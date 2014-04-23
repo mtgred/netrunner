@@ -7,13 +7,4 @@
 
        :injections [(require 'weasel.repl.websocket)
                     (defn brepl []
-                      (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env)))]
-
-       :source-paths ["src"]
-
-       :cljsbuild {:builds [{:id "netrunner"
-                             :source-paths ["src"]
-                             :output-dir "out"
-                             :compiler {:output-to "resources/js/app.js"
-                                        :optimizations :none
-                                        :source-map true}}]}}}
+                      (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env)))]}}

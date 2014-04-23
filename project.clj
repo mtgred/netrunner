@@ -9,11 +9,11 @@
 
   :plugins [[lein-cljsbuild "1.0.3"]]
 
-  :source-paths ["src"]
+  :source-paths ["src/cljs"]
 
   :cljsbuild {:builds [{:id "netrunner"
-                        :source-paths ["src"]
-                        :compiler {:output-to "resources/js/app.js"
+                        :source-paths ["src/cljs"]
+                        :compiler {:output-to "out/app.js"
                                    :output-dir "out"
                                    :optimizations :none
                                    :source-map true}}]})
