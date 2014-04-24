@@ -1,0 +1,59 @@
+extends layout
+
+block content
+  nav.navbar
+    div.navbar-bg
+    div.uk-container.uk-container-center
+      ul.uk-navbar-nav.carousel-indicator
+        li.active(data-target="#main", data-slide-to="0", data-url="/")
+          a(href="/") Manabase
+        li(data-target="#main", data-slide-to="1", data-url="/play")
+          a(href="/play") Play
+        li(data-target="#main", data-slide-to="2", data-url="/deckbuilder")
+          a(href="/deckbuilder") Deck Builder
+        li(data-target="#main", data-slide-to="3", data-url="/cards")
+          a(href="/cards") Cards
+        li(data-target="#main", data-slide-to="4", data-url="/news")
+          a(href="/news") News
+
+  div#main.carousel.slide(data-interval="false")
+    div.carousel-inner
+      div.item.active
+        div.home-bg
+        div.uk-container.uk-container-center
+          h1 Play Android: Netrunner in your browser
+          div#chat-box
+
+      div.item
+        div.play-bg#gameboard
+        div.uk-container.uk-container-center
+          h1 Play
+
+      div.item#deckbuilder
+        div.deckbuilder-bg
+        div.uk-container.uk-container-center
+          h1 Deck Builder
+
+      div.item
+        div.cards-bg
+        div.uk-container.uk-container-center
+          h1 Card
+
+      div.item
+        div.news-bg
+        div.uk-container.uk-container-center
+          h1 News
+
+
+block js
+  // script(src='/lib/bootstrap/dist/js/bootstrap.min.js')
+  // script(src='/lib/json2/json2.js')
+  // script(src='/lib/underscore/underscore-min.js')
+  // script(src='/lib/backbone/backbone-min.js')
+  // script(src='/lib/react/react.min.js')
+  // script(src='/js/manabase.js')
+  // script(src='/js/goog/base.js')
+  // script(src='/js/mb.js')
+  // script.
+  //   goog.require('manabase.utils.brepl')
+  //   goog.require('manabase.main')
