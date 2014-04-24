@@ -10,7 +10,8 @@
     "jade": "*",
     "socket.io": "~0.9.16",
     "mongoskin": "~0.6.1",
-    "stylus": "~0.44.0"
+    "stylus": "~0.44.0",
+    "coffee-middleware": "~0.2.1"
   },
   "devDependencies": {
     "bower": "0.9.2"
