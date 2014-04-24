@@ -1,45 +1,36 @@
 extends layout
 
 block content
-  nav.navbar
-    div.navbar-bg
-    div.uk-container.uk-container-center
-      ul.uk-navbar-nav.carousel-indicator
-        li.active(data-target="#main", data-slide-to="0", data-url="/")
-          a(href="/") Manabase
-        li(data-target="#main", data-slide-to="1", data-url="/play")
-          a(href="/play") Play
-        li(data-target="#main", data-slide-to="2", data-url="/deckbuilder")
-          a(href="/deckbuilder") Deck Builder
-        li(data-target="#main", data-slide-to="3", data-url="/cards")
-          a(href="/cards") Cards
-        li(data-target="#main", data-slide-to="4", data-url="/news")
-          a(href="/news") News
+  nav.topnav.blue-shade
+    ul.carousel-indicator
+      li.active(data-target="#main", data-slide-to="0", data-url="/")
+        a(href="/") Manabase
+      li(data-target="#main", data-slide-to="1", data-url="/play")
+        a(href="/play") Play
+      li(data-target="#main", data-slide-to="2", data-url="/deckbuilder")
+        a(href="/deckbuilder") Deck Builder
+      li(data-target="#main", data-slide-to="3", data-url="/cards")
+        a(href="/cards") Cards
+      li(data-target="#main", data-slide-to="4", data-url="/news")
+        a(href="/news") News
 
   div#main.carousel.slide(data-interval="false")
     div.carousel-inner
       div.item.active
         div.home-bg
-        div.uk-container.uk-container-center
+        div.container
           h1 Play Android: Netrunner in your browser
-          div#chat-box
 
       div.item
-        div.play-bg#gameboard
-        div.uk-container.uk-container-center
-          h1 Play
+        div.lobby-bg
+        div#gameboard
 
-      div.item#deckbuilder
+      div.item
         div.deckbuilder-bg
-        div.uk-container.uk-container-center
-          h1 Deck Builder
+        div#deckbuilder
 
       div.item
-        div.cards-bg
-        div.uk-container.uk-container-center
-          h1 Card
+        div.library-bg
 
       div.item
-        div.news-bg
-        div.uk-container.uk-container-center
-          h1 News
+        div.forum-bg

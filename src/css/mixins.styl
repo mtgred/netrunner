@@ -1,0 +1,47 @@
+radius(radius)
+  -moz-border-radius: radius
+  -webkit-border-radius: radius
+  border-radius: radius
+
+vertical-gradient(startColor, endColor)
+  background: endColor
+  background: -moz-linear-gradient(startColor, endColor)
+  background: -webkit-gradient(linear, left top, left bottom, from(startColor), to(endColor))
+
+box-shadow()
+  -moz-box-shadow: arguments
+  -webkit-box-shadow: arguments
+  box-shadow: arguments
+
+transition()
+  -webkit-transition: arguments
+  -moz-transition: arguments
+  -ms-transition: all 0.2s ease-out
+  -o-transition: arguments
+  transition: arguments
+
+background-size()
+  -webkit-background-size: arguments
+  -moz-background-size: arguments
+  -o-background-size: arguments
+  background-size: arguments
+
+ellipsis()
+  text-overflow: ellipsis
+  white-space: nowrap
+  overflow: hidden
+
+cover-img(img, opacity=0.6)
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  z-index: -10
+  background-image: img
+  -webkit-background-size: cover
+  -moz-background-size: cover
+  -o-background-size: cover
+  background-size: cover
+  background-position: 50% 50%
+  opacity: opacity

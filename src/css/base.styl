@@ -1,0 +1,145 @@
+*
+  box-sizing: border-box
+
+html, body
+  margin: 0
+  padding: 0
+  height: 100%
+
+body
+  color: text-color
+  background-color: black
+  font-family: "Titillium Web", "Helvetica Neue", sans-serif
+  font-size: 16px
+  line-height: 20px
+
+h1, h2, h3, h4
+  line-height: normal
+  font-weight: 200
+
+h1
+  font-size: 40px
+  margin: 10px 0
+
+h2
+  font-size: 32px
+  margin: 10px 0
+
+h3
+  font-size: 24px
+  margin: 5px 0
+
+h4
+  font-size: 16px
+  margin: 5px 0
+
+a
+  text-decoration: none
+  color: orange
+  transition(all 0.2s ease-out)
+  &:hover
+    color: text-color
+    text-decoration: none
+
+table
+  border-collapse: collapse
+
+ul
+  margin: 0
+  padding: 0
+
+p
+  margin: 5px 0
+
+form
+  display: inline-block
+  padding: 15px 20px
+
+.clear
+  clear: both
+
+.italic
+  font-style: italic
+
+.highlight
+  color: orange !important
+
+* html .clearfix
+  height: 1%
+  overflow: visible
+
+*+html .clearfix
+  min-height: 1%
+
+.clearfix:after
+  clear: both
+  content: "."
+  display: block
+  height: 0
+  visibility: hidden
+  font-size: 0
+
+nav
+  ul
+    list-style-type: none
+
+nav.topnav
+  position: fixed
+  z-index: 10
+  top: 0
+  left: 0
+  right: 0
+  padding: 5px 20px 8px
+  border-bottom: 1px solid rgba(39, 56, 76, 0.9)
+  li
+    display: inline-block
+    margin-right: 20px
+    a
+      color: white
+      &:hover
+        color: orange
+
+.panel
+  radius: 4px
+  padding: 10px
+  border: 1px solid rgba(39, 56, 76, 0.9)
+
+.container
+  width: 960px
+  margin: 0 auto
+
+.blue-shade
+  background-color: rgba(39, 56, 76, 0.8)
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+
+// Buttons
+
+a.button, button
+  display: inline-block
+
+
+// Layout
+
+#main
+  height: 100%
+  .carousel-inner
+    height: 100%
+    .item
+      padding: 32px 20px 0
+      height: 100%
+      color: white
+
+.home-bg
+  cover-img: url('/img/bg/Beanstalk.jpg')
+
+.lobby-bg
+  cover-img: url('/img/bg/Grimoire.jpg')
+
+.deckbuilder-bg
+  cover-img: url('/img/bg/ProjectAtlas.jpg')
+
+.library-bg
+  cover-img: url('/img/bg/Aesop.jpg')
+
+.forum-bg
+  cover-img: url('/img/bg/SelfModifyingCode.jpg')
