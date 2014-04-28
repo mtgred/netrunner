@@ -11,9 +11,15 @@
 
   :source-paths ["src/cljs"]
 
-  :cljsbuild {:builds [{:id "netrunner"
+  :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs"]
-                        :compiler {:output-to "out/app.js"
-                                   :output-dir "out"
+                        :compiler {:output-to "resources/cljs/app.js"
+                                   :output-dir "resources/cljs"
                                    :optimizations :none
-                                   :source-map true}}]})
+                                   :source-map true}},
+                       {:id "prod"
+                        :source-paths ["src/cljs/netrunner"]
+                        :compiler {:output-to "resources/js/app.js"
+                                   :optimizations :advanced
+                                   :pretty-print false
+                                   :externs ["resources/lib/react/react.min.js"]}}]})

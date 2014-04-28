@@ -11,5 +11,7 @@ pom.xml
 .lein-repl-history
 .lein-plugins/
 
+/resources/js/
+/resources/cljs/
 /resources/lib/
 /resources/css/netrunner.css
