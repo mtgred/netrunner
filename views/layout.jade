@@ -17,10 +17,13 @@ html
     script(src='/lib/react/react.min.js')
     script(src='/js/netrunner.js')
 
-    script(src="cljs/goog/base.js", type="text/javascript")
-    script(src="cljs/app.js", type="text/javascript")
-    script(type="text/javascript").
-      goog.require("netrunner.main");
-      goog.require("utils.brepl");
-    block js
+    if env === 'dev'
+      script(src="cljs/goog/base.js", type="text/javascript")
+      script(src="cljs/app.js", type="text/javascript")
+      script(type="text/javascript").
+        goog.require("netrunner.main");
+        goog.require("utils.brepl");
+    else
+      script(src="js/app.js", type="text/javascript")
 
+    block js

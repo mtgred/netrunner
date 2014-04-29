@@ -23,12 +23,12 @@ app.configure ->
 app.configure 'development', ->
   console.log "Dev environment"
   app.get '/*', (req, res) ->
-    res.render('index.jade', {})
+    res.render('index.jade', { env: 'dev'})
 
 app.configure 'production', ->
   console.log "Prod environment"
   app.get '/*', (req, res) ->
-    res.sendfile('index.html')
+    res.render('index.jade', { env: 'prod'})
 
 terminate = () ->
   process.exit(1)
