@@ -2,7 +2,7 @@
   "name": "Manabase",
   "version": "0.0.1",
   "scripts": {
-    "start": "./node_modules/coffee-script/bin/coffee server.coffee",
+    "start": "coffee server.coffee",
     "postinstall": "./node_modules/bower/bin/bower install"
   },
   "main": "server.coffee",
