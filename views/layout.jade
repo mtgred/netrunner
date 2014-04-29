@@ -16,14 +16,20 @@ html
     script(src='/lib/backbone/backbone.js')
     script(src='/lib/react/react.min.js')
     script(src='/js/netrunner.js')
+    script(src='/socket.io/socket.io.js')
 
     if env === 'dev'
+      script(type="text/javascript").
+        var socket = io.connect(window.location.hostname);
       script(src="cljs/goog/base.js", type="text/javascript")
       script(src="cljs/app.js", type="text/javascript")
       script(type="text/javascript").
         goog.require("netrunner.main");
+        goog.require("netrunner.socket");
         goog.require("utils.brepl");
     else
+      script(type="text/javascript").
+        var socket = io.connect(window.location.hostname + ":8000");
       script(src="js/app.js", type="text/javascript")
 
     block js

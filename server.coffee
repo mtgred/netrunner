@@ -5,8 +5,17 @@ stylus = require('stylus')
 coffeeMiddleware = require('coffee-middleware')
 
 # db = require('mongoskin').db('localhost:27017/netrunner')
-# io = require('socket.io').listen(server) #
-# io.set('log level', 2)
+
+io = require('socket.io').listen(server)
+io.enable('browser client minification')
+io.enable('browser client etag')
+io.enable('browser client gzip')
+io.set('log level', 1)
+io.set('transports', ['websocket'])
+
+io.sockets.on 'connection', (socket) ->
+  socket.emit 'data', { 'msg': 'Connected to Manabase.' }
+  socket.on 'data', (data) -> console.log(data)
 
 app.configure ->
   app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 3000
