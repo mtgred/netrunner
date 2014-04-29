@@ -40,5 +40,5 @@ for signal in ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
                'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM']
   process.on(signal, terminate)
 
-server.listen app.get('port'), ->
+server.listen app.get('port'), app.get('ipaddr'), ->
   console.log("Express server listening on port " + app.get('port'))

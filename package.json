@@ -5,6 +5,7 @@
     "start": "./node_modules/coffee-script/bin/coffee server.coffee",
     "postinstall": "./node_modules/bower/bin/bower install"
   },
+  "main": "server.coffee",
   "dependencies": {
     "express": "~3.4.7",
     "jade": "*",
@@ -15,7 +16,6 @@
     "coffee-script": "~1.7.1"
   },
   "devDependencies": {
-    "bower": ">=1.3.3",
-    "coffee-script": ">=1.7.1"
+    "bower": ">=1.3.3"
   }
 }
