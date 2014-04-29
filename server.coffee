@@ -14,8 +14,8 @@ io.set('log level', 1)
 io.set('transports', ['websocket'])
 
 io.sockets.on 'connection', (socket) ->
-  socket.emit 'data', { 'msg': 'Connected to Manabase.' }
-  socket.on 'data', (data) -> console.log(data)
+  socket.on 'data', (data) ->
+    io.sockets.emit 'data', { 'msg': data.msg }
 
 app.configure ->
   app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 3000

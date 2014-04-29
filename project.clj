@@ -11,15 +11,18 @@
 
   :source-paths ["src/cljs"]
 
-  :cljsbuild {:builds [{:id "dev"
-                        :source-paths ["src/cljs"]
-                        :compiler {:output-to "resources/cljs/app.js"
-                                   :output-dir "resources/cljs"
-                                   :optimizations :none
-                                   :source-map true}},
-                       {:id "prod"
-                        :source-paths ["src/cljs/netrunner"]
-                        :compiler {:output-to "resources/js/app.js"
-                                   :optimizations :advanced
-                                   :pretty-print false
-                                   :externs ["resources/lib/react/react.min.js"]}}]})
+  :cljsbuild {
+    :builds [
+      {:id "dev"
+       :source-paths ["src/cljs"]
+       :compiler {:output-to "resources/cljs/app.js"
+                 :output-dir "resources/cljs"
+                 :optimizations :none
+                 :source-map true}},
+      {:id "prod"
+       :source-paths ["src/cljs/netrunner"]
+       :compiler {:output-to "resources/js/app.js"
+                  :optimizations :advanced
+                  :pretty-print false
+                  :externs ["resources/lib/react/react.min.js"
+                            "node_modules/socket.io/node_modules/socket.io-client/dist/socket.io.min.js"]}}]})

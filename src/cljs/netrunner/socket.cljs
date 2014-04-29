@@ -6,15 +6,15 @@
 (.log js/console "bar")
 
 ;; (.on js/socket "data" #(.log js/console %1))
-;; (.emit js/socket "data" "spam")
+;; (.emit js/socket "data" (js-obj "msg" "eggs"))
 
 (defn socket-listen [msg-type]
   (let [c (chan 1)]
     (.on js/socket msg-type #(put! c %))
     c))
 
-(defn process-msg [msg]
-  (.log js/console "async: " msg))
+(defn process-msg [data]
+  (.log js/console "async: " (aget data "msg")))
 
 (let [c (socket-listen "data")]
   (go (while true
