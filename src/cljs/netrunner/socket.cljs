@@ -3,19 +3,20 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.main :as main]))
 
-(.log js/console "bar")
+(def socket-channel (chan))
 
-;; (.on js/socket "data" #(.log js/console %1))
-;; (.emit js/socket "data" (js-obj "msg" "eggs"))
+(.on js/socket "message" #(put! socket-channel %))
 
-(defn socket-listen [msg-type]
-  (let [c (chan 1)]
-    (.on js/socket msg-type #(put! c %))
-    c))
+(defmulti process-msg #(aget % "type"))
 
-(defn process-msg [data]
-  (.log js/console "async: " (aget data "msg")))
+(go (while true
+      (process-msg (<! socket-channel))))
 
-(let [c (socket-listen "data")]
-  (go (while true
-        (process-msg (<! c)))))
+(defmethod process-msg "chat" [msg]
+  (.log js/console "Chat: #" (aget msg "channel") (aget msg "msg")))
+
+(defmethod process-msg "game-lobby" [msg]
+  (.log js/console "Game Lobby:" (aget msg "title")))
+
+(defmethod process-msg "game" [msg]
+  (.log js/console "New Game:" (aget msg "player1") "vs" (aget msg "player2")))
