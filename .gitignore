@@ -10,6 +10,8 @@ pom.xml
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
+.repl
+.nrepl-port
 
 /resources/js/
 /resources/cljs/
