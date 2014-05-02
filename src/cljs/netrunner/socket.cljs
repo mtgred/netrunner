@@ -3,17 +3,27 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.main :as main]))
 
-(def socket-channel (chan))
+(def in-channel (chan))
+(def out-channel (chan))
 
-(.on js/socket "message" #(put! socket-channel %))
+(def chat-channel (chan))
+(def game-lobby-channel (chan))
+(def game-channel (chan))
+
+(go (while true
+      (let [msg (<! out-channel)]
+        (.log js/console msg)
+        (.emit js/socket "netrunner" msg))))
+
+(.on js/socket "netrunner" #(put! in-channel %))
 
 (defmulti process-msg #(aget % "type"))
 
 (go (while true
-      (process-msg (<! socket-channel))))
+      (process-msg (<! in-channel))))
 
 (defmethod process-msg "chat" [msg]
-  (.log js/console "Chat: #" (aget msg "channel") (aget msg "msg")))
+  (put! chat-channel msg))
 
 (defmethod process-msg "game-lobby" [msg]
   (.log js/console "Game Lobby:" (aget msg "title")))

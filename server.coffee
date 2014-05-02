@@ -14,7 +14,7 @@ io.set('log level', 1)
 io.set('transports', ['websocket'])
 
 io.sockets.on 'connection', (socket) ->
-  socket.on 'message', (msg) ->
+  socket.on 'netrunner', (msg) ->
     io.sockets.emit "netrunner", msg
 
 app.configure ->
