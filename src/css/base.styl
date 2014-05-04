@@ -55,6 +55,22 @@ form
   display: inline-block
   padding: 15px 20px
 
+input[type=text]
+  border-radius: 4px
+  padding: 0 5px
+  font-size: 14px
+  background-color: rgba(255, 255, 255, 0.7)
+
+button
+  border-radius: 4px
+  font-size: 14px
+  padding: 0 25px
+  background-color: transparent-orange
+  border: 2px solid orange
+  color: white
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9)
+  cursor: pointer
+
 .clear
   clear: both
 
@@ -143,3 +159,33 @@ a.button, button
 
 .forum-bg
   cover-img: url('/img/bg/SelfModifyingCode.jpg')
+
+// Chat
+
+.chat-app
+  display: flex
+  flex-direction: row
+
+.channel-list
+  flex: 0 0 180px
+  margin-right: 10px
+
+.chat-box
+  flex: 1
+  flex-direction: column
+
+.message-list
+  height: 400px
+  overflow: scroll
+
+.msg-box
+  display: flex
+  margin-top: 10px
+
+  > input
+    flex: 1
+    margin-right: 10px
+    height: 30px
+
+  > button
+    height: 30px

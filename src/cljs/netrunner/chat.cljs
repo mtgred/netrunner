@@ -31,7 +31,7 @@
   (reify
     om/IRender
     (render [this]
-      (dom/div nil
+      (dom/div #js {:className "msg-box"}
        (dom/input #js {:type "text"
                        :ref "msg-input"
                        :onKeyPress #(when (== (.-keyCode %) 13)
@@ -42,35 +42,37 @@
   (reify
     om/IRender
     (render [this]
-      (dom/li nil (str "#" (name channel))))))
+      (dom/div nil (str "#" (name channel))))))
 
 (defn channel-list-view [app owner]
   (reify
     om/IRenderState
     (render-state [this state]
-      (apply dom/ul #js {:className "blue-shade panel"}
+      (apply dom/div #js {:className "blue-shade panel channel-list"}
              (om/build-all channel-view (keys (:channels app)))))))
 
 (defn message-view [message owner]
   (reify
     om/IRender
     (render [this]
-      (dom/li nil (str message)))))
+      (dom/div nil (str message)))))
 
 (defn message-list-view [messages owner]
   (reify
     om/IRenderState
     (render-state [this state]
-      (apply dom/ul #js {:className "blue-shade panel"} (om/build-all message-view messages)))))
+      (apply dom/div #js {:className "blue-shade panel message-list"}
+             (om/build-all message-view messages)))))
 
 (defn chat-app [app owner]
   (reify
     om/IRender
     (render [this]
-      (dom/div nil
+      (dom/div #js {:className "chat-app"}
        (om/build channel-list-view app)
-       (om/build message-list-view (get-in app [:channels (:active-channel app)]))
-       (om/build msg-input-view app)))))
+       (dom/div #js {:className "chat-box"}
+        (om/build message-list-view (get-in app [:channels (:active-channel app)]))
+        (om/build msg-input-view app))))))
 
 (om/root chat-app app-state {:target (. js/document (getElementById "chat"))})
 
