@@ -1,7 +1,7 @@
 (ns netrunner.chat
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
+            [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.socket :refer [out-channel chat-channel]]))
 
@@ -23,6 +23,7 @@
         text (.-value input)]
     (when-not (zero? (alength text))
       (aset input "value" "")
+      (.focus input)
       (put! out-channel #js {:type "chat"
                              :channel (name (:active-channel @app))
                              :msg text}))))
@@ -31,48 +32,54 @@
   (reify
     om/IRender
     (render [this]
-      (dom/div #js {:className "msg-box"}
-       (dom/input #js {:type "text"
-                       :ref "msg-input"
-                       :onKeyPress #(when (== (.-keyCode %) 13)
-                                      (send-msg app owner))})
-       (dom/button #js {:onClick #(send-msg app owner)} "Send")))))
+      (sab/html
+       [:div.msg-box
+        [:input {:type "text"
+                 :ref "msg-input"
+                 :onKeyPress #(when (== (.-keyCode %) 13) (send-msg app owner))}]
+        [:button {:on-click #(send-msg app owner)} "Send"]]))))
 
 (defn channel-view [channel owner]
   (reify
     om/IRender
     (render [this]
-      (dom/div nil (str "#" (name channel))))))
+      (sab/html
+       [:div {:class (if (= (:active-channel @app-state) channel) "active" "")
+              :on-click #(swap! app-state assoc :active-channel channel)}
+         (str "#" (name channel))]))))
 
 (defn channel-list-view [app owner]
   (reify
     om/IRenderState
     (render-state [this state]
-      (apply dom/div #js {:className "blue-shade panel channel-list"}
-             (om/build-all channel-view (keys (:channels app)))))))
+      (sab/html
+       [:div.blue-shade.panel.channel-list
+        (om/build-all channel-view (keys (:channels app)))]))))
 
 (defn message-view [message owner]
   (reify
     om/IRender
     (render [this]
-      (dom/div nil (str message)))))
+      (sab/html [:div {} (str message)]))))
 
 (defn message-list-view [messages owner]
   (reify
     om/IRenderState
     (render-state [this state]
-      (apply dom/div #js {:className "blue-shade panel message-list"}
-             (om/build-all message-view messages)))))
+      (sab/html
+       [:div.blue-shade.panel.message-list
+        (om/build-all message-view messages)]))))
 
 (defn chat-app [app owner]
   (reify
     om/IRender
     (render [this]
-      (dom/div #js {:className "chat-app"}
-       (om/build channel-list-view app)
-       (dom/div #js {:className "chat-box"}
-        (om/build message-list-view (get-in app [:channels (:active-channel app)]))
-        (om/build msg-input-view app))))))
+      (sab/html
+       [:div.chat-app
+        (om/build channel-list-view app)
+        [:div.chat-box
+         (om/build message-list-view (get-in app [:channels (:active-channel app)]))
+         (om/build msg-input-view app)]]))))
 
 (om/root chat-app app-state {:target (. js/document (getElementById "chat"))})
 
