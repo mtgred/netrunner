@@ -5,9 +5,6 @@
     "jquery": "~2.0.3",
     "react": "latest",
     "Snap.svg": "latest",
-    "bootstrap": "~3.0.3",
-    "backbone": "~1.1.0",
-    "underscore": "~1.5.2",
-    "json2": "*"
+    "bootstrap": "~3.0.3"
   }
 }

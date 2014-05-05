@@ -1,18 +1,7 @@
 extends layout
 
 block content
-  nav.topnav.blue-shade
-    ul.carousel-indicator
-      li.active(data-target="#main", data-slide-to="0", data-url="/")
-        a(href="/") Manabase
-      li(data-target="#main", data-slide-to="1", data-url="/play")
-        a(href="/play") Play
-      li(data-target="#main", data-slide-to="2", data-url="/deckbuilder")
-        a(href="/deckbuilder") Deck Builder
-      li(data-target="#main", data-slide-to="3", data-url="/cards")
-        a(href="/cards") Cards
-      li(data-target="#main", data-slide-to="4", data-url="/news")
-        a(href="/news") News
+  nav#topnav.blue-shade
 
   div#main.carousel.slide(data-interval="false")
     div.carousel-inner

@@ -36,7 +36,7 @@ h4
 a
   text-decoration: none
   color: orange
-  transition(all 0.2s ease-out)
+  // transition(all 0.2s ease-out)
   &:hover
     color: text-color
     text-decoration: none
@@ -77,9 +77,6 @@ button
 .italic
   font-style: italic
 
-.highlight
-  color: orange !important
-
 * html .clearfix
   height: 1%
   overflow: visible
@@ -99,7 +96,7 @@ nav
   ul
     list-style-type: none
 
-nav.topnav
+nav#topnav
   position: fixed
   z-index: 10
   top: 0
@@ -114,6 +111,9 @@ nav.topnav
       color: white
       &:hover
         color: orange
+  li.active
+    a
+      color: orange
 
 .panel
   radius: 4px
@@ -171,6 +171,7 @@ a.button, button
   margin-right: 10px
   > div.active
     color: orange
+    transition(all 0.2s ease-out)
 
 .chat-box
   flex: 1

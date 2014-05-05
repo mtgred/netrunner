@@ -2,7 +2,6 @@ express = require('express')
 app = express()
 server = require('http').createServer(app)
 stylus = require('stylus')
-coffeeMiddleware = require('coffee-middleware')
 
 # db = require('mongoskin').db('localhost:27017/netrunner')
 
@@ -25,7 +24,6 @@ app.configure ->
   app.use express.cookieParser()
   app.use express.bodyParser()
   app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources'})
-  app.use coffeeMiddleware({src: __dirname + '/src', dest: __dirname + '/resources'})
   app.use express.static(__dirname + '/resources')
   app.use app.router
 

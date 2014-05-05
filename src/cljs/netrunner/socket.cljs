@@ -12,7 +12,6 @@
 
 (go (while true
       (let [msg (<! out-channel)]
-        (.log js/console msg)
         (.emit js/socket "netrunner" msg))))
 
 (.on js/socket "netrunner" #(put! in-channel %))
