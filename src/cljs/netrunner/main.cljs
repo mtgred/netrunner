@@ -55,11 +55,3 @@
       (sab/html [:h1 {} "Deck Builder"]))))
 
 (om/root deckbuilder-view app-state {:target (. js/document (getElementById "deckbuilder"))})
-
-(defn gameboard-view [app owner]
-  (reify
-    om/IRender
-    (render [this]
-      (sab/html [:h1 {} "Game board"]))))
-
-(om/root gameboard-view app-state {:target (. js/document (getElementById "gameboard"))})
