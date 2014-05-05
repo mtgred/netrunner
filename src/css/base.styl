@@ -163,30 +163,29 @@ a.button, button
 // Chat
 
 .chat-app
-  display: flex
-  flex-direction: row
+  display-flex()
 
 .channel-list
-  flex: 0 0 180px
+  flex(0 0 180px)
   margin-right: 10px
   > div.active
     color: orange
     transition(all 0.2s ease-out)
 
 .chat-box
-  flex: 1
-  flex-direction: column
+  flex(1)
 
 .message-list
   height: 400px
   overflow: scroll
 
 .msg-box
-  display: flex
+  display-flex()
+  flex(1)
   margin-top: 10px
 
   > input
-    flex: 1
+    flex(1)
     margin-right: 10px
     height: 30px
 
