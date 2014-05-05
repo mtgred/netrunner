@@ -7,9 +7,9 @@
 
 (def app-state
   (atom
-    {:active-channel :general
-     :channels {:general ["foobar" "spam eggs"]
-                :belgium ["Vive la frite !" "On aime la biere ici."]}}))
+   {:active-channel [:general]
+    :channels {:general ["foobar" "spam eggs"]
+               :belgium ["Vive la frite !" "On aime la biere ici."]}}))
 
 (go (while true
       (let [msg (<! chat-channel)
@@ -25,7 +25,7 @@
       (aset input "value" "")
       (.focus input)
       (put! out-channel #js {:type "chat"
-                             :channel (name (:active-channel @app))
+                             :channel (name (first (:active-channel @app)))
                              :msg text}))))
 
 (defn msg-input-view [app owner]
@@ -39,14 +39,16 @@
                  :onKeyPress #(when (== (.-keyCode %) 13) (send-msg app owner))}]
         [:button {:on-click #(send-msg app owner)} "Send"]]))))
 
-(defn channel-view [channel owner]
+(defn channel-view [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html
-       [:div {:class (if (= (:active-channel @app-state) channel) "active" "")
-              :on-click #(swap! app-state assoc :active-channel channel)}
-         (str "#" (name channel))]))))
+      (let [ch (:channel cursor)
+            active-ch (:active-channel cursor)]
+       (sab/html
+        [:div {:class (if (= (first active-ch) ch) "active" "")
+               :on-click #(om/update! active-ch [ch])}
+         (str "#" (name ch))])))))
 
 (defn channel-list-view [app owner]
   (reify
@@ -54,7 +56,9 @@
     (render-state [this state]
       (sab/html
        [:div.blue-shade.panel.channel-list
-        (om/build-all channel-view (keys (:channels app)))]))))
+        (for [ch (keys (:channels app))]
+          (om/build channel-view {:channel ch
+                                  :active-channel (:active-channel app)}))]))))
 
 (defn message-view [message owner]
   (reify
@@ -78,12 +82,7 @@
        [:div.chat-app
         (om/build channel-list-view app)
         [:div.chat-box
-         (om/build message-list-view (get-in app [:channels (:active-channel app)]))
+         (om/build message-list-view (get-in app [:channels (first (:active-channel app))]))
          (om/build msg-input-view app)]]))))
 
 (om/root chat-app app-state {:target (. js/document (getElementById "chat"))})
-
-;; (swap! app-state assoc-in [:channels :general] ["foo"])
-;; (swap! app-state assoc :active-channel :general)
-;; (swap! app-state assoc-in [:channels :france] ["bar"])
-;; (.log js/console (:active-channel @app-state))
