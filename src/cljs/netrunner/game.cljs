@@ -7,7 +7,8 @@
 
 (def game-state
   (atom
-   {:log []
+   {:game-id 0
+    :log []
     :side :runner
     :corp
       {:r&d []
@@ -38,6 +39,25 @@
     om/IRender
     (render [this]
       (sab/html [:div.panel.blue-shade.log {} "Log"]))))
+
+(defn send-msg [cursor owner]
+  (let [input (om/get-node owner "msg-input")
+        text (.-value input)]
+    (when-not (zero? (alength text))
+      (aset input "value" "")
+      (put! out-channel #js {:type "game"
+                             :game-id 0
+                             :action "say"
+                             :msg text}))))
+
+(defn msg-input-view [cursor owner]
+  (reify
+    om/IRender
+    (render [this]
+      (sab/html
+       [:div.msg-box
+        [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
+                 :onKeyPress #(when (== (.-keyCode %) 13) (send-msg cursor owner))}]]))))
 
 (defn hand-view [cursor owner]
   (reify
@@ -104,21 +124,31 @@
        [:div.gameboard {}
         [:div.leftpane {}
          [:div {}
-          (om/build stats-view (:runner app))
-          (om/build scored-view app)]
+          (om/build stats-view (:runner cursor))
+          (om/build scored-view cursor)]
          [:div {}
-          (om/build scored-view app)
-          (om/build stats-view (:corp app))]]
+          (om/build scored-view cursor)
+          (om/build stats-view (:corp cursor))]]
         [:div.centralpane
-         (om/build corp-board (:corp app))
-         (om/build runner-board (:runner app))
+         (om/build corp-board (:corp cursor))
+         (om/build runner-board (:runner cursor))
          [:div.dashboard {}
-          (om/build hand-view ((hand) app))
-          (om/build deck-view ((deck) app))
-          (om/build discard-view ((discard) app))]]
+          (om/build hand-view ((hand) cursor))
+          (om/build deck-view ((deck) cursor))
+          (om/build discard-view ((discard) cursor))]]
         [:div.rightpane {}
          [:div.card-zoom {}]
-         (om/build log-pane (:log app))
-         [:input {:type "text" :placeholder "Say something..."}]]]))))
+         (om/build log-pane (:log cursor))
+         (om/build msg-input-view cursor)]]))))
 
 (om/root game-app game-state {:target (. js/document (getElementById "gameboard"))})
+
+
+
+
+
+
+
+
+
+

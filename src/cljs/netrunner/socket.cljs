@@ -25,7 +25,7 @@
   (put! chat-channel msg))
 
 (defmethod process-msg "game-lobby" [msg]
-  (.log js/console "Game Lobby:" (aget msg "title")))
+  (put! game-lobby-channel msg))
 
 (defmethod process-msg "game" [msg]
-  (.log js/console "New Game:" (aget msg "player1") "vs" (aget msg "player2")))
+  (put! game-channel msg))
