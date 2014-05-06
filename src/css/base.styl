@@ -196,24 +196,40 @@ a.button, button
 // Gameboard
 
 .gameboard
+  position: absolute
+  top: 0
+  bottom: 0
+  left: 0
+  right: 0
 
 .log
   width: 240px
-  height: 389px
-  display: inline-block
-  margin: 5px
+  height: 334px
+  position: absolute
+  right: 2px
+  bottom: 2px
 
 .corp-board
 
 .runner-board
 
-.hand, .stack, .discard
+.hand, .deck, .discard, .stats
+  position: absolute
   height: 139px
-  display: inline-block
-  margin: 5px
+  bottom: 0
 
-.stack, .discard
+.discard
+  left: 104px
+  width: 100px
+
+.deck
+  left: 208px
   width: 100px
 
 .hand
-  width: 600px
+  left: 312px
+  width: 500px
+
+.stats
+  width: 100px
+  left: 0

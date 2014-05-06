@@ -8,11 +8,12 @@
 (def game-state
   (atom
    {:log []
+    :side :runner
     :corp
       {:r&d []
        :hq []
        :archive []
-       :hidden-archive []
+       :remote-servers []
        :credit 5
        :click 3
        :bad-publicity 0
@@ -22,6 +23,7 @@
       {:stack []
        :grip []
        :heap []
+       :rig []
        :credit 5
        :memory 4
        :link 0
@@ -43,11 +45,11 @@
     (render [this]
       (sab/html [:div.panel.blue-shade.hand {} ""]))))
 
-(defn stack-view [app owner]
+(defn deck-view [app owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.stack {} ""]))))
+      (sab/html [:div.panel.blue-shade.deck {} ""]))))
 
 (defn discard-view [app owner]
   (reify
@@ -55,34 +57,50 @@
     (render [this]
       (sab/html [:div.panel.blue-shade.discard {} ""]))))
 
-(defn corp-board [app owner]
+(defn stats-view [app owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html
-       [:div.corp-board {}
-        (om/build hand-view (:hq app))
-        (om/build stack-view (:r&d app))
-        (om/build discard-view (:archive app))
-        (om/build stack-view (:hidden-archive app))]))))
+      (sab/html [:div.panel.blue-shade.stats {} ""]))))
 
-(defn runner-board [app owner]
-  (reify
-    om/IRender
-    (render [this]
-      (sab/html
-       [:div.runner-board {}
-        (om/build hand-view (:grip app))
-        (om/build stack-view (:stack app))
-        (om/build discard-view (:heap app))]))))
+;; (defn corp-board [app owner]
+;;   (reify
+;;     om/IRender
+;;     (render [this]
+;;       (sab/html
+;;        [:div.corp-board {}
+;;         (om/build stack-view (:hq app))
+;;         (om/build stack-view (:r&d app))
+;;         (om/build stack-view (:archive app))]))))
+
+;; (defn runner-board [app owner]
+;;   (reify
+;;     om/IRender
+;;     (render [this]
+;;       (sab/html
+;;        [:div.runner-board {}]))))
+
+(defn deck []
+  (if (= (:side game-state) :runner) :stack :r&d))
+
+(defn hand []
+  (if (= (:side game-state) :runner) :grip :hq))
+
+(defn discard []
+  (if (= (:side game-state) :runner) :heap :archive))
 
 (defn game-app [app owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.gameboard {}
+      (sab/html [:div.dashboard {}
                  (om/build log-pane (:log app))
-                 (om/build corp-board (:corp app))
-                 (om/build runner-board (:runner app))]))))
+                 (om/build hand-view ((hand) app))
+                 (om/build deck-view ((deck) app))
+                 (om/build discard-view ((discard) app))
+                 (om/build stats-view app)
+                 ;; (om/build corp-board (:corp app))
+                 ;; (om/build runner-board (:runner app))
+                 ]))))
 
 (om/root game-app game-state {:target (. js/document (getElementById "gameboard"))})

@@ -52,8 +52,8 @@
 
 (defn channel-list-view [app owner]
   (reify
-    om/IRenderState
-    (render-state [this state]
+    om/IRender
+    (render [this]
       (sab/html
        [:div.blue-shade.panel.channel-list
         (for [ch (keys (:channels app))]
