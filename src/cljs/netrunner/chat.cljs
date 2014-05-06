@@ -34,8 +34,7 @@
     (render [this]
       (sab/html
        [:div.msg-box
-        [:input {:type "text"
-                 :ref "msg-input"
+        [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
                  :onKeyPress #(when (== (.-keyCode %) 13) (send-msg app owner))}]
         [:button {:on-click #(send-msg app owner)} "Send"]]))))
 

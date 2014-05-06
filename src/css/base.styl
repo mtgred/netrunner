@@ -1,16 +1,20 @@
 *
+  -moz-box-sizing: border-box
+  -webkit-box-sizing: border-box
   box-sizing: border-box
 
 html, body
   margin: 0
   padding: 0
   height: 100%
+  overflow: hidden
 
 body
   color: text-color
   background-color: black
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
-  font-size: 16px
+  font-size: 14px
+  font-weight: 300
   line-height: 20px
 
 h1, h2, h3, h4
@@ -19,19 +23,19 @@ h1, h2, h3, h4
 
 h1
   font-size: 40px
-  margin: 10px 0
+  margin: 0
 
 h2
   font-size: 32px
-  margin: 10px 0
+  margin: 0
 
 h3
   font-size: 24px
-  margin: 5px 0
+  margin: 0
 
 h4
   font-size: 16px
-  margin: 5px 0
+  margin: 0
 
 a
   text-decoration: none
@@ -58,18 +62,23 @@ form
 input[type=text]
   border-radius: 4px
   padding: 0 5px
-  font-size: 14px
-  background-color: rgba(255, 255, 255, 0.7)
+  font-size: 12px
+  height: 28px
+  background-color: rgba(255, 255, 255, 0.85)
+  border: 2px solid rgba(39, 56, 76, 0.9)
+  border-radius: 4px
 
 button
   border-radius: 4px
-  font-size: 14px
-  padding: 0 25px
+  font-size: 12px
+  padding: 0 20px
   background-color: transparent-orange
   border: 2px solid orange
   color: white
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9)
   cursor: pointer
+  height: 28px
+
 
 .clear
   clear: both
@@ -102,7 +111,7 @@ nav#topnav
   top: 0
   left: 0
   right: 0
-  padding: 5px 20px 8px
+  padding: 5px 20px
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
   li
     display: inline-block
@@ -117,8 +126,9 @@ nav#topnav
 
 .panel
   radius: 4px
-  padding: 10px
+  padding: 4px 8px
   border: 1px solid rgba(39, 56, 76, 0.9)
+  margin: 4px
 
 .container
   width: 960px
@@ -141,7 +151,7 @@ a.button, button
   .carousel-inner
     height: 100%
     .item
-      padding-top: 40px
+      padding-top: 31px
       height: 100%
       color: white
 
@@ -167,7 +177,7 @@ a.button, button
 
 .channel-list
   flex(0 0 180px)
-  margin-right: 10px
+  margin: 0 4px 0 0
   > div.active
     color: orange
     transition(all 0.2s ease-out)
@@ -177,59 +187,87 @@ a.button, button
 
 .message-list
   height: 400px
+  margin: 0
   overflow: scroll
 
 .msg-box
   display-flex()
   flex(1)
-  margin-top: 10px
+  margin-top: 4px
 
   > input
     flex(1)
-    margin-right: 10px
-    height: 30px
-
-  > button
-    height: 30px
-
+    margin-right: 4px
 
 // Gameboard
 
+
 .gameboard
   position: absolute
-  top: 0
+  top: 31px
   bottom: 0
   left: 0
   right: 0
-
-.log
-  width: 240px
-  height: 334px
-  position: absolute
-  right: 2px
-  bottom: 2px
+  display-flex()
+  justify-content: space-between
 
 .corp-board
 
 .runner-board
 
-.hand, .deck, .discard, .stats
-  position: absolute
-  height: 139px
-  bottom: 0
+.hand, .deck, .discard, .scored
+  height: 105px
 
-.discard
-  left: 104px
-  width: 100px
-
-.deck
-  left: 208px
-  width: 100px
+.discard, .deck
+  width: 75px
+  margin-left: 0
+  flex-shrink: 0
 
 .hand
-  left: 312px
-  width: 500px
+  width: 400px
+
+.scored
+  flex-shrink: 0
 
 .stats
-  width: 100px
-  left: 0
+  height: 150px
+  flex-shrink: 0
+
+.leftpane
+  width: 150px
+  display-flex()
+  flex-direction: column
+  justify-content: space-between
+
+  > div
+    width: 100%
+
+.centralpane
+  display-flex()
+  flex-direction: column
+  flex(1)
+
+  .board
+    flex(1)
+
+  .dashboard
+    display-flex()
+    align-items: flex-end
+    justify-content: center
+
+.rightpane
+  bottom: 0
+  display-flex()
+  flex-direction(column)
+
+  .card-zoom
+    width: 220px
+    height: 307px
+    margin-top: 4px
+
+  .log
+    overflow: scroll
+    flex(1)
+
+  > input
+    margin: 0 4px 4px

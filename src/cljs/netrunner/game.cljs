@@ -33,52 +33,59 @@
        :max-hand-size 5
        :brain-damage 0}}))
 
-(defn log-pane [app owner]
+(defn log-pane [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.log {} ""]))))
+      (sab/html [:div.panel.blue-shade.log {} "Log"]))))
 
-(defn hand-view [app owner]
+(defn hand-view [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.hand {} ""]))))
+      (sab/html [:div.panel.blue-shade.hand {} "Hand"]))))
 
-(defn deck-view [app owner]
+(defn deck-view [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.deck {} ""]))))
+      (sab/html [:div.panel.blue-shade.deck {} "Deck"]))))
 
-(defn discard-view [app owner]
+(defn discard-view [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.discard {} ""]))))
+      (sab/html [:div.panel.blue-shade.discard {} "Discard"]))))
 
-(defn stats-view [app owner]
+(defn scored-view [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.panel.blue-shade.stats {} ""]))))
+      (sab/html [:div.panel.blue-shade.scored {} (str "Agenda Points")]))))
 
-;; (defn corp-board [app owner]
-;;   (reify
-;;     om/IRender
-;;     (render [this]
-;;       (sab/html
-;;        [:div.corp-board {}
-;;         (om/build stack-view (:hq app))
-;;         (om/build stack-view (:r&d app))
-;;         (om/build stack-view (:archive app))]))))
+(defn stats-view [cursor owner]
+  (reify
+    om/IRender
+    (render [this]
+      (sab/html [:div.panel.blue-shade.stats {} "Stat"]))))
 
-;; (defn runner-board [app owner]
-;;   (reify
-;;     om/IRender
-;;     (render [this]
-;;       (sab/html
-;;        [:div.runner-board {}]))))
+(defn corp-board [cursor owner]
+  (reify
+    om/IRender
+    (render [this]
+      (sab/html
+       [:div.board {}
+        ;; (om/build stack-view (:hq app))
+        ;; (om/build stack-view (:r&d app))
+        ;; (om/build stack-view (:archive app))
+        ]))))
+
+(defn runner-board [cursor owner]
+  (reify
+    om/IRender
+    (render [this]
+      (sab/html
+       [:div.board {}]))))
 
 (defn deck []
   (if (= (:side game-state) :runner) :stack :r&d))
@@ -89,18 +96,29 @@
 (defn discard []
   (if (= (:side game-state) :runner) :heap :archive))
 
-(defn game-app [app owner]
+(defn game-app [cursor owner]
   (reify
     om/IRender
     (render [this]
-      (sab/html [:div.dashboard {}
-                 (om/build log-pane (:log app))
-                 (om/build hand-view ((hand) app))
-                 (om/build deck-view ((deck) app))
-                 (om/build discard-view ((discard) app))
-                 (om/build stats-view app)
-                 ;; (om/build corp-board (:corp app))
-                 ;; (om/build runner-board (:runner app))
-                 ]))))
+      (sab/html
+       [:div.gameboard {}
+        [:div.leftpane {}
+         [:div {}
+          (om/build stats-view (:runner app))
+          (om/build scored-view app)]
+         [:div {}
+          (om/build scored-view app)
+          (om/build stats-view (:corp app))]]
+        [:div.centralpane
+         (om/build corp-board (:corp app))
+         (om/build runner-board (:runner app))
+         [:div.dashboard {}
+          (om/build hand-view ((hand) app))
+          (om/build deck-view ((deck) app))
+          (om/build discard-view ((discard) app))]]
+        [:div.rightpane {}
+         [:div.card-zoom {}]
+         (om/build log-pane (:log app))
+         [:input {:type "text" :placeholder "Say something..."}]]]))))
 
 (om/root game-app game-state {:target (. js/document (getElementById "gameboard"))})
