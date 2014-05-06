@@ -18,7 +18,7 @@ io.sockets.on 'connection', (socket) ->
 
 app.configure ->
   app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 3000
-  app.set 'ipaddr', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1"
+  app.set 'ipaddr', process.env.OPENSHIFT_NODEJS_IP || "0.0.0.0"
   app.use express.favicon()
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()
