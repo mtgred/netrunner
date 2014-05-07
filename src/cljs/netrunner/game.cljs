@@ -11,28 +11,32 @@
     :log []
     :side :runner
     :corp
-      {:r&d []
+      {:username "Richard Gardfield"
+       :r&d []
        :hq []
        :archive []
        :remote-servers []
-       :credit 5
        :click 3
+       :credit 5
        :bad-publicity 0
        :agenda-point 0
        :max-hand-size 5}
     :runner
-      {:stack []
+      {:username "Lukas Litzsinger"
+       :stack []
        :grip []
        :heap []
        :rig []
+       :click 4
        :credit 5
        :memory 4
        :link 0
-       :click 4
        :tag 0
        :agenda-point 0
        :max-hand-size 5
        :brain-damage 0}}))
+
+(swap! game-state assoc-in [:corp :bad-publicity] 0)
 
 (defn log-pane [cursor owner]
   (reify
@@ -82,11 +86,29 @@
     (render [this]
       (sab/html [:div.panel.blue-shade.scored {} (str "Agenda Points")]))))
 
-(defn stats-view [cursor owner]
-  (reify
-    om/IRender
-    (render [this]
-      (sab/html [:div.panel.blue-shade.stats {} "Stat"]))))
+(defn runner-stats-view [{:keys [username click credit memory link tag
+                                 brain-damage max-hand-size]} owner]
+  (om/component
+   (sab/html
+    [:div.panel.blue-shade {}
+     [:h4.ellipsis username]
+     [:div (str click " Click" (if (> click 1) "s" ""))]
+     [:div (str credit " Credit" (if (> credit 1) "s" ""))]
+     [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
+     [:div (str link " Link" (if (> link 1) "s" ""))]
+     [:div (str tag " Tag" (if (> tag 1) "s" ""))]
+     [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]
+     [:div (str max-hand-size " Max Hand Size")]])))
+
+(defn corp-stats-view [{:keys [username click credit bad-publicity max-hand-size]} owner]
+  (om/component
+   (sab/html
+    [:div.panel.blue-shade {}
+     [:h4.ellipsis username]
+     [:div (str click " Click" (if (> click 1) "s" ""))]
+     [:div (str credit " Credit" (if (> credit 1) "s" ""))]
+     [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]
+     [:div (str max-hand-size " Max Hand Size")]])))
 
 (defn corp-board [cursor owner]
   (reify
@@ -123,11 +145,12 @@
        [:div.gameboard {}
         [:div.leftpane {}
          [:div {}
-          (om/build stats-view (:runner cursor))
+          (om/build corp-stats-view (:corp cursor))
           (om/build scored-view cursor)]
          [:div {}
           (om/build scored-view cursor)
-          (om/build stats-view (:corp cursor))]]
+          (om/build runner-stats-view (:runner cursor))
+          ]]
         [:div.centralpane
          (om/build corp-board (:corp cursor))
          (om/build runner-board (:runner cursor))
@@ -141,13 +164,3 @@
          (om/build msg-input-view cursor)]]))))
 
 (om/root game-app game-state {:target (. js/document (getElementById "gameboard"))})
-
-
-
-
-
-
-
-
-
-
