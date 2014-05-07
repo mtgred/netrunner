@@ -11,7 +11,7 @@
 (defn navigate [token]
   (let [page-number (case token "/" 0 "/play" 1 "/deckbuilder" 2 "/cards" 3 "/news" 4)]
     (.carousel (js/$ ".carousel") page-number))
-  (js/ga "send" "pageview")
+  (try (js/ga "send" "pageview") (catch js/Error e))
   (swap! app-state assoc :active-page [token]))
 
 (def history (Html5History.))
