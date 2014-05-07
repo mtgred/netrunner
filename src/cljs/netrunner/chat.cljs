@@ -9,7 +9,8 @@
   (atom
    {:active-channel [:general]
     :channels {:general ["foobar" "spam eggs"]
-               :belgium ["Vive la frite !" "On aime la biere ici."]}}))
+               :belgium ["Vive la frite !" "On aime la biere ici."]
+               :france ["Vive le pinard" "Et le petit jaune!"]}}))
 
 (go (while true
       (let [msg (<! chat-channel)
@@ -54,7 +55,9 @@
     om/IRender
     (render [this]
       (sab/html
-       [:div.blue-shade.panel.channel-list
+       [:div.blue-shade.panel.channel-list {}
+        [:button.add {} "+"]
+        [:h4 {} "Channels"]
         (for [ch (keys (:channels app))]
           (om/build channel-view {:channel ch
                                   :active-channel (:active-channel app)}))]))))
