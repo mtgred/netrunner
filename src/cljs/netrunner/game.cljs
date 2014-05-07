@@ -55,9 +55,8 @@
     om/IRender
     (render [this]
       (sab/html
-       [:div.msg-box
-        [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
-                 :onKeyPress #(when (== (.-keyCode %) 13) (send-msg cursor owner))}]]))))
+       [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
+                :onKeyPress #(when (== (.-keyCode %) 13) (send-msg cursor owner))}]))))
 
 (defn hand-view [cursor owner]
   (reify
