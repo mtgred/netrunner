@@ -10,9 +10,9 @@
     "express": "~3.4.7",
     "jade": "*",
     "socket.io": "~0.9.16",
-    "mongoskin": "~0.6.1",
     "stylus": "~0.44.0",
-    "coffee-script": "~1.7.1"
+    "coffee-script": "~1.7.1",
+    "mongoskin": "~1.4.1"
   },
   "devDependencies": {
     "bower": ">=1.3.3"
