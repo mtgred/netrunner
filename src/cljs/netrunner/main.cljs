@@ -48,11 +48,3 @@
         [:a {:href "/news"} "News"]]]))))
 
 (om/root navbar app-state {:target (. js/document (getElementById "topnav"))})
-
-(defn deckbuilder-view [app owner]
-  (reify
-    om/IRender
-    (render [this]
-      (sab/html [:h1 {} "Deck Builder"]))))
-
-(om/root deckbuilder-view app-state {:target (. js/document (getElementById "deckbuilder"))})
