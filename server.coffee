@@ -14,9 +14,6 @@ appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}")
 
-db.collection('cards').find().toArray (err, cards) ->
-  console.log cards
-
 # Socket.io
 io = require('socket.io').listen(server)
 io.enable('browser client minification')
@@ -41,6 +38,28 @@ app.configure ->
   app.use express.static(__dirname + '/resources')
   app.use app.router
 
+
+# Routes
+app.get '/data/:collection', (req, res) ->
+  db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
+    throw err if err
+    delete d._id for d in data
+    res.json(200, data)
+
+app.get '/data/:collection/:title', (req, res) ->
+  db.collection(req.params.collection).findOne title: req.params.title, (err, data) ->
+    throw err if err
+    delete d._id for d in data
+    res.json(200, data)
+
+app.get '/data/:collection/filter/:field/:value', (req, res) ->
+  filter = {}
+  filter[req.params.field] = req.params.value
+  db.collection(req.params.collection).find(filter).toArray (err, data) ->
+    console.error(err) if err
+    delete d._id for d in data
+    res.json(200, data)
+
 app.configure 'development', ->
   console.log "Dev environment"
   app.get '/*', (req, res) ->
@@ -51,6 +70,8 @@ app.configure 'production', ->
   app.get '/*', (req, res) ->
     res.render('index.jade', { env: 'prod'})
 
+
+# Server
 terminate = () ->
   process.exit(1)
   console.log("#{Date(Date.now())}: Node server stopped.")
