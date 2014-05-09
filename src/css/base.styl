@@ -176,7 +176,7 @@ a.button, button
 .deckbuilder-bg
   cover-img: url('/img/bg/ProjectAtlas.jpg')
 
-.library-bg
+.cardbrowser-bg
   cover-img: url('/img/bg/DysonMemChip.jpg')
 
 .forum-bg
@@ -189,6 +189,43 @@ a.button, button
   display-flex()
 
 .channel-list
+  flex(0 0 180px)
+  margin: 0 4px 0 0
+  > div
+    cursor: pointer
+    border: 1px solid transparent
+    padding: 0 4px
+    margin: 0 -4px
+    border-radius: 4px
+    &:hover
+      background-color: transparent-orange
+      border: 1px solid orange
+  > div.active
+    color: orange
+    transition(all 0.2s ease-out)
+
+.chat-box
+  flex(1)
+
+.message-list
+  height: 400px
+  margin: 0
+  overflow: scroll
+
+.msg-box
+  display-flex()
+  flex(1)
+  margin-top: 4px
+
+  > input
+    flex(1)
+
+// Card Browser
+.cardbrowser
+  display-flex()
+  padding: 16px
+
+.set-list
   flex(0 0 180px)
   margin: 0 4px 0 0
   > div
