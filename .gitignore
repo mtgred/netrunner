@@ -17,3 +17,4 @@ pom.xml
 /resources/cljs/
 /resources/lib/
 /resources/css/netrunner.css
+/data/*.json
