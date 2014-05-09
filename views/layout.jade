@@ -26,7 +26,7 @@ html
 
     if env === 'dev'
       script(type="text/javascript").
-        var socket = io.connect(window.location.hostname);
+        var socket = io.connect(window.location.hostname + ":3000");
       script(src="cljs/goog/base.js", type="text/javascript")
       script(src="cljs/app.js", type="text/javascript")
       script(type="text/javascript").
