@@ -223,11 +223,11 @@ a.button, button
 // Card Browser
 .cardbrowser
   display-flex()
-  padding: 16px
+  padding: 0 10px
 
 .set-list
   flex(0 0 180px)
-  margin: 0 4px 0 0
+  margin: 10px 10px 0 0
   > div
     cursor: pointer
     border: 1px solid transparent
@@ -241,21 +241,23 @@ a.button, button
     color: orange
     transition(all 0.2s ease-out)
 
-.chat-box
-  flex(1)
+ .card-list
+   position: absolute
+   top: 0
+   bottom: 0
+   left: 195px
+   right: 5px
+   overflow: scroll
+   padding-top: 40px
+   flex(1)
+   display-flex()
+   flex-wrap: wrap
+   justify-content: space-around
 
-.message-list
-  height: 400px
-  margin: 0
-  overflow: scroll
-
-.msg-box
-  display-flex()
-  flex(1)
-  margin-top: 4px
-
-  > input
-    flex(1)
+ .card-img
+   height: 302px
+   width: 217px
+   margin: 0 5px 20px
 
 // Gameboard
 

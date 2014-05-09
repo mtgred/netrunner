@@ -40,6 +40,19 @@
      (for [set sets]
        (om/build set-view {:set set :set-filter set-filter}))])))
 
+(defn card-view [card owner]
+  (om/component
+   (let [base-url "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/"]
+     (sab/html [:img.card-img {:src (str base-url (:code card) ".png")}]
+               ;; [:div {} (:title card)]
+               ))))
+
+(defn card-list-view [cards owner]
+  (om/component
+   (sab/html
+    [:div.card-list
+     (om/build-all card-view cards)])))
+
 (defn card-browser-app [cursor owner]
   (om/component
    (sab/html
@@ -47,9 +60,7 @@
      (om/build set-list-view cursor)
      [:div.main
      ;;  (om/build filter-view cursor)
-     ;;  (om/build cards-view cursor)
-      ]
-     ])))
+      (om/build card-list-view (:cards cursor))]])))
 
 (om/root card-browser-app app-state {:target (. js/document (getElementById "cardbrowser"))})
 
