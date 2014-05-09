@@ -38,6 +38,8 @@ cardFields = [
   "quantity",
   "setname",
   "set_code",
+  "number",
+  "cyclenumber",
   "side",
   "uniqueness",
   "strength",
