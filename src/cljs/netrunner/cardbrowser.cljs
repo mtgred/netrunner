@@ -18,27 +18,23 @@
 (def app-state
   (atom
    {:cards []
-    :sets []
-    :search-query ""
-    :cycle-filter ""
-    :set-filter []
-    :side-filter ""
-    :faction-filter []
-    :type-filter []}))
+    :sets []}))
 
-(defn set-view [{:keys [set set-filter]} owner]
-  (om/component
-   (sab/html
-    [:div {:class (if (= (first set-filter) set) "active" "")
-           :on-click #(om/update! set-filter [set])}
-     (:name set)])))
+(defn set-view [{:keys [name]} owner]
+  (reify
+    om/IRenderState
+    (render-state [this {:keys [set-filter]}]
+      (sab/html
+       [:div {:class (if (= set-filter name) "active" "")
+              :on-click #(om/set-state! owner :set-filter name)} name]))))
 
-(defn set-list-view [{:keys [sets set-filter]} owner]
-  (om/component
-   (sab/html
-    [:div.blue-shade.panel.set-list {}
-     (for [set sets]
-       (om/build set-view {:set set :set-filter set-filter}))])))
+(defn set-list-view [cursor owner]
+  (reify
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div.blue-shade.panel.set-list {}
+        (om/build-all set-view (:sets cursor) {:init-state state})]))))
 
 (defn card-view [card owner]
   (om/component
@@ -54,13 +50,23 @@
      (om/build-all card-view cards)])))
 
 (defn card-browser-app [cursor owner]
-  (om/component
-   (sab/html
-    [:div.cardbrowser
-     (om/build set-list-view cursor)
-     [:div.main
-     ;;  (om/build filter-view cursor)
-      (om/build card-list-view (:cards cursor))]])))
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:set-filter "Core Set"})
+
+    om/IRenderState
+    (render-state [this {:keys [set-filter]}]
+      (sab/html
+       [:div.cardbrowser
+        (om/build set-list-view cursor {:init-state {:set-filter set-filter}})
+        [:div.main
+         ;;  (om/build filter-view cursor)
+         (om/build card-list-view
+                   (let [cards (:cards cursor)]
+                     (if (zero? (alength set-filter))
+                       cards
+                       (filter #(= (:setname %) set-filter) cards))))]]))))
 
 (om/root card-browser-app app-state {:target (. js/document (getElementById "cardbrowser"))})
 
