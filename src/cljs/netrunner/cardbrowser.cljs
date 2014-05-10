@@ -23,18 +23,11 @@
 (defn set-view [{:keys [name]} owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [set-filter]}]
-      (sab/html
-       [:div {:class (if (= set-filter name) "active" "")
-              :on-click #(om/set-state! owner :set-filter name)} name]))))
-
-(defn set-list-view [cursor owner]
-  (reify
-    om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.blue-shade.panel.set-list {}
-        (om/build-all set-view (:sets cursor) {:init-state state})]))))
+       [:div {:class (if (= (:set-filter state) name) "active" "")
+              :on-click #(om/set-state! owner [:set-filter] name)}
+        name]))))
 
 (defn card-view [card owner]
   (om/component
@@ -49,6 +42,9 @@
     [:div.card-list
      (om/build-all card-view cards)])))
 
+(defn handle-change [e owner {:keys [set-filter]}]
+  (om/set-state! owner :set-filter (.. e -target -value)))
+
 (defn card-browser-app [cursor owner]
   (reify
     om/IInitState
@@ -56,14 +52,18 @@
       {:set-filter "Core Set"})
 
     om/IRenderState
-    (render-state [this {:keys [set-filter]}]
+    (render-state [this state]
       (sab/html
        [:div.cardbrowser
-        (om/build set-list-view cursor {:init-state {:set-filter set-filter}})
+        [:input {:type "text" :value (:set-filter state)
+                 :on-change #(handle-change % owner state)}]
+        [:div.blue-shade.panel.set-list {}
+         (om/build-all set-view (:sets cursor) {:init-state state})]
         [:div.main
          ;;  (om/build filter-view cursor)
          (om/build card-list-view
-                   (let [cards (:cards cursor)]
+                   (let [set-filter (:set-filter state)
+                         cards (:cards cursor)]
                      (if (zero? (alength set-filter))
                        cards
                        (filter #(= (:setname %) set-filter) cards))))]]))))
