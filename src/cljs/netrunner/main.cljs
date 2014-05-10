@@ -9,7 +9,7 @@
   (atom {:active-page ["/"]}))
 
 (defn navigate [token]
-  (let [page-number (case token "/" 0 "/play" 1 "/deckbuilder" 2 "/cards" 3 "/news" 4)]
+  (let [page-number (case token "/" 0 "/cards" 1 "/play" 2 "/deckbuilder" 3 "/news" 4)]
     (.carousel (js/$ ".carousel") page-number))
   (try (js/ga "send" "pageview") (catch js/Error e))
   (swap! app-state assoc :active-page [token]))
@@ -30,18 +30,18 @@
              :on-click #(.setToken history "/")
              :data-target "#main" :data-slide-to 0}
         [:a {:href "/"} "Manabase"]]
+       [:li {:class (if (= (first page) "/cards") "active" "")
+             :on-click #(.setToken history "/cards")
+             :data-target "#main" :data-slide-to 1}
+        [:a {:href "/cards"} "Cards"]]
        [:li {:class (if (= (first page) "/play") "active" "")
              :on-click #(.setToken history "/play")
-             :data-target "#main" :data-slide-to 1}
+             :data-target "#main" :data-slide-to 2}
         [:a {:href "/play"} "Play"]]
        [:li {:class (if (= (first page) "/deckbuilder") "active" "")
              :on-click #(.setToken history "/deckbuilder")
-             :data-target "#main" :data-slide-to 2}
-        [:a {:href "/deckbuilder"} "Decks"]]
-       [:li {:class (if (= (first page) "/cards") "active" "")
-             :on-click #(.setToken history "/cards")
              :data-target "#main" :data-slide-to 3}
-        [:a {:href "/cards"} "Cards"]]
+        [:a {:href "/deckbuilder"} "Decks"]]
        [:li {:class (if (= (first page) "/news") "active" "")
              :on-click #(.setToken history "/news")
              :data-target "#main" :data-slide-to 4}
