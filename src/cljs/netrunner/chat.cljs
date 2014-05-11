@@ -7,8 +7,7 @@
 
 (def app-state
   (atom
-   {:active-channel [:general]
-    :channels {:general ["foobar" "spam eggs"]
+   {:channels {:general ["foobar" "spam eggs"]
                :belgium ["Vive la frite !" "On aime la biere ici."]
                :france ["Vive le pinard" "Et le petit jaune!"]}}))
 
@@ -38,38 +37,44 @@
      [:button {:on-click #(send-msg cursor owner)} "Send"]])))
 
 (defn channel-view [{:keys [channel active-channel]} owner]
-  (om/component
-   (sab/html
-    [:div {:class (if (= (first active-channel) channel) "active" "")
-           :on-click #(om/update! active-channel [channel])}
-     (str "#" (name channel))])))
-
-(defn channel-list-view [{:keys [channels active-channel]} owner]
-  (om/component
-   (sab/html
-    [:div.blue-shade.panel.channel-list {}
-     [:button.add {} "+"]
-     [:h4 {} "Channels"]
-     (for [ch (keys channels)]
-       (om/build channel-view {:channel ch :active-channel active-channel}))])))
+  (reify
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div {:class (if (= active-channel channel) "active" "")
+              :on-click #(put! (:channel-ch state) channel)}
+        (str "#" (name channel))]))))
 
 (defn message-view [message owner]
   (om/component
-   (sab/html [:div {} (str message)])))
+   (sab/html [:div (str message)])))
 
-(defn message-list-view [messages owner]
-  (om/component
-   (sab/html
-    [:div.blue-shade.panel.message-list
-     (om/build-all message-view messages)])))
+(defn chat [cursor owner]
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:channel :general
+       :channel-ch (chan)})
 
-(defn chat-app [cursor owner]
-  (om/component
-   (sab/html
-    [:div.chat-app
-     (om/build channel-list-view cursor)
-     [:div.chat-box
-      (om/build message-list-view (get-in cursor [:channels (first (:active-channel cursor))]))
-      (om/build msg-input-view cursor)]])))
+    om/IWillMount
+    (will-mount [this]
+      (go (while true
+            (let [ch (<! (om/get-state owner :channel-ch))]
+              (om/set-state! owner :channel ch)))))
 
-(om/root chat-app app-state {:target (. js/document (getElementById "chat"))})
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div.chat-app
+        [:div.blue-shade.panel.channel-list
+         [:button.add "+"]
+         [:h4 "Channels"]
+         (for [ch (keys (:channels cursor))]
+           (om/build channel-view {:channel ch :active-channel (:channel state)}
+                     {:init-state {:channel-ch (:channel-ch state)}}))]
+        [:div.chat-box
+         [:div.blue-shade.panel.message-list
+          (om/build-all message-view (get-in cursor [:channels (:channel state)]))]
+         (om/build msg-input-view cursor)]]))))
+
+(om/root chat app-state {:target (. js/document (getElementById "chat"))})
