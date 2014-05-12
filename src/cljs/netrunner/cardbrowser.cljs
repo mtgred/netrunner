@@ -37,7 +37,7 @@
   (reify
     om/IInitState
     (init-state [this]
-      {:set-filter "Core Set"
+      {:set-filter ""
        :filter-ch (chan)})
 
     om/IWillMount
@@ -51,7 +51,9 @@
       (sab/html
        [:div.cardbrowser
         [:div.blue-shade.panel.set-list {}
-         (for [set (:sets cursor)]
+         [:div {:class (if (= (:set-filter state) "") "active" "")
+                :on-click #(om/set-state! owner :set-filter "")} "All"]
+         (for [set (sort-by :available (:sets cursor))]
            (om/build set-view
                      {:set set :set-filter (:set-filter state)}
                      {:init-state {:ch (:filter-ch state)}}))]
