@@ -38,7 +38,7 @@ $ coffee server.coffee
 Compile and watch Clojurescript files:
 
 ```
-$ lein cljsbuild auto netrunner
+$ lein cljsbuild auto dev
 ```
 
 Launch a Browser REPL:
