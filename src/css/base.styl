@@ -224,9 +224,14 @@ a.button, button
 .cardbrowser
   display-flex()
 
-.set-list
+.filters
   flex(0 0 180px)
   margin: 10px
+
+  input, select
+    width: 100%
+
+.set-list
   > div
     cursor: pointer
     border: 1px solid transparent
@@ -240,20 +245,20 @@ a.button, button
     color: orange
     transition(all 0.2s ease-out)
 
- .card-list
-   position: absolute
-   top: 0
-   bottom: 0
-   // left: 200px
-   // right: 0
-   overflow: scroll
-   padding-top: 40px
-   flex(1)
+.card-list
+  position: absolute
+  top: 0
+  bottom: 0
+  // left: 200px
+  // right: 0
+  overflow: scroll
+  padding-top: 40px
+  flex(1)
 
- .card-img
-   height: 302px
-   width: 217px
-   margin: 0 10px 10px 0
+.card-img
+  height: 302px
+  width: 217px
+  margin: 0 10px 10px 0
 
 // Gameboard
 

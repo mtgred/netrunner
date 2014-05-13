@@ -13,15 +13,13 @@
                       (put! ch response))))
     ch))
 
-(def app-state
-  (atom
-   {:cards []
-    :sets []}))
+(def app-state (atom {:cards [] :sets []}))
 
 (defn card-view [card owner]
   (om/component
    (let [base-url "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/"]
-     (sab/html [:img.card-img {:src (str base-url (:code card) ".png")}]))))
+     (sab/html
+      [:img.card-img {:src (str base-url (:code card) ".png")}]))))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
@@ -33,11 +31,40 @@
                 :on-click #(put! (:ch state) {:filter :set-filter :value name})}
           name])))))
 
+(defn types [side]
+  (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
+        corp-types ["Agenda" "Asset" "ICE" "Operation" "Upgrade"]]
+    (case side
+      "All" (concat  runner-types corp-types)
+      "Runner" runner-types
+      "Corp" (cons "Identity" corp-types))))
+
+(defn factions [side]
+  (let [runner-factions ["Anarch" "Criminal" "Shaper"]
+        corp-factions ["Jinteki" "Haas-Bioroid" "NBN" "Weyland Consortium" "Neutral"]]
+    (case side
+      "All" (concat runner-factions corp-factions)
+      "Runner" (conj runner-factions "Neutral")
+      "Corp" corp-factions)))
+
+(defn options [list]
+  (let [options (cons "All" list)]
+    (for [option options]
+      [:option {:value option} option])))
+
+(defn filter-cards [cards filter-value field]
+  (if (= filter-value "All")
+    cards
+    (filter #(= (field %) filter-value) cards)))
+
 (defn card-browser [cursor owner]
   (reify
     om/IInitState
     (init-state [this]
-      {:set-filter ""
+      {:set-filter "All"
+       :type-filter "All"
+       :side-filter "All"
+       :faction-filter "All"
        :filter-ch (chan)})
 
     om/IWillMount
@@ -50,20 +77,27 @@
     (render-state [this state]
       (sab/html
        [:div.cardbrowser
-        [:div.blue-shade.panel.set-list {}
-         [:div {:class (if (= (:set-filter state) "") "active" "")
-                :on-click #(om/set-state! owner :set-filter "")} "All"]
-         (for [set (sort-by :available (:sets cursor))]
-           (om/build set-view
-                     {:set set :set-filter (:set-filter state)}
-                     {:init-state {:ch (:filter-ch state)}}))]
+        [:div.blue-shade.panel.filters
+         [:input {:type "text" :placeholder "Search cards"
+                  :on-change #()}]
+
+         (for [filter [["Set" :set-filter (map :name (:sets cursor))]
+                       ["Side" :side-filter ["Corp" "Runner"]]
+                       ["Faction" :faction-filter (factions (:side-filter state))]
+                       ["Type" :type-filter (types (:side-filter state))]]]
+           [:div
+            [:h4 (first filter)]
+            [:select {:value ((second filter) state)
+                      :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
+             (options (last filter))]])]
+
         [:div.card-list
          (om/build-all card-view
-                       (let [set-filter (:set-filter state)
-                             cards (:cards cursor)]
-                         (if (empty? set-filter)
-                           cards
-                           (filter #(= (:setname %) set-filter) cards))))]]))))
+                       (-> (:cards cursor)
+                           (filter-cards (:set-filter state) :setname)
+                           (filter-cards (:side-filter state) :side)
+                           (filter-cards (:faction-filter state) :faction)
+                           (filter-cards (:type-filter state) :type)))]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
 
