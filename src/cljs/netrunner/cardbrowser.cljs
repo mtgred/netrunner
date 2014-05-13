@@ -104,7 +104,8 @@
                             (filter-cards (:side-filter state) :side)
                             (filter-cards (:faction-filter state) :faction)
                             (filter-cards (:type-filter state) :type)
-                            (match (.toLowerCase (:search-query state)))))]]))))
+                            (match (.toLowerCase (:search-query state))))
+                       {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
 
