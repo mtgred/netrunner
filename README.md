@@ -1,6 +1,41 @@
+## Dependencies
+
+* Node.js, Node Package Manager
+* Leiningen
+* MongoDB
+* Coffeescript
+
+
+## Installation
+
+Install Node.js dependencies:
+
+```
+$ npm install
+```
+
+Install Javascript dependencies:
+
+```
+$ node_modules/bower/bin/bower install
+```
+
+Launch MongoDB and fetch card data:
+
+```
+$ mongod
+$ coffee data/fetch.coffee
+```
+
 ## Usage
 
-Compile and watch cljs files:
+Launch the server:
+
+```
+$ coffee server.coffee
+```
+
+Compile and watch Clojurescript files:
 
 ```
 $ lein cljsbuild auto netrunner
