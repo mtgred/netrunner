@@ -52,16 +52,22 @@
     (for [option options]
       [:option {:value option} option])))
 
-(defn filter-cards [cards filter-value field]
+(defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards
     (filter #(= (field %) filter-value) cards)))
+
+(defn match [query cards]
+  (if (empty? query)
+    cards
+    (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards)))
 
 (defn card-browser [cursor owner]
   (reify
     om/IInitState
     (init-state [this]
-      {:set-filter "All"
+      {:search-query ""
+       :set-filter "All"
        :type-filter "All"
        :side-filter "All"
        :faction-filter "All"
@@ -79,7 +85,7 @@
        [:div.cardbrowser
         [:div.blue-shade.panel.filters
          [:input {:type "text" :placeholder "Search cards"
-                  :on-change #()}]
+                  :on-change #(om/set-state! owner :search-query (.. % -target -value))}]
 
          (for [filter [["Set" :set-filter (map :name (:sets cursor))]
                        ["Side" :side-filter ["Corp" "Runner"]]
@@ -93,11 +99,12 @@
 
         [:div.card-list
          (om/build-all card-view
-                       (-> (:cards cursor)
-                           (filter-cards (:set-filter state) :setname)
-                           (filter-cards (:side-filter state) :side)
-                           (filter-cards (:faction-filter state) :faction)
-                           (filter-cards (:type-filter state) :type)))]]))))
+                       (->> (:cards cursor)
+                            (filter-cards (:set-filter state) :setname)
+                            (filter-cards (:side-filter state) :side)
+                            (filter-cards (:faction-filter state) :faction)
+                            (filter-cards (:type-filter state) :type)
+                            (match (.toLowerCase (:search-query state)))))]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
 
