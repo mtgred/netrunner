@@ -84,8 +84,10 @@
       (sab/html
        [:div.cardbrowser
         [:div.blue-shade.panel.filters
-         [:input {:type "text" :placeholder "Search cards"
-                  :on-change #(om/set-state! owner :search-query (.. % -target -value))}]
+         [:div.search-box
+          [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#128269;"}}]
+          [:input.search {:type "text" :placeholder "Search cards" :autofocus "autofocus"
+                          :on-change #(om/set-state! owner :search-query (.. % -target -value))}]]
 
          (for [filter [["Set" :set-filter (map :name (:sets cursor))]
                        ["Side" :side-filter ["Corp" "Runner"]]
