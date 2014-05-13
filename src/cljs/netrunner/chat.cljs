@@ -18,23 +18,21 @@
             messages (get-in @app-state [:channels ch])]
         (swap! app-state assoc-in [:channels ch] (conj messages text)))))
 
-(defn send-msg [cursor owner]
+(defn send-msg [channel owner]
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
-    (when-not (zero? (alength text))
+    (when-not (empty? text)
       (aset input "value" "")
       (.focus input)
-      (put! out-channel #js {:type "chat"
-                             :channel (name (first (:active-channel @cursor)))
-                             :msg text}))))
+      (put! out-channel #js {:type "chat" :channel (name channel) :msg text}))))
 
-(defn msg-input-view [cursor owner]
+(defn msg-input-view [{:keys [channel]} owner]
   (om/component
    (sab/html
     [:div.msg-box
      [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
-              :onKeyPress #(when (== (.-keyCode %) 13) (send-msg cursor owner))}]
-     [:button {:on-click #(send-msg cursor owner)} "Send"]])))
+              :onKeyPress #(when (== (.-keyCode %) 13) (send-msg channel owner))}]
+     [:button {:on-click #(send-msg channel owner)} "Send"]])))
 
 (defn channel-view [{:keys [channel active-channel]} owner]
   (reify
@@ -75,6 +73,6 @@
         [:div.chat-box
          [:div.blue-shade.panel.message-list
           (om/build-all message-view (get-in cursor [:channels (:channel state)]))]
-         (om/build msg-input-view cursor)]]))))
+         (om/build msg-input-view state)]]))))
 
 (om/root chat app-state {:target (. js/document (getElementById "chat"))})
