@@ -62,11 +62,21 @@
     cards
     (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards)))
 
+(defn sort-field [fieldname]
+  (case fieldname
+    "Name" :title
+    "Influence" :factioncost
+    "Cost" :cost
+    "Faction" (juxt :side :faction)
+    "Type" (juxt :side :type)
+    "Set number" :number))
+
 (defn card-browser [cursor owner]
   (reify
     om/IInitState
     (init-state [this]
       {:search-query ""
+       :sort-field "Faction"
        :set-filter "All"
        :type-filter "All"
        :side-filter "All"
@@ -89,6 +99,13 @@
           [:input.search {:type "text" :placeholder "Search cards" :autofocus "autofocus"
                           :on-change #(om/set-state! owner :search-query (.. % -target -value))}]]
 
+         [:div
+          [:h4 "Sort by"]
+          [:select {:value (:sort-filter state)
+                    :on-change #(om/set-state! owner :sort-field (.. % -target -value))}
+           (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
+             [:option {:value field} field])]]
+
          (for [filter [["Set" :set-filter (map :name (:sets cursor))]
                        ["Side" :side-filter ["Corp" "Runner"]]
                        ["Faction" :faction-filter (factions (:side-filter state))]
@@ -106,7 +123,8 @@
                             (filter-cards (:side-filter state) :side)
                             (filter-cards (:faction-filter state) :faction)
                             (filter-cards (:type-filter state) :type)
-                            (match (.toLowerCase (:search-query state))))
+                            (match (.toLowerCase (:search-query state)))
+                            (sort-by (sort-field (:sort-field state)) ))
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
