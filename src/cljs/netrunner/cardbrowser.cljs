@@ -19,7 +19,13 @@
   (om/component
    (let [base-url "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/"]
      (sab/html
-      [:img.card-img {:src (str base-url (:code card) ".png")}]))))
+      [:div.card.blue-shade
+       [:h4 (:title card)]
+       [:div.text
+        [:p [:span.type (str (:type card))] (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
+        [:pre {:dangerouslySetInnerHTML #js {:__html (:text card)}}]]
+       [:img {:src (str base-url (:code card) ".png")
+              :alt (:text card)}]]))))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
