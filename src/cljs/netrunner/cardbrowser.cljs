@@ -24,8 +24,7 @@
        [:div.text
         [:p [:span.type (str (:type card))] (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
         [:pre {:dangerouslySetInnerHTML #js {:__html (:text card)}}]]
-       [:img {:src (str base-url (:code card) ".png")
-              :alt (:text card)}]]))))
+       [:img {:src (str base-url (:code card) ".png") :alt (:text card)}]]))))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
@@ -81,9 +80,7 @@
   (let [$cardlist (js/$ ".card-list")
         height (- (.prop $cardlist "scrollHeight") (.innerHeight $cardlist))]
     (when (> (.scrollTop $cardlist) (- height 600))
-      (om/set-state! owner :page (inc (om/get-state owner :page)))
-      ;; (om/update-state! owner :page inc)
-      )))
+      (om/update-state! owner :page inc))))
 
 (defn card-browser [cursor owner]
   (reify
@@ -111,7 +108,7 @@
         [:div.blue-shade.panel.filters
          [:div.search-box
           [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#128269;"}}]
-          [:input.search {:type "text" :placeholder "Search cards" :autofocus "autofocus"
+          [:input.search {:type "text" :placeholder "Search cards"
                           :on-change #(om/set-state! owner :search-query (.. % -target -value))}]]
 
          [:div
