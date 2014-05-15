@@ -17,12 +17,13 @@
       {:id "dev"
        :source-paths ["src/cljs"]
        :compiler {:output-to "resources/cljs/app.js"
-                 :output-dir "resources/cljs"
-                 :optimizations :none
-                 :source-map true}},
+                  :output-dir "resources/cljs"
+                  :optimizations :none
+                  :source-map true}},
       {:id "prod"
        :source-paths ["src/cljs/netrunner"]
        :compiler {:output-to "resources/js/app.js"
+                  :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
                   :externs ["resources/lib/react/react.min.js"
