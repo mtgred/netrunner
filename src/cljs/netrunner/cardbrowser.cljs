@@ -77,6 +77,14 @@
     "Type" (juxt :side :type)
     "Set number" :number))
 
+(defn handle-scroll [e owner {:keys [page]}]
+  (let [$cardlist (js/$ ".card-list")
+        height (- (.prop $cardlist "scrollHeight") (.innerHeight $cardlist))]
+    (when (> (.scrollTop $cardlist) (- height 600))
+      (om/set-state! owner :page (inc (om/get-state owner :page)))
+      ;; (om/update-state! owner :page inc)
+      )))
+
 (defn card-browser [cursor owner]
   (reify
     om/IInitState
@@ -87,6 +95,7 @@
        :type-filter "All"
        :side-filter "All"
        :faction-filter "All"
+       :page 1
        :filter-ch (chan)})
 
     om/IWillMount
@@ -122,7 +131,7 @@
                       :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
              (options (last filter))]])]
 
-        [:div.card-list
+        [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
                        (->> (:cards cursor)
                             (filter-cards (:set-filter state) :setname)
@@ -130,7 +139,8 @@
                             (filter-cards (:faction-filter state) :faction)
                             (filter-cards (:type-filter state) :type)
                             (match (.toLowerCase (:search-query state)))
-                            (sort-by (sort-field (:sort-field state)) ))
+                            (take (* (:page state) 55))
+                            (sort-by (sort-field (:sort-field state))))
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
