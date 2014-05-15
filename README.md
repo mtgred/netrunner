@@ -1,3 +1,7 @@
+## Live server
+
+[http://netrunner-manabase.rhcloud.com/]
+
 ## Dependencies
 
 * Node.js, Node Package Manager
