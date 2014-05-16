@@ -36,7 +36,7 @@ h4
 a
   text-decoration: none
   color: orange
-  // transition(all 0.2s ease-out)
+  transition(all 0.2s ease-in-out)
   &:hover
     color: text-color
     text-decoration: none
@@ -62,13 +62,19 @@ form
   padding: 15px 20px
 
 input[type=text]
+  font-family: "Titillium Web", "Helvetica Neue", sans-serif
+  font-size: 13px
   border-radius: 4px
   padding: 0 5px
-  font-size: 12px
   height: 28px
   background-color: rgba(255, 255, 255, 0.85)
-  border: 2px solid rgba(39, 56, 76, 0.9)
-  border-radius: 4px
+  border: 2px solid rgba(39, 56, 76, 0.8)
+  transition(all 0.2s ease-in-out
+  outline: none
+
+  &:focus
+    box-shadow(0 0 6px rgb(255, 165, 0, 0.3))
+    border-color: rgb(255, 165, 0)
 
 button
   border-radius: 4px
@@ -207,7 +213,7 @@ a.button, button
       border: 1px solid orange
   > div.active
     color: orange
-    transition(all 0.2s ease-out)
+    transition(all 0.2s ease-in-out)
 
 .chat-box
   flex(1)
@@ -241,9 +247,9 @@ a.button, button
   h4
     margin-top: 5px
 
-  .search-box
-    position: relative
-    margin-bottom: 10px
+.search-box
+  position: relative
+  margin-bottom: 10px
 
   .search
     border-radius: 14px
@@ -251,9 +257,19 @@ a.button, button
 
   .search-icon
     position: absolute
-    color: dark-border
+    color: dark-grey
     top: 8px
     left: 5px
+
+  .search-clear
+    position: absolute
+    color: grey
+    top: 3px
+    right: 3px
+    padding-top: 5px
+    width: 22px
+    height: 22px
+    cursor: pointer
 
 .set-list
   > div
@@ -267,7 +283,7 @@ a.button, button
       border: 1px solid orange
   > div.active
     color: orange
-    transition(all 0.2s ease-out)
+    transition(all 0.2s ease-in-out)
 
 .card-list
   position: absolute

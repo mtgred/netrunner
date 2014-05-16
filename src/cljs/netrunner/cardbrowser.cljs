@@ -103,13 +103,18 @@
 
     om/IRenderState
     (render-state [this state]
+      (.focus (js/$ ".search"))
       (sab/html
        [:div.cardbrowser
         [:div.blue-shade.panel.filters
-         [:div.search-box
-          [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#128269;"}}]
-          [:input.search {:type "text" :placeholder "Search cards"
-                          :on-change #(om/set-state! owner :search-query (.. % -target -value))}]]
+         (let [query (:search-query state)]
+           [:div.search-box
+            [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#128269;"}}]
+            (when-not (empty? query)
+              [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#10006;"}
+                                     :on-click #(om/set-state! owner :search-query "")}])
+            [:input.search {:on-change #(om/set-state! owner :search-query (.. % -target -value))
+                            :type "text" :placeholder "Search cards" :value query}]])
 
          [:div
           [:h4 "Sort by"]
