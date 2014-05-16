@@ -136,7 +136,7 @@
                             (filter-cards (:faction-filter state) :faction)
                             (filter-cards (:type-filter state) :type)
                             (match (.toLowerCase (:search-query state)))
-                            (take (* (:page state) 55))
+                            (take (* (:page state) 41))
                             (sort-by (sort-field (:sort-field state))))
                        {:key :code})]]))))
 
