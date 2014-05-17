@@ -5,8 +5,7 @@
   (:import goog.history.Html5History
            goog.history.EventType))
 
-(def app-state
-  (atom {:active-page ["/"]}))
+(def app-state (atom {:active-page "/"}))
 
 (defn navigate [token]
   (let [page-number (case token "/" 0 "/cards" 1 "/play" 2 "/deckbuilder" 3 "/news" 4)]
@@ -21,30 +20,19 @@
 (.setPathPrefix history "")
 (.setEnabled history true)
 
-(defn navbar [app owner]
+(defn navbar [cursor owner]
   (om/component
-   (let [page (:active-page app)]
-     (sab/html
-      [:ul.carousel-indicator {}
-       [:li {:class (if (= (first page) "/") "active" "")
-             :on-click #(.setToken history "/")
-             :data-target "#main" :data-slide-to 0}
-        [:a {:href "/"} "Manabase"]]
-       [:li {:class (if (= (first page) "/cards") "active" "")
-             :on-click #(.setToken history "/cards")
-             :data-target "#main" :data-slide-to 1}
-        [:a {:href "/cards"} "Cards"]]
-       [:li {:class (if (= (first page) "/play") "active" "")
-             :on-click #(.setToken history "/play")
-             :data-target "#main" :data-slide-to 2}
-        [:a {:href "/play"} "Play"]]
-       [:li {:class (if (= (first page) "/deckbuilder") "active" "")
-             :on-click #(.setToken history "/deckbuilder")
-             :data-target "#main" :data-slide-to 3}
-        [:a {:href "/deckbuilder"} "Decks"]]
-       [:li {:class (if (= (first page) "/news") "active" "")
-             :on-click #(.setToken history "/news")
-             :data-target "#main" :data-slide-to 4}
-        [:a {:href "/news"} "News"]]]))))
+   (sab/html
+    [:ul.carousel-indicator {}
+     (for [page [["Manabase" "/" 0]
+                 ["Cards" "/cards" 1]
+                 ["Play" "/play" 2]
+                 ["Decks" "/deckbuilder" 3]
+                 ["News" "/news" 4]]]
+       (let [route (second page)]
+         [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
+               :on-click #(.setToken history route)
+               :data-target "#main" :data-slide-to (last page)}
+          [:a {:href route} (first page)]]))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "topnav"))})
