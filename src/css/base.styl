@@ -61,7 +61,7 @@ form
   display: inline-block
   padding: 15px 20px
 
-input[type=text]
+input[type=text], select
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
   font-size: 13px
   border-radius: 4px
@@ -88,7 +88,8 @@ button
   height: 28px
 
 button.add
-  padding: 2px 4px
+  padding: 0 5px 2px
+  font-size: 14px
   float: right
   height: auto
   background-color: transparent
@@ -96,7 +97,6 @@ button.add
   &:hover
     background-color: transparent-orange
     border-color: orange
-    color: orange
 
 .clear
   clear: both
@@ -230,6 +230,9 @@ a.button, button
 
   > input
     flex(1)
+    margin-left: 0
+    margin-top: 0
+    margin-right: 4px
 
 // Card Browser
 .cardbrowser
@@ -270,6 +273,10 @@ a.button, button
     width: 22px
     height: 22px
     cursor: pointer
+    transition(all 0.2s ease-in-out)
+
+    &:hover
+      color: dark-grey
 
 .set-list
   > div
