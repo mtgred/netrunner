@@ -24,7 +24,8 @@
        [:div.text
         [:p [:span.type (str (:type card))] (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
         [:pre {:dangerouslySetInnerHTML #js {:__html (:text card)}}]]
-       [:img {:src (str base-url (:code card) ".png") :alt (:text card)}]]))))
+       [:img {:src (str base-url (:code card) ".png")
+              :onError #(-> % .-target js/$ .hide)}]]))))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
