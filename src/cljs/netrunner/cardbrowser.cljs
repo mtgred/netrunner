@@ -143,8 +143,8 @@
                             (filter-cards (:faction-filter state) :faction)
                             (filter-cards (:type-filter state) :type)
                             (match (.toLowerCase (:search-query state)))
-                            (take (* (:page state) 41))
-                            (sort-by (sort-field (:sort-field state))))
+                            (sort-by (sort-field (:sort-field state)))
+                            (take (* (:page state) 41)))
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
