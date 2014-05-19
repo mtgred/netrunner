@@ -58,6 +58,7 @@ request.get baseurl + "sets", (error, response, body) ->
     # db.collection("sets").remove ->
     # db.collection('sets').insert sets, (err, result) ->
     fs.writeFile "sets.json", JSON.stringify(sets), ->
+      # exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
       exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
 
 request.get baseurl + "cards", (error, response, body) ->
@@ -66,4 +67,5 @@ request.get baseurl + "cards", (error, response, body) ->
     # db.collection("cards").remove ->
     # db.collection("cards").insert cards, (err, result) ->
     fs.writeFile "cards.json", JSON.stringify(cards), ->
+      # exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
       exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
