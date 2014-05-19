@@ -18,7 +18,7 @@ body
 
 h1, h2, h3, h4
   line-height: normal
-  margin: 0 0 4px
+  margin: 0 0 10px
 
 h1
   font-size: 40px
@@ -32,6 +32,7 @@ h3
 h4
   font-size: 16px
   line-height: 20px
+  margin: 0 0 5px
 
 a
   text-decoration: none
@@ -57,24 +58,20 @@ ul
 p
   margin: 5px 0
 
-form
-  display: inline-block
-  padding: 15px 20px
-
-input[type=text], select
+input, select
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
   font-size: 13px
   border-radius: 4px
   padding: 0 5px
   height: 28px
-  background-color: rgba(255, 255, 255, 0.85)
+  background-color: rgba(255, 255, 255, 0.9)
   border: 2px solid rgba(39, 56, 76, 0.8)
   transition(all 0.2s ease-in-out)
   outline: none
 
   &:focus
-    box-shadow(0 0 6px rgb(255, 165, 0, 0.3))
-    border-color: rgb(255, 165, 0)
+    box-shadow(0 0 6px blue)
+    border-color: blue
 
 button
   border-radius: 4px
@@ -86,6 +83,13 @@ button
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9)
   cursor: pointer
   height: 28px
+  outline: none
+  transition(all 0.2s ease-in-out)
+  cursor: pointer
+
+  &:focus
+    box-shadow(0 0 6px blue)
+    border-color: blue
 
 button.add
   padding: 0 5px 2px
@@ -124,11 +128,55 @@ button.add
   visibility: hidden
   font-size: 0
 
+// Modal
+.modal-open
+  overflow: hidden
+
+.modal
+  position: fixed
+  top: 0
+  right: 0
+  bottom: 0
+  left: 0
+  z-index: 1050
+  display: none
+  overflow: auto
+  overflow-y: scroll
+  -webkit-overflow-scrolling: touch
+  outline: 0
+
+.modal-dialog
+  position: absolute
+  top: 50%
+  left: 50%
+  background-clip: padding-box
+  border: 1px solid orange
+  border-radius: 10px
+  outline: none
+  transform(translate(-50%, -50%))
+  transition(all 0.3s ease-in-out)
+
+.modal-backdrop
+  position: fixed
+  top: 0
+  right: 0
+  bottom: 0
+  left: 0
+  z-index: 1040
+  background-color: black
+  transition(all 0.3s ease-in-out)
+
+.modal-backdrop.fade
+  opacity: 0
+
+.modal-backdrop.in
+  opacity: 0.85
+
 nav
   ul
     list-style-type: none
 
-nav#topnav
+nav.topnav
   position: fixed
   z-index: 10
   top: 0
@@ -158,14 +206,32 @@ nav#topnav
   margin: 0 auto
 
 .blue-shade
-  background-color: rgba(39, 56, 76, 0.8)
+  background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
-
-// Buttons
 
 a.button, button
   display: inline-block
 
+
+// Top nav
+#left-menu
+  float: left
+
+.right-menu
+  float: right
+
+// Auth
+
+#login-form, #register-form
+  .modal-dialog
+    padding: 15px 20px
+  h3
+    color: white
+  input
+    width: 240px
+    margin-bottom: 10px
+    font-size: 15px
+    padding: 12px 10px
 
 // Layout
 

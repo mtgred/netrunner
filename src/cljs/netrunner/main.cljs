@@ -35,4 +35,4 @@
                :data-target "#main" :data-slide-to (last page)}
           [:a {:href route} (first page)]]))])))
 
-(om/root navbar app-state {:target (. js/document (getElementById "topnav"))})
+(om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
