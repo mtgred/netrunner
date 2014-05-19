@@ -1,7 +1,12 @@
-COFFEE_BIN_DST="${HOME}.node_modules/.bin"
-COFFEE_BIN_SRC="${OPENSHIFT_REPO_DIR}node_modules/.bin/coffee"
+# COFFEE_BIN_DST="${HOME}.node_modules/.bin"
+# COFFEE_BIN_SRC="${OPENSHIFT_REPO_DIR}node_modules/.bin/coffee"
+CONFIG_FILE = "${OPENSHIFT_DATA_DIR}config.coffee"
 
 echo "++++ Deploy ++++"
-cd $COFFEE_BIN_DST
-ln -s $COFFEE_BIN_SRC .
-echo "ln -s $COFFEE_BIN_SRC $COFFEE_BIN_DST"
+# cd $COFFEE_BIN_DST
+# ln -s $COFFEE_BIN_SRC .
+# echo "ln -s $COFFEE_BIN_SRC $COFFEE_BIN_DST"echo "ln -s $COFFEE_BIN_SRC $COFFEE_BIN_DST"
+echo "rm $CONFIG_FILE"
+rm $CONFIG_FILE
+ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR
+echo "ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR"

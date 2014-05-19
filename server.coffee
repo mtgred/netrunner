@@ -2,7 +2,11 @@ express = require('express')
 app = express()
 server = require('http').createServer(app)
 stylus = require('stylus')
+config = require('./config')
 mongoskin = require('mongoskin')
+MongoStore = require('connect-mongo')(express)
+passport = require 'passport'
+localStrategy = require('passport-local').Strategy
 
 # MongoDB connection
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
@@ -11,8 +15,9 @@ login = if process.env.OPENSHIFT_MONGODB_DB_PASSWORD then "#{mongoUser}:#{mongoP
 mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
 appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
+mongoUrl = "mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}"
 
-db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}")
+db = mongoskin.db(mongoUrl)
 
 # Socket.io
 io = require('socket.io').listen(server)
@@ -34,12 +39,50 @@ app.configure ->
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()
   app.use express.bodyParser()
+  app.use express.session(store: new MongoStore(url: mongoUrl), secret: config.salt)
   app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources'})
   app.use express.static(__dirname + '/resources')
   app.use app.router
 
+# Auth
+passport.use new localStrategy {usernameField: "email"}, (username, password, done) ->
+  db.collection('users').findOne username: username, (err, user) ->
+    return done(err) if err
+    return done(null, false, message: 'Incorrect username') unless user
+    return done(null, false, message: 'Incorrect password') unless user.password is password
+    done(null, user)
+
+passport.serializeUser (user, done) ->
+  done(null, user._id) if user
+
+passport.deserializeUser (id, done) ->
+  db.collection('users').findById id, (err, user) ->
+    console.log err if err
+    done(err, { username: user.username, _id: user._id })
 
 # Routes
+app.post '/login', passport.authenticate('local'), (req, res) ->
+  res.redirect('/')
+
+app.post '/logout', (req, res) ->
+  req.logout()
+  res.redirect('/')
+
+app.post '/register', (req, res) ->
+  db.collection('users').findOne username: req.body.username, (err, user) ->
+    if user
+      res.send 'Username taken'
+    else
+      #TODO: Check validy req.param
+      db.collection('users').insert req.body, (err) ->
+        res.send "error: #{err}" if err
+        req.login user, (err) -> next(err) if err
+        res.send 'Registered'
+
+app.get '/check/:username', (req, res) ->
+  db.collection('users').findOne username: req.params.username, (err, user) ->
+    res.send(if user then 'Username taken' else 'OK')
+
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
     throw err if err
@@ -69,7 +112,6 @@ app.configure 'production', ->
   console.log "Prod environment"
   app.get '/*', (req, res) ->
     res.render('index.jade', { env: 'prod'})
-
 
 # Server
 terminate = () ->
