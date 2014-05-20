@@ -23,6 +23,7 @@ html
     script(src='/lib/bootstrap/dist/js/bootstrap.js')
     script(src='/lib/react/react.min.js')
     script(src='/socket.io/socket.io.js')
+    script(type="text/javascript")!= "var user = " + JSON.stringify(user) + ";"
 
     if env === 'dev'
       script(type="text/javascript").
@@ -31,6 +32,8 @@ html
       script(src="cljs/app.js", type="text/javascript")
       script(type="text/javascript").
         goog.require("netrunner.main");
+        goog.require("netrunner.ajax");
+        goog.require("netrunner.auth");
         goog.require("netrunner.socket");
         goog.require("netrunner.chat");
         goog.require("netrunner.game");

@@ -5,7 +5,7 @@ stylus = require('stylus')
 config = require('./config')
 mongoskin = require('mongoskin')
 MongoStore = require('connect-mongo')(express)
-passport = require 'passport'
+passport = require('passport')
 localStrategy = require('passport-local').Strategy
 
 # MongoDB connection
@@ -40,17 +40,18 @@ app.configure ->
   app.use express.cookieParser()
   app.use express.bodyParser()
   app.use express.session(store: new MongoStore(url: mongoUrl), secret: config.salt)
+  app.use passport.initialize()
+  app.use passport.session()
   app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources'})
   app.use express.static(__dirname + '/resources')
   app.use app.router
 
 # Auth
-passport.use new localStrategy {usernameField: "email"}, (username, password, done) ->
-  db.collection('users').findOne username: username, (err, user) ->
+passport.use new localStrategy (username, password, done) ->
+  db.collection('users').findOne {username: username}, (err, user) ->
     return done(err) if err
-    return done(null, false, message: 'Incorrect username') unless user
-    return done(null, false, message: 'Incorrect password') unless user.password is password
-    done(null, user)
+    return done(null, false) if (not user) or user.password isnt password
+    done(null, { username: user.username, email: user.email, _id: user._id })
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
@@ -58,13 +59,13 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, { username: user.username, _id: user._id })
+    done(err, { username: user.username, email: user.email, _id: user._id })
 
 # Routes
 app.post '/login', passport.authenticate('local'), (req, res) ->
-  res.redirect('/')
+  res.json(200, req.user)
 
-app.post '/logout', (req, res) ->
+app.get '/logout', (req, res) ->
   req.logout()
   res.redirect('/')
 
@@ -77,7 +78,7 @@ app.post '/register', (req, res) ->
       db.collection('users').insert req.body, (err) ->
         res.send "error: #{err}" if err
         req.login user, (err) -> next(err) if err
-        res.send 'Registered'
+        res.redirect ('/')
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
@@ -106,12 +107,12 @@ app.get '/data/:collection/filter/:field/:value', (req, res) ->
 app.configure 'development', ->
   console.log "Dev environment"
   app.get '/*', (req, res) ->
-    res.render('index.jade', { env: 'dev'})
+    res.render('index.jade', { user: req.user, env: 'dev'})
 
 app.configure 'production', ->
   console.log "Prod environment"
   app.get '/*', (req, res) ->
-    res.render('index.jade', { env: 'prod'})
+    res.render('index.jade', { user: req.user, env: 'prod'})
 
 # Server
 terminate = () ->

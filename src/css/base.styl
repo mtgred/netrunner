@@ -38,6 +38,7 @@ a
   text-decoration: none
   color: orange
   transition(all 0.2s ease-in-out)
+  cursor: pointer
   &:hover
     color: text-color
     text-decoration: none
@@ -102,6 +103,12 @@ button.add
     background-color: transparent-orange
     border-color: orange
 
+.float-left
+  float: left
+
+.float-right
+  float: right
+
 .clear
   clear: both
 
@@ -127,6 +134,64 @@ button.add
   height: 0
   visibility: hidden
   font-size: 0
+
+.caret
+  display: inline-block
+  width: 0
+  height: 0
+  margin-left: 5px
+  vertical-align: middle
+  border-top: 4px solid
+  border-right: 4px solid transparent
+  border-left: 4px solid transparent
+
+
+// Dropdown
+
+.dropdown
+  position: relative
+
+.dropdown-toggle:focus
+  outline: 0
+
+.dropdown-menu
+  position: absolute
+  top: 100%
+  left: 0
+  z-index: 1000
+  display: none
+  float: left
+  min-width: 160px
+  padding: 5px 0
+  margin: 5px 0 0
+  font-size: 14px
+  list-style: none
+  background-clip: padding-box
+  border: 1px solid #ccc
+  border: 1px solid rgba(0, 0, 0, .15)
+  border-radius: 4px
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, .175)
+          box-shadow: 0 6px 12px rgba(0, 0, 0, .175)
+
+.dropdown-menu.float-right
+  right: 0
+  left: auto
+
+.dropdown-menu > li > a
+  display: block
+  padding: 3px 20px
+  clear: both
+  font-weight: normal
+  line-height: 1.42857143
+  color: #333
+  white-space: nowrap
+
+.open > .dropdown-menu
+  display: block
+
+.open > a
+  outline: 0
+
 
 // Modal
 .modal-open
@@ -184,9 +249,15 @@ nav.topnav
   right: 0
   padding: 5px 20px
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
+
+  #left-menu > ul li
+    margin-right: 20px
+
+  #right-menu > ul li
+    margin-left: 20px
+
   li
     display: inline-block
-    margin-right: 20px
     a
       color: white
       &:hover
@@ -217,12 +288,12 @@ a.button, button
 #left-menu
   float: left
 
-.right-menu
+#right-menu
   float: right
 
 // Auth
 
-#login-form, #register-form
+#auth-forms
   .modal-dialog
     padding: 15px 20px
   h3
@@ -231,7 +302,6 @@ a.button, button
     width: 240px
     margin-bottom: 10px
     font-size: 15px
-    padding: 12px 10px
 
 // Layout
 

@@ -3,15 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put!] :as async]
-            [goog.net.XhrIo :as xhr]))
-
-(defn fetch [url]
-  (let [ch (chan)]
-    (xhr/send url (fn [event]
-                    (let [response (-> event .-target .getResponseText JSON/parse
-                                   (js->clj :keywordize-keys true))]
-                      (put! ch response))))
-    ch))
+            [netrunner.ajax :refer [GET]]))
 
 (def app-state (atom {:cards [] :sets []}))
 
@@ -149,5 +141,5 @@
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
 
-(go (swap! app-state assoc :sets (<! (fetch "data/sets"))))
-(go (swap! app-state assoc :cards (<! (fetch "data/cards"))))
+(go (swap! app-state assoc :sets (<! (GET "data/sets"))))
+(go (swap! app-state assoc :cards (<! (GET "data/cards"))))

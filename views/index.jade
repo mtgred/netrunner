@@ -3,49 +3,9 @@ extends layout
 block content
   nav.topnav.blue-shade
     div#left-menu
-    ul.right-menu
-      if user
-        li.dropdown
-          a.dropdown-toggle(href="", data-toggle="dropdown")= user.username
-            b.caret
-          ul.dropdown-menu.pull-right
-            li
-              a(href="#{user.username}") Profile
-            li
-              a(href="") Settings
-            li
-              a(href="/logout") Log out
-      else
-        li
-          a(href="", data-target="#register-form", data-toggle="modal") Sign up
-        li
-          a(href="", data-target="#login-form", data-toggle="modal") Login
+    div#right-menu
 
-  div.modal.fade#register-form
-    div.modal-dialog
-      h3 Create an account
-      form(action="/register", method="post")
-        p
-          input(placeholder="Username", name="username")
-        p
-          input(placeholder="Email", name="email")
-        p
-          input(placeholder="Password", name="password")
-        p
-          button Sign up
-          button(data-dismiss="modal") Cancel
-
-  div.modal.fade#login-form
-    div.modal-dialog
-      h3 Log in
-      form(action="/login", method="post")
-        p
-          input(placeholder="Email", name="email")
-        p
-          input(placeholder="Password", name="password")
-        p
-          button Log in
-          button(data-dismiss="modal") Cancel
+  div#auth-forms
 
   div#main.carousel.slide(data-interval="false")
     div.carousel-inner
