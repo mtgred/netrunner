@@ -27,6 +27,8 @@ cardFields = [
   "subtype",
   "text",
   "cost",
+  "advancementcost",
+  "agendapoints",
   "baselink",
   "influencelimit",
   "minimumdecksize",
@@ -42,6 +44,7 @@ cardFields = [
   "cyclenumber",
   "side",
   "uniqueness",
+  "memoryunits",
   "strength",
   "trash"
 ]
