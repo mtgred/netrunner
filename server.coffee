@@ -5,6 +5,7 @@ stylus = require('stylus')
 config = require('./config')
 mongoskin = require('mongoskin')
 MongoStore = require('connect-mongo')(express)
+bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
 
@@ -49,9 +50,11 @@ app.configure ->
 # Auth
 passport.use new localStrategy (username, password, done) ->
   db.collection('users').findOne {username: username}, (err, user) ->
-    return done(err) if err
-    return done(null, false) if (not user) or user.password isnt password
-    done(null, { username: user.username, email: user.email, _id: user._id })
+    return done(err) if err or not user
+    if bcrypt.compareSync(password, user.password)
+      done(null, { username: user.username, email: user.email, _id: user._id })
+    else
+      return done(null, false)
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
@@ -74,11 +77,12 @@ app.post '/register', (req, res) ->
     if user
       res.send 'Username taken'
     else
-      #TODO: Check validy req.param
-      db.collection('users').insert req.body, (err) ->
-        res.send "error: #{err}" if err
-        req.login user, (err) -> next(err) if err
-        res.redirect ('/')
+      bcrypt.hash req.body.password, 3, (err, hash) ->
+        req.body.password = hash
+        db.collection('users').insert req.body, (err) ->
+          res.send "error: #{err}" if err
+          req.login user, (err) -> next(err) if err
+          res.redirect ('/')
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
