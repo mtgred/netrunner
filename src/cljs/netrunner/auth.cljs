@@ -48,7 +48,7 @@
          [:form {:action "/register" :method "post"}
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "text" :placeholder "Email" :name "email"}]]
-          [:p [:input {:typeg "password" :placeholder "Password" :name "password"}]]
+          [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]]]))))
 
@@ -77,8 +77,10 @@
 
 (defn auth-forms [cursor owner]
   (om/component
-   (om/build register-form cursor)
-   (om/build login-form cursor)))
+   (sab/html
+    [:div
+     (om/build register-form cursor)
+     (om/build login-form cursor)])))
 
 (om/root auth-menu app-state {:target (. js/document (getElementById "right-menu"))})
 (om/root auth-forms app-state {:target (. js/document (getElementById "auth-forms"))})
