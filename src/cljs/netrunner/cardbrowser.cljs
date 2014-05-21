@@ -7,15 +7,52 @@
 
 (def app-state (atom {:cards [] :sets []}))
 
+(defn make-span [text symbol class]
+  (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
+
+(defn add-symbols [card-text]
+  (-> card-text
+      (make-span "\\[Credits\\]" "credit")
+      (make-span "\\[Click\\]" "click")
+      (make-span "\\[Subroutine\\]" "subroutine")
+      (make-span "\\[Recuring Credits\\]" "recuring-credit")
+      (make-span "1\\[Memory Unit\\]" "mu1")
+      (make-span "2\\[Memory Unit\\]" "mu2")
+      (make-span "3\\[Memory Unit\\]" "mu3")
+      (make-span "\\[Memory Unit\\]" "mu")
+      (make-span "\\[Link\\]" "link")
+      (make-span "\\[Trash\\]" "trash")))
+
 (defn card-view [card owner]
   (om/component
    (let [base-url "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/"]
      (sab/html
       [:div.card.blue-shade
        [:h4 (:title card)]
+       (when-let [memory (:memoryunits card)]
+         (if (< memory 3)
+           [:div.anr-icon {:class (str "mu" memory)} ""]
+           [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+       (when-let [cost (:cost card)]
+         [:div.heading (str "Cost: " cost)])
+       (when-let [trash-cost (:trash card)]
+         [:div.heading (str "Trash cost: " trash-cost)])
+       (when-let [strength (:strength card)]
+         [:div.heading (str "Strength: " strength)])
+       (when-let [requirement (:advancementcost card)]
+         [:div.heading (str "Advancement requirement: " requirement)])
+       (when-let [agenda-point (:agendatpoints card)]
+         [:div.heading (str "Agenda points: " agenda-point)])
+       (when-let [min-deck-size (:minimumdecksize card)]
+         [:div.heading (str "Minimum deck size: " min-deck-size)])
+       (when-let [influence-limit (:influencelimit card)]
+         [:div.heading (str "Influence limit: " influence-limit)])
+       (when-let [influence (:factioncost card)]
+         [:div.heading (str "Influence: " influence)])
        [:div.text
-        [:p [:span.type (str (:type card))] (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
-        [:pre {:dangerouslySetInnerHTML #js {:__html (:text card)}}]]
+        [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                                 "" (str ": " (:subtype card)))]
+        [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
        [:img {:src (str base-url (:code card) ".png")
               :onError #(-> % .-target js/$ .hide)}]]))))
 
