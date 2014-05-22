@@ -84,7 +84,7 @@ app.post '/register', (req, res) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
-          req.login user, (err) -> next(err) if err
+          req.login req.body, (err) -> next(err) if err
           res.redirect ('/')
 
 app.get '/check/:username', (req, res) ->
