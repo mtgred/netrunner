@@ -13,12 +13,15 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:li.dropdown
-        [:a.dropdown-toggle {:href "" :data-toggle "dropdown"} (:username user)
+       [:li.dropdown.usermenu
+        [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
+         [:img {:src (str "http://www.gravatar.com/avatar/" (:emailhash user) "?d=retro&s=22")}]
+         (:username user)
          [:b.caret]]
-        [:ul.dropdown-menu.blue-shade.float-right
-         [:li
-          [:a {:href "/logout"} "Logout"]]]]))))
+        [:div.dropdown-menu.blue-shade.float-right
+         [:a.block-link {:href "/"} "Profile"]
+         [:a.block-link {:href "/"} "Settings"]
+         [:a.block-link {:href "/logout"} "Logout"]]]))))
 
 (defn unlogged-menu [user owner]
   (reify
@@ -27,7 +30,8 @@
       (sab/html
        [:ul
         [:li
-         [:a {:href "" :data-target "#register-form" :data-toggle "modal"} "Sign up"]]
+         [:a {:href "" :data-target "#register-form" :data-toggle "modal"
+              :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
         [:li
          [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]]))))
 

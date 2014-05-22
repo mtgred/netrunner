@@ -5,6 +5,7 @@ stylus = require('stylus')
 config = require('./config')
 mongoskin = require('mongoskin')
 MongoStore = require('connect-mongo')(express)
+crypto = require('crypto')
 bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
@@ -52,7 +53,7 @@ passport.use new localStrategy (username, password, done) ->
   db.collection('users').findOne {username: username}, (err, user) ->
     return done(err) if err or not user
     if bcrypt.compareSync(password, user.password)
-      done(null, { username: user.username, email: user.email, _id: user._id })
+      done(null, {username: user.username, emailhash: user.emailhash, _id: user._id})
     else
       return done(null, false)
 
@@ -62,7 +63,7 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, { username: user.username, email: user.email, _id: user._id })
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id})
 
 # Routes
 app.post '/login', passport.authenticate('local'), (req, res) ->
@@ -77,6 +78,8 @@ app.post '/register', (req, res) ->
     if user
       res.send 'Username taken'
     else
+      email = req.body.email.trim().toLowerCase()
+      req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
       bcrypt.hash req.body.password, 3, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->

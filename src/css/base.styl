@@ -161,30 +161,21 @@ button.add
   z-index: 1000
   display: none
   float: left
-  min-width: 160px
-  padding: 5px 0
-  margin: 5px 0 0
-  font-size: 14px
+  min-width: 140px
+  padding: 4px 6px
   list-style: none
   background-clip: padding-box
   border: 1px solid #ccc
   border: 1px solid rgba(0, 0, 0, .15)
   border-radius: 4px
-  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, .175)
-          box-shadow: 0 6px 12px rgba(0, 0, 0, .175)
+  box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+
+  .block-link
+    padding: 2px 8px
 
 .dropdown-menu.float-right
   right: 0
   left: auto
-
-.dropdown-menu > li > a
-  display: block
-  padding: 3px 20px
-  clear: both
-  font-weight: normal
-  line-height: 1.42857143
-  color: #333
-  white-space: nowrap
 
 .open > .dropdown-menu
   display: block
@@ -237,17 +228,16 @@ button.add
 .modal-backdrop.in
   opacity: 0.85
 
-nav
-  ul
-    list-style-type: none
+nav ul
+  list-style-type: none
 
-nav.topnav
+.topnav
   position: fixed
   z-index: 10
   top: 0
   left: 0
   right: 0
-  padding: 5px 20px
+  padding-left: 20px
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
 
   #left-menu > ul li
@@ -258,6 +248,8 @@ nav.topnav
 
   li
     display: inline-block
+    height: 30px
+    line-height: 29px
     a
       color: white
       &:hover
@@ -265,6 +257,11 @@ nav.topnav
   li.active
     a
       color: orange
+
+  .dropdown-menu a
+    line-height: 20px
+    &:hover
+      color: white
 
 .panel
   radius: 4px
@@ -307,6 +304,27 @@ a.button, button
   color: orange
   font-size: 14px
 
+.usermenu
+  padding: 0 10px
+  img
+    vertical-align: middle
+    margin-right: 5px
+    border-radius: 3px
+
+.block-link
+  cursor: pointer
+  border: 1px solid transparent
+  padding: 0 5px
+  border-radius: 4px
+  display: block
+  margin: 0 -4px
+  &:hover
+    background-color: transparent-orange
+    border: 1px solid orange
+  &.active
+    color: orange
+    transition(all 0.2s ease-in-out)
+
 // Layout
 
 #main
@@ -342,18 +360,6 @@ a.button, button
 .channel-list
   flex(0 0 180px)
   margin: 0 4px 0 0
-  > div
-    cursor: pointer
-    border: 1px solid transparent
-    padding: 0 4px
-    margin: 0 -4px
-    border-radius: 4px
-    &:hover
-      background-color: transparent-orange
-      border: 1px solid orange
-  > div.active
-    color: orange
-    transition(all 0.2s ease-in-out)
 
 .chat-box
   flex(1)

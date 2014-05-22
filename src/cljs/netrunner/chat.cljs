@@ -39,8 +39,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div {:class (if (= active-channel channel) "active" "")
-              :on-click #(put! (:channel-ch state) channel)}
+       [:div.block-link {:class (if (= active-channel channel) "active" "")
+                         :on-click #(put! (:channel-ch state) channel)}
         (str "#" (name channel))]))))
 
 (defn message-view [message owner]
