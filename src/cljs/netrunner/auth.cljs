@@ -46,30 +46,36 @@
         [:div.modal-dialog
          [:h3 "Create an account"]
          [:form {:action "/register" :method "post"}
-          [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "text" :placeholder "Email" :name "email"}]]
+          [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]]]))))
 
-(defn handle-login [e]
+(defn handle-login [e owner]
   (.preventDefault e)
+  (om/set-state! owner :flash-message "")
   (let [params (-> e .-target js/$ .serialize)]
     (go (let [response (<! (POST "/login" params))]
           (if (:error response)
-            (.log js/console (str "Login failed: " (:error response)))
+            (om/set-state! owner :flash-message (str "Invalid login or password"))
             (do (.modal (js/$ "#login-form") "hide")
                 (swap! app-state assoc :user response)))))))
 
 (defn login-form [cursor owner]
   (reify
+    om/IInitState
+    (init-state [this]
+      {:flash-message ""})
+
     om/IRenderState
     (render-state [this state]
       (sab/html
        [:div.modal.fade#login-form
         [:div.modal-dialog
          [:h3 "Log in"]
-         [:form {:on-submit handle-login}
+         [:p.flash-message (:flash-message state)]
+         [:form {:on-submit #(handle-login % owner)}
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Log in"]
