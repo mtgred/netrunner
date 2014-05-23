@@ -72,7 +72,7 @@ input, select
 
   &:focus
     box-shadow(0 0 6px blue)
-    border-color: blue
+    border-color: blue !important
 
 button
   border-radius: 4px
@@ -99,6 +99,7 @@ button.add
   height: auto
   background-color: transparent
   border-color: white
+  margin-right: -2px
   &:hover
     background-color: transparent-orange
     border-color: orange
@@ -329,6 +330,7 @@ a.button, button
     width: 240px
     margin-bottom: 10px
     font-size: 15px
+    border-color: orange
 
 .flash-message
   color: orange
@@ -339,7 +341,7 @@ a.button, button
   margin-right: -20px
   img
     vertical-align: middle
-    margin-right: 5px
+    margin-right: 10px
     border-radius: 3px
 
 .block-link
@@ -390,7 +392,7 @@ a.button, button
 
 .channel-list
   flex(0 0 180px)
-  margin: 0 4px 0 0
+  margin: 0 5px 0 0
 
 .chat-box
   flex(1)
@@ -403,13 +405,13 @@ a.button, button
 .msg-box
   display-flex()
   flex(1)
-  margin-top: 4px
+  margin-top: 5px
 
   > input
     flex(1)
     margin-left: 0
     margin-top: 0
-    margin-right: 4px
+    margin-right: 5px
 
 // Card Browser
 .cardbrowser
