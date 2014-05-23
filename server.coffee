@@ -100,13 +100,7 @@ app.get '/data/:collection', (req, res) ->
     delete d._id for d in data
     res.json(200, data)
 
-app.get '/data/:collection/:title', (req, res) ->
-  db.collection(req.params.collection).findOne title: req.params.title, (err, data) ->
-    throw err if err
-    delete d._id for d in data
-    res.json(200, data)
-
-app.get '/data/:collection/filter/:field/:value', (req, res) ->
+app.get '/data/:collection/:field/:value', (req, res) ->
   filter = {}
   filter[req.params.field] = req.params.value
   db.collection(req.params.collection).find(filter).toArray (err, data) ->
