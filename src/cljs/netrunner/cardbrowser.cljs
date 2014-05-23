@@ -180,5 +180,5 @@
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
 
-(go (swap! app-state assoc :sets (<! (GET "data/sets"))))
-(go (swap! app-state assoc :cards (<! (GET "data/cards"))))
+(go (swap! app-state assoc :sets (:json (<! (GET "data/sets")))))
+(go (swap! app-state assoc :cards (:json (<! (GET "data/cards")))))
