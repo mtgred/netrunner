@@ -48,13 +48,15 @@
        (when-let [influence-limit (:influencelimit card)]
          [:div.heading (str "Influence limit: " influence-limit)])
        (when-let [influence (:factioncost card)]
-         [:div.heading (str "Influence: " influence)])
+         [:div.heading "Influence "
+          [:span.influence
+           {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+            :class (-> card :faction .toLowerCase (.replace " " "-"))}]])
        [:div.text
         [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                                  "" (str ": " (:subtype card)))]
         [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
-       [:img {:src (str base-url (:code card) ".png")
-              :onError #(-> % .-target js/$ .hide)}]]))))
+       [:img {:src (str base-url (:code card) ".png") :onError #(-> % .-target js/$ .hide)}]]))))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
@@ -70,7 +72,7 @@
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
         corp-types ["Agenda" "Asset" "ICE" "Operation" "Upgrade"]]
     (case side
-      "All" (concat  runner-types corp-types)
+      "All" (concat runner-types corp-types)
       "Runner" runner-types
       "Corp" (cons "Identity" corp-types))))
 
