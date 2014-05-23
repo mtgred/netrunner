@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put!] :as async]
-            [netrunner.ajax :refer [POST]]))
+            [netrunner.ajax :refer [POST GET]]))
 
 (def app-state
   (atom {:user (js->clj js/user :keywordize-keys true)}))
@@ -47,10 +47,16 @@
   (let [params (-> e .-target js/$ .serialize)]
     (go (let [response (<! (POST url params))]
           (case (:status response)
-            401 (om/set-state! owner :flash-message (str "Invalid login or password"))
-            422 (om/set-state! owner :flash-message (str "Username taken"))
+            401 (om/set-state! owner :flash-message "Invalid login or password")
+            422 (om/set-state! owner :flash-message "Username taken")
             (do (.modal (js/$ (om/get-node owner ref)) "hide")
                 (swap! app-state assoc :user (:json response))))))))
+
+(defn check-username [event owner]
+  (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]
+        (if (= (:status response) 422)
+          (om/set-state! owner :flash-message "Username taken")
+          (om/set-state! owner :flash-message "")))))
 
 (defn register-form [cursor owner]
   (reify
@@ -66,7 +72,8 @@
          [:p.flash-message (:flash-message state)]
          [:form {:on-submit #(handle-post % owner "/register" "register-form")}
           [:p [:input {:type "text" :placeholder "Email" :name "email"}]]
-          [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
+          [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username"
+                       :on-blur #(check-username % owner)}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]]]))))

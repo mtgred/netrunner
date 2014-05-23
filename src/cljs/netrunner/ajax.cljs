@@ -4,7 +4,10 @@
             [goog.net.XhrIo :as xhr]))
 
 (defn parse [event]
-  (-> event .-target .getResponseText JSON/parse (js->clj :keywordize-keys true)))
+  (let [xhr (.-target event)
+        status (.getStatus xhr)
+        response (-> xhr .getResponseText JSON/parse (js->clj :keywordize-keys true))]
+    {:status status :json response}))
 
 (defn GET [url]
   (let [ch (chan)]
@@ -13,10 +16,5 @@
 
 (defn POST [url params]
   (let [ch (chan)]
-    (xhr/send url #(let [xhr (.-target %)
-                         status (.getStatus xhr)]
-                     (if (= status 200)
-                       (put! ch {:status status :json (parse %)})
-                       (put! ch {:status status})))
-              "POST" params)
+    (xhr/send url #(put! ch (parse %)) "POST" params)
     ch))
