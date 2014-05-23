@@ -41,45 +41,49 @@
      (om/build unlogged-menu user)
      (om/build logged-menu user))))
 
+(defn handle-post [e owner url ref]
+  (.preventDefault e)
+  (om/set-state! owner :flash-message "")
+  (let [params (-> e .-target js/$ .serialize)]
+    (go (let [response (<! (POST url params))]
+          (case (:status response)
+            401 (om/set-state! owner :flash-message (str "Invalid login or password"))
+            422 (om/set-state! owner :flash-message (str "Username taken"))
+            (do (.modal (js/$ (om/get-node owner ref)) "hide")
+                (swap! app-state assoc :user (:json response))))))))
+
 (defn register-form [cursor owner]
   (reify
+    om/IInitState
+    (init-state [this] {:flash-message ""})
+
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.modal.fade#register-form
+       [:div.modal.fade#register-form {:ref "register-form"}
         [:div.modal-dialog
          [:h3 "Create an account"]
-         [:form {:action "/register" :method "post"}
+         [:p.flash-message (:flash-message state)]
+         [:form {:on-submit #(handle-post % owner "/register" "register-form")}
           [:p [:input {:type "text" :placeholder "Email" :name "email"}]]
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]]]))))
 
-(defn handle-login [e owner]
-  (.preventDefault e)
-  (om/set-state! owner :flash-message "")
-  (let [params (-> e .-target js/$ .serialize)]
-    (go (let [response (<! (POST "/login" params))]
-          (if (:error response)
-            (om/set-state! owner :flash-message (str "Invalid login or password"))
-            (do (.modal (js/$ "#login-form") "hide")
-                (swap! app-state assoc :user response)))))))
-
 (defn login-form [cursor owner]
   (reify
     om/IInitState
-    (init-state [this]
-      {:flash-message ""})
+    (init-state [this] {:flash-message ""})
 
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.modal.fade#login-form
+       [:div.modal.fade#login-form {:ref "login-form"}
         [:div.modal-dialog
          [:h3 "Log in"]
          [:p.flash-message (:flash-message state)]
-         [:form {:on-submit #(handle-login % owner)}
+         [:form {:on-submit #(handle-post % owner "/login" "login-form")}
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Log in"]

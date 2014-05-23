@@ -3,21 +3,20 @@
   (:require [cljs.core.async :refer [chan put!] :as async]
             [goog.net.XhrIo :as xhr]))
 
+(defn parse [event]
+  (-> event .-target .getResponseText JSON/parse (js->clj :keywordize-keys true)))
+
 (defn GET [url]
   (let [ch (chan)]
-    (xhr/send url (fn [event]
-                    (let [response (-> event .-target .getResponseText JSON/parse
-                                   (js->clj :keywordize-keys true))]
-                      (put! ch response))))
+    (xhr/send url #(put! ch (parse %)))
     ch))
 
 (defn POST [url params]
   (let [ch (chan)]
-    (xhr/send url
-              (fn [event]
-                (let [xhr (.-target event)]
-                  (if (= (.getStatus xhr) 200)
-                    (put! ch (-> xhr .getResponseText JSON/parse (js->clj :keywordize-keys true)))
-                    (put! ch {:error "Failed"}))))
+    (xhr/send url #(let [xhr (.-target %)
+                         status (.getStatus xhr)]
+                     (if (= status 200)
+                       (put! ch {:status status :json (parse %)})
+                       (put! ch {:status status})))
               "POST" params)
     ch))

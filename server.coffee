@@ -76,7 +76,7 @@ app.get '/logout', (req, res) ->
 app.post '/register', (req, res) ->
   db.collection('users').findOne username: req.body.username, (err, user) ->
     if user
-      res.send 'Username taken'
+      res.send 'Username taken', 422
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
@@ -85,7 +85,7 @@ app.post '/register', (req, res) ->
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
           req.login req.body, (err) -> next(err) if err
-          res.redirect ('/')
+          res.json(200, req.user)
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
