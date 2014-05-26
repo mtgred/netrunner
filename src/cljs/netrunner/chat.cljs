@@ -16,14 +16,15 @@
         (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
 
 (defn send-msg [channel owner]
-  (let [input (om/get-node owner "msg-input")
-        text (.-value input)
-        user (:user @auth/app-state)]
-    (when-not (empty? text)
-      (aset input "value" "")
-      (.focus input)
-      (put! out-channel #js {:type "chat" :channel (name channel) :msg text
-                             :username (:username user) :emailhash (:emailhash user)}))))
+  (if-let [user (:user @auth/app-state)]
+    (let [input (om/get-node owner "msg-input")
+          text (.-value input)]
+      (when-not (empty? text)
+        (aset input "value" "")
+        (.focus input)
+        (put! out-channel #js {:type "chat" :channel (name channel) :msg text
+                               :username (:username user) :emailhash (:emailhash user)})))
+    (.modal (js/$ "#register-form") "show")))
 
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component
