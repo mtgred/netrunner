@@ -32,7 +32,8 @@ io.set('transports', ['websocket'])
 io.sockets.on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
-    io.sockets.emit "netrunner", msg
+    io.sockets.emit('netrunner', msg)
+    db.collection('messages').insert msg, (err, result) ->
 
 # Express config
 app.configure ->
@@ -107,6 +108,11 @@ app.get '/data/:collection/:field/:value', (req, res) ->
   db.collection(req.params.collection).find(filter).toArray (err, data) ->
     console.error(err) if err
     delete d._id for d in data
+    res.json(200, data)
+
+app.get '/messages/:channel', (req, res) ->
+  db.collection('messages').find({channel: req.params.channel}).sort(date: 1).limit(50).toArray (err, data) ->
+    throw err if err
     res.json(200, data)
 
 app.configure 'development', ->

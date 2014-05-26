@@ -4,7 +4,8 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.socket :refer [out-channel chat-channel]]))
+            [netrunner.socket :refer [out-channel chat-channel]]
+            [netrunner.ajax :refer [GET]]))
 
 (def app-state (atom {:channels {:general [] :belgium [] :france []}}))
 
@@ -52,21 +53,28 @@
        [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
       [:div (:msg message)]]])))
 
+(defn fetch-messages [owner]
+  (let [channel (om/get-state owner :channel)
+        messages (get-in @app-state [:channels channel])]
+    (when (empty? messages)
+      (go (let [data (:json (<! (GET (str "/messages/" (name channel)))))]
+            (swap! app-state assoc-in [:channels channel] data))))))
+
 (defn chat [cursor owner]
   (reify
     om/IInitState
-    (init-state [this]
-      {:channel :general
-       :channel-ch (chan)})
+    (init-state [this] {:channel :general :channel-ch (chan)})
 
     om/IWillMount
     (will-mount [this]
+      (fetch-messages owner)
       (go (while true
             (let [ch (<! (om/get-state owner :channel-ch))]
               (om/set-state! owner :channel ch)))))
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
+      (fetch-messages owner)
       (let [div (om/get-node owner "message-list")]
         (aset div "scrollTop" (.-scrollHeight div))))
 
