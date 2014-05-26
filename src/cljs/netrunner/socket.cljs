@@ -14,9 +14,9 @@
       (let [msg (<! out-channel)]
         (.emit js/socket "netrunner" msg))))
 
-(.on js/socket "netrunner" #(put! in-channel %))
+(.on js/socket "netrunner" #(put! in-channel (js->clj % :keywordize-keys true)))
 
-(defmulti process-msg #(aget % "type"))
+(defmulti process-msg :type)
 
 (go (while true
       (process-msg (<! in-channel))))

@@ -8,6 +8,13 @@
 (def app-state
   (atom {:user (js->clj js/user :keywordize-keys true)}))
 
+(defn avatar [{:keys [emailhash]} owner opts]
+  (om/component
+   (sab/html
+    (when emailhash
+      [:img.avatar
+       {:src (str "http://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
+
 (defn logged-menu [user owner]
   (reify
     om/IRenderState
@@ -15,7 +22,7 @@
       (sab/html
        [:li.dropdown.usermenu
         [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-         [:img {:src (str "http://www.gravatar.com/avatar/" (:emailhash user) "?d=retro&s=22")}]
+         (om/build avatar user {:key :username :opts {:size 22}})
          (:username user)
          [:b.caret]]
         [:div.dropdown-menu.blue-shade.float-right

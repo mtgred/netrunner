@@ -31,6 +31,7 @@ io.set('transports', ['websocket'])
 
 io.sockets.on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
+    msg.date = new Date()
     io.sockets.emit "netrunner", msg
 
 # Express config

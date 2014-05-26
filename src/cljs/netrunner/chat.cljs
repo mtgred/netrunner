@@ -3,28 +3,26 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [netrunner.auth :refer [avatar] :as auth]
             [netrunner.socket :refer [out-channel chat-channel]]))
 
-(def app-state
-  (atom
-   {:channels {:general ["foobar" "spam eggs"]
-               :belgium ["Vive la frite !" "On aime la biere ici."]
-               :france ["Vive le pinard" "Et le petit jaune!"]}}))
+(def app-state (atom {:channels {:general [] :belgium [] :france []}}))
 
 (go (while true
       (let [msg (<! chat-channel)
-            ch (keyword (aget msg "channel"))
-            text (aget msg "msg")
+            ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
-        (swap! app-state assoc-in [:channels ch] (conj messages text)))))
+        (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
 
 (defn send-msg [channel owner]
   (let [input (om/get-node owner "msg-input")
-        text (.-value input)]
+        text (.-value input)
+        user (:user @auth/app-state)]
     (when-not (empty? text)
       (aset input "value" "")
       (.focus input)
-      (put! out-channel #js {:type "chat" :channel (name channel) :msg text}))))
+      (put! out-channel #js {:type "chat" :channel (name channel) :msg text
+                             :username (:username user) :emailhash (:emailhash user)}))))
 
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component
@@ -45,7 +43,14 @@
 
 (defn message-view [message owner]
   (om/component
-   (sab/html [:div (str message)])))
+   (sab/html
+    [:div.message
+     (om/build avatar message {:opts {:size 40}})
+     [:div.content
+      [:div
+       [:span.username (:username message)]
+       [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
+      [:div (:msg message)]]])))
 
 (defn chat [cursor owner]
   (reify
