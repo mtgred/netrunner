@@ -65,6 +65,11 @@
             (let [ch (<! (om/get-state owner :channel-ch))]
               (om/set-state! owner :channel ch)))))
 
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [div (om/get-node owner "message-list")]
+        (aset div "scrollTop" (.-scrollHeight div))))
+
     om/IRenderState
     (render-state [this state]
       (sab/html
@@ -76,7 +81,7 @@
            (om/build channel-view {:channel ch :active-channel (:channel state)}
                      {:init-state {:channel-ch (:channel-ch state)}}))]
         [:div.chat-box
-         [:div.blue-shade.panel.message-list
+         [:div.blue-shade.panel.message-list {:ref "message-list"}
           (om/build-all message-view (get-in cursor [:channels (:channel state)]))]
          (om/build msg-input-view state)]]))))
 
