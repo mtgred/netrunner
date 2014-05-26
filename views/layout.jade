@@ -21,11 +21,12 @@ html
 
     script(src='/lib/jquery/jquery.min.js')
     script(src='/lib/bootstrap/dist/js/bootstrap.js')
-    script(src='/lib/react/react.min.js')
+    script(src='/lib/moment/min/moment.min.js')
     script(src='/socket.io/socket.io.js')
     script(type="text/javascript")!= "var user = " + JSON.stringify(user) + ";"
 
     if env === 'dev'
+      script(src='/lib/react/react.js')
       script(type="text/javascript").
         var socket = io.connect(window.location.hostname);
       script(src="cljs/goog/base.js", type="text/javascript")
@@ -41,6 +42,7 @@ html
         goog.require("netrunner.deckbuilder");
         goog.require("utils.brepl");
     else
+      script(src='/lib/react/react.min.js')
       script(type="text/javascript").
         var socket = io.connect(window.location.hostname + ":8000");
 
