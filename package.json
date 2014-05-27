@@ -2,7 +2,8 @@
   "name": "Manabase",
   "version": "0.0.1",
   "scripts": {
-    "start": "coffee server.coffee"
+    "start": "coffee server.coffee",
+    "postinstall": "export HOME=${OPENSHIFT_DATA_DIR}; ./node_modules/bower/bin/bower/install"
   },
   "main": "server.coffee",
   "dependencies": {

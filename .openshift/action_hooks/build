@@ -2,15 +2,16 @@
 
 echo "++++ Build ++++"
 
-BOWER=${OPENSHIFT_REPO_DIR}node_modules/.bin/bower
-FAKE_HOME_DIR=${OPENSHIFT_DATA_DIR}
+# BOWER=${OPENSHIFT_REPO_DIR}node_modules/.bin/bower
+# FAKE_HOME_DIR=${OPENSHIFT_DATA_DIR}
 BOWER_INSTALL_DIR=${OPENSHIFT_DATA_DIR}bower
 BOWER_APP_DIR=${OPENSHIFT_REPO_DIR}resources/lib
 
-mkdir $BOWER_INSTALL_DIR
-cd ${OPENSHIFT_REPO_DIR}
-echo $BOWER --config.directory=$BOWER_INSTALL_DIR install
-env HOME=$FAKE_HOME_DIR $BOWER --config.directory=$BOWER_INSTALL_DIR install
+# mkdir $BOWER_INSTALL_DIR
+# cd ${OPENSHIFT_REPO_DIR}
+# echo $BOWER --config.directory=$BOWER_INSTALL_DIR install
+# env HOME=$FAKE_HOME_DIR $BOWER --config.directory=$BOWER_INSTALL_DIR install
 
-echo ln -s $BOWER_INSTALL_DIR $BOWER_APP_DIR
+# echo ln -s $BOWER_INSTALL_DIR $BOWER_APP_DIR
 ln -s $BOWER_INSTALL_DIR $BOWER_APP_DIR
+
