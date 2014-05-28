@@ -59,7 +59,7 @@ ul
 p
   margin: 5px 0
 
-input, select
+input, select, textarea
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
   font-size: 13px
   border-radius: 4px
@@ -539,8 +539,42 @@ a.button, button
 // Deckbuilder
 
 .deckbuilder
-  .button-bar
-    margin-bottom: 20px
+  overflow: hidden
+  padding: 10px 0
+
+  .viewport
+    position: relative
+    height: 650px
+    width: 1431px
+    left: 0
+    transition(all 0.5s ease-in-out)
+    display-flex()
+
+    .button-bar
+      margin-bottom: 20px
+
+    .decks, .decklist, .deckedit
+      flex(1)
+      border-right: 1px solid white
+      padding: 5px 15px
+
+    .decklist
+      .deck-name
+        float: left
+
+      button
+        width: 70px
+        float: right
+
+    .deckedit
+      .qty
+        width: 28px
+        text-align: center
+
+      > textarea
+        width: 100%
+        height: 530px
+
 
 // Gameboard
 
