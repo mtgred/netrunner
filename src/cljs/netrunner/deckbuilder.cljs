@@ -4,11 +4,51 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :as auth]
-            [clojure.string :refer [split split-lines]]))
+            [clojure.string :refer [split split-lines join]]
+            [netrunner.ajax :refer [POST GET]]
+            [netrunner.cardbrowser :as cb]
+            ))
 
 (def app-state (atom {:decks []}))
 
-(defn deck [deck owner]
+(defn check-deck [deck])
+
+(defn lookup [words]
+  (let [cards (:cards @cb/app-state)]
+    (let [matches (filter #(= (.toLowerCase (:title %)) (join " " words)) cards)]
+      (if (empty? matches)
+        (join " " words)
+        (first matches)))))
+
+(defn parse-deck [owner]
+  (let [deck (-> owner (om/get-node "deck-edit") .-value .toLowerCase)]
+    (for [line (split-lines deck)]
+      (let [tokens (split line " ")
+            qty (js/parseInt (first tokens))]
+        (when-not (js/isNaN qty)
+            {:qty qty :card (lookup (rest tokens))})))))
+
+(defn edit-deck [owner]
+  (om/set-state! owner :edit true)
+  (-> owner (om/get-node "viewport") js/$ (.css "left" -477)))
+
+(defn new-deck [owner]
+  (om/set-state! owner :name name)
+  (om/set-state! owner :cards cards)
+  (om/set-state! owner :identity identity)
+  (edit-deck owner))
+
+(defn save-deck [owner]
+  (om/set-state! owner :edit false)
+  (-> owner (om/get-node "viewport") js/$ (.css "left" 0))
+  ;; (let [params (-> e .-target js/$ )]
+  ;;   (go (let [response (<! (POST "/data/deck/new" params))])))
+  )
+
+(defn handle-edit [event owner]
+  (swap! app-state assoc :deck (parse-deck owner)))
+
+(defn deck-view [{:keys [name]} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -17,21 +57,16 @@
         [:h4 (:identity deck)]
         [:p (:name deck)]]))))
 
-(defn new-deck [side owner]
-  (om/set-state! owner :edit true)
-  (-> owner (om/get-node "viewport") js/$ (.css "left" -477)))
-
-(defn save-deck [deck owner]
-  (om/set-state! owner :edit false)
-  (-> owner (om/get-node "viewport") js/$ (.css "left" 0)))
-
 (defn deck-builder [{:keys [decks]} owner]
   (reify
     om/IInitState
     (init-state [this]
       {:edit false
        :card-search ""
-       :quantity 1})
+       :quantity 1
+       :name ""
+       :identity ""
+       :cards []})
 
     om/IRenderState
     (render-state [this state]
@@ -42,27 +77,28 @@
          [:div.viewport {:ref "viewport"}
           [:div.decks
            [:p.button-bar
-            [:button {:on-click #(new-deck :corp owner)} "New Corp deck"]
-            [:button {:on-click #(new-deck :runner owner)} "New Runner deck"]]
+            [:button {:on-click #(new-deck owner)} "New deck"]]
            (if (empty? decks)
              [:h4 "You have no deck"]
-             (om/build-all deck))]
+             (om/build-all deck-view decks))]
           [:div.decklist
-           [:h2.deck-name "Astrobiotic"]
+           [:h2.deck-name (:name state)]
+           [:h2.deck-name (:identity state)]
            (if (:edit state)
-             [:button {:on-click #(save-deck "" owner)} "Save"]
-             [:button {:on-click #(new-deck :corp owner)} "Edit"])]
+             [:button {:on-click #(save-deck owner)} "Save"]
+             [:button {:on-click #(edit-deck owner)} "Edit"])]
           [:div.deckedit
-           [:p [:input {:type "text" :placeholder "Deck name" :value ""}]]
+           [:p [:input.name {:type "text" :placeholder "Deck name" :value (:deckname state)
+                             :on-change #(om/set-state! owner :name (.. % -target -value))}]]
            [:p
-            [:input {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
+            [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
             [:input.qty {:type "text" :value (:quantity state)}]
             [:button {:on-click #()} "Add"]]
-           [:textarea]]]]]))))
+           [:textarea {:ref "deck-edit" :on-change #(handle-edit % owner)}]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
 
-(let [user (:user @auth/app-state)]
-  (when-not (empty? user)
-    (go (swap! app-state assoc :decks
-               (:json (<! (GET (str "/data/decks/user/username/" (:username user)))))))))
+;; (let [user (:user @auth/app-state)]
+;;   (when-not (empty? user)
+;;     (go (swap! app-state assoc :decks
+;;                (:json (<! (GET (str "/data/decks/user/username/" (:username user)))))))))
