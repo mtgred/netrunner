@@ -4,29 +4,10 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :as auth]
-            [clojure.string :refer [split split-lines join]]
             [netrunner.ajax :refer [POST GET]]
-            [netrunner.cardbrowser :as cb]
-            ))
+            [netrunner.deck :refer [parse-deck]]))
 
 (def app-state (atom {:decks []}))
-
-(defn check-deck [deck])
-
-(defn lookup [words]
-  (let [cards (:cards @cb/app-state)]
-    (let [matches (filter #(= (.toLowerCase (:title %)) (join " " words)) cards)]
-      (if (empty? matches)
-        (join " " words)
-        (first matches)))))
-
-(defn parse-deck [owner]
-  (let [deck (-> owner (om/get-node "deck-edit") .-value .toLowerCase)]
-    (for [line (split-lines deck)]
-      (let [tokens (split line " ")
-            qty (js/parseInt (first tokens))]
-        (when-not (js/isNaN qty)
-            {:qty qty :card (lookup (rest tokens))})))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -46,7 +27,8 @@
   )
 
 (defn handle-edit [event owner]
-  (swap! app-state assoc :deck (parse-deck owner)))
+  (let [deck (-> owner (om/get-node "deck-edit") .-value)]
+    (om/set-state! owner :cards (parse-deck deck))))
 
 (defn deck-view [{:keys [name]} owner]
   (reify
@@ -86,7 +68,13 @@
            [:h2.deck-name (:identity state)]
            (if (:edit state)
              [:button {:on-click #(save-deck owner)} "Save"]
-             [:button {:on-click #(edit-deck owner)} "Edit"])]
+             [:button {:on-click #(edit-deck owner)} "Edit"])
+           [:div.cards
+            (for [card (:cards state)]
+              [:p (:qty card) " "
+               (if-let [name (get-in card [:card :title])]
+                 [:a {:href ""} name]
+                 (:card card))])]]
           [:div.deckedit
            [:p [:input.name {:type "text" :placeholder "Deck name" :value (:deckname state)
                              :on-change #(om/set-state! owner :name (.. % -target -value))}]]
