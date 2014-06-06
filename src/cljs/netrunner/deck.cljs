@@ -27,15 +27,23 @@
           (recur c dist (rest cards))
           (recur card min-dist (rest cards)))))))
 
+(defn identical-cards? [cards]
+  (let [name (:title (first cards))]
+    (every? #(= (:title %) name) cards)))
+
+(defn match [query cards]
+  (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
+
 (defn lookup [query]
-  (let [cards (:cards @cb/app-state)]
-    (if-let [card (some #(when (= (-> % :title .toLowerCase) (.toLowerCase query)) %) cards)]
+  (let [q (.toLowerCase query)
+        cards (:cards @cb/app-state)]
+    (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
       card
-      query
-      ;; (loop [matches cards]
-      ;;   (if (= (count matches) 1)
-      ;;     ))
-      )))
+      (loop [i 3 matches cards]
+        (cond (zero? (count matches)) query
+              (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+              (<= i (count query)) (recur (inc i) (match (subs q 0 i) matches))
+              :else query)))))
 
 (defn parse-line [line]
   (let [tokens (split line " ")
