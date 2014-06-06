@@ -4,6 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :as auth]
+            [netrunner.cardbrowser :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
 
@@ -13,10 +14,11 @@
   (om/set-state! owner :edit true)
   (-> owner (om/get-node "viewport") js/$ (.css "left" -477)))
 
-(defn new-deck [owner]
-  (om/set-state! owner :name name)
-  (om/set-state! owner :cards cards)
-  (om/set-state! owner :identity identity)
+(defn new-deck [side owner]
+  (om/set-state! owner :side side)
+  (om/set-state! owner :name "New deck")
+  (om/set-state! owner :cards [])
+  (om/set-state! owner :identity "")
   (edit-deck owner))
 
 (defn save-deck [owner]
@@ -48,6 +50,7 @@
        :quantity 1
        :name ""
        :identity ""
+       :side ""
        :cards []})
 
     om/IRenderState
@@ -59,10 +62,12 @@
          [:div.viewport {:ref "viewport"}
           [:div.decks
            [:p.button-bar
-            [:button {:on-click #(new-deck owner)} "New deck"]]
+            [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
+            [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            (if (empty? decks)
              [:h4 "You have no deck"]
              (om/build-all deck-view decks))]
+
           [:div.decklist
            [:h2.deck-name (:name state)]
            [:h2.deck-name (:identity state)]
@@ -75,9 +80,14 @@
                (if-let [name (get-in card [:card :title])]
                  [:a {:href ""} name]
                  (:card card))])]]
+
           [:div.deckedit
-           [:p [:input.name {:type "text" :placeholder "Deck name" :value (:deckname state)
+           [:p [:input.name {:type "text" :placeholder "Deck name" :value (:name state)
                              :on-change #(om/set-state! owner :name (.. % -target -value))}]]
+           [:p
+            [:select {:value (:identity state)}
+             (for [card (filter #(and (= (:side %) (:side state)) (= (:type %) "Identity")) (:cards @cb/app-state))]
+               [:option (:title card)])]]
            [:p
             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
             [:input.qty {:type "text" :value (:quantity state)}]
