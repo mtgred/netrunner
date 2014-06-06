@@ -69,8 +69,8 @@
              (om/build-all deck-view decks))]
 
           [:div.decklist
-           [:h2.deck-name (:name state)]
-           [:h2.deck-name (:identity state)]
+           [:h2 (:name state)]
+           [:h4 (:identity state)]
            (if (:edit state)
              [:button {:on-click #(save-deck owner)} "Save"]
              [:button {:on-click #(edit-deck owner)} "Edit"])
@@ -87,7 +87,7 @@
            [:p
             [:select {:value (:identity state)}
              (for [card (filter #(and (= (:side %) (:side state)) (= (:type %) "Identity")) (:cards @cb/app-state))]
-               [:option (:title card)])]]
+               [:option  (:title card)])]]
            [:p
             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
             [:input.qty {:type "text" :value (:quantity state)}]
