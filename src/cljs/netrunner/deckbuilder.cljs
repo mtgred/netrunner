@@ -86,7 +86,9 @@
                              :on-change #(om/set-state! owner :name (.. % -target -value))}]]
            [:p
             [:select {:value (:identity state)}
-             (for [card (filter #(and (= (:side %) (:side state)) (= (:type %) "Identity")) (:cards @cb/app-state))]
+             (for [card (filter #(and (= (:side %) (:side state))
+                                      (not (#{"Special" "Alternates"} (:setname %)))
+                                      (= (:type %) "Identity")) (:cards @cb/app-state))]
                [:option  (:title card)])]]
            [:p
             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
