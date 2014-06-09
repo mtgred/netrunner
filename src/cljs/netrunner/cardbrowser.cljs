@@ -142,9 +142,9 @@
         [:div.blue-shade.panel.filters
          (let [query (:search-query state)]
            [:div.search-box
-            [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#128269;"}}]
+            [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#xe822;"}}]
             (when-not (empty? query)
-              [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#10006;"}
+              [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
                                      :on-click #(om/set-state! owner :search-query "")}])
             [:input.search {:on-change #(om/set-state! owner :search-query (.. % -target -value))
                             :type "text" :placeholder "Search cards" :value query}]])
