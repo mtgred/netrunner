@@ -20,10 +20,8 @@
   (-> owner (om/get-node "viewport") js/$ (.css "left" -477)))
 
 (defn new-deck [side owner]
-  (om/set-state! owner :side side)
-  (om/set-state! owner :name "New deck")
-  (om/set-state! owner :cards [])
-  (om/set-state! owner :identity (-> side side-identities first :title))
+  (om/set-state! owner :deck {:side side :name "New deck" :cards []
+                              :identity (-> side side-identities first :title)})
   (edit-deck owner))
 
 (defn save-deck [owner]
@@ -35,7 +33,7 @@
 
 (defn handle-edit [event owner]
   (let [deck (-> owner (om/get-node "deck-edit") .-value)]
-    (om/set-state! owner :cards (parse-deck deck))))
+    (om/set-state! owner [:deck :cards] (parse-deck deck))))
 
 (defn deck-view [{:keys [name]} owner]
   (reify
@@ -46,6 +44,19 @@
         [:h4 (:identity deck)]
         [:p (:name deck)]]))))
 
+(defn decklist-view [{:keys [name identity cards]} owner]
+  (om/component
+   (sab/html
+    [:div
+     [:h3.deckname name]
+     [:h4 identity]
+     [:div.cards
+      (for [card cards]
+        [:p (:qty card) " "
+         (if-let [name (get-in card [:card :title])]
+           [:a {:href ""} name]
+           (:card card))])]])))
+
 (defn deck-builder [{:keys [decks]} owner]
   (reify
     om/IInitState
@@ -53,10 +64,7 @@
       {:edit false
        :card-search ""
        :quantity 1
-       :name ""
-       :identity ""
-       :side ""
-       :cards []})
+       :deck {}})
 
     om/IRenderState
     (render-state [this state]
@@ -74,25 +82,20 @@
              (om/build-all deck-view decks))]
 
           [:div.decklist
-           [:h2 (:name state)]
-           [:h4 (:identity state)]
-           (if (:edit state)
-             [:button {:on-click #(save-deck owner)} "Save"]
-             [:button {:on-click #(edit-deck owner)} "Edit"])
-           [:div.cards
-            (for [card (:cards state)]
-              [:p (:qty card) " "
-               (if-let [name (get-in card [:card :title])]
-                 [:a {:href ""} name]
-                 (:card card))])]]
+           (when-not (empty? (:deck state))
+             (if (:edit state)
+               [:button {:on-click #(save-deck owner)} "Save"]
+               [:button {:on-click #(edit-deck owner)} "Edit"]))
+           (om/build decklist-view (:deck state))]
 
           [:div.deckedit
-           [:p [:input.name {:type "text" :placeholder "Deck name" :value (:name state)
-                             :on-change #(om/set-state! owner :name (.. % -target -value))}]]
            [:p
-            [:select {:value (:identity state)
-                      :on-change #(om/set-state! owner :identity (.. % -target -value))}
-             (for [card (side-identities (:side state))]
+            [:input.name {:type "text" :placeholder "Deck name" :value (get-in state [:deck :name])
+                          :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
+           [:p
+            [:select {:value (get-in state [:deck :identity])
+                      :on-change #(om/set-state! owner [:deck :identity] (.. % -target -value))}
+             (for [card (side-identities (get-in state [:deck :side]))]
                [:option (:title card)])]]
            [:p
             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
