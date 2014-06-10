@@ -10,6 +10,11 @@
 
 (def app-state (atom {:decks []}))
 
+(defn side-identities [side]
+  (filter #(and (= (:side %) side)
+                (not (#{"Special" "Alternates"} (:setname %)))
+                (= (:type %) "Identity")) (:cards @cb/app-state)))
+
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
   (-> owner (om/get-node "viewport") js/$ (.css "left" -477)))
@@ -18,7 +23,7 @@
   (om/set-state! owner :side side)
   (om/set-state! owner :name "New deck")
   (om/set-state! owner :cards [])
-  (om/set-state! owner :identity "")
+  (om/set-state! owner :identity (-> side side-identities first :title))
   (edit-deck owner))
 
 (defn save-deck [owner]
@@ -85,11 +90,10 @@
            [:p [:input.name {:type "text" :placeholder "Deck name" :value (:name state)
                              :on-change #(om/set-state! owner :name (.. % -target -value))}]]
            [:p
-            [:select {:value (:identity state)}
-             (for [card (filter #(and (= (:side %) (:side state))
-                                      (not (#{"Special" "Alternates"} (:setname %)))
-                                      (= (:type %) "Identity")) (:cards @cb/app-state))]
-               [:option  (:title card)])]]
+            [:select {:value (:identity state)
+                      :on-change #(om/set-state! owner :identity (.. % -target -value))}
+             (for [card (side-identities (:side state))]
+               [:option (:title card)])]]
            [:p
             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
             [:input.qty {:type "text" :value (:quantity state)}]
