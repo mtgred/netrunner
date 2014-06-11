@@ -115,6 +115,21 @@ app.get '/messages/:channel', (req, res) ->
     throw err if err
     res.json(200, data)
 
+app.post '/data/decks/', (req, res) ->
+  deck = req.body
+  if req.user
+    deck.user = req.user
+    if deck._id
+      db.collection('decks').update {_id: deck._id}, deck, (err) ->
+        console.log(err) if err
+        res.send {message: 'OK'}, 200
+    else
+      db.collection('decks').insert deck, (err) ->
+        console.log(err) if err
+        res.send {message: 'OK'}, 200
+  else
+    res.send {message: 'Unauthorized'}, 401
+
 app.configure 'development', ->
   console.log "Dev environment"
   app.get '/*', (req, res) ->
