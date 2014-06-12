@@ -99,6 +99,31 @@ app.get '/check/:username', (req, res) ->
     else
       res.send {message: 'OK'}, 200
 
+app.get '/messages/:channel', (req, res) ->
+  db.collection('messages').find({channel: req.params.channel}).sort(date: 1).limit(50).toArray (err, data) ->
+    throw err if err
+    res.json(200, data)
+
+app.get '/data/decks', (req, res) ->
+  db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
+    throw err if err
+    res.json(200, data)
+
+app.post '/data/decks', (req, res) ->
+  deck = req.body
+  if req.user
+    deck.username = req.user.username
+    if deck._id
+      db.collection('decks').update {_id: deck._id}, deck, (err) ->
+        console.log(err) if err
+        res.send {message: 'OK'}, 200
+    else
+      db.collection('decks').insert deck, (err) ->
+        console.log(err) if err
+        res.send {message: 'OK'}, 200
+  else
+    res.send {message: 'Unauthorized'}, 401
+
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
     throw err if err
@@ -112,26 +137,6 @@ app.get '/data/:collection/:field/:value', (req, res) ->
     console.error(err) if err
     delete d._id for d in data
     res.json(200, data)
-
-app.get '/messages/:channel', (req, res) ->
-  db.collection('messages').find({channel: req.params.channel}).sort(date: 1).limit(50).toArray (err, data) ->
-    throw err if err
-    res.json(200, data)
-
-app.post '/data/decks/', (req, res) ->
-  deck = req.body
-  if req.user
-    deck.user = req.user
-    if deck._id
-      db.collection('decks').update {_id: deck._id}, deck, (err) ->
-        console.log(err) if err
-        res.send {message: 'OK'}, 200
-    else
-      db.collection('decks').insert deck, (err) ->
-        console.log(err) if err
-        res.send {message: 'OK'}, 200
-  else
-    res.send {message: 'Unauthorized'}, 401
 
 app.configure 'development', ->
   console.log "Dev environment"
