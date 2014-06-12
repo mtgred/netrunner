@@ -39,14 +39,14 @@
   (let [deck (-> owner (om/get-node "deck-edit") .-value)]
     (om/set-state! owner [:deck :cards] (parse-deck deck))))
 
-(defn deck-view [{:keys [name]} owner]
+(defn deck-view [{:keys [name identity]} owner]
   (reify
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div
-        [:h4 (:identity deck)]
-        [:p (:name deck)]]))))
+       [:div.block-link
+        [:h4 name]
+        [:p identity]]))))
 
 (defn decklist-view [{:keys [name identity cards]} owner]
   (om/component
@@ -111,7 +111,16 @@
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
 
-;; (let [user (:user @auth/app-state)]
-;;   (when-not (empty? user)
-;;     (go (swap! app-state assoc :decks
-;;                (:json (<! (GET (str "/data/decks/user/username/" (:username user)))))))))
+;; (defn load-deck [data]
+;;   (let [cards (:cards @cb/app-state)
+;;         decks (for [deck data line (:cards deck)]
+;;                 (some #(when (= (:code %) (:card line)) %) cards)
+;;                 )]
+;;       ;; (swap! app-state assoc :decks data)
+;;       (println decks)
+;;       ))
+
+(when-not (empty? (:user @auth/app-state))
+  (go (swap! app-state assoc :decks (:json (<! (GET (str "/data/decks" (:username user))))))))
+
+(println (:decks @app-state))
