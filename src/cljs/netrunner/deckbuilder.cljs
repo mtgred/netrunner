@@ -124,5 +124,3 @@
 
 (when-not (empty? (:user @auth/app-state))
   (go (swap! app-state assoc :decks (:json (<! (GET (str "/data/decks" (:username user))))))))
-
-(println (:decks @app-state))
