@@ -24,9 +24,12 @@
                               :identity (-> side side-identities first :title)})
   (edit-deck owner))
 
-(defn save-deck [owner]
+(defn end-edit [owner]
   (om/set-state! owner :edit false)
-  (-> owner (om/get-node "viewport") js/$ (.css "left" 0))
+  (-> owner (om/get-node "viewport") js/$ (.css "left" 0)))
+
+(defn save-deck [owner]
+  (end-edit owner)
   (let [deck (om/get-state owner :deck)
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :code])})]
@@ -85,7 +88,9 @@
           [:div.decklist
            (when-not (empty? (:deck state))
              (if (:edit state)
-               [:button {:on-click #(save-deck owner)} "Save"]
+               [:div
+                [:button {:on-click #(end-edit owner)} "Cancel"]
+                [:button {:on-click #(save-deck owner)} "Save"]]
                [:button {:on-click #(edit-deck owner)} "Edit"]))
            (om/build decklist-view (:deck state))]
 
