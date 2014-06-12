@@ -32,8 +32,10 @@
   (end-edit owner)
   (let [deck (om/get-state owner :deck)
         cards (for [card (:cards deck)]
-                {:qty (:qty card) :card (get-in card [:card :code])})]
-    (go (let [response (<! (POST "/data/decks/" (assoc deck :cards cards) :json))]))))
+                {:qty (:qty card) :card (get-in card [:card :code])})
+        data (assoc deck :cards cards)]
+    (swap! app-state assoc :decks (conj (:decks @app-state) data))
+    (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn handle-edit [event owner]
   (let [deck (-> owner (om/get-node "deck-edit") .-value)]
