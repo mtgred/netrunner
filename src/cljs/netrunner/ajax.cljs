@@ -6,9 +6,10 @@
 
 (defn parse [event]
   (let [xhr (.-target event)
-        status (.getStatus xhr)
-        response (-> xhr .getResponseText JSON/parse (js->clj :keywordize-keys true))]
-    {:status status :json response}))
+        status (.getStatus xhr)]
+    (if (= status 200)
+      {:status status :json (-> xhr .getResponseText JSON/parse (js->clj :keywordize-keys true))}
+      {:status status})))
 
 (defn GET [url]
   (let [ch (chan)]
