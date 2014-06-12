@@ -69,7 +69,8 @@ passport.deserializeUser (id, done) ->
 
 # Routes
 app.post '/login', passport.authenticate('local'), (req, res) ->
-  res.json(200, req.user)
+  db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
+    res.json(200, req.user)
 
 app.get '/logout', (req, res) ->
   req.logout()
@@ -82,6 +83,8 @@ app.post '/register', (req, res) ->
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
+      req.body.registrationDate = new Date()
+      req.body.lastConnection = new Date()
       bcrypt.hash req.body.password, 3, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
@@ -133,11 +136,15 @@ app.post '/data/decks/', (req, res) ->
 app.configure 'development', ->
   console.log "Dev environment"
   app.get '/*', (req, res) ->
+    if req.user
+      db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     res.render('index.jade', { user: req.user, env: 'dev'})
 
 app.configure 'production', ->
   console.log "Prod environment"
   app.get '/*', (req, res) ->
+    if req.user
+      db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     res.render('index.jade', { user: req.user, env: 'prod'})
 
 # Server
