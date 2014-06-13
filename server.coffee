@@ -124,6 +124,14 @@ app.post '/data/decks', (req, res) ->
   else
     res.send {message: 'Unauthorized'}, 401
 
+app.post '/data/decks/delete', (req, res) ->
+  deck = req.body
+  if req.user
+    db.collection('decks').remove {_id: mongoskin.helper.toObjectID(deck._id), username: req.user.username}, (err) ->
+      res.send {message: 'OK'}, 200
+  else
+    res.send {message: 'Unauthorized'}, 401
+
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
     throw err if err

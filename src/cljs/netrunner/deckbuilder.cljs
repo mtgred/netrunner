@@ -40,12 +40,18 @@
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
     (swap! app-state assoc :decks (conj (:decks @app-state) deck))
-    (go (let [response (<! (POST "/data/decks/" data :json))]))))
+    (go (let [response (<! (POST "/data/decks/delete" data :json))]))))
 
-(defn handle-edit [event owner]
+(defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
     (om/set-state! owner :deck-edit text)
     (om/set-state! owner [:deck :cards] (parse-deck text))))
+
+(defn handle-delete [cursor owner]
+  (let [deck (om/get-state owner :deck)]
+    (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
+    (om/transact! cursor :decks (fn [ds] (vec (remove #(= deck %) ds))))
+    (om/set-state! owner :deck {})))
 
 (defn decklist-view [{:keys [name identity cards]} owner]
   (om/component
@@ -60,7 +66,7 @@
            [:a {:href ""} name]
            (:card card))])]])))
 
-(defn deck-builder [{:keys [decks]} owner]
+(defn deck-builder [{:keys [decks] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -95,7 +101,9 @@
                [:span
                 [:button {:on-click #(end-edit owner)} "Cancel"]
                 [:button {:on-click #(save-deck owner)} "Save"]]
-               [:button {:on-click #(edit-deck owner)} "Edit"]))
+               [:span
+                [:button {:on-click #(handle-delete cursor owner)} "Delete"]
+                [:button {:on-click #(edit-deck owner)} "Edit"]]))
            (om/build decklist-view (:deck state))]
 
           [:div.deckedit
@@ -113,7 +121,7 @@
              [:input.qty {:type "text" :value (:quantity state)}]
              [:button {:on-click #()} "Add"]]
             [:textarea {:ref "deck-edit" :value (:deck-edit state)
-                        :on-change #(handle-edit % owner)}]]]]]]))))
+                        :on-change #(handle-edit owner)}]]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
 
