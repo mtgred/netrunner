@@ -272,7 +272,7 @@ nav ul
   margin: 4px
 
 .container
-  width: 960px
+  width: 1000px
   margin: 0 auto
 
 .blue-shade
@@ -540,30 +540,47 @@ a.button, button
 .deckbuilder
   overflow: hidden
   padding: 10px 0
+  margin-top: 20px
 
   .viewport
     position: relative
     height: 650px
-    width: 1431px
+    width: 1491px
     left: 0
     transition(all 0.5s ease-in-out)
     display-flex()
 
-    .button-bar
-      margin-bottom: 20px
-      button
-        width: 135px
-        margin-right: 5px
-
     .decks, .decklist, .deckedit
       flex(1)
       border-right: 1px solid white
-      padding: 5px 15px
+      margin: 5px 0
+
+      > div
+        padding: 0 15px
 
     .decks
-      > div
-        padding: 5px 10px
-        margin: 0 -10px
+      display-flex()
+      flex-direction(column)
+      padding: 0
+
+      .button-bar
+        padding-bottom: 10px
+
+        button
+          width: 135px
+          margin-right: 5px
+
+      .deck-collection
+        overflow: auto
+        flex(1)
+
+        > .block-link
+          padding: 5px 10px
+          margin: 0 0 5px
+          border: 1px solid white
+
+          &:hover
+            border-color: orange
 
     .decklist
       position: relative
@@ -572,6 +589,8 @@ a.button, button
         float: right
         width: 80px
         margin-left: 5px
+        &:first-child
+          margin-right: 15px
 
       .deckname
         height: 30px
@@ -584,9 +603,12 @@ a.button, button
         width: 28px
         text-align: center
 
-      > textarea
+      p
+        margin: 0 0 5px 0
+
+      textarea
         width: 100%
-        height: 530px
+        height: 540px
 
 
 // Gameboard
