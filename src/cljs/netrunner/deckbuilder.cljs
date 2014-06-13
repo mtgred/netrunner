@@ -3,6 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [clojure.string :refer [join]]
             [netrunner.auth :as auth]
             [netrunner.cardbrowser :as cb]
             [netrunner.ajax :refer [POST GET]]
@@ -32,23 +33,14 @@
   (end-edit owner)
   (let [deck (om/get-state owner :deck)
         cards (for [card (:cards deck)]
-                {:qty (:qty card) :card (get-in card [:card :code])})
+                {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
-    (swap! app-state assoc :decks (conj (:decks @app-state) data))
+    (swap! app-state assoc :decks (conj (:decks @app-state) deck))
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn handle-edit [event owner]
   (let [deck (-> owner (om/get-node "deck-edit") .-value)]
     (om/set-state! owner [:deck :cards] (parse-deck deck))))
-
-(defn deck-view [{:keys [name identity]} owner]
-  (reify
-    om/IRenderState
-    (render-state [this state]
-      (sab/html
-       [:div.block-link
-        [:h4 name]
-        [:p identity]]))))
 
 (defn decklist-view [{:keys [name identity cards]} owner]
   (om/component
@@ -85,7 +77,11 @@
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            (if (empty? decks)
              [:h4 "You have no deck"]
-             (om/build-all deck-view decks))]
+             (for [deck decks]
+               [:div.block-link {:class (when (= (:deck state) deck) "active")
+                                 :on-click #(om/set-state! owner :deck deck)}
+                [:h4 (:name deck)]
+                [:p (:identity deck)]]))]
 
           [:div.decklist
            (when-not (empty? (:deck state))
@@ -113,14 +109,9 @@
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
 
-;; (defn load-deck [data]
-;;   (let [cards (:cards @cb/app-state)
-;;         decks (for [deck data line (:cards deck)]
-;;                 (some #(when (= (:code %) (:card line)) %) cards)
-;;                 )]
-;;       ;; (swap! app-state assoc :decks data)
-;;       (println decks)
-;;       ))
-
 (when-not (empty? (:user @auth/app-state))
-  (go (swap! app-state assoc :decks (:json (<! (GET (str "/data/decks" (:username user))))))))
+  (go (let [data (:json (<! (GET (str "/data/decks" (:username user)))))
+            decks (for [deck data]
+                    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
+                      (assoc deck :cards (parse-deck (join "\n" cards)))))]
+        (swap! app-state assoc :decks decks))))
