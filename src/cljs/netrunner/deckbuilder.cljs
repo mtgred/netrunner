@@ -16,8 +16,12 @@
                 (not (#{"Special" "Alternates"} (:setname %)))
                 (= (:type %) "Identity")) (:cards @cb/app-state)))
 
+(defn deck->str [cards]
+  (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards))
+
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
+  (om/set-state! owner :deck-edit (deck->str (om/get-state owner [:deck :cards])))
   (-> owner (om/get-node "viewport") js/$ (.css "left" -500)))
 
 (defn new-deck [side owner]
@@ -39,8 +43,9 @@
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn handle-edit [event owner]
-  (let [deck (-> owner (om/get-node "deck-edit") .-value)]
-    (om/set-state! owner [:deck :cards] (parse-deck deck))))
+  (let [text (-> owner (om/get-node "deck-edit") .-value)]
+    (om/set-state! owner :deck-edit text)
+    (om/set-state! owner [:deck :cards] (parse-deck text))))
 
 (defn decklist-view [{:keys [name identity cards]} owner]
   (om/component
@@ -62,6 +67,7 @@
       {:edit false
        :card-search ""
        :quantity 1
+       :deck-edit ""
        :deck {}})
 
     om/IRenderState
@@ -106,7 +112,8 @@
              [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
              [:input.qty {:type "text" :value (:quantity state)}]
              [:button {:on-click #()} "Add"]]
-            [:textarea {:ref "deck-edit" :on-change #(handle-edit % owner)}]]]]]]))))
+            [:textarea {:ref "deck-edit" :value (:deck-edit state)
+                        :on-change #(handle-edit % owner)}]]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
 
@@ -116,6 +123,3 @@
                     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
                       (assoc deck :cards (parse-deck (join "\n" cards)))))]
         (swap! app-state assoc :decks decks))))
-
-
-(println (:decks @app-state))
