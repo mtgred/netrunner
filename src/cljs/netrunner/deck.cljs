@@ -2,31 +2,6 @@
   (:require [clojure.string :refer [split split-lines join]]
             [netrunner.cardbrowser :as cb]))
 
-(declare levenshtein)
-
-(defn levenshtein-distance [a b]
-  (cond
-    (empty? a) (count b)
-    (empty? b) (count a)
-    :else (min
-           (+ (if (= (first a) (first b)) 0 1) (levenshtein (rest a) (rest b)))
-           (inc (levenshtein (rest a) b))
-           (inc (levenshtein seq1 (rest a))))))
-
-(def levenshtein (memoize levenshtein-distance))
-
-(defn fuzzy-search [query]
-  (loop [card nil
-         min-dist 1000
-         cards (:cards @cb/app-state)]
-    (if (empty? cards)
-      card
-      (let [c (first cards)
-            dist (levenshtein query (:title c))]
-        (if (< dist min-dist)
-          (recur c dist (rest cards))
-          (recur card min-dist (rest cards)))))))
-
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
