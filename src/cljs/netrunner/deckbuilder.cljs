@@ -50,7 +50,7 @@
 (defn handle-delete [cursor owner]
   (let [deck (om/get-state owner :deck)]
     (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
-    (om/transact! cursor :decks (fn [ds] (vec (remove #(= deck %) ds))))
+    (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
     (om/set-state! owner :deck (first (:decks @cursor)))))
 
 (defn deck-builder [{:keys [decks] :as cursor} owner]
