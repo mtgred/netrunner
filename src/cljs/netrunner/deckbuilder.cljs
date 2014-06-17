@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! <!] :as async]
+            [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
             [netrunner.auth :as auth]
             [netrunner.cardbrowser :as cb]
@@ -22,7 +22,9 @@
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
   (om/set-state! owner :deck-edit (deck->str (om/get-state owner [:deck :cards])))
-  (-> owner (om/get-node "viewport") js/$ (.css "left" -500)))
+  (-> owner (om/get-node "viewport") js/$ (.css "left" -500))
+  (go (<! (timeout 500))
+      (-> owner (om/get-node "deckname") js/$ .focus)))
 
 (defn new-deck [side owner]
   (om/set-state! owner :deck {:side side :name "New deck" :cards []
@@ -92,7 +94,7 @@
                 [:span
                  [:button {:on-click #(handle-delete cursor owner)} "Delete"]
                  [:button {:on-click #(edit-deck owner)} "Edit"]])
-              [:h3.deckname (:name deck)]
+              [:h3 (:name deck)]
               [:h4 (:identity deck)]
               [:div.cards
                (for [card (:cards deck)]
@@ -106,8 +108,9 @@
            [:div
             [:p
              [:h4 "Deck name"]
-             [:input.name {:type "text" :placeholder "Deck name" :value (get-in state [:deck :name])
-                           :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
+             [:input.deckname {:type "text" :placeholder "Deck name"
+                               :ref "deckname" :value (get-in state [:deck :name])
+                               :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
             [:p
              [:h4 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity])
