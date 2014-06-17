@@ -77,7 +77,7 @@
             (if (empty? decks)
               [:h4 "You have no deck"]
               (for [deck (:decks cursor)]
-                [:div.block-link {:class (when (= (:deck state) deck) "active")
+                [:div.deckline {:class (when (= (:deck state) deck) "active")
                                   :on-click #(om/set-state! owner :deck deck)}
                  [:h4 (:name deck)]
                  [:p (:identity deck)]]))]]
@@ -105,17 +105,22 @@
           [:div.deckedit
            [:div
             [:p
+             [:h4 "Deck name"]
              [:input.name {:type "text" :placeholder "Deck name" :value (get-in state [:deck :name])
                            :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
             [:p
-             [:select {:value (get-in state [:deck :identity])
-                       :on-change #(om/set-state! owner [:deck :identity] (.. % -target -value))}
+             [:h4 "Identity"]
+             [:select.identity {:value (get-in state [:deck :identity])
+                                :on-change #(om/set-state! owner [:deck :identity] (.. % -target -value))}
               (for [card (side-identities (get-in state [:deck :side]))]
                 [:option (:title card)])]]
             [:p
-             [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
-             [:input.qty {:type "text" :value (:quantity state)}]
-             [:button {:on-click #()} "Add"]]
+             [:h4 "Card lookup"]
+             [:form
+              [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
+              [:input.qty {:type "text" :value (:quantity state)}]
+              [:button {:on-click #()} "Add to deck"]]]
+            [:h4 "Decklist"]
             [:textarea {:ref "deck-edit" :value (:deck-edit state)
                         :on-change #(handle-edit owner)}]]]]]]))))
 

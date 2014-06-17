@@ -574,13 +574,18 @@ a.button, button
         overflow: auto
         flex(1)
 
-        > .block-link
+        .deckline
           padding: 5px 10px
           margin: 0 0 5px
           border: 1px solid white
+          border-radius: 4px
+          cursor: pointer
 
           &:hover
             border-color: orange
+
+         .deckline.active
+           color: orange
 
     .decklist
       position: relative
@@ -599,19 +604,27 @@ a.button, button
         columns(2, 5px)
 
     .deckedit
-      .name, .lookup
+      .name
+        width: 100%
+
+      .lookup
         width: 250px
 
+      .identity
+        width: 100%
+
       .qty
-        width: 28px
+        width: 30px
         text-align: center
+        margin-right: 10px
 
       p
         margin: 0 0 5px 0
 
       textarea
         width: 100%
-        height: 540px
+        height: 435px
+        line-height: 18px
 
 
 // Gameboard
