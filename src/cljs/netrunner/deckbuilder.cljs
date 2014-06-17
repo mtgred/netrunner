@@ -51,20 +51,7 @@
   (let [deck (om/get-state owner :deck)]
     (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
     (om/transact! cursor :decks (fn [ds] (vec (remove #(= deck %) ds))))
-    (om/set-state! owner :deck {})))
-
-(defn decklist-view [{:keys [name identity cards]} owner]
-  (om/component
-   (sab/html
-    [:div
-     [:h3.deckname name]
-     [:h4 identity]
-     [:div.cards
-      (for [card cards]
-        [:p (:qty card) " "
-         (if-let [name (get-in card [:card :title])]
-           [:a {:href ""} name]
-           (:card card))])]])))
+    (om/set-state! owner :deck (first (:decks @cursor)))))
 
 (defn deck-builder [{:keys [decks] :as cursor} owner]
   (reify
@@ -74,7 +61,7 @@
        :card-search ""
        :quantity 1
        :deck-edit ""
-       :deck {}})
+       :deck nil})
 
     om/IRenderState
     (render-state [this state]
@@ -89,22 +76,30 @@
            [:div.deck-collection
             (if (empty? decks)
               [:h4 "You have no deck"]
-              (for [deck decks]
+              (for [deck (:decks cursor)]
                 [:div.block-link {:class (when (= (:deck state) deck) "active")
                                   :on-click #(om/set-state! owner :deck deck)}
                  [:h4 (:name deck)]
                  [:p (:identity deck)]]))]]
 
           [:div.decklist
-           (when-not (empty? (:deck state))
-             (if (:edit state)
-               [:span
-                [:button {:on-click #(end-edit owner)} "Cancel"]
-                [:button {:on-click #(save-deck owner)} "Save"]]
-               [:span
-                [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                [:button {:on-click #(edit-deck owner)} "Edit"]]))
-           (om/build decklist-view (:deck state))]
+           (when-let [deck (:deck state)]
+             [:div
+              (if (:edit state)
+                [:span
+                 [:button {:on-click #(end-edit owner)} "Cancel"]
+                 [:button {:on-click #(save-deck owner)} "Save"]]
+                [:span
+                 [:button {:on-click #(handle-delete cursor owner)} "Delete"]
+                 [:button {:on-click #(edit-deck owner)} "Edit"]])
+              [:h3.deckname (:name deck)]
+              [:h4 (:identity deck)]
+              [:div.cards
+               (for [card (:cards deck)]
+                 [:p (:qty card) " "
+                  (if-let [name (get-in card [:card :title])]
+                    [:a {:href ""} name]
+                    (:card card))])]])]
 
           [:div.deckedit
            [:div
