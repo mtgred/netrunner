@@ -40,7 +40,7 @@
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
     (swap! app-state assoc :decks (conj (:decks @app-state) deck))
-    (go (let [response (<! (POST "/data/decks/delete" data :json))]))))
+    (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
