@@ -96,10 +96,11 @@
               [:h4 (:identity deck)]
               [:div.cards
                (for [card (:cards deck)]
-                 [:p (:qty card) " "
+                 [:span (:qty card) " "
                   (if-let [name (get-in card [:card :title])]
                     [:a {:href ""} name]
-                    (:card card))])]])]
+                    (:card card))
+                  [:br]])]])]
 
           [:div.deckedit
            [:div
