@@ -97,12 +97,14 @@
               [:h3 (:name deck)]
               [:h4 (:identity deck)]
               [:div.cards
-               (for [card (:cards deck)]
-                 [:span (:qty card) " "
-                  (if-let [name (get-in card [:card :title])]
-                    [:a {:href ""} name]
-                    (:card card))
-                  [:br]])]])]
+               (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
+                 [:div.group
+                  [:h4 (str (first group) " (" (count (last group)) ")") ]
+                  (for [line (last group)]
+                    [:div.line (:qty line) " "
+                     (if-let [name (get-in line [:card :title])]
+                       [:a {:href ""} name]
+                       (:card line))])])]])]
 
           [:div.deckedit
            [:div
