@@ -65,6 +65,11 @@
        :deck-edit ""
        :deck nil})
 
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (if (and (not (empty? decks)) (not (:deck prev-state)))
+        (om/set-state! owner :deck (first decks))))
+
     om/IRenderState
     (render-state [this state]
       (sab/html
