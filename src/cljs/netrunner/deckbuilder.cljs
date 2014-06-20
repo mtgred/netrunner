@@ -103,28 +103,28 @@
 
           [:div.decklist
            (when-let [deck (:deck state)]
-             [:div
-              (if (:edit state)
-                [:span
-                 [:button {:on-click #(end-edit owner)} "Cancel"]
-                 [:button {:on-click #(save-deck owner)} "Save"]]
-                [:span
-                 [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                 [:button {:on-click #(edit-deck owner)} "Edit"]])
-              [:h3 (:name deck)]
-              (let [identity (:identity deck)]
+             (let [identity (:identity deck)]
+               [:div
+                (if (:edit state)
+                  [:span
+                   [:button {:on-click #(end-edit owner)} "Cancel"]
+                   [:button {:on-click #(save-deck owner)} "Save"]]
+                  [:span
+                   [:button {:on-click #(handle-delete cursor owner)} "Delete"]
+                   [:button {:on-click #(edit-deck owner)} "Edit"]])
+                [:h3 (:name deck)]
                 [:h4 (:title identity)]
                 [:div
-                 (str "Influence: " (compute-influence deck)"/" (:influencelimit identity))])
-              [:div.cards
-               (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
-                 [:div.group
-                  [:h4 (str (or (first group) "Unknown") " (" (count (last group)) ")") ]
-                  (for [line (last group)]
-                    [:div.line (:qty line) " "
-                     (if-let [name (get-in line [:card :title])]
-                       [:a {:href ""} name]
-                       (:card line))])])]])]
+                 (str "Influence: " (compute-influence deck)"/" (:influencelimit identity))]
+                [:div.cards
+                 (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
+                   [:div.group
+                    [:h4 (str (or (first group) "Unknown") " (" (count (last group)) ")") ]
+                    (for [line (last group)]
+                      [:div.line (:qty line) " "
+                       (if-let [name (get-in line [:card :title])]
+                         [:a {:href ""} name]
+                         (:card line))])])]]))]
 
           [:div.deckedit
            [:div
@@ -135,7 +135,7 @@
                                :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
             [:p
              [:h4 "Identity"]
-             [:select.identity {:value (get-in state [:deck :identity])
+             [:select.identity {:value (get-in state [:deck :identity :title])
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
               (for [card (side-identities (get-in state [:deck :side]))]
                 [:option (:title card)])]]
