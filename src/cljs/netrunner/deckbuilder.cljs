@@ -16,8 +16,20 @@
                 (not (#{"Special" "Alternates"} (:setname %)))
                 (= (:type %) "Identity")) (:cards @cb/app-state)))
 
+(defn get-card [title]
+  (some #(when (= (:title %) title) %) (:cards @cb/app-state)))
+
 (defn deck->str [cards]
   (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards))
+
+(defn compute-influence [deck]
+  (let [faction (get-in deck [:identity :faction] deck)
+        cards (:cards deck)]
+    (reduce #(let [card (:card %2)]
+               (if (= (:faction card) faction)
+                 %1
+                 (+ %1 (* (:qty %2) (:factioncost card)))))
+            0 (:cards deck))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -28,7 +40,7 @@
 
 (defn new-deck [side owner]
   (om/set-state! owner :deck {:side side :name "New deck" :cards []
-                              :identity (-> side side-identities first :title)})
+                              :identity (-> side side-identities first)})
   (edit-deck owner))
 
 (defn end-edit [owner]
@@ -87,7 +99,7 @@
                 [:div.deckline {:class (when (= (:deck state) deck) "active")
                                   :on-click #(om/set-state! owner :deck deck)}
                  [:h4 (:name deck)]
-                 [:p (:identity deck)]]))]]
+                 [:p (get-in deck [:identity :title])]]))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
@@ -100,7 +112,10 @@
                  [:button {:on-click #(handle-delete cursor owner)} "Delete"]
                  [:button {:on-click #(edit-deck owner)} "Edit"]])
               [:h3 (:name deck)]
-              [:h4 (:identity deck)]
+              (let [identity (:identity deck)]
+                [:h4 (:title identity)]
+                [:div
+                 (str "Influence: " (compute-influence deck)"/" (:influencelimit identity))])
               [:div.cards
                (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
                  [:div.group
@@ -121,7 +136,7 @@
             [:p
              [:h4 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity])
-                                :on-change #(om/set-state! owner [:deck :identity] (.. % -target -value))}
+                                :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
               (for [card (side-identities (get-in state [:deck :side]))]
                 [:option (:title card)])]]
             [:p
