@@ -119,7 +119,7 @@
               [:div.cards
                (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
                  [:div.group
-                  [:h4 (str (first group) " (" (count (last group)) ")") ]
+                  [:h4 (str (or (first group) "Unknown") " (" (count (last group)) ")") ]
                   (for [line (last group)]
                     [:div.line (:qty line) " "
                      (if-let [name (get-in line [:card :title])]
