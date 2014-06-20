@@ -22,7 +22,7 @@
 (defn deck->str [cards]
   (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards))
 
-(defn compute-influence [deck]
+(defn influence [deck]
   (let [faction (get-in deck [:identity :faction] deck)
         cards (:cards deck)]
     (reduce #(let [card (:card %2)]
@@ -30,6 +30,17 @@
                  %1
                  (+ %1 (* (:qty %2) (:factioncost card)))))
             0 (:cards deck))))
+
+(defn deck-size [cards]
+  (reduce #(+ %1 (:qty %2)) 0 cards))
+
+(defn min-agenda-points [deck]
+  (let [size (max (deck-size (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
+    (+ 2 (* 2 (/ size 5)))))
+
+(defn agenda-points [cards]
+  (reduce #(if-let [point (get-in %2 [:card :agendapoints])]
+             (+ (* point (:qty %2)) %1) %1) 0 cards))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -96,14 +107,14 @@
             (if (empty? decks)
               [:h4 "You have no deck"]
               (for [deck (:decks cursor)]
-                [:div.deckline {:class (when (= (:deck state) deck) "active")
-                                  :on-click #(om/set-state! owner :deck deck)}
+                [:div.deckline {:class (when (= (:deck state) deck) "active") :on-click #(om/set-state! owner :deck deck)}
                  [:h4 (:name deck)]
                  [:p (get-in deck [:identity :title])]]))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
-             (let [identity (:identity deck)]
+             (let [identity (:identity deck)
+                   cards (:cards deck)]
                [:div
                 (if (:edit state)
                   [:span
@@ -114,10 +125,16 @@
                    [:button {:on-click #(edit-deck owner)} "Edit"]])
                 [:h3 (:name deck)]
                 [:h4 (:title identity)]
+                [:div (str (deck-size cards) " cards (minimum " (:minimumdecksize identity) ")")]
                 [:div
-                 (str "Influence: " (compute-influence deck)"/" (:influencelimit identity))]
+                 (str "Influence: " (influence deck) "/" (:influencelimit identity))]
+                (when (= (:side identity) "Corp")
+                  (let [min-point (min-agenda-points deck)
+                        points (agenda-points cards)]
+                    [:div (str "Agenda points: " points "/" min-point " - " (inc min-point))])
+                  )
                 [:div.cards
-                 (for [group (group-by #(get-in % [:card :type]) (:cards deck))]
+                 (for [group (group-by #(get-in % [:card :type]) cards)]
                    [:div.group
                     [:h4 (str (or (first group) "Unknown") " (" (count (last group)) ")") ]
                     (for [line (last group)]
