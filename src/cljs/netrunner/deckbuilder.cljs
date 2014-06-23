@@ -164,6 +164,7 @@
               [:button {:on-click #()} "Add to deck"]]]
             [:h4 "Decklist"]
             [:textarea {:ref "deck-edit" :value (:deck-edit state)
+                        :placeholder "Copy & paste a decklist. Or start typing."
                         :on-change #(handle-edit owner)}]]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
