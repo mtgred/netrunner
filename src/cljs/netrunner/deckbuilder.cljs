@@ -36,7 +36,7 @@
 
 (defn min-agenda-points [deck]
   (let [size (max (deck-size (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
-    (+ 2 (* 2 (/ size 5)))))
+    (+ 2 (* 2 (quot size 5)))))
 
 (defn agenda-points [cards]
   (reduce #(if-let [point (get-in %2 [:card :agendapoints])]
