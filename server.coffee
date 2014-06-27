@@ -33,7 +33,8 @@ io.sockets.on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
     io.sockets.emit('netrunner', msg)
-    db.collection('messages').insert msg, (err, result) ->
+    if msg.type is "chat"
+      db.collection('messages').insert msg, (err, result) ->
 
 # Express config
 app.configure ->
