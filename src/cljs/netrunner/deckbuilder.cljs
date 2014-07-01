@@ -4,12 +4,27 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
-            [netrunner.auth :as auth]
+            [netrunner.auth :refer [auth-channel] :as auth]
             [netrunner.cardbrowser :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
 
 (def app-state (atom {:decks []}))
+
+(defn fetch-decks []
+  (go (let [data (:json (<! (GET (str "/data/decks"))))
+            decks (for [deck data]
+                    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
+                      (assoc deck :cards (parse-deck (join "\n" cards)))))]
+        (swap! app-state assoc :decks decks))))
+
+;; Fetch decks if user is logged in
+(when (:user @auth/app-state)
+  (fetch-decks))
+
+;; Fetch deck after a login or registration
+(go (<! auth-channel)
+    (fetch-decks))
 
 (defn side-identities [side]
   (filter #(and (= (:side %) side)
@@ -168,10 +183,3 @@
                         :on-change #(handle-edit owner)}]]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
-
-(when-not (empty? (:user @auth/app-state))
-  (go (let [data (:json (<! (GET (str "/data/decks" (:username user)))))
-            decks (for [deck data]
-                    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
-                      (assoc deck :cards (parse-deck (join "\n" cards)))))]
-        (swap! app-state assoc :decks decks))))
