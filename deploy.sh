@@ -1,5 +1,6 @@
 # git remote add openshift -f <openshift git repo>
 
+git stash
 lein cljsbuild clean
 lein cljsbuild once prod &
 git push openshift
