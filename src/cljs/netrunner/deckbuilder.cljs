@@ -46,11 +46,11 @@
                  (+ %1 (* (:qty %2) (:factioncost card)))))
             0 (:cards deck))))
 
-(defn deck-size [cards]
+(defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))
 
 (defn min-agenda-points [deck]
-  (let [size (max (deck-size (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
+  (let [size (max (card-count (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
     (+ 2 (* 2 (quot size 5)))))
 
 (defn agenda-points [cards]
@@ -140,7 +140,7 @@
                    [:button {:on-click #(edit-deck owner)} "Edit"]])
                 [:h3 (:name deck)]
                 [:h4 (:title identity)]
-                [:div (str (deck-size cards) " cards (minimum " (:minimumdecksize identity) ")")]
+                [:div (str (card-count cards) " cards (minimum " (:minimumdecksize identity) ")")]
                 [:div
                  (str "Influence: " (influence deck) "/" (:influencelimit identity))]
                 (when (= (:side identity) "Corp")
@@ -151,7 +151,7 @@
                 [:div.cards
                  (for [group (group-by #(get-in % [:card :type]) cards)]
                    [:div.group
-                    [:h4 (str (or (first group) "Unknown") " (" (count (last group)) ")") ]
+                    [:h4 (str (or (first group) "Unknown") " (" (card-count (last group)) ")") ]
                     (for [line (last group)]
                       [:div.line (:qty line) " "
                        (if-let [name (get-in line [:card :title])]
