@@ -122,7 +122,8 @@
             (if (empty? decks)
               [:h4 "You have no deck"]
               (for [deck (:decks cursor)]
-                [:div.deckline {:class (when (= (:deck state) deck) "active") :on-click #(om/set-state! owner :deck deck)}
+                [:div.deckline {:class (when (= (:deck state) deck) "active")
+                                :on-click #(om/set-state! owner :deck deck)}
                  [:h4 (:name deck)]
                  [:p (get-in deck [:identity :title])]]))]]
 
@@ -140,30 +141,42 @@
                    [:button {:on-click #(edit-deck owner)} "Edit"]])
                 [:h3 (:name deck)]
                 [:h4 (:title identity)]
-                [:div (str (card-count cards) " cards (minimum " (:minimumdecksize identity) ")")]
                 [:div
-                 (str "Influence: " (influence deck) "/" (:influencelimit identity))]
+                 (let [count (card-count cards)
+                       min-count (:minimumdecksize identity)]
+                   [:div count " cards"
+                    (when (< count min-count)
+                      [:span.invalid (str "(minimum " min-count ")")])])]
+                (let [inf (influence deck)
+                      limit (:influencelimit identity)]
+                  [:div "Influence: "
+                   [:span {:class (when (> inf limit) "invalid")} inf]
+                   "/" (:influencelimit identity)])
                 (when (= (:side identity) "Corp")
                   (let [min-point (min-agenda-points deck)
                         points (agenda-points cards)]
-                    [:div (str "Agenda points: " points "/" min-point " - " (inc min-point))])
-                  )
+                    [:div "Agenda points: " points
+                     (when (< points min-point)
+                       [:span.invalid "(minimum " min-point ")"])
+                     (when (> points (inc min-point))
+                       [:span.invalid "(maximum" (inc min-point) ")"])]))
                 [:div.cards
                  (for [group (group-by #(get-in % [:card :type]) cards)]
                    [:div.group
                     [:h4 (str (or (first group) "Unknown") " (" (card-count (last group)) ")") ]
                     (for [line (last group)]
                       [:div.line (:qty line) " "
-                       (if-let [card (:card line)]
-                         [:span
-                          [:a {:href ""} (:title card)]
-                          (when-not (or (= (:faction card) (:faction identity))
-                                        (zero? (:factioncost card)))
-                            (let [influence (* (:factioncost card) (:qty line))]
-                              [:span.influence
-                               {:class (-> card :faction .toLowerCase (.replace " " "-"))
-                                :dangerouslySetInnerHTML
-                                #js {:__html (apply str (for [i (range influence)] "&#8226;"))}}]))]
+                       (if-let [name (get-in line [:card :title])]
+                         (let [card (:card line)]
+                           [:span
+                            [:a {:href ""} name]
+                            (when-not (or (= (:faction card) (:faction identity))
+                                          (zero? (:factioncost card)))
+                              (let [influence (* (:factioncost card) (:qty line))]
+                                [:span.influence
+                                 {:class (-> card :faction .toLowerCase (.replace " " "-"))
+                                  :dangerouslySetInnerHTML
+                                  #js {:__html (apply str (for [i (range influence)] "&#8226;"))}}]))])
                          (:card line))])])]]))]
 
           [:div.deckedit
