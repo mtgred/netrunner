@@ -154,8 +154,16 @@
                     [:h4 (str (or (first group) "Unknown") " (" (card-count (last group)) ")") ]
                     (for [line (last group)]
                       [:div.line (:qty line) " "
-                       (if-let [name (get-in line [:card :title])]
-                         [:a {:href ""} name]
+                       (if-let [card (:card line)]
+                         [:span
+                          [:a {:href ""} (:title card)]
+                          (when-not (or (= (:faction card) (:faction identity))
+                                        (zero? (:factioncost card)))
+                            (let [influence (* (:factioncost card) (:qty line))]
+                              [:span.influence
+                               {:class (-> card :faction .toLowerCase (.replace " " "-"))
+                                :dangerouslySetInnerHTML
+                                #js {:__html (apply str (for [i (range influence)] "&#8226;"))}}]))]
                          (:card line))])])]]))]
 
           [:div.deckedit
