@@ -115,7 +115,9 @@ app.post '/data/decks', (req, res) ->
   if req.user
     deck.username = req.user.username
     if deck._id
-      db.collection('decks').update {_id: deck._id}, deck, (err) ->
+      id = deck._id
+      delete deck._id
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
         console.log(err) if err
         res.send {message: 'OK'}, 200
     else
