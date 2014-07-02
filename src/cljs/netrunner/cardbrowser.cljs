@@ -2,10 +2,18 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put!] :as async]
+            [cljs.core.async :refer [chan put! >!] :as async]
             [netrunner.ajax :refer [GET]]))
 
 (def app-state (atom {:cards [] :sets []}))
+
+(def cards-channel (chan))
+
+(go (swap! app-state assoc :sets (:json (<! (GET "/data/sets")))))
+
+(go (let [cards (:json (<! (GET "/data/cards")))]
+      (swap! app-state assoc :cards cards)
+      (put! cards-channel cards)))
 
 (defn make-span [text symbol class]
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
@@ -179,6 +187,3 @@
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
-
-(go (swap! app-state assoc :sets (:json (<! (GET "/data/sets")))))
-(go (swap! app-state assoc :cards (:json (<! (GET "/data/cards")))))

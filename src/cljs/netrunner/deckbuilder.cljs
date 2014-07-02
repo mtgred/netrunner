@@ -5,7 +5,7 @@
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
             [netrunner.auth :refer [auth-channel] :as auth]
-            [netrunner.cardbrowser :as cb]
+            [netrunner.cardbrowser :refer [cards-channel] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
 
@@ -13,18 +13,16 @@
 
 (defn fetch-decks []
   (go (let [data (:json (<! (GET (str "/data/decks"))))
+            loaded (<! cards-channel)
             decks (for [deck data]
                     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
                       (assoc deck :cards (parse-deck (join "\n" cards)))))]
         (swap! app-state assoc :decks decks))))
 
-;; Fetch decks if user is logged in
-(when (:user @auth/app-state)
-  (fetch-decks))
-
-;; Fetch deck after a login or registration
-(go (<! auth-channel)
-    (fetch-decks))
+(if (:user @auth/app-state)
+  (fetch-decks)
+  (go (<! auth-channel)
+      (fetch-decks)))
 
 (defn side-identities [side]
   (filter #(and (= (:side %) side)
