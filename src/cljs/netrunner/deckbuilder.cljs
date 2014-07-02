@@ -74,10 +74,13 @@
 (defn save-deck [owner]
   (end-edit owner)
   (let [deck (om/get-state owner :deck)
+        decks (:decks @app-state)
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
-    (swap! app-state assoc :decks (conj (:decks @app-state) deck))
+    (if-let [id (:_id deck)]
+      (swap! app-state assoc :decks (map #(if (= id (:_id %)) deck %) decks))
+      (swap! app-state assoc :decks (conj decks deck)))
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn handle-edit [owner]
