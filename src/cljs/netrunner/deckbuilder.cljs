@@ -102,14 +102,25 @@
     (om/set-state! owner :deck (first (:decks @cursor)))))
 
 (defn handle-keydown [owner event]
-  (let [selected (om/get-state owner :selected)]
+  (let [selected (om/get-state owner :selected)
+        matches (om/get-state owner :matches)]
     (case (.-keyCode event)
       38 (when (> selected 0)
            (om/update-state! owner :selected dec))
-      40 (when (< selected (dec (count (om/get-state owner :matches))))
+      40 (when (< selected (dec (count matches)))
            (om/update-state! owner :selected inc))
-      13 (om/set-state! owner :query (:title (nth (om/get-state owner :matches) selected)))
+      13 (when-not (= (om/get-state owner :query) (:title (first matches)))
+           (.preventDefault event)
+           (om/set-state! owner :query (:title (nth matches selected))))
       (om/set-state! owner :selected 0))))
+
+(defn handle-add [owner event]
+  (.preventDefault event)
+  (put! (om/get-state owner :add-channel)
+        (str (om/get-state owner :quantity) " " (om/get-state owner :query) "\n"))
+  (om/set-state! owner :quantity 3)
+  (om/set-state! owner :query "")
+  (-> ".deckedit .lookup" js/$ .focus))
 
 (defn card-lookup [{:keys [cards]} owner]
   (reify
@@ -117,7 +128,7 @@
     (init-state [this]
       {:query ""
        :matches []
-       :quantity 1
+       :quantity 3
        :selected 0})
 
     om/IRenderState
@@ -125,12 +136,13 @@
       (sab/html
        [:p
         [:h4 "Card lookup"]
-        [:form.card-search {:on-submit #(.preventDefault %)}
+        [:form.card-search {:on-submit #(handle-add owner %)}
          [:input.lookup {:type "text" :placeholder "Card" :value (:query state)
                          :on-change #(om/set-state! owner :query (.. % -target -value))
                          :on-key-down #(handle-keydown owner %)
                          :on-blur #(om/set-state! owner :matches [])}] " x "
-         [:input.qty {:type "text" :value (:quantity state)}]
+         [:input.qty {:type "text" :value (:quantity state)
+                      :on-change #(om/set-state! owner :quantity (.. % -target -value))}]
          [:button {:on-click #()} "Add to deck"]
          (let [query (:query state)]
            (when-not (or (empty? query)
@@ -148,7 +160,16 @@
     om/IInitState
     (init-state [this]
       {:edit false
+       :add-channel (chan)
        :deck nil})
+
+    om/IWillMount
+    (will-mount [this]
+      (let [add-channel (om/get-state owner :add-channel)]
+        (go (while true
+              (let [line (<! add-channel)]
+                (-> ".deckedit textarea" js/$ (.append line))
+                (handle-edit owner))))))
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
