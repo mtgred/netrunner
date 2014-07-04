@@ -120,8 +120,7 @@
   (let [$cardlist (js/$ ".card-list")
         height (- (.prop $cardlist "scrollHeight") (.innerHeight $cardlist))]
     (when (> (.scrollTop $cardlist) (- height 600))
-      ;; (om/update-state! owner :page inc)
-      (om/set-state! owner :page (inc (om/get-state owner :page))))))
+      (om/update-state! owner :page inc))))
 
 (defn card-browser [cursor owner]
   (reify
