@@ -13,16 +13,17 @@
 
 (defn fetch-decks []
   (go (let [data (:json (<! (GET (str "/data/decks"))))
-            loaded (<! cards-channel)
             decks (for [deck data]
                     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
-                      (assoc deck :cards (parse-deck (join "\n" cards)))))]
+                      (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards)))))]
         (swap! app-state assoc :decks decks))))
 
-(if (:user @auth/app-state)
-  (fetch-decks)
-  (go (<! auth-channel)
-      (fetch-decks)))
+(go (let [cards (<! cards-channel)]
+      (if (:user @auth/app-state)
+        (fetch-decks)
+        (go (<! auth-channel)
+            (fetch-decks)))
+      (>! cards-channel cards)))
 
 (defn side-identities [side]
   (filter #(and (= (:side %) side)
@@ -86,7 +87,7 @@
 (defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
     (om/set-state! owner :deck-edit text)
-    (om/set-state! owner [:deck :cards] (parse-deck text))))
+    (om/set-state! owner [:deck :cards] (parse-deck (om/get-state owner [:deck :identity :side]) text))))
 
 (defn handle-delete [cursor owner]
   (let [deck (om/get-state owner :deck)]
