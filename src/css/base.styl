@@ -620,8 +620,31 @@ a.button, button
       .deckname, .identity
         width: 100%
 
-      .lookup
-        width: 250px
+      .card-search
+        position: relative
+
+        .lookup
+          width: 250px
+
+        .typeahead
+          position: absolute
+          padding: 2px
+          margin: 2px 0 0 0
+          width: 250px
+          background-color: rgba(255, 255, 255, 0.9)
+          color: black
+          border-radius: 4px
+          border: 1px solid transparent-blue
+
+          > div
+            padding: 2px 5px
+            border-radius: 4px
+            border: 1px solid transparent
+
+
+          .selected
+            background-color: transparent-orange
+            border-color: orange
 
       .qty
         width: 30px

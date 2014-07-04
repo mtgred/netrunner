@@ -37,7 +37,7 @@
   (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards))
 
 (defn influence [deck]
-  (let [faction (get-in deck [:identity :faction] deck)
+  (let [faction (get-in deck [:identity :faction])
         cards (:cards deck)]
     (reduce #(let [card (:card %2)]
                (if (= (:faction card) faction)
@@ -84,6 +84,12 @@
       (swap! app-state assoc :decks (conj decks deck)))
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
+(defn match [side query]
+  (let [cards (filter #(and (= (:side %) side)
+                            (not (#{"Special" "Alternates"} (:setname %)))
+                            (not= (:type %) "Identity")) (:cards @cb/app-state))]
+    (take 10 (filter #(if (= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) false true) cards))))
+
 (defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
     (om/set-state! owner :deck-edit text)
@@ -95,14 +101,50 @@
     (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
     (om/set-state! owner :deck (first (:decks @cursor)))))
 
+(defn handle-keydown [owner event]
+  (let [selected (om/get-state owner :selected)]
+    (case (.-keyCode event)
+      38 (when (> selected 0)
+           (om/update-state! owner :selected dec))
+      40 (when (< selected (dec (count (om/get-state owner :matches))))
+           (om/update-state! owner :selected inc))
+      13 (om/set-state! owner :query (:title (nth (om/get-state owner :matches) selected)))
+      (om/set-state! owner :selected 0))))
+
+(defn card-lookup [{:keys [cards]} owner]
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:query ""
+       :matches []
+       :quantity 1
+       :selected 0})
+
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:p
+        [:h4 "Card lookup"]
+        [:form.card-search {:on-submit #(.preventDefault %)}
+         [:input.lookup {:type "text" :placeholder "Card" :value (:query state)
+                         :on-change #(om/set-state! owner :query (.. % -target -value))
+                         :on-key-down #(handle-keydown owner %)}] " x "
+         [:input.qty {:type "text" :value (:quantity state)}]
+         [:button {:on-click #()} "Add to deck"]
+         (let [query (:query state)]
+           (when-not (or (empty? query) (= (:title (first (:matches state))) query))
+             (let [matches (match (get-in state [:deck :identity :side]) query)]
+               (om/set-state! owner :matches matches)
+               [:div.typeahead
+                (for [i (range (count matches))]
+                  [:div {:class (if (= i (:selected state)) "selected" "")}
+                   (:title (nth matches i))])])))]]))))
+
 (defn deck-builder [{:keys [decks] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
       {:edit false
-       :card-search ""
-       :quantity 1
-       :deck-edit ""
        :deck nil})
 
     om/IDidUpdate
@@ -194,12 +236,7 @@
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
               (for [card (side-identities (get-in state [:deck :side]))]
                 [:option (:title card)])]]
-            [:p
-             [:h4 "Card lookup"]
-             [:form
-              [:input.lookup {:type "text" :placeholder "Card" :value (:card-search state)}] " x "
-              [:input.qty {:type "text" :value (:quantity state)}]
-              [:button {:on-click #()} "Add to deck"]]]
+            (om/build card-lookup cursor {:state state})
             [:h4 "Decklist"]
             [:textarea {:ref "deck-edit" :value (:deck-edit state)
                         :placeholder "Copy & paste a decklist. Or start typing."
