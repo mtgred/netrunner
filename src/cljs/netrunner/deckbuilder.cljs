@@ -128,11 +128,14 @@
         [:form.card-search {:on-submit #(.preventDefault %)}
          [:input.lookup {:type "text" :placeholder "Card" :value (:query state)
                          :on-change #(om/set-state! owner :query (.. % -target -value))
-                         :on-key-down #(handle-keydown owner %)}] " x "
+                         :on-key-down #(handle-keydown owner %)
+                         :on-blur #(om/set-state! owner :matches [])}] " x "
          [:input.qty {:type "text" :value (:quantity state)}]
          [:button {:on-click #()} "Add to deck"]
          (let [query (:query state)]
-           (when-not (or (empty? query) (= (:title (first (:matches state))) query))
+           (when-not (or (empty? query)
+                         (-> ".deckedit .lookup" js/$ (.is ":focus") not)
+                         (= (:title (first (:matches state))) query))
              (let [matches (match (get-in state [:deck :identity :side]) query)]
                (om/set-state! owner :matches matches)
                [:div.typeahead
