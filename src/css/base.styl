@@ -578,14 +578,21 @@ a.button, button
         flex(1)
 
         .deckline
+          height: 60px
           padding: 5px 10px
           margin: 0 0 5px
           border: 1px solid white
           border-radius: 4px
           cursor: pointer
+          clear: both
 
           &:hover
             border-color: orange
+
+          > img
+            float: left
+            height: 100%
+            margin-right: 10px
 
          .deckline.active
            color: orange
@@ -599,6 +606,15 @@ a.button, button
         margin-left: 5px
         &:first-child
           margin-right: 15px
+
+      .header
+        height: 82px
+        clear: both
+
+        > img
+          height: 100%
+          margin-right: 10px
+          float: left
 
       .deckname
         height: 30px

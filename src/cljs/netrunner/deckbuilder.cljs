@@ -5,7 +5,7 @@
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
             [netrunner.auth :refer [auth-channel] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel] :as cb]
+            [netrunner.cardbrowser :refer [cards-channel image-url] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
 
@@ -200,6 +200,7 @@
               (for [deck (:decks cursor)]
                 [:div.deckline {:class (when (= (:deck state) deck) "active")
                                 :on-click #(om/set-state! owner :deck deck)}
+                 [:img {:src (image-url (:identity deck))}]
                  [:h4 (:name deck)]
                  [:p (get-in deck [:identity :title])]]))]]
 
@@ -216,26 +217,27 @@
                    [:button {:on-click #(handle-delete cursor owner)} "Delete"]
                    [:button {:on-click #(edit-deck owner)} "Edit"]])
                 [:h3 (:name deck)]
-                [:h4 (:title identity)]
-                [:div
+                [:div.header
+                 [:img {:src (image-url identity)}]
+                 [:h4 (:title identity)]
                  (let [count (card-count cards)
                        min-count (:minimumdecksize identity)]
                    [:div count " cards"
                     (when (< count min-count)
-                      [:span.invalid (str "(minimum " min-count ")")])])]
-                (let [inf (influence deck)
-                      limit (:influencelimit identity)]
-                  [:div "Influence: "
-                   [:span {:class (when (> inf limit) "invalid")} inf]
-                   "/" (:influencelimit identity)])
-                (when (= (:side identity) "Corp")
-                  (let [min-point (min-agenda-points deck)
-                        points (agenda-points cards)]
-                    [:div "Agenda points: " points
-                     (when (< points min-point)
-                       [:span.invalid "(minimum " min-point ")"])
-                     (when (> points (inc min-point))
-                       [:span.invalid "(maximum" (inc min-point) ")"])]))
+                      [:span.invalid (str "(minimum " min-count ")")])])
+                 (let [inf (influence deck)
+                       limit (:influencelimit identity)]
+                   [:div "Influence: "
+                    [:span {:class (when (> inf limit) "invalid")} inf]
+                    "/" (:influencelimit identity)])
+                 (when (= (:side identity) "Corp")
+                   (let [min-point (min-agenda-points deck)
+                         points (agenda-points cards)]
+                     [:div "Agenda points: " points
+                      (when (< points min-point)
+                        [:span.invalid "(minimum " min-point ")"])
+                      (when (> points (inc min-point))
+                        [:span.invalid "(maximum" (inc min-point) ")"])]))]
                 [:div.cards
                  (for [group (group-by #(get-in % [:card :type]) cards)]
                    [:div.group
