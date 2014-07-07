@@ -84,10 +84,14 @@
       (swap! app-state assoc :decks (conj decks deck)))
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
-(defn match [side query]
+(defn match [{:keys [side faction]} query]
   (let [cards (filter #(and (= (:side %) side)
                             (not (#{"Special" "Alternates"} (:setname %)))
-                            (not= (:type %) "Identity")) (:cards @cb/app-state))]
+                            (not= (:type %) "Identity")
+                            (or (not= (:type %) "Agenda")
+                                (= (:faction %) "Neutral")
+                                (= (:faction %) faction)))
+                      (:cards @cb/app-state))]
     (take 10 (filter #(if (= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) false true) cards))))
 
 (defn handle-edit [owner]
@@ -148,7 +152,7 @@
            (when-not (or (empty? query)
                          (-> ".deckedit .lookup" js/$ (.is ":focus") not)
                          (= (:title (first (:matches state))) query))
-             (let [matches (match (get-in state [:deck :identity :side]) query)]
+             (let [matches (match (get-in state [:deck :identity]) query)]
                (om/set-state! owner :matches matches)
                [:div.typeahead
                 (for [i (range (count matches))]
