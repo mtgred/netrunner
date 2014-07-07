@@ -85,14 +85,16 @@
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn match [{:keys [side faction]} query]
-  (let [cards (filter #(and (= (:side %) side)
-                            (not (#{"Special" "Alternates"} (:setname %)))
-                            (not= (:type %) "Identity")
-                            (or (not= (:type %) "Agenda")
-                                (= (:faction %) "Neutral")
-                                (= (:faction %) faction)))
-                      (:cards @cb/app-state))]
-    (take 10 (filter #(if (= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) false true) cards))))
+  (if (empty? query)
+    []
+    (let [cards (filter #(and (= (:side %) side)
+                              (not (#{"Special" "Alternates"} (:setname %)))
+                              (not= (:type %) "Identity")
+                              (or (not= (:type %) "Agenda")
+                                  (= (:faction %) "Neutral")
+                                  (= (:faction %) faction)))
+                        (:cards @cb/app-state))]
+      (take 10 (filter #(if (= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) false true) cards)))))
 
 (defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
@@ -115,6 +117,7 @@
            (om/update-state! owner :selected inc))
       13 (when-not (= (om/get-state owner :query) (:title (first matches)))
            (.preventDefault event)
+           (-> ".deckedit .qty" js/$ .focus)
            (om/set-state! owner :query (:title (nth matches selected))))
       (om/set-state! owner :selected 0))))
 
@@ -147,17 +150,18 @@
                          :on-blur #(om/set-state! owner :matches [])}] " x "
          [:input.qty {:type "text" :value (:quantity state)
                       :on-change #(om/set-state! owner :quantity (.. % -target -value))}]
-         [:button {:on-click #()} "Add to deck"]
-         (let [query (:query state)]
+         [:button "Add to deck"]
+         (let [query (:query state)
+               matches (match (get-in state [:deck :identity]) query)]
            (when-not (or (empty? query)
-                         (-> ".deckedit .lookup" js/$ (.is ":focus") not)
-                         (= (:title (first (:matches state))) query))
-             (let [matches (match (get-in state [:deck :identity]) query)]
-               (om/set-state! owner :matches matches)
-               [:div.typeahead
-                (for [i (range (count matches))]
-                  [:div {:class (if (= i (:selected state)) "selected" "")}
-                   (:title (nth matches i))])])))]]))))
+                         (= (:title (first matches)) query))
+             (om/set-state! owner :matches matches)
+             [:div.typeahead
+              (for [i (range (count matches))]
+                [:div {:class (if (= i (:selected state)) "selected" "")
+                       :on-click (fn [e] (-> ".deckedit .qty" js/$ .focus)
+                                         (om/set-state! owner :query (.. e -target -innerHTML)))}
+                 (:title (nth matches i))])]))]]))))
 
 (defn deck-builder [{:keys [decks] :as cursor} owner]
   (reify
