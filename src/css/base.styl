@@ -545,6 +545,15 @@ a.button, button
   padding: 10px 0
   margin-top: 20px
 
+  .viewport.edit
+    left: -500px
+
+    .decklist .line .card
+      left: auto
+      right: 50%
+      transform: translateX(100%)
+      margin-right: -12px
+
   .viewport
     position: relative
     height: 650px
@@ -622,6 +631,23 @@ a.button, button
       .cards
         margin-top: 20px
         columns(2, 5px)
+
+      .line
+        position: relative
+        overflow: visible
+        line-height: 20px
+
+        &:hover .card
+          display: block
+
+        .card
+          display: none
+          position: fixed
+          z-index: 10
+          margin-left: -12px
+          left: 50%
+          top: 65px
+          transform: translateX(-100%)
 
       .group
         margin-bottom: 20px

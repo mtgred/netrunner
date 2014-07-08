@@ -5,7 +5,7 @@
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
             [netrunner.auth :refer [auth-channel] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url] :as cb]
+            [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
 
@@ -59,7 +59,7 @@
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
   (om/set-state! owner :deck-edit (deck->str (om/get-state owner [:deck :cards])))
-  (-> owner (om/get-node "viewport") js/$ (.css "left" -500))
+  (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
   (go (<! (timeout 500))
       (-> owner (om/get-node "deckname") js/$ .focus)))
 
@@ -70,7 +70,7 @@
 
 (defn end-edit [owner]
   (om/set-state! owner :edit false)
-  (-> owner (om/get-node "viewport") js/$ (.css "left" 0)))
+  (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
 
 (defn save-deck [owner]
   (end-edit owner)
@@ -248,6 +248,7 @@
                          (let [card (:card line)]
                            [:span
                             [:a {:href ""} name]
+                            (om/build card-view card)
                             (when-not (or (= (:faction card) (:faction identity))
                                           (zero? (:factioncost card)))
                               (let [influence (* (:factioncost card) (:qty line))]
