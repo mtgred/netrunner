@@ -30,4 +30,5 @@
                             "resources/lib/react/react.min.js"
                             "resources/lib/moment/min/moment.min.js"
                             "resources/lib/bootstrap/dist/js/bootstrap.min.js"
+                            "resources/js/mobile.js"
                             "node_modules/socket.io/node_modules/socket.io-client/dist/socket.io.min.js"]}}]})
