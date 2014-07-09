@@ -7,13 +7,16 @@
 
 (def app-state (atom {:active-page "/"}))
 
-(defn navigate [token]
-  (let [page-number (case token "/" 0 "/cards" 1 "/play" 2 "/deckbuilder" 3 "/news" 4)]
-    (.carousel (js/$ ".carousel") page-number))
-  (try (js/ga "send" "pageview") (catch js/Error e))
-  (swap! app-state assoc :active-page [token]))
+(def tokens #js ["/" "/cards" "/play" "/deckbuilder" "/news"])
 
 (def history (Html5History.))
+
+(defn navigate [token]
+  (let [page-number (.indexOf tokens token)]
+    (.carousel (js/$ ".carousel") page-number))
+  (try (js/ga "send" "pageview") (catch js/Error e))
+  (.setToken history token)
+  (swap! app-state assoc :active-page [token]))
 
 (events/listen history EventType/NAVIGATE #(navigate (.-token %)))
 (.setUseFragment history false)
@@ -36,3 +39,14 @@
           [:a {:href route} (first page)]]))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
+
+(defn handle-swipe [direction]
+  (let [page (.indexOf tokens (first (:active-page @app-state)))]
+    (if (= direction :left)
+      (when (< (inc page) (count tokens))
+        (navigate (nth tokens (inc page))))
+      (when (> page 0)
+        (navigate (nth tokens (dec page)))))))
+
+(-> ".carousel" js/$ (.swipeleft #(handle-swipe :left)))
+(-> ".carousel" js/$ (.swiperight #(handle-swipe :right)))
