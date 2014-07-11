@@ -216,7 +216,7 @@
                   [:span
                    [:button.big {:on-click #(handle-delete cursor owner)} "Delete"]
                    [:button.big {:on-click #(edit-deck owner)} "Edit"]])
-                [:h3 (:name deck)]
+                [:h3.deckname (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
                  [:h4 (:title identity)]

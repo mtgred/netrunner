@@ -78,7 +78,7 @@ input, select, textarea
 button
   border-radius: 4px
   font-size: 12px
-  padding: 0 15px
+  padding: 0 10px
   background-color: transparent-orange
   border: 1px solid orange
   color: white
@@ -550,7 +550,7 @@ a.button, button
 .deckbuilder
   overflow: hidden
   padding: 10px 0
-  margin-top: 20px
+  margin-top: 10px
 
   .viewport.edit
     left: -500px
@@ -563,7 +563,7 @@ a.button, button
 
   .viewport
     position: relative
-    height: 650px
+    min-height: 600px
     width: 1491px
     left: 0
     transition(all 0.5s ease-in-out)
@@ -583,10 +583,10 @@ a.button, button
       padding: 0
 
       .button-bar
-        padding-bottom: 10px
+        padding-bottom: 15px
 
         button
-          width: 140px
+          width: 135px
           margin-right: 5px
 
       .deck-collection
@@ -619,7 +619,7 @@ a.button, button
 
       button.big
         float: right
-        width: 80px
+        width: 70px
         margin-left: 5px
 
       .header
@@ -631,7 +631,9 @@ a.button, button
           margin-right: 10px
           float: left
 
-      .deckname
+      h3.deckname
+        width: 320px
+      input.deckname
         height: 30px
 
       .cards
@@ -641,13 +643,13 @@ a.button, button
       .line
         position: relative
         overflow: visible
-        line-height: 22px
+        line-height: 20px
 
         &:hover .card
           display: block
 
         button.small
-          margin: 3px 6px 3px 0
+          margin: 3px 5px 3px 0
 
         .card
           display: none
