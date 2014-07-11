@@ -84,7 +84,7 @@
       (sab/html
        [:div.chat-app
         [:div.blue-shade.panel.channel-list
-         [:button.add "+"]
+         [:button.small "+"]
          [:h4 "Channels"]
          (for [ch (keys (:channels cursor))]
            (om/build channel-view {:channel ch :active-channel (:channel state)}

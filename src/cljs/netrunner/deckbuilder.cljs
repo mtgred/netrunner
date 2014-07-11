@@ -211,11 +211,11 @@
                [:div
                 (if (:edit state)
                   [:span
-                   [:button {:on-click #(end-edit owner)} "Cancel"]
-                   [:button {:on-click #(save-deck owner)} "Save"]]
+                   [:button.big {:on-click #(end-edit owner)} "Cancel"]
+                   [:button.big {:on-click #(save-deck owner)} "Save"]]
                   [:span
-                   [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                   [:button {:on-click #(edit-deck owner)} "Edit"]])
+                   [:button.big {:on-click #(handle-delete cursor owner)} "Delete"]
+                   [:button.big {:on-click #(edit-deck owner)} "Edit"]])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
@@ -243,7 +243,12 @@
                    [:div.group
                     [:h4 (str (or (first group) "Unknown") " (" (card-count (last group)) ")") ]
                     (for [line (last group)]
-                      [:div.line (:qty line) " "
+                      [:div.line
+                       (when (:edit state)
+                         [:span
+                          [:button.small {:type "button" :on-click #()} "+"]
+                          [:button.small {:type "button" :on-click #()} "-"]])
+                       (:qty line) " "
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)]
                            [:span

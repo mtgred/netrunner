@@ -93,14 +93,14 @@ button
     box-shadow(0 0 6px blue)
     border-color: blue
 
-button.add
-  padding: 0 4px 2px
+button.small
+  padding: 0
   font-size: 12px
-  float: right
-  height: auto
+  height: 20px
+  width: 20px
+  line-height: 18px
   background-color: transparent
   border-color: white
-  margin-right: -2px
   &:hover
     background-color: transparent-orange
     border-color: orange
@@ -400,6 +400,10 @@ a.button, button
   flex(0 0 180px)
   margin: 0 5px 0 0
 
+  button.small
+    float: right
+    margin-right: -2px
+
 .chat-box
   flex(1)
 
@@ -613,12 +617,10 @@ a.button, button
     .decklist
       position: relative
 
-      button
+      button.big
         float: right
         width: 80px
         margin-left: 5px
-        &:first-child
-          margin-right: 15px
 
       .header
         height: 82px
@@ -639,10 +641,13 @@ a.button, button
       .line
         position: relative
         overflow: visible
-        line-height: 20px
+        line-height: 22px
 
         &:hover .card
           display: block
+
+        button.small
+          margin: 3px 6px 3px 0
 
         .card
           display: none
@@ -654,7 +659,7 @@ a.button, button
           transform: translateX(-100%)
 
       .group
-        margin-bottom: 20px
+        margin-bottom: 15px
         display: inline-block
         width: 100%
 
