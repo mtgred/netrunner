@@ -72,16 +72,16 @@
   (om/set-state! owner :edit false)
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
 
-(defn save-deck [owner]
+(defn save-deck [cursor owner]
   (end-edit owner)
-  (let [deck (om/get-state owner :deck)
+  (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
         decks (:decks @app-state)
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
     (if-let [id (:_id deck)]
-      (swap! app-state assoc :decks (map #(if (= id (:_id %)) deck %) decks))
-      (swap! app-state assoc :decks (conj decks deck)))
+      (om/update! cursor :decks (map #(if (= id (:_id %)) deck %) decks))
+      (om/update! cursor :decks (conj decks deck)))
     (go (let [response (<! (POST "/data/decks/" data :json))]))))
 
 (defn match [{:keys [side faction]} query]
@@ -176,13 +176,14 @@
       (let [add-channel (om/get-state owner :add-channel)]
         (go (while true
               (let [line (<! add-channel)]
+                ;; (println line)
                 (-> ".deckedit textarea" js/$ (.append line))
                 (handle-edit owner))))))
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (if (and (not (empty? decks)) (not (:deck prev-state)))
-        (om/set-state! owner :deck (first decks))))
+        (om/set-state! owner :deck (first (sort-by :date > decks)))))
 
     om/IRenderState
     (render-state [this state]
@@ -197,11 +198,12 @@
            [:div.deck-collection
             (if (empty? decks)
               [:h4 "You have no deck"]
-              (for [deck (:decks cursor)]
-                [:div.deckline {:class (when (= (:deck state) deck) "active")
+              (for [deck (sort-by :date > decks)]
+                [:div.deckline {:class (when (= (get-in state [:deck :_id]) (:_id deck)) "active")
                                 :on-click #(om/set-state! owner :deck deck)}
                  [:img {:src (image-url (:identity deck))}]
                  [:h4 (:name deck)]
+                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
                  [:p (get-in deck [:identity :title])]]))]]
 
           [:div.decklist
@@ -212,7 +214,7 @@
                 (if (:edit state)
                   [:span
                    [:button.big {:on-click #(end-edit owner)} "Cancel"]
-                   [:button.big {:on-click #(save-deck owner)} "Save"]]
+                   [:button.big {:on-click #(save-deck cursor owner)} "Save"]]
                   [:span
                    [:button.big {:on-click #(handle-delete cursor owner)} "Delete"]
                    [:button.big {:on-click #(edit-deck owner)} "Edit"]])
