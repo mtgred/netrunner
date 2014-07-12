@@ -115,10 +115,10 @@
            (om/update-state! owner :selected dec))
       40 (when (< selected (dec (count matches)))
            (om/update-state! owner :selected inc))
-      13 (when-not (= (om/get-state owner :query) (:title (first matches)))
-           (.preventDefault event)
-           (-> ".deckedit .qty" js/$ .focus)
-           (om/set-state! owner :query (:title (nth matches selected))))
+      (9 13) (when-not (= (om/get-state owner :query) (:title (first matches)))
+               (.preventDefault event)
+               (-> ".deckedit .qty" js/$ .focus)
+               (om/set-state! owner :query (:title (nth matches selected))))
       (om/set-state! owner :selected 0))))
 
 (defn handle-add [owner event]
