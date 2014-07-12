@@ -260,9 +260,12 @@
                     (for [line (last group)]
                       [:div.line
                        (when (:edit state)
-                         [:span
-                          [:button.small {:type "button" :on-click #()} "+"]
-                          [:button.small {:type "button" :on-click #()} "-"]])
+                         (let [ch (om/get-state owner :edit-channel)]
+                           [:span
+                            [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)})
+                                            :type "button"} "+"]
+                            [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
+                                            :type "button"} "-"]]))
                        (:qty line) " "
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)]
