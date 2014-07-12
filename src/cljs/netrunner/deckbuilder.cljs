@@ -254,10 +254,10 @@
                       (when (> points (inc min-point))
                         [:span.invalid "(maximum" (inc min-point) ")"])]))]
                 [:div.cards
-                 (for [group (group-by #(get-in % [:card :type]) cards)]
+                 (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group
                     [:h4 (str (or (first group) "Unknown") " (" (card-count (last group)) ")") ]
-                    (for [line (last group)]
+                    (for [line (sort-by #(get-in % [:card :title]) (last group))]
                       [:div.line
                        (when (:edit state)
                          (let [ch (om/get-state owner :edit-channel)]
