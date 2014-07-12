@@ -33,8 +33,10 @@
 (defn get-card [title]
   (some #(when (= (:title %) title) %) (:cards @cb/app-state)))
 
-(defn deck->str [cards]
-  (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards))
+(defn deck->str [owner]
+  (let [cards (om/get-state owner [:deck :cards])
+        str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards)]
+    (om/set-state! owner :deck-edit str)))
 
 (defn influence [deck]
   (let [faction (get-in deck [:identity :faction])
@@ -58,7 +60,7 @@
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
-  (om/set-state! owner :deck-edit (deck->str (om/get-state owner [:deck :cards])))
+  (deck->str owner)
   (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
   (go (<! (timeout 500))
       (-> owner (om/get-node "deckname") js/$ .focus)))
@@ -123,8 +125,9 @@
 
 (defn handle-add [owner event]
   (.preventDefault event)
-  (put! (om/get-state owner :add-channel)
-        (str (om/get-state owner :quantity) " " (om/get-state owner :query) "\n"))
+  (put! (om/get-state owner :edit-channel)
+        {:qty (js/parseInt (om/get-state owner :quantity))
+         :card (first (om/get-state owner :matches))})
   (om/set-state! owner :quantity 3)
   (om/set-state! owner :query "")
   (-> ".deckedit .lookup" js/$ .focus))
@@ -146,8 +149,8 @@
         [:form.card-search {:on-submit #(handle-add owner %)}
          [:input.lookup {:type "text" :placeholder "Card" :value (:query state)
                          :on-change #(om/set-state! owner :query (.. % -target -value))
-                         :on-key-down #(handle-keydown owner %)
-                         :on-blur #(om/set-state! owner :matches [])}] " x "
+                         :on-key-down #(handle-keydown owner %)}]
+         " x "
          [:input.qty {:type "text" :value (:quantity state)
                       :on-change #(om/set-state! owner :quantity (.. % -target -value))}]
          [:button "Add to deck"]
@@ -168,17 +171,27 @@
     om/IInitState
     (init-state [this]
       {:edit false
-       :add-channel (chan)
+       :edit-channel (chan)
        :deck nil})
 
     om/IWillMount
     (will-mount [this]
-      (let [add-channel (om/get-state owner :add-channel)]
+      (let [edit-channel (om/get-state owner :edit-channel)]
         (go (while true
-              (let [line (<! add-channel)]
-                ;; (println line)
-                (-> ".deckedit textarea" js/$ (.append line))
-                (handle-edit owner))))))
+              (let [edit (<! edit-channel)
+                    card (:card edit)
+                    cards (om/get-state owner [:deck :cards])
+                    match? #(when (= (get-in % [:card :title]) (:title card)) %)
+                    existing-line (some match? cards)]
+                (if existing-line
+                  (let [new-qty (+ (:qty existing-line) (:qty edit))
+                        other-cards (remove match? cards)
+                        new-cards (cond (> new-qty 3) (conj other-cards {:qty 3 :card card})
+                                        (<= new-qty 0) other-cards
+                                        :else (conj other-cards {:qty new-qty :card card}))]
+                    (om/set-state! owner [:deck :cards] new-cards))
+                  (om/set-state! owner [:deck :cards] (conj cards edit)))
+                (deck->str owner))))))
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
