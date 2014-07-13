@@ -72,6 +72,7 @@
 
 (defn end-edit [owner]
   (om/set-state! owner :edit false)
+  (om/set-state! owner :query "")
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
 
 (defn save-deck [cursor owner]
