@@ -108,7 +108,7 @@
   (let [deck (om/get-state owner :deck)]
     (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
     (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
-    (om/set-state! owner :deck (first (:decks @cursor)))))
+    (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
