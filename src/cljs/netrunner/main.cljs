@@ -7,7 +7,7 @@
 
 (def app-state (atom {:active-page "/"}))
 
-(def tokens #js ["/" "/cards" "/play" "/deckbuilder" "/news"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/about"])
 
 (def history (Html5History.))
 
@@ -29,9 +29,9 @@
     [:ul.carousel-indicator {}
      (for [page [["Manabase" "/" 0]
                  ["Cards" "/cards" 1]
-                 ["Play" "/play" 2]
-                 ["Decks" "/deckbuilder" 3]
-                 ["News" "/news" 4]]]
+                 ["Decks" "/deckbuilder" 2]
+                 ["Play" "/play" 3]
+                 ["About" "/about" 4]]]
        (let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
