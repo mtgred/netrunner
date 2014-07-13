@@ -187,8 +187,8 @@
                 (let [new-qty (+ (or (:qty existing-line) 0) (:qty edit))
                       rest (remove match? cards)
                       new-cards (cond (> new-qty max-qty) (conj rest {:qty max-qty :card card})
-                                      (<= new-qty 0) other-cards
-                                      :else (conj other-cards {:qty new-qty :card card}))]
+                                      (<= new-qty 0) rest
+                                      :else (conj rest {:qty new-qty :card card}))]
                   (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner))))))
 
