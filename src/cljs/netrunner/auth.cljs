@@ -28,8 +28,6 @@
          (:username user)
          [:b.caret]]
         [:div.dropdown-menu.blue-shade.float-right
-         [:a.block-link {:href "/"} "Profile"]
-         [:a.block-link {:href "/"} "Settings"]
          [:a.block-link {:href "/logout"} "Logout"]]]))))
 
 (defn unlogged-menu [user owner]
