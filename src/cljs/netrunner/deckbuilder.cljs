@@ -180,17 +180,16 @@
         (go (while true
               (let [edit (<! edit-channel)
                     card (:card edit)
+                    max-qty (if (:uniqueness card) 1 3)
                     cards (om/get-state owner [:deck :cards])
                     match? #(when (= (get-in % [:card :title]) (:title card)) %)
                     existing-line (some match? cards)]
-                (if existing-line
-                  (let [new-qty (+ (:qty existing-line) (:qty edit))
-                        other-cards (remove match? cards)
-                        new-cards (cond (> new-qty 3) (conj other-cards {:qty 3 :card card})
-                                        (<= new-qty 0) other-cards
-                                        :else (conj other-cards {:qty new-qty :card card}))]
-                    (om/set-state! owner [:deck :cards] new-cards))
-                  (om/set-state! owner [:deck :cards] (conj cards edit)))
+                (let [new-qty (+ (or (:qty existing-line) 0) (:qty edit))
+                      rest (remove match? cards)
+                      new-cards (cond (> new-qty max-qty) (conj rest {:qty max-qty :card card})
+                                      (<= new-qty 0) other-cards
+                                      :else (conj other-cards {:qty new-qty :card card}))]
+                  (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner))))))
 
     om/IDidUpdate
