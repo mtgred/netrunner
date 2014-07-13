@@ -121,9 +121,9 @@ app.post '/data/decks', (req, res) ->
         console.log(err) if err
         res.send {message: 'OK'}, 200
     else
-      db.collection('decks').insert deck, (err) ->
+      db.collection('decks').insert deck, (err, data) ->
         console.log(err) if err
-        res.send {message: 'OK'}, 200
+        res.json(200, data[0])
   else
     res.send {message: 'Unauthorized'}, 401
 

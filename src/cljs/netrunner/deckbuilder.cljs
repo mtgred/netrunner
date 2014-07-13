@@ -77,14 +77,14 @@
 (defn save-deck [cursor owner]
   (end-edit owner)
   (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
-        decks (:decks @app-state)
+        decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
-    (if-let [id (:_id deck)]
-      (om/update! cursor :decks (map #(if (= id (:_id %)) deck %) decks))
-      (om/update! cursor :decks (conj decks deck)))
-    (go (let [response (<! (POST "/data/decks/" data :json))]))))
+    (go (let [new-deck (:json (<! (POST "/data/decks/" data :json)))]
+          (if (:_id deck)
+            (om/update! cursor :decks (conj decks deck) )
+            (om/update! cursor :decks (conj decks new-deck)))))))
 
 (defn match [{:keys [side faction]} query]
   (if (empty? query)
