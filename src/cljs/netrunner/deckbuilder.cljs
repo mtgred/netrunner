@@ -127,7 +127,7 @@
   (.preventDefault event)
   (put! (om/get-state owner :edit-channel)
         {:qty (js/parseInt (om/get-state owner :quantity))
-         :card (first (om/get-state owner :matches))})
+         :card (nth (om/get-state owner :matches) (om/get-state owner :selected))})
   (om/set-state! owner :quantity 3)
   (om/set-state! owner :query "")
   (-> ".deckedit .lookup" js/$ .focus))
@@ -163,7 +163,8 @@
               (for [i (range (count matches))]
                 [:div {:class (if (= i (:selected state)) "selected" "")
                        :on-click (fn [e] (-> ".deckedit .qty" js/$ .focus)
-                                         (om/set-state! owner :query (.. e -target -innerHTML)))}
+                                         (om/set-state! owner :query (.. e -target -innerHTML))
+                                         (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
 (defn deck-builder [{:keys [decks] :as cursor} owner]
