@@ -82,10 +82,10 @@
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
-    (go (let [new-deck (:json (<! (POST "/data/decks/" data :json)))]
-          (if (:_id deck)
-            (om/update! cursor :decks (conj decks deck) )
-            (om/update! cursor :decks (conj decks new-deck)))))))
+    (go (let [new-id (-> (<! (POST "/data/decks/" data :json) :json :_id))
+              new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
+          (om/update! cursor :decks (conj decks new-deck))
+          (om/set-state! owner :deck new-deck)))))
 
 (defn match [{:keys [side faction]} query]
   (if (empty? query)
