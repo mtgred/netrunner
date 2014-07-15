@@ -11,18 +11,12 @@
 
 (def app-state (atom {:decks []}))
 
-(defn fetch-decks []
-  (go (let [data (:json (<! (GET (str "/data/decks"))))
-            decks (for [deck data]
-                    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
-                      (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards)))))]
-        (swap! app-state assoc :decks decks))))
-
-(go (let [cards (<! cards-channel)]
-      (if (:user @auth/app-state)
-        (fetch-decks)
-        (go (<! auth-channel)
-            (fetch-decks)))
+(go (let [cards (<! cards-channel)
+          data (:json (<! (GET (str "/data/decks"))))
+          decks (for [deck data]
+                  (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
+                    (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards)))))]
+      (swap! app-state assoc :decks decks)
       (>! cards-channel cards)))
 
 (defn side-identities [side]
@@ -213,7 +207,7 @@
             (if (empty? decks)
               [:h4 "You have no deck"]
               (for [deck (sort-by :date > decks)]
-                [:div.deckline {:class (when (= (get-in state [:deck :_id]) (:_id deck)) "active")
+                [:div.deckline {:class (when (= (:deck state) deck) "active")
                                 :on-click #(om/set-state! owner :deck deck)}
                  [:img {:src (image-url (:identity deck))}]
                  [:h4 (:name deck)]

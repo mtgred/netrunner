@@ -106,9 +106,15 @@ app.get '/messages/:channel', (req, res) ->
     res.json(200, data)
 
 app.get '/data/decks', (req, res) ->
-  db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
-    throw err if err
-    res.json(200, data)
+  if req.user
+    db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
+      throw err if err
+      res.json(200, data)
+  else
+    db.collection('decks').find({username: "__demo__"}).toArray (err, data) ->
+      throw err if err
+      delete deck._id for deck in data
+      res.json(200, data)
 
 app.post '/data/decks', (req, res) ->
   deck = req.body
