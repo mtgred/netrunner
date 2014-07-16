@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
-            [netrunner.auth :refer [avatar] :as auth]
+            [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.socket :refer [out-channel chat-channel]]
             [netrunner.ajax :refer [GET]]))
 
@@ -16,15 +16,15 @@
         (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
 
 (defn send-msg [channel owner]
-  (if-let [user (:user @auth/app-state)]
-    (let [input (om/get-node owner "msg-input")
-          text (.-value input)]
-      (when-not (empty? text)
-        (aset input "value" "")
-        (.focus input)
-        (put! out-channel #js {:type "chat" :channel (name channel) :msg text
-                               :username (:username user) :emailhash (:emailhash user)})))
-    (.modal (js/$ "#register-form") "show")))
+  (authenticated
+   (fn [user]
+     (let [input (om/get-node owner "msg-input")
+           text (.-value input)]
+       (when-not (empty? text)
+         (aset input "value" "")
+         (.focus input)
+         (put! out-channel #js {:type "chat" :channel (name channel) :msg text
+                                :username (:username user) :emailhash (:emailhash user)}))))))
 
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component

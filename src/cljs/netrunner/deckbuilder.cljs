@@ -4,7 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
-            [netrunner.auth :refer [auth-channel] :as auth]
+            [netrunner.auth :refer [auth-channel authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
@@ -74,16 +74,18 @@
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
 
 (defn save-deck [cursor owner]
-  (end-edit owner)
-  (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
-        decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
-        cards (for [card (:cards deck)]
-                {:qty (:qty card) :card (get-in card [:card :title])})
-        data (assoc deck :cards cards)]
-    (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
-              new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
-          (om/update! cursor :decks (conj decks new-deck))
-          (om/set-state! owner :deck new-deck)))))
+  (authenticated
+   (fn [user]
+     (end-edit owner)
+     (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
+           decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
+           cards (for [card (:cards deck)]
+                   {:qty (:qty card) :card (get-in card [:card :title])})
+           data (assoc deck :cards cards)]
+       (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
+                 new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
+             (om/update! cursor :decks (conj decks new-deck))
+             (om/set-state! owner :deck new-deck)))))))
 
 (defn match [{:keys [side faction]} query]
   (if (empty? query)
@@ -103,10 +105,12 @@
     (om/set-state! owner [:deck :cards] (parse-deck (om/get-state owner [:deck :identity :side]) text))))
 
 (defn handle-delete [cursor owner]
-  (let [deck (om/get-state owner :deck)]
-    (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
-    (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
-    (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))
+  (authenticated
+   (fn [user]
+     (let [deck (om/get-state owner :deck)]
+       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
+       (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
+       (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
