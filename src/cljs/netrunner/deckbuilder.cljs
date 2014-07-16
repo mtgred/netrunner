@@ -11,12 +11,16 @@
 
 (def app-state (atom {:decks []}))
 
+(defn process-decks [decks]
+  (for [deck decks]
+    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
+      (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards))))))
+
 (go (let [cards (<! cards-channel)
-          data (:json (<! (GET (str "/data/decks"))))
-          decks (for [deck data]
-                  (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
-                    (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards)))))]
+          decks (process-decks (:json (<! (GET (str "/data/decks")))))]
       (swap! app-state assoc :decks decks)
+      (go (let [data (<! auth-channel)]
+            (swap! app-state assoc :decks (process-decks (:decks data)))))
       (>! cards-channel cards)))
 
 (defn side-identities [side]
@@ -76,7 +80,7 @@
         cards (for [card (:cards deck)]
                 {:qty (:qty card) :card (get-in card [:card :title])})
         data (assoc deck :cards cards)]
-    (go (let [new-id (-> (<! (POST "/data/decks/" data :json) :json :_id))
+    (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
               new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
           (om/update! cursor :decks (conj decks new-deck))
           (om/set-state! owner :deck new-deck)))))

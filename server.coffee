@@ -71,7 +71,10 @@ passport.deserializeUser (id, done) ->
 # Routes
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
-    res.json(200, req.user)
+    throw err if err
+    db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
+      throw err if err
+      res.json(200, {user: req.user, decks: data})
 
 app.get '/logout', (req, res) ->
   req.logout()
@@ -91,7 +94,14 @@ app.post '/register', (req, res) ->
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
           req.login req.body, (err) -> next(err) if err
-          res.json(200, req.user)
+          db.collection('decks').find({username: '__demo__'}).toArray (err, demoDecks) ->
+            throw err if err
+            for deck in demoDecks
+              delete deck._id
+              deck.username = req.body.username
+            db.collection('decks').insert demoDecks, (err, newDecks) ->
+              throw err if err
+              res.json(200, {user: req.user, decks: newDecks})
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->

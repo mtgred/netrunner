@@ -57,9 +57,9 @@
             401 (om/set-state! owner :flash-message "Invalid login or password")
             422 (om/set-state! owner :flash-message "Username taken")
             (do (.modal (js/$ (om/get-node owner ref)) "hide")
-                (let [user (:json response)]
-                  (swap! app-state assoc :user user)
-                  (put! auth-channel user))))))))
+                (let [data (:json response)]
+                  (swap! app-state assoc :user (:user data))
+                  (put! auth-channel data))))))))
 
 (defn check-username [event owner]
   (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]
