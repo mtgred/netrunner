@@ -29,7 +29,7 @@
     [:ul.carousel-indicator {}
      (for [page [["Manabase" "/" 0]
                  ["Cards" "/cards" 1]
-                 ["Decks" "/deckbuilder" 2]
+                 ["Deck Builder" "/deckbuilder" 2]
                  ["Play" "/play" 3]
                  ["About" "/about" 4]]]
        (let [route (second page)]
