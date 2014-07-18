@@ -119,10 +119,11 @@
 (defn auth-forms [cursor owner]
   (om/component
    (sab/html
-    [:div
-     (when-not (:user @app-state)
+    (if (:user @app-state)
+      [:div]
+      [:div
        (om/build register-form cursor)
-       (om/build login-form cursor))])))
+       (om/build login-form cursor)]))))
 
 (om/root auth-menu app-state {:target (. js/document (getElementById "right-menu"))})
 (om/root auth-forms app-state {:target (. js/document (getElementById "auth-forms"))})
