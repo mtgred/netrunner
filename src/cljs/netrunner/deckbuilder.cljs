@@ -198,8 +198,9 @@
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
-      (if (and (not (empty? decks)) (not (:deck prev-state)))
-        (om/set-state! owner :deck (first (sort-by :date > decks)))))
+      (let [deck (:deck prev-state)]
+        (when-not (some #{deck} decks)
+          (om/set-state! owner :deck (first (sort-by :date > decks))))))
 
     om/IRenderState
     (render-state [this state]
