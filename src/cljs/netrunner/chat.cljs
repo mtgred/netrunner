@@ -15,7 +15,8 @@
             messages (get-in @app-state [:channels ch])]
         (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
 
-(defn send-msg [channel owner]
+(defn send-msg [event channel owner]
+  (.preventDefault event)
   (authenticated
    (fn [user]
      (let [input (om/get-node owner "msg-input")
@@ -29,10 +30,9 @@
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component
    (sab/html
-    [:div.msg-box
-     [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
-              :onKeyPress #(when (== (.-keyCode %) 13) (send-msg channel owner))}]
-     [:button {:on-click #(send-msg channel owner)} "Send"]])))
+    [:form.msg-box {:on-submit #(send-msg % channel owner)}
+     [:input {:type "text" :ref "msg-input" :placeholder "Say something..."}]
+     [:button "Send"]])))
 
 (defn channel-view [{:keys [channel active-channel]} owner]
   (reify
