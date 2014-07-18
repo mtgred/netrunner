@@ -22,17 +22,12 @@ mongoUrl = "mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}"
 db = mongoskin.db(mongoUrl)
 
 # Socket.io
-io = require('socket.io').listen(server)
-io.enable('browser client minification')
-io.enable('browser client etag')
-io.enable('browser client gzip')
-io.set('log level', 1)
-io.set('transports', ['websocket'])
+io = require('socket.io')(server)
 
 io.sockets.on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
-    io.sockets.emit('netrunner', msg)
+    io.emit('netrunner', msg)
     if msg.type is "chat"
       db.collection('messages').insert msg, (err, result) ->
 
