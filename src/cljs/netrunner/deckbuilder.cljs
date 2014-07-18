@@ -273,7 +273,7 @@
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)]
                            [:span
-                            [:span.card-link name (om/build card-view card)]
+                            [:span.fake-link name (om/build card-view card)]
                             (when-not (or (= (:faction card) (:faction identity))
                                           (zero? (:factioncost card)))
                               (let [influence (* (:factioncost card) (:qty line))]

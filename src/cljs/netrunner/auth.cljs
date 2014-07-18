@@ -49,9 +49,9 @@
 
 (defn auth-menu [{:keys [user]} owner]
   (om/component
-   (if (empty? user)
-     (om/build unlogged-menu user)
-     (om/build logged-menu user))))
+   (if user
+     (om/build logged-menu user)
+     (om/build unlogged-menu user))))
 
 (defn handle-post [e owner url ref]
   (.preventDefault e)
@@ -90,7 +90,10 @@
                        :on-blur #(check-username % owner)}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Sign up"]
-              [:button {:data-dismiss "modal"} "Cancel"]]]]]))))
+              [:button {:data-dismiss "modal"} "Cancel"]]]
+         [:p "Already have an account? "
+          [:span.fake-link {:on-click #(.modal (js/$ "#login-form") "show")
+                            :data-dismiss "modal"} "Log in"]]]]))))
 
 (defn login-form [cursor owner]
   (reify
@@ -108,14 +111,18 @@
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Log in"]
-              [:button {:data-dismiss "modal"} "Cancel"]]]]]))))
+              [:button {:data-dismiss "modal"} "Cancel"]]
+          [:p "No account? "
+            [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
+                              :data-dismiss "modal"} "Sign up!"]]]]]))))
 
 (defn auth-forms [cursor owner]
   (om/component
    (sab/html
-    [:div
-     (om/build register-form cursor)
-     (om/build login-form cursor)])))
+    (when-not (:user @app-state)
+      [:div
+       (om/build register-form cursor)
+       (om/build login-form cursor)]))))
 
 (om/root auth-menu app-state {:target (. js/document (getElementById "right-menu"))})
 (om/root auth-forms app-state {:target (. js/document (getElementById "auth-forms"))})
