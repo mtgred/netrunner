@@ -29,14 +29,13 @@ html
     if env === 'dev'
       script(src='/lib/react/react.js')
       script(type="text/javascript").
-        var socket = io.connect(window.location.hostname);
+        var iourl = window.location.hostname
       script(src="cljs/goog/base.js", type="text/javascript")
       script(src="cljs/app.js", type="text/javascript")
       script(type="text/javascript").
         goog.require("netrunner.main");
         goog.require("netrunner.ajax");
         goog.require("netrunner.auth");
-        goog.require("netrunner.socket");
         goog.require("netrunner.chat");
         goog.require("netrunner.game");
         goog.require("netrunner.cardbrowser");
@@ -46,7 +45,7 @@ html
     else
       script(src='/lib/react/react.min.js')
       script(type="text/javascript").
-        var socket = io.connect(window.location.hostname + ":8000");
+        var iourl = window.location.hostname:8000
 
       script(src="js/app.js", type="text/javascript")
 

@@ -4,10 +4,14 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :refer [avatar authenticated] :as auth]
-            [netrunner.socket :refer [out-channel chat-channel]]
             [netrunner.ajax :refer [GET]]))
 
 (def app-state (atom {:channels {:general [] :belgium [] :france []}}))
+
+(def chat-channel (chan))
+(def chat-socket (.connect js/io (str js/iourl "/chat")))
+
+(.on chat-socket "netrunner" #(put! chat-channel (js->clj % :keywordize-keys true)))
 
 (go (while true
       (let [msg (<! chat-channel)
@@ -22,10 +26,12 @@
      (let [input (om/get-node owner "msg-input")
            text (.-value input)]
        (when-not (empty? text)
+         (.emit chat-socket "netrunner" #js {:channel (name channel)
+                                             :msg text
+                                             :username (:username user)
+                                             :emailhash (:emailhash user)})
          (aset input "value" "")
-         (.focus input)
-         (put! out-channel #js {:type "chat" :channel (name channel) :msg text
-                                :username (:username user) :emailhash (:emailhash user)}))))))
+         (.focus input))))))
 
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component

@@ -2,8 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! <!] :as async]
-            [netrunner.socket :refer [out-channel chat-channel]]))
+            [cljs.core.async :refer [chan put! <!] :as async]))
 
 (def game-state
   (atom
@@ -43,14 +42,15 @@
    (sab/html [:div.panel.blue-shade.log {} "Log"])))
 
 (defn send-msg [cursor owner]
-  (let [input (om/get-node owner "msg-input")
-        text (.-value input)]
-    (when-not (zero? (alength text))
-      (aset input "value" "")
-      (put! out-channel #js {:type "game"
-                             :game-id 0
-                             :action "say"
-                             :msg text}))))
+  ;; (let [input (om/get-node owner "msg-input")
+  ;;       text (.-value input)]
+  ;;   (when-not (zero? (alength text))
+  ;;     (aset input "value" "")
+  ;;     (put! out-channel #js {:type "game"
+  ;;                            :game-id 0
+  ;;                            :action "say"
+  ;;                            :msg text})))
+  )
 
 (defn msg-input-view [cursor owner]
   (om/component

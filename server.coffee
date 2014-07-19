@@ -1,6 +1,7 @@
 express = require('express')
 app = express()
 server = require('http').createServer(app)
+io = require('socket.io')(server)
 stylus = require('stylus')
 config = require('./config')
 mongoskin = require('mongoskin')
@@ -22,14 +23,11 @@ mongoUrl = "mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}"
 db = mongoskin.db(mongoUrl)
 
 # Socket.io
-io = require('socket.io')(server)
-
-io.sockets.on 'connection', (socket) ->
+chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
-    io.emit('netrunner', msg)
-    if msg.type is "chat"
-      db.collection('messages').insert msg, (err, result) ->
+    chat.emit('netrunner', msg)
+    db.collection('/messages').insert msg, (err, result) ->
 
 # Express config
 app.configure ->
