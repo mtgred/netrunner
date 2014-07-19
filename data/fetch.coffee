@@ -51,9 +51,10 @@ cardFields = [
 
 baseurl = "http://netrunnerdb.com/api/"
 
+restricted = ["Philotic Entanglement"]
+
 selectFields = (fields, objectList) ->
-  ((fields.reduce ((newObj, key) ->
-    newObj[key] = obj[key]; newObj), {}) for obj in objectList)
+  ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj.title in restricted; newObj), {}) for obj in objectList)
 
 request.get baseurl + "sets", (error, response, body) ->
   if !error and response.statusCode is 200

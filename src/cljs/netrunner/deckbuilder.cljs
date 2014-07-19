@@ -184,7 +184,7 @@
         (go (while true
               (let [edit (<! edit-channel)
                     card (:card edit)
-                    max-qty (if (:uniqueness card) 1 3)
+                    max-qty (or (:limit card) 3)
                     cards (om/get-state owner [:deck :cards])
                     match? #(when (= (get-in % [:card :title]) (:title card)) %)
                     existing-line (some match? cards)]
