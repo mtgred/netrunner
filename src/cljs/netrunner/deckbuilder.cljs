@@ -11,6 +11,12 @@
 
 (def app-state (atom {:decks []}))
 
+(def select-channel (chan))
+
+(defn load-decks [decks]
+  (swap! app-state assoc :decks decks)
+  (put! select-channel (first (sort-by :date > decks))))
+
 (defn process-decks [decks]
   (for [deck decks]
     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
@@ -18,9 +24,9 @@
 
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-      (swap! app-state assoc :decks decks)
+      (load-decks decks)
       (go (let [data (<! auth-channel)]
-            (swap! app-state assoc :decks (process-decks (:decks data)))))
+            (load-decks (process-decks (:decks data)))))
       (>! cards-channel cards)))
 
 (defn side-identities [side]
@@ -194,13 +200,9 @@
                                       (<= new-qty 0) rest
                                       :else (conj rest {:qty new-qty :card card}))]
                   (om/set-state! owner [:deck :cards] new-cards))
-                (deck->str owner))))))
-
-    om/IDidUpdate
-    (did-update [this prev-props prev-state]
-      (let [deck (:deck prev-state)]
-        (when-not (some #{deck} decks)
-          (om/set-state! owner :deck (first (sort-by :date > decks))))))
+                (deck->str owner)))))
+      (go (while true
+            (om/set-state! owner :deck (<! select-channel)))))
 
     om/IRenderState
     (render-state [this state]
@@ -217,7 +219,7 @@
               [:h4 "You have no deck"]
               (for [deck (sort-by :date > decks)]
                 [:div.deckline {:class (when (= (:deck state) deck) "active")
-                                :on-click #(om/set-state! owner :deck deck)}
+                                :on-click #(put! select-channel deck)}
                  [:img {:src (image-url (:identity deck))}]
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
