@@ -134,12 +134,15 @@
 
 (defn handle-add [owner event]
   (.preventDefault event)
-  (put! (om/get-state owner :edit-channel)
-        {:qty (js/parseInt (om/get-state owner :quantity))
-         :card (nth (om/get-state owner :matches) (om/get-state owner :selected))})
-  (om/set-state! owner :quantity 3)
-  (om/set-state! owner :query "")
-  (-> ".deckedit .lookup" js/$ .focus))
+  (let [qty (js/parseInt (om/get-state owner :quantity))]
+    (if (js/isNaN qty)
+      (om/set-state! owner :quantity 3)
+      (do (put! (om/get-state owner :edit-channel)
+                {:qty qty
+                 :card (nth (om/get-state owner :matches) (om/get-state owner :selected))})
+          (om/set-state! owner :quantity 3)
+          (om/set-state! owner :query "")
+          (-> ".deckedit .lookup" js/$ .focus)))))
 
 (defn card-lookup [{:keys [cards]} owner]
   (reify
