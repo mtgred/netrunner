@@ -103,7 +103,7 @@
                                   (= (:faction %) "Neutral")
                                   (= (:faction %) faction)))
                         (:cards @cb/app-state))]
-      (take 10 (filter #(if (= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) false true) cards)))))
+      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
 (defn handle-edit [owner]
   (let [text (-> owner (om/get-node "deck-edit") .-value)]
@@ -157,9 +157,9 @@
     (render-state [this state]
       (sab/html
        [:p
-        [:h4 "Card lookup"]
+        [:h4 "Add cards"]
         [:form.card-search {:on-submit #(handle-add owner %)}
-         [:input.lookup {:type "text" :placeholder "Card" :value (:query state)
+         [:input.lookup {:type "text" :placeholder "Card name" :value (:query state)
                          :on-change #(om/set-state! owner :query (.. % -target -value))
                          :on-key-down #(handle-keydown owner %)}]
          " x "
