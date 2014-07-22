@@ -27,7 +27,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
     chat.emit('netrunner', msg)
-    db.collection('/messages').insert msg, (err, result) ->
+    db.collection('messages').insert msg, (err, result) ->
 
 # Express config
 app.configure ->
