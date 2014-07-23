@@ -23,29 +23,25 @@
     (.modal (js/$ "#register-form") "show")))
 
 (defn logged-menu [user owner]
-  (reify
-    om/IRenderState
-    (render-state [this state]
-      (sab/html
-       [:li.dropdown.usermenu
-        [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-         (om/build avatar user {:key :username :opts {:size 22}})
-         (:username user)
-         [:b.caret]]
-        [:div.dropdown-menu.blue-shade.float-right
-         [:a.block-link {:href "/logout"} "Logout"]]]))))
+  (om/component
+   (sab/html
+    [:li.dropdown.usermenu
+     [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
+      (om/build avatar user {:key :username :opts {:size 22}})
+      (:username user)
+      [:b.caret]]
+     [:div.dropdown-menu.blue-shade.float-right
+      [:a.block-link {:href "/logout"} "Logout"]]])))
 
 (defn unlogged-menu [user owner]
-  (reify
-    om/IRenderState
-    (render-state [this state]
-      (sab/html
-       [:ul
-        [:li
-         [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-              :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
-        [:li
-         [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]]))))
+  (om/component
+   (sab/html
+    [:ul
+     [:li
+      [:a {:href "" :data-target "#register-form" :data-toggle "modal"
+           :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
+     [:li
+      [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])))
 
 (defn auth-menu [{:keys [user]} owner]
   (om/component
