@@ -145,7 +145,7 @@
 
     om/IRenderState
     (render-state [this state]
-      (.focus (js/$ ".search"))
+      (.select (js/$ ".search"))
       (sab/html
        [:div.cardbrowser
         [:div.blue-shade.panel.filters

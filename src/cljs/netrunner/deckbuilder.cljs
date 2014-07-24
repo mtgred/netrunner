@@ -67,7 +67,7 @@
   (deck->str owner)
   (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
   (go (<! (timeout 500))
-      (-> owner (om/get-node "deckname") js/$ .focus)))
+      (-> owner (om/get-node "deckname") js/$ .select)))
 
 (defn new-deck [side owner]
   (om/set-state! owner :deck {:side side :name "New deck" :cards []
@@ -128,7 +128,7 @@
            (om/update-state! owner :selected inc))
       (9 13) (when-not (= (om/get-state owner :query) (:title (first matches)))
                (.preventDefault event)
-               (-> ".deckedit .qty" js/$ .focus)
+               (-> ".deckedit .qty" js/$ .select)
                (om/set-state! owner :query (:title (nth matches selected))))
       (om/set-state! owner :selected 0))))
 
@@ -142,7 +142,7 @@
                  :card (nth (om/get-state owner :matches) (om/get-state owner :selected))})
           (om/set-state! owner :quantity 3)
           (om/set-state! owner :query "")
-          (-> ".deckedit .lookup" js/$ .focus)))))
+          (-> ".deckedit .lookup" js/$ .select)))))
 
 (defn card-lookup [{:keys [cards]} owner]
   (reify
@@ -174,7 +174,7 @@
              [:div.typeahead
               (for [i (range (count matches))]
                 [:div {:class (if (= i (:selected state)) "selected" "")
-                       :on-click (fn [e] (-> ".deckedit .qty" js/$ .focus)
+                       :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
                                          (om/set-state! owner :query (.. e -target -innerHTML))
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
