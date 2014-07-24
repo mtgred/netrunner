@@ -29,6 +29,37 @@ chat = io.of('/chat').on 'connection', (socket) ->
     chat.emit('netrunner', msg)
     db.collection('messages').insert msg, (err, result) ->
 
+gameid = 0
+games = []
+
+removePlayer = (username) ->
+  for game, i in games
+    for player, j in game.players
+      if player.username is username
+        game.players.splice(j, 1)
+        break
+    games.splice(i, 1) if game.players.length is 0
+
+lobby = io.of('/lobby').on 'connection', (socket) ->
+  lobby.emit('netrunner', {type: "games", games: games})
+
+  socket.on 'netrunner', (msg) ->
+    console.log "msg", msg
+    switch msg.action
+      when "create"
+        game = {date: new Date(), id: gameid++, title: msg.title, players: [msg.player]}
+        games.push(game)
+        socket.emit("netrunner", {type: "game", game: game})
+      when "leave"
+        removePlayer(msg.username)
+      when "join"
+        for game in games
+          if game.id is msg.gameid and game.players[0].username isnt msg.user.username
+            game.players.push(msg.user)
+            socket.emit("netrunner", {type: "game", game: game})
+            break
+    lobby.emit('netrunner', {type: "games", games: games})
+
 # Express config
 app.configure ->
   app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 3000

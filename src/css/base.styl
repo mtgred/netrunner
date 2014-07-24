@@ -105,6 +105,15 @@ button.small
     background-color: transparent-orange
     border-color: orange
 
+.avatar
+  vertical-align: middle
+  margin-right: 5px
+  border-radius: 3px
+
+.active
+  color: orange
+  transition(all 0.2s ease-in-out)
+
 .fake-link
   color: orange
   cursor: pointer
@@ -271,7 +280,7 @@ nav ul
 
 .panel
   radius: 4px
-  padding: 4px 8px
+  padding: 5px 10px
   border: 1px solid rgba(39, 56, 76, 0.9)
   margin: 4px
 
@@ -363,9 +372,6 @@ a.button, button
   &:hover
     background-color: transparent-orange
     border: 1px solid orange
-  &.active
-    color: orange
-    transition(all 0.2s ease-in-out)
 
 // Layout
 
@@ -419,11 +425,12 @@ a.button, button
   .message
     display-flex()
     margin-bottom: 10px
+    &:last-child
+      margin-bottom: 5px
 
   .avatar
     height: 40px
     width: 40px
-    margin-right: 8px
     border-radius: 5px
 
   .content
@@ -502,9 +509,6 @@ a.button, button
     &:hover
       background-color: transparent-orange
       border: 1px solid orange
-  > div.active
-    color: orange
-    transition(all 0.2s ease-in-out)
 
 .card-list
   position: absolute
@@ -615,9 +619,6 @@ a.button, button
             float: left
             height: 100%
             margin-right: 10px
-
-         .deckline.active
-           color: orange
 
     .decklist
       position: relative
@@ -733,9 +734,50 @@ a.button, button
         width: 100%
         height: 456px
         line-height: 18px
+// Game Lobby
 
+.lobby
+  padding: 15px 0
+  margin: 10px auto
+  height: 600px
+  display-flex()
+
+  .games, .game-panel
+    flex(1)
+    padding: 0 15px
+
+  .game-panel
+    border-left: 1px solid white
+
+  .button-bar
+    padding-bottom: 15px
+
+  .gameline
+    border: 1px solid white
+    border-radius: 4px
+    padding: 5px 10px
+    margin-bottom: 5px
+    clear: both
+
+    .player
+      &:first-child:after
+        content: "vs"
+        margin: 0 10px
+
+      &:last-child:after
+        display: none
+
+  .game-panel button
+    width: 80px
+    margin-right: 5px
+
+  .game-title
+    width: 250px
 
 // Gameboard
+
+#gameboard
+  display: none
 
 .gameboard
   position: absolute
