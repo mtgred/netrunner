@@ -38,7 +38,9 @@ removePlayer = (username) ->
       if player.username is username
         game.players.splice(j, 1)
         break
-    games.splice(i, 1) if game.players.length is 0
+    if game.players.length is 0
+      games.splice(i, 1)
+      break
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
   lobby.emit('netrunner', {type: "games", games: games})
