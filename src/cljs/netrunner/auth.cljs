@@ -49,8 +49,8 @@
      (om/build logged-menu user)
      (om/build unlogged-menu user))))
 
-(defn handle-post [e owner url ref]
-  (.preventDefault e)
+(defn handle-post [event owner url ref]
+  (.preventDefault event)
   (om/set-state! owner :flash-message "")
   (let [params (-> e .-target js/$ .serialize)]
     (go (let [response (<! (POST url params))]
@@ -68,6 +68,17 @@
           (om/set-state! owner :flash-message "Username taken")
           (om/set-state! owner :flash-message "")))))
 
+(defn register [event owner]
+  (.preventDefault event)
+  (let [username (.-value (om/get-node owner "username"))
+        email (.-value (om/get-node owner "email"))
+        password (.-value (om/get-node owner "password"))]
+    (cond
+      (empty? email) (om/set-state! owner :flash-message "Email can't be empty")
+      (empty? username) (om/set-state! owner :flash-message "Username can't be empty")
+      (empty? password) (om/set-state! owner :flash-message "Password can't be empty")
+      :else (handle-post % owner "/register" "register-form"))))
+
 (defn register-form [cursor owner]
   (reify
     om/IInitState
@@ -80,11 +91,11 @@
         [:div.modal-dialog
          [:h3 "Create an account"]
          [:p.flash-message (:flash-message state)]
-         [:form {:on-submit #(handle-post % owner "/register" "register-form")}
-          [:p [:input {:type "text" :placeholder "Email" :name "email"}]]
+         [:form {:on-submit #(register % owner)}
+          [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email"}]]
           [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username"
                        :on-blur #(check-username % owner)}]]
-          [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
+          [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]
          [:p "Already have an account? "
