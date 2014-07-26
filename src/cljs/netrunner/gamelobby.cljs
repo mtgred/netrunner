@@ -14,7 +14,7 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "game" (put! join-channel (:game msg))
+          "game" (put! join-channel (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))))))
 
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -25,7 +25,7 @@
 (defn new-game [cursor owner]
   (authenticated
    (fn [user]
-     (when-not (om/get-state owner :game)
+     (when-not (om/get-state owner :gameid)
        (om/set-state! owner :title (str (:username user) "'s game"))
        (om/set-state! owner :editing true)
        (-> ".game-title" js/$ .select)))))
@@ -49,15 +49,15 @@
 (defn leave-game [owner]
   (send {:action "leave" :username (get-in @auth/app-state [:user :username])})
   (om/set-state! owner :in-game false)
-  (om/set-state! owner :game nil))
+  (om/set-state! owner :gameid nil))
 
 (defn game-lobby [{:keys [games] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
       (go (while true
-            (let [game (<! join-channel)]
-              (om/set-state! owner :game game)))))
+            (let [gameid (<! join-channel)]
+              (om/set-state! owner :gameid gameid)))))
 
     om/IRenderState
     (render-state [this state]
@@ -70,8 +70,8 @@
          (if (empty? games)
            [:h4 "No game"]
            (for [game games]
-             [:div.gameline {:class (when (= (get-in state [:game :id]) (:id game)) "active")}
-              (when-not (or (:game state) (:editing state) (= (count (:players game)) 2))
+             [:div.gameline {:class (when (= (:gameid state) (:id game)) "active")}
+              (when-not (or (:gameid state) (:editing state) (= (count (:players game)) 2))
                 (let [id (:id game)]
                   [:button.float-right {:on-click #(join-game id cursor owner)} "Join"]))
               [:h4 (:title game)]
@@ -92,7 +92,7 @@
               [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                   :value (:title state) :placeholder "Title"}]
               [:p.flash-message (:flash-message state)]])
-           (when-let [game (:game state)]
+           (when-let [game (some #(= (:gameid state) (:id %)) games)]
              (let [username (get-in @auth/app-state [:user :username])]
                [:div
                 [:div.button-bar

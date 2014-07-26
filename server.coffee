@@ -49,16 +49,16 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     console.log "msg", msg
     switch msg.action
       when "create"
-        game = {date: new Date(), id: gameid++, title: msg.title, players: [msg.player]}
+        game = {date: new Date(), id: ++gameid, title: msg.title, players: [msg.player]}
         games.push(game)
-        socket.emit("netrunner", {type: "game", game: game})
+        socket.emit("netrunner", {type: "game", gameid: gameid})
       when "leave"
         removePlayer(msg.username)
       when "join"
         for game in games
           if game.id is msg.gameid and game.players[0].username isnt msg.user.username
             game.players.push(msg.user)
-            socket.emit("netrunner", {type: "game", game: game})
+            socket.emit("netrunner", {type: "game", gameid: gameid})
             break
     lobby.emit('netrunner', {type: "games", games: games})
 
