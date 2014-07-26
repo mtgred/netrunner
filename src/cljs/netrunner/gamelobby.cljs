@@ -51,8 +51,19 @@
   (om/set-state! owner :in-game false)
   (om/set-state! owner :gameid nil))
 
+(defn player-view [cursor]
+  (om/component
+   (sab/html
+    [:span.player
+     (om/build avatar cursor {:opts {:size 22}})
+     (:username cursor)])))
+
 (defn game-lobby [{:keys [games] :as cursor} owner]
   (reify
+    om/IInitState
+    (init-state [this]
+      {:side "Runner"})
+
     om/IWillMount
     (will-mount [this]
       (go (while true
@@ -76,10 +87,7 @@
                   [:button.float-right {:on-click #(join-game id cursor owner)} "Join"]))
               [:h4 (:title game)]
               [:div
-               (for [player (:players game)]
-                 [:span.player
-                  (om/build avatar player {:opts {:size 22}})
-                  (:username player)])]]))]
+               (om/build-all player-view (:players game))]]))]
 
         [:div.game-panel
          (if (:editing state)
@@ -92,7 +100,7 @@
               [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                   :value (:title state) :placeholder "Title"}]
               [:p.flash-message (:flash-message state)]])
-           (when-let [game (some #(= (:gameid state) (:id %)) games)]
+           (when-let [game (some #(when (= (:gameid state) (:id %)) %) games)]
              (let [username (get-in @auth/app-state [:user :username])]
                [:div
                 [:div.button-bar
@@ -101,6 +109,17 @@
                  [:button {:on-click #(leave-game owner)} "Leave"]]
                 [:h3 (:title game)]
                 [:h4 "Players"]
-                [:div username]])))]]))))
+                (for [player (:players game)]
+                  [:div.player
+                   (if (= (:username player) username)
+                     [:select {:on-change #(om/set-state! owner :side (.. % -target -value))
+                               :value (:side state)}
+                      [:option "Runner"]
+                      [:option "Corp"]]
+                     [:select {:on-change #(om/set-state! owner :side (.. % -target -value))
+                               :value (:side state)}
+                      [:option {:value "Corp"} "Runner"]
+                      [:option {:Value "Runner"} "Corp"]])
+                   (om/build player-view player)])])))]]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})

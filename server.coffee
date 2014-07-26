@@ -56,7 +56,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         removePlayer(msg.username)
       when "join"
         for game in games
-          if game.id is msg.gameid and game.players[0].username isnt msg.user.username
+          if game.id is msg.gameid and game.players.length <= 2 and game.players[0].username isnt msg.user.username
             game.players.push(msg.user)
             socket.emit("netrunner", {type: "game", gameid: gameid})
             break
