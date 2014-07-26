@@ -89,7 +89,7 @@ button
   transition(all 0.2s ease-in-out)
   cursor: pointer
 
-  &:focus
+  &:focus, &:hover
     box-shadow(0 0 6px blue)
     border-color: blue
 
@@ -759,6 +759,7 @@ a.button, button
     padding-bottom: 15px
 
   .gameline
+    position: relative
     border: 1px solid white
     border-radius: 4px
     padding: 5px 10px
@@ -772,6 +773,12 @@ a.button, button
 
       &:last-child:after
         display: none
+
+    button
+      position: absolute
+      top: 50%
+      right: 10px
+      transform(translateY(-50%))
 
   .game-panel button
     width: 80px
