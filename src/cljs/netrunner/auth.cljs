@@ -52,7 +52,7 @@
 (defn handle-post [event owner url ref]
   (.preventDefault event)
   (om/set-state! owner :flash-message "")
-  (let [params (-> e .-target js/$ .serialize)]
+  (let [params (-> event .-target js/$ .serialize)]
     (go (let [response (<! (POST url params))]
           (case (:status response)
             401 (om/set-state! owner :flash-message "Invalid login or password")
