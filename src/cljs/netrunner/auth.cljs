@@ -77,7 +77,7 @@
       (empty? email) (om/set-state! owner :flash-message "Email can't be empty")
       (empty? username) (om/set-state! owner :flash-message "Username can't be empty")
       (empty? password) (om/set-state! owner :flash-message "Password can't be empty")
-      :else (handle-post % owner "/register" "register-form"))))
+      :else (handle-post event owner "/register" "register-form"))))
 
 (defn register-form [cursor owner]
   (reify
