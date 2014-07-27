@@ -51,16 +51,23 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "create"
         game = {date: new Date(), id: ++gameid, title: msg.title, players: [msg.player]}
         games.push(game)
+        socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
+        lobby.emit('netrunner', {type: "games", games: games})
       when "leave"
         removePlayer(msg.username)
+        socket.leave(msg.gameid)
+        lobby.emit('netrunner', {type: "games", games: games})
       when "join"
         for game in games
-          if game.id is msg.gameid and game.players.length <= 2 and game.players[0].username isnt msg.user.username
+          if game.id is msg.gameid and game.players.length < 2 and game.players[0].username isnt msg.user.username
             game.players.push(msg.user)
-            socket.emit("netrunner", {type: "game", gameid: gameid})
+            socket.join(game.id)
+            socket.emit("netrunner", {type: "game", gameid: game.id})
             break
-    lobby.emit('netrunner', {type: "games", games: games})
+        lobby.emit('netrunner', {type: "games", games: games})
+      when "say"
+        lobby.to(msg.gameid).emit("netrunner", {type: "say", user: msg.user, message: msg.message})
 
 # Express config
 app.configure ->

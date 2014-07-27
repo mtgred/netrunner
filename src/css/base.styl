@@ -27,7 +27,7 @@ h2
   font-size: 24px
 
 h3
-  font-size: 20px
+  font-size: 18px
 
 h4
   font-size: 14px
@@ -78,7 +78,7 @@ input, select, textarea
 button
   border-radius: 4px
   font-size: 12px
-  padding: 0 10px
+  padding: 0 14px
   background-color: transparent-orange
   border: 1px solid orange
   color: white
@@ -359,10 +359,6 @@ a.button, button
 .usermenu
   padding: 0 10px
   margin-right: -20px
-  img
-    vertical-align: middle
-    margin-right: 10px
-    border-radius: 3px
 
 .block-link
   cursor: pointer
@@ -431,8 +427,8 @@ a.button, button
       margin-bottom: 5px
 
   .avatar
-    height: 40px
-    width: 40px
+    height: 38px
+    width: 38px
     border-radius: 5px
 
   .content
@@ -457,6 +453,9 @@ a.button, button
     margin-left: 0
     margin-top: 0
     margin-right: 5px
+
+  button
+    margin-right: 0
 
 // Card Browser
 .cardbrowser
@@ -696,7 +695,7 @@ a.button, button
         position: relative
 
         .lookup
-          width: 308px
+          width: 300px
           margin-right: 5px
 
         .typeahead
@@ -747,6 +746,7 @@ a.button, button
   .games, .game-panel
     flex(1)
     padding: 0 15px
+    overflow: auto
 
   .game-panel
     border-left: 1px solid white
@@ -757,6 +757,7 @@ a.button, button
 
   .button-bar
     padding-bottom: 15px
+
 
   .gameline
     position: relative
@@ -780,9 +781,26 @@ a.button, button
       right: 10px
       transform(translateY(-50%))
 
-  .game-panel button
-    width: 80px
-    margin-right: 5px
+  .game-panel
+    .button-bar
+      button
+        width: 80px
+        margin-right: 5px
+
+    .players
+      height: 65px
+
+      > div
+        margin: 8px 0
+
+    .message-list
+      height: 298px
+      width: 100%
+      border: 1px solid white
+      border-radius: 4px
+      margin: 10px 0
+      overflow: auto
+      padding: 5px 10px
 
   .game-title
     width: 250px

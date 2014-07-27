@@ -53,7 +53,7 @@
   (om/component
    (sab/html
     [:div.message
-     (om/build avatar message {:opts {:size 40}})
+     (om/build avatar message {:opts {:size 38}})
      [:div.content
       [:div
        [:span.username (:username message)]

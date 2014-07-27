@@ -6,16 +6,19 @@
             [clojure.string :refer [join]]
             [netrunner.auth :refer [authenticated avatar] :as auth]))
 
-(def app-state (atom {:games []}))
+(def app-state (atom {:games [] :messages []}))
 (def socket-channel (chan))
 (def join-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 
 (go (while true
       (let [msg (<! socket-channel)]
+        (.log js/console (clj->js msg))
         (case (:type msg)
           "game" (put! join-channel (:gameid msg))
-          "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))))))
+          "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
+          "say" (swap! app-state assoc :messages (conj (:messages @app-state) {:user (:user msg)
+                                                                              :msg (:message msg)}))))))
 
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
@@ -25,10 +28,9 @@
 (defn new-game [cursor owner]
   (authenticated
    (fn [user]
-     (when-not (om/get-state owner :gameid)
-       (om/set-state! owner :title (str (:username user) "'s game"))
-       (om/set-state! owner :editing true)
-       (-> ".game-title" js/$ .select)))))
+     (om/set-state! owner :title (str (:username user) "'s game"))
+     (om/set-state! owner :editing true)
+     (-> ".game-title" js/$ .select))))
 
 (defn create-game [cursor owner]
   (authenticated
@@ -47,9 +49,22 @@
 (defn start-game [owner])
 
 (defn leave-game [owner]
-  (send {:action "leave" :username (get-in @auth/app-state [:user :username])})
+  (send {:action "leave"
+         :gameid (om/get-state owner :gameid)
+         :username (get-in @auth/app-state [:user :username])})
   (om/set-state! owner :in-game false)
-  (om/set-state! owner :gameid nil))
+  (om/set-state! owner :gameid nil)
+  (swap! app-state assoc :messages []))
+
+(defn send-msg [event owner]
+  (.preventDefault event)
+  (let [input (om/get-node owner "msg-input")
+        text (.-value input)]
+    (when-not (empty? text)
+      (send {:action "say" :gameid (om/get-state owner :gameid)
+             :user (:user @auth/app-state) :message text})
+      (aset input "value" "")
+      (.focus input))))
 
 (defn player-view [cursor]
   (om/component
@@ -57,6 +72,29 @@
     [:span.player
      (om/build avatar cursor {:opts {:size 22}})
      (:username cursor)])))
+
+(defn chat-view [messages owner]
+  (reify
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [div (om/get-node owner "msg-list")]
+        (aset div "scrollTop" (.-scrollHeight div))))
+
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div
+        [:h3 "Chat"]
+        [:div.message-list {:ref "msg-list"}
+         (for [msg messages]
+           [:div.message
+            (om/build avatar (:user msg) {:opts {:size 38}})
+            [:div.content
+             [:div (get-in msg [:user :username])]
+             [:div (:msg msg)]]])]
+        [:form.msg-box {:on-submit #(send-msg % owner)}
+         [:input {:ref "msg-input" :placeholder "Say something"}]
+         [:button "Send"]]]))))
 
 (defn game-lobby [{:keys [games] :as cursor} owner]
   (reify
@@ -84,7 +122,7 @@
              [:div.gameline {:class (when (= (:gameid state) (:id game)) "active")}
               (when-not (or (:gameid state) (:editing state) (= (count (:players game)) 2))
                 (let [id (:id game)]
-                  [:button.float-right {:on-click #(join-game id cursor owner)} "Join"]))
+                  [:button {:on-click #(join-game id cursor owner)} "Join"]))
               [:h4 (:title game)]
               [:div
                (om/build-all player-view (:players game))]]))]
@@ -104,22 +142,14 @@
              (let [username (get-in @auth/app-state [:user :username])]
                [:div
                 [:div.button-bar
-                 (when (= (get-in game [:player :user :username]) username)
+                 (when (= (get-in (first (:players game)) [:user :username]) username)
                    [:button {:on-click #(start-game owner)} "Start"])
                  [:button {:on-click #(leave-game owner)} "Leave"]]
-                [:h3 (:title game)]
-                [:h4 "Players"]
-                (for [player (:players game)]
-                  [:div.player
-                   (if (= (:username player) username)
-                     [:select {:on-change #(om/set-state! owner :side (.. % -target -value))
-                               :value (:side state)}
-                      [:option "Runner"]
-                      [:option "Corp"]]
-                     [:select {:on-change #(om/set-state! owner :side (.. % -target -value))
-                               :value (:side state)}
-                      [:option {:value "Corp"} "Runner"]
-                      [:option {:Value "Runner"} "Corp"]])
-                   (om/build player-view player)])])))]]))))
+                [:h2 (:title game)]
+                [:h3 "Players"]
+                [:div.players
+                 (for [player (:players game)]
+                   [:div (om/build player-view player)])]
+                (om/build chat-view (:messages cursor) {:state state})])))]]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})
