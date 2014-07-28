@@ -110,6 +110,11 @@ button.small
   margin-right: 5px
   border-radius: 3px
 
+.username
+  font-weight: bold
+  font-size: 14px
+  margin-right: 10px
+
 .active
   color: orange
   transition(all 0.2s ease-in-out)
@@ -434,11 +439,6 @@ a.button, button
   .content
     flex(1)
 
-  .username
-    font-weight: bold
-    font-size: 14px
-    margin-right: 10px
-
   .date
     font-weight: 300
     font-size: 12px
@@ -745,11 +745,12 @@ a.button, button
 
   .games, .game-panel
     flex(1)
-    padding: 0 15px
-    overflow: auto
+    display: flex
+    flex-direction: column
 
   .game-panel
     border-left: 1px solid white
+    padding: 0 15px
 
     select
       margin-right: 10px
@@ -758,6 +759,13 @@ a.button, button
   .button-bar
     padding-bottom: 15px
 
+  .games .button-bar
+    padding: 0 15px 15px
+
+  .game-list
+    padding: 0 15px
+    overflow: auto
+    flex: 1
 
   .gameline
     position: relative

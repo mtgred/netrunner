@@ -90,7 +90,7 @@
            [:div.message
             (om/build avatar (:user msg) {:opts {:size 38}})
             [:div.content
-             [:div (get-in msg [:user :username])]
+             [:div.username (get-in msg [:user :username])]
              [:div (:msg msg)]]])]
         [:form.msg-box {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]
@@ -116,16 +116,17 @@
          [:div.button-bar
           [:button {:class (if (:in-game state) "disabled" "")
                     :on-click #(new-game cursor owner)} "New game"]]
-         (if (empty? games)
-           [:h4 "No game"]
-           (for [game games]
-             [:div.gameline {:class (when (= (:gameid state) (:id game)) "active")}
-              (when-not (or (:gameid state) (:editing state) (= (count (:players game)) 2))
-                (let [id (:id game)]
-                  [:button {:on-click #(join-game id cursor owner)} "Join"]))
-              [:h4 (:title game)]
-              [:div
-               (om/build-all player-view (:players game))]]))]
+         [:div.game-list
+          (if (empty? games)
+            [:h4 "No game"]
+            (for [game games]
+              [:div.gameline {:class (when (= (:gameid state) (:id game)) "active")}
+               (when-not (or (:gameid state) (:editing state) (= (count (:players game)) 2))
+                 (let [id (:id game)]
+                   [:button {:on-click #(join-game id cursor owner)} "Join"]))
+               [:h4 (:title game)]
+               [:div
+                (om/build-all player-view (:players game))]]))]]
 
         [:div.game-panel
          (if (:editing state)
