@@ -5,8 +5,6 @@
             [cljs.core.async :refer [chan put!] :as async]
             [netrunner.ajax :refer [POST GET]]))
 
-(def auth-channel (chan))
-
 (def app-state
   (atom {:user (js->clj js/user :keywordize-keys true)}))
 
@@ -57,10 +55,7 @@
           (case (:status response)
             401 (om/set-state! owner :flash-message "Invalid login or password")
             422 (om/set-state! owner :flash-message "Username taken")
-            (do (.modal (js/$ (om/get-node owner ref)) "hide")
-                (let [data (:json response)]
-                  (swap! app-state assoc :user (:user data))
-                  (put! auth-channel data))))))))
+            (-> js/document .-location (.reload true)))))))
 
 (defn check-username [event owner]
   (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]

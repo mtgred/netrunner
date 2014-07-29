@@ -10,6 +10,7 @@ crypto = require('crypto')
 bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
+jwt = require('jsonwebtoken')
 
 # MongoDB connection
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
@@ -19,16 +20,9 @@ mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
 appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 mongoUrl = "mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}"
-
 db = mongoskin.db(mongoUrl)
 
-# Socket.io
-chat = io.of('/chat').on 'connection', (socket) ->
-  socket.on 'netrunner', (msg) ->
-    msg.date = new Date()
-    chat.emit('netrunner', msg)
-    db.collection('messages').insert msg, (err, result) ->
-
+# Game lobby
 gameid = 0
 games = []
 
@@ -41,6 +35,23 @@ removePlayer = (username) ->
     if game.players.length is 0
       games.splice(i, 1)
       break
+
+# Socket.io
+io.use (socket, next) ->
+  if socket.handshake.query.token
+    jwt.verify socket.handshake.query.token, config.salt, (err, user) ->
+      socket.request.user = user unless err
+  next()
+
+io.on 'connection', (socket) ->
+  socket.on 'disconnect', () ->
+    removePlayer(socket.request.user.username) if socket.request.user
+
+chat = io.of('/chat').on 'connection', (socket) ->
+  socket.on 'netrunner', (msg) ->
+    msg.date = new Date()
+    chat.emit('netrunner', msg)
+    db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
   lobby.emit('netrunner', {type: "games", games: games})
@@ -105,9 +116,7 @@ passport.deserializeUser (id, done) ->
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     throw err if err
-    db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
-      throw err if err
-      res.json(200, {user: req.user, decks: data})
+    res.json(200, {user: req.user})
 
 app.get '/logout', (req, res) ->
   req.logout()
@@ -203,14 +212,16 @@ app.configure 'development', ->
   app.get '/*', (req, res) ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
-    res.render('index.jade', { user: req.user, env: 'dev'})
+      token = jwt.sign(req.user, config.salt)
+    res.render('index.jade', { user: req.user, env: 'dev', token: token})
 
 app.configure 'production', ->
   console.log "Prod environment"
   app.get '/*', (req, res) ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
-    res.render('index.jade', { user: req.user, env: 'prod'})
+      token = jwt.sign(req.user, config.salt, {expiresInMinutes: 360})
+    res.render('index.jade', { user: req.user, env: 'prod', token: token})
 
 # Server
 terminate = () ->

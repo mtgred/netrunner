@@ -12,6 +12,7 @@
     "connect-mongo": "~0.4.1",
     "express": "~3.4.7",
     "jade": "*",
+    "jsonwebtoken": "~0.4.1",
     "mongoskin": "~1.4.1",
     "passport": "~0.2.0",
     "passport-local": "~1.0.0",

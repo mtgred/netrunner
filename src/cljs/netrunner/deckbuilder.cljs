@@ -4,7 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
-            [netrunner.auth :refer [auth-channel authenticated] :as auth]
+            [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
@@ -25,8 +25,6 @@
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]
       (load-decks decks)
-      (go (let [data (<! auth-channel)]
-            (load-decks (process-decks (:decks data)))))
       (>! cards-channel cards)))
 
 (defn side-identities [side]
