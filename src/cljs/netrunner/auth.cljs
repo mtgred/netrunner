@@ -18,7 +18,7 @@
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
     (f user)
-    (.modal (js/$ "#register-form") "show")))
+    (.modal (js/$ "#login-form") "show")))
 
 (defn logged-menu [user owner]
   (om/component
