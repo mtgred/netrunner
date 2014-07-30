@@ -34,7 +34,7 @@ removePlayer = (socket, username) ->
         socket.to(game.id).emit 'netrunner',
           type: "say"
           user: "__system__"
-          message: "#{username} left the game."
+          text: "#{username} left the game."
         break
     if game.players.length is 0
       games.splice(i, 1)
@@ -64,19 +64,19 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     console.log "msg", msg
     switch msg.action
       when "create"
-        game = {date: new Date(), id: ++gameid, title: msg.title, players: [msg.player]}
+        game = {date: new Date(), id: ++gameid, title: msg.title, players: [socket.request.user]}
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
         lobby.emit('netrunner', {type: "games", games: games})
       when "leave"
-        removePlayer(socket, msg.username)
+        removePlayer(socket, socket.request.user.username)
         socket.leave(msg.gameid)
         lobby.emit('netrunner', {type: "games", games: games})
       when "join"
         for game in games
-          if game.id is msg.gameid and game.players.length < 2 and game.players[0].username isnt msg.user.username
-            game.players.push(msg.user)
+          if game.id is msg.gameid and game.players.length < 2 and game.players[0].username isnt socket.request.user.username
+            game.players.push(socket.request.user)
             socket.join(game.id)
             socket.emit("netrunner", {type: "game", gameid: game.id})
             break
@@ -84,9 +84,9 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.broadcast.to(msg.gameid).emit 'netrunner',
           type: "say"
           user: "__system__"
-          message: "#{socket.request.user.username} joined the game."
+          text: "#{socket.request.user.username} joined the game."
       when "say"
-        lobby.to(msg.gameid).emit("netrunner", {type: "say", user: msg.user, message: msg.message})
+        lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
 
 # Express config
 app.configure ->

@@ -18,8 +18,7 @@
         (case (:type msg)
           "game" (put! join-channel (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
-          "say" (swap! app-state update-in [:messages]
-                       #(conj % {:user (:user msg) :msg (:message msg)}))))))
+          "say" (swap! app-state update-in [:messages] #(conj % {:user (:user msg) :text (:text msg)}))))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
@@ -38,19 +37,17 @@
        (om/set-state! owner :flash-message "Please fill a game title.")
        (do
          (om/set-state! owner :editing false)
-         (send {:action "create" :title (om/get-state owner :title) :player user}))))))
+         (send {:action "create" :title (om/get-state owner :title)}))))))
 
 (defn join-game [gameid cursor owner]
   (authenticated
    (fn [user]
-     (send {:action "join" :gameid gameid :user user}))))
+     (send {:action "join" :gameid gameid}))))
 
 (defn start-game [owner])
 
 (defn leave-game [owner]
-  (send {:action "leave"
-         :gameid (om/get-state owner :gameid)
-         :username (get-in @auth/app-state [:user :username])})
+  (send {:action "leave" :gameid (om/get-state owner :gameid)})
   (om/set-state! owner :in-game false)
   (om/set-state! owner :gameid nil)
   (swap! app-state assoc :messages []))
@@ -60,8 +57,7 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (when-not (empty? text)
-      (send {:action "say" :gameid (om/get-state owner :gameid)
-             :user (:user @auth/app-state) :message text})
+      (send {:action "say" :gameid (om/get-state owner :gameid) :text text})
       (aset input "value" "")
       (.focus input))))
 
@@ -87,12 +83,12 @@
         [:div.message-list {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
-             [:div.system (:msg msg)]
+             [:div.system (:text msg)]
              [:div.message
               (om/build avatar (:user msg) {:opts {:size 38}})
               [:div.content
                [:div.username (get-in msg [:user :username])]
-               [:div (:msg msg)]]]))]
+               [:div (:text msg)]]]))]
         [:form.msg-box {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]
          [:button "Send"]]]))))
