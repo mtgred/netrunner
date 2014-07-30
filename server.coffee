@@ -26,11 +26,15 @@ db = mongoskin.db(mongoUrl)
 gameid = 0
 games = []
 
-removePlayer = (username) ->
+removePlayer = (socket, username) ->
   for game, i in games
     for player, j in game.players
       if player.username is username
         game.players.splice(j, 1)
+        socket.to(game.id).emit 'netrunner',
+          type: "say"
+          user: "__system__"
+          message: "#{username} left the game."
         break
     if game.players.length is 0
       games.splice(i, 1)
@@ -43,10 +47,6 @@ io.use (socket, next) ->
       socket.request.user = user unless err
   next()
 
-io.on 'connection', (socket) ->
-  socket.on 'disconnect', () ->
-    removePlayer(socket.request.user.username) if socket.request.user
-
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
@@ -55,6 +55,10 @@ chat = io.of('/chat').on 'connection', (socket) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
   lobby.emit('netrunner', {type: "games", games: games})
+
+  socket.on 'disconnect', () ->
+    removePlayer(socket, socket.request.user.username) if socket.request.user
+    lobby.emit('netrunner', {type: "games", games: games})
 
   socket.on 'netrunner', (msg) ->
     console.log "msg", msg
@@ -66,7 +70,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.emit("netrunner", {type: "game", gameid: gameid})
         lobby.emit('netrunner', {type: "games", games: games})
       when "leave"
-        removePlayer(msg.username)
+        removePlayer(socket, msg.username)
         socket.leave(msg.gameid)
         lobby.emit('netrunner', {type: "games", games: games})
       when "join"
@@ -77,6 +81,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             socket.emit("netrunner", {type: "game", gameid: game.id})
             break
         lobby.emit('netrunner', {type: "games", games: games})
+        socket.broadcast.to(msg.gameid).emit 'netrunner',
+          type: "say"
+          user: "__system__"
+          message: "#{socket.request.user.username} joined the game."
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: msg.user, message: msg.message})
 

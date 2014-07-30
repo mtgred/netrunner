@@ -10,6 +10,7 @@
 (def socket-channel (chan))
 (def join-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
+(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
 (go (while true
       (let [msg (<! socket-channel)]
@@ -17,10 +18,8 @@
         (case (:type msg)
           "game" (put! join-channel (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
-          "say" (swap! app-state assoc :messages (conj (:messages @app-state) {:user (:user msg)
-                                                                              :msg (:message msg)}))))))
-
-(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+          "say" (swap! app-state update-in [:messages]
+                       #(conj % {:user (:user msg) :msg (:message msg)}))))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
@@ -87,11 +86,13 @@
         [:h3 "Chat"]
         [:div.message-list {:ref "msg-list"}
          (for [msg messages]
-           [:div.message
-            (om/build avatar (:user msg) {:opts {:size 38}})
-            [:div.content
-             [:div.username (get-in msg [:user :username])]
-             [:div (:msg msg)]]])]
+           (if (= (:user msg) "__system__")
+             [:div.system (:msg msg)]
+             [:div.message
+              (om/build avatar (:user msg) {:opts {:size 38}})
+              [:div.content
+               [:div.username (get-in msg [:user :username])]
+               [:div (:msg msg)]]]))]
         [:form.msg-box {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]
          [:button "Send"]]]))))
