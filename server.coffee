@@ -26,10 +26,13 @@ db = mongoskin.db(mongoUrl)
 gameid = 0
 games = []
 
+swapSide = (side) ->
+  if side is "Corp" then "Runner" else "Corp"
+
 removePlayer = (socket, username) ->
   for game, i in games
     for player, j in game.players
-      if player.username is username
+      if player.user.username is username
         game.players.splice(j, 1)
         socket.to(game.id).emit 'netrunner',
           type: "say"
@@ -64,19 +67,25 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     console.log "msg", msg
     switch msg.action
       when "create"
-        game = {date: new Date(), id: ++gameid, title: msg.title, players: [socket.request.user]}
+        game =
+          date: new Date()
+          id: ++gameid
+          title: msg.title
+          players: [{user: socket.request.user, side: "Corp"}]
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
         lobby.emit('netrunner', {type: "games", games: games})
+
       when "leave"
         removePlayer(socket, socket.request.user.username)
         socket.leave(msg.gameid)
         lobby.emit('netrunner', {type: "games", games: games})
+
       when "join"
         for game in games
-          if game.id is msg.gameid and game.players.length < 2 and game.players[0].username isnt socket.request.user.username
-            game.players.push(socket.request.user)
+          if game.id is msg.gameid and game.players.length < 2 and game.players[0].user.username isnt socket.request.user.username
+            game.players.push({user: socket.request.user, side: swapSide(game.players[0].side)})
             socket.join(game.id)
             socket.emit("netrunner", {type: "game", gameid: game.id})
             break
@@ -85,8 +94,24 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           type: "say"
           user: "__system__"
           text: "#{socket.request.user.username} joined the game."
+
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
+
+      when "swap"
+        for game in games
+          if game.id is msg.gameid
+            for player in game.players
+              player.side = swapSide(player.side)
+            break
+        lobby.emit('netrunner', {type: "games", games: games})
+
+      when "start"
+        for game, i in games
+          if game.id is msg.gameid
+            games.splice(i, 1)
+            break
+        socket.broadcast.to(msg.gameid).emit("netrunner", {type: "start"})
 
 # Express config
 app.configure ->

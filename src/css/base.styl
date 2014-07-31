@@ -754,6 +754,9 @@ a.button, button
       margin-right: 10px
       margin-bottom: 5px
 
+  .side
+    margin-left: 5px
+
   .button-bar
     padding-bottom: 15px
 
@@ -776,7 +779,8 @@ a.button, button
     .player
       &:first-child:after
         content: "vs"
-        margin: 0 10px
+        margin: 0 8px
+        font-weight: bold
 
       &:last-child:after
         display: none
@@ -795,9 +799,15 @@ a.button, button
 
     .players
       height: 65px
+      clear: both
 
       > div
         margin: 8px 0
+
+     .swap-link
+       float: left
+       line-height: 30px
+       margin-left: 10px
 
     .message-list
       height: 298px
