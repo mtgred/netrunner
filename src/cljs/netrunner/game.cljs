@@ -2,40 +2,41 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! <!] :as async]))
+            [cljs.core.async :refer [chan put! <!] :as async]
+            [netrunner.auth :refer [avatar] :as auth]))
 
-(def game-state
-  (atom
-   {:game-id 0
-    :log []
-    :side :runner
-    :corp
-    {:username "Richard Gardfield"
-     :r&d []
-     :hq []
-     :archive []
-     :remote-servers []
-     :click 3
-     :credit 5
-     :bad-publicity 0
-     :agenda-point 0
-     :max-hand-size 5}
-    :runner
-    {:username "Lukas Litzsinger"
-     :stack []
-     :grip []
-     :heap []
-     :rig []
-     :click 4
-     :credit 5
-     :memory 4
-     :link 0
-     :tag 0
-     :agenda-point 0
-     :max-hand-size 5
-     :brain-damage 0}}))
+(def app-state
+  (atom {:gameid 0
+         :log []
+         :side "Corp"
+         :corp {:user nil
+                :r&d []
+                :hq []
+                :archive []
+                :remote-servers []
+                :click 3
+                :credit 5
+                :bad-publicity 0
+                :agenda-point 0
+                :max-hand-size 5}
+         :runner {:user nil
+                  :stack []
+                  :grip []
+                  :heap []
+                  :rig []
+                  :click 4
+                  :credit 5
+                  :memory 4
+                  :link 0
+                  :tag 0
+                  :agenda-point 0
+                  :max-hand-size 5
+                  :brain-damage 0}}{}))
 
-(swap! game-state assoc-in [:corp :bad-publicity] 0)
+(defn init-game [gameid side corp runner]
+  (swap! app-state assoc :gameid gameid :side side)
+  (swap! app-state assoc-in [:runner :user] (:user runner))
+  (swap! app-state assoc-in [:corp :user] (:user corp)))
 
 (defn log-pane [cursor owner]
   (om/component
@@ -74,12 +75,11 @@
   (om/component
    (sab/html [:div.panel.blue-shade.scored {} (str "Agenda Points")])))
 
-(defn runner-stats-view [{:keys [username click credit memory link tag
-                                 brain-damage max-hand-size]} owner]
+(defn runner-stats-view [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
-     [:h4.ellipsis username]
+     [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
      [:div (str click " Click" (if (> click 1) "s" ""))]
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
      [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
@@ -88,11 +88,11 @@
      [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]
      [:div (str max-hand-size " Max Hand Size")]])))
 
-(defn corp-stats-view [{:keys [username click credit bad-publicity max-hand-size]} owner]
+(defn corp-stats-view [{:keys [user click credit bad-publicity max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
-     [:h4.ellipsis username]
+     [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
      [:div (str click " Click" (if (> click 1) "s" ""))]
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
      [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]
@@ -109,15 +109,15 @@
     [:div.board {}])))
 
 (defn deck []
-  (if (= (:side game-state) :runner) :stack :r&d))
+  (if (= (:side app-state) :runner) :stack :r&d))
 
 (defn hand []
-  (if (= (:side game-state) :runner) :grip :hq))
+  (if (= (:side app-state) :runner) :grip :hq))
 
 (defn discard []
-  (if (= (:side game-state) :runner) :heap :archive))
+  (if (= (:side app-state) :runner) :heap :archive))
 
-(defn game-app [cursor owner]
+(defn gameboard [cursor owner]
   (om/component
    (sab/html
     [:div.gameboard {}
@@ -140,4 +140,4 @@
       (om/build log-pane (:log cursor))
       (om/build msg-input-view cursor)]])))
 
-(om/root game-app game-state {:target (. js/document (getElementById "gameboard"))})
+(om/root gameboard app-state {:target (. js/document (getElementById "gameboard"))})

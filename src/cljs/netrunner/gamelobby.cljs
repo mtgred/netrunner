@@ -4,22 +4,33 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
-            [netrunner.auth :refer [authenticated avatar] :as auth]))
+            [netrunner.auth :refer [authenticated avatar] :as auth]
+            [netrunner.game :refer [init-game]]))
 
-(def app-state (atom {:games [] :messages [] :active true}))
+(def app-state (atom {:games [] :gameid nil :messages []}))
 (def socket-channel (chan))
-(def join-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+
+(defn launch-game []
+  (let [gameid (:gameid @app-state)
+        players (:players (some #(when (= (:id %) gameid) %) (:games @app-state)))
+        corp (some #(when (= (:side %) "Corp") %) players)
+        runner (some #(when (= (:side %) "Runner") %) players)
+        username (get-in @auth/app-state [:user :username])
+        side (if (= (get-in runner [:user :username]) username) "Runner" "Corp")]
+    (init-game gameid side corp runner))
+  (-> "#gamelobby" js/$ .fadeOut)
+  (-> "#gameboard" js/$ .fadeIn))
 
 (go (while true
       (let [msg (<! socket-channel)]
         (.log js/console (clj->js msg))
         (case (:type msg)
-          "game" (put! join-channel (:gameid msg))
+          "game" (swap! app-state assoc :gameid (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
           "say" (swap! app-state update-in [:messages] #(conj % {:user (:user msg) :text (:text msg)}))
-          "start" (swap! app-state assoc :active false)))))
+          "start" (launch-game)))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
@@ -40,27 +51,23 @@
          (om/set-state! owner :editing false)
          (send {:action "create" :title (om/get-state owner :title)}))))))
 
-(defn join-game [gameid cursor owner]
+(defn join-game [gameid owner]
   (authenticated
    (fn [user]
      (send {:action "join" :gameid gameid}))))
 
-(defn start-game [cursor owner]
-  (send {:action "start" :gameid (om/get-state owner :gameid)})
-  (om/update! cursor :active false))
-
-(defn leave-game [owner]
-  (send {:action "leave" :gameid (om/get-state owner :gameid)})
+(defn leave-game [cursor owner]
+  (send {:action "leave" :gameid (:gameid @app-state)})
   (om/set-state! owner :in-game false)
-  (om/set-state! owner :gameid nil)
-  (swap! app-state assoc :messages []))
+  (om/update! cursor :gameid nil)
+  (om/update! cursor :message []))
 
 (defn send-msg [event owner]
   (.preventDefault event)
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (when-not (empty? text)
-      (send {:action "say" :gameid (om/get-state owner :gameid) :text text})
+      (send {:action "say" :gameid (:gameid @app-state) :text text})
       (aset input "value" "")
       (.focus input))))
 
@@ -97,63 +104,55 @@
          [:input {:ref "msg-input" :placeholder "Say something"}]
          [:button "Send"]]]))))
 
-(defn game-lobby [{:keys [games] :as cursor} owner]
+(defn game-lobby [{:keys [games gameid] :as cursor} owner]
   (reify
-    om/IWillMount
-    (will-mount [this]
-      (go (while true
-            (let [gameid (<! join-channel)]
-              (om/set-state! owner :gameid gameid)))))
-
     om/IRenderState
     (render-state [this state]
       (sab/html
-       (if-not (:active cursor)
-         [:div]
-         [:div.lobby.panel.blue-shade
-          [:div.games
-           [:div.button-bar
-            [:button {:class (if (:in-game state) "disabled" "")
-                      :on-click #(new-game cursor owner)} "New game"]]
-           [:div.game-list
-            (if (empty? games)
-              [:h4 "No game"]
-              (for [game games]
-                [:div.gameline {:class (when (= (:gameid state) (:id game)) "active")}
-                 (when-not (or (:gameid state) (:editing state) (= (count (:players game)) 2))
-                   (let [gameid (:id game)]
-                     [:button {:on-click #(join-game gameid cursor owner)} "Join"]))
-                 [:h4 (:title game)]
-                 [:div
-                  (om/build-all player-view (:players game))]]))]]
+       [:div.lobby.panel.blue-shade
+        [:div.games
+         [:div.button-bar
+          [:button {:class (if (:in-game state) "disabled" "")
+                    :on-click #(new-game cursor owner)} "New game"]]
+         [:div.game-list
+          (if (empty? games)
+            [:h4 "No game"]
+            (for [game games]
+              [:div.gameline {:class (when (= gameid (:id game)) "active")}
+               (when-not (or gameid (= (count (:players game)) 2))
+                 (let [id (:id game)]
+                   [:button {:on-click #(join-game id owner)} "Join"]))
+               [:h4 (:title game)]
+               [:div
+                (om/build-all player-view (:players game))]]))]]
 
-          [:div.game-panel
-           (if (:editing state)
-             (do
+        [:div.game-panel
+         (if (:editing state)
+           (do
+             [:div
+              [:div.button-bar
+               [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
+               [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
+              [:h4 "Title"]
+              [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
+                                  :value (:title state) :placeholder "Title"}]
+              [:p.flash-message (:flash-message state)]])
+           (when-let [game (some #(when (= gameid (:id %)) %) games)]
+             (let [username (get-in @auth/app-state [:user :username])
+                   players (:players game)]
                [:div
                 [:div.button-bar
-                 [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
-                 [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
-                [:h4 "Title"]
-                [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                    :value (:title state) :placeholder "Title"}]
-                [:p.flash-message (:flash-message state)]])
-             (when-let [game (some #(when (= (:gameid state) (:id %)) %) games)]
-               (let [username (get-in @auth/app-state [:user :username])
-                     players (:players game)]
-                 [:div
-                  [:div.button-bar
-                   (when (and (= (count players) 2) (= (-> players first :user :username) username))
-                     [:button {:on-click #(start-game cursor owner)} "Start"])
-                   [:button {:on-click #(leave-game owner)} "Leave"]]
-                  [:h2 (:title game)]
-                  [:h3.float-left "Players"]
-                  (when (= (-> players first :user :username) username)
-                    [:span.fake-link.swap-link
-                     {:on-click #(send {:action "swap" :gameid (:gameid state)})} "Change sides"])
-                  [:div.players
-                   (for [player (:players game)]
-                     [:div (om/build player-view player)])]
-                  (om/build chat-view (:messages cursor) {:state state})])))]])))))
+                 (when (and (= (count players) 2) (= (-> players first :user :username) username))
+                   [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"])
+                 [:button {:on-click #(leave-game cursor owner)} "Leave"]]
+                [:h2 (:title game)]
+                [:h3.float-left "Players"]
+                (when (= (-> players first :user :username) username)
+                  [:span.fake-link.swap-link
+                   {:on-click #(send {:action "swap" :gameid gameid})} "Change sides"])
+                [:div.players
+                 (for [player (:players game)]
+                   [:div (om/build player-view player)])]
+                (om/build chat-view (:messages cursor) {:state state})])))]]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})

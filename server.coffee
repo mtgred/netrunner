@@ -104,14 +104,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             for player in game.players
               player.side = swapSide(player.side)
             break
-        lobby.emit('netrunner', {type: "games", games: games})
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "start"
         for game, i in games
           if game.id is msg.gameid
             games.splice(i, 1)
             break
-        socket.broadcast.to(msg.gameid).emit("netrunner", {type: "start"})
+        lobby.to(msg.gameid).emit("netrunner", {type: "start"})
 
 # Express config
 app.configure ->
