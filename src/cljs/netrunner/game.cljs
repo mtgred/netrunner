@@ -8,7 +8,7 @@
 (def app-state
   (atom {:gameid 0
          :log []
-         :side "Corp"
+         :side :corp
          :corp {:user nil
                 :r&d []
                 :hq []
@@ -34,7 +34,7 @@
                   :brain-damage 0}}{}))
 
 (defn init-game [gameid side corp runner]
-  (swap! app-state assoc :gameid gameid :side side)
+  (swap! app-state assoc :gameid gameid :side (keyword (.toLowerCase side)))
   (swap! app-state assoc-in [:runner :user] (:user runner))
   (swap! app-state assoc-in [:corp :user] (:user corp)))
 
@@ -117,26 +117,30 @@
 (defn discard []
   (if (= (:side app-state) :runner) :heap :archive))
 
-(defn gameboard [cursor owner]
+(defn gameboard [{:keys [side] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.gameboard {}
-     [:div.leftpane {}
-      [:div {}
-       (om/build corp-stats-view (:corp cursor))
-       (om/build scored-view cursor)]
-      [:div {}
-       (om/build scored-view cursor)
-       (om/build runner-stats-view (:runner cursor))]]
+    [:div.gameboard
+     [:div.leftpane
+      [:div
+       (if (= side :corp)
+         (om/build runner-stats-view (:runner cursor))
+         (om/build corp-stats-view (:corp cursor)))
+       (om/build scored-view ((if (= side :corp) :runner :corp) cursor))]
+      [:div
+       (om/build scored-view (side cursor))
+       (if (= side :corp)
+         (om/build corp-stats-view (:corp cursor))
+         (om/build runner-stats-view (:runner cursor)))]]
      [:div.centralpane
       (om/build corp-board (:corp cursor))
       (om/build runner-board (:runner cursor))
-      [:div.dashboard {}
+      [:div.dashboard
        (om/build hand-view ((hand) cursor))
        (om/build deck-view ((deck) cursor))
        (om/build discard-view ((discard) cursor))]]
      [:div.rightpane {}
-      [:div.card-zoom {}]
+      [:div.card-zoom]
       (om/build log-pane (:log cursor))
       (om/build msg-input-view cursor)]])))
 
