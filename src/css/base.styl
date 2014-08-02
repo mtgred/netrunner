@@ -561,7 +561,7 @@ a.button, button
   .viewport.edit
     left: -500px
 
-    .decklist .line .card
+    .decklist .card
       left: auto
       right: 50%
       transform: translateX(100%)
@@ -645,6 +645,18 @@ a.button, button
       input.deckname
         height: 30px
 
+      .card
+        display: none
+        position: fixed
+        z-index: 10
+        margin-left: -12px
+        left: 50%
+        top: 65px
+        transform: translateX(-100%)
+
+      .fake-link:hover .card
+        display: block
+
       .cards
         margin-top: 15px
         columns(2, 5px)
@@ -657,21 +669,8 @@ a.button, button
         .card
           color: white
 
-
         button.small
           margin: 3px 5px 3px 0
-
-        .card
-          display: none
-          position: fixed
-          z-index: 10
-          margin-left: -12px
-          left: 50%
-          top: 65px
-          transform: translateX(-100%)
-
-        .fake-link:hover .card
-          display: block
 
       .group
         display: inline-block

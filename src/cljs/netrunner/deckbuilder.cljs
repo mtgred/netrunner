@@ -241,7 +241,7 @@
                 [:h3.deckname (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
-                 [:h4 (:title identity)]
+                 [:h4.fake-link (:title identity) (om/build card-view identity)]
                  (let [count (card-count cards)
                        min-count (:minimumdecksize identity)]
                    [:div count " cards"
