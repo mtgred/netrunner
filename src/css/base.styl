@@ -165,6 +165,9 @@ button.small
   border-right: 4px solid transparent
   border-left: 4px solid transparent
 
+.system
+  font-weight: bold
+  margin-bottom: 5px
 
 // Dropdown
 
@@ -419,23 +422,23 @@ a.button, button
 .chat-box
   flex(1)
 
+.message
+  display-flex()
+  margin-bottom: 5px
+
+  .content
+    flex(1)
+
 .message-list
   height: 400px
   margin: 0
   overflow: auto
   -webkit-overflow-scrolling: touch
 
-  .message
-    display-flex()
-    margin-bottom: 5px
-
   .avatar
     height: 38px
     width: 38px
     border-radius: 5px
-
-  .content
-    flex(1)
 
   .date
     font-weight: 300
@@ -742,7 +745,7 @@ a.button, button
 
   .games, .game-panel
     flex(1)
-    display: flex
+    display-flex()
     flex-direction: column
 
   .game-panel
@@ -817,10 +820,6 @@ a.button, button
       overflow: auto
       padding: 5px 10px
 
-    .system
-      font-weight: bold
-      margin-bottom: 5px
-
   .game-title
     width: 250px
 
@@ -828,6 +827,9 @@ a.button, button
 
 #gameboard
   display: none
+
+// #gamelobby
+//   display: none
 
 .gameboard
   position: absolute
@@ -895,9 +897,24 @@ a.button, button
     overflow: auto
     -webkit-overflow-scrolling: touch
     flex(1)
+    display-flex()
+    flex-direction(column)
 
-  > input
-    margin: 0 4px 4px
+    .avatar
+      width: 28px
+      height: 28px
+
+    > .panel
+     padding: 5px 8px
+
+    > div
+      flex(1)
+
+    > form
+      margin: 0 4px 4px
+
+      input
+        width: 100%
 
 .about
   padding: 10px 20px

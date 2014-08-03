@@ -5,11 +5,15 @@
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :refer [avatar] :as auth]))
 
+(def socket (.connect js/io (str js/iourl "/lobby")))
+(def socket-channel (chan))
+(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+
 (def app-state
   (atom {:gameid 0
          :log []
          :side :corp
-         :corp {:user nil
+         :corp {:user {:username "" :emailhash ""}
                 :r&d []
                 :hq []
                 :archive []
@@ -19,7 +23,7 @@
                 :bad-publicity 0
                 :agenda-point 0
                 :max-hand-size 5}
-         :runner {:user nil
+         :runner {:user {:username "" :emailhash ""}
                   :stack []
                   :grip []
                   :heap []
@@ -38,26 +42,47 @@
   (swap! app-state assoc-in [:runner :user] (:user runner))
   (swap! app-state assoc-in [:corp :user] (:user corp)))
 
-(defn log-pane [cursor owner]
-  (om/component
-   (sab/html [:div.panel.blue-shade.log {} "Log"])))
+(go (while true
+      (let [msg (<! socket-channel)]
+        (.log js/console "game" (clj->js msg))
+        (case (:type msg)
+          "say" (swap! app-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
+          nil))))
 
-(defn send-msg [cursor owner]
-  ;; (let [input (om/get-node owner "msg-input")
-  ;;       text (.-value input)]
-  ;;   (when-not (zero? (alength text))
-  ;;     (aset input "value" "")
-  ;;     (put! out-channel #js {:type "game"
-  ;;                            :game-id 0
-  ;;                            :action "say"
-  ;;                            :msg text})))
-  )
+(defn send [msg]
+  (.emit socket "netrunner" (clj->js msg)))
 
-(defn msg-input-view [cursor owner]
-  (om/component
-   (sab/html
-    [:input {:type "text" :ref "msg-input" :placeholder "Say something..."
-             :onKeyPress #(when (== (.-keyCode %) 13) (send-msg cursor owner))}])))
+(defn send-msg [event owner]
+  (.preventDefault event)
+  (let [input (om/get-node owner "msg-input")
+        text (.-value input)]
+    (when-not (empty? text)
+      (send {:action "say" :gameid (:gameid @app-state) :text text})
+      (aset input "value" "")
+      (.focus input))))
+
+(defn log-pane [messages owner]
+  (reify
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [div (om/get-node owner "msg-list")]
+        (aset div "scrollTop" (.-scrollHeight div))))
+
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div.log
+        [:div.panel.blue-shade {:ref "msg-list"}
+         (for [msg messages]
+           (if (= (:user msg) "__system__")
+             [:div.system (:text msg)]
+             [:div.message
+              (om/build avatar (:user msg) {:opts {:size 38}})
+              [:div.content
+               [:div.username (get-in msg [:user :username])]
+               [:div (:text msg)]]]))]
+        [:form {:on-submit #(send-msg % owner)}
+         [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
 (defn hand-view [cursor owner]
   (om/component
@@ -141,7 +166,6 @@
        (om/build discard-view ((discard) cursor))]]
      [:div.rightpane {}
       [:div.card-zoom]
-      (om/build log-pane (:log cursor))
-      (om/build msg-input-view cursor)]])))
+      (om/build log-pane (:log cursor))]])))
 
 (om/root gameboard app-state {:target (. js/document (getElementById "gameboard"))})

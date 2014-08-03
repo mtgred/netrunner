@@ -64,7 +64,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     lobby.emit('netrunner', {type: "games", games: games})
 
   socket.on 'netrunner', (msg) ->
-    console.log "msg", msg
     switch msg.action
       when "create"
         game =

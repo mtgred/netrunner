@@ -30,7 +30,8 @@
           "game" (swap! app-state assoc :gameid (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
           "say" (swap! app-state update-in [:messages] #(conj % {:user (:user msg) :text (:text msg)}))
-          "start" (launch-game)))))
+          "start" (launch-game)
+          nil))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
