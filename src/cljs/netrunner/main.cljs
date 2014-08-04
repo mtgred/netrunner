@@ -47,7 +47,3 @@
         (navigate (nth tokens (inc page))))
       (when (> page 0)
         (navigate (nth tokens (dec page)))))))
-
-(when (js* "\"ontouchstart\" in window")
-  (-> ".carousel" js/$ (.swipeleft #(handle-swipe :left)))
-  (-> ".carousel" js/$ (.swiperight #(handle-swipe :right))))
