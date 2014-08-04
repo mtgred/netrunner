@@ -140,6 +140,13 @@ button.small
   overflow: hidden
   text-overflow: ellipsis
 
+.label
+  border: 1px solid white
+  border-radius: 4px
+  padding: 2px 5px
+  font-size: 12px
+  margin: 0 10px
+
 * html .clearfix
   height: 1%
   overflow: visible
@@ -796,7 +803,7 @@ a.button, button
   .game-panel
     .button-bar
       button
-        width: 80px
+        min-width: 80px
         margin-right: 5px
 
     .players
@@ -806,10 +813,18 @@ a.button, button
       > div
         margin: 8px 0
 
-     .swap-link
-       float: left
-       line-height: 30px
-       margin-left: 10px
+      .player
+        line-height: 22px
+
+      .label
+        width: 60px
+        display: inline-block
+        text-align: center
+        color: limegreen
+        border-color: limegreen
+
+      .fake-link
+        margin-left: 10px
 
     .message-list
       height: 298px

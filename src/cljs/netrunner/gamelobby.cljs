@@ -17,8 +17,7 @@
         players (:players (some #(when (= (:id %) gameid) %) (:games @app-state)))
         corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
-        username (get-in @auth/app-state [:user :username])
-        side (if (= (get-in runner [:user :username]) username) "Runner" "Corp")]
+        side (if (= (:user runner) (:user @auth/app-state)) "Runner" "Corp")]
     (init-game gameid side corp runner))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
@@ -71,6 +70,9 @@
       (send {:action "say" :gameid (:gameid @app-state) :text text})
       (aset input "value" "")
       (.focus input))))
+
+(defn open-deck-select [cursor]
+  (om/update! cursor [:deck] []))
 
 (defn player-view [cursor]
   (om/component
@@ -139,21 +141,26 @@
                                   :value (:title state) :placeholder "Title"}]
               [:p.flash-message (:flash-message state)]])
            (when-let [game (some #(when (= gameid (:id %)) %) games)]
-             (let [username (get-in @auth/app-state [:user :username])
+             (let [user (:user @auth/app-state)
                    players (:players game)]
                [:div
                 [:div.button-bar
-                 (when (and (= (count players) 2) (= (-> players first :user :username) username))
+                 (when (and (= (count players) 2)
+                            (= (-> players first :user) user))
                    [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"])
-                 [:button {:on-click #(leave-game cursor owner)} "Leave"]]
+                 [:button {:on-click #(leave-game cursor owner)} "Leave"]
+                 (when (= (-> players first :user) user)
+                  [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
                 [:h2 (:title game)]
                 [:h3.float-left "Players"]
-                (when (= (-> players first :user :username) username)
-                  [:span.fake-link.swap-link
-                   {:on-click #(send {:action "swap" :gameid gameid})} "Change sides"])
                 [:div.players
                  (for [player (:players game)]
-                   [:div (om/build player-view player)])]
+                   [:div
+                    (om/build player-view player)
+                    (if (:deck cursor)
+                      [:span.label "Deck OK"]
+                      (when (= (:user player) (:user @auth/app-state))
+                        [:span.fake-link.deck-load {:on-click #(open-deck-select cursor)} "Choose deck"]))])]
                 (om/build chat-view (:messages cursor) {:state state})])))]]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})
