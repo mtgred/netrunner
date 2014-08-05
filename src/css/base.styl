@@ -145,7 +145,7 @@ button.small
   border-radius: 4px
   padding: 2px 5px
   font-size: 12px
-  margin: 0 10px
+  margin: 0 12px
 
 * html .clearfix
   height: 1%
@@ -237,8 +237,11 @@ button.small
   left: 50%
   background-clip: padding-box
   border: 1px solid orange
+  background-color: rgba(0, 0, 0, 0.6)
   border-radius: 10px
   outline: none
+  padding: 15px 20px
+  color: white
   transform(translate(-50%, -50%))
   transition(all 0.2s ease-in-out)
 
@@ -256,7 +259,7 @@ button.small
   opacity: 0
 
 .modal-backdrop.in
-  opacity: 0.85
+  opacity: 0.7
 
 nav ul
   list-style-type: none
@@ -354,9 +357,6 @@ a.button, button
 // Auth
 
 #auth-forms
-  .modal-dialog
-    padding: 15px 20px
-    color: white
   input
     width: 240px
     margin-bottom: 10px
@@ -563,6 +563,31 @@ a.button, button
 
 // Deckbuilder
 
+.deck-collection
+  overflow: auto
+  -webkit-overflow-scrolling: touch
+  flex(1)
+
+  .deckline
+    height: 60px
+    padding: 5px 10px
+    margin: 0 0 5px
+    border: 1px solid white
+    border-radius: 4px
+    cursor: pointer
+    clear: both
+
+    &:hover
+      border-color: orange
+
+    p
+      margin-top: 5px
+
+    > img
+      float: left
+      height: 100%
+      margin-right: 10px
+
 .deckbuilder
   overflow: hidden
   padding: 15px 0
@@ -603,31 +628,6 @@ a.button, button
         button
           width: 135px
           margin-right: 5px
-
-      .deck-collection
-        overflow: auto
-        -webkit-overflow-scrolling: touch
-        flex(1)
-
-        .deckline
-          height: 60px
-          padding: 5px 10px
-          margin: 0 0 5px
-          border: 1px solid white
-          border-radius: 4px
-          cursor: pointer
-          clear: both
-
-          &:hover
-            border-color: orange
-
-          p
-            margin-top: 5px
-
-          > img
-            float: left
-            height: 100%
-            margin-right: 10px
 
     .decklist
       position: relative
@@ -817,11 +817,11 @@ a.button, button
         line-height: 22px
 
       .label
-        width: 60px
         display: inline-block
         text-align: center
         color: limegreen
         border-color: limegreen
+        margin-right: 0
 
       .fake-link
         margin-left: 10px
@@ -837,6 +837,10 @@ a.button, button
 
   .game-title
     width: 250px
+
+  .deck-collection
+    width: 496px
+    max-height: 355px
 
 // Gameboard
 
