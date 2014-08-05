@@ -121,8 +121,7 @@
 (defn auth-forms [cursor owner]
   (om/component
    (sab/html
-    (if (:user @app-state)
-      [:div]
+    (when-not (:user @app-state)
       [:div
        (om/build register-form cursor)
        (om/build login-form cursor)]))))

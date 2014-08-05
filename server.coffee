@@ -34,10 +34,7 @@ removePlayer = (socket, username) ->
     for player, j in game.players
       if player.user.username is username
         game.players.splice(j, 1)
-        socket.to(game.id).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          text: "#{username} left the game."
+        socket.to(game.id).emit('netrunner', {type: "say", user: "__system__", text: "#{username} left the game."})
         break
     if game.players.length is 0
       games.splice(i, 1)
@@ -66,11 +63,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
-        game =
-          date: new Date()
-          id: ++gameid
-          title: msg.title
-          players: [{user: socket.request.user, side: "Corp"}]
+        game = {date: new Date(), id: ++gameid, title: msg.title, players: [{user: socket.request.user, side: "Corp"}]}
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
