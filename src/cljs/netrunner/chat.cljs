@@ -97,6 +97,7 @@
         [:div.chat-box
          [:div.blue-shade.panel.message-list {:ref "message-list"}
           (om/build-all message-view (get-in cursor [:channels (:channel state)]))]
-         (om/build msg-input-view state)]]))))
+         [:div
+          (om/build msg-input-view state)]]]))))
 
 (om/root chat app-state {:target (. js/document (getElementById "chat"))})

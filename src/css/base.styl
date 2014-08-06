@@ -417,6 +417,10 @@ a.button, button
 
 .chat-app
   display-flex()
+  position: absolute
+  top: 100px
+  bottom: 15px
+  width: 995px
 
 .channel-list
   flex(0 0 180px)
@@ -428,6 +432,8 @@ a.button, button
 
 .chat-box
   flex(1)
+  display-flex()
+  flex-direction(column)
 
 .message
   display-flex()
@@ -441,6 +447,7 @@ a.button, button
   margin: 0
   overflow: auto
   -webkit-overflow-scrolling: touch
+  flex(1)
 
   .avatar
     height: 38px
@@ -592,9 +599,13 @@ a.button, button
   overflow: hidden
   padding: 15px 0
   margin-top: 10px
+  position: absolute
+  top: 31px
+  bottom: 10px
+  width: 995px
 
   .viewport.edit
-    left: -500px
+    left: -497px
 
     .decklist .card
       left: auto
@@ -604,8 +615,8 @@ a.button, button
 
   .viewport
     position: relative
-    height: 670px
     width: 1491px
+    height: 100%
     left: 0
     transition(all 0.5s ease-in-out)
     display-flex()
@@ -740,14 +751,17 @@ a.button, button
 
       textarea
         width: 100%
-        height: 456px
         line-height: 18px
+
 // Game Lobby
 
 .lobby
   padding: 15px 0
   margin: 10px auto
-  height: 600px
+  position: absolute
+  top: 31px
+  bottom: 5px
+  width: 995px
   display-flex()
 
   .games, .game-panel
@@ -775,7 +789,7 @@ a.button, button
   .game-list
     padding: 0 15px
     overflow: auto
-    flex: 1
+    flex(1)
 
   .gameline
     position: relative
@@ -801,6 +815,17 @@ a.button, button
       transform(translateY(-50%))
 
   .game-panel
+    position: relative
+
+    > div
+      position: absolute
+      top: 0
+      bottom: 0
+      left: 15px
+      right: 15px
+      display-flex()
+      flex-direction: column
+
     .button-bar
       button
         min-width: 80px
@@ -826,14 +851,15 @@ a.button, button
       .fake-link
         margin-left: 10px
 
-    .message-list
-      height: 298px
-      width: 100%
-      border: 1px solid white
-      border-radius: 4px
-      margin: 10px 0
-      overflow: auto
-      padding: 5px 10px
+    .chat-box
+      .message-list
+        height: 298px
+        width: 100%
+        border: 1px solid white
+        border-radius: 4px
+        margin-bottom: 5px
+        overflow: auto
+        padding: 5px 10px
 
   .game-title
     width: 250px

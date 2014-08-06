@@ -105,7 +105,7 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div
+       [:div.chat-box
         [:h3 "Chat"]
         [:div.message-list {:ref "msg-list"}
          (for [msg messages]
@@ -116,9 +116,10 @@
               [:div.content
                [:div.username (get-in msg [:user :username])]
                [:div (:text msg)]]]))]
-        [:form.msg-box {:on-submit #(send-msg % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something"}]
-         [:button "Send"]]]))))
+        [:div
+         [:form.msg-box {:on-submit #(send-msg % owner)}
+          [:input {:ref "msg-input" :placeholder "Say something"}]
+          [:button "Send"]]]]))))
 
 (defn game-lobby [{:keys [games gameid] :as cursor} owner]
   (reify
@@ -164,17 +165,18 @@
                  [:button {:on-click #(leave-game cursor owner)} "Leave"]
                  (when (= (-> players first :user) user)
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
-                [:h2 (:title game)]
-                [:h3.float-left "Players"]
-                [:div.players
-                 (for [player (:players game)]
-                   [:div
-                    (om/build player-view player)
-                    (when (:deck cursor)
-                      [:span.label "Deck selected"])
-                    (when (= (:user player) (:user @auth/app-state))
-                      [:span.fake-link.deck-load
-                       {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                [:div.content
+                 [:h2 (:title game)]
+                 [:h3 "Players"]
+                 [:div.players
+                  (for [player (:players game)]
+                    [:div
+                     (om/build player-view player)
+                     (when (:deck cursor)
+                       [:span.label "Deck selected"])
+                     (when (= (:user player) (:user @auth/app-state))
+                       [:span.fake-link.deck-load
+                        {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
                 (om/build chat-view (:messages cursor) {:state state})])))]
         [:div#deck-modal]]))))
 
