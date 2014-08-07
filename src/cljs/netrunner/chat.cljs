@@ -6,7 +6,8 @@
             [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.ajax :refer [GET]]))
 
-(def app-state (atom {:channels {:general [] :belgium [] :france []}}))
+(def app-state
+  (atom {:channels {:general [] :francais [] :deutsch [] :espanol [] :america [] :europe [] :asia []}}))
 
 (def chat-channel (chan))
 (def chat-socket (.connect js/io (str js/iourl "/chat")))
