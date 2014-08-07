@@ -9,7 +9,7 @@
             [netrunner.deckbuilder :as deckbuilder]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
-(def app-state (atom {:games [] :gameid nil :messages [] :deck nil}))
+(def app-state (atom {:games [] :gameid nil :messages []}))
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -81,7 +81,8 @@
       [:h3 "Select your deck"]
       [:div.deck-collection
        (for [deck (:decks cursor)]
-         [:div.deckline {:data-dismiss "modal" :on-click #(swap! app-state assoc :deck deck)}
+         [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})
+                         :data-dismiss "modal"}
           [:img {:src (image-url (:identity deck))}]
           [:h4 (:name deck)]
           [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
@@ -172,9 +173,12 @@
                   (for [player (:players game)]
                     [:div
                      (om/build player-view player)
-                     (when (:deck cursor)
-                       [:span.label "Deck selected"])
-                     (when (= (:user player) (:user @auth/app-state))
+                     (when-let [deck (:deck player)]
+                       [:span.label
+                        (if (= (:user player) user)
+                          (:name deck)
+                          "Deck selected")])
+                     (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
                 (om/build chat-view (:messages cursor) {:state state})])))]

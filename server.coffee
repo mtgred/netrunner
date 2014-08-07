@@ -95,6 +95,17 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           if game.id is msg.gameid
             for player in game.players
               player.side = swapSide(player.side)
+              player.deck = null
+            break
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
+
+      when "deck"
+        for game in games
+          if game.id is msg.gameid
+            for player in game.players
+              if player.user.username is socket.request.user.username
+                player.deck = msg.deck
+                break
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 

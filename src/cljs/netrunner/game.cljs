@@ -40,7 +40,9 @@
 (defn init-game [gameid side corp runner]
   (swap! app-state assoc :gameid gameid :side (keyword (.toLowerCase side)))
   (swap! app-state assoc-in [:runner :user] (:user runner))
-  (swap! app-state assoc-in [:corp :user] (:user corp)))
+  (swap! app-state assoc-in [:runner :deck] (:deck runner))
+  (swap! app-state assoc-in [:corp :user] (:user corp))
+  (swap! app-state assoc-in [:corp :deck] (:deck corp)))
 
 (go (while true
       (let [msg (<! socket-channel)]
