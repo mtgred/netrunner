@@ -140,6 +140,15 @@ button.small
   overflow: hidden
   text-overflow: ellipsis
 
+.disabled
+  opacity: 0.5
+  box-shadow(none)
+  cursor: auto
+
+  &:hover, &:focus
+    box-shadow(none)
+    border-color: orange
+
 .label
   border: 1px solid white
   border-radius: 4px

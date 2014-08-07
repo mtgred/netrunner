@@ -160,9 +160,10 @@
                    players (:players game)]
                [:div
                 [:div.button-bar
-                 (when (and (= (count players) 2)
-                            (= (-> players first :user) user))
-                   [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"])
+                 (when (= (-> players first :user) user)
+                   (if (and (= (count players) 2) (every? :deck players))
+                     [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"]
+                     [:button {:class "disabled"} "Start"]))
                  [:button {:on-click #(leave-game cursor owner)} "Leave"]
                  (when (= (-> players first :user) user)
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
