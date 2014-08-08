@@ -14,7 +14,7 @@
          :log []
          :side :corp
          :corp {:user {:username "" :emailhash ""}
-                :identity {:side "Corp"}
+                :identity {}
                 :deck []
                 :hand []
                 :discard []
@@ -26,7 +26,7 @@
                 :agenda-point 0
                 :max-hand-size 5}
          :runner {:user {:username "" :emailhash ""}
-                  :identity {:side "Runner"}
+                  :identity {}
                   :deck []
                   :hand []
                   :discard []
@@ -197,28 +197,29 @@
      (when (> (count (:rfg cursor)) 0)
        (om/build rfg-view (:rfg cursor)))])))
 
-(defn gameboard [{:keys [side] :as cursor} owner]
+(defn gameboard [{:keys [side gameid] :as cursor} owner]
   (om/component
    (sab/html
     (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
           opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
-      [:div.gameboard
-       [:div.leftpane
-        [:div
-         (om/build stats-view opponent)
-         (om/build scored-view opponent)]
-        [:div
-         (om/build scored-view me)
-         (om/build stats-view me)]]
+      (when (> gameid 0)
+        [:div.gameboard
+         [:div.leftpane
+          [:div
+           (om/build stats-view opponent)
+           (om/build scored-view opponent)]
+          [:div
+           (om/build scored-view me)
+           (om/build stats-view me)]]
 
-       [:div.centralpane
-        (om/build zones opponent)
-        (om/build board opponent)
-        (om/build board me)
-        (om/build zones me)]
+         [:div.centralpane
+          (om/build zones opponent)
+          (om/build board opponent)
+          (om/build board me)
+          (om/build zones me)]
 
-       [:div.rightpane {}
-        [:div.card-zoom]
-        (om/build log-pane (:log cursor))]]))))
+         [:div.rightpane {}
+          [:div.card-zoom]
+          (om/build log-pane (:log cursor))]])))))
 
 (om/root gameboard app-state {:target (. js/document (getElementById "gameboard"))})
