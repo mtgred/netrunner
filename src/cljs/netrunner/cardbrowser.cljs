@@ -37,7 +37,7 @@
 (defn card-view [card owner]
   (om/component
    (sab/html
-    [:div.card.blue-shade
+    [:div.card-preview.blue-shade
      [:h4 (:title card)]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)

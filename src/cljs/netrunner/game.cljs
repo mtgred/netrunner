@@ -107,12 +107,20 @@
 (defmethod deck-view "Runner" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck {} (str "Stack (" (count deck) ")")])))
+    [:div.panel.blue-shade.deck {}
+     [:div.header {:class (when (> (count deck) 0) "blue-shade")}
+      (str "Stack (" (count deck) ")")]
+     (when (> (count deck) 0)
+       [:img.card.bg {:src "/img/runner.png"}])])))
 
 (defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck {} (str "R&D (" (count deck) ")")])))
+    [:div.panel.blue-shade.deck {}
+     [:div.header {:class (when (> (count deck) 0) "blue-shade")}
+      (str "R&D (" (count deck) ")")]
+     (when (> (count deck) 0)
+       [:img.card.bg {:src "/img/corp.png"}])])))
 
 (defmulti discard-view #(get-in % [:identity :side]))
 

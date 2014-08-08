@@ -545,7 +545,7 @@ a.button, button
   flex(1)
 
 
-.card
+.card-preview
   float: left
   position: relative
   height: 348px
@@ -616,7 +616,7 @@ a.button, button
   .viewport.edit
     left: -497px
 
-    .decklist .card
+    .decklist .card-preview
       left: auto
       right: 50%
       transform: translateX(100%)
@@ -675,7 +675,7 @@ a.button, button
       input.deckname
         height: 30px
 
-      .card
+      .card-preview
         display: none
         position: fixed
         z-index: 10
@@ -684,7 +684,7 @@ a.button, button
         top: 65px
         transform: translateX(-100%)
 
-      .fake-link:hover .card
+      .fake-link:hover .card-preview
         display: block
 
       .cards
@@ -696,7 +696,7 @@ a.button, button
         overflow: visible
         line-height: 20px
 
-        .card
+        .card-preview
           color: white
 
         button.small
@@ -895,8 +895,26 @@ a.button, button
   justify-content(space-between)
 
   .panel
+    position: relative
     font-size: 12px
     padding: 3px 6px
+
+  .header
+    position: absolute
+    top: 0
+    left: 0
+    right: 0
+    z-index: 2
+    padding: 2px 5px
+
+  .card
+    width: 73px
+    height: 103px
+
+  .bg
+    position: absolute
+    top: 0
+    left: 0
 
 .hand, .deck, .discard, .rfg, .scored
   height: 105px
