@@ -14,6 +14,7 @@
          :log []
          :side :corp
          :corp {:user {:username "" :emailhash ""}
+                :identity {:side "Corp"}
                 :deck []
                 :hand []
                 :discard []
@@ -25,6 +26,7 @@
                 :agenda-point 0
                 :max-hand-size 5}
          :runner {:user {:username "" :emailhash ""}
+                  :identity {:side "Runner"}
                   :deck []
                   :hand []
                   :discard []
