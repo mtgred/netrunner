@@ -92,23 +92,41 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
-(defn hand-view [cursor]
-  (om/component
-   (sab/html [:div.panel.blue-shade.hand {} (str "Hand " (count cursor) ")")])))
+(defmulti hand-view #(get-in % [:identity :side]))
 
-(defn deck-view [cursor]
+(defmethod hand-view "Runner" [{:keys [hand] :as cursor}]
+  (om/component
+   (sab/html [:div.panel.blue-shade.hand {} (str "Grip (" (count hand) ")")])))
+
+(defmethod hand-view "Corp" [{:keys [hand] :as cursor}]
+  (om/component
+   (sab/html [:div.panel.blue-shade.hand {} (str "HQ (" (count hand) ")")])))
+
+(defmulti deck-view #(get-in % [:identity :side]))
+
+(defmethod deck-view "Runner" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck {}
-     (str "Deck (" (count cursor) ")")])))
+    [:div.panel.blue-shade.deck {} (str "Stack (" (count deck) ")")])))
 
-(defn discard-view [cursor]
+(defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.discard {} (str "Discard (" (count cursor) ")")])))
+   (sab/html
+    [:div.panel.blue-shade.deck {} (str "R&D (" (count deck) ")")])))
+
+(defmulti discard-view #(get-in % [:identity :side]))
+
+(defmethod discard-view "Runner" [{:keys [discard] :as cursor}]
+  (om/component
+   (sab/html [:div.panel.blue-shade.discard {} (str "Heap (" (count discard) ")")])))
+
+(defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
+  (om/component
+   (sab/html [:div.panel.blue-shade.discard {} (str "Archive (" (count discard) ")")])))
 
 (defn rfg-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.rfg {} (str "Removed (" (count cursor) ")")])))
+   (sab/html [:div.panel.blue-shade.rfg {} "Removed"])))
 
 (defn scored-view [cursor]
   (om/component
@@ -155,10 +173,11 @@
   (om/component
    (sab/html
     [:div.dashboard
-     (om/build hand-view (:hand cursor))
-     (om/build deck-view (:deck cursor))
-     (om/build discard-view (:discard cursor))
-     (om/build rfg-view (:rfg cursor))])))
+     (om/build hand-view cursor)
+     (om/build deck-view cursor)
+     (om/build discard-view cursor)
+     (when (> (count (:rfg cursor)) 0)
+       (om/build rfg-view (:rfg cursor)))])))
 
 (defn gameboard [{:keys [side] :as cursor} owner]
   (om/component
