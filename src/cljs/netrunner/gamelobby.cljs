@@ -19,7 +19,7 @@
         players (:players (some #(when (= (:id %) gameid) %) (:games @app-state)))
         corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
-        side (if (= (:user runner) (:user @auth/app-state)) "Runner" "Corp")]
+        side (if (= (:user runner) (:user @auth/app-state)) :runner :corp)]
     (init-game gameid side corp runner))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))

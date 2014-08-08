@@ -14,9 +14,10 @@
          :log []
          :side :corp
          :corp {:user {:username "" :emailhash ""}
-                :r&d []
-                :hq []
-                :archive []
+                :deck []
+                :hand []
+                :discard []
+                :rfg []
                 :remote-servers []
                 :click 3
                 :credit 5
@@ -24,9 +25,10 @@
                 :agenda-point 0
                 :max-hand-size 5}
          :runner {:user {:username "" :emailhash ""}
-                  :stack []
-                  :grip []
-                  :heap []
+                  :deck []
+                  :hand []
+                  :discard []
+                  :rfg []
                   :rig []
                   :click 4
                   :credit 5
@@ -37,12 +39,16 @@
                   :max-hand-size 5
                   :brain-damage 0}}{}))
 
+(defn load-deck [deck]
+  {:identity (:identity deck)
+   :deck (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck)))})
+
 (defn init-game [gameid side corp runner]
-  (swap! app-state assoc :gameid gameid :side (keyword (.toLowerCase side)))
+  (swap! app-state assoc :gameid gameid :side side)
   (swap! app-state assoc-in [:runner :user] (:user runner))
-  (swap! app-state assoc-in [:runner :deck] (:deck runner))
+  (swap! app-state update-in [:runner] merge (load-deck (:deck runner)))
   (swap! app-state assoc-in [:corp :user] (:user corp))
-  (swap! app-state assoc-in [:corp :deck] (:deck corp)))
+  (swap! app-state update-in [:corp] merge (load-deck (:deck corp))))
 
 (go (while true
       (let [msg (<! socket-channel)]
@@ -86,23 +92,31 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
-(defn hand-view [cursor owner]
+(defn hand-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.hand {} "Hand"])))
+   (sab/html [:div.panel.blue-shade.hand {} (str "Hand " (count cursor) ")")])))
 
-(defn deck-view [cursor owner]
+(defn deck-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.deck {} "Deck"])))
+   (sab/html
+    [:div.panel.blue-shade.deck {}
+     (str "Deck (" (count cursor) ")")])))
 
-(defn discard-view [cursor owner]
+(defn discard-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.discard {} "Discard"])))
+   (sab/html [:div.panel.blue-shade.discard {} (str "Discard (" (count cursor) ")")])))
 
-(defn scored-view [cursor owner]
+(defn rfg-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.scored {} (str "Agenda Points")])))
+   (sab/html [:div.panel.blue-shade.rfg {} (str "Removed (" (count cursor) ")")])))
 
-(defn runner-stats-view [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
+(defn scored-view [cursor]
+  (om/component
+   (sab/html [:div.panel.blue-shade.scored {} "Scored"])))
+
+(defmulti stats-view #(get-in % [:identity :side]))
+
+(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
@@ -115,7 +129,7 @@
      [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]
      [:div (str max-hand-size " Max Hand Size")]])))
 
-(defn corp-stats-view [{:keys [user click credit bad-publicity max-hand-size]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
@@ -125,49 +139,49 @@
      [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]
      [:div (str max-hand-size " Max Hand Size")]])))
 
-(defn corp-board [cursor owner]
+(defmulti board #(get-in % [:identity :side]))
+
+(defmethod board "Corp" [cursor]
   (om/component
    (sab/html
     [:div.board {}])))
 
-(defn runner-board [cursor owner]
+(defmethod board "Runner" [cursor]
   (om/component
    (sab/html
     [:div.board {}])))
 
-(defn deck []
-  (if (= (:side app-state) :runner) :stack :r&d))
-
-(defn hand []
-  (if (= (:side app-state) :runner) :grip :hq))
-
-(defn discard []
-  (if (= (:side app-state) :runner) :heap :archive))
+(defn zones [cursor]
+  (om/component
+   (sab/html
+    [:div.dashboard
+     (om/build hand-view (:hand cursor))
+     (om/build deck-view (:deck cursor))
+     (om/build discard-view (:discard cursor))
+     (om/build rfg-view (:rfg cursor))])))
 
 (defn gameboard [{:keys [side] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.gameboard
-     [:div.leftpane
-      [:div
-       (if (= side :corp)
-         (om/build runner-stats-view (:runner cursor))
-         (om/build corp-stats-view (:corp cursor)))
-       (om/build scored-view ((if (= side :corp) :runner :corp) cursor))]
-      [:div
-       (om/build scored-view (side cursor))
-       (if (= side :corp)
-         (om/build corp-stats-view (:corp cursor))
-         (om/build runner-stats-view (:runner cursor)))]]
-     [:div.centralpane
-      (om/build corp-board (:corp cursor))
-      (om/build runner-board (:runner cursor))
-      [:div.dashboard
-       (om/build hand-view ((hand) cursor))
-       (om/build deck-view ((deck) cursor))
-       (om/build discard-view ((discard) cursor))]]
-     [:div.rightpane {}
-      [:div.card-zoom]
-      (om/build log-pane (:log cursor))]])))
+    (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
+          opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
+      [:div.gameboard
+       [:div.leftpane
+        [:div
+         (om/build stats-view opponent)
+         (om/build scored-view opponent)]
+        [:div
+         (om/build scored-view me)
+         (om/build stats-view me)]]
+
+       [:div.centralpane
+        (om/build zones opponent)
+        (om/build board opponent)
+        (om/build board me)
+        (om/build zones me)]
+
+       [:div.rightpane {}
+        [:div.card-zoom]
+        (om/build log-pane (:log cursor))]]))))
 
 (om/root gameboard app-state {:target (. js/document (getElementById "gameboard"))})
