@@ -6,6 +6,7 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
+(def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -188,41 +189,57 @@
    (sab/html
     [:div.board {}])))
 
+(defn card-view [cursor]
+  (om/component
+   (sab/html
+    [:div.panel.blue-shade.identity {:on-mouse-enter #(put! zoom-channel cursor)
+                                     :on-mouse-leave #(put! zoom-channel false)}
+     [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
+
 (defn zones [cursor]
   (om/component
    (sab/html
     [:div.dashboard
      (om/build hand-view cursor)
-     [:div.panel.blue-shade.identity
-      [:img.card.bg {:src (image-url (:identity cursor)) :onError #(-> % .-target js/$ .hide)}]]
+     (om/build card-view (:identity cursor))
      (om/build deck-view cursor)
      (om/build discard-view cursor)
      (when (> (count (:rfg cursor)) 0)
        (om/build rfg-view (:rfg cursor)))])))
 
 (defn gameboard [{:keys [side gameid] :as cursor} owner]
-  (om/component
-   (sab/html
-    (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
-          opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
-      (when (> gameid 0)
-        [:div.gameboard
-         [:div.leftpane
-          [:div
-           (om/build stats-view opponent)
-           (om/build scored-view opponent)]
-          [:div
-           (om/build scored-view me)
-           (om/build stats-view me)]]
+  (reify
+    om/IWillMount
+    (will-mount [this]
+      (go (while true
+            (let [card (<! zoom-channel)]
+              (om/set-state! owner :zoom card)))))
 
-         [:div.centralpane
-          (om/build zones opponent)
-          (om/build board opponent)
-          (om/build board me)
-          (om/build zones me)]
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
+             opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
+         (when (> gameid 0)
+           [:div.gameboard
+            [:div.leftpane
+             [:div
+              (om/build stats-view opponent)
+              (om/build scored-view opponent)]
+             [:div
+              (om/build scored-view me)
+              (om/build stats-view me)]]
 
-         [:div.rightpane {}
-          [:div.card-zoom]
-          (om/build log-pane (:log cursor))]])))))
+            [:div.centralpane
+             (om/build zones opponent)
+             (om/build board opponent)
+             (om/build board me)
+             (om/build zones me)]
+
+            [:div.rightpane {}
+             [:div.card-zoom
+              (when-let [card (om/get-state owner :zoom)]
+                [:img.card.bg {:src (image-url card)}])]
+             (om/build log-pane (:log cursor))]]))))))
 
 (om/root gameboard app-state {:target (. js/document (getElementById "gameboard"))})
