@@ -3,7 +3,8 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
-            [netrunner.auth :refer [avatar] :as auth]))
+            [netrunner.auth :refer [avatar] :as auth]
+            [netrunner.cardbrowser :refer [image-url] :as cb]))
 
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
@@ -192,6 +193,8 @@
    (sab/html
     [:div.dashboard
      (om/build hand-view cursor)
+     [:div.panel.blue-shade.identity
+      [:img.card.bg {:src (image-url (:identity cursor)) :onError #(-> % .-target js/$ .hide)}]]
      (om/build deck-view cursor)
      (om/build discard-view cursor)
      (when (> (count (:rfg cursor)) 0)
