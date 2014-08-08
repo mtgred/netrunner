@@ -60,7 +60,6 @@
 
 (defn leave-game [cursor owner]
   (send {:action "leave" :gameid (:gameid @app-state)})
-  (om/set-state! owner :in-game false)
   (om/update! cursor :gameid nil)
   (om/update! cursor :message []))
 
@@ -130,8 +129,9 @@
        [:div.lobby.panel.blue-shade
         [:div.games
          [:div.button-bar
-          [:button {:class (if (:in-game state) "disabled" "")
-                    :on-click #(new-game cursor owner)} "New game"]]
+          (if gameid
+            [:button {:class "disabled"} "New game"]
+            [:button {:on-click #(new-game cursor owner)} "New game"])]
          [:div.game-list
           (if (empty? games)
             [:h4 "No game"]
