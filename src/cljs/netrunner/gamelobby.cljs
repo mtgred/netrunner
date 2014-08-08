@@ -26,7 +26,6 @@
 
 (go (while true
       (let [msg (<! socket-channel)]
-        (.log js/console (clj->js msg))
         (case (:type msg)
           "game" (swap! app-state assoc :gameid (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))

@@ -56,7 +56,6 @@
 
 (go (while true
       (let [msg (<! socket-channel)]
-        (.log js/console "game" (clj->js msg))
         (case (:type msg)
           "say" (swap! app-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
           nil))))
