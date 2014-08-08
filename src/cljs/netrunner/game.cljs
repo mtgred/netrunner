@@ -96,13 +96,21 @@
 
 (defmulti hand-view #(get-in % [:identity :side]))
 
-(defmethod hand-view "Runner" [{:keys [hand] :as cursor}]
+(defmethod hand-view "Runner" [{:keys [hand max-hand-size] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.hand {} (str "Grip (" (count hand) ")")])))
+   (sab/html
+    [:div.panel.blue-shade.hand {}
+     [:div.header
+      (str "Grip (" (count hand) ")")
+      [:span.float-right (str "Max hand size: " max-hand-size)]]])))
 
-(defmethod hand-view "Corp" [{:keys [hand] :as cursor}]
+(defmethod hand-view "Corp" [{:keys [hand max-hand-size] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.hand {} (str "HQ (" (count hand) ")")])))
+   (sab/html
+    [:div.panel.blue-shade.hand {}
+     [:div.header
+      (str "HQ (" (count hand) ")")
+      [:span.float-right (str "Max hand size: " max-hand-size)]]])))
 
 (defmulti deck-view #(get-in % [:identity :side]))
 
@@ -110,29 +118,31 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.deck {}
-     [:div.header {:class (when (> (count deck) 0) "blue-shade")}
-      (str "Stack (" (count deck) ")")]
+     [:div.header (str "Stack (" (count deck) ")")]
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/runner.png"}])])))
+       [:img.card.bg.darken {:src "/img/runner.png"}])])))
 
 (defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
     [:div.panel.blue-shade.deck {}
-     [:div.header {:class (when (> (count deck) 0) "blue-shade")}
-      (str "R&D (" (count deck) ")")]
+     [:div.header (str "R&D (" (count deck) ")")]
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/corp.png"}])])))
+       [:img.card.bg.darken {:src "/img/corp.png"}])])))
 
 (defmulti discard-view #(get-in % [:identity :side]))
 
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.discard {} (str "Heap (" (count discard) ")")])))
+   (sab/html
+    [:div.panel.blue-shade.discard
+     [:div.header (str "Heap (" (count discard) ")")]])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.discard {} (str "Archive (" (count discard) ")")])))
+   (sab/html
+    [:div.panel.blue-shade.discard
+     [:div.header (str "Archive (" (count discard) ")")]])))
 
 (defn rfg-view [cursor]
   (om/component
@@ -144,7 +154,7 @@
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
-(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
+(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
@@ -154,18 +164,16 @@
      [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
      [:div (str link " Link" (if (> link 1) "s" ""))]
      [:div (str tag " Tag" (if (> tag 1) "s" ""))]
-     [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]
-     [:div (str max-hand-size " Max Hand Size")]])))
+     [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]])))
 
-(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity max-hand-size]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
      [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
      [:div (str click " Click" (if (> click 1) "s" ""))]
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
-     [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]
-     [:div (str max-hand-size " Max Hand Size")]])))
+     [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]])))
 
 (defmulti board #(get-in % [:identity :side]))
 
