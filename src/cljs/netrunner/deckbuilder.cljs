@@ -155,7 +155,7 @@
     (render-state [this state]
       (sab/html
        [:p
-        [:h4 "Add cards"]
+        [:h3 "Add cards"]
         [:form.card-search {:on-submit #(handle-add owner %)}
          [:input.lookup {:type "text" :placeholder "Card name" :value (:query state)
                          :on-change #(om/set-state! owner :query (.. % -target -value))
@@ -290,20 +290,20 @@
           [:div.deckedit
            [:div
             [:p
-             [:h4 "Deck name"]
+             [:h3 "Deck name"]
              [:input.deckname {:type "text" :placeholder "Deck name"
                                :ref "deckname" :value (get-in state [:deck :name])
                                :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
             [:p
-             [:h4 "Identity"]
+             [:h3 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity :title])
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
               (for [card (side-identities (get-in state [:deck :side]))]
                 [:option (:title card)])]]
             (om/build card-lookup cursor {:state state})
-            [:h4 "Decklist"]
-            [:textarea {:ref "deck-edit" :value (:deck-edit state)
-                        :placeholder "Copy & paste a decklist. Or start typing."
-                        :on-change #(handle-edit owner)}]]]]]]))))
+            [:h3 "Decklist"
+             [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
+           [:textarea {:ref "deck-edit" :value (:deck-edit state)
+                       :on-change #(handle-edit owner)}]]]]]))))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
