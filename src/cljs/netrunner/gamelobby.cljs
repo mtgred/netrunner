@@ -4,12 +4,11 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.game :refer [init-game]]
-            [netrunner.deckbuilder :as deckbuilder]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
-(def app-state (atom {:games [] :gameid nil :messages []}))
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -19,7 +18,7 @@
         players (:players (some #(when (= (:id %) gameid) %) (:games @app-state)))
         corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
-        side (if (= (:user runner) (:user @auth/app-state)) :runner :corp)]
+        side (if (= (:user runner) (:user @app-state)) :runner :corp)]
     (init-game gameid side corp runner))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
@@ -71,7 +70,7 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn deckselect-modal [{:keys [gameid games]} owner opts]
+(defn deckselect-modal [{:keys [gameid games decks user]} owner opts]
   (om/component
    (sab/html
     [:div.modal.fade#deck-select
@@ -79,8 +78,8 @@
       [:h3 "Select your deck"]
       [:div.deck-collection
        (let [players (:players (some #(when (= (:id %) gameid) %) games))
-             side (:side (some #(when (= (:user %) (:user @auth/app-state)) %) players))]
-         (for [deck (:decks @deckbuilder/app-state) :when (= (get-in deck [:identity :side]) side)]
+             side (:side (some #(when (= (:user %) user) %) players))]
+         (for [deck decks :when (= (get-in deck [:identity :side]) side)]
            [:div.deckline {:on-click #(send {:action "deck" :gameid gameid :deck deck})
                            :data-dismiss "modal"}
             [:img {:src (image-url (:identity deck))}]
@@ -122,7 +121,7 @@
           [:input {:ref "msg-input" :placeholder "Say something"}]
           [:button "Send"]]]]))))
 
-(defn game-lobby [{:keys [games gameid] :as cursor} owner]
+(defn game-lobby [{:keys [games gameid user] :as cursor} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -157,8 +156,7 @@
                                   :value (:title state) :placeholder "Title"}]
               [:p.flash-message (:flash-message state)]])
            (when-let [game (some #(when (= gameid (:id %)) %) games)]
-             (let [user (:user @auth/app-state)
-                   players (:players game)]
+             (let [players (:players game)]
                [:div
                 [:div.button-bar
                  (when (= (-> players first :user) user)
@@ -184,6 +182,6 @@
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
                 (om/build chat-view (:messages cursor) {:state state})])))]
-        (om/build deckselect-modal (merge cursor @deckbuilder/app-state))]))))
+        (om/build deckselect-modal cursor)]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})

@@ -5,7 +5,12 @@
   (:import goog.history.Html5History
            goog.history.EventType))
 
-(def app-state (atom {:active-page "/"}))
+(def app-state
+  (atom {:active-page "/"
+         :user (js->clj js/user :keywordize-keys true)
+         :cards [] :sets []
+         :decks []
+         :games [] :gameid nil :messages []}))
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/about"])
 

@@ -3,9 +3,8 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! >!] :as async]
+            [netrunner.main :refer [app-state]]
             [netrunner.ajax :refer [GET]]))
-
-(def app-state (atom {:cards [] :sets []}))
 
 (def cards-channel (chan))
 

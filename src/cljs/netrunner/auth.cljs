@@ -3,10 +3,8 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put!] :as async]
+            [netrunner.main :refer [app-state]]
             [netrunner.ajax :refer [POST GET]]))
-
-(def app-state
-  (atom {:user (js->clj js/user :keywordize-keys true)}))
 
 (defn avatar [{:keys [emailhash]} owner opts]
   (om/component

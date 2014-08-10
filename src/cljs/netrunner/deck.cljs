@@ -1,6 +1,6 @@
 (ns netrunner.deck
   (:require [clojure.string :refer [split split-lines join]]
-            [netrunner.cardbrowser :as cb]))
+            [netrunner.main :refer [app-state]]))
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
@@ -14,7 +14,7 @@
 
 (defn lookup [side query]
   (let [q (.toLowerCase query)
-        cards (filter #(= (:side %) side) (:cards @cb/app-state))]
+        cards (filter #(= (:side %) side) (:cards @app-state))]
     (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
       card
       (loop [i 2 matches cards]

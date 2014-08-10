@@ -4,12 +4,11 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [join]]
+            [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.ajax :refer [POST GET]]
             [netrunner.deck :refer [parse-deck]]))
-
-(def app-state (atom {:decks []}))
 
 (def select-channel (chan))
 
@@ -30,10 +29,10 @@
 (defn side-identities [side]
   (filter #(and (= (:side %) side)
                 (not (#{"Special" "Alternates"} (:setname %)))
-                (= (:type %) "Identity")) (:cards @cb/app-state)))
+                (= (:type %) "Identity")) (:cards @app-state)))
 
 (defn get-card [title]
-  (some #(when (= (:title %) title) %) (:cards @cb/app-state)))
+  (some #(when (= (:title %) title) %) (:cards @app-state)))
 
 (defn deck->str [owner]
   (let [cards (om/get-state owner [:deck :cards])
@@ -100,7 +99,7 @@
                               (or (not= (:type %) "Agenda")
                                   (= (:faction %) "Neutral")
                                   (= (:faction %) faction)))
-                        (:cards @cb/app-state))]
+                        (:cards @app-state))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
 (defn handle-edit [owner]
