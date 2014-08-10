@@ -71,20 +71,22 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn deckselect-modal [cursor owner opts]
+(defn deckselect-modal [{:keys [gameid games]} owner opts]
   (om/component
    (sab/html
     [:div.modal.fade#deck-select
      [:div.modal-dialog
       [:h3 "Select your deck"]
       [:div.deck-collection
-       (for [deck (:decks cursor)]
-         [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})
-                         :data-dismiss "modal"}
-          [:img {:src (image-url (:identity deck))}]
-          [:h4 (:name deck)]
-          [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
-          [:p (get-in deck [:identity :title])]])]]])))
+       (let [players (:players (some #(when (= (:id %) gameid) %) games))
+             side (:side (some #(when (= (:user %) (:user @auth/app-state)) %) players))]
+         (for [deck (:decks @deckbuilder/app-state) :when (= (get-in deck [:identity :side]) side)]
+           [:div.deckline {:on-click #(send {:action "deck" :gameid gameid :deck deck})
+                           :data-dismiss "modal"}
+            [:img {:src (image-url (:identity deck))}]
+            [:h4 (:name deck)]
+            [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+            [:p (get-in deck [:identity :title])]]))]]])))
 
 (defn player-view [cursor]
   (om/component
@@ -182,7 +184,6 @@
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
                 (om/build chat-view (:messages cursor) {:state state})])))]
-        [:div#deck-modal]]))))
+        (om/build deckselect-modal (merge cursor @deckbuilder/app-state))]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})
-(om/root deckselect-modal deckbuilder/app-state {:target (. js/document (getElementById "deck-modal"))})
