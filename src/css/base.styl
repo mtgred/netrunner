@@ -920,24 +920,30 @@ a.button, button
     radius: 4px 4px 0 0
 
   .card
-    width: 75px
-    height: 105px
+    display: inline-block
 
   .bg
     position: absolute
-    top: -1px
-    left: -1px
+    left: 0
+    bottom: 0
 
-  .hand, .deck, .discard, .rfg, .scored, .identity
-    height: 105px
+  .hand, .deck, .discard, .rfg, .scored, .card
+    height: 84px
 
-  .discard, .deck, .rfg, .identity
-    width: 75px
+  .discard, .deck, .rfg, .card
+    width: 60px
     margin-left: 0
     flex-shrink: 0
 
   .hand
-    width: 333px
+    width: 382px
+    padding: 0
+
+    .card
+      margin: 0 4px 0 0
+
+      &:last-child
+        margin-right: 0
 
   .scored
     flex-shrink: 0
