@@ -40,8 +40,8 @@
                   :brain-damage 0}}{}))
 
 (defn init-game [game side]
-  (swap! game-state assoc :side side)
-  (swap! game-state merge game))
+  (swap! game-state merge game)
+  (swap! game-state assoc :side side))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -52,6 +52,7 @@
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "say" (swap! game-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
+          "state" (swap! game-state merge (:state msg))
           nil))))
 
 (defn send [msg]
@@ -107,7 +108,7 @@
 
 (defn handle-deck-click [side]
   (when (= side (:side @game-state))
-    (send {:action "do" :gameid (:gameid @game-state) :command "draw"})))
+    (send {:action "do" :gameid (:gameid @game-state) :side side :command "draw"})))
 
 (defmulti deck-view #(get-in % [:identity :side]))
 

@@ -119,6 +119,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
+      when "do"
+        state = gameEngine.main.exec("do", msg.command, msg.side, msg.args)
+        lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+
 # Express config
 app.configure ->
   app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 3000

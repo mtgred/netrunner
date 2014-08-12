@@ -9,7 +9,6 @@
 (def game-state
   (atom {:gameid 0
          :log []
-         :side :corp
          :corp {:user {:username "" :emailhash ""}
                 :identity {}
                 :deck []
@@ -42,9 +41,8 @@
   {:identity (:identity deck)
    :deck (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck)))})
 
-(defn init-game [data]
-  (let [game (js->clj data :keywordize-keys true)
-        players (:players game)
+(defn init-game [game]
+  (let [players (:players game)
         corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)]
     (swap! game-state assoc :gameid (:id game))
@@ -53,15 +51,24 @@
     (swap! game-state assoc-in [:corp :user] (:user corp))
     (swap! game-state update-in [:corp] merge (create-deck (:deck corp)))))
 
-(defn exec [command & args]
-  (case command
-    "init" (apply init-game args)
-    "do" (apply (symbol command) args))
-  (clj->js @game-state))
-
-(defn draw
-  ([side] (draw side 1))
+(defn draw!
+  ([side] (draw! side 1))
   ([side n]
      (let [deck (get-in @game-state [side :deck])]
        (swap! game-state update-in [side :hand] #(concat % (take n deck))))
      (swap! game-state update-in [side :deck] (partial drop n))))
+
+(defn pay! [side resource n]
+  (swap! game-state update-in [side resource] #(- % n)))
+
+(def commands
+  {"draw" (fn [side & args]
+            (draw! side)
+            (pay! side :click 1))})
+
+(defn exec [action & args]
+  (let [params (js->clj args :keywordize-keys true)]
+    (case action
+      "init" (init-game (first params))
+      "do" ((commands (first params)) (keyword (second params)) (rest (rest params)))))
+  (clj->js @game-state))
