@@ -14,6 +14,12 @@
 
   :cljsbuild {
     :builds [
+      {:id "node"
+       :source-paths ["src/node"]
+       :compiler {:output-to "game.js"
+                  :target :nodejs
+                  :optimizations :simple
+                  :pretty-print true}}
       {:id "dev"
        :source-paths ["src/cljs"]
        :compiler {:output-to "resources/cljs/app.js"

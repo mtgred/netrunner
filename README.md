@@ -1,6 +1,6 @@
 ## Live server
 
-[http://netrunner-manabase.rhcloud.com/]
+http://netrunner-manabase.rhcloud.com/
 
 ## Dependencies
 
@@ -33,19 +33,19 @@ $ coffee data/fetch.coffee
 
 ## Usage
 
-Launch the server:
+To launch the server:
 
 ```
 $ coffee server.coffee
 ```
 
-Compile and watch Clojurescript files:
+To compile and watch Clojurescript files:
 
 ```
 $ lein cljsbuild auto dev
 ```
 
-Launch a Browser REPL:
+To launch a Clojurescript Browser nREPL:
 
 ```
 $ lein repl
@@ -53,6 +53,13 @@ $ lein repl
 user> (brepl)
 << started Weasel server on ws://0.0.0.0:9001 >>
 Type `:cljs/quit` to stop the ClojureScript REPL
-nil
 ```
 
+To launch a Clojurescript Node.js nREPL:
+
+```
+$ lein repl
+
+user> (node-repl)
+Type `:cljs/quit` to stop the ClojureScript REPL
+```

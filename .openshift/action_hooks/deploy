@@ -1,12 +1,16 @@
-# COFFEE_BIN_DST="${HOME}.node_modules/.bin"
-# COFFEE_BIN_SRC="${OPENSHIFT_REPO_DIR}node_modules/.bin/coffee"
 CONFIG_FILE = "${OPENSHIFT_DATA_DIR}config.coffee"
+GAME_FILE = "${OPENSHIFT_DATA_DIR}game.js"
 
 echo "++++ Deploy ++++"
-# cd $COFFEE_BIN_DST
-# ln -s $COFFEE_BIN_SRC .
-# echo "ln -s $COFFEE_BIN_SRC $COFFEE_BIN_DST"echo "ln -s $COFFEE_BIN_SRC $COFFEE_BIN_DST"
+
 echo "rm $CONFIG_FILE"
 rm $CONFIG_FILE
-ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR
+
+echo "rm $GAME_FILE"
+rm $GAME_FILE
+
 echo "ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR"
+ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR
+
+echo "ln -s $GAME_FILE $OPENSHIFT_REPO_DIR"
+ln -s $GAME_FILE $OPENSHIFT_REPO_DIR

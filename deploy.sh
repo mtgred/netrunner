@@ -2,6 +2,8 @@
 
 git stash
 lein cljsbuild clean
+lein cljsbuild once node
+rhc scp netrunner upload game.js app-root/data
 lein cljsbuild once prod &
 git push openshift master
 rhc scp netrunner upload resources/js/app.js app-root/repo/resources/js

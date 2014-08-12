@@ -11,6 +11,7 @@ bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
+game = require('./game')
 
 # MongoDB connection
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
