@@ -6,20 +6,16 @@
             [clojure.string :refer [join]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.game :refer [init-game]]
+            [netrunner.gameboard :refer [init-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
-(defn launch-game []
-  (let [gameid (:gameid @app-state)
-        players (:players (some #(when (= (:id %) gameid) %) (:games @app-state)))
-        corp (some #(when (= (:side %) "Corp") %) players)
-        runner (some #(when (= (:side %) "Runner") %) players)
-        side (if (= (:user runner) (:user @app-state)) :runner :corp)]
-    (init-game gameid side corp runner))
+(defn launch-game [game]
+  (let [side (if (= (get-in game [:runner :user]) (:user @app-state)) :runner :corp)]
+    (init-game game side))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
 
@@ -29,7 +25,7 @@
           "game" (swap! app-state assoc :gameid (:gameid msg))
           "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
           "say" (swap! app-state update-in [:messages] #(conj % {:user (:user msg) :text (:text msg)}))
-          "start" (launch-game)
+          "start" (launch-game (:state msg))
           nil))))
 
 (defn send [msg]

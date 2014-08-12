@@ -5,8 +5,43 @@
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.game :refer [game-state] :as game]))
+            [netrunner.cardbrowser :refer [image-url] :as cb]))
+
+(def game-state
+  (atom {:gameid 0
+         :log []
+         :side :corp
+         :corp {:user {:username "" :emailhash ""}
+                :identity {}
+                :deck []
+                :hand []
+                :discard []
+                :rfg []
+                :remote-servers []
+                :click 3
+                :credit 5
+                :bad-publicity 0
+                :agenda-point 0
+                :max-hand-size 5}
+         :runner {:user {:username "" :emailhash ""}
+                  :identity {}
+                  :deck []
+                  :hand []
+                  :discard []
+                  :rfg []
+                  :rig []
+                  :click 4
+                  :credit 5
+                  :memory 4
+                  :link 0
+                  :tag 0
+                  :agenda-point 0
+                  :max-hand-size 5
+                  :brain-damage 0}}{}))
+
+(defn init-game [game side]
+  (swap! game-state assoc :side side)
+  (swap! game-state merge game))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -54,6 +89,13 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
+(defn card-view [cursor]
+  (om/component
+   (sab/html
+    [:div.panel.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+                                 :on-mouse-leave #(put! zoom-channel false)}
+     [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
+
 (defn hand-view [{:keys [identity hand max-hand-size] :as cursor}]
   (om/component
    (sab/html
@@ -65,7 +107,7 @@
 
 (defn handle-deck-click [side]
   (when (= side (:side @game-state))
-    (game/draw side)))
+    (send {:action "do" :gameid (:gameid @game-state) :command "draw"})))
 
 (defmulti deck-view #(get-in % [:identity :side]))
 
@@ -141,13 +183,6 @@
   (om/component
    (sab/html
     [:div.board {}])))
-
-(defn card-view [cursor]
-  (om/component
-   (sab/html
-    [:div.panel.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
-                                 :on-mouse-leave #(put! zoom-channel false)}
-     [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
 (defn zones [cursor]
   (om/component

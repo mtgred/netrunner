@@ -11,7 +11,7 @@ bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
-game = require('./game')
+gameEngine = require('./game')
 
 # MongoDB connection
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
@@ -113,9 +113,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "start"
         for game, i in games
           if game.id is msg.gameid
+            state = gameEngine.main.exec("init", game)
+            lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
             games.splice(i, 1)
             break
-        lobby.to(msg.gameid).emit("netrunner", {type: "start"})
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
 # Express config
 app.configure ->
