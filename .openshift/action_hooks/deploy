@@ -1,13 +1,10 @@
-CONFIG_FILE="${OPENSHIFT_REPO_DIR}config.coffee"
-GAME_FILE="${OPENSHIFT_REPO_DIR}game.js"
+CONFIG_FILE="${OPENSHIFT_DATA_DIR}config.coffee"
+GAME_FILE="${OPENSHIFT_DATA_DIR}game.js"
 
 echo "++++ Deploy ++++"
 
-echo "rm $CONFIG_FILE"
-rm $CONFIG_FILE
-
-echo "rm $GAME_FILE"
-rm $GAME_FILE
+echo "rm $OPENSHIFT_REPO_DIR/config.coffee"
+rm $OPENSHIFT_REPO_DIR/config.coffee
 
 echo "ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR"
 ln -s $CONFIG_FILE $OPENSHIFT_REPO_DIR
