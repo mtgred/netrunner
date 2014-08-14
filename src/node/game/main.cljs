@@ -52,13 +52,25 @@
        (swap! state update-in [side :hand] #(concat % (take n deck))))
      (swap! state update-in [side :deck] (partial drop n))))
 
-(defn pay! [state side resource n]
-  (swap! state update-in [side resource] #(- % n)))
+(defn gain!
+  ([state side resource] (gain! state side resource 1))
+  ([state side resource n]
+     (swap! state update-in [side resource] #(+ % n))))
+
+(defn pay!
+  ([state side resource] (pay! state side resource 1))
+  ([state side resource n]
+     (if (>= (- (get-in @state [side resource]) n) 0)
+       (swap! state update-in [side resource] #(- % n))
+       false)))
 
 (def commands
   {"draw" (fn [state side & args]
-            (draw! state side)
-            (pay! state side :click 1))})
+            (when (pay! state side :click)
+              (draw! state side)))
+   "credit" (fn [state side & args]
+              (when (pay! state side :click)
+                (gain! state side :credit)))})
 
 (defn exec [action args]
   (let [params (js->clj args :keywordize-keys true)
