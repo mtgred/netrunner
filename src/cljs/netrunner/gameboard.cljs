@@ -147,7 +147,9 @@
 
 (defn rfg-view [cursor]
   (om/component
-   (sab/html [:div.panel.blue-shade.rfg {} "Removed"])))
+   (sab/html
+    (when (> (count (:rfg cursor)) 0)
+      [:div.panel.blue-shade.rfg {} "Removed"]))))
 
 (defn scored-view [cursor]
   (om/component
@@ -181,23 +183,21 @@
 (defmethod board "Corp" [cursor]
   (om/component
    (sab/html
-    [:div.board {}])))
+    [:div {}])))
 
 (defmethod board "Runner" [cursor]
   (om/component
    (sab/html
-    [:div.board {}])))
+    [:div {}])))
 
 (defn zones [cursor]
   (om/component
    (sab/html
     [:div.dashboard
      (om/build hand-view cursor)
-     (om/build card-view (:identity cursor))
-     (om/build deck-view cursor)
      (om/build discard-view cursor)
-     (when (> (count (:rfg cursor)) 0)
-       (om/build rfg-view (:rfg cursor)))])))
+     (om/build deck-view cursor)
+     (om/build card-view (:identity cursor))])))
 
 (defn gameboard [{:keys [side gameid] :as cursor} owner]
   (reify
@@ -214,20 +214,21 @@
              opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
          (when (> gameid 0)
            [:div.gameboard
-            [:div.leftpane
-             [:div
-              (om/build stats-view opponent)
-              (om/build scored-view opponent)]
-             [:div
-              (om/build scored-view me)
-              (om/build stats-view me)]]
-
-            [:div.centralpane
+            [:div.mainpane
              (om/build zones opponent)
-             (om/build board opponent)
-             (om/build board me)
+             [:div.centralpane
+              [:div.leftpane
+               [:div
+                (om/build stats-view opponent)
+                (om/build scored-view opponent)
+                (om/build rfg-view opponent)]
+               [:div
+                (om/build rfg-view opponent)
+                (om/build scored-view me)
+                (om/build stats-view me)]]
+              [:div.board
+               (om/build board me)]]
              (om/build zones me)]
-
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

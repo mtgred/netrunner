@@ -908,6 +908,7 @@ a.button, button
     position: relative
     font-size: 12px
     padding: 3px 6px
+    overflow: hidden
 
   .header
     position: absolute
@@ -927,15 +928,22 @@ a.button, button
     left: 0
     bottom: 0
 
-  .hand, .deck, .discard, .rfg, .scored, .card
+  .deck, .discard, .rfg, .card
     height: 84px
-
-  .discard, .deck, .rfg, .card
     width: 60px
-    margin-left: 0
-    flex-shrink: 0
+
+  .dashboard
+    .deck, .rfg, > .card
+      margin-left: 16px
+      margin-right: 16px
+      flex-shrink: 0
+
+    .discard
+      margin-left: 0
+      margin-right: 16px
 
   .hand
+    height: 84px
     width: 382px
     padding: 0
 
@@ -947,13 +955,20 @@ a.button, button
 
   .scored
     flex-shrink: 0
+    height: 84px
 
   .stats
     height: 150px
     flex-shrink: 0
 
+  .centralpane
+    display-flex()
+    flex(1)
+
   .leftpane
     width: 160px
+    margin-top: -5px
+    margin-bottom: -5px
     display-flex()
     flex-direction(column)
     justify-content(space-between)
@@ -961,7 +976,7 @@ a.button, button
     > div
       width: 100%
 
-  .centralpane
+  .mainpane
     display-flex()
     flex-direction(column)
     flex(1)
@@ -972,7 +987,6 @@ a.button, button
     .dashboard
       display-flex()
       align-items: flex-end
-      justify-content(center)
 
   .rightpane
     display-flex()
