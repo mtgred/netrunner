@@ -97,17 +97,22 @@
                                  :on-mouse-leave #(put! zoom-channel false)}
      [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
+(defn label [cursor owner opts]
+  (om/component
+   (sab/html
+    (let [fn (or (:fn opts) count)]
+      [:div.header {:class (when (> (count cursor) 0) "darkbg")}
+       (str (:name opts) " (" (fn cursor) ")")]))))
+
 (defn hand-view [{:keys [identity hand max-hand-size user] :as cursor}]
   (om/component
    (sab/html
     (let [side (:side identity)]
       [:div.panel.blue-shade.hand
-       [:div.header
-        (str (if (= side "Corp") "HQ" "Grip") " (" (count hand) ")")
-        [:span.float-right (str "Max hand size: " max-hand-size)]]
-       (if (= user (:user @app-state))
-         (om/build-all card-view hand)
-         (repeat (count hand) [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}]))]))))
+        (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
+        (if (= user (:user @app-state))
+          (om/build-all card-view hand)
+          (repeat (count hand) [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}]))]))))
 
 (defn handle-deck-click [side]
   (when (= side (:side @game-state))
@@ -119,7 +124,7 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.deck {}
-     [:div.header (str "Stack (" (count deck) ")")]
+     (om/build label deck {:opts {:name "Stack"}})
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png" :on-double-click #(handle-deck-click :runner)}])])))
 
@@ -127,7 +132,7 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.deck {}
-     [:div.header (str "R&D (" (count deck) ")")]
+     (om/build label deck {:opts {:name "R&D"}})
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png" :on-double-click #(handle-deck-click :corp)}])])))
 
@@ -137,27 +142,30 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard
-     [:div.header (str "Heap (" (count discard) ")")]])))
+     (om/build label discard {:opts {:name "Heap"}})])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard
-     [:div.header (str "Archive (" (count discard) ")")]])))
+     (om/build label discard {:opts {:name "Archive"}})])))
 
-(defn rfg-view [cursor]
+(defn rfg-view [{:keys [rfg] :as cursor}]
   (om/component
    (sab/html
     (when (> (count (:rfg cursor)) 0)
-      [:div.panel.blue-shade.rfg {} "Removed"]))))
+      [:div.panel.blue-shade.rfg
+       (om/build label rfg {:opts {:name "Removed"}})]))))
 
-(defn scored-view [cursor]
+(defn scored-view [{:keys [rfg] :as cursor}]
   (om/component
-   (sab/html [:div.panel.blue-shade.scored {} "Scored"])))
+   (sab/html
+    [:div.panel.blue-shade.scored
+     (om/build label rfg {:opts {:name "Scored"}})])))
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
-(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage]} owner]
+(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
@@ -166,17 +174,24 @@
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
      [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
      [:div (str link " Link" (if (> link 1) "s" ""))]
-     [:div (str tag " Tag" (if (> tag 1) "s" ""))]
-     [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))]])))
+     (when (> tag 0)
+       [:div (str tag " Tag" (if (> tag 1) "s" ""))])
+     (when (> brain-damage 0)
+       [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))])
+     (when-not (= max-hand-size 5)
+       [:div (str max-hand-size " Max hand size")])])))
 
-(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity max-hand-size]} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade {}
      [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
      [:div (str click " Click" (if (> click 1) "s" ""))]
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
-     [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))]])))
+     (when (> bad-publicity 0)
+       [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))])
+     (when-not (= max-hand-size 5)
+       [:div (str max-hand-size " Max hand size")])])))
 
 (defmulti board #(get-in % [:identity :side]))
 
