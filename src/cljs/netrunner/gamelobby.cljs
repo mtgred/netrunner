@@ -73,7 +73,7 @@
      [:div.modal-dialog
       [:h3 "Select your deck"]
       [:div.deck-collection
-       (let [players (:players (some #(when (= (:id %) gameid) %) games))
+       (let [players (:players (some #(when (= (:gameid %) gameid) %) games))
              side (:side (some #(when (= (:user %) user) %) players))]
          (for [deck decks :when (= (get-in deck [:identity :side]) side)]
            [:div.deckline {:on-click #(send {:action "deck" :gameid gameid :deck deck})
@@ -132,9 +132,9 @@
           (if (empty? games)
             [:h4 "No game"]
             (for [game games]
-              [:div.gameline {:class (when (= gameid (:id game)) "active")}
+              [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
                (when-not (or gameid (= (count (:players game)) 2))
-                 (let [id (:id game)]
+                 (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
                [:h4 (:title game)]
                [:div
@@ -151,7 +151,7 @@
               [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                   :value (:title state) :placeholder "Title"}]
               [:p.flash-message (:flash-message state)]])
-           (when-let [game (some #(when (= gameid (:id %)) %) games)]
+           (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
                 [:div.button-bar

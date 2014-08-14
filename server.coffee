@@ -35,7 +35,7 @@ removePlayer = (socket, username) ->
     for player, j in game.players
       if player.user.username is username
         game.players.splice(j, 1)
-        socket.to(game.id).emit('netrunner', {type: "say", user: "__system__", text: "#{username} left the game."})
+        socket.to(game.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{username} left the game."})
         break
     if game.players.length is 0
       games.splice(i, 1)
@@ -64,7 +64,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
-        game = {date: new Date(), id: ++gameid, title: msg.title, players: [{user: socket.request.user, side: "Corp"}]}
+        game = {date: new Date(), gameid: ++gameid, title: msg.title,\
+                players: [{user: socket.request.user, side: "Corp"}]}
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
@@ -77,10 +78,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "join"
         for game in games
-          if game.id is msg.gameid and game.players.length < 2 and game.players[0].user.username isnt socket.request.user.username
+          if game.gameid is msg.gameid and game.players.length < 2 and game.players[0].user.username isnt socket.request.user.username
             game.players.push({user: socket.request.user, side: swapSide(game.players[0].side)})
-            socket.join(game.id)
-            socket.emit("netrunner", {type: "game", gameid: game.id})
+            socket.join(game.gameid)
+            socket.emit("netrunner", {type: "game", gameid: game.gameid})
             break
         lobby.emit('netrunner', {type: "games", games: games})
         socket.broadcast.to(msg.gameid).emit 'netrunner',
@@ -93,7 +94,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "swap"
         for game in games
-          if game.id is msg.gameid
+          if game.gameid is msg.gameid
             for player in game.players
               player.side = swapSide(player.side)
               player.deck = null
@@ -102,7 +103,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "deck"
         for game in games
-          if game.id is msg.gameid
+          if game.gameid is msg.gameid
             for player in game.players
               if player.user.username is socket.request.user.username
                 player.deck = msg.deck
@@ -112,7 +113,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "start"
         for game, i in games
-          if game.id is msg.gameid
+          if game.gameid is msg.gameid
             state = gameEngine.main.exec("init", game)
             lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
             games.splice(i, 1)
@@ -120,7 +121,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "do"
-        state = gameEngine.main.exec("do", msg.command, msg.side, msg.args)
+        state = gameEngine.main.exec("do", msg)
         lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
 
 # Express config
