@@ -97,14 +97,17 @@
                                  :on-mouse-leave #(put! zoom-channel false)}
      [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
-(defn hand-view [{:keys [identity hand max-hand-size] :as cursor}]
+(defn hand-view [{:keys [identity hand max-hand-size user] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.hand {}
-     [:div.header
-      (str (if (= (:side identity) "Corp") "HQ" "Grip") " (" (count hand) ")")
-      [:span.float-right (str "Max hand size: " max-hand-size)]]
-     (om/build-all card-view hand)])))
+    (let [side (:side identity)]
+      [:div.panel.blue-shade.hand
+       [:div.header
+        (str (if (= side "Corp") "HQ" "Grip") " (" (count hand) ")")
+        [:span.float-right (str "Max hand size: " max-hand-size)]]
+       (if (= user (:user @app-state))
+         (om/build-all card-view hand)
+         (repeat (count hand) [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}]))]))))
 
 (defn handle-deck-click [side]
   (when (= side (:side @game-state))
