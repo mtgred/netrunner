@@ -49,50 +49,66 @@
                         :keep false}}]
     (swap! game-states assoc gameid (atom state))))
 
-(defn mulligan! [state side & args]
+(defn say! [state side args]
+  (let [user (or (:user args) (get-in @state [side :user]))]
+    (swap! state update-in [:log] #(conj % {:user user :text (:text args)}))))
+
+(defn mulligan! [state side args]
   (let [player (side @state)
         deck (shuffle (concat (:deck player) (:hand player)))]
     (swap! state assoc-in [side :hand] (take 5 deck))
     (swap! state assoc-in [side :deck] (drop 5 deck))
-    (swap! state assoc-in [side :keep] true)))
+    (swap! state assoc-in [side :keep] true)
+    (say! state side {:user "__system__"
+                      :text (str (get-in player [:user :username]) " takes a mulligan.")})))
 
-(defn keep! [state side & args]
-  (swap! state assoc-in [side :keep] true))
+(defn keep! [state side args]
+  (swap! state assoc-in [side :keep] true)
+  (say! state side {:user "__system__"
+                    :text (str (get-in @state [side :user :username]) " keeps his or her hand.")}))
 
 (defn draw!
   ([state side] (draw! state side 1))
   ([state side n]
      (let [deck (get-in @state [side :deck])]
        (swap! state update-in [side :hand] #(concat % (take n deck))))
-     (swap! state update-in [side :deck] (partial drop n))))
+     (swap! state update-in [side :deck] (partial drop n))
+     (say! state side {:user "__system__"
+                       :text (str (get-in @state [side :user :username]) " draws " n " card" (if (> n 1) "s." "."))})))
 
 (defn gain!
   ([state side resource] (gain! state side resource 1))
   ([state side resource n]
-     (swap! state update-in [side resource] #(+ % n))))
+     (swap! state update-in [side resource] #(+ % n))
+     (say! state side {:user "__system__"
+                       :text (str (get-in @state [side :user :username])
+                                  " gains " n (name resource) (if (> n 1) "s." "."))})))
 
-(defn pay! [state side & args]
-  (let [resources (partition 2 args)]
-    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
-      (not (doseq [r resources]
-             (swap! state update-in [side (first r)] #(- % (last r)))))
-      false)))
+(defn pay!
+  ([state side & args]
+     (let [resources (partition 2 args)]
+       (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
+         (not (doseq [r resources]
+                (swap! state update-in [side (first r)] #(- % (last r)))))
+         false))))
 
 (defn purge! [state side]
   (let [cards (get-in state [:runner :rig :programs])]
     ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
-    ))
+    (say! state side {:user "__system__"
+                      :text (str (get-in @state [side :user :username]) " purges viruses.")})))
 
 (def commands
-  {"mulligan" mulligan!
+  {"say" say!
+   "mulligan" mulligan!
    "keep" keep!
-   "draw" (fn [state side & args]
+   "draw" (fn [state side args]
             (when (pay! state side :click 1) (draw! state side)))
-   "credit" (fn [state side & args]
+   "credit" (fn [state side args]
               (when (pay! state side :click 1) (gain! state side :credit)))
-   "purge" (fn [state side & args]
+   "purge" (fn [state side args]
              (when (pay! state side :click 3) (purge! state side)))
-   "remove-tag" (fn [state side & args]
+   "remove-tag" (fn [state side args]
                   (pay! state side :click 1 :credit 2 :tag 1))})
 
 (defn exec [action args]

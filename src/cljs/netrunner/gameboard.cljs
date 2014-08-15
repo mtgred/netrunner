@@ -7,37 +7,7 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
-(def game-state
-  (atom {:gameid 0
-         :log []
-         :side :corp
-         :corp {:user {:username "" :emailhash ""}
-                :identity {}
-                :deck []
-                :hand []
-                :discard []
-                :rfg []
-                :remote-servers []
-                :click 3
-                :credit 5
-                :bad-publicity 0
-                :agenda-point 0
-                :max-hand-size 5}
-         :runner {:user {:username "" :emailhash ""}
-                  :identity {}
-                  :deck []
-                  :hand []
-                  :discard []
-                  :rfg []
-                  :rig []
-                  :click 4
-                  :credit 5
-                  :memory 4
-                  :link 0
-                  :tag 0
-                  :agenda-point 0
-                  :max-hand-size 5
-                  :brain-damage 0}}{}))
+(def game-state (atom {}))
 
 (defn init-game [game side]
   (swap! game-state merge game)
@@ -51,24 +21,27 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "say" (swap! game-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
+          ;; "say" (swap! game-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
           "state" (swap! game-state merge (:state msg))
           nil))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
 
+(defn send-command
+  ([command] (send-command command nil))
+  ([command args]
+   (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
+          :command command :args args})))
+
 (defn send-msg [event owner]
   (.preventDefault event)
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (when-not (empty? text)
-      (send {:action "say" :gameid (:gameid @game-state) :text text})
+      (send-command "say" {:text text})
       (aset input "value" "")
       (.focus input))))
-
-(defn send-command [command]
-  (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state) :command command}))
 
 (defn log-pane [messages owner]
   (reify
