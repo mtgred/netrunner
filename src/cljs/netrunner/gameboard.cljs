@@ -67,6 +67,9 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn send-command [command]
+  (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state) :command command}))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -114,10 +117,6 @@
           (om/build-all card-view hand)
           (repeat (count hand) [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}]))]))))
 
-(defn handle-deck-click [side]
-  (when (= side (:side @game-state))
-    (send {:action "do" :gameid (:gameid @game-state) :side side :command "draw"})))
-
 (defmulti deck-view #(get-in % [:identity :side]))
 
 (defmethod deck-view "Runner" [{:keys [deck] :as cursor}]
@@ -126,7 +125,7 @@
     [:div.panel.blue-shade.deck {}
      (om/build label deck {:opts {:name "Stack"}})
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/runner.png" :on-double-click #(handle-deck-click :runner)}])])))
+       [:img.card.bg {:src "/img/runner.png" :on-click #(send-command "draw")}])])))
 
 (defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
@@ -134,7 +133,7 @@
     [:div.panel.blue-shade.deck {}
      (om/build label deck {:opts {:name "R&D"}})
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/corp.png" :on-double-click #(handle-deck-click :corp)}])])))
+       [:img.card.bg {:src "/img/corp.png" :on-click #(send-command "draw")}])])))
 
 (defmulti discard-view #(get-in % [:identity :side]))
 
@@ -214,6 +213,12 @@
      (om/build deck-view cursor)
      (om/build card-view (:identity cursor))])))
 
+(defn cond-button [text cond command]
+  (sab/html
+   (if cond
+     [:button.disabled text]
+     [:button {:on-click #(send-command command)} text])))
+
 (defn gameboard [{:keys [side gameid] :as cursor} owner]
   (reify
     om/IWillMount
@@ -231,7 +236,17 @@
            [:div.gameboard
             [:div.mainpane
              (om/build zones opponent)
+
              [:div.centralpane
+              [:div.button-pane.panel.blue-shade
+               (when (= side :runner)
+                 (cond-button "Remove Tag" (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
+                              "remove-tag"))
+               (when (= side :corp)
+                 (cond-button "Purge" (< (:click me) 3) "purge"))
+               (cond-button "Draw" (< (:click me) 1) "draw")
+               (cond-button "Take Credit" (< (:click me) 1) "credit")]
+
               [:div.leftpane
                [:div
                 (om/build stats-view opponent)
@@ -241,6 +256,7 @@
                 (om/build rfg-view opponent)
                 (om/build scored-view me)
                 (om/build stats-view me)]]
+
               [:div.board
                (om/build board me)]]
              (om/build zones me)]

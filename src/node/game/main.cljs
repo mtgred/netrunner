@@ -34,7 +34,7 @@
                         :hand []
                         :discard []
                         :rfg []
-                        :rig []
+                        :rig {:programs [] :resources [] :hardware []}
                         :click 4
                         :credit 5
                         :memory 4
@@ -57,20 +57,27 @@
   ([state side resource n]
      (swap! state update-in [side resource] #(+ % n))))
 
-(defn pay!
-  ([state side resource] (pay! state side resource 1))
-  ([state side resource n]
-     (if (>= (- (get-in @state [side resource]) n) 0)
-       (swap! state update-in [side resource] #(- % n))
-       false)))
+(defn pay! [state side & args]
+  (let [resources (partition 2 args)]
+    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
+      (not (doseq [r resources]
+             (swap! state update-in [side (first r)] #(- % (last r)))))
+      false)))
+
+(defn purge! [state side]
+  (let [cards (get-in state [:runner :rig :programs])]
+    ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
+    ))
 
 (def commands
   {"draw" (fn [state side & args]
-            (when (pay! state side :click)
-              (draw! state side)))
+            (when (pay! state side :click 1) (draw! state side)))
    "credit" (fn [state side & args]
-              (when (pay! state side :click)
-                (gain! state side :credit)))})
+              (when (pay! state side :click 1) (gain! state side :credit)))
+   "purge" (fn [state side & args]
+             (when (pay! state side :click 3) (purge! state side)))
+   "remove-tag" (fn [state side & args]
+                  (pay! state side :click 1 :credit 2 :tag 1))})
 
 (defn exec [action args]
   (let [params (js->clj args :keywordize-keys true)

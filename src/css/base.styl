@@ -78,7 +78,7 @@ input, select, textarea
 button
   border-radius: 4px
   font-size: 12px
-  padding: 0 14px
+  padding: 0 12px
   background-color: transparent-orange
   border: 1px solid orange
   color: white
@@ -906,7 +906,6 @@ a.button, button
 
   .panel
     position: relative
-    font-size: 11px
     padding: 3px 6px
     overflow: hidden
 
@@ -916,6 +915,7 @@ a.button, button
     left: 0
     z-index: 2
     padding: 1px 4px
+    font-size: 11px
     text-shadow 1px 1px 2px black
     radius: 4px 4px 0 0
 
@@ -966,6 +966,21 @@ a.button, button
   .centralpane
     display-flex()
     flex(1)
+
+  .button-pane
+    margin: 0 0 0 5px
+    width: 120px
+    display-flex()
+    flex-direction(column)
+    justify-content(flex-end)
+
+    button
+      font-size: 11px
+      margin-bottom: 5px
+      padding: 0 10px 1px
+
+      &:last-child
+        margin-bottom: 0
 
   .leftpane
     width: 160px
