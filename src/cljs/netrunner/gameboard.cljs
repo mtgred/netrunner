@@ -213,7 +213,7 @@
      (om/build deck-view cursor)
      (om/build card-view (:identity cursor))])))
 
-(defn cond-button [text cond command]
+(defn cond-button [text command cond]
   (sab/html
    (if cond
      [:button.disabled text]
@@ -239,13 +239,21 @@
 
              [:div.centralpane
               [:div.button-pane.panel.blue-shade
-               (when (= side :runner)
-                 (cond-button "Remove Tag" (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
-                              "remove-tag"))
-               (when (= side :corp)
-                 (cond-button "Purge" (< (:click me) 3) "purge"))
-               (cond-button "Draw" (< (:click me) 1) "draw")
-               (cond-button "Take Credit" (< (:click me) 1) "credit")]
+               (when-not (:keep me)
+                 [:div
+                  [:h4 "Keep hand?"]
+                  [:button {:on-click #(send-command "keep")} "Keep hand"]
+                  [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
+
+               (when (and (:keep me) (:keep opponent))
+                 [:div
+                  (when (= side :runner)
+                    (cond-button "Remove Tag" "remove-tag"
+                                 (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))))
+                  (when (= side :corp)
+                    (cond-button "Purge" "purge" (< (:click me) 3)))
+                  (cond-button "Draw" "draw" (< (:click me) 1))
+                  (cond-button "Take Credit" "credit" (< (:click me) 1))])]
 
               [:div.leftpane
                [:div

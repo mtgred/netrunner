@@ -14,12 +14,14 @@
 (defn init-game [{:keys [players gameid log] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
+        corp-deck (create-deck (:deck corp))
+        runner-deck (create-deck (:deck runner))
         state {:gameid gameid
                :log log
                :corp {:user (:user corp)
                       :identity (get-in corp [:deck :identity])
-                      :deck (create-deck (:deck corp))
-                      :hand []
+                      :deck (drop 5 corp-deck)
+                      :hand (take 5 corp-deck)
                       :discard []
                       :rfg []
                       :remote-servers []
@@ -27,23 +29,35 @@
                       :credit 5
                       :bad-publicity 0
                       :agenda-point 0
-                      :max-hand-size 5}
+                      :max-hand-size 5
+                      :keep false}
                :runner {:user (:user runner)
                         :identity (get-in runner [:deck :identity])
-                        :deck (create-deck (:deck runner))
-                        :hand []
+                        :deck (drop 5 runner-deck)
+                        :hand (take 5 runner-deck)
                         :discard []
                         :rfg []
                         :rig {:programs [] :resources [] :hardware []}
-                        :click 4
+                        :click 0
                         :credit 5
                         :memory 4
                         :link 0
                         :tag 0
                         :agenda-point 0
                         :max-hand-size 5
-                        :brain-damage 0}}]
+                        :brain-damage 0
+                        :keep false}}]
     (swap! game-states assoc gameid (atom state))))
+
+(defn mulligan! [state side & args]
+  (let [player (side @state)
+        deck (shuffle (concat (:deck player) (:hand player)))]
+    (swap! state assoc-in [side :hand] (take 5 deck))
+    (swap! state assoc-in [side :deck] (drop 5 deck))
+    (swap! state assoc-in [side :keep] true)))
+
+(defn keep! [state side & args]
+  (swap! state assoc-in [side :keep] true))
 
 (defn draw!
   ([state side] (draw! state side 1))
@@ -70,7 +84,9 @@
     ))
 
 (def commands
-  {"draw" (fn [state side & args]
+  {"mulligan" mulligan!
+   "keep" keep!
+   "draw" (fn [state side & args]
             (when (pay! state side :click 1) (draw! state side)))
    "credit" (fn [state side & args]
               (when (pay! state side :click 1) (gain! state side :credit)))
