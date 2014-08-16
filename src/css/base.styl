@@ -924,6 +924,7 @@ a.button, button
 
   .card
     display: inline-block
+    position: relative
 
   .bg
     position: absolute
@@ -933,6 +934,7 @@ a.button, button
   .deck, .discard, .rfg, .card
     height: 84px
     width: 60px
+    padding: 0
 
   .dashboard
     .deck, .rfg, > .card
@@ -949,11 +951,15 @@ a.button, button
     width: 382px
     padding: 0
 
-    .card
-      margin: 0 4px 0 0
+  .card-wrapper
+    display: inline-block
+    margin: 0 4px 0 0
 
-      &:last-child
-        margin-right: 0
+    &:last-child
+      margin-right: 0
+
+  .squeeze .card-wrapper
+    position: absolute
 
   .scored
     flex-shrink: 0

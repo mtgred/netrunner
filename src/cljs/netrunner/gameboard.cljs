@@ -21,7 +21,6 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          ;; "say" (swap! game-state update-in [:log] #(conj % {:user (:user msg) :text (:text msg)}))
           "state" (swap! game-state merge (:state msg))
           nil))))
 
@@ -69,7 +68,7 @@
 (defn card-view [cursor]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+    [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                                  :on-mouse-leave #(put! zoom-channel false)}
      [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
@@ -83,12 +82,18 @@
 (defn hand-view [{:keys [identity hand max-hand-size user] :as cursor}]
   (om/component
    (sab/html
-    (let [side (:side identity)]
-      [:div.panel.blue-shade.hand
-        (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
-        (if (= user (:user @app-state))
-          (om/build-all card-view hand)
-          (repeat (count hand) [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}]))]))))
+    (let [side (:side identity)
+          size (count hand)]
+      [:div.panel.blue-shade.hand {:class (when (> size 6) "squeeze")}
+       (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
+       (map-indexed
+        (fn [i card]
+          (sab/html
+           [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
+            (if (= user (:user @app-state))
+              (om/build card-view card)
+              [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
+        hand)]))))
 
 (defmulti deck-view #(get-in % [:identity :side]))
 
