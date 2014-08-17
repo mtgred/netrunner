@@ -218,11 +218,13 @@
 
              [:div.centralpane
               [:div.button-pane.panel.blue-shade
-               (when-not (:keep me)
+               (if-not (:keep me)
                  [:div
                   [:h4 "Keep hand?"]
                   [:button {:on-click #(send-command "keep")} "Keep hand"]
-                  [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
+                  [:button {:on-click #(send-command "mulligan")} "Mulligan"]]
+                 (when-not (:keep opponent)
+                   [:h4 "Waiting for opponent's mulligan choice."]))
 
                (when (and (:keep me) (:keep opponent))
                  [:div
