@@ -18,4 +18,5 @@ pom.xml
 /resources/lib/
 /resources/css/netrunner.css
 /data/*.json
+/data/cards
 game.js
