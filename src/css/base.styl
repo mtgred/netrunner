@@ -892,9 +892,6 @@ a.button, button
 #gameboard
   display: none
 
-// #gamelobby
-//   display: none
-
 .gameboard
   position: absolute
   top: 31px
@@ -925,15 +922,17 @@ a.button, button
   .card
     display: inline-block
     position: relative
+    height: 84px
+    width: 60px
 
   .bg
     position: absolute
     left: 0
     bottom: 0
 
-  .deck, .discard, .rfg, .card
-    height: 84px
-    width: 60px
+  .deck, .discard, .rfg, .identity
+    height: 86px
+    width: 62px
     padding: 0
 
   .dashboard
@@ -947,13 +946,14 @@ a.button, button
       margin-right: 16px
 
   .hand
-    height: 84px
+    height: 86px
     width: 382px
     padding: 0
 
   .card-wrapper
     display: inline-block
     margin: 0 4px 0 0
+    transition(all 0.2s ease-in-out)
 
     &:last-child
       margin-right: 0

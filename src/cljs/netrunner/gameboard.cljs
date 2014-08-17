@@ -69,7 +69,7 @@
   (om/component
    (sab/html
     [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
-                                 :on-mouse-leave #(put! zoom-channel false)}
+                           :on-mouse-leave #(put! zoom-channel false)}
      [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
 (defn label [cursor owner opts]
@@ -103,7 +103,7 @@
     [:div.panel.blue-shade.deck {}
      (om/build label deck {:opts {:name "Stack"}})
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/runner.png" :on-click #(send-command "draw")}])])))
+       [:img.card.bg {:src "/img/runner.png"}])])))
 
 (defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
@@ -111,7 +111,7 @@
     [:div.panel.blue-shade.deck {}
      (om/build label deck {:opts {:name "R&D"}})
      (when (> (count deck) 0)
-       [:img.card.bg {:src "/img/corp.png" :on-click #(send-command "draw")}])])))
+       [:img.card.bg {:src "/img/corp.png"}])])))
 
 (defmulti discard-view #(get-in % [:identity :side]))
 
@@ -189,7 +189,8 @@
      (om/build hand-view cursor)
      (om/build discard-view cursor)
      (om/build deck-view cursor)
-     (om/build card-view (:identity cursor))])))
+     [:div.panel.blue-shade.identity
+      (om/build card-view (:identity cursor))]])))
 
 (defn cond-button [text command cond]
   (sab/html
