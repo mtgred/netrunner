@@ -1,4 +1,5 @@
-(ns game.core)
+(ns game.core
+  (:require-macros [game.macros :refer [do!]]))
 
 (def game-states (atom {}))
 

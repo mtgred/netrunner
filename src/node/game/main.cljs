@@ -1,4 +1,5 @@
 (ns game.main
+  (:require-macros [game.macros :refer [do!]])
   (:require [cljs.nodejs :as node]
             [game.core :refer [game-states system-msg pay gain draw] :as core]))
 
