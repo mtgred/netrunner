@@ -1,7 +1,20 @@
-(ns game.core
-  (:require-macros [game.macros :refer [do!]]))
+(ns game.core)
 
 (def game-states (atom {}))
+
+(defn pay [state side & args]
+  (let [resources (partition 2 args)]
+    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
+      (not (doseq [r resources]
+             (swap! state update-in [side (first r)] #(- % (last r)))))
+      false)))
+
+(defn do! [ability]
+  (fn [state side args]
+    (if-let [cost (:cost ability)]
+     (when (apply pay (concat [state side] cost))
+       ((:effect ability) state side args))
+     ((:effect ability) state side args))))
 
 (defn create-deck [deck]
   (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck))))
@@ -45,9 +58,9 @@
                               :brain-damage 0
                               :keep false}})]
     (when-let [corp-init (get-in game.cards/cards [(:title corp-identity) :game-init])]
-      (corp-init state :corp nil))
+      ((do! corp-init) state :corp nil))
     (when-let [runner-init (get-in game.cards/cards [(:title runner-identity) :game-init])]
-      (runner-init state :runner nil))
+      ((do! runner-init) state :runner nil))
     (swap! game-states assoc gameid state)))
 
 (def reset-value
@@ -70,7 +83,7 @@
     (swap! state assoc-in [side :deck] (drop 5 deck))
     (swap! state assoc-in [side :keep] true)
     (when-let [init-fn (get-in game.cards/cards [(get-in player [:identity :title]) :game-init])]
-      (init-fn state side nil))
+      ((do! init-fn) state side nil))
     (system-msg state side  "takes a mulligan.")))
 
 (defn keep-hand [state side args]
@@ -87,13 +100,6 @@
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
     (swap! state update-in [side (first r)] #(+ % (last r)))))
-
-(defn pay [state side & args]
-  (let [resources (partition 2 args)]
-    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
-      (not (doseq [r resources]
-             (swap! state update-in [side (first r)] #(- % (last r)))))
-      false)))
 
 (defn purge [state side]
   (let [cards (get-in state [:runner :rig :programs])]
