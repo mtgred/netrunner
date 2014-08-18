@@ -53,15 +53,15 @@
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
    :runner {:credit 5 :link 0 :memory 4 :max-hand-size 5}})
 
-(defn say! [state side args]
+(defn say [state side args]
   (let [user (or (:user args) (get-in @state [side :user]))]
     (swap! state update-in [:log] #(conj % {:user user :text (:text args)}))))
 
 (defn system-msg [state side text]
   (let [username (get-in @state [side :user :username])]
-    (say! state side {:user "__system__" :text (str username " " text)})))
+    (say state side {:user "__system__" :text (str username " " text)})))
 
-(defn mulligan! [state side args]
+(defn mulligan [state side args]
   (let [player (side @state)
         deck (shuffle (concat (:deck player) (:hand player)))]
     (swap! state update-in [side] #(merge % (side reset-value)))
@@ -72,29 +72,29 @@
       (init-fn state side nil))
     (system-msg state side  "takes a mulligan.")))
 
-(defn keep! [state side args]
+(defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "keeps his or her hand."))
 
-(defn draw!
-  ([state side] (draw! state side 1))
+(defn draw
+  ([state side] (draw state side 1))
   ([state side n]
      (let [deck (get-in @state [side :deck])]
        (swap! state update-in [side :hand] #(concat % (take n deck))))
      (swap! state update-in [side :deck] (partial drop n))))
 
-(defn gain! [state side resource n]
-  (swap! state update-in [side resource] #(+ % n)))
+(defn gain [state side & args]
+  (doseq [r (partition 2 args)]
+    (swap! state update-in [side (first r)] #(+ % (last r)))))
 
-(defn pay!
-  ([state side & args]
-     (let [resources (partition 2 args)]
-       (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
-         (not (doseq [r resources]
-                (swap! state update-in [side (first r)] #(- % (last r)))))
-         false))))
+(defn pay [state side & args]
+  (let [resources (partition 2 args)]
+    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
+      (not (doseq [r resources]
+             (swap! state update-in [side (first r)] #(- % (last r)))))
+      false)))
 
-(defn purge! [state side]
+(defn purge [state side]
   (let [cards (get-in state [:runner :rig :programs])]
     ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
     ))
