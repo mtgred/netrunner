@@ -12,21 +12,10 @@
   {"say" core/say
    "mulligan" core/mulligan
    "keep" core/keep-hand
-   "draw" (fn [state side args]
-            (when (pay state side :click 1)
-              (draw state side)
-              (system-msg state side "draw 1 card.")))
-   "credit" (fn [state side args]
-              (when (pay state side :click 1)
-                (gain state side :credit 1)
-                (system-msg state side "take 1 credit.")))
-   "purge" (fn [state side args]
-             (when (pay state side :click 3)
-               (core/purge state side)
-               (system-msg state side "purges viruses.")))
-   "remove-tag" (fn [state side args]
-                  (pay state side :click 1 :credit 2 :tag 1)
-                  (system-msg state side "removes 1 tag."))})
+   "draw" (do! {:cost [:click 1] :effect [(draw) (system-msg "draw 1 card.")]})
+   "credit" (do! {:cost [:click 1] :effect [(gain :credit 1) (system-msg "take 1 credit.")]})
+   "purge" (do! {:cost [:click 3] :effect [(core/purge) (system-msg "purges viruses.")]})
+   "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect [(system-msg "removes 1 tag.")]})})
 
 (defn exec [action args]
   (let [params (js->clj args :keywordize-keys true)
