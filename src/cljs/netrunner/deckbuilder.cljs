@@ -67,8 +67,8 @@
       (-> owner (om/get-node "deckname") js/$ .select)))
 
 (defn new-deck [side owner]
-  (om/set-state! owner :deck {:side side :name "New deck" :cards []
-                              :identity (-> side side-identities first)})
+  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (om/set-state! owner :side side)
   (edit-deck owner))
 
 (defn end-edit [owner]
@@ -297,7 +297,7 @@
              [:h3 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity :title])
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
-              (for [card (side-identities (get-in state [:deck :side]))]
+              (for [card (side-identities (:side state))]
                 [:option (:title card)])]]
             (om/build card-lookup cursor {:state state})
             [:h3 "Decklist"
