@@ -40,7 +40,7 @@ a
   transition(all 0.2s ease-in-out)
   cursor: pointer
   &:hover
-    color: white
+    color: blue
     text-decoration: none
 
 table
@@ -642,14 +642,18 @@ a.button, button
     .decks, .decklist, .deckedit
       flex(1)
       border-right: 1px solid white
-      padding: 0 15px
+      padding: 0
+
+      > div
+        padding: 0 15px
 
     .decks
       display-flex()
       flex-direction(column)
+      padding: 0
 
       .button-bar
-        padding-bottom: 15px
+        padding: 0 15px 15px
 
         button
           width: 135px
@@ -768,7 +772,7 @@ a.button, button
         margin: 0 0 5px 0
 
       textarea
-        width: 100%
+        margin: 0 15px
         line-height: 18px
         flex(1)
 
@@ -886,6 +890,7 @@ a.button, button
   .deck-collection
     width: 496px
     max-height: 355px
+    padding: 0
 
 // Gameboard
 

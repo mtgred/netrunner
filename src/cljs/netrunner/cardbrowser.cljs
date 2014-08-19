@@ -183,7 +183,7 @@
                             (filter-cards (:type-filter state) :type)
                             (match (.toLowerCase (:search-query state)))
                             (sort-by (sort-field (:sort-field state)))
-                            (take (* (:page state) 32)))
+                            (take (* (:page state) 24)))
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
