@@ -122,7 +122,7 @@
     [:div.panel.blue-shade.discard
      (om/build label discard {:opts {:name "Heap"}})
      (when-not (empty? discard)
-       (om/build card-view (first discard)))])))
+       (om/build card-view (last discard)))])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
@@ -130,7 +130,7 @@
     [:div.panel.blue-shade.discard
      (om/build label discard {:opts {:name "Archive"}})
      (when-not (empty? discard)
-       (om/build card-view (first discard)))])))
+       (om/build card-view (last discard)))])))
 
 (defn rfg-view [{:keys [rfg] :as cursor}]
   (om/component
