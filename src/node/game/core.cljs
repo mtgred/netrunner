@@ -1,4 +1,5 @@
-(ns game.core)
+(ns game.core
+  (:require [game.utils :refer [remove-once]]))
 
 (def game-states (atom {}))
 
@@ -105,3 +106,26 @@
   (let [cards (get-in state [:runner :rig :programs])]
     ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
     ))
+
+(defn move-card [state side card from to]
+  (swap! state update-in [side to] #(conj % card))
+  (swap! state update-in [side from] (fn [coll] (remove-once #(not= % card) coll))))
+
+(defmulti play #(:type %3))
+
+(defmethod play "Event" [state side card]
+  ((get-in game.cards/cards [(:title card) :ability :effect]) state side nil)
+  (move-card state side card :hand :discard))
+
+(defmethod play :hardware [state side card])
+(defmethod play :resource [state side card])
+(defmethod play :program [state side card])
+
+(defmethod play "Operation" [state side card]
+  ((get-in game.cards/cards [(:title card) :ability :effect]) state side nil)
+  (move-card state side card :hand :discard))
+
+(defmethod play :ICE [state side card])
+(defmethod play :agenda [state side card])
+(defmethod play :asset [state side card])
+(defmethod play :upgrade [state side card])

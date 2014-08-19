@@ -19,7 +19,11 @@
    "purge" (do! (ability {:cost [:click 3]
                           :effect [(core/purge) (system-msg "purges viruses.")]}))
    "remove-tag" (do! (ability {:cost [:click 1 :credit 2 :tag 1]
-                               :effect [(system-msg "removes 1 tag.")]}))})
+                               :effect [(system-msg "removes 1 tag.")]}))
+   "play" (fn [state side {:keys [card]}]
+            (when (pay state side :click 1 :credit (:cost card))
+              (play state side card)
+              (system-msg state side (str "plays " (:title card) "."))))})
 
 (defn exec [action args]
   (let [params (js->clj args :keywordize-keys true)

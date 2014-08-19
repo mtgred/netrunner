@@ -30,8 +30,8 @@
 (defn send-command
   ([command] (send-command command nil))
   ([command args]
-   (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
-          :command command :args args})))
+     (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
+            :command command :args args})))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -91,7 +91,8 @@
           (sab/html
            [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
             (if (= user (:user @app-state))
-              (om/build card-view card)
+              [:div {:on-click #(send-command "play" {:card @card})}
+               (om/build card-view card)]
               [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
         hand)]))))
 
@@ -119,13 +120,17 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard
-     (om/build label discard {:opts {:name "Heap"}})])))
+     (om/build label discard {:opts {:name "Heap"}})
+     (when-not (empty? discard)
+       (om/build card-view (first discard)))])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard
-     (om/build label discard {:opts {:name "Archive"}})])))
+     (om/build label discard {:opts {:name "Archive"}})
+     (when-not (empty? discard)
+       (om/build card-view (first discard)))])))
 
 (defn rfg-view [{:keys [rfg] :as cursor}]
   (om/component
