@@ -34,8 +34,6 @@ cardFields = [
   "minimumdecksize",
   "faction",
   "factioncost", # influence
-  "flavor",
-  "illustrator",
   "number",
   "quantity",
   "setname",
@@ -68,9 +66,6 @@ request.get baseurl + "sets", (error, response, body) ->
 request.get baseurl + "cards", (error, response, body) ->
   if !error and response.statusCode is 200
     cards = selectFields(cardFields, JSON.parse(body))
-    #for card in cards
-      #fs.writeFile "cards/#{card.title}.json", JSON.stringify(card)
-
     # db.collection("cards").remove ->
     # db.collection("cards").insert cards, (err, result) ->
     fs.writeFile "cards.json", JSON.stringify(cards), ->
