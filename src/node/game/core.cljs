@@ -10,12 +10,12 @@
              (swap! state update-in [side (first r)] #(- % (last r)))))
       false)))
 
-(defn do! [ability]
+(defn do! [{:keys [cost effect]}]
   (fn [state side args]
-    (if-let [cost (:cost ability)]
+    (if cost
      (when (apply pay (concat [state side] cost))
-       ((:effect ability) state side args))
-     ((:effect ability) state side args))))
+       (effect state side args))
+     (effect state side args))))
 
 (defn create-deck [deck]
   (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck))))
@@ -58,9 +58,9 @@
                               :max-hand-size 5
                               :brain-damage 0
                               :keep false}})]
-    (when-let [corp-init (get-in game.cards/cards [(:title corp-identity) :game-init])]
+    (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((do! corp-init) state :corp nil))
-    (when-let [runner-init (get-in game.cards/cards [(:title runner-identity) :game-init])]
+    (when-let [runner-init (game.cards/cards (:title runner-identity))]
       ((do! runner-init) state :runner nil))
     (swap! game-states assoc gameid state)))
 
@@ -102,6 +102,10 @@
   (doseq [r (partition 2 args)]
     (swap! state update-in [side (first r)] #(+ % (last r)))))
 
+(defn lose [state side & args]
+  (doseq [r (partition 2 args)]
+    (swap! state update-in [side (first r)] #(max (- % (last r)) 0))))
+
 (defn purge [state side]
   (let [cards (get-in state [:runner :rig :programs])]
     ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
@@ -111,19 +115,23 @@
   (swap! state update-in [side to] #(conj % card))
   (swap! state update-in [side from] (fn [coll] (remove-once #(not= % card) coll))))
 
-(defmulti play #(:type %3))
+(defn play-instant [state side card]
+  (when (pay state side :click 1 :credit (:cost card))
+    ((get-in game.cards/cards [(:title card) :effect]) state side nil)
+    (move-card state side card :hand :discard)
+    (system-msg state side (str "plays " (:title card) "."))))
 
-(defmethod play "Event" [state side card]
-  ((get-in game.cards/cards [(:title card) :ability :effect]) state side nil)
-  (move-card state side card :hand :discard))
+(defmulti play #(get-in %3 [:card :type]))
+
+(defmethod play "Event" [state side {:keys [card]}]
+  (play-instant state side card))
+
+(defmethod play "Operation" [state side {:keys [card]}]
+  (play-instant state side card))
 
 (defmethod play :hardware [state side card])
 (defmethod play :resource [state side card])
 (defmethod play :program [state side card])
-
-(defmethod play "Operation" [state side card]
-  ((get-in game.cards/cards [(:title card) :ability :effect]) state side nil)
-  (move-card state side card :hand :discard))
 
 (defmethod play :ICE [state side card])
 (defmethod play :agenda [state side card])
