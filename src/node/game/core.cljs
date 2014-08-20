@@ -50,7 +50,7 @@
                               :discard []
                               :scored []
                               :rfg []
-                              :rig {:programs [] :resources [] :hardware []}
+                              :rig {:program [] :resource [] :hardware []}
                               :click 4
                               :credit 5
                               :memory 4
@@ -115,8 +115,10 @@
 (defn purge [state side])
 
 (defn move [state side card from to]
-  (swap! state update-in [side to] #(conj % card))
-  (swap! state update-in [side from] (fn [coll] (remove-once #(not= % card) coll))))
+  (let [f (if (sequential? from) from [from])
+        t (if (sequential? to) to [to])]
+    (swap! state update-in (cons side t) #(conj % card))
+    (swap! state update-in (cons side f) (fn [coll] (remove-once #(not= % card) coll)))))
 
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
@@ -126,6 +128,11 @@
     ((get-in game.cards/cards [(:title card) :effect]) state side nil)
     (system-msg state side (str "plays " (:title card) "."))))
 
+(defn runner-install [state side card]
+  (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
+    (move state side card :hand [:rig (keyword (.toLowerCase (:type card)))])
+    (system-msg state side (str "installs " (:title card) "."))))
+
 (defmulti play #(get-in %3 [:card :type]))
 
 (defmethod play "Event" [state side {:keys [card]}]
@@ -134,9 +141,14 @@
 (defmethod play "Operation" [state side {:keys [card]}]
   (play-instant state side card))
 
-(defmethod play :hardware [state side card])
-(defmethod play :resource [state side card])
-(defmethod play :program [state side card])
+(defmethod play "Hardware" [state side {:keys [card]}]
+  (runner-install state side card))
+
+(defmethod play "Resource" [state side {:keys [card]}]
+  (runner-install state side card))
+
+(defmethod play "Program" [state side {:keys [card]}]
+  (runner-install state side card))
 
 (defmethod play :ICE [state side card])
 (defmethod play :agenda [state side card])

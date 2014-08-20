@@ -186,17 +186,20 @@
      (when-not (= max-hand-size 5)
        [:div (str max-hand-size " Max hand size")])])))
 
-(defmulti board #(get-in % [:identity :side]))
+(defmulti board-view #(get-in % [:identity :side]))
 
-(defmethod board "Corp" [cursor]
+(defmethod board-view "Corp" [cursor]
   (om/component
    (sab/html
     [:div {}])))
 
-(defmethod board "Runner" [cursor]
+(defmethod board-view "Runner" [{:keys [rig]}]
   (om/component
    (sab/html
-    [:div {}])))
+    [:div
+     [:div (om/build-all card-view (:program rig))]
+     [:div (om/build-all card-view (:resource rig))]
+     [:div (om/build-all card-view (:hardware rig))]])))
 
 (defn zones [cursor]
   (om/component
@@ -263,7 +266,8 @@
                 (om/build stats-view me)]]
 
               [:div.board
-               (om/build board me)]]
+               (om/build board-view opponent)
+               (om/build board-view me)]]
              (om/build zones me)]
             [:div.rightpane {}
              [:div.card-zoom

@@ -1,7 +1,7 @@
 (ns game.main
   (:require-macros [game.macros :refer [effect]])
   (:require [cljs.nodejs :as node]
-            [game.core :refer [game-states do! system-msg pay gain draw move-card] :as core]))
+            [game.core :refer [game-states do! system-msg pay gain draw] :as core]))
 
 (aset js/exports "main" game.main)
 (enable-console-print!)

@@ -10,7 +10,7 @@
    "Blue Level Clearance" {:effect (effect (gain :credit 5) (draw 2))}
    "Biotic Labor" {:effect (effect (gain :click 2))}
    "Calling in Favors"
-   {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection")) (:resources rig)))))}
+   {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection")) (:resource rig)))))}
    "Chaos Theory: Wünderkind" {:effect (effect (gain :memory 1))}
    "Corporate Shuffle" {:effect (effect (shuffle-into-deck :hand) (draw 5))}
    "Diversified Portfolio" {:effect (effect (gain :credit (count (:remote servers))))}
