@@ -76,7 +76,7 @@
       [:div.deck-collection
        (let [players (:players (some #(when (= (:gameid %) gameid) %) games))
              side (:side (some #(when (= (:user %) user) %) players))]
-         (for [deck decks :when (= (get-in deck [:identity :side]) side)]
+         (for [deck (sort-by :date > decks) :when (= (get-in deck [:identity :side]) side)]
            [:div.deckline {:on-click #(send {:action "deck" :gameid gameid :deck deck})
                            :data-dismiss "modal"}
             [:img {:src (image-url (:identity deck))}]
