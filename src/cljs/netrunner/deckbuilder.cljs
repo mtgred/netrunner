@@ -68,7 +68,6 @@
 
 (defn new-deck [side owner]
   (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
-  (om/set-state! owner :side side)
   (edit-deck owner))
 
 (defn end-edit [owner]
@@ -248,8 +247,8 @@
                [:div
                 (if (:edit state)
                   [:div.button-bar
-                   [:button {:on-click #(end-edit owner)} "Cancel"]
-                   [:button {:on-click #(save-deck cursor owner)} "Save"]]
+                   [:button {:on-click #(save-deck cursor owner)} "Save"]
+                   [:button {:on-click #(end-edit owner)} "Cancel"]]
                   [:div.button-bar
                    [:button {:on-click #(edit-deck owner)} "Edit"]
                    [:button {:on-click #(handle-delete cursor owner)} "Delete"]
@@ -314,7 +313,7 @@
              [:h3 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity :title])
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
-              (for [card (side-identities (:side state))]
+              (for [card (side-identities (get-in state [:deck :identity :side]))]
                 [:option (:title card)])]]
             (om/build card-lookup cursor {:state state})
             [:h3 "Decklist"
