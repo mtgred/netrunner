@@ -906,10 +906,17 @@ nav ul
   display-flex()
   justify-content(space-between)
 
+  .playable
+    cursor: pointer
+    border-radius: 4px
+
+    &:hover
+      box-shadow(0 0 6px 1px orange)
+
   .panel
     position: relative
     padding: 3px 6px
-    overflow: hidden
+    overflow: visible
 
   .header
     position: absolute

@@ -90,7 +90,7 @@
                       (sab/html
                        [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
                         (if (= user (:user @app-state))
-                          [:div {:on-click #(send-command "play" {:card @card})}
+                          [:div.playable {:on-click #(send-command "play" {:card @card})}
                            (om/build card-view card)]
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
                     hand)]))))
