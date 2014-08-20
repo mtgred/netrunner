@@ -1,6 +1,6 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect]])
-  (:require [game.core :refer [pay gain lose draw] :as core]
+  (:require [game.core :refer [pay gain lose draw shuffle-into-deck] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -12,6 +12,7 @@
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection")) (:resources rig)))))}
    "Chaos Theory: Wünderkind" {:effect (effect (gain :memory 1))}
+   "Corporate Shuffle" {:effect (effect (shuffle-into-deck :hand) (draw 5))}
    "Diversified Portfolio" {:effect (effect (gain :credit (count (:remote servers))))}
    "Diesel" {:effect (effect (draw 3))}
    "Easy Mark" {:effect (effect (gain :credit 3))}
@@ -19,6 +20,7 @@
    "GRNDL: Power Unleashed" {:effect (effect (gain :credit 5 :bad-publicity 1))}
    "Hedge Fund" {:effect (effect (gain :credit 9))}
    "Lawyer Up" {:effect (effect (draw 3) (lose :tag 2))}
+   "Levy AR Lab Access" {:effect (effect (shuffle-into-deck :hand :discard) (draw 5))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Power Nap" {:effect (effect (gain (+ 2 (count (filter (fn [c] has? c :subtype "Double") heap)))))}

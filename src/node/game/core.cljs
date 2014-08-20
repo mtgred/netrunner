@@ -76,20 +76,11 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text)})))
 
-(defn mulligan [state side args]
+(defn shuffle-into-deck [state side & args]
   (let [player (side @state)
-        deck (shuffle (concat (:deck player) (:hand player)))]
-    (swap! state update-in [side] #(merge % (side reset-value)))
-    (swap! state assoc-in [side :hand] (take 5 deck))
-    (swap! state assoc-in [side :deck] (drop 5 deck))
-    (swap! state assoc-in [side :keep] true)
-    (when-let [init-fn (get-in game.cards/cards [(get-in player [:identity :title]) :game-init])]
-      ((do! init-fn) state side nil))
-    (system-msg state side  "takes a mulligan.")))
-
-(defn keep-hand [state side args]
-  (swap! state assoc-in [side :keep] true)
-  (system-msg state side "keeps his or her hand."))
+        deck (shuffle (reduce concat (:deck player) (for [p args] (p player))))]
+    (swap! state assoc-in [side :deck] deck))
+  (doseq [p args] (swap! state assoc-in [side p])))
 
 (defn draw
   ([state side] (draw state side 1))
@@ -97,6 +88,19 @@
      (let [deck (get-in @state [side :deck])]
        (swap! state update-in [side :hand] #(concat % (take n deck))))
      (swap! state update-in [side :deck] (partial drop n))))
+
+(defn mulligan [state side args]
+  (swap! state update-in [side] #(merge % (side reset-value)))
+  (shuffle-into-deck state side :hand)
+  (draw state side 5)
+  (when-let [init-fn (get-in game.cards/cards [(get-in @state [side :identity :title])])]
+    ((do! init-fn) state side nil))
+  (swap! state assoc-in [side :keep] true)
+  (system-msg state side  "takes a mulligan."))
+
+(defn keep-hand [state side args]
+  (swap! state assoc-in [side :keep] true)
+  (system-msg state side "keeps his or her hand."))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -106,19 +110,18 @@
   (doseq [r (partition 2 args)]
     (swap! state update-in [side (first r)] #(max (- % (last r)) 0))))
 
-(defn purge [state side]
-  (let [cards (get-in state [:runner :rig :programs])]
-    ;; (filter (fn [card] (some #(= % "virus") (:subtype card))) cards)
-    ))
+(defn purge [state side])
 
-(defn move-card [state side card from to]
+(defn move [state side card from to]
   (swap! state update-in [side to] #(conj % card))
   (swap! state update-in [side from] (fn [coll] (remove-once #(not= % card) coll))))
 
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
+    (if (= (:title card) "Levy AR Lab Access")
+      (move state side card :hand :rfg)
+      (move state side card :hand :discard))
     ((get-in game.cards/cards [(:title card) :effect]) state side nil)
-    (move-card state side card :hand :discard)
     (system-msg state side (str "plays " (:title card) "."))))
 
 (defmulti play #(get-in %3 [:card :type]))
