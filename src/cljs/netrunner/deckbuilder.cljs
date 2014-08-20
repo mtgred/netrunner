@@ -114,7 +114,7 @@
        (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
        (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
-(defn octgn-export [owner]
+(defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
         identity (:identity deck)
         id "bc0f047c-01b1-427f-a439-d451eda"
@@ -126,9 +126,8 @@
                           (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
                                (get-in c [:card :title]) "</card>")))
              "</section></deck>")
-        blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})
-        object-url (.createObjectURL js/URL blob)]
-    (aset js/window "location" object-url)))
+        blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
+    (.createObjectURL js/URL blob)))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
@@ -252,7 +251,7 @@
                   [:div.button-bar
                    [:button {:on-click #(edit-deck owner)} "Edit"]
                    [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                   [:button {:on-click #(octgn-export owner)} "OCTGN export"]])
+                   [:a.button {:href (octgn-link owner) :download (str (:name deck) ".o8d")} "OCTGN Export"]])
                 [:h3.deckname (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]

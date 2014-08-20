@@ -75,10 +75,12 @@ input, select, textarea
     box-shadow(0 0 6px blue)
     border-color: blue !important
 
-button
+button, a.button
+  display: inline-block
   border-radius: 4px
   font-size: 12px
-  padding: 0 12px
+  padding: 4px 12px
+  margin: 0 2px
   background-color: transparent-orange
   border: 1px solid orange
   color: white
@@ -327,9 +329,6 @@ nav ul
 .blue-shade
   background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
-
-a.button, button
-  display: inline-block
 
 .influence
   font-size: 18px
@@ -667,7 +666,7 @@ a.button, button
       .button-bar
         padding-bottom: 15px
 
-        button
+        button, a.button
           min-width: 75px
 
       .header
