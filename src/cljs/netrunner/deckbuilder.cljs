@@ -115,6 +115,22 @@
        (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
        (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
+(defn octgn-export [owner]
+  (let [deck (om/get-state owner :deck)
+        identity (:identity deck)
+        id "bc0f047c-01b1-427f-a439-d451eda"
+        xml (str
+             "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
+             id (:code identity) "\">" (:title identity) "</card></section>"
+             "<section name=\"R&amp;amp;D / Stack\">"
+             (apply str (for [c (:cards deck)]
+                          (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
+                               (get-in c [:card :title]) "</card>")))
+             "</section></deck>")
+        blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})
+        object-url (.createObjectURL js/URL blob)]
+    (aset js/window "location" object-url)))
+
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
         matches (om/get-state owner :matches)]
@@ -231,12 +247,13 @@
                    cards (:cards deck)]
                [:div
                 (if (:edit state)
-                  [:span
-                   [:button.big {:on-click #(end-edit owner)} "Cancel"]
-                   [:button.big {:on-click #(save-deck cursor owner)} "Save"]]
-                  [:span
-                   [:button.big {:on-click #(handle-delete cursor owner)} "Delete"]
-                   [:button.big {:on-click #(edit-deck owner)} "Edit"]])
+                  [:div.button-bar
+                   [:button {:on-click #(end-edit owner)} "Cancel"]
+                   [:button {:on-click #(save-deck cursor owner)} "Save"]]
+                  [:div.button-bar
+                   [:button {:on-click #(edit-deck owner)} "Edit"]
+                   [:button {:on-click #(handle-delete cursor owner)} "Delete"]
+                   [:button {:on-click #(octgn-export owner)} "OCTGN export"]])
                 [:h3.deckname (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
