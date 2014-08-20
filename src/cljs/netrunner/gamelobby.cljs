@@ -50,6 +50,7 @@
 (defn join-game [gameid owner]
   (authenticated
    (fn [user]
+     (om/set-state! owner :editing false)
      (send {:action "join" :gameid gameid}))))
 
 (defn leave-game [cursor owner]
