@@ -1,13 +1,13 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once]]))
+  (:require [game.utils :refer [remove-once has? merge-costs]]))
 
 (def game-states (atom {}))
 
 (defn pay [state side & args]
-  (let [resources (partition 2 args)]
-    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) resources)
-      (not (doseq [r resources]
-             (swap! state update-in [side (first r)] #(- % (last r)))))
+  (let [costs (merge-costs args)]
+    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+      (not (doseq [c costs]
+             (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
 (defn do! [{:keys [cost effect]}]
@@ -116,7 +116,7 @@
   (swap! state update-in [side from] (fn [coll] (remove-once #(not= % card) coll))))
 
 (defn play-instant [state side card]
-  (when (pay state side :click 1 :credit (:cost card))
+  (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
     ((get-in game.cards/cards [(:title card) :effect]) state side nil)
     (move-card state side card :hand :discard)
     (system-msg state side (str "plays " (:title card) "."))))
