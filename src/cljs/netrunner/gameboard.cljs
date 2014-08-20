@@ -86,15 +86,14 @@
           size (count hand)]
       [:div.panel.blue-shade.hand {:class (when (> size 6) "squeeze")}
        (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
-       (map-indexed
-        (fn [i card]
-          (sab/html
-           [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
-            (if (= user (:user @app-state))
-              [:div {:on-click #(send-command "play" {:card @card})}
-               (om/build card-view card)]
-              [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
-        hand)]))))
+       (map-indexed (fn [i card]
+                      (sab/html
+                       [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
+                        (if (= user (:user @app-state))
+                          [:div {:on-click #(send-command "play" {:card @card})}
+                           (om/build card-view card)]
+                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
+                    hand)]))))
 
 (defmulti deck-view #(get-in % [:identity :side]))
 
@@ -135,15 +134,27 @@
 (defn rfg-view [{:keys [rfg] :as cursor}]
   (om/component
    (sab/html
-    (when (> (count (:rfg cursor)) 0)
-      [:div.panel.blue-shade.rfg
-       (om/build label rfg {:opts {:name "Removed"}})]))))
+    (let [size (count rfg)]
+      (when (> size 0)
+        [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
+         (om/build label rfg {:opts {:name "Removed"}})
+         (map-indexed (fn [i card]
+                        (sab/html
+                         [:div.card-wrapper {:style {:left (* (/ 100 (dec size)) i)}}
+                          [:div (om/build card-view card)]]))
+                      rfg)])))))
 
-(defn scored-view [{:keys [rfg] :as cursor}]
+(defn scored-view [{:keys [scored] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.scored
-     (om/build label rfg {:opts {:name "Scored"}})])))
+    (let [size (count scored)]
+      [:div.panel.blue-shade.scored {:class (when (> size 2) "squeeze")}
+       (om/build label scored {:opts {:name "Scored"}})
+       (map-indexed (fn [i card]
+                      (sab/html
+                       [:div.card-wrapper {:style {:left (* (/ 100 (dec size)) i)}}
+                        [:div (om/build card-view card)]]))
+                    scored)]))))
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
@@ -247,7 +258,7 @@
                 (om/build scored-view opponent)
                 (om/build rfg-view opponent)]
                [:div
-                (om/build rfg-view opponent)
+                (om/build rfg-view me)
                 (om/build scored-view me)
                 (om/build stats-view me)]]
 

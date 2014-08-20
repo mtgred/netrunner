@@ -34,6 +34,7 @@
                             :deck (drop 5 corp-deck)
                             :hand (take 5 corp-deck)
                             :discard []
+                            :scored []
                             :rfg []
                             :remote-servers []
                             :click 3
@@ -47,6 +48,7 @@
                               :deck (drop 5 runner-deck)
                               :hand (take 5 runner-deck)
                               :discard []
+                              :scored []
                               :rfg []
                               :rig {:programs [] :resources [] :hardware []}
                               :click 4
