@@ -61,9 +61,9 @@
                               :brain-damage 0
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
-      ((do! corp-init) state :corp nil))
+      ((:effect corp-init) state :corp nil))
     (when-let [runner-init (game.cards/cards (:title runner-identity))]
-      ((do! runner-init) state :runner nil))
+      ((:effect runner-init) state :runner nil))
     (swap! game-states assoc gameid state)))
 
 (def reset-value
@@ -125,7 +125,8 @@
     (if (= (:title card) "Levy AR Lab Access")
       (move state side card :hand :rfg)
       (move state side card :hand :discard))
-    ((get-in game.cards/cards [(:title card) :effect]) state side nil)
+    (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
+      (effect state side nil))
     (system-msg state side (str "plays " (:title card) "."))))
 
 (defn runner-install [state side card]
