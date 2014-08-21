@@ -23,7 +23,7 @@
    "Levy AR Lab Access" {:effect (effect (shuffle-into-deck :hand :discard) (draw 5))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
-   "Power Nap" {:effect (effect (gain (+ 2 (count (filter (fn [c] has? c :subtype "Double") heap)))))}
+   "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}
    "Quality Time" {:effect (effect (draw 5))}
    "Restructure" {:effect (effect (gain :credit 15))}
    "Sure Gamble" {:effect (effect (gain :credit 9))}
