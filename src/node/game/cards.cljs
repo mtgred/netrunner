@@ -1,6 +1,6 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect]])
-  (:require [game.core :refer [pay gain lose draw shuffle-into-deck] :as core]
+  (:require [game.core :refer [pay gain lose draw move shuffle-into-deck] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -20,7 +20,7 @@
    "GRNDL: Power Unleashed" {:effect (effect (gain :credit 5 :bad-publicity 1))}
    "Hedge Fund" {:effect (effect (gain :credit 9))}
    "Lawyer Up" {:effect (effect (draw 3) (lose :tag 2))}
-   "Levy AR Lab Access" {:effect (effect (shuffle-into-deck :hand :discard) (draw 5))}
+   "Levy AR Lab Access" {:effect (effect (move card :hand :rfg) (shuffle-into-deck :hand :discard) (draw 5))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}

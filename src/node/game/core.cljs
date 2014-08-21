@@ -36,7 +36,7 @@
                             :discard []
                             :scored []
                             :rfg []
-                            :remote-servers []
+                            :servers {:hq {} :rd{} :archive {} :remotes []}
                             :click 3
                             :credit 5
                             :bad-publicity 0
@@ -122,11 +122,9 @@
 
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
-    (if (= (:title card) "Levy AR Lab Access")
-      (move state side card :hand :rfg)
-      (move state side card :hand :discard))
     (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
-      (effect state side nil))
+      (effect state side card))
+    (move state side card :hand :discard)
     (system-msg state side (str "plays " (:title card) "."))))
 
 (defn runner-install [state side card]

@@ -1,7 +1,7 @@
 (ns game.macros)
 
 (defmacro effect [& expr]
-  `(fn ~['state 'side 'args]
+  `(fn ~['state 'side 'card]
      ~(let [actions (map #(concat [(first %) 'state 'side] (rest %)) expr)]
         `(let ~['grip '(get-in @state [:runner :hand])
                 'stack '(get-in @state [:runner :deck])
