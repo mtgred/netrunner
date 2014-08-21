@@ -1,6 +1,18 @@
+Play Android: Netrunner in the browser.
+
 ## Live server
 
 http://netrunner-manabase.rhcloud.com/
+
+
+## Development status
+
+The chat, deck builder, card browser and game lobby are operational. All the deck building rules are implemented the deck builder except for "The Professor" and "Custom Biotics".
+
+The implemention of the game rules is in progress. Some actions such as drawing, taking credit or playing card are implemented but a game can't be completely played yet.
+
+Card rules implementation status: https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx
+
 
 ## Dependencies
 
@@ -52,14 +64,5 @@ $ lein repl
 
 user> (brepl)
 << started Weasel server on ws://0.0.0.0:9001 >>
-Type `:cljs/quit` to stop the ClojureScript REPL
-```
-
-To launch a Clojurescript Node.js nREPL:
-
-```
-$ lein repl
-
-user> (node-repl)
 Type `:cljs/quit` to stop the ClojureScript REPL
 ```
