@@ -130,6 +130,8 @@
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
     (move state side card :hand [:rig (keyword (.toLowerCase (:type card)))])
+    (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
+      (effect state side card))
     (system-msg state side (str "installs " (:title card) "."))))
 
 (defmulti play #(get-in %3 [:card :type]))
