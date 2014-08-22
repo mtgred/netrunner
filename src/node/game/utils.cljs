@@ -12,3 +12,7 @@
 (defn has? [card property value]
   (when-let [p (property card)]
     (> (.indexOf p value) -1)))
+
+(defn zone [zone coll]
+  (let [dest (if (sequential? zone) zone [zone])]
+    (map #(assoc % :zone dest) coll)))

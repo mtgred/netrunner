@@ -18,8 +18,14 @@
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag."))})
    "play" core/play})
 
+(defn convert [args]
+  (let [params (js->clj args :keywordize-keys true)]
+    (if (get-in params [:args :card])
+      (update-in params [:args :card :zone] #(map (fn [k] (keyword k)) %))
+      params)))
+
 (defn exec [action args]
-  (let [params (js->clj args :keywordize-keys true)
+  (let [params (convert args)
         gameid (:gameid params)
         state (@game-states (:gameid params))]
     (case action

@@ -1,5 +1,5 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs]]))
+  (:require [game.utils :refer [remove-once has? merge-costs zone]]))
 
 (def game-states (atom {}))
 
@@ -9,6 +9,19 @@
       (not (doseq [c costs]
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
+
+(defn move [state side card to]
+  (when card
+    (let [dest (if (sequential? to) to [to])]
+      (swap! state update-in (cons side dest) #(conj % (assoc card :zone dest)))
+      (swap! state update-in (cons side (:zone card)) (fn [coll] (remove-once #(not= (:title %) (:title card)) coll))))))
+
+(defn draw
+  ([state side] (draw state side 1))
+  ([state side n]
+     (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
+       (swap! state update-in [side :hand] #(concat % drawn)))
+     (swap! state update-in [side :deck] (partial drop n))))
 
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
@@ -31,11 +44,12 @@
                      :log log
                      :corp {:user (:user corp)
                             :identity corp-identity
-                            :deck (drop 5 corp-deck)
-                            :hand (take 5 corp-deck)
+                            :deck (zone :deck (drop 5 corp-deck))
+                            :hand (zone :hand (take 5 corp-deck))
                             :discard []
                             :scored []
                             :rfg []
+                            :play-area []
                             :servers {:hq {} :rd{} :archive {} :remotes []}
                             :click 3
                             :credit 5
@@ -45,11 +59,12 @@
                             :keep false}
                      :runner {:user (:user runner)
                               :identity runner-identity
-                              :deck (drop 5 runner-deck)
-                              :hand (take 5 runner-deck)
+                              :deck (zone :deck (drop 5 runner-deck))
+                              :hand (zone :hand (take 5 runner-deck))
                               :discard []
                               :scored []
                               :rfg []
+                              :play-area []
                               :rig {:program [] :resource [] :hardware []}
                               :click 4
                               :credit 5
@@ -80,16 +95,9 @@
 
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
-        deck (shuffle (reduce concat (:deck player) (for [p args] (p player))))]
+        deck (shuffle (reduce concat (:deck player) (for [p args] (zone :deck (p player)))))]
     (swap! state assoc-in [side :deck] deck))
   (doseq [p args] (swap! state assoc-in [side p])))
-
-(defn draw
-  ([state side] (draw state side 1))
-  ([state side n]
-     (let [deck (get-in @state [side :deck])]
-       (swap! state update-in [side :hand] #(concat % (take n deck))))
-     (swap! state update-in [side :deck] (partial drop n))))
 
 (defn mulligan [state side args]
   (swap! state update-in [side] #(merge % (side reset-value)))
@@ -114,22 +122,17 @@
 
 (defn purge [state side])
 
-(defn move [state side card from to]
-  (let [f (if (sequential? from) from [from])
-        t (if (sequential? to) to [to])]
-    (swap! state update-in (cons side t) #(conj % card))
-    (swap! state update-in (cons side f) (fn [coll] (remove-once #(not= % card) coll)))))
-
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
+    (move state side card :play-area)
     (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
       (effect state side card))
-    (move state side card :hand :discard)
+    (move state side (first (get-in @state [side :play-area])) :discard)
     (system-msg state side (str "plays " (:title card) "."))))
 
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
-    (move state side card :hand [:rig (keyword (.toLowerCase (:type card)))])
+    (move state side card [:rig (keyword (.toLowerCase (:type card)))])
     (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
       (effect state side card))
     (system-msg state side (str "installs " (:title card) "."))))

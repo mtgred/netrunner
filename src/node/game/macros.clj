@@ -10,5 +10,6 @@
                 'rd '(get-in @state [:corp :deck])
                 'archive '(get-in @state [:corp :discard])
                 'rig '(get-in @state [:runner :rig])
-                'servers '(get-in @state [:corp :servers])]
+                'servers '(get-in @state [:corp :servers])
+                'play-area '(get-in @state [side :play-area])]
            ~@actions))))
