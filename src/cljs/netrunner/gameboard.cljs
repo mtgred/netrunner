@@ -241,11 +241,9 @@
                  [:div
                   [:h4 "Keep hand?"]
                   [:button {:on-click #(send-command "keep")} "Keep hand"]
-                  [:button {:on-click #(send-command "mulligan")} "Mulligan"]]
-                 (when-not (:keep opponent)
-                   [:h4 "Waiting for opponent's mulligan choice."]))
+                  [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
-               (when (and (:keep me) (:keep opponent))
+               (when (:keep me)
                  [:div
                   (when (= side :runner)
                     (cond-button "Remove Tag" "remove-tag"
