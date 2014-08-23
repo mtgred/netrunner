@@ -121,7 +121,7 @@
         xml (str
              "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
              id (:code identity) "\">" (:title identity) "</card></section>"
-             "<section name=\"R&amp;amp;D / Stack\">"
+             "<section name=\"R&amp;D / Stack\">"
              (apply str (for [c (:cards deck)]
                           (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
                                (get-in c [:card :title]) "</card>")))
