@@ -40,13 +40,20 @@
     (om/set-state! owner :deck-edit str)))
 
 (defn influence [deck]
-  (let [faction (get-in deck [:identity :faction])
-        cards (:cards deck)]
-    (reduce #(let [card (:card %2)]
-               (if (= (:faction card) faction)
-                 %1
-                 (+ %1 (* (:qty %2) (:factioncost card)))))
-            0 (:cards deck))))
+  (let [identity (:identity deck)
+        cards (:cards deck)
+        inf (reduce #(let [card (:card %2)]
+                       (if (= (:faction card) (:faction identity))
+                         %1
+                         (+ %1 (* (:qty %2) (:factioncost card)))))
+                    0 (:cards deck))]
+    (if (= (:title identity) "The Professor: Keeper of Knowledge")
+      (- inf (reduce #(+ %1 (get-in %2 [:card :factioncost])) 0
+                     (filter #(let [card (:card %)]
+                                (and (= (:type card) "Program")
+                                     (not= (:faction card) (:faction identity))))
+                             cards)))
+      inf)))
 
 (defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))

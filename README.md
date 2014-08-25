@@ -7,9 +7,7 @@ http://netrunner-manabase.rhcloud.com/
 
 ## Development status
 
-The chat, deck builder, card browser and game lobby are operational. All the deck building rules are implemented the deck builder except for "The Professor" and "Custom Biotics".
-
-The implemention of the game rules is in progress. Some actions such as drawing, taking credit or playing card are implemented but a game can't be completely played yet.
+The chat, deck builder, card browser and game lobby are operational. All the deck building rules are implemented in the deck builder. The implemention of the game rules is in progress. Some actions such as drawing, taking credit or playing card are implemented but a game can't be completely played yet.
 
 Card rules implementation status: https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx
 
