@@ -3,14 +3,55 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :refer [join]]
+            [clojure.string :refer [split split-lines join]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
-            [netrunner.ajax :refer [POST GET]]
-            [netrunner.deck :refer [parse-deck]]))
+            [netrunner.ajax :refer [POST GET]]))
 
 (def select-channel (chan))
+
+(defn identical-cards? [cards]
+  (let [name (:title (first cards))]
+    (every? #(= (:title %) name) cards)))
+
+(defn found? [query cards]
+  (some #(if (= (.toLowerCase (:title %)) query) %) cards))
+
+(defn match [query cards]
+  (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
+
+(defn lookup [side query]
+  (let [q (.toLowerCase query)
+        cards (filter #(= (:side %) side) (:cards @app-state))]
+    (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
+      card
+      (loop [i 2 matches cards]
+        (let [subquery (subs q 0 i)]
+         (cond (zero? (count matches)) query
+               (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+               (found? subquery matches) (found? subquery matches)
+               (<= i (count query)) (recur (inc i) (match subquery matches))
+               :else query))))))
+
+(defn parse-line [side line]
+  (let [tokens (split line " ")
+        qty (js/parseInt (first tokens))
+        cardname (join " " (rest tokens))]
+    (when-not (js/isNaN qty)
+      {:qty (min qty 3) :card (lookup side cardname)})))
+
+(defn parse-deck [side deck]
+  (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
+
+(defn allowed? [card {:keys [side faction title] :as deck}]
+  (and (not= (:type card) "Identity")
+       (= (:side card) side)
+       (or (not= (:type card) "Agenda")
+           (= (:faction card) "Neutral")
+           (= (:faction card) faction))
+       (or (not= title "Custom Biotics: Engineered for Success")
+           (not= (:faction card) "Jinteki"))))
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
@@ -62,9 +103,17 @@
   (let [size (max (card-count (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
     (+ 2 (* 2 (quot size 5)))))
 
-(defn agenda-points [cards]
+(defn agenda-points [{:keys [cards]}]
   (reduce #(if-let [point (get-in %2 [:card :agendapoints])]
              (+ (* point (:qty %2)) %1) %1) 0 cards))
+
+(defn valid? [{:keys [identity cards] :as deck}]
+  (and (>= (card-count cards) (:minimumdecksize identity))
+       (<= (influence deck) (:influencelimit identity))
+       (every? #(allowed? (:card %) identity) cards)
+       (or (= (:side identity) "Runner")
+           (let [min (min-agenda-points deck)]
+             (<= min (agenda-points deck) (inc min))))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -96,15 +145,11 @@
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
 
-(defn match [{:keys [side faction]} query]
+(defn match [identity query]
   (if (empty? query)
     []
-    (let [cards (filter #(and (= (:side %) side)
-                              (not (#{"Special" "Alternates"} (:setname %)))
-                              (not= (:type %) "Identity")
-                              (or (not= (:type %) "Agenda")
-                                  (= (:faction %) "Neutral")
-                                  (= (:faction %) faction)))
+    (let [cards (filter #(and (allowed? % identity)
+                              (not (#{"Special" "Alternates"} (:setname %))))
                         (:cards @app-state))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
@@ -242,6 +287,8 @@
                 [:div.deckline {:class (when (= (:deck state) deck) "active")
                                 :on-click #(put! select-channel deck)}
                  [:img {:src (image-url (:identity deck))}]
+                 (when-not (valid? deck)
+                   [:div.float-right.invalid "Invalid deck"])
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
                  [:p (get-in deck [:identity :title])]]))]]
@@ -275,7 +322,7 @@
                     "/" (:influencelimit identity)])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
-                         points (agenda-points cards)]
+                         points (agenda-points deck)]
                      [:div "Agenda points: " points
                       (when (< points min-point)
                         [:span.invalid "(minimum " min-point ")"])
@@ -298,7 +345,8 @@
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)]
                            [:span
-                            [:span.fake-link name (om/build card-view card)]
+                            [:span {:class (if (allowed? card identity) "fake-link" "invalid")}
+                             name (om/build card-view card)]
                             (when-not (or (= (:faction card) (:faction identity))
                                           (zero? (:factioncost card)))
                               (let [influence (* (:factioncost card) (:qty line))]
