@@ -136,8 +136,8 @@ app.configure ->
   app.use express.session(store: new MongoStore(url: mongoUrl), secret: config.salt)
   app.use passport.initialize()
   app.use passport.session()
-  app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources'})
-  app.use express.static(__dirname + '/resources')
+  app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
+  app.use express.static(__dirname + '/resources/public')
   app.use app.router
 
 # Auth

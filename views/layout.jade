@@ -38,8 +38,8 @@ html
 
     if env === 'dev'
       script(src='/lib/react/react.js')
-      script(src="cljs/goog/base.js", type="text/javascript")
-      script(src="cljs/app.js", type="text/javascript")
+      script(src="/cljs/goog/base.js", type="text/javascript")
+      script(src="/cljs/app.js", type="text/javascript")
       script(type="text/javascript").
         goog.require("netrunner.main");
         goog.require("netrunner.ajax");
@@ -50,7 +50,8 @@ html
         goog.require("netrunner.cardbrowser");
         goog.require("netrunner.deckbuilder");
         goog.require("netrunner.about");
-        goog.require("utils.brepl");
+        goog.require("dev.brepl");
+        goog.require("dev.figwheel");
     else
       script(src='/lib/react/react.min.js')
       script(src="js/app.js", type="text/javascript")

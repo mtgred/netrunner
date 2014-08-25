@@ -7,7 +7,7 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url] :as cb]))
 
-(def game-state (atom {}))
+(defonce game-state (atom {}))
 
 (defn init-game [game side]
   (swap! game-state merge game)

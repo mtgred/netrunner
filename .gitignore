@@ -13,10 +13,10 @@ pom.xml
 .repl
 .nrepl-port
 
-/resources/js/
-/resources/cljs/
-/resources/lib/
-/resources/css/netrunner.css
+/resources/public/js/
+/resources/public/cljs/
+/resources/public/lib/
+/resources/public/css/
 /data/*.json
 /data/cards
 game.js
