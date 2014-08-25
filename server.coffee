@@ -131,7 +131,8 @@ app.configure ->
   app.use express.favicon()
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()
-  app.use express.bodyParser()
+  app.use express.urlencoded()
+  app.use express.json()
   app.use express.session(store: new MongoStore(url: mongoUrl), secret: config.salt)
   app.use passport.initialize()
   app.use passport.session()

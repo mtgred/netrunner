@@ -1,4 +1,4 @@
-{:dev {:dependencies [[weasel "0.2.0"]
+{:dev {:dependencies [[weasel "0.4.0-SNAPSHOT"]
                       [com.cemerick/piggieback "0.1.3"]
                       [org.bodil/cljs-noderepl "0.1.11"]]
 
