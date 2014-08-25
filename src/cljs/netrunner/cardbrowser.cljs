@@ -123,6 +123,11 @@
     (when (> (.scrollTop $cardlist) (- height 600))
       (om/update-state! owner :page inc))))
 
+(defn handle-search [e owner]
+  (doseq [filter [:set-filter :type-filter :sort-filter :faction-filter]]
+    (om/set-state! owner filter "All"))
+  (om/set-state! owner :search-query (.. e -target -value)))
+
 (defn card-browser [cursor owner]
   (reify
     om/IInitState
@@ -154,7 +159,7 @@
             (when-not (empty? query)
               [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
                                      :on-click #(om/set-state! owner :search-query "")}])
-            [:input.search {:on-change #(om/set-state! owner :search-query (.. % -target -value))
+            [:input.search {:on-change #(handle-search % owner)
                             :type "text" :placeholder "Search cards" :value query}]])
 
          [:div
@@ -164,7 +169,7 @@
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (for [filter [["Set" :set-filter (map :name (:sets cursor))]
+         (for [filter [["Set" :set-filter (map :name (sort-by :available (:sets cursor)))]
                        ["Side" :side-filter ["Corp" "Runner"]]
                        ["Faction" :faction-filter (factions (:side-filter state))]
                        ["Type" :type-filter (types (:side-filter state))]]]
