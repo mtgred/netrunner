@@ -5,7 +5,7 @@
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.cardbrowser :refer [image-url] :as cb]))
+            [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]))
 
 (defonce game-state (atom {}))
 
@@ -74,10 +74,10 @@
     (render-state [this state]
       (sab/html
        [:div.log
-        [:div.panel.blue-shade {:ref "msg-list"}
+        [:div.messages.panel.blue-shade {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
-             [:div.system (:text msg)]
+             [:div.system {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text msg))}}]
              [:div.message
               (om/build avatar (:user msg) {:opts {:size 38}})
               [:div.content

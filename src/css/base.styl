@@ -193,7 +193,8 @@ button.small
   border-left: 4px solid transparent
 
 .system
-  margin-bottom: 5px
+  margin-bottom: 10px
+  line-height: 16px
 
 // Dropdown
 
@@ -1043,7 +1044,6 @@ nav ul
       width: 220px
       height: 307px
       margin-top: 5px
-      margin-right: 5px
       position: relative
       transition(all 0.2s ease-in-out)
 
@@ -1053,8 +1053,7 @@ nav ul
         transition(all 0.2s ease-in-out)
 
     .log
-      overflow: auto
-      -webkit-overflow-scrolling: touch
+      width: 220px
       flex(1)
       display-flex()
       flex-direction(column)
@@ -1067,8 +1066,10 @@ nav ul
        padding: 5px 8px
        margin-left: 0
 
-      > div
+      .messages
         flex(1)
+        overflow: auto
+        -webkit-overflow-scrolling: touch
 
       > form
         margin: 0 5px 5px 0

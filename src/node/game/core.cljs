@@ -42,7 +42,7 @@
         corp-identity (get-in corp [:deck :identity])
         runner-identity (get-in runner [:deck :identity])
         state (atom {:gameid gameid
-                     :log log
+                     :log []
                      :corp {:user (:user corp)
                             :identity corp-identity
                             :deck (zone :deck (drop 5 corp-deck))
