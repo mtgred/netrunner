@@ -121,8 +121,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "do"
-        state = gameEngine.main.exec("do", msg)
-        lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+        try
+          state = gameEngine.main.exec("do", msg)
+          lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+        catch err
+          console.log(err)
 
 # Express config
 app.configure ->
