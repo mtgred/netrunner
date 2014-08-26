@@ -42,6 +42,15 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn playable? [{:keys [title side zone cost]}]
+  (let [my-side (:side @game-state)
+        me (my-side @game-state)]
+   (and (= (keyword (.toLowerCase side)) my-side)
+        (or (and (= zone ["hand"])
+             (>= (:credit me) cost)
+             (> (:click me) 0))
+        (= (first zone) #{"servers" "rig"})))))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -90,7 +99,7 @@
                       (sab/html
                        [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
                         (if (= user (:user @app-state))
-                          [:div.playable {:on-click #(send-command "play" {:card @card})}
+                          [:div {:class (if (playable? card) "playable" "")}
                            (om/build card-view card)]
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
                     hand)]))))
