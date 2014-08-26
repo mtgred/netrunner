@@ -33,7 +33,7 @@
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}
    "Professional Contacts" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
-                                         :msg "gain 1 [credit] and draw 1 card."}]}
+                                         :msg "gain 1 [credit] and draw 1 card"}]}
    "Quality Time" {:effect (effect (draw 5))}
    "Restructure" {:effect (effect (gain :credit 15))}
    "Sure Gamble" {:effect (effect (gain :credit 9))}

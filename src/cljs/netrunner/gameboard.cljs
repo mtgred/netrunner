@@ -42,8 +42,11 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn select-server [])
+
 (defn play [{:keys [type] :as card}]
   (if (#{"Agenda" "Asset" "Upgrade" "ICE"} type)
+    (select-server)
     (send-command "play" {:card card})))
 
 (defn handle-card-click [{:keys [type zone] :as card}]
@@ -54,11 +57,11 @@
 (defn playable? [{:keys [title side zone cost]}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
-   (and (= (keyword (.toLowerCase side)) my-side)
-        (or (and (= zone ["hand"])
-             (>= (:credit me) cost)
-             (> (:click me) 0))
-        (= (first zone) #{"servers" "rig"})))))
+    (and (= (keyword (.toLowerCase side)) my-side)
+         (or (and (= zone ["hand"])
+                  (>= (:credit me) cost)
+                  (> (:click me) 0))
+             (#{"rig" "servers"} (first zone))))))
 
 (defn log-pane [messages owner]
   (reify
@@ -107,10 +110,10 @@
        (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
        (map-indexed (fn [i card]
                       (sab/html
-                       [:div.card-wrapper {:style {:left (* (/ 320 (dec size)) i)}}
+                       [:div.card-wrapper {:class (if (playable? card) "playable" "")
+                                           :style {:left (* (/ 320 (dec size)) i)}}
                         (if (= user (:user @app-state))
-                          [:div {:class (if (playable? card) "playable" "")}
-                           (om/build card-view card)]
+                          (om/build card-view card)
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
                     hand)]))))
 
@@ -215,10 +218,11 @@
 (defmethod board-view "Runner" [{:keys [rig]}]
   (om/component
    (sab/html
-    [:div
-     [:div (om/build-all card-view (:program rig))]
-     [:div (om/build-all card-view (:resource rig))]
-     [:div (om/build-all card-view (:hardware rig))]])))
+    [:div.runner-board
+     (for [zone [:program :resource :hardware]]
+       [:div (for [c (zone rig)]
+               [:div.card-wrapper {:class (when (playable? c) "playable")}
+                (om/build card-view c)])])])))
 
 (defn zones [cursor]
   (om/component
@@ -247,9 +251,9 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
-             opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
-         (when (> gameid 0)
+       (when (> gameid 0)
+         (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
+               opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
            [:div.gameboard
             [:div.mainpane
              (om/build zones opponent)
