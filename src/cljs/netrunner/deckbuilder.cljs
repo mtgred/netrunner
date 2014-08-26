@@ -18,7 +18,7 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
-(defn match [query cards]
+(defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
 
 (defn lookup [side query]
@@ -31,7 +31,7 @@
          (cond (zero? (count matches)) query
                (or (= (count matches) 1) (identical-cards? matches)) (first matches)
                (found? subquery matches) (found? subquery matches)
-               (<= i (count query)) (recur (inc i) (match subquery matches))
+               (<= i (count query)) (recur (inc i) (search subquery matches))
                :else query))))))
 
 (defn parse-line [side line]
@@ -154,7 +154,7 @@
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
 (defn handle-edit [owner]
-  (let [text (-> owner (om/get-node "deck-edit") .-value)]
+  (let [text (.-value (om/get-node owner "deck-edit"))]
     (om/set-state! owner :deck-edit text)
     (om/set-state! owner [:deck :cards] (parse-deck (om/get-state owner [:deck :identity :side]) text))))
 
