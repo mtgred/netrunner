@@ -136,7 +136,10 @@ app.configure ->
   app.use express.cookieParser()
   app.use express.urlencoded()
   app.use express.json()
-  app.use express.session(store: new MongoStore(url: mongoUrl), secret: config.salt)
+  app.use express.session
+    store: new MongoStore(url: mongoUrl)
+    secret: config.salt
+    cookie: { maxAge: 2592000000 } # 30 days
   app.use passport.initialize()
   app.use passport.session()
   app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
