@@ -122,6 +122,11 @@
 
 (defn purge [state side])
 
+(defn play-ability [state side {:keys [card ability]}]
+  (let [ab (get-in game.cards/cards [(:title card) :abilities ability])]
+    ((do! ab) state side nil)
+    (system-msg state side (str "uses " (:title card) " to " (:msg ab) "."))))
+
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
     (move state side card :play-area)

@@ -42,6 +42,15 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn play [{:keys [type] :as card}]
+  (if (#{"Agenda" "Asset" "Upgrade" "ICE"} type)
+    (send-command "play" {:card card})))
+
+(defn handle-card-click [{:keys [type zone] :as card}]
+  (if (= zone ["hand"])
+    (play card)
+    (send-command "ability" {:card card :ability 0})))
+
 (defn playable? [{:keys [title side zone cost]}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
@@ -78,7 +87,8 @@
   (om/component
    (sab/html
     [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
-                           :on-mouse-leave #(put! zoom-channel false)}
+                           :on-mouse-leave #(put! zoom-channel false)
+                           :on-click #(handle-card-click @cursor)}
      [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
 
 (defn label [cursor owner opts]

@@ -29,8 +29,11 @@
    "Lawyer Up" {:effect (effect (draw 3) (lose :tag 2))}
    "Levy AR Lab Access" {:effect (effect (shuffle-into-deck :hand :discard) (draw 5) (move (first play-area) :rfg))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
+   "Magnum Opus" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [credit]"}]}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}
+   "Professional Contacts" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
+                                         :msg "gain 1 [credit] and draw 1 card."}]}
    "Quality Time" {:effect (effect (draw 5))}
    "Restructure" {:effect (effect (gain :credit 15))}
    "Sure Gamble" {:effect (effect (gain :credit 9))}
