@@ -26,14 +26,15 @@
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
     (if cost
-     (when (apply pay (concat [state side] cost))
-       (effect state side args))
+     (if (apply pay (concat [state side] cost))
+       (effect state side args)
+       false)
      (effect state side args))))
 
 (defn create-deck [deck]
   (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck))))
 
-(defn init-game [{:keys [players gameid log] :as game}]
+(defn init-game [{:keys [players gameid] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
@@ -124,8 +125,8 @@
 
 (defn play-ability [state side {:keys [card ability]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])]
-    ((do! ab) state side nil)
-    (system-msg state side (str "uses " (:title card) " to " (:msg ab) "."))))
+    (when ((do! ab) state side nil)
+      (system-msg state side (str "uses " (:title card) " to " (:msg ab) ".")))))
 
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
