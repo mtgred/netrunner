@@ -168,7 +168,7 @@
    (sab/html
     (let [size (count scored)]
       [:div.panel.blue-shade.scored {:class (when (> size 2) "squeeze")}
-       (om/build label scored {:opts {:name "Scored"}})
+       (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
                       (sab/html
                        [:div.card-wrapper {:style {:left (* (/ 100 (dec size)) i)}}
@@ -259,7 +259,7 @@
                (if-not (:keep me)
                  [:div
                   [:h4 "Keep hand?"]
-                  [:button {:on-click #(send-command "keep")} "Keep hand"]
+                  [:button {:on-click #(send-command "keep")} "Keep"]
                   [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
                (when (:keep me)
