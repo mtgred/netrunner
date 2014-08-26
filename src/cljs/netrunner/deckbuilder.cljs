@@ -44,7 +44,7 @@
 (defn parse-deck [side deck]
   (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
 
-(defn allowed? [card {:keys [side faction title] :as deck}]
+(defn allowed? [card {:keys [side faction title] :as identity}]
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
@@ -110,7 +110,8 @@
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (:minimumdecksize identity))
        (<= (influence deck) (:influencelimit identity))
-       (every? #(allowed? (:card %) identity) cards)
+       (every? #(and (allowed? (:card %) identity)
+                     (<= (:qty %) (or (get-in % [:card :limit]) 3))) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
