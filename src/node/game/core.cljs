@@ -39,8 +39,8 @@
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
         runner-deck (create-deck (:deck runner))
-        corp-identity (get-in corp [:deck :identity])
-        runner-identity (get-in runner [:deck :identity])
+        corp-identity (or (get-in corp [:deck :identity]) {:side "Runner"})
+        runner-identity (or (get-in runner [:deck :identity]) {:side "Corp"})
         state (atom {:gameid gameid
                      :log []
                      :corp {:user (:user corp)
