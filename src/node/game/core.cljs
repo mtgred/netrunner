@@ -24,19 +24,19 @@
      (swap! state update-in [side :deck] (partial drop n))))
 
 (defn flatline [state]
-  (prn "flatline"))
+  (system-msg state :runner "is flatlined"))
 
 (defn damage [state side type n]
   (let [hand (get-in @state [:runner :hand])]
-    (if (< (count hand) n)
-      (flatline state)
-      (do (when (= type :brain)
-            (swap! state update-in [:runner :brain-damage] inc)
-            (swap! state update-in [:runner :max-hand-size] dec))
-          (let [shuffled-hand (shuffle hand)
-                discarded (zone :discard (take n shuffled-hand))]
-            (swap! state update-in [:runner :discard] #(concat % discarded))
-            (swap! state assoc-in [:runner :hand] (drop n shuffled-hand)))))))
+    (when (< (count hand) n)
+      (flatline state))
+    (do (when (= type :brain)
+          (swap! state update-in [:runner :brain-damage] inc)
+          (swap! state update-in [:runner :max-hand-size] dec))
+        (let [shuffled-hand (shuffle hand)
+              discarded (zone :discard (take n shuffled-hand))]
+          (swap! state update-in [:runner :discard] #(concat % discarded))
+          (swap! state assoc-in [:runner :hand] (drop n shuffled-hand))))))
 
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
@@ -145,11 +145,11 @@
 
 (defn play-instant [state side card]
   (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
+    (system-msg state side (str "plays " (:title card) "."))
     (move state side card :play-area)
     (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
       (effect state side card))
-    (move state side (first (get-in @state [side :play-area])) :discard)
-    (system-msg state side (str "plays " (:title card) "."))))
+    (move state side (first (get-in @state [side :play-area])) :discard)))
 
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
