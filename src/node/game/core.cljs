@@ -23,6 +23,21 @@
        (swap! state update-in [side :hand] #(concat % drawn)))
      (swap! state update-in [side :deck] (partial drop n))))
 
+(defn flatline [state]
+  (prn "flatline"))
+
+(defn damage [state side type n]
+  (let [hand (get-in @state [:runner :hand])]
+    (if (< (count hand) n)
+      (flatline state)
+      (do (when (= type :brain)
+            (swap! state update-in [:runner :brain-damage] inc)
+            (swap! state update-in [:runner :max-hand-size] dec))
+          (let [shuffled-hand (shuffle hand)
+                discarded (zone :discard (take n shuffled-hand))]
+            (swap! state update-in [:runner :discard] #(concat % discarded))
+            (swap! state assoc-in [:runner :hand] (drop n shuffled-hand)))))))
+
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
     (if cost

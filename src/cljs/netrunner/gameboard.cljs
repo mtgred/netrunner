@@ -185,7 +185,11 @@
    (sab/html
     [:div.panel.blue-shade {}
      [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-     [:div (str click " Click" (if (> click 1) "s" ""))]
+     [:div
+      (str click " Click" (if (> click 1) "s" ""))
+      [:span.float-right
+       [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)}) :type "button"} "+"]
+       [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)}) :type "button"} "-"]]]
      [:div (str credit " Credit" (if (> credit 1) "s" ""))]
      [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
      [:div (str link " Link" (if (> link 1) "s" ""))]

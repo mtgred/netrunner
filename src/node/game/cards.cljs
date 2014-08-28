@@ -1,6 +1,6 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect]])
-  (:require [game.core :refer [pay gain lose draw move shuffle-into-deck] :as core]
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -31,6 +31,7 @@
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "Magnum Opus" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
+   "Neural EMP" {:effect (effect (damage :net 1))}
    "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}
    "Professional Contacts" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                                          :msg "gain 1 [Credits] and draw 1 card"}]}
