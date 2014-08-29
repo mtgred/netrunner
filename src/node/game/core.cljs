@@ -135,7 +135,9 @@
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
-    (swap! state update-in [side (first r)] #(max (- % (last r)) 0))))
+    (if (= (last r) :all)
+      (swap! state assoc-in [side (first r)] 0)
+      (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
 
 (defn purge [state side])
 
