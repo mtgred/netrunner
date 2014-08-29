@@ -3,9 +3,9 @@
 
 (def game-states (atom {}))
 
-(defn say [state side args]
-  (let [user (or (:user args) (get-in @state [side :user]))]
-    (swap! state update-in [:log] #(conj % {:user user :text (:text args)}))))
+(defn say [state side {:keys [user text]}]
+  (let [author (or user (get-in @state [side :user]))]
+    (swap! state update-in [:log] #(conj % {:user author :text text}))))
 
 (defn system-msg [state side text]
   (let [username (get-in @state [side :user :username])]
@@ -62,8 +62,8 @@
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
         runner-deck (create-deck (:deck runner))
-        corp-identity (or (get-in corp [:deck :identity]) {:side "Runner"})
-        runner-identity (or (get-in runner [:deck :identity]) {:side "Corp"})
+        corp-identity (or (get-in corp [:deck :identity]) {:side "Corp"})
+        runner-identity (or (get-in runner [:deck :identity]) {:side "Runner"})
         state (atom {:gameid gameid
                      :log []
                      :corp {:user (:user corp)
@@ -123,7 +123,7 @@
   (when-let [init-fn (get-in game.cards/cards [(get-in @state [side :identity :title])])]
     ((do! init-fn) state side nil))
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side  "takes a mulligan."))
+  (system-msg state side "takes a mulligan."))
 
 (defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
