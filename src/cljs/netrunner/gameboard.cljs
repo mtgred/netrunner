@@ -178,39 +178,40 @@
                         [:div (om/build card-view card)]]))
                     scored)]))))
 
+(defn controls [key]
+  (sab/html
+   [:div.controls
+    [:button.small {:on-click #(send-command "change" {:key key :delta 1}) :type "button"} "+"]
+    [:button.small {:on-click #(send-command "change" {:key key :delta -1}) :type "button"} "-"]]))
+
 (defmulti stats-view #(get-in % [:identity :side]))
 
 (defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade {}
-     [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-     [:div
-      (str click " Click" (if (> click 1) "s" ""))
-      [:span.float-right
-       [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)}) :type "button"} "+"]
-       [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)}) :type "button"} "-"]]]
-     [:div (str credit " Credit" (if (> credit 1) "s" ""))]
-     [:div (str memory " Memory Unit" (if (> memory 1) "s" ""))]
-     [:div (str link " Link" (if (> link 1) "s" ""))]
-     (when (> tag 0)
-       [:div (str tag " Tag" (if (> tag 1) "s" ""))])
-     (when (> brain-damage 0)
-       [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))])
-     (when-not (= max-hand-size 5)
-       [:div (str max-hand-size " Max hand size")])])))
+    (let [me? (= (:side @game-state) :runner)]
+      [:div.stats.panel.blue-shade {}
+       [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
+       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
+       [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
+       [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
+       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when me? (controls :tag))]
+       [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
+        (when me? (controls :brain-damage))]
+       [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
 (defmethod stats-view "Corp" [{:keys [user click credit bad-publicity max-hand-size]} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade {}
-     [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-     [:div (str click " Click" (if (> click 1) "s" ""))]
-     [:div (str credit " Credit" (if (> credit 1) "s" ""))]
-     (when (> bad-publicity 0)
-       [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))])
-     (when-not (= max-hand-size 5)
-       [:div (str max-hand-size " Max hand size")])])))
+    (let [me? (= (:side @game-state) :corp)]
+      [:div.stats.panel.blue-shade {}
+       [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
+       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
+       [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))
+        (when me? (controls :bad-publicity))]
+       [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
 (defmulti board-view #(get-in % [:identity :side]))
 

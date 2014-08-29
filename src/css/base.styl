@@ -145,7 +145,7 @@ button.small
 .italic
   font-style: italic
 
-.small
+span.small
   font-size: 12px
   font-weight: normal
   margin-left: 10px
@@ -977,8 +977,17 @@ nav ul
     position: absolute
 
   .stats
-    height: 150px
-    flex-shrink: 0
+    > div
+      height: 22px
+      font-size: 13px
+
+      .controls
+        float: right
+        display: none
+        margin-top: -1px
+
+      &:hover .controls
+        display: block
 
   .centralpane
     display-flex()
@@ -1004,7 +1013,7 @@ nav ul
         margin-bottom: 0
 
   .leftpane
-    width: 160px
+    width: 200px
     margin-top: -5px
     margin-bottom: -5px
     display-flex()

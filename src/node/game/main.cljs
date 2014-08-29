@@ -10,6 +10,7 @@
 
 (def commands
   {"say" core/say
+   "change" core/change
    "mulligan" core/mulligan
    "keep" core/keep-hand
    "draw" (do! {:cost [:click 1] :effect (effect (draw) (system-msg "draw 1 card."))})
