@@ -13,5 +13,6 @@
 (defmacro req [& expr]
   `(fn ~['state]
      (let ~['runner '(:runner @state)
-            'corp '(:corp @state)]
+            'corp '(:corp @state)
+            'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
