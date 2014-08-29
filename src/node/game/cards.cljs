@@ -10,6 +10,7 @@
    "Anonymous Tip" {:effect (effect (draw 3))}
    "Beanstalk Royalties" {:effect (effect (gain :credit 3))}
    "Blue Level Clearance" {:effect (effect (gain :credit 5) (draw 2))}
+   "Big Brother" {:req (req (> (:tag runner) 0)) :effect (effect (gain :runner :tag 2))}
    "Biotic Labor" {:effect (effect (gain :click 2))}
    "Borrowed Satellite" {:effect (effect (gain :link 1 :max-hand-size 1))
                          :leave-play (effect (lose :link 1 :max-hand-size 1))}
@@ -32,6 +33,7 @@
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5) (move (first (:play-area runner)) :rfg))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "Magnum Opus" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+   "Medical Research Fundraiser" {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Neural EMP" {:effect (effect (damage :net 1))}
    "Power Nap"
@@ -44,6 +46,7 @@
    "Scorched Earth" {:req (req (> (:tag runner) 0)) :effect (effect (damage :meat 4))}
    "Successful Demonstration" {:prereq [()]}
    "Sweeps Week" {:effect (effect (gain :credit (count (:hand runner))))}
+   "Witness Tampering" {:effect (effect (lose :bad-publicity 2))}
 
    ;; partial implementation
    "Astrolabe" {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
