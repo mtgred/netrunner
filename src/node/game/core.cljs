@@ -3,6 +3,14 @@
 
 (def game-states (atom {}))
 
+(defn say [state side args]
+  (let [user (or (:user args) (get-in @state [side :user]))]
+    (swap! state update-in [:log] #(conj % {:user user :text (:text args)}))))
+
+(defn system-msg [state side text]
+  (let [username (get-in @state [side :user :username])]
+    (say state side {:user "__system__" :text (str username " " text)})))
+
 (defn pay [state side & args]
   (let [costs (merge-costs args)]
     (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
@@ -66,7 +74,7 @@
                             :scored []
                             :rfg []
                             :play-area []
-                            :servers {:hq {} :rd{} :archive {} :remotes []}
+                            :servers {:hq {} :rd{} :archive {} :remote []}
                             :click 3
                             :credit 5
                             :bad-publicity 0
@@ -90,6 +98,7 @@
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
+                              :flags {}
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((:effect corp-init) state :corp nil))
@@ -100,14 +109,6 @@
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
    :runner {:credit 5 :link 0 :memory 4 :max-hand-size 5}})
-
-(defn say [state side args]
-  (let [user (or (:user args) (get-in @state [side :user]))]
-    (swap! state update-in [:log] #(conj % {:user user :text (:text args)}))))
-
-(defn system-msg [state side text]
-  (let [username (get-in @state [side :user :username])]
-    (say state side {:user "__system__" :text (str username " " text)})))
 
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
@@ -143,13 +144,15 @@
     (when ((do! ab) state side nil)
       (system-msg state side (str "uses " (:title card) " to " (:msg ab) ".")))))
 
-(defn play-instant [state side card]
-  (when (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1]))
-    (system-msg state side (str "plays " (:title card) "."))
-    (move state side card :play-area)
-    (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
-      (effect state side card))
-    (move state side (first (get-in @state [side :play-area])) :discard)))
+(defn play-instant [state side {:keys [title] :as card}]
+  (let [card-def (game.cards/cards title)]
+    (when (and (if-let [req (:req card-def)] (req state) true)
+               (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
+     (system-msg state side (str "plays " (:title card) "."))
+     (move state side card :play-area)
+     (when-let [effect (:effect card-def)]
+       (effect state side card))
+     (move state side (first (get-in @state [side :play-area])) :discard))))
 
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))

@@ -1,5 +1,5 @@
 (ns game.cards
-  (:require-macros [game.macros :refer [effect]])
+  (:require-macros [game.macros :refer [effect req]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck] :as core]
             [game.utils :refer [has?]]))
 
@@ -14,11 +14,12 @@
    "Borrowed Satellite" {:effect (effect (gain :link 1 :max-hand-size 1))
                          :leave-play (effect (lose :link 1 :max-hand-size 1))}
    "Calling in Favors"
-   {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection")) (:resource rig)))))}
+   {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
+                                                 (get-in runner [:rig :resource])))))}
    "Chaos Theory: Wünderkind" {:effect (effect (gain :memory 1))}
    "Corporate Shuffle" {:effect (effect (shuffle-into-deck :hand) (draw 5))}
    "CyberSolutions Mem Chip" {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
-   "Diversified Portfolio" {:effect (effect (gain :credit (count (:remote servers))))}
+   "Diversified Portfolio" {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
    "Diesel" {:effect (effect (draw 3))}
    "Dyson Mem Chip" {:effect (effect (gain :link 1 :memory 1))
                      :leave-play (effect (lose :link 1 :memory 1))}
@@ -27,18 +28,22 @@
    "GRNDL: Power Unleashed" {:effect (effect (gain :credit 5 :bad-publicity 1))}
    "Hedge Fund" {:effect (effect (gain :credit 9))}
    "Lawyer Up" {:effect (effect (draw 3) (lose :tag 2))}
-   "Levy AR Lab Access" {:effect (effect (shuffle-into-deck :hand :discard) (draw 5) (move (first play-area) :rfg))}
+   "Levy AR Lab Access"
+   {:effect (effect (shuffle-into-deck :hand :discard) (draw 5) (move (first (:play-area runner)) :rfg))}
    "Lucky Find" {:effect (effect (gain :credit 9))}
    "Magnum Opus" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
    "Neural EMP" {:effect (effect (damage :net 1))}
-   "Power Nap" {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) heap)))))}
+   "Power Nap"
+   {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) (:discard runner))))))}
    "Professional Contacts" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                                          :msg "gain 1 [Credits] and draw 1 card"}]}
    "Quality Time" {:effect (effect (draw 5))}
    "Restructure" {:effect (effect (gain :credit 15))}
    "Sure Gamble" {:effect (effect (gain :credit 9))}
-   "Sweeps Week" {:effect (effect (gain :credit (count grip)))}
+   "Scorched Earth" {:req (req (> (:tag runner) 0)) :effect (effect (damage :meat 4))}
+   "Successful Demonstration" {:prereq [()]}
+   "Sweeps Week" {:effect (effect (gain :credit (count (:hand runner))))}
 
    ;; partial implementation
    "Astrolabe" {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
