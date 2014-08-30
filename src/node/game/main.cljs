@@ -1,7 +1,7 @@
 (ns game.main
   (:require-macros [game.macros :refer [effect]])
   (:require [cljs.nodejs :as node]
-            [game.core :refer [game-states do! system-msg pay gain draw] :as core]))
+            [game.core :refer [game-states do! system-msg pay gain draw run] :as core]))
 
 (aset js/exports "main" game.main)
 (enable-console-print!)
@@ -18,6 +18,7 @@
    "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses."))})
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag."))})
    "play" core/play
+   "run" core/run
    "ability" core/play-ability})
 
 (defn convert [args]

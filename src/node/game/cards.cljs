@@ -18,7 +18,7 @@
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
                                                  (get-in runner [:rig :resource])))))}
    "Chaos Theory: Wünderkind" {:effect (effect (gain :memory 1))}
-   "Closed Accounts" {:req (req tagged) :effect (lose :runner :credit :all)}
+   "Closed Accounts" {:req (req tagged) :effect (effect (lose :runner :credit :all))}
    "Corporate Shuffle" {:effect (effect (shuffle-into-deck :hand) (draw 5))}
    "CyberSolutions Mem Chip" {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
    "Diversified Portfolio" {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
@@ -36,8 +36,8 @@
    "Magnum Opus" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
    "Medical Research Fundraiser" {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
    "NBN: The World is Yours*" {:effect (effect (gain :max-hand-size 1))}
-   "Neural EMP" {:effect (effect (damage :net 1))}
-   "Paper Tripping" {:effect (effect (lose :tag :all))}
+   "Neural EMP" {:req (req (:made-run register)) :effect (effect (damage :net 1))}
+   "Paper Tripping" {:req (req (not (:spent-click register))) :effect (effect (lose :tag :all))}
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) (:discard runner))))))}
    "Professional Contacts" {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))

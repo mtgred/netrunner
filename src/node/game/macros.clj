@@ -14,5 +14,6 @@
   `(fn ~['state]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
+            'register '(get-in @state [:runner :register])
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))

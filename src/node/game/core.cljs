@@ -15,6 +15,8 @@
   (let [costs (merge-costs args)]
     (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
       (not (doseq [c costs]
+             (when (= (first c) :click)
+               (swap! state assoc-in [side :register :spent-click] true))
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
@@ -104,7 +106,7 @@
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
-                              :flags {}
+                              :register {}
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((:effect corp-init) state :corp nil))
@@ -144,6 +146,12 @@
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
       (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
+
+(defn run [state side {:keys [server] :as args}]
+  (pay state :runner :click 1)
+  (let [kw (keyword server)]
+    (swap! state assoc-in [:runner :register :made-run] kw))
+  (system-msg state :runner (str "runs on " server ".")))
 
 (defn purge [state side])
 
