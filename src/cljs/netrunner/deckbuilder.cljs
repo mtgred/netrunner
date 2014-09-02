@@ -246,7 +246,7 @@
 (defn deck-view [deck owner opts]
   (om/component
    (sab/html
-    [:div.deckline {:class (when (= (:deck state) deck) "active")
+    [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
                     :on-click #(put! (:ch opts) deck)}
      [:img {:src (image-url (:identity deck))}]
      (when-not (valid? deck)
