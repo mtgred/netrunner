@@ -16,7 +16,7 @@
     (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
       (not (doseq [c costs]
              (when (= (first c) :click)
-               (swap! state assoc-in [side :register :spent-click] true))
+               (swap! state assoc-in [:register :spent-click] true))
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
@@ -74,6 +74,7 @@
         runner-identity (or (get-in runner [:deck :identity]) {:side "Runner"})
         state (atom {:gameid gameid
                      :log []
+                     :register {}
                      :corp {:user (:user corp)
                             :identity corp-identity
                             :deck (zone :deck (drop 5 corp-deck))
@@ -106,7 +107,6 @@
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
-                              :register {}
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((:effect corp-init) state :corp nil))
@@ -150,7 +150,7 @@
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
   (let [kw (keyword server)]
-    (swap! state assoc-in [:runner :register :made-run] kw))
+    (swap! state assoc-in [:register :made-run] kw))
   (system-msg state :runner (str "runs on " server ".")))
 
 (defn purge [state side])

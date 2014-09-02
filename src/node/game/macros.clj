@@ -7,13 +7,14 @@
                             (concat [(first %) 'state 'side] (rest %)))
                          expr)]
         `(let ~['runner '(:runner @state)
-                'corp '(:corp @state)]
+                'corp '(:corp @state)
+                'register '(:register @state)]
            ~@actions))))
 
 (defmacro req [& expr]
   `(fn ~['state]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
-            'register '(get-in @state [:runner :register])
+            'register '(:register @state)
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
