@@ -239,11 +239,11 @@
      [:div.panel.blue-shade.identity
       (om/build card-view (:identity cursor))]])))
 
-(defn cond-button [text cond command args]
+(defn cond-button [text cond f]
   (sab/html
    (if cond
      [:button.disabled text]
-     [:button {:on-click #(send-command command args)} text])))
+     [:button {:on-click f} text])))
 
 (defn gameboard [{:keys [side gameid] :as cursor} owner]
   (reify
@@ -274,13 +274,15 @@
                (when (:keep me)
                  [:div
                   (when (= side :runner)
-                    (cond-button "Remove Tag" (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1)) "remove-tag"))
+                    (cond-button "Remove Tag"
+                                 (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
+                                 #(send-command "remove-tag")))
                   (when (= side :runner)
-                    (cond-button "Run" (< (:click me) 1) "run" {:server :hq}))
+                    (cond-button "Run" (< (:click me) 1) #(send-command "run")))
                   (when (= side :corp)
-                    (cond-button "Purge" (< (:click me) 3) "purge"))
-                  (cond-button "Draw" (< (:click me) 1) "draw")
-                  (cond-button "Take Credit" (< (:click me) 1) "credit")])]
+                    (cond-button "Purge" (< (:click me) 3) #(send-command "purge")))
+                  (cond-button "Draw" (< (:click me) 1) #(send-command "draw"))
+                  (cond-button "Take Credit" (< (:click me) 1) #(send-command "credit"))])]
 
               [:div.leftpane
                [:div
