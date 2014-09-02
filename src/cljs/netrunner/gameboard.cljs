@@ -54,14 +54,13 @@
     (play card)
     (send-command "ability" {:card card :ability 0})))
 
-(defn playable? [{:keys [title side zone cost]}]
+(defn playable? [{:keys [title side zone cost abilities]}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
-         (or (and (= zone ["hand"])
-                  (>= (:credit me) cost)
-                  (> (:click me) 0))
-             (#{"rig" "servers"} (first zone))))))
+         (and (= zone ["hand"])
+              (>= (:credit me) cost)
+              (> (:click me) 0)))))
 
 (defn log-pane [messages owner]
   (reify
@@ -264,15 +263,25 @@
              (om/build zones opponent)
 
              [:div.centralpane
-              [:div.button-pane.panel.blue-shade
+              [:div.leftpane
+               [:div
+                (om/build stats-view opponent)
+                (om/build scored-view opponent)
+                (om/build rfg-view opponent)]
+               [:div
+                (om/build rfg-view me)
+                (om/build scored-view me)
+                (om/build stats-view me)]]
+
+              [:div.button-pane
                (if-not (:keep me)
-                 [:div
+                 [:div.panel.blue-shade
                   [:h4 "Keep hand?"]
                   [:button {:on-click #(send-command "keep")} "Keep"]
                   [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
                (when (:keep me)
-                 [:div
+                 [:div.panel.blue-shade
                   (when (= side :runner)
                     (cond-button "Remove Tag"
                                  (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
@@ -283,16 +292,6 @@
                     (cond-button "Purge" (< (:click me) 3) #(send-command "purge")))
                   (cond-button "Draw" (< (:click me) 1) #(send-command "draw"))
                   (cond-button "Take Credit" (< (:click me) 1) #(send-command "credit"))])]
-
-              [:div.leftpane
-               [:div
-                (om/build stats-view opponent)
-                (om/build scored-view opponent)
-                (om/build rfg-view opponent)]
-               [:div
-                (om/build rfg-view me)
-                (om/build scored-view me)
-                (om/build stats-view me)]]
 
               [:div.board
                (om/build board-view opponent)
