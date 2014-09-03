@@ -92,7 +92,7 @@
       [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                              :on-mouse-leave #(put! zoom-channel false)
                              :on-click #(handle-card-click @cursor)}
-       (when-let [url (image-url card)]
+       (when-let [url (image-url cursor)]
          [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}])]))))
 
 (defn label [cursor owner opts]
