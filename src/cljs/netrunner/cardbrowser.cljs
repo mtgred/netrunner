@@ -18,7 +18,7 @@
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
 (defn image-url [card]
-  (when (or (:imagesrc card) (= (:type card) "Identity"))
+  (when (or (not (empty? (:imagesrc card))) (= (:type card) "Identity"))
     (str "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/" (:code card) ".png")))
 
 (defn add-symbols [card-text]
@@ -66,7 +66,8 @@
       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                             "" (str ": " (:subtype card)))]
       [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
-     [:img {:src (image-url card) :onError #(-> % .-target js/$ .hide)}]])))
+     (when-let [url (image-url card)]
+       [:img {:src url :onError #(-> % .-target js/$ .hide)}])])))
 
 (defn set-view [{:keys [set set-filter]} owner]
   (reify
