@@ -22,7 +22,7 @@
      [:p "Bug reports and feature suggestions can be filled on "
       [:a {:href "https://github.com/mtgred/netrunner/issues"} "Github"] "."]
 
-     [:p "Manabase is built using Clojurescript, React, Socket.io, Node.js. If you are proficient with some of these technologies and would like to contribute to the development, feel free to get in touch."]
+     [:p "Jinteki is built using Clojurescript, React, Socket.io, Node.js. If you are proficient with some of these technologies and would like to contribute to the development, feel free to get in touch."]
 
      [:h3 "Credits"]
      [:p "The card data and images are provided by "

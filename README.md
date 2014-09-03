@@ -2,7 +2,7 @@ Play Android: Netrunner in the browser.
 
 ## Live server
 
-http://netrunner-manabase.rhcloud.com/
+http://www.jinteki.net
 
 
 ## Development status
