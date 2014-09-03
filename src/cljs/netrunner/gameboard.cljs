@@ -87,11 +87,12 @@
 
 (defn card-view [cursor]
   (om/component
-   (sab/html
-    [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
-                           :on-mouse-leave #(put! zoom-channel false)
-                           :on-click #(handle-card-click @cursor)}
-     [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]])))
+   (when (:code cursor)
+     (sab/html
+      [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+                             :on-mouse-leave #(put! zoom-channel false)
+                             :on-click #(handle-card-click @cursor)}
+       [:img.card.bg {:src (image-url cursor) :onError #(-> % .-target js/$ .hide)}]]))))
 
 (defn label [cursor owner opts]
   (om/component

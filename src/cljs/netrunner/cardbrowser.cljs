@@ -18,7 +18,8 @@
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
 (defn image-url [card]
-  (str "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/" (:code card) ".png"))
+  (when (or (:imagesrc card) (= (:type card) "Identity"))
+    (str "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/" (:code card) ".png")))
 
 (defn add-symbols [card-text]
   (-> card-text

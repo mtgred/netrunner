@@ -43,7 +43,8 @@ cardFields = [
   "uniqueness",
   "memoryunits",
   "strength",
-  "trash"
+  "trash",
+  "imagesrc"
 ]
 
 baseurl = "http://netrunnerdb.com/api/"
