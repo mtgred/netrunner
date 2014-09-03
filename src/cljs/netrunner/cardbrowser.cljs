@@ -26,7 +26,7 @@
       (make-span "\\[Credits\\]" "credit")
       (make-span "\\[Click\\]" "click")
       (make-span "\\[Subroutine\\]" "subroutine")
-      (make-span "\\[Recuring Credits\\]" "recuring-credit")
+      (make-span "\\[Recurring Credits\\]" "recurring-credit")
       (make-span "1\\[Memory Unit\\]" "mu1")
       (make-span "2\\[Memory Unit\\]" "mu2")
       (make-span "3\\[Memory Unit\\]" "mu3")
