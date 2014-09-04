@@ -9,7 +9,7 @@
    (sab/html
     [:div.about.panel.blue-shade
      [:h3 "About"]
-     [:p "This website is created by an avid Netrunner player from Belgium. The goal is to provide a great way to create and test of Netrunner decks online."]
+     [:p "This website is created by an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
 
      [:h3 "Contact"]
      [:p "Twitter: " [:a {:href "http://twitter.com/mtgred"} "@mtgred"]]
