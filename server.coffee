@@ -206,7 +206,7 @@ app.get '/check/:username', (req, res) ->
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
     throw err if err
-    res.json(200, data.reverse)
+    res.json(200, data.reverse())
 
 app.get '/data/decks', (req, res) ->
   if req.user
