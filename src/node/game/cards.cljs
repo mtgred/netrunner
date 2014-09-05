@@ -32,6 +32,10 @@
    {:effect (effect (gain :link 1 :max-hand-size 1))
     :leave-play (effect (lose :link 1 :max-hand-size 1))}
 
+   "BOX-E"
+   {:effect (effect (gain :memory 2 :max-hand-size 2))
+    :leave-play (effect (lose :memory 2 :max-hand-size 2))}
+
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
                                                  (get-in runner [:rig :resource])))))}
@@ -65,6 +69,9 @@
 
    "Diesel"
    {:effect (effect (draw 3))}
+
+   "Duggar’s"
+   {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
 
    "Dyson Mem Chip"
    {:effect (effect (gain :link 1 :memory 1)) :leave-play (effect (lose :link 1 :memory 1))}
