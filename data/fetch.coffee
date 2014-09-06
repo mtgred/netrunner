@@ -35,7 +35,6 @@ cardFields = [
   "faction",
   "factioncost", # influence
   "number",
-  "quantity",
   "setname",
   "number",
   "cyclenumber",
