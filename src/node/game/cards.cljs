@@ -1,6 +1,6 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck] :as core]
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -9,6 +9,13 @@
 
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+
+   "Armitage Codebusting"
+   {:data {:counter 12}
+    :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
+                 :effect #(do (gain %1 :runner :credit 2)
+                              (when (= (:counter %3) 0)
+                                (trash %1 :runner %3)))}]}
 
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4))}
@@ -35,6 +42,10 @@
    "BOX-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}
+
+   "Cache"
+   {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
+    :data {:counter 3}}
 
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
@@ -104,6 +115,13 @@
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
                     (move (first (:play-area runner)) :rfg))}
 
+   "Liberated Account"
+   {:data {:counter 16}
+    :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
+                 :effect #(do (gain %1 :runner :credit 4)
+                              (when (= (:counter %3) 0)
+                                (trash %1 :runner %3)))}]}
+
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
 
@@ -127,6 +145,13 @@
 
    "Philotic Entanglement"
    {:effect (effect (damage :net (count (:scored runner))))}
+
+   "Private Contracts"
+   {:data {:counter 14}
+    :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
+                 :effect #(do (gain %1 :corp :credit 2)
+                              (when (= (:counter %3) 0)
+                                (trash %1 :corp %3)))}]}
 
    "Private Security Force"
    {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage :meat 1))

@@ -1,5 +1,5 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone]]))
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]))
 
 (def game-states (atom {}))
 
@@ -26,6 +26,9 @@
       (swap! state update-in (cons side dest) #(conj % (assoc card :zone dest)))
       (swap! state update-in (cons side (:zone card)) (fn [coll] (remove-once #(not= (:title %) (:title card)) coll))))))
 
+(defn trash [state side card]
+  (move state side card :discard))
+
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
@@ -50,11 +53,9 @@
 
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
-    (if cost
-     (if (apply pay (concat [state side] cost))
-       (effect state side args)
-       false)
-     (effect state side args))))
+    (if (apply pay (concat [state side] cost))
+      (effect state side args)
+      false)))
 
 (defn change [state side {:keys [key delta]}]
   (let [kw (keyword (.toLowerCase key))]
@@ -155,9 +156,20 @@
 
 (defn purge [state side])
 
-(defn play-ability [state side {:keys [card ability]}]
-  (let [ab (get-in game.cards/cards [(:title card) :abilities ability])]
-    (when ((do! ab) state side nil)
+
+(defn update! [state side card]
+  (let [zone (cons side (:zone card))
+        [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
+    (swap! state assoc-in zone (concat head [card] (rest tail)))))
+
+(defn play-ability [state side {:keys [card ability :as args]}]
+  (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
+        counter-cost (:counter-cost ab)]
+    (when (and (<= counter-cost (:counter card))
+               (apply pay (concat [state side] (:cost ab))))
+      (let [c (update-in card [:counter] #(- % counter-cost))]
+        (update! state side c)
+        ((:effect ab) state side c))
       (system-msg state side (str "uses " (:title card) " to " (:msg ab) ".")))))
 
 (defn play-instant [state side {:keys [title] :as card}]
@@ -172,9 +184,11 @@
 
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
-    (move state side card [:rig (keyword (.toLowerCase (:type card)))])
-    (when-let [effect (get-in game.cards/cards [(:title card) :effect])]
-      (effect state side card))
+    (let [card-def (game.cards/cards (:title card))
+          c (merge card (:data card-def) {:cid (make-cid)})]
+      (when-let [effect (:effect card-def)]
+        (effect state side c))
+      (move state side c [:rig (keyword (.toLowerCase (:type c)))]))
     (system-msg state side (str "installs " (:title card) "."))))
 
 (defmulti play #(get-in %3 [:card :type]))

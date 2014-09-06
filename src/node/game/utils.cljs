@@ -1,5 +1,10 @@
 (ns game.utils)
 
+(def cid (atom 0))
+
+(defn make-cid []
+  (swap! cid inc))
+
 (defn merge-costs [costs]
   (vec (reduce #(let [key (first %2) value (last %2)]
               (assoc %1 key (+ (or (key %1) 0) value )))

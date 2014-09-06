@@ -93,7 +93,10 @@
                              :on-mouse-leave #(put! zoom-channel false)
                              :on-click #(handle-card-click @cursor)}
        (when-let [url (image-url cursor)]
-         [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}])]))))
+         [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}])
+       (when-let [counter (:counter cursor)]
+         (when (> counter 0)
+           [:div.darkbg.counter counter]))]))))
 
 (defn label [cursor owner opts]
   (om/component
@@ -150,7 +153,7 @@
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard
-     (om/build label discard {:opts {:name "Archive"}})
+     (om/build label discard {:opts {:name "Archives"}})
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
 
