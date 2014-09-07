@@ -24,7 +24,7 @@
   (when card
     (let [dest (if (sequential? to) to [to])]
       (swap! state update-in (cons side dest) #(conj % (assoc card :zone dest)))
-      (swap! state update-in (cons side (:zone card)) (fn [coll] (remove-once #(not= (:title %) (:title card)) coll))))))
+      (swap! state update-in (cons side (:zone card)) (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))))
 
 (defn trash [state side card]
   (move state side card :discard))
@@ -64,7 +64,8 @@
                                 " (" (if (> delta 0) (str "+" delta) delta) ")."))))
 
 (defn create-deck [deck]
-  (shuffle (mapcat #(repeat (:qty %) (:card %)) (:cards deck))))
+  (shuffle (mapcat #(map (fn [c] (assoc c :cid (make-cid))) (repeat (:qty %) (:card %)))
+                   (:cards deck))))
 
 (defn init-game [{:keys [players gameid] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
@@ -187,7 +188,7 @@
 (defn runner-install [state side card]
   (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
     (let [card-def (game.cards/cards (:title card))
-          c (merge card (:data card-def) {:cid (make-cid)})]
+          c (merge card (:data card-def))]
       (when-let [effect (:effect card-def)]
         (effect state side c))
       (move state side c [:rig (keyword (.toLowerCase (:type c)))]))
