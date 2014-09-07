@@ -16,7 +16,7 @@
     (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
       (not (doseq [c costs]
              (when (= (first c) :click)
-               (swap! state assoc-in [:register :spent-click] true))
+               (swap! state assoc-in [side :register :spent-click] true))
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
@@ -57,6 +57,13 @@
       (effect state side args)
       false)))
 
+(defn once-per-turn
+  ([state side card f] (once-per-turn state side card f (:cid card)))
+  ([state side card f key]
+     (when-not (get-in @state [side :register key])
+       (swap! state assoc-in [side :register key] true)
+       (f state side card))))
+
 (defn change [state side {:keys [key delta]}]
   (let [kw (keyword (.toLowerCase key))]
     (swap! state update-in [side kw] (partial + delta))
@@ -76,7 +83,6 @@
         runner-identity (or (get-in runner [:deck :identity]) {:side "Runner"})
         state (atom {:gameid gameid
                      :log []
-                     :register {}
                      :corp {:user (:user corp)
                             :identity corp-identity
                             :deck (zone :deck (drop 5 corp-deck))
@@ -91,6 +97,7 @@
                             :bad-publicity 0
                             :agenda-point 0
                             :max-hand-size 5
+                            :register {}
                             :keep false}
                      :runner {:user (:user runner)
                               :identity runner-identity
@@ -109,6 +116,7 @@
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
+                              :register {}
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((:effect corp-init) state :corp nil))
@@ -152,7 +160,7 @@
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
   (let [kw (keyword server)]
-    (swap! state assoc-in [:register :made-run] kw))
+    (swap! state assoc-in [:runner :register :made-run] kw))
   (system-msg state :runner (str "runs on " server ".")))
 
 (defn purge [state side])
@@ -166,7 +174,8 @@
 (defn play-ability [state side {:keys [card ability :as args]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
         counter-cost (:counter-cost ab)]
-    (when (and (<= counter-cost (:counter card))
+    (when (and (not (get-in @state [side :register (:cid card)]))
+               (<= counter-cost (:counter card))
                (apply pay (concat [state side] (:cost ab))))
       (let [c (update-in card [:counter] #(- % counter-cost))]
         (update! state side c)

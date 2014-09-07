@@ -1,6 +1,7 @@
 (ns game.cards
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash] :as core]
   (:require-macros [game.macros :refer [effect req msg]])
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash
+                               once-per-turn] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -152,10 +153,10 @@
    {:effect (effect (gain :max-hand-size 1))}
 
    "Neural EMP"
-   {:req (req (:made-run register)) :effect (effect (damage :net 1))}
+   {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
 
    "Paper Tripping"
-   {:req (req (not (:spent-click register))) :effect (effect (lose :tag :all))}
+   {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
 
    "Philotic Entanglement"
    {:effect (effect (damage :net (count (:scored runner))))}
@@ -193,12 +194,10 @@
 
    "Subliminal Messaging"
    {:effect #(do (gain % :corp :credit 1)
-                 (when-not (get-in % [:register :subliminal-messaging])
-                   (gain % :corp :click 1))
-                 (swap! % assoc-in [:register :subliminal-messaging] true))}
+                 (once-per-turn %1 %2 %3 (effect (gain :click 1)) :subliminal-messaging))}
 
    "Successful Demonstration"
-   {:req (req (:unsucessful-run register)) :effect (gain :credit 7)}
+   {:req (req (:unsucessful-run runner-reg)) :effect (gain :credit 7)}
 
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
@@ -214,6 +213,10 @@
                                 (when (not= (get-in old [:runner :credit]) credit)
                                   (swap! ref assoc-in [:runner :max-hand-size] credit))))))
     :leave-play #(remove-watch % :theophilius-bagbiter)}
+
+   "Tri-maf Contact"
+   {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]"
+                 :effect #(once-per-turn %1 %2 %3 (effect (gain :credit 2)))}]}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -253,7 +256,7 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Early Bird"
-   {:req (req (not (:spent-click register)))}
+   {:req (req (not (:spent-click runner-reg)))}
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card) (draw :corp 2))
@@ -265,7 +268,7 @@
                  :msg "gain [Click][Click]"}]}
 
    "Emergency Shutdown"
-   {:req (req (some :hq (:successful-run register)))}
+   {:req (req (some :hq (:successful-run runner-reg)))}
 
    "Eve Campaign"
    {:data {:counter 16}}
@@ -273,6 +276,8 @@
    "Fall Guy"
    {:abilities [{:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
+   "Freelancer"
+   {:req (req tagged)}
 
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
@@ -287,10 +292,10 @@
    {:effect (effect (gain :link 1))}
 
    "Imp"
-   {:data {:counter 2}}
+   {:data {:counter 2}
+    :abilities [{:counter-cost 1 :msg "trash at no cost"
+                 :effect #(once-per-turn %1 %2 %3 (fn []))}]}
 
-   "Freelancer"
-   {:req (req tagged)}
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}]}
 
@@ -298,7 +303,7 @@
    {:effect (effect (gain :link 1))}
 
    "Kraken"
-   {:req (req (:stole-agenda register))}
+   {:req (req (:stole-agenda runner-reg))}
 
    "Logos"
    {:effect (effect (gain :memory 1 :max-hand-size 1))
@@ -308,7 +313,7 @@
    {:effect (effect (gain :runner :max-hand-size 1))}
 
    "Midseason Replacements"
-   {:req (req (:stole-agenda register))}
+   {:req (req (:stole-agenda runner-reg))}
 
    "Monolith"
    {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
@@ -320,7 +325,7 @@
    {:effect (effect (lose :tag 1))}
 
    "Power Shutdown"
-   {:req (req (:made-run register))}
+   {:req (req (:made-run runner-reg))}
 
    "Psychographics"
    {:req (req tagged)}
@@ -332,7 +337,7 @@
    {:effect (effect (gain :link 1))}
 
    "SEA Source"
-   {:req (req (:sucessful-run register))}
+   {:req (req (:sucessful-run runner-reg))}
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
@@ -344,4 +349,4 @@
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))}
 
    "Three Steps Ahead"
-   {:req (req (not (:spent-click register)))}})
+   {:req (req (not (:spent-click runner-reg)))}})
