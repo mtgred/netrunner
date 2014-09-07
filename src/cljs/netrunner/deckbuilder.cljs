@@ -311,7 +311,7 @@
                    [:button {:on-click #(edit-deck owner)} "Edit"]
                    [:button {:on-click #(handle-delete cursor owner)} "Delete"]
                    [:a.button {:href (octgn-link owner) :download (str (:name deck) ".o8d")} "OCTGN Export"]])
-                [:h3.deckname (:name deck)]
+                [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
                  [:h4.fake-link (:title identity) (om/build card-view identity)]

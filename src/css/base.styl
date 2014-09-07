@@ -197,8 +197,8 @@ span.small
   border-left: 4px solid transparent
 
 .system
-  margin-bottom: 10px
-  line-height: 16px
+  margin-bottom: 8px
+  line-height: 15px
 
 // Dropdown
 
@@ -669,7 +669,7 @@ nav ul
       -webkit-overflow-scrolling: touch
 
       .button-bar
-        padding-bottom: 15px
+        padding-bottom: 10px
 
         button, a.button
           min-width: 75px
@@ -682,10 +682,6 @@ nav ul
           height: 100%
           margin-right: 10px
           float: left
-
-      h3.deckname
-        width: 320px
-        min-height: 31px
 
       input.deckname
         height: 30px
@@ -703,7 +699,6 @@ nav ul
         display: block
 
       .cards
-        margin-top: 10px
         columns(2, 5px)
 
       .line
@@ -723,7 +718,6 @@ nav ul
 
         h4
           margin-top: 10px
-          margin-bottom: 2px
 
     .deckedit
       display-flex()
@@ -1015,7 +1009,7 @@ nav ul
     button
       width: 100%
       font-size: 11px
-      margin-bottom: 5px
+      margin: 0 0 5px 0
       padding: 0 10px 1px
 
       &:last-child
@@ -1077,13 +1071,18 @@ nav ul
       display-flex()
       flex-direction(column)
 
+      .username
+        font-size: 12px
+        margin-top: -2px
+
       .avatar
         width: 28px
         height: 28px
 
       > .panel
-       padding: 5px 8px
        margin-left: 0
+       font-size: 12px
+       line-height: 15px
 
       .messages
         flex(1)
