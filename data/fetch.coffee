@@ -47,7 +47,7 @@ cardFields = [
 
 baseurl = "http://netrunnerdb.com/api/"
 
-restricted = ["Philotic Entanglement", "Eden Shard", "Eden Fragment"]
+restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment"]
 
 selectFields = (fields, objectList) ->
   ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj.title in restricted; newObj), {}) for obj in objectList)
