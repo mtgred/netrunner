@@ -37,7 +37,6 @@ cardFields = [
   "number",
   "setname",
   "number",
-  "cyclenumber",
   "side",
   "uniqueness",
   "memoryunits",
