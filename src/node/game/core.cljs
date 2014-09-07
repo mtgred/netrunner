@@ -9,7 +9,7 @@
 
 (defn system-msg [state side text]
   (let [username (get-in @state [side :user :username])]
-    (say state side {:user "__system__" :text (str username " " text)})))
+    (say state side {:user "__system__" :text (str username " " text ".")})))
 
 (defn pay [state side & args]
   (let [costs (merge-costs args)]
@@ -68,7 +68,7 @@
   (let [kw (keyword (.toLowerCase key))]
     (swap! state update-in [side kw] (partial + delta))
     (system-msg state side (str "sets " key " to " (get-in @state [side kw])
-                                " (" (if (> delta 0) (str "+" delta) delta) ")."))))
+                                " (" (if (> delta 0) (str "+" delta) delta) ")"))))
 
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [c] (assoc c :cid (make-cid))) (repeat (:qty %) (:card %)))
@@ -143,11 +143,11 @@
   (when-let [init-fn (get-in game.cards/cards [(get-in @state [side :identity :title])])]
     ((do! init-fn) state side nil))
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side "takes a mulligan."))
+  (system-msg state side "takes a mulligan"))
 
 (defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side "keeps his or her hand."))
+  (system-msg state side "keeps his or her hand"))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -163,7 +163,7 @@
   (pay state :runner :click 1)
   (let [kw (keyword server)]
     (swap! state assoc-in [:runner :register :made-run] kw))
-  (system-msg state :runner (str "runs on " server ".")))
+  (system-msg state :runner (str "runs on " server)))
 
 (defn purge [state side])
 
@@ -194,13 +194,13 @@
         ((:effect ab) state side c))
       (let [msg (:msg ab)
             desc (if (string? msg) msg (msg state side card))]
-        (system-msg state side (str "uses " (:title card) (when desc (str " to " desc)) "."))))))
+        (system-msg state side (str "uses " (:title card) (when desc (str " to " desc))))))))
 
 (defn play-instant [state side {:keys [title] :as card}]
   (let [card-def (game.cards/cards title)]
     (when (and (if-let [req (:req card-def)] (req state) true)
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
-     (system-msg state side (str "plays " (:title card) "."))
+     (system-msg state side (str "plays " (:title card)))
      (move state side card :play-area)
      (when-let [effect (:effect card-def)]
        (effect state side card))
@@ -213,7 +213,7 @@
       (when-let [effect (:effect card-def)]
         (effect state side c))
       (move state side c [:rig (keyword (.toLowerCase (:type c)))]))
-    (system-msg state side (str "installs " (:title card) "."))))
+    (system-msg state side (str "installs " (:title card)))))
 
 (defmulti play #(get-in %3 [:card :type]))
 
