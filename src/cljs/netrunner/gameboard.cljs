@@ -249,7 +249,7 @@
      [:button.disabled text]
      [:button {:on-click f} text])))
 
-(defn gameboard [{:keys [side gameid] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player end-turn] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -261,8 +261,8 @@
     (render-state [this state]
       (sab/html
        (when (> gameid 0)
-         (let [me (if (= side :corp) (:corp cursor) (:runner cursor))
-               opponent (if (= side :corp) (:runner cursor) (:corp cursor))]
+         (let [me (side cursor)
+               opponent ((if (= side :corp) :runner :corp) cursor)]
            [:div.gameboard
             [:div.mainpane
              (om/build zones opponent)
@@ -287,6 +287,11 @@
 
                (when (:keep me)
                  [:div.panel.blue-shade
+                  (if (= (keyword active-player) side)
+                    (when (and (zero? (:click me)) (not end-turn))
+                      [:button {:on-click #(send-command "end-turn")} "End Turn"])
+                    (when end-turn
+                      [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
                   (when (= side :runner)
                     (cond-button "Remove Tag"
                                  (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))

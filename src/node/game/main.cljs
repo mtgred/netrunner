@@ -17,6 +17,8 @@
    "credit" (do! {:cost [:click 1] :effect (effect (gain :credit 1) (system-msg "gains 1 credit."))})
    "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses."))})
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag."))})
+   "start-turn" core/start-turn
+   "end-turn" core/end-turn
    "play" core/play
    "run" core/run
    "ability" core/play-ability})

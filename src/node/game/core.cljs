@@ -60,8 +60,8 @@
 (defn once-per-turn
   ([state side card f] (once-per-turn state side card f (:cid card)))
   ([state side card f key]
-     (when-not (get-in @state [side :register key])
-       (swap! state assoc-in [side :register key] true)
+     (when-not (get-in @state [:once-per-turn key])
+       (swap! state assoc-in [:once-per-turn key] true)
        (f state side card))))
 
 (defn change [state side {:keys [key delta]}]
@@ -83,6 +83,8 @@
         runner-identity (or (get-in runner [:deck :identity]) {:side "Runner"})
         state (atom {:gameid gameid
                      :log []
+                     :active-player :runner
+                     :end-turn true
                      :corp {:user (:user corp)
                             :identity corp-identity
                             :deck (zone :deck (drop 5 corp-deck))
@@ -97,7 +99,7 @@
                             :bad-publicity 0
                             :agenda-point 0
                             :max-hand-size 5
-                            :register {}
+                            :click-per-turn 3
                             :keep false}
                      :runner {:user (:user runner)
                               :identity runner-identity
@@ -116,7 +118,7 @@
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
-                              :register {}
+                              :click-per-turn 4
                               :keep false}})]
     (when-let [corp-init (game.cards/cards (:title corp-identity))]
       ((:effect corp-init) state :corp nil))
@@ -165,6 +167,16 @@
 
 (defn purge [state side])
 
+(defn start-turn [state side]
+  (when (= side :corp)
+    (draw state :corp))
+  (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
+  (swap! state assoc :active-player side :once-per-turn nil :end-turn false)
+  (swap! state assoc-in [side :register] nil))
+
+(defn end-turn [state side]
+  (swap! state assoc :end-turn true)
+  (system-msg state side (str "is ending his or her turn")))
 
 (defn update! [state side card]
   (let [zone (cons side (:zone card))
