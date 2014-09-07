@@ -13,8 +13,8 @@
    "change" core/change
    "mulligan" core/mulligan
    "keep" core/keep-hand
-   "draw" (do! {:cost [:click 1] :effect (effect (draw) (system-msg "draw 1 card."))})
-   "credit" (do! {:cost [:click 1] :effect (effect (gain :credit 1) (system-msg "take 1 credit."))})
+   "draw" (do! {:cost [:click 1] :effect (effect (draw) (system-msg "draws 1 card."))})
+   "credit" (do! {:cost [:click 1] :effect (effect (gain :credit 1) (system-msg "gains 1 credit."))})
    "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses."))})
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag."))})
    "play" core/play

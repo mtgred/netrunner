@@ -296,7 +296,7 @@
                   (when (= side :corp)
                     (cond-button "Purge" (< (:click me) 3) #(send-command "purge")))
                   (cond-button "Draw" (< (:click me) 1) #(send-command "draw"))
-                  (cond-button "Take Credit" (< (:click me) 1) #(send-command "credit"))])]
+                  (cond-button "Gain Credit" (< (:click me) 1) #(send-command "credit"))])]
 
               [:div.board
                (om/build board-view opponent)
