@@ -18,3 +18,6 @@
             'register '(:register @state)
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
+
+(defmacro msg [& expr]
+  `(fn ~['state 'side 'card] (str ~@expr)))

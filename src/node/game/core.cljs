@@ -170,7 +170,9 @@
       (let [c (update-in card [:counter] #(- % counter-cost))]
         (update! state side c)
         ((:effect ab) state side c))
-      (system-msg state side (str "uses " (:title card) " to " (:msg ab) ".")))))
+      (let [msg (:msg ab)
+            desc (if (string? msg) msg (msg state side card))]
+        (system-msg state side (str "uses " (:title card) (when desc (str " to " desc)) "."))))))
 
 (defn play-instant [state side {:keys [title] :as card}]
   (let [card-def (game.cards/cards title)]

@@ -1,6 +1,6 @@
 (ns game.cards
-  (:require-macros [game.macros :refer [effect req]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash] :as core]
+  (:require-macros [game.macros :refer [effect req msg]])
             [game.utils :refer [has?]]))
 
 (def cards
@@ -275,7 +275,8 @@
 
 
    "Gorman Drip v1"
-   {:abilities [:effect (effect (gain :credit (:counter card)) (trash card))]}
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
+                 :msg (msg "gain " (:counter card) " [Credits]")}]}
 
    "House of Knives"
    {:data {:counter 3}
