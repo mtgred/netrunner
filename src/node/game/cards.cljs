@@ -10,6 +10,10 @@
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+   "All-nighter"
+   {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
+                 :msg "gain [Click][Click]"}]}
+
    "Armitage Codebusting"
    {:data {:counter 12}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
@@ -89,6 +93,16 @@
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
+
+   "Executive Retreat"
+   {:data {:counter 1}
+    :abilities [{:cost [:click 1] :counter-cost 1
+                 :effect (effect (shuffle-into-deck :hand) (draw 5))}]}
+
+   "Geothermal Fracking"
+   {:data {:counter 2}
+    :abilities [{:cost [:click 1] :counter-cost 1
+                 :effect (effect (gain :credit 7 :bad-publicity 1))}]}
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
@@ -208,11 +222,23 @@
    {:effect (effect (lose :bad-publicity 2))}
 
    ;; partial implementation
+   "Adonis Campaign"
+   {:data {:counter 12}}
+
+   "AstroScript Pilot Program"
+   {:data {:counter 1}}
+
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Bad Times"
    {:req (req tagged)}
+
+   "D4v1d"
+   {:data {:counter 3}}
+
+   "Daily Casts"
+   {:data {:counter 8}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
@@ -229,14 +255,43 @@
    "Early Bird"
    {:req (req (not (:spent-click register)))}
 
+   "Eden Shard"
+   {:abilities [{:effect (effect (trash card) (draw :corp 2))
+                 :msg "force the Corp to draw 2 cards"}]}
+
+   "Efficiency Committee"
+   {:data {:counter 3}
+    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (gain :click 2))
+                 :msg "gain [Click][Click]"}]}
+
    "Emergency Shutdown"
    {:req (req (some :hq (:successful-run register)))}
+
+   "Eve Campaign"
+   {:data {:counter 16}}
+
+   "Fall Guy"
+   {:abilities [{:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+
+
+   "Gorman Drip v1"
+   {:abilities [:effect (effect (gain :credit (:counter card)) (trash card))]}
+
+   "House of Knives"
+   {:data {:counter 3}
+    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (damage :net 1))
+                 :msg "do 1 Net damage"}]}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))}
 
+   "Imp"
+   {:data {:counter 2}}
+
    "Freelancer"
    {:req (req tagged)}
+   "Jackson Howard"
+   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))}
@@ -248,6 +303,9 @@
    {:effect (effect (gain :memory 1 :max-hand-size 1))
     :leave-play (effect (lose :memory 1 :max-hand-size 1))}
 
+   "Mental Health Clinic"
+   {:effect (effect (gain :runner :max-hand-size 1))}
+
    "Midseason Replacements"
    {:req (req (:stole-agenda register))}
 
@@ -256,6 +314,9 @@
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
+
+   "Networking"
+   {:effect (effect (lose :tag 1))}
 
    "Power Shutdown"
    {:req (req (:made-run register))}
