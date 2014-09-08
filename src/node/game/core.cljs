@@ -184,6 +184,12 @@
         [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
     (swap! state assoc-in zone (concat head [card] (rest tail)))))
 
+(defn add-counters [state side card n]
+  (update! state side (update-in card [:counter] #(+ % n))))
+
+(defn set-counters [state side card n]
+  (update! state side (assoc card :counter n)))
+
 (defn play-ability [state side {:keys [card ability :as args]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
         counter-cost (:counter-cost ab)]

@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash
-                               once-per-turn] :as core]
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash add-counters
+                               set-counters once-per-turn] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -122,6 +122,13 @@
 
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
+
+   "Kati Jones"
+   {:abilities
+    [{:cost [:click 1] :msg "store 3 [Credits]"
+      :effect #(once-per-turn %1 %2 %3 (effect (add-counters card 3)))}
+     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
+      :effect #(once-per-turn %1 %2 %3 (effect (gain (:counter card)) (set-counters card 0)))}]}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
@@ -244,6 +251,10 @@
    "Bad Times"
    {:req (req tagged)}
 
+   "Crypsis"
+   {:abilities [{:cost [:click 1] :msg "place 1 virus counter"
+                 :effect (effect (add-counters card 1))}]}
+
    "D4v1d"
    {:data {:counter 3}}
 
@@ -318,6 +329,10 @@
    "Logos"
    {:effect (effect (gain :memory 1 :max-hand-size 1))
     :leave-play (effect (lose :memory 1 :max-hand-size 1))}
+
+   "Marked Accounts"
+   {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
+                 :effect (effect (add-counters card 3))}]}
 
    "Mental Health Clinic"
    {:effect (effect (gain :runner :max-hand-size 1))}
