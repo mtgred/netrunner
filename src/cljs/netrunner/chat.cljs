@@ -7,7 +7,7 @@
             [netrunner.ajax :refer [GET]]))
 
 (def app-state
-  (atom {:channels {:general [] :francais [] :deutsch [] :espanol [] :america [] :europe [] :asia []}}))
+  (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :francais []}}))
 
 (def chat-channel (chan))
 (def chat-socket (.connect js/io (str js/iourl "/chat")))
