@@ -126,9 +126,11 @@
    "Kati Jones"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]"
+      :label "Place 3 [Credits] from the bank on Katie Jones."
       :effect #(once-per-turn %1 %2 %3 (effect (add-counters card 3)))}
      {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
-      :effect #(once-per-turn %1 %2 %3 (effect (gain (:counter card)) (set-counters card 0)))}]}
+      :label "Take all credits from Katie Jones."
+      :effect #(once-per-turn %1 %2 %3 (effect (gain :credit (:counter card)) (set-counters card 0)))}]}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}

@@ -42,22 +42,17 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn select-server [])
-
 (defn play [{:keys [type] :as card}]
   (if (#{"Agenda" "Asset" "Upgrade" "ICE"} type)
     (select-server)
     (send-command "play" {:card card})))
 
-(defn handle-card-click [e {:keys [type zone abilities] :as card}]
+(defn handle-card-click [{:keys [type zone abilities] :as card} owner]
   (if (= zone ["hand"])
     (play card)
-    (let [n (count abilities)]
-      (cond
-       (= n 1) (send-command "ability" {:card card :ability 0})
-       (> n 1) (do (go (let [i <! select-channel]
-                         (send-command "ability" {:card card :ability i})))
-                   (-> % .-target js/$ .show))))))
+    (if (> (count abilities) 1)
+      (-> (om/get-node owner "abilities") js/$ .toggle)
+      (send-command "ability" {:card card :ability 0}))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -96,18 +91,28 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
-(defn card-view [cursor]
+(defn card-view [cursor owner]
   (om/component
    (when (:code cursor)
      (sab/html
       [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                              :on-mouse-leave #(put! zoom-channel false)
-                             :on-click #(handle-card-click @cursor)}
+                             :on-click #(handle-card-click @cursor owner)}
        (when-let [url (image-url cursor)]
          [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}])
        (when-let [counter (:counter cursor)]
          (when (> counter 0)
-           [:div.darkbg.counter counter]))]))))
+           [:div.darkbg.counter counter]))
+       (when-let [abilities (:abilities cursor)]
+         (when (> (count abilities 1))
+           [:div.blue-shade.panel.abilities {:ref "abilities"}
+            (map-indexed
+             (fn [i label]
+               (prn i label)
+               [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
+                                     (-> (om/get-node owner "abilities") js/$ (.attr "display" "none")))}
+                label])
+             abilities )]))]))))
 
 (defn label [cursor owner opts]
   (om/component
