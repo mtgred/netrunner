@@ -4,10 +4,16 @@ Play Android: Netrunner in the browser.
 
 http://www.jinteki.net
 
+![screenshot](https://dl.dropboxusercontent.com/u/5601199/screenshot.jpg)
+
 
 ## Development status
 
-The chat, deck builder, card browser and game lobby are operational. All the deck building rules are implemented in the deck builder. The implemention of the game rules is in progress. Some actions such as drawing, taking credit or playing card are implemented but a game can't be completely played yet.
+The chat, deck builder, card browser and game lobby are operational.
+
+The deck builder implements all the deck building constraints. It is optimised for fast deck edition. It is possible for instance to copy & paste a decklist from a forum and it will be parsed.
+
+The implemention of the game rules is in progress. Some actions such as drawing, taking credit or playing card are implemented but a game can't be completely played yet.
 
 Card rules implementation status: https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx
 
