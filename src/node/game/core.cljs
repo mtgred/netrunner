@@ -213,14 +213,20 @@
        (effect state side card))
      (move state side (first (get-in @state [side :play-area])) :discard))))
 
-(defn runner-install [state side card]
-  (when (pay state side :click 1 :credit (:cost card) :memory (:memoryunits card))
-    (let [card-def (game.cards/cards (:title card))
-          c (merge card (:data card-def))]
+(defn in-play? [state card]
+  (let [dest (when (= (:side card) "Runner")
+               (get-in @state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
+    (some #(= (:title %) (:title card)) dest)))
+
+(defn runner-install [state side {:keys [title type memoryunits uniqueness] :as card}]
+  (when (and (or (not uniqueness) (not (in-play? state card)))
+             (pay state side :click 1 :credit (:cost card) :memory memoryunits))
+    (let [card-def (game.cards/cards title)
+          c (merge card (:data card-def) {:abilities (map :label (:abilities card-def))})]
       (when-let [effect (:effect card-def)]
         (effect state side c))
-      (move state side c [:rig (keyword (.toLowerCase (:type c)))]))
-    (system-msg state side (str "installs " (:title card)))))
+      (move state side c [:rig (keyword (.toLowerCase type))]))
+    (system-msg state side (str "installs " title))))
 
 (defmulti play #(get-in %3 [:card :type]))
 

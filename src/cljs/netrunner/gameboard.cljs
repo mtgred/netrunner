@@ -49,16 +49,27 @@
     (select-server)
     (send-command "play" {:card card})))
 
-(defn handle-card-click [{:keys [type zone] :as card}]
+(defn handle-card-click [e {:keys [type zone abilities] :as card}]
   (if (= zone ["hand"])
     (play card)
-    (send-command "ability" {:card card :ability 0})))
+    (let [n (count abilities)]
+      (cond
+       (= n 1) (send-command "ability" {:card card :ability 0})
+       (> n 1) (do (go (let [i <! select-channel]
+                         (send-command "ability" {:card card :ability i})))
+                   (-> % .-target js/$ .show))))))
 
-(defn playable? [{:keys [title side zone cost abilities]}]
+(defn in-play? [card]
+  (let [dest (when (= (:side card) "Runner")
+               (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
+    (some #(= (:title %) (:title card)) dest)))
+
+(defn playable? [{:keys [title side zone cost uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
          (and (= zone ["hand"])
+              (or (not uniqueness) (not (in-play? card)))
               (>= (:credit me) cost)
               (> (:click me) 0)))))
 
