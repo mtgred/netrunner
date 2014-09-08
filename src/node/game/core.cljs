@@ -165,8 +165,6 @@
     (swap! state assoc-in [:runner :register :made-run] kw))
   (system-msg state :runner (str "runs on " server)))
 
-(defn purge [state side])
-
 (defn start-turn [state side]
   (when (= side :corp)
     (draw state :corp))
@@ -189,6 +187,11 @@
 
 (defn set-counters [state side card n]
   (update! state side (assoc card :counter n)))
+
+(defn purge [state side]
+  (doseq [card (get-in @state [:runner :rig :program])]
+    (when (has? card :subtype "Virus")
+      (set-counters state :runner card 0))))
 
 (defn play-ability [state side {:keys [card ability :as args]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])

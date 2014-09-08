@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash add-counters
-                               set-counters once-per-turn] :as core]
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge
+                               add-counters set-counters once-per-turn] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -76,6 +76,9 @@
    {:effect #(if (> (get-in % [:corp :credit]) 6)
                (gain % :corp :credit 7)
                (lose % :corp :credit :all))}
+
+   "Cyberdex Trial"
+   {:effect (effect (purge))}
 
    "CyberSolutions Mem Chip"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}

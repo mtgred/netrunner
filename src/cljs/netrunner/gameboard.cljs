@@ -108,7 +108,6 @@
            [:div.blue-shade.panel.abilities {:ref "abilities"}
             (map-indexed
              (fn [i label]
-               (prn i label)
                [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
                                      (-> (om/get-node owner "abilities") js/$ (.attr "display" "none")))}
                 label])
