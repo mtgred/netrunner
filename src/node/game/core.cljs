@@ -172,7 +172,8 @@
     (draw state :corp))
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (swap! state assoc :active-player side :once-per-turn nil :end-turn false)
-  (swap! state assoc-in [side :register] nil))
+  (swap! state assoc-in [side :register] nil)
+  (system-msg state side (str "started his or her turn")))
 
 (defn end-turn [state side]
   (swap! state assoc :end-turn true)
@@ -186,7 +187,7 @@
 (defn play-ability [state side {:keys [card ability :as args]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
         counter-cost (:counter-cost ab)]
-    (when (and (not (get-in @state [side :register (:cid card)]))
+    (when (and (not (get-in @state [:once-per-turn (:cid card)]))
                (<= counter-cost (:counter card))
                (apply pay (concat [state side] (:cost ab))))
       (let [c (update-in card [:counter] #(- % counter-cost))]
