@@ -143,6 +143,9 @@
    "Magnum Opus"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
+   "Mandatory Upgrades"
+   {:effect (effect (gain :click 1 :click-per-turn 1))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -185,6 +188,10 @@
 
    "Quality Time"
    {:effect (effect (draw 5))}
+
+   "Rachel Beckman"
+   {:effect (effect (gain :click 1 :click-per-turn 1))
+    :leave-play (effect (lose :click 1 :click-per-turn 1))}
 
    "Restructure"
    {:effect (effect (gain :credit 15))}
@@ -242,6 +249,9 @@
 
    "Daily Casts"
    {:data {:counter 8}}
+
+   "Director Haas"
+   {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
@@ -335,6 +345,10 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
+
+   "Research Station"
+   {:effect (effect (gain :max-hand-size 2))
+    :leave-play (effect (lose :max-hand-size 2))}
 
    "SEA Source"
    {:req (req (:sucessful-run runner-reg))}
