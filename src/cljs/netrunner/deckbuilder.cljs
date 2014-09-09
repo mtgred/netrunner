@@ -243,18 +243,6 @@
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
-(defn deck-view [deck owner opts]
-  (om/component
-   (sab/html
-    [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
-                    :on-click #(put! (:ch opts) deck)}
-     [:img {:src (image-url (:identity deck))}]
-     (when-not (valid? deck)
-       [:div.float-right.invalid "Invalid deck"])
-     [:h4 (:name deck)]
-     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
-     [:p (get-in deck [:identity :title])]])))
-
 (defn deck-builder [{:keys [decks] :as cursor} owner]
   (reify
     om/IInitState
@@ -296,7 +284,15 @@
            [:div.deck-collection
             (if (empty? decks)
               [:h4 "You have no deck"]
-              [:div (om/build-all deck-view (sort-by :date > decks) {:opts {:ch select-channel}})])]]
+              (for [deck (sort-by :date > decks)]
+                [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
+                                :on-click #(put! select-channel deck)}
+                 [:img {:src (image-url (:identity deck))}]
+                 (when-not (valid? deck)
+                   [:div.float-right.invalid "Invalid deck"])
+                 [:h4 (:name deck)]
+                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+                 [:p (get-in deck [:identity :title])]]))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]

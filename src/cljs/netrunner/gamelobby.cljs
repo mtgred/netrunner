@@ -8,9 +8,8 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-view]]))
+            [netrunner.deckbuilder :refer [valid?]]))
 
-(def select-channel (chan))
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -32,10 +31,6 @@
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
-
-(go (while true
-      (let [deck (<! select-channel)]
-        (send {:action "deck" :gameid (:gameid @app-state) :deck deck}))))
 
 (defn new-game [cursor owner]
   (authenticated
@@ -83,9 +78,14 @@
        (let [players (:players (some #(when (= (:gameid %) gameid) %) games))
              side (:side (some #(when (= (:user %) user) %) players))]
          [:div {:data-dismiss "modal"}
-          (om/build-all deck-view
-                        (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))
-                        {:opts {:ch select-channel}})])]]])))
+          (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
+            [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
+             [:img {:src (image-url (:identity deck))}]
+             (when-not (valid? deck)
+               [:div.float-right.invalid "Invalid deck"])
+             [:h4 (:name deck)]
+             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+             [:p (get-in deck [:identity :title])]])])]]])))
 
 (defn player-view [cursor]
   (om/component
