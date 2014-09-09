@@ -146,15 +146,14 @@
 
         [:div.game-panel
          (if (:editing state)
-           (do
-             [:div
-              [:div.button-bar
-               [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
-               [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
-              [:h4 "Title"]
-              [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                  :value (:title state) :placeholder "Title"}]
-              [:p.flash-message (:flash-message state)]])
+           [:div
+            [:div.button-bar
+             [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
+             [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
+            [:h4 "Title"]
+            [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
+                                :value (:title state) :placeholder "Title"}]
+            [:p.flash-message (:flash-message state)]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
@@ -168,7 +167,9 @@
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
                 [:div.content
                  [:h2 (:title game)]
-                 [:h3 "Players"]
+                 [:h3.float-left "Players"]
+                 (when-not (every? :deck players)
+                   [:div.flash-message "Waiting players deck selection"])
                  [:div.players
                   (for [player (:players game)]
                     [:div
