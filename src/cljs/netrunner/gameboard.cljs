@@ -108,8 +108,8 @@
             (map-indexed
              (fn [i label]
                [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
-                                     (-> (om/get-node owner "abilities") js/$ (.attr "display" "none")))}
-                label])
+                                     (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                      :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
              abilities )]))]))))
 
 (defn label [cursor owner opts]

@@ -1,5 +1,6 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]))
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]
+            [clojure.string :refer [split-lines]]))
 
 (def game-states (atom {}))
 
@@ -225,7 +226,10 @@
   (when (and (or (not uniqueness) (not (in-play? state card)))
              (pay state side :click 1 :credit (:cost card) :memory memoryunits))
     (let [card-def (game.cards/cards title)
-          c (merge card (:data card-def) {:abilities (map :label (:abilities card-def))})]
+          abilities (for [ab (split-lines (:text card))
+                          :let [matches (re-matches #".*: (.*)" ab)] :when matches]
+                      (second matches))
+          c (merge card (:data card-def) {:abilities abilities})]
       (when-let [effect (:effect card-def)]
         (effect state side c))
       (move state side c [:rig (keyword (.toLowerCase type))]))
