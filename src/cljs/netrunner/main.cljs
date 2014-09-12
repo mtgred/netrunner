@@ -44,11 +44,3 @@
           [:a {:href route} (first page)]]))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
-
-(defn handle-swipe [direction]
-  (let [page (.indexOf tokens (first (:active-page @app-state)))]
-    (if (= direction :left)
-      (when (< (inc page) (count tokens))
-        (navigate (nth tokens (inc page))))
-      (when (> page 0)
-        (navigate (nth tokens (dec page)))))))

@@ -236,13 +236,6 @@
       (move state side c [:rig (keyword (.toLowerCase type))]))
     (system-msg state side (str "installs " title))))
 
-(defn create-server [state side card]
-  (let [server (case (:type card)
-                 ("ICE") {:ices [card]}
-                 ("Upgrade") {:upgrades [card]}
-                 ("Agenda" "Asset") {:content card})]
-    (swap! state update-in [:corp :servers :remote] server)))
-
 (defn corp-install [state side card server]
   (let [dest (case server
               "HQ" [:servers :hq]
