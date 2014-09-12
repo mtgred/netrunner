@@ -42,13 +42,14 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn play [{:keys [type] :as card}]
-  (if (#{"Agenda" "Asset" "Upgrade" "ICE"} type)
-    (send-command "play" {:card card})))
-
 (defn handle-card-click [{:keys [type zone abilities] :as card} owner]
   (if (= zone ["hand"])
-    (play card)
+    (case type
+      ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
+      ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                           (send-command "play" {:card card :servers :new})
+                           (-> (om/get-node owner "servers") js/$ .toggle))
+      (send-command "play" {:card card}))
     (if (> (count abilities) 1)
       (-> (om/get-node owner "abilities") js/$ .toggle)
       (send-command "ability" {:card card :ability 0}))))
@@ -58,13 +59,13 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn playable? [{:keys [title side zone cost uniqueness abilities] :as card}]
+(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
-              (>= (:credit me) cost)
+              (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
               (> (:click me) 0)))))
 
 (defn log-pane [messages owner]
@@ -90,15 +91,18 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
-(defn card-view [cursor owner]
+(defn card-view [{:keys [code type] :as cursor} owner {:keys [flipped] :as opts}]
   (om/component
-   (when (:code cursor)
+   (when code
      (sab/html
-      [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+      [:div.blue-shade.card {:on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
+                                                (put! zoom-channel cursor))
                              :on-mouse-leave #(put! zoom-channel false)
                              :on-click #(handle-card-click @cursor owner)}
        (when-let [url (image-url cursor)]
-         [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}])
+         (if flipped
+           [:img.card.bg {:src "/img/corp.png"}]
+           [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]))
        (when-let [counter (:counter cursor)]
          (when (> counter 0)
            [:div.darkbg.counter counter]))
@@ -110,7 +114,19 @@
                [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
                                      (-> (om/get-node owner "abilities") js/$ .fadeOut))
                       :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
-             abilities )]))]))))
+             abilities)]))
+       (when (#{"Agenda" "Asset" "ICE" "Upgrade"} type)
+         (let [centrals ["HQ" "R&D" "Archives"]
+               remotes (conj (range (count (get-in @game-state [:corp :servers :remote]))) "New remote")
+               servers (case type
+                         ("Upgrade" "ICE") (concat centrals remotes)
+                         ("Agenda" "Asset") remotes)]
+           [:div.blue-shade.panel.servers {:ref "servers"}
+            (map-indexed (fn [i label]
+                           [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
+                                                 (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                            label])
+                         servers)]))]))))
 
 (defn label [cursor owner opts]
   (om/component
@@ -152,13 +168,15 @@
 
 (defmulti discard-view #(get-in % [:identity :side]))
 
-(defmethod discard-view "Runner" [{:keys [discard] :as cursor}]
+(defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
+    [:div.panel.blue-shade.discard {:on-click #(-> (om/get-node owner "heap") js/$ .toggle)}
      (om/build label discard {:opts {:name "Heap"}})
      (when-not (empty? discard)
-       (om/build card-view (last discard)))])))
+       (om/build card-view (last discard))
+       [:div.panel.blue-shade.heap {:ref "heap"}
+        (om/build-all cursor card-view)])])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
@@ -222,12 +240,33 @@
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defmulti board-view #(get-in % [:identity :side]))
-
-(defmethod board-view "Corp" [cursor]
+(defn central-server-view [{:keys [ices content] :as cursor}]
   (om/component
    (sab/html
-    [:div {}])))
+    [:div.server
+     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]])))
+
+(defn remote-server-view [{:keys [ices content] :as cursor} owner opts]
+  (om/component
+   (sab/html
+    [:div.remote.server {:class (when (= (:side @game-state) :runner) "opponent")}
+     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]
+     [:div.content
+      (for [card content] (om/build card-view card))
+      (om/build label content {:opts {:name (opts)}})]])))
+
+(defmulti board-view #(get-in % [:identity :side]))
+
+(defmethod board-view "Corp" [{:keys [servers]}]
+  (om/component
+   (sab/html
+    [:div.corp-board
+     (om/build central-server-view (:archive servers))
+     (om/build central-server-view (:rd servers))
+     (om/build central-server-view (:hq servers))
+     (map-indexed (fn [i server]
+                    (om/build remote-server-view server {:opts {:name (str "Remote " i)}}))
+                  (:remote server))])))
 
 (defmethod board-view "Runner" [{:keys [rig]}]
   (om/component

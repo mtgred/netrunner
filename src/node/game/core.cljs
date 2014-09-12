@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]
-            [clojure.string :refer [split-lines]]))
+            [clojure.string :refer [split-lines split]]))
 
 (def game-states (atom {}))
 
@@ -24,8 +24,9 @@
 (defn move [state side card to]
   (when card
     (let [dest (if (sequential? to) to [to])]
-      (swap! state update-in (cons side dest) #(conj % (assoc card :zone dest)))
-      (swap! state update-in (cons side (:zone card)) (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))))
+      (swap! state update-in (cons side dest) #(vec (conj % (assoc card :zone dest))))
+      (swap! state update-in (cons side (:zone card))
+             (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))))
 
 (defn trash [state side card]
   (move state side card :discard))
@@ -235,24 +236,32 @@
       (move state side c [:rig (keyword (.toLowerCase type))]))
     (system-msg state side (str "installs " title))))
 
-(defmulti play #(get-in %3 [:card :type]))
+(defn create-server [state side card]
+  (let [server (case (:type card)
+                 ("ICE") {:ices [card]}
+                 ("Upgrade") {:upgrades [card]}
+                 ("Agenda" "Asset") {:content card})]
+    (swap! state update-in [:corp :servers :remote] server)))
 
-(defmethod play "Event" [state side {:keys [card]}]
-  (play-instant state side card))
+(defn corp-install [state side card server]
+  (let [dest (case server
+              "HQ" [:servers :hq]
+              "R&D" [:servers :rd]
+              "Archives" [:servers :archive]
+              "New remote" [:servers :remote 0]
+              [:servers :remote (-> (split server " ") last .parseInt)])
+        card-type (:type card)
+        slot (case card-type
+               "ICE" :ices
+               "Upgrade" :upgrades
+               ("Agenda" "Asset") :content)
+        cost (if (= card-type "ICE") [:credit (count (get-in @state (cons :corp dest)))])]
+    (when (apply pay (concat [state side :click 1] cost))
+      (system-msg state side (str "installs a" (if (= card-type "ICE") "n ICE" " card") " in " server))
+      (move state side card (conj dest slot)))))
 
-(defmethod play "Operation" [state side {:keys [card]}]
-  (play-instant state side card))
-
-(defmethod play "Hardware" [state side {:keys [card]}]
-  (runner-install state side card))
-
-(defmethod play "Resource" [state side {:keys [card]}]
-  (runner-install state side card))
-
-(defmethod play "Program" [state side {:keys [card]}]
-  (runner-install state side card))
-
-(defmethod play :ICE [state side card])
-(defmethod play :agenda [state side card])
-(defmethod play :asset [state side card])
-(defmethod play :upgrade [state side card])
+(defn play [state side {:keys [card server]}]
+  (case (:type card)
+    ("Event" "Operation") (play-instant state side card)
+    ("Hardware" "Resource" "Program") (runner-install state side card)
+    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server)))

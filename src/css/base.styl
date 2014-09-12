@@ -942,7 +942,7 @@ nav ul
     line-height: 22px
     text-align: center
 
-  .abilities
+  .abilities, .servers
     display: none
     position: absolute
     z-index: 10
@@ -964,6 +964,11 @@ nav ul
 
       &:hover
         border-color: orange
+
+  .servers
+    top: auto
+    width: 120px
+    bottom: -5px
 
   .playable
     cursor: pointer
@@ -987,8 +992,8 @@ nav ul
 
   .dashboard
     .deck, .rfg, > .card, .identity, .discard
-      margin-left: 16px
-      margin-right: 16px
+      margin-left: 15px
+      margin-right: 15px
       flex-shrink: 0
 
   .hand, .scored, .rfg
@@ -1073,18 +1078,41 @@ nav ul
       flex(1)
       display-flex()
       flex-direction(column)
+      margin-left: 72px
 
       > div
         flex(1)
+
+      .runner-board
         padding: 10px
 
-      .blue-shade.card
+      .corp-board
+        display-flex()
+
+        .server
+          margin: 0 3px
+          transform(rotate(180deg))
+
+          .ices
+            width: 86px
+            margin-top: 12px
+
+            > div
+              position: relative
+              left: 13px
+              margin-top: -22px
+              transform(rotate(90deg))
+
+        .server.opponent
+          transform(rotate(0))
+
+      .card-wrapper
         margin-right: 10px
         margin-bottom: 5px
 
     .dashboard
       display-flex()
-      align-items: flex-end
+      align-items(flex-end)
 
   .rightpane
     display-flex()
