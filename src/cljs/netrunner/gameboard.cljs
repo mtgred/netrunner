@@ -117,9 +117,11 @@
              abilities)]))
        (when (#{"Agenda" "Asset" "ICE" "Upgrade"} type)
          (let [centrals ["HQ" "R&D" "Archives"]
-               remotes (conj (range (count (get-in @game-state [:corp :servers :remote]))) "New remote")
+               remotes (conj (map #(str "Server " %)
+                                  (-> (get-in @game-state [:corp :servers :remote]) count range reverse))
+                             "New remote")
                servers (case type
-                         ("Upgrade" "ICE") (concat centrals remotes)
+                         ("Upgrade" "ICE") (concat remotes centrals)
                          ("Agenda" "Asset") remotes)]
            [:div.blue-shade.panel.servers {:ref "servers"}
             (map-indexed (fn [i label]
@@ -240,12 +242,14 @@
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defn server-view [{:keys [ices content] :as cursor}]
+(defn server-view [{:keys [ices content] :as cursor} owner opts]
   (om/component
    (sab/html
-    [:div.server
+    [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
      [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]
-     [:div.content (for [card content] (om/build card-view card {:opts {:flipped false}}))]])))
+     [:div.content {:class (when (= (count content) 1) "center")}
+      (for [card content] (om/build card-view card {:opts {:flipped true}}))
+      (when opts (om/build label content {:opts opts}))]])))
 
 (defmulti board-view #(get-in % [:identity :side]))
 
@@ -256,7 +260,8 @@
      (om/build server-view (:archive servers))
      (om/build server-view (:rd servers))
      (om/build server-view (:hq servers))
-     (map-indexed (fn [i server] (om/build server-view server)) (:remote servers))])))
+     (map-indexed (fn [i server] (om/build server-view server {:opts {:name (str "Server " i)}}))
+                  (:remote servers))])))
 
 (defmethod board-view "Runner" [{:keys [rig]}]
   (om/component

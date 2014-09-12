@@ -992,8 +992,8 @@ nav ul
 
   .dashboard
     .deck, .rfg, > .card, .identity, .discard
-      margin-left: 15px
-      margin-right: 15px
+      margin-left: 16px
+      margin-right: 16px
       flex-shrink: 0
 
   .hand, .scored, .rfg
@@ -1090,7 +1090,7 @@ nav ul
         display-flex()
 
         .server
-          margin: 0 3px
+          margin: 0 4px
           transform(rotate(180deg))
           position: relative
 
@@ -1104,11 +1104,22 @@ nav ul
               margin-top: -22px
               transform(rotate(90deg))
 
+          .content.center
+            left: -13px
+
           .content
             transform(rotate(180deg))
             position: absolute
-            top: -95px
-            left: 12px
+            top: -90px
+            display-flex()
+            width: 86px
+            overflow: hidden
+
+            .card
+              margin-left: -34px
+
+              &:first-child
+                margin-left: -1px
 
         .server.opponent
           transform(rotate(0))
