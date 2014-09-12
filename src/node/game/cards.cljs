@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge
-                               add-counters set-counters once-per-turn] :as core]
+                               add-prop set-prop once-per-turn] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -129,9 +129,10 @@
    "Kati Jones"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]"
-      :effect #(once-per-turn %1 %2 %3 (effect (add-counters card 3)))}
+      :effect #(once-per-turn %1 %2 %3 (effect (add-prop card :counter 3)))}
      {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
-      :effect #(once-per-turn %1 %2 %3 (effect (gain :credit (:counter card)) (set-counters card 0)))}]}
+      :effect #(once-per-turn %1 %2 %3 (effect (gain :credit (:counter card))
+                                               (set-prop card :counter 0)))}]}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
@@ -255,8 +256,10 @@
    {:req (req tagged)}
 
    "Crypsis"
-   {:abilities [{:cost [:click 1] :msg "place 1 virus counter"
-                 :effect (effect (add-counters card 1))}]}
+   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (add-prop card :strengh 1))}
+                {:cost [:click 1] :msg "place 1 virus counter"
+                 :effect (effect (add-prop card :counter 1))}]}
 
    "D4v1d"
    {:data {:counter 3}}
@@ -335,7 +338,7 @@
 
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
-                 :effect (effect (add-counters card 3))}]}
+                 :effect (effect (add-prop card :counter 3))}]}
 
    "Mental Health Clinic"
    {:effect (effect (gain :runner :max-hand-size 1))}

@@ -184,16 +184,16 @@
         [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
     (swap! state assoc-in zone (concat head [card] (rest tail)))))
 
-(defn add-counters [state side card n]
-  (update! state side (update-in card [:counter] #(+ % n))))
+(defn add-prop [state side card key n]
+  (update! state side (update-in card [key] #(+ % n))))
 
-(defn set-counters [state side card n]
-  (update! state side (assoc card :counter n)))
+(defn set-prop [state side card & args]
+  (update! state side (apply assoc (cons card args))))
 
 (defn purge [state side]
   (doseq [card (get-in @state [:runner :rig :program])]
     (when (has? card :subtype "Virus")
-      (set-counters state :runner card 0))))
+      (set-prop state :runner card :counter 0))))
 
 (defn play-ability [state side {:keys [card ability :as args]}]
   (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
