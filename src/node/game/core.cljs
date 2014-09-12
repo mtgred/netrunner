@@ -249,15 +249,21 @@
               "R&D" [:servers :rd]
               "Archives" [:servers :archive]
               "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
-              [:servers :remote (-> (split server " ") last js/parseInt)])
-        card-type (:type card)
-        slot (case card-type
-               "ICE" (conj dest :ices)
-               ("Agenda" "Asset" "Upgrade") (conj dest :content))
-        cost (if (= card-type "ICE") [:credit (count (get-in @state (cons :corp slot)))])]
-    (when (apply pay (concat [state side :click 1] cost))
-      (system-msg state side (str "installs a" (if (= card-type "ICE") "n ICE" " card") " in " server))
-      (move state side card slot))))
+              [:servers :remote (-> (split server " ") last js/parseInt)])]
+    (if (= (:type card) "ICE")
+      (let [slot (conj dest :ices)]
+        (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
+          (move state side card slot)
+          (system-msg state side (str "install an ICE on " server))))
+      (when (pay state side :click 1)
+        (let [slot (conj dest :content)]
+          (when (#{"Asset" "Agenda"} (:type card))
+            (doseq [c (get-in @state (cons :corp slot))]
+              (when (#{"Asset" "Agenda"} (:type c))
+                (trash state side c)
+                (system-msg state side (str "trash a card in " server)))))
+          (move state side card slot))
+        (system-msg state side (str "installs a card in " server))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
