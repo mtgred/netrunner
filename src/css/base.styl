@@ -1092,6 +1092,7 @@ nav ul
         .server
           margin: 0 3px
           transform(rotate(180deg))
+          position: relative
 
           .ices
             width: 86px
@@ -1103,8 +1104,17 @@ nav ul
               margin-top: -22px
               transform(rotate(90deg))
 
+          .content
+            transform(rotate(180deg))
+            position: absolute
+            top: -95px
+            left: 12px
+
         .server.opponent
           transform(rotate(0))
+
+          .content
+            transform(rotate(0))
 
       .card-wrapper
         margin-right: 10px

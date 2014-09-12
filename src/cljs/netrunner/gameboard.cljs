@@ -47,7 +47,7 @@
     (case type
       ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
       ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                           (send-command "play" {:card card :servers :new})
+                           (send-command "play" {:card card :server "New remote"})
                            (-> (om/get-node owner "servers") js/$ .toggle))
       (send-command "play" {:card card}))
     (if (> (count abilities) 1)
@@ -244,7 +244,8 @@
   (om/component
    (sab/html
     [:div.server
-     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]])))
+     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]
+     [:div.content (for [card content] (om/build card-view card {:opts {:flipped false}}))]])))
 
 (defmulti board-view #(get-in % [:identity :side]))
 
