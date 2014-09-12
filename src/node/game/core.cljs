@@ -248,8 +248,8 @@
               "HQ" [:servers :hq]
               "R&D" [:servers :rd]
               "Archives" [:servers :archive]
-              "New remote" [:servers :remote 0]
-              [:servers :remote (-> (split server " ") last .parseInt)])
+              "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
+              [:servers :remote (-> (split server " ") last js/parseInt)])
         card-type (:type card)
         slot (case card-type
                "ICE" :ices

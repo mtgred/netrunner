@@ -240,20 +240,11 @@
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defn central-server-view [{:keys [ices content] :as cursor}]
+(defn server-view [{:keys [ices content] :as cursor}]
   (om/component
    (sab/html
     [:div.server
      [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]])))
-
-(defn remote-server-view [{:keys [ices content] :as cursor} owner opts]
-  (om/component
-   (sab/html
-    [:div.remote.server {:class (when (= (:side @game-state) :runner) "opponent")}
-     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]
-     [:div.content
-      (for [card content] (om/build card-view card))
-      (om/build label content {:opts {:name (opts)}})]])))
 
 (defmulti board-view #(get-in % [:identity :side]))
 
@@ -261,12 +252,10 @@
   (om/component
    (sab/html
     [:div.corp-board
-     (om/build central-server-view (:archive servers))
-     (om/build central-server-view (:rd servers))
-     (om/build central-server-view (:hq servers))
-     (map-indexed (fn [i server]
-                    (om/build remote-server-view server {:opts {:name (str "Remote " i)}}))
-                  (:remote server))])))
+     (om/build server-view (:archive servers))
+     (om/build server-view (:rd servers))
+     (om/build server-view (:hq servers))
+     (map-indexed (fn [i server] (om/build server-view server)) (:remote servers))])))
 
 (defmethod board-view "Runner" [{:keys [rig]}]
   (om/component
