@@ -252,13 +252,12 @@
               [:servers :remote (-> (split server " ") last js/parseInt)])
         card-type (:type card)
         slot (case card-type
-               "ICE" :ices
-               "Upgrade" :upgrades
-               ("Agenda" "Asset") :content)
-        cost (if (= card-type "ICE") [:credit (count (get-in @state (cons :corp dest)))])]
+               "ICE" (conj dest :ices)
+               ("Agenda" "Asset" "Upgrade") (conj dest :content))
+        cost (if (= card-type "ICE") [:credit (count (get-in @state (cons :corp slot)))])]
     (when (apply pay (concat [state side :click 1] cost))
       (system-msg state side (str "installs a" (if (= card-type "ICE") "n ICE" " card") " in " server))
-      (move state side card (conj dest slot)))))
+      (move state side card slot))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
