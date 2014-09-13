@@ -19,7 +19,7 @@
 
 (defn image-url [card]
   (when (or (not (empty? (:imagesrc card))) (= (:type card) "Identity"))
-    (str "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/" (:code card) ".png")))
+    (str "/img/cards/" (:code card) ".png")))
 
 (defn add-symbols [card-text]
   (-> card-text

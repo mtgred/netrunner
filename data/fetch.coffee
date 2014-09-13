@@ -55,17 +55,33 @@ selectFields = (fields, objectList) ->
 request.get baseurl + "sets", (error, response, body) ->
   if !error and response.statusCode is 200
     sets = selectFields(setFields, JSON.parse(body))
-    # db.collection("sets").remove ->
-    # db.collection('sets').insert sets, (err, result) ->
+    db.collection("sets").remove ->
+    db.collection('sets').insert sets, (err, result) ->
     fs.writeFile "sets.json", JSON.stringify(sets), ->
-      # exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
-      exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
+      if mongoUser
+        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
+      else
+        exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
+
+fetchImg = (code, t) ->
+  setTimeout ->
+    console.log code
+    url = "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
+    request(url).pipe(fs.createWriteStream("img/#{code}.png"))
+  , t
 
 request.get baseurl + "cards", (error, response, body) ->
   if !error and response.statusCode is 200
     cards = selectFields(cardFields, JSON.parse(body))
-    # db.collection("cards").remove ->
-    # db.collection("cards").insert cards, (err, result) ->
+    i = 0
+    for card in cards
+      if card.imagesrc and !fs.existsSync("img/#{card.code}.png")
+        fetchImg(card.code, i++ * 200)
+
+    db.collection("cards").remove ->
+    db.collection("cards").insert cards, (err, result) ->
     fs.writeFile "cards.json", JSON.stringify(cards), ->
-      # exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
-      exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
+      if mongoUser
+        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
+      else
+        exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")

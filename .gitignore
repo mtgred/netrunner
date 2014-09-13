@@ -17,6 +17,7 @@ pom.xml
 /resources/public/cljs/
 /resources/public/lib/
 /resources/public/css/
+/resources/public/img/cards
 /data/*.json
-/data/cards
+/data/img
 game.js
