@@ -20,13 +20,14 @@
    "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses"))})
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag"))})
    "play" core/play
+   "rez" core/rez
    "run" core/run
    "ability" core/play-ability})
 
 (defn convert [args]
   (let [params (js->clj args :keywordize-keys true)]
     (if (get-in params [:args :card])
-      (update-in params [:args :card :zone] #(map (fn [k] (keyword k)) %))
+      (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
       params)))
 
 (defn exec [action args]

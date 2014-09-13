@@ -263,3 +263,14 @@
     ("Event" "Operation") (play-instant state side card)
     ("Hardware" "Resource" "Program") (runner-install state side card)
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server)))
+
+(defn rez [state side {:keys [card]}]
+  (when (pay state side :credit (:cost card))
+    (let [card-def (game.cards/cards (:title card))
+          abilities (for [ab (split-lines (:text card))
+                          :let [matches (re-matches #".*: (.*)" ab)] :when matches]
+                      (second matches))]
+      (update! state side (merge card (:data card-def) {:abilities abilities :rezzed true}))
+      (when-let [effect (:effect card-def)]
+        (effect state side card)))
+    (system-msg state side (str "rez " (:title card)))))

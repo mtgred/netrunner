@@ -50,9 +50,11 @@
                            (send-command "play" {:card card :server "New remote"})
                            (-> (om/get-node owner "servers") js/$ .toggle))
       (send-command "play" {:card card}))
-    (if (> (count abilities) 1)
-      (-> (om/get-node owner "abilities") js/$ .toggle)
-      (send-command "ability" {:card card :ability 0}))))
+    (if (or (= (:side card) "Runner") (:rezzed card))
+      (if (> (count abilities) 1)
+        (-> (om/get-node owner "abilities") js/$ .toggle)
+        (send-command "ability" {:card card :ability 0}))
+      (send-command "rez" {:card card}))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -246,9 +248,9 @@
   (om/component
    (sab/html
     [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
-     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped true}}))]
+     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))]
      [:div.content {:class (when (= (count content) 1) "center")}
-      (for [card content] (om/build card-view card {:opts {:flipped true}}))
+      (for [card content] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
       (when opts (om/build label content {:opts opts}))]])))
 
 (defmulti board-view #(get-in % [:identity :side]))
