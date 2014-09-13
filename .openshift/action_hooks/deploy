@@ -1,7 +1,7 @@
 CONFIG_FILE="${OPENSHIFT_DATA_DIR}config.coffee"
 GAME_FILE="${OPENSHIFT_DATA_DIR}game.js"
-IMAGE_DATA_DIR="${OPENSHIFT_DATA_DIR}/img"
-IMAGE_REPO_DIR="${OPENSHIFT_REPO_DIR}/resources/public/img/cards"
+IMAGE_DATA_DIR="${OPENSHIFT_DATA_DIR}img"
+IMAGE_REPO_DIR="${OPENSHIFT_REPO_DIR}resources/public/img/cards"
 
 echo "++++ Deploy ++++"
 
