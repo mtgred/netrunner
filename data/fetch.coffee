@@ -67,7 +67,7 @@ fetchImg = (code, t) ->
   setTimeout ->
     console.log code
     url = "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
-    imgDir = if mongoUser "#{process.env.OPENSHIFT_DATA_DIR}/img" else "img"
+    imgDir = if mongoUser then "#{process.env.OPENSHIFT_DATA_DIR}/img" else "img"
     request(url).pipe(fs.createWriteStream("#{imgDir}/#{code}.png"))
   , t
 
