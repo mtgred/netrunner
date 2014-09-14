@@ -175,12 +175,10 @@
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard {:on-click #(-> (om/get-node owner "heap") js/$ .toggle)}
+    [:div.panel.blue-shade.discard
      (om/build label discard {:opts {:name "Heap"}})
      (when-not (empty? discard)
-       (om/build card-view (last discard))
-       [:div.panel.blue-shade.heap {:ref "heap"}
-        (om/build-all cursor card-view)])])))
+       (om/build card-view (last discard)))])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
