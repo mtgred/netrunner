@@ -52,10 +52,12 @@ html
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
         ga('create', 'UA-20250150-2', 'www.jinteki.net');
-        ga('send', 'pageview');
 
       if user
         script.
-          ga(‘set’, ‘&uid’, '#{user.username}'); // Set the user ID using signed-in user_id.
+          ga('set', '&uid', '#{user.username}');
+
+      script.
+        ga('send', 'pageview');
 
     block js
