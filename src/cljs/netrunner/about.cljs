@@ -17,19 +17,13 @@
 
      [:h3 "Development"]
 
-     [:p "The card browser and deck builder are ready for use. The gameplay functionnalities are currently under development."]
+     [:p "The card browser and deck builder are ready for use. The gameplay functionnalities are currently under development. " [:a {:href "https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx"} "Card implementation status"]]
 
-     [:p "Bug reports and feature suggestions can be filled on "
-      [:a {:href "https://github.com/mtgred/netrunner/issues"} "Github"] "."]
+     [:p "The code is open source and available on "
+      [:a {:href "https://github.com/mtgred/netrunner"} "Github"] "."]
 
-     [:p "Jinteki is built using Clojurescript, React, Socket.io, Node.js. If you are proficient with some of these technologies and would like to contribute to the development, feel free to get in touch."]
-
-     [:h3 "Credits"]
-     [:p "The card data and images are provided by "
-      [:a {:href "http://netrunnerdb.com"} "netrunnerdb.com"]
-      ". Big thanks to "
-      [:a {:href "http://twitter.com/alsciende"} "@alsciende"]
-      " for creating and maintaining such a great website."]
+     [:p "Bug reports and feature suggestions can be submitted "
+      [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"] "."]
 
      [:h3 "Disclaimer"]
      [:p "Netrunner and Android are trademarks of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
