@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge
-                               add-prop set-prop once-per-turn] :as core]
+                               add-prop set-prop once-per-turn system-msg] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -169,6 +169,16 @@
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
 
+   "Order of Sol"
+   {:effect #(add-watch % :order-of-sol
+                        (fn [k ref old new]
+                          (when (zero? (get-in new [:runner :credit]))
+                            (once-per-turn % :runner %3
+                                           (effect (system-msg "gain 1 credit with Order of Sol")
+                                                   (gain :credit 1))
+                                           :order-of-sol))))
+    :leave-play #(remove-watch % :order-of-sol)}
+
    "Paper Tripping"
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
 
@@ -201,8 +211,14 @@
    {:effect (effect (draw 5))}
 
    "Rachel Beckman"
-   {:effect (effect (gain :click 1 :click-per-turn 1))
-    :leave-play (effect (lose :click 1 :click-per-turn 1))}
+   {:effect #(do (gain % :runner :click 1 :click-per-turn 1)
+                 (add-watch % :rachel-beckman
+                            (fn [k ref old new]
+                              (when (> (get-in new [:runner :tag]) 0)
+                                (trash ref :runner %3)
+                                (system-msg ref %2 "trash Rachel Beckman for being tagged")))))
+    :leave-play #(do (remove-watch % :rachel-beckman)
+                     (lose %1 %2 :click 1 :click-per-turn 1))}
 
    "Restructure"
    {:effect (effect (gain :credit 15))}
@@ -234,7 +250,8 @@
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]"
-                 :effect #(once-per-turn %1 %2 %3 (effect (gain :credit 2)))}]}
+                 :effect #(once-per-turn %1 %2 %3 (effect (gain :credit 2)))}]
+    :leave-play (effect (damage :meat 3))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -301,7 +318,8 @@
    {:data {:counter 16}}
 
    "Fall Guy"
-   {:abilities [{:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+   {:abilities [{:effect (effect (trash card)) :msg "prevent another resource from being trashed"}
+                {:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Freelancer"
    {:req (req tagged)}

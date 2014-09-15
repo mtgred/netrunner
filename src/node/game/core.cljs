@@ -21,14 +21,19 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
-(defn move [state side card to]
+(defn move [state side {:keys [zone cid] :as card} to]
   (when card
-    (let [dest (if (sequential? to) to [to])]
-      (swap! state update-in (cons side dest) #(vec (conj % (assoc card :zone dest))))
-      (swap! state update-in (cons side (:zone card))
-             (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))))
+    (let [dest (if (sequential? to) to [to])
+          moved-card (assoc card :zone dest)]
+      (swap! state update-in (cons side dest) #(conj % moved-card))
+      (swap! state update-in (cons side zone)
+             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+      moved-card)))
 
-(defn trash [state side card]
+(defn trash [state side {:keys [title zone] :as card}]
+  (when (#{:servers :rig} (first zone))
+    (when-let [effect (:leave-play (game.cards/cards title))]
+      (effect state side card)))
   (move state side card :discard))
 
 (defn draw
@@ -230,10 +235,10 @@
           abilities (for [ab (split-lines (:text card))
                           :let [matches (re-matches #".*: (.*)" ab)] :when matches]
                       (second matches))
-          c (merge card (:data card-def) {:abilities abilities})]
+          c (merge card (:data card-def) {:abilities abilities})
+          moved-card (move state side c [:rig (keyword (.toLowerCase type))])]
       (when-let [effect (:effect card-def)]
-        (effect state side c))
-      (move state side c [:rig (keyword (.toLowerCase type))]))
+        (effect state side moved-card)))
     (system-msg state side (str "installs " title))))
 
 (defn corp-install [state side card server]
