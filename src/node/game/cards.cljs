@@ -89,8 +89,8 @@
    "Diesel"
    {:effect (effect (draw 3))}
 
-   "Duggar’s"
-   {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
+   "Duggars"
+   {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 card"}]}
 
    "Dyson Mem Chip"
    {:effect (effect (gain :link 1 :memory 1)) :leave-play (effect (lose :link 1 :memory 1))}

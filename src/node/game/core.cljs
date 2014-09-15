@@ -4,6 +4,10 @@
 
 (def game-states (atom {}))
 
+(defn card-def [card]
+  (when-let [title (:title card)]
+    (game.cards/cards (.replace title "'" ""))))
+
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
     (swap! state update-in [:log] #(conj % {:user author :text text}))))
@@ -30,9 +34,9 @@
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
-(defn trash [state side {:keys [title zone] :as card}]
+(defn trash [state side {:keys [zone] :as card}]
   (when (#{:servers :rig} (first zone))
-    (when-let [effect (:leave-play (game.cards/cards title))]
+    (when-let [effect (:leave-play (card-def card))]
       (effect state side card)))
   (move state side card :discard))
 
@@ -127,9 +131,9 @@
                               :brain-damage 0
                               :click-per-turn 4
                               :keep false}})]
-    (when-let [corp-init (game.cards/cards (:title corp-identity))]
+    (when-let [corp-init (card-def corp-identity)]
       ((:effect corp-init) state :corp nil))
-    (when-let [runner-init (game.cards/cards (:title runner-identity))]
+    (when-let [runner-init (card-def runner-identity)]
       ((:effect runner-init) state :runner nil))
     (swap! game-states assoc gameid state)))
 
@@ -147,7 +151,7 @@
   (swap! state update-in [side] #(merge % (side reset-value)))
   (shuffle-into-deck state side :hand)
   (draw state side 5)
-  (when-let [init-fn (get-in game.cards/cards [(get-in @state [side :identity :title])])]
+  (when-let [init-fn (card-def (get-in @state [side :identity]))]
     ((do! init-fn) state side nil))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan"))
@@ -201,7 +205,7 @@
       (set-prop state :runner card :counter 0))))
 
 (defn play-ability [state side {:keys [card ability :as args]}]
-  (let [ab (get-in game.cards/cards [(:title card) :abilities ability])
+  (let [ab (get-in (card-def card) [:abilities ability])
         counter-cost (:counter-cost ab)]
     (when (and (not (get-in @state [:once-per-turn (:cid card)]))
                (<= counter-cost (:counter card))
@@ -214,12 +218,12 @@
         (system-msg state side (str "uses " (:title card) (when desc (str " to " desc))))))))
 
 (defn play-instant [state side {:keys [title] :as card}]
-  (let [card-def (game.cards/cards title)]
-    (when (and (if-let [req (:req card-def)] (req state) true)
+  (let [cdef (card-def card)]
+    (when (and (if-let [req (:req cdef)] (req state) true)
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
-     (system-msg state side (str "plays " (:title card)))
+     (system-msg state side (str "plays " title))
      (move state side card :play-area)
-     (when-let [effect (:effect card-def)]
+     (when-let [effect (:effect cdef)]
        (effect state side card))
      (move state side (first (get-in @state [side :play-area])) :discard))))
 
@@ -231,13 +235,13 @@
 (defn runner-install [state side {:keys [title type memoryunits uniqueness] :as card}]
   (when (and (or (not uniqueness) (not (in-play? state card)))
              (pay state side :click 1 :credit (:cost card) :memory memoryunits))
-    (let [card-def (game.cards/cards title)
+    (let [cdef (card-def card)
           abilities (for [ab (split-lines (:text card))
                           :let [matches (re-matches #".*: (.*)" ab)] :when matches]
                       (second matches))
-          c (merge card (:data card-def) {:abilities abilities})
+          c (merge card (:data cdef) {:abilities abilities})
           moved-card (move state side c [:rig (keyword (.toLowerCase type))])]
-      (when-let [effect (:effect card-def)]
+      (when-let [effect (:effect cdef)]
         (effect state side moved-card)))
     (system-msg state side (str "installs " title))))
 
@@ -271,11 +275,11 @@
 
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
-    (let [card-def (game.cards/cards (:title card))
+    (let [cdef (card-def card)
           abilities (for [ab (split-lines (:text card))
                           :let [matches (re-matches #".*: (.*)" ab)] :when matches]
                       (second matches))]
-      (update! state side (merge card (:data card-def) {:abilities abilities :rezzed true}))
-      (when-let [effect (:effect card-def)]
+      (update! state side (merge card (:data cdef) {:abilities abilities :rezzed true}))
+      (when-let [effect (:effect cdef)]
         (effect state side card)))
     (system-msg state side (str "rez " (:title card)))))
