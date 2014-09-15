@@ -43,18 +43,22 @@
       (.focus input))))
 
 (defn handle-card-click [{:keys [type zone abilities] :as card} owner]
-  (if (= zone ["hand"])
-    (case type
-      ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
-      ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                           (send-command "play" {:card card :server "New remote"})
-                           (-> (om/get-node owner "servers") js/$ .toggle))
-      (send-command "play" {:card card}))
-    (if (or (= (:side card) "Runner") (:rezzed card))
-      (if (> (count abilities) 1)
-        (-> (om/get-node owner "abilities") js/$ .toggle)
-        (send-command "ability" {:card card :ability 0}))
-      (send-command "rez" {:card card}))))
+  (cond
+   (= zone ["hand"]) (case type
+                       ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
+                       ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                                            (send-command "play" {:card card :server "New remote"})
+                                            (-> (om/get-node owner "servers") js/$ .toggle))
+                       (send-command "play" {:card card}))
+   (or (= (first zone) "rig")
+       (and (= (first zone) "server")
+            (:rezzed card))) ((if (> (count abilities) 1)
+                                (-> (om/get-node owner "abilities") js/$ .toggle)
+                                (send-command "ability" {:card card :ability 0})))
+   (and (= (first zone) "server")
+        (not (:rezzed card))) (send-command "rez" {:card card})))
+
+
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
