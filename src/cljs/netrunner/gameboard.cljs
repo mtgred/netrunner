@@ -52,9 +52,9 @@
                        (send-command "play" {:card card}))
    (or (= (first zone) "rig")
        (and (= (first zone) "servers")
-            (:rezzed card))) (if (> (count abilities) 1)
-                               (-> (om/get-node owner "abilities") js/$ .toggle)
-                               (send-command "ability" {:card card :ability 0}))
+            (:rezzed card))) (let [count (count abilities)]
+                               (cond (> count 1) (-> (om/get-node owner "abilities") js/$ .toggle)
+                                     (= count 1) (send-command "ability" {:card card :ability 0})))
    (and (= (first zone) "servers")
         (not (:rezzed card))) (send-command "rez" {:card card})))
 
@@ -250,7 +250,7 @@
     [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
      [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))]
      [:div.content {:class (when (= (count content) 1) "center")}
-      (for [card content] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
+      (for [card (reverse content)] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
       (when opts (om/build label content {:opts opts}))]])))
 
 (defmulti board-view #(get-in % [:identity :side]))
