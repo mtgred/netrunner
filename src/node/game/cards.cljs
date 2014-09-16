@@ -8,6 +8,12 @@
   {"Access to Globalsec"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
 
+   "Adonis Campaign"
+   {:data {:counter 12}
+    :events {:turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
+                           :effect #(do (gain %1 :corp :credit 3)
+                                        (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
+
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
@@ -19,8 +25,7 @@
    {:data {:counter 12}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect #(do (gain %1 :runner :credit 2)
-                              (when (= (:counter %3) 0)
-                                (trash %1 :runner %3)))}]}
+                              (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4))}
@@ -83,6 +88,12 @@
    "CyberSolutions Mem Chip"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
 
+   "Daily Casts"
+   {:data {:counter 8}
+    :events {:turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
+                           :effect #(do (gain %1 :runner :credit 2)
+                                        (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
+
    "Diversified Portfolio"
    {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
 
@@ -97,6 +108,12 @@
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
+
+   "Eve Campaign"
+   {:data {:counter 16}
+    :events {:turn-begins {:msg "gain 3 [Credits]" :counter-cost 2
+                           :effect #(do (gain %1 :corp :credit 2)
+                                        (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
    "Executive Retreat"
    {:data {:counter 1}
@@ -119,6 +136,10 @@
 
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
+
+   "Hard at Work"
+   {:events {:turn-begins {:msg "gain 2 [Credits] and lose [Click]"
+                           :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
@@ -157,17 +178,31 @@
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
+   "Marked Accounts"
+   {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
+                 :effect (effect (add-prop card :counter 3))}]
+    :events {:turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
+                           :effect (effect (gain :credit 1))}}}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
+   "Mental Health Clinic"
+   {:effect (effect (gain :runner :max-hand-size 1))
+    :leave-play (effect (lose :runner :max-hand-size 1))
+    :events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
    "NBN: The World is Yours*"
    {:effect (effect (gain :max-hand-size 1))}
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
+
+   "PAD Campaign"
+   {:events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
@@ -253,16 +288,21 @@
                  :effect #(once-per-turn %1 %2 %3 (effect (gain :credit 2)))}]
     :leave-play (effect (damage :meat 3))}
 
+   "Underworld Contact"
+   {:events {:turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
+                           :effect (effect (gain :credit 1))}}}
+
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}
 
-   ;; partial implementation
-   "Adonis Campaign"
-   {:data {:counter 12}}
+   "Wyldside"
+   {:events {:turn-begins {:msg "draw 2 cards and lose [Click]"
+                           :effect (effect (lose :click 1) (draw 2))}}}
 
+   ;; partial implementation
    "AstroScript Pilot Program"
    {:data {:counter 1}}
 
@@ -280,9 +320,6 @@
 
    "D4v1d"
    {:data {:counter 3}}
-
-   "Daily Casts"
-   {:data {:counter 8}}
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))}
@@ -313,9 +350,6 @@
 
    "Emergency Shutdown"
    {:req (req (some :hq (:successful-run runner-reg)))}
-
-   "Eve Campaign"
-   {:data {:counter 16}}
 
    "Fall Guy"
    {:abilities [{:effect (effect (trash card)) :msg "prevent another resource from being trashed"}
@@ -353,13 +387,6 @@
    "Logos"
    {:effect (effect (gain :memory 1 :max-hand-size 1))
     :leave-play (effect (lose :memory 1 :max-hand-size 1))}
-
-   "Marked Accounts"
-   {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
-                 :effect (effect (add-prop card :counter 3))}]}
-
-   "Mental Health Clinic"
-   {:effect (effect (gain :runner :max-hand-size 1))}
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))}
