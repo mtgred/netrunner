@@ -173,9 +173,8 @@
 
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
-  (let [kw (keyword server)]
-    (swap! state assoc-in [:runner :register :made-run] kw))
-  (system-msg state :runner (str "runs on " server)))
+  (swap! state assoc-in [:runner :register :made-run] true)
+  (system-msg state :runner (str "makes a run on " server)))
 
 (defn update! [state side card]
   (let [zone (cons side (:zone card))

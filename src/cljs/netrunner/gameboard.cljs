@@ -95,6 +95,9 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
+(defn remote-list []
+  (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
+
 (defn card-view [{:keys [code type] :as cursor} owner {:keys [flipped] :as opts}]
   (om/component
    (when code
@@ -121,18 +124,16 @@
              abilities)]))
        (when (#{"Agenda" "Asset" "ICE" "Upgrade"} type)
          (let [centrals ["HQ" "R&D" "Archives"]
-               remotes (conj (map #(str "Server " %)
-                                  (-> (get-in @game-state [:corp :servers :remote]) count range reverse))
-                             "New remote")
+               remotes (conj (remote-list) "New remote")
                servers (case type
                          ("Upgrade" "ICE") (concat remotes centrals)
                          ("Agenda" "Asset") remotes)]
            [:div.blue-shade.panel.servers {:ref "servers"}
-            (map-indexed (fn [i label]
-                           [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
-                                                 (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                            label])
-                         servers)]))]))))
+            (map (fn [label]
+                   [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
+                                         (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                    label])
+                 servers)]))]))))
 
 (defn label [cursor owner opts]
   (om/component
@@ -338,7 +339,16 @@
                                  (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
                                  #(send-command "remove-tag")))
                   (when (= side :runner)
-                    (cond-button "Run" (< (:click me) 1) #(send-command "run")))
+                    [:div.run-button
+                     (cond-button "Run" (< (:click me) 1)
+                                  #(-> (om/get-node owner "servers") js/$ .toggle))
+                     (let [servers (concat (remote-list) ["HQ" "R&D" "Archives"])]
+                       [:div.blue-shade.panel.servers {:ref "servers"}
+                        (map (fn [label]
+                               [:div {:on-click #(do (send-command "run" {:server label})
+                                                     (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                                label])
+                             servers)])])
                   (when (= side :corp)
                     (cond-button "Purge" (< (:click me) 3) #(send-command "purge")))
                   (cond-button "Draw" (< (:click me) 1) #(send-command "draw"))

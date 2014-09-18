@@ -930,6 +930,11 @@ nav ul
     width: 60px
     border-radius: 4px
 
+    .servers
+      top: auto
+      width: 120px
+      bottom: -5px
+
   .counter
     position: absolute
     top: 50%
@@ -964,11 +969,6 @@ nav ul
 
       &:hover
         border-color: orange
-
-  .servers
-    top: auto
-    width: 120px
-    bottom: -5px
 
   .playable
     cursor: pointer
@@ -1045,6 +1045,15 @@ nav ul
     > .panel
       padding: 8px 10px
       margin-left: 0
+
+    .run-button
+      position: relative
+
+      .servers
+        bottom: 0
+        top: auto
+        left: 100px
+        width: 120px
 
     h4
       text-align: center
