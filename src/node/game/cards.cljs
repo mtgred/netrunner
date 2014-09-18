@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge
-                               add-prop set-prop once-per-turn system-msg] :as core]
+                               add-prop set-prop once-per-turn system-msg end-run] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -301,6 +301,144 @@
    "Wyldside"
    {:events {:turn-begins {:msg "draw 2 cards and lose [Click]"
                            :effect (effect (lose :click 1) (draw 2))}}}
+
+   ;; ICE
+   "Bastion"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Chimera"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Curtain Wall"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Data Mine"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1))}]}
+
+   "Datapike"
+   {:abilities [{:label "The runner must pay 2 [Credits] if able"
+                 :msg "force the runner to pay 2 [Credits] if able"
+                 :effect (effect (lose :runner :credit 2))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Eli 1.0"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Enigma"
+   {:abilities [{:label "The runner lose 1 [Click] if able"
+                 :msg "force the runner to lose 1 [Click] if able"
+                 :effect (effect (lose :runner :click 1))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Fenris"
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+    :abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
+                 :effect (effect (damage :brain 1))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Galahad"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Grim"
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
+
+   "Guard"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Himitsu-Bako"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Hive"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Hadrians Wall"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Heimdall 1.0"
+   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
+                 :effect (effect (damage :brain 1))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Heimdall 2.0"
+   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
+                 :effect (effect (damage :brain 1))}
+                {:label "Do 1 brain damage and end the run" :msg "do 1 brain damage and end the run"
+                 :effect (effect (damage :brain 1))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Hourglass"
+   {:abilities [{:msg "force the runner to lose 1 [Click] if able"
+                 :effect (effect (lose :runner :click 1))}]}
+
+   "Ice Wall"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "IQ"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Janus 1.0"
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}
+
+   "Komainu"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
+   "Lotus Field"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Mother Goddess"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Neural Katana"
+   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+
+   "NEXT Bronze"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "NEXT Silver"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Paper Wall"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Quandary"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Rainbow"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Rototurret"
+   {:abilities [{:label "trash 1 program" :msg "trash 1 program"}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Shinobi"
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
+
+   "TMI"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Tollbooth"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Viktor 1.0"
+   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
+                 :effect (effect (damage :brain 1))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Wall of Static"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Wall of Thorns"
+   {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2))}
+                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+
+   "Wraparound"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Wotan"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Yagura"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    ;; partial implementation
    "AstroScript Pilot Program"

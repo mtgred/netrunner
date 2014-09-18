@@ -104,7 +104,7 @@
                             :scored []
                             :rfg []
                             :play-area []
-                            :servers {:hq {} :rd{} :archive {} :remote []}
+                            :servers {:hq {} :rd{} :archives {} :remote []}
                             :click 3
                             :credit 5
                             :bad-publicity 0
@@ -173,8 +173,41 @@
 
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
-  (swap! state assoc-in [:runner :register :made-run] true)
+  (let [s (case server
+            "HQ" [:hq]
+            "R&D" [:rd]
+            "Archives" [:archives]
+            [:remote (last (split server " "))])]
+    (swap! state assoc :run {:server s :position 0})
+    (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
   (system-msg state :runner (str "makes a run on " server)))
+
+(defmulti access #(first %3))
+
+(defmethod access :hq [state side server]
+  ([state side server] (access side server 1))
+  ([state side server n]
+     (let [hq (get-in @state [:corp :servers :hq])]
+       (get hq (rand-int (count hq))))))
+
+(defmethod access :rd
+  ([state side server] (access side server 1))
+  ([state side server n] (take  (get-in @state [:corp :servers :rd]))))
+
+(defmethod access :archives [state side server]
+  (get-in @state [:corp :servers :archives]))
+
+(defmethod access :remote [state side server]
+  (get-in @state [:corp :servers :remote (last server)]))
+
+(defn successful-run [state side]
+  (let [server (get-in @state [:run :server])]
+    (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
+    (access server)))
+
+(defn end-run [state side]
+  (swap! state update-in [:runner :register :unsucessful-run] #(conj % (get-in @state [:run :server])))
+  (swap! state assoc :run nil))
 
 (defn update! [state side card]
   (let [zone (cons side (:zone card))
@@ -263,7 +296,7 @@
   (let [dest (case server
               "HQ" [:servers :hq]
               "R&D" [:servers :rd]
-              "Archives" [:servers :archive]
+              "Archives" [:servers :archives]
               "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
               [:servers :remote (-> (split server " ") last js/parseInt)])]
     (if (= (:type card) "ICE")

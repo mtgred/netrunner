@@ -260,7 +260,7 @@
   (om/component
    (sab/html
     [:div.corp-board
-     (om/build server-view (:archive servers))
+     (om/build server-view (:archives servers))
      (om/build server-view (:rd servers))
      (om/build server-view (:hq servers))
      (map-indexed (fn [i server] (om/build server-view server {:opts {:name (str "Server " i)}}))
