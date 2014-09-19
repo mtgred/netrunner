@@ -30,6 +30,7 @@
           nil))))
 
 (defn send [msg]
+  (try (js/ga "send" "event" "lobby" msg) (catch js/Error e))
   (.emit socket "netrunner" (clj->js msg)))
 
 (defn new-game [cursor owner]

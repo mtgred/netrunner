@@ -120,11 +120,13 @@
   (om/set-state! owner :edit true)
   (deck->str owner)
   (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
+  (try (js/ga "send" "event" "deckbuilder" "edit") (catch js/Error e))
   (go (<! (timeout 500))
       (-> owner (om/get-node "deckname") js/$ .select)))
 
 (defn new-deck [side owner]
   (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
   (edit-deck owner))
 
 (defn end-edit [owner]
@@ -141,6 +143,7 @@
            cards (for [card (:cards deck)]
                    {:qty (:qty card) :card (get-in card [:card :title])})
            data (assoc deck :cards cards)]
+       (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
        (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
              (om/update! cursor :decks (conj decks new-deck))
@@ -163,6 +166,7 @@
   (authenticated
    (fn [user]
      (let [deck (om/get-state owner :deck)]
+       (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
        (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
        (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
        (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
