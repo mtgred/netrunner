@@ -30,6 +30,7 @@
 (defn send-command
   ([command] (send-command command nil))
   ([command args]
+     (try (js/ga "send" "event" "game" command) (catch js/Error e))
      (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
             :command command :args args})))
 

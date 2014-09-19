@@ -19,7 +19,7 @@
 (defn navigate [token]
   (let [page-number (.indexOf tokens token)]
     (.carousel (js/$ ".carousel") page-number))
-  (try (js/ga "send" "pageview") (catch js/Error e))
+  (try (js/ga "send" "pageview" token) (catch js/Error e))
   (.setToken history token)
   (swap! app-state assoc :active-page [token]))
 
