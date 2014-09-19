@@ -1002,7 +1002,6 @@ nav ul
 
   .hand
     width: 382px
-    display-flex()
 
   .card-wrapper
     display: inline-block
@@ -1012,12 +1011,8 @@ nav ul
     &:last-child
       margin-right: 0
 
-  .squeeze
-    .card-wrapper
-      margin: 0 0 0 -18px
-
-      &:first-child
-        margin-left: 0
+  .squeeze .card-wrapper
+    position: absolute
 
   .stats
     > div
@@ -1112,6 +1107,7 @@ nav ul
               left: 13px
               margin-top: -22px
               transform(rotate(90deg))
+              cursor: pointer
 
             .abilities
               transform(rotate(90deg))
