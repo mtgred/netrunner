@@ -29,7 +29,7 @@
   (when card
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]
-      (swap! state update-in (cons side dest) #(conj % moved-card))
+      (swap! state update-in (cons side dest) #(vec (conj % moved-card)))
       (swap! state update-in (cons side zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
@@ -184,15 +184,15 @@
 
 (defmulti access #(first %3))
 
-(defmethod access :hq [state side server]
+(defmethod access :hq
   ([state side server] (access side server 1))
   ([state side server n]
      (let [hq (get-in @state [:corp :servers :hq])]
-       (get hq (rand-int (count hq))))))
+       (take n (shuffle (count hq))))))
 
 (defmethod access :rd
   ([state side server] (access side server 1))
-  ([state side server n] (take  (get-in @state [:corp :servers :rd]))))
+  ([state side server n] (take n (get-in @state [:corp :servers :rd]))))
 
 (defmethod access :archives [state side server]
   (get-in @state [:corp :servers :archives]))
@@ -282,7 +282,7 @@
              (pay state side :click 1 :credit (:cost card) :memory memoryunits))
     (let [cdef (card-def card)
           abilities (for [ab (split-lines (:text card))
-                          :let [matches (re-matches #".*: (.*)" ab)] :when matches]
+                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
                       (second matches))
           c (merge card (:data cdef) {:abilities abilities})
           moved-card (move state side c [:rig (keyword (.toLowerCase type))])]
@@ -324,9 +324,9 @@
   (when (pay state side :credit (:cost card))
     (let [cdef (card-def card)
           abilities (if (= (:type card) "ICE")
-                      (map :label (:abilities cdef))
+                      (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
                       (for [ab (split-lines (:text card))
-                            :let [matches (re-matches #".*: (.*)" ab)] :when matches]
+                            :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
                         (second matches)))
           c (merge card (:data cdef) {:abilities abilities :rezzed true})]
       (update! state side c)

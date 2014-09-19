@@ -51,11 +51,13 @@
                                             (-> (om/get-node owner "servers") js/$ .toggle))
                        (send-command "play" {:card card}))
    (or (= (first zone) "rig")
+       (= (:side @game-state) :runner)
        (and (= (first zone) "servers")
             (:rezzed card))) (let [count (count abilities)]
                                (cond (> count 1) (-> (om/get-node owner "abilities") js/$ .toggle)
                                      (= count 1) (send-command "ability" {:card card :ability 0})))
    (and (= (first zone) "servers")
+        (= (:side @game-state) :corp)
         (not (:rezzed card))) (send-command "rez" {:card card})))
 
 (defn in-play? [card]
