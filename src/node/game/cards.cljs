@@ -407,7 +407,7 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rototurret"
-   {:abilities [{:label "trash 1 program" :msg "trash 1 program"}
+   {:abilities [{:label "Trash 1 program" :msg "trash 1 program"}
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Shinobi"
