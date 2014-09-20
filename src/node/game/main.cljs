@@ -1,7 +1,7 @@
 (ns game.main
   (:require-macros [game.macros :refer [effect]])
   (:require [cljs.nodejs :as node]
-            [game.core :refer [game-states do! system-msg pay gain draw run] :as core]))
+            [game.core :refer [game-states do! system-msg pay gain draw] :as core]))
 
 (aset js/exports "main" game.main)
 (enable-console-print!)
@@ -22,6 +22,8 @@
    "play" core/play
    "rez" core/rez
    "run" core/run
+   "advance" core/advance
+   "score" core/score
    "ability" core/play-ability})
 
 (defn convert [args]

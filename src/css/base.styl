@@ -930,7 +930,7 @@ nav ul
     width: 60px
     border-radius: 4px
 
-    .servers
+    .servers-menu
       top: auto
       width: 120px
       bottom: -5px
@@ -947,7 +947,7 @@ nav ul
     line-height: 22px
     text-align: center
 
-  .abilities, .servers
+  .abilities, .servers-menu
     display: none
     position: absolute
     z-index: 10
@@ -1044,7 +1044,7 @@ nav ul
     .run-button
       position: relative
 
-      .servers
+      .servers-menu
         bottom: 0
         top: auto
         left: 100px
@@ -1123,13 +1123,18 @@ nav ul
             top: -90px
             display-flex()
             width: 86px
-            overflow: hidden
+            height: 86px
 
             .card
               margin-left: -34px
 
               &:first-child
                 margin-left: -1px
+
+              .abilities
+                left: -145px
+                bottom: 85px
+                top: auto
 
         .server.opponent
           transform(rotate(0))

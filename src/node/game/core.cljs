@@ -327,18 +327,33 @@
     ("Hardware" "Resource" "Program") (runner-install state side card)
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server)))
 
+(defn card-init [state side card]
+  (let [cdef (card-def card)
+        abilities (if (= (:type card) "ICE")
+                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
+                    (for [ab (split-lines (:text card))
+                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
+                      (second matches)))
+        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
+    (update! state side c)
+    (when-let [effect (:effect cdef)] (effect state side c))
+    (when-let [events (:events cdef)] (register-events state side events c))
+    c))
+
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
-    (let [cdef (card-def card)
-          abilities (if (= (:type card) "ICE")
-                      (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
-                      (for [ab (split-lines (:text card))
-                            :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                        (second matches)))
-          c (merge card (:data cdef) {:abilities abilities :rezzed true})]
-      (update! state side c)
-      (when-let [effect (:effect cdef)]
-        (effect state side c))
-      (when-let [events (:events cdef)]
-        (register-events state side events c)))
+    (card-init state side card)
     (system-msg state side (str "rez " (:title card)))))
+
+(defn advance [state side {:keys [card]}]
+  (when (pay state side :click 1 :credit 1)
+    (add-prop state side card :counter 1)
+    (system-msg state side "advance a card")))
+
+(defn score [state side {:keys [card]}]
+  (let [c (card-init state side (assoc card :counter nil))]
+    (move state side c :scored)
+    (swap! state update-in [:corp :agenda-point] #(+ % (:agendapoints c)))
+    (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points")))
+  (when (>= (get-in @state [:corp :agenda-point]) 7)
+    (system-msg state side "wins the game")))

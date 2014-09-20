@@ -43,7 +43,7 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn handle-card-click [{:keys [type zone abilities] :as card} owner]
+(defn handle-card-click [{:keys [type zone abilities counter advancementcost] :as card} owner]
   (cond
    (= zone ["hand"]) (case type
                        ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
@@ -51,15 +51,19 @@
                                             (send-command "play" {:card card :server "New remote"})
                                             (-> (om/get-node owner "servers") js/$ .toggle))
                        (send-command "play" {:card card}))
-   (or (= (first zone) "rig")
-       (= (:side @game-state) :runner)
+   (or (and (= (first zone) "rig") (= (:side @game-state) :runner))
        (and (= (first zone) "servers")
+            (= (:side @game-state) :corp)
             (:rezzed card))) (let [count (count abilities)]
                                (cond (> count 1) (-> (om/get-node owner "abilities") js/$ .toggle)
                                      (= count 1) (send-command "ability" {:card card :ability 0})))
    (and (= (first zone) "servers")
         (= (:side @game-state) :corp)
-        (not (:rezzed card))) (send-command "rez" {:card card})))
+        (not (:rezzed card))) (if (= type "Agenda")
+                                (if (>= counter advancementcost)
+                                  (-> (om/get-node owner "agenda") js/$ .toggle)
+                                  (send-command "advance" {:card card}))
+                                (send-command "rez" {:card card}))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -101,7 +105,7 @@
 (defn remote-list []
   (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
 
-(defn card-view [{:keys [code type] :as cursor} owner {:keys [flipped] :as opts}]
+(defn card-view [{:keys [zone code type counter advancementcost] :as cursor} owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
@@ -125,18 +129,22 @@
                                      (-> (om/get-node owner "abilities") js/$ .fadeOut))
                       :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
              abilities)]))
-       (when (#{"Agenda" "Asset" "ICE" "Upgrade"} type)
+       (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
          (let [centrals ["HQ" "R&D" "Archives"]
                remotes (conj (remote-list) "New remote")
                servers (case type
                          ("Upgrade" "ICE") (concat remotes centrals)
                          ("Agenda" "Asset") remotes)]
-           [:div.blue-shade.panel.servers {:ref "servers"}
+           [:div.blue-shade.panel.servers-menu {:ref "servers"}
             (map (fn [label]
                    [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
                                          (-> (om/get-node owner "servers") js/$ .fadeOut))}
                     label])
-                 servers)]))]))))
+                 servers)]))
+       (when (and (= (first zone) "servers") (= type "Agenda") (>= counter advancementcost))
+         [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
+          [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
+          [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]])]))))
 
 (defn label [cursor owner opts]
   (om/component
@@ -202,7 +210,7 @@
    (sab/html
     (let [size (count rfg)]
       (when (> size 0)
-        [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
+        [:div.panel.blue-shade.rfg {:class (when (> size 3) "squeeze")}
          (om/build label rfg {:opts {:name "Removed"}})
          (map-indexed (fn [i card]
                         (sab/html
@@ -214,7 +222,7 @@
   (om/component
    (sab/html
     (let [size (count scored)]
-      [:div.panel.blue-shade.scored {:class (when (> size 2) "squeeze")}
+      [:div.panel.blue-shade.scored {:class (when (> size 3) "squeeze")}
        (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
                       (sab/html
