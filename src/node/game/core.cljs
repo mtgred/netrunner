@@ -82,8 +82,9 @@
 (defn change [state side {:keys [key delta]}]
   (let [kw (keyword (.toLowerCase key))]
     (swap! state update-in [side kw] (partial + delta))
-    (system-msg state side (str "sets " key " to " (get-in @state [side kw])
-                                " (" (if (> delta 0) (str "+" delta) delta) ")"))))
+    (system-msg state side
+                (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
+                     " (" (if (> delta 0) (str "+" delta) delta) ")"))))
 
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [c] (assoc c :cid (make-cid))) (repeat (:qty %) (:card %)))

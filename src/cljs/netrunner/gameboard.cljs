@@ -238,7 +238,8 @@
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
-(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage max-hand-size]} owner]
+(defmethod stats-view "Runner" [{:keys [user click credit memory link tag brain-damage agenda-point
+                                        max-hand-size]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
@@ -248,12 +249,14 @@
        [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
        [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
+       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+        (when me? (controls :agenda-point))]
        [:div (str tag " Tag" (if (> tag 1) "s" "")) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit bad-publicity max-hand-size]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity max-hand-size]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
@@ -261,6 +264,8 @@
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
+       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+        (when me? (controls :agenda-point))]
        [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
