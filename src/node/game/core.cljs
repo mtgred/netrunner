@@ -25,6 +25,10 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
+(defn can-move? [state side {:keys [cid] :as card} to]
+  (let [dest (if (sequential? to) to [to])]
+    (not (some #(= (:cid %) cid) (get-in @state (cons side to))))))
+
 (defn move [state side {:keys [zone cid] :as card} to]
   (when card
     (let [dest (if (sequential? to) to [to])
@@ -277,20 +281,22 @@
   (doseq [e events]
     (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
 
-(defn runner-install [state side {:keys [title type memoryunits uniqueness] :as card}]
-  (when (and (or (not uniqueness) (not (in-play? state card)))
-             (pay state side :click 1 :credit (:cost card) :memory memoryunits))
-    (let [cdef (card-def card)
-          abilities (for [ab (split-lines (:text card))
-                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                      (second matches))
-          c (merge card (:data cdef) {:abilities abilities})
-          moved-card (move state side c [:rig (keyword (.toLowerCase type))])]
-      (when-let [effect (:effect cdef)]
-        (effect state side moved-card))
-      (when-let [events (:events cdef)]
-        (register-events state side events moved-card)))
-    (system-msg state side (str "installs " title))))
+(defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
+  (let [dest [:rig (keyword (.toLowerCase type))]]
+    (when (and (can-move? state side card dest)
+               (or (not uniqueness) (not (in-play? state card)))
+               (pay state side :click 1 :credit cost :memory memoryunits))
+      (let [cdef (card-def card)
+            abilities (for [ab (split-lines (:text card))
+                            :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
+                        (second matches))
+            c (merge card (:data cdef) {:abilities abilities})
+            moved-card (move state side c dest)]
+        (when-let [effect (:effect cdef)]
+          (effect state side moved-card))
+        (when-let [events (:events cdef)]
+          (register-events state side events moved-card)))
+      (system-msg state side (str "installs " title)))))
 
 (defn corp-install [state side card server]
   (let [dest (case server
@@ -304,15 +310,16 @@
         (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
           (move state side card slot)
           (system-msg state side (str "install an ICE on " server))))
-      (when (pay state side :click 1)
-        (let [slot (conj dest :content)]
+      (let [slot (conj dest :content)]
+        (when (and (can-move? state side card slot)
+                   (pay state side :click 1))
           (when (#{"Asset" "Agenda"} (:type card))
             (doseq [c (get-in @state (cons :corp slot))]
               (when (#{"Asset" "Agenda"} (:type c))
                 (trash state side c)
                 (system-msg state side (str "trash a card in " server)))))
-          (move state side card slot))
-        (system-msg state side (str "installs a card in " server))))))
+          (move state side card slot)))
+      (system-msg state side (str "installs a card in " server)))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
