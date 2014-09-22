@@ -173,8 +173,7 @@
   (doseq [r (partition 2 args)]
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
-      (when (>= (get-in @state [side (first r)]) (last r))
-        (swap! state update-in [side (first r)] #(- % (last r)))))))
+      (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
 
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)

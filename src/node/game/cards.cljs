@@ -78,7 +78,7 @@
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
    "Corporate War"
-   {:effect #(if (> (get-in % [:corp :credit]) 6)
+   {:effect #(if (> (get-in @% [:corp :credit]) 6)
                (gain % :corp :credit 7)
                (lose % :corp :credit :all))}
 
@@ -116,13 +116,12 @@
                                         (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
    "Executive Retreat"
-   {:data {:counter 1}
-    :abilities [{:cost [:click 1] :counter-cost 1
-                 :effect (effect (shuffle-into-deck :hand) (draw 5))}]}
+   {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
+    :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Geothermal Fracking"
    {:data {:counter 2}
-    :abilities [{:cost [:click 1] :counter-cost 1
+    :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
                  :effect (effect (gain :credit 7 :bad-publicity 1))}]}
 
    "Gila Hands Arcology"
@@ -318,7 +317,7 @@
    "Datapike"
    {:abilities [{:label "The runner must pay 2 [Credits] if able"
                  :msg "force the runner to pay 2 [Credits] if able"
-                 :effect (effect (lose :runner :credit 2))}
+                 :effect (effect (pay :runner :credit 2))}
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Eli 1.0"
