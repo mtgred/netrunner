@@ -218,7 +218,7 @@
          (om/build label rfg {:opts {:name "Removed"}})
          (map-indexed (fn [i card]
                         (sab/html
-                         [:div.card-wrapper {:style {:left (* (/ 100 (dec size)) i)}}
+                         [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
                           [:div (om/build card-view card)]]))
                       rfg)])))))
 
@@ -230,7 +230,7 @@
        (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
                       (sab/html
-                       [:div.card-wrapper {:style {:left (* (/ 100 (dec size)) i)}}
+                       [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
                         [:div (om/build card-view card)]]))
                     scored)]))))
 
@@ -372,7 +372,7 @@
                      (cond-button "Run" (< (:click me) 1)
                                   #(-> (om/get-node owner "servers") js/$ .toggle))
                      (let [servers (concat (remote-list) ["HQ" "R&D" "Archives"])]
-                       [:div.blue-shade.panel.servers {:ref "servers"}
+                       [:div.blue-shade.panel.servers-menu {:ref "servers"}
                         (map (fn [label]
                                [:div {:on-click #(do (send-command "run" {:server label})
                                                      (-> (om/get-node owner "servers") js/$ .fadeOut))}
