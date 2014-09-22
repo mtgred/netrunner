@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge
-                               add-prop set-prop once-per-turn system-msg end-run] :as core]
+  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
+                               set-prop once system-msg end-run unregister-event] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -100,6 +100,11 @@
    "Diesel"
    {:effect (effect (draw 3))}
 
+   "Domestic Sleepers"
+   {:abilities [{:cost [:click 3]
+                 :effect #(do (when (zero? (:counter %3)) (gain :agenda-point 1))
+                              (add-prop %1 %2 %3 :counter 1))}]}
+
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 card"}]}
 
@@ -146,12 +151,17 @@
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
+   "House of Knives"
+   {:data {:counter 3}
+    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @%))
+                 :effect #(once %1 %2 %3 :per-run (effect (damage :net 1)))}]}
+
    "Kati Jones"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]"
-      :effect #(once-per-turn %1 %2 %3 (effect (add-prop card :counter 3)))}
+      :effect #(once %1 %2 %3 :per-turn (effect (add-prop card :counter 3)))}
      {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
-      :effect #(once-per-turn %1 %2 %3 (effect (gain :credit (:counter card))
+      :effect #(once %1 %2 %3 :per-turn (effect (gain :credit (:counter card))
                                                (set-prop card :counter 0)))}]}
 
    "Lawyer Up"
@@ -165,8 +175,7 @@
    {:data {:counter 16}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
                  :effect #(do (gain %1 :runner :credit 4)
-                              (when (= (:counter %3) 0)
-                                (trash %1 :runner %3)))}]}
+                              (when (= (:counter %3) 0) (trash %1 :runner %3)))}]}
 
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
@@ -207,10 +216,9 @@
    {:effect #(add-watch % :order-of-sol
                         (fn [k ref old new]
                           (when (zero? (get-in new [:runner :credit]))
-                            (once-per-turn % :runner %3
-                                           (effect (system-msg "gain 1 credit with Order of Sol")
-                                                   (gain :credit 1))
-                                           :order-of-sol))))
+                            (once % :runner %3 :per-turn
+                                  (effect (system-msg "gain 1 credit with Order of Sol") (gain :credit 1))
+                                  :order-of-sol))))
     :leave-play #(remove-watch % :order-of-sol)}
 
    "Paper Tripping"
@@ -262,7 +270,7 @@
 
    "Subliminal Messaging"
    {:effect #(do (gain % :corp :credit 1)
-                 (once-per-turn %1 %2 %3 (effect (gain :click 1)) :subliminal-messaging))}
+                 (once %1 %2 %3 :per-turn (effect (gain :click 1)) :subliminal-messaging))}
 
    "Successful Demonstration"
    {:req (req (:unsucessful-run runner-reg)) :effect (gain :credit 7)}
@@ -284,7 +292,7 @@
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]"
-                 :effect #(once-per-turn %1 %2 %3 (effect (gain :credit 2)))}]
+                 :effect #(once %1 %2 %3 :per-turn (effect (gain :credit 2)))}]
     :leave-play (effect (damage :meat 3))}
 
    "Underworld Contact"
@@ -449,6 +457,11 @@
    "Bad Times"
    {:req (req tagged)}
 
+   "Breaking News"
+   {:effect (effect (gain :runner :tag 2))
+    :events {:turn-end {:effect #(do (lose %1 :runner :tag 2)
+                                     (unregister-event %1 %2 :turn-ends %3))}}}
+
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (add-prop card :strengh 1))}
@@ -495,14 +508,15 @@
    "Freelancer"
    {:req (req tagged)}
 
+   "Ghost Runner"
+   {:data {:counter 3}
+    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @%))
+                 :effect #(do (gain %1 :credit 1)
+                              (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
+
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
                  :msg (msg "gain " (:counter card) " [Credits]")}]}
-
-   "House of Knives"
-   {:data {:counter 3}
-    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (damage :net 1))
-                 :msg "do 1 Net damage"}]}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))}
@@ -510,7 +524,7 @@
    "Imp"
    {:data {:counter 2}
     :abilities [{:counter-cost 1 :msg "trash at no cost"
-                 :effect #(once-per-turn %1 %2 %3 (fn []))}]}
+                 :effect #(once %1 %2 %3 :per-turn (fn []))}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}]}

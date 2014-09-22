@@ -72,11 +72,11 @@
       (effect state side args)
       false)))
 
-(defn once-per-turn
-  ([state side card f] (once-per-turn state side card f (:cid card)))
-  ([state side card f key]
-     (when-not (get-in @state [:once-per-turn key])
-       (swap! state assoc-in [:once-per-turn key] true)
+(defn once
+  ([state side card per f] (once state side card per f (:cid card)))
+  ([state side card per f key]
+     (when-not (get-in @state [per key])
+       (swap! state assoc-in [per key] true)
        (f state side card))))
 
 (defn change [state side {:keys [key delta]}]
@@ -182,7 +182,7 @@
             "R&D" [:rd]
             "Archives" [:archives]
             [:remote (last (split server " "))])]
-    (swap! state assoc :run {:server s :position 0})
+    (swap! state assoc :run {:server s :position 0} :per-run nil)
     (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
   (system-msg state :runner (str "makes a run on " server)))
 
@@ -238,17 +238,28 @@
   (some #(when (= (:cid card) (:cid %)) %)
         (get-in @state (cons (keyword (.toLowerCase (:side card))) (:zone card)))))
 
+(defn register-events [state side events card]
+  (doseq [e events]
+    (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
+
+(defn unregister-event [state side event card]
+  (swap! state update-in [side :events event] #(remove (fn [effect] (= (:card effect) card)) %)))
+
+(defn trigger-event [state side event]
+  (doseq [e (get-in @state [side :events event])]
+    (resolve-ability state side (:ability e) (get-card state (:card e)))))
+
 (defn start-turn [state side]
   (system-msg state side (str "started his or her turn"))
-  (swap! state assoc :active-player side :once-per-turn nil :end-turn false)
+  (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
-  (doseq [e (get-in @state [side :events :turn-begins])]
-    (resolve-ability state side (:ability e) (get-card state (:card e))))
+  (trigger-event state side :turn-begins)
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
-  (swap! state assoc :end-turn true)
+  (trigger-event state side :turn-ends)
+  (swap! state assoc :turn-ends true)
   (system-msg state side (str "is ending his or her turn")))
 
 (defn add-prop [state side card key n]
@@ -276,10 +287,6 @@
   (let [dest (when (= (:side card) "Runner")
                (get-in @state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
-
-(defn register-events [state side events card]
-  (doseq [e events]
-    (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
 
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
   (let [dest [:rig (keyword (.toLowerCase type))]]
