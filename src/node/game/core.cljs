@@ -225,7 +225,7 @@
 (defn update! [state side card]
   (let [zone (cons side (:zone card))
         [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
-    (swap! state assoc-in zone (concat head [card] (rest tail)))))
+    (swap! state assoc-in zone (vec (concat head [card] (rest tail))))))
 
 (defn resolve-ability [state side {:keys [counter-cost cost effect msg req] :as ability}
                        {:keys [title cid counter] :as card}]
