@@ -51,6 +51,13 @@
        (swap! state update-in [side :hand] #(concat % drawn)))
      (swap! state update-in [side :deck] (partial drop n))))
 
+(defn mill
+  ([state side] (mill state side 1))
+  ([state side n]
+     (let [milled (zone :discard (take n (get-in @state [side :deck])))]
+       (swap! state update-in [side :discard] #(concat % milled)))
+     (swap! state update-in [side :deck] (partial drop n))))
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
@@ -116,6 +123,7 @@
                             :agenda-point 0
                             :max-hand-size 5
                             :click-per-turn 3
+                            :agenda-point-req 7
                             :keep false}
                      :runner {:user (:user runner)
                               :identity runner-identity
@@ -135,6 +143,7 @@
                               :max-hand-size 5
                               :brain-damage 0
                               :click-per-turn 4
+                              :agenda-point-req 7
                               :keep false}})]
     (when-let [corp-init (card-def corp-identity)]
       ((:effect corp-init) state :corp nil))
@@ -183,7 +192,7 @@
             "Archives" [:archives]
             [:remote (last (split server " "))])]
     (swap! state assoc :run {:server s :position 0} :per-run nil)
-    (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
+    (swap! state update-in [:runner :register :made-run] #(conj % server)))
   (system-msg state :runner (str "makes a run on " server)))
 
 (defmulti access #(first %3))
@@ -275,7 +284,7 @@
 
 (defn play-instant [state side {:keys [title] :as card}]
   (let [cdef (card-def card)]
-    (when (and (if-let [req (:req cdef)] (req state) true)
+    (when (and (if-let [req (:req cdef)] (req state card) true)
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
      (system-msg state side (str "plays " title))
      (move state side card :play-area)
@@ -289,12 +298,13 @@
     (some #(= (:title %) (:title card)) dest)))
 
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
-  (let [dest [:rig (keyword (.toLowerCase type))]]
+  (let [dest [:rig (keyword (.toLowerCase type))]
+        cdef (card-def card)]
     (when (and (can-move? state side card dest)
                (or (not uniqueness) (not (in-play? state card)))
+               (if-let [req (:req cdef)] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
-      (let [cdef (card-def card)
-            abilities (for [ab (split-lines (:text card))
+      (let [abilities (for [ab (split-lines (:text card))
                             :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
                         (second matches))
             c (merge card (:data cdef) {:abilities abilities})
@@ -360,7 +370,8 @@
 (defn score [state side {:keys [card]}]
   (let [c (card-init state side (assoc card :counter nil))]
     (move state side c :scored)
-    (swap! state update-in [:corp :agenda-point] #(+ % (:agendapoints c)))
+    (swap! state update-in [side :agenda-point] #(+ % (:agendapoints c)))
     (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points")))
-  (when (>= (get-in @state [:corp :agenda-point]) 7)
-    (system-msg state side "wins the game")))
+  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+    (system-msg state side "wins the game"))
+  (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen)))

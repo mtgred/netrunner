@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop once system-msg end-run unregister-event] :as core]
+                               set-prop once system-msg end-run unregister-event mill] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -94,6 +94,10 @@
                            :effect #(do (gain %1 :runner :credit 2)
                                         (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
+   "Data Leak Reversal"
+   {:req (req (some #{"HQ" "R&D" "Archives"} (:successful-run runner-reg)))
+    :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
+
    "Diversified Portfolio"
    {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
 
@@ -145,6 +149,9 @@
    {:events {:turn-begins {:msg "gain 2 [Credits] and lose [Click]"
                            :effect (effect (lose :click 1) (gain :credit 2))}}}
 
+   "Harmony Medtech: Biomedical Pioneer"
+   {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))}
+
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
 
@@ -153,7 +160,7 @@
 
    "House of Knives"
    {:data {:counter 3}
-    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @%))
+    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state))
                  :effect #(once %1 %2 %3 :per-run (effect (damage :net 1)))}]}
 
    "Kati Jones"
@@ -192,6 +199,9 @@
     :events {:turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
                            :effect (effect (gain :credit 1))}}}
 
+   "Market Research"
+   {:req (req tagged) :effect (effect (gain :agenda-point 1))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -208,6 +218,10 @@
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
+
+   "Nisei MK II"
+   {:data {:counter 1}
+    :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
 
    "PAD Campaign"
    {:events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -420,6 +434,9 @@
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
 
+   "Swordsman"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
    "TMI"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -510,7 +527,7 @@
 
    "Ghost Runner"
    {:data {:counter 3}
-    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @%))
+    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect #(do (gain %1 :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
