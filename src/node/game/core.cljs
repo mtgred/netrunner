@@ -58,6 +58,56 @@
        (swap! state update-in [side :discard] #(concat % milled)))
      (swap! state update-in [side :deck] (partial drop n))))
 
+(defn get-card [state {:keys [cid zone side] :as card}]
+  (if zone
+    (some #(when (= cid (:cid %)) %) (get-in @state (cons (keyword (.toLowerCase side)) zone)))
+    card))
+
+(defn update! [state side card]
+  (if (= (:type card) "Identity")
+    (swap! state assoc-in [side :identity] card)
+    (let [zone (cons side (:zone card))
+          [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
+      (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
+
+(defn resolve-ability [state side {:keys [counter-cost cost effect msg req] :as ability}
+                       {:keys [title cid counter] :as card}]
+  (when (and (not (get-in @state [:once-per-turn cid]))
+             (or (not req) (req state))
+             (<= counter-cost counter)
+             (apply pay (concat [state side] cost)))
+    (when (>= counter-cost (:counter card))
+      (let [c (update-in card [:counter] #(- % counter-cost))]
+        (update! state side c)
+        (effect state side c)))
+    (when msg
+      (let [desc (if (string? msg) msg (msg state side card))]
+        (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
+
+(defn register-events [state side events card]
+  (doseq [e events]
+    (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
+
+(defn unregister-event [state side event card]
+  (swap! state update-in [side :events event] #(remove (fn [effect] (= (:card effect) card)) %)))
+
+(defn trigger-event [state side event]
+  (doseq [e (get-in @state [side :events event])]
+    (resolve-ability state side (:ability e) (get-card state (:card e)))))
+
+(defn card-init [state side card]
+  (let [cdef (card-def card)
+        abilities (if (= (:type card) "ICE")
+                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
+                    (for [ab (split-lines (:text card))
+                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
+                      (second matches)))
+        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
+    (update! state side c)
+    (when-let [effect (:effect cdef)] (effect state side c))
+    (when-let [events (:events cdef)] (register-events state side events c))
+    c))
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
@@ -102,8 +152,8 @@
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
         runner-deck (create-deck (:deck runner))
-        corp-identity (or (get-in corp [:deck :identity]) {:side "Corp"})
-        runner-identity (or (get-in runner [:deck :identity]) {:side "Runner"})
+        corp-identity (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"})
+        runner-identity (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"})
         state (atom {:gameid gameid
                      :log []
                      :active-player :runner
@@ -145,10 +195,8 @@
                               :click-per-turn 4
                               :agenda-point-req 7
                               :keep false}})]
-    (when-let [corp-init (card-def corp-identity)]
-      ((:effect corp-init) state :corp nil))
-    (when-let [runner-init (card-def runner-identity)]
-      ((:effect runner-init) state :runner nil))
+    (card-init state :corp corp-identity)
+    (card-init state :runner runner-identity)
     (swap! game-states assoc gameid state)))
 
 (def reset-value
@@ -165,8 +213,8 @@
   (swap! state update-in [side] #(merge % (side reset-value)))
   (shuffle-into-deck state side :hand)
   (draw state side 5)
-  (when-let [init-fn (card-def (get-in @state [side :identity]))]
-    ((do! init-fn) state side nil))
+  (when-let [cdef (card-def (get-in @state [side :identity]))]
+    (when-let [effect (:effect cdef)] (effect state side nil)))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan"))
 
@@ -222,41 +270,8 @@
   (swap! state update-in [:runner :register :unsucessful-run] #(conj % (get-in @state [:run :server])))
   (swap! state assoc :run nil))
 
-(defn update! [state side card]
-  (let [zone (cons side (:zone card))
-        [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
-    (swap! state assoc-in zone (vec (concat head [card] (rest tail))))))
-
-(defn resolve-ability [state side {:keys [counter-cost cost effect msg req] :as ability}
-                       {:keys [title cid counter] :as card}]
-  (when (and (not (get-in @state [:once-per-turn cid]))
-             (or (not req) (req state))
-             (<= counter-cost counter)
-             (apply pay (concat [state side] cost)))
-    (let [c (update-in card [:counter] #(- % counter-cost))]
-      (update! state side c)
-      (effect state side c))
-    (when msg
-      (let [desc (if (string? msg) msg (msg state side card))]
-        (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
-
 (defn play-ability [state side {:keys [card ability] :as args}]
   (resolve-ability state side (get-in (card-def card) [:abilities ability]) card))
-
-(defn get-card [state card]
-  (some #(when (= (:cid card) (:cid %)) %)
-        (get-in @state (cons (keyword (.toLowerCase (:side card))) (:zone card)))))
-
-(defn register-events [state side events card]
-  (doseq [e events]
-    (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
-
-(defn unregister-event [state side event card]
-  (swap! state update-in [side :events event] #(remove (fn [effect] (= (:card effect) card)) %)))
-
-(defn trigger-event [state side event]
-  (doseq [e (get-in @state [side :events event])]
-    (resolve-ability state side (:ability e) (get-card state (:card e)))))
 
 (defn start-turn [state side]
   (system-msg state side (str "started his or her turn"))
@@ -343,19 +358,6 @@
     ("Event" "Operation") (play-instant state side card)
     ("Hardware" "Resource" "Program") (runner-install state side card)
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server)))
-
-(defn card-init [state side card]
-  (let [cdef (card-def card)
-        abilities (if (= (:type card) "ICE")
-                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
-                    (for [ab (split-lines (:text card))
-                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                      (second matches)))
-        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
-    (update! state side c)
-    (when-let [effect (:effect cdef)] (effect state side c))
-    (when-let [events (:events cdef)] (register-events state side events c))
-    c))
 
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))

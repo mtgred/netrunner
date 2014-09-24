@@ -163,6 +163,10 @@
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state))
                  :effect #(once %1 %2 %3 :per-run (effect (damage :net 1)))}]}
 
+   "Jinteki: Personal Evolution"
+   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
+             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+
    "Kati Jones"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]"
