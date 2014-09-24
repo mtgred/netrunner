@@ -268,7 +268,7 @@
 
 (defn end-turn [state side]
   (trigger-event state side :turn-ends)
-  (swap! state assoc :turn-ends true)
+  (swap! state assoc :end-turn true)
   (system-msg state side (str "is ending his or her turn")))
 
 (defn add-prop [state side card key n]
