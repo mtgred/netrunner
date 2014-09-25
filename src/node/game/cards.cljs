@@ -229,7 +229,7 @@
 
    "Noise: Hacker Extraordinaire"
    {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
-                              :req (req (has? (first targets) :subtype "Virus"))}}}
+                              :req (req (has? target :subtype "Virus"))}}}
 
    "PAD Campaign"
    {:events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -326,7 +326,7 @@
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
-                              :req (req (has? (first targets) :subtype "Transaction"))}}}
+                              :req (req (has? target :subtype "Transaction"))}}}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}

@@ -8,6 +8,7 @@
                          expr)]
         `(let ~['runner '(:runner @state)
                 'corp '(:corp @state)
+                'target '(first targets)
                 'register '(:register @state)]
            ~@actions))))
 
@@ -17,6 +18,7 @@
             'corp '(:corp @state)
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
+            'target '(first targets)
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
 
