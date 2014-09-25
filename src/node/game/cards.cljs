@@ -227,6 +227,10 @@
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
 
+   "Noise: Hacker Extraordinaire"
+   {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
+                              :req (req (has? (first targets) :subtype "Virus"))}}}
+
    "PAD Campaign"
    {:events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
@@ -319,6 +323,10 @@
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
+
+   "Weyland Consortium: Building a Better World"
+   {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
+                              :req (req (has? (first targets) :subtype "Transaction"))}}}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}

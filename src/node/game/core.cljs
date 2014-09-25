@@ -41,7 +41,7 @@
 (defn trash [state side {:keys [zone] :as card}]
   (when (#{:servers :rig} (first zone))
     (when-let [effect (:leave-play (card-def card))]
-      (effect state side card)))
+      (effect state side card nil)))
   (move state side card :discard))
 
 (defn draw
@@ -71,15 +71,15 @@
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
 (defn resolve-ability [state side {:keys [counter-cost cost effect msg req] :as ability}
-                       {:keys [title cid counter] :as card}]
+                       {:keys [title cid counter] :as card} targets]
   (when (and (not (get-in @state [:once-per-turn cid]))
-             (or (not req) (req state))
+             (or (not req) (req state card targets))
              (<= counter-cost counter)
              (apply pay (concat [state side] cost)))
     (when (>= counter-cost (:counter card))
       (let [c (update-in card [:counter] #(- % counter-cost))]
         (update! state side c)
-        (effect state side c)))
+        (effect state side c targets)))
     (when msg
       (let [desc (if (string? msg) msg (msg state side card))]
         (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
@@ -91,9 +91,9 @@
 (defn unregister-event [state side event card]
   (swap! state update-in [side :events event] #(remove (fn [effect] (= (:card effect) card)) %)))
 
-(defn trigger-event [state side event]
+(defn trigger-event [state side event targets]
   (doseq [e (get-in @state [side :events event])]
-    (resolve-ability state side (:ability e) (get-card state (:card e)))))
+    (resolve-ability state side (:ability e) (get-card state (:card e)) targets)))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -104,7 +104,7 @@
                       (second matches)))
         c (merge card (:data cdef) {:abilities abilities :rezzed true})]
     (update! state side c)
-    (when-let [effect (:effect cdef)] (effect state side c))
+    (when-let [effect (:effect cdef)] (effect state side c nil))
     (when-let [events (:events cdef)] (register-events state side events c))
     c))
 
@@ -270,19 +270,19 @@
   (swap! state update-in [:runner :register :unsucessful-run] #(conj % (get-in @state [:run :server])))
   (swap! state assoc :run nil))
 
-(defn play-ability [state side {:keys [card ability] :as args}]
-  (resolve-ability state side (get-in (card-def card) [:abilities ability]) card))
+(defn play-ability [state side {:keys [card ability targets] :as args}]
+  (resolve-ability state side (get-in (card-def card) [:abilities ability]) card targets))
 
 (defn start-turn [state side]
   (system-msg state side (str "started his or her turn"))
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
-  (trigger-event state side :turn-begins)
+  (trigger-event state side :turn-begins nil)
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
-  (trigger-event state side :turn-ends)
+  (trigger-event state side :turn-ends nil)
   (swap! state assoc :end-turn true)
   (system-msg state side (str "is ending his or her turn")))
 
@@ -297,38 +297,44 @@
     (when (has? card :subtype "Virus")
       (set-prop state :runner card :counter 0))))
 
-(defn play-instant [state side {:keys [title] :as card}]
+(defn play-instant [state side {:keys [title] :as card} & args]
   (let [cdef (card-def card)]
-    (when (and (if-let [req (:req cdef)] (req state card) true)
+    (when (and (if-let [req (:req cdef)] (req state card (first args)) true)
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
-     (system-msg state side (str "plays " title))
-     (move state side card :play-area)
-     (when-let [effect (:effect cdef)]
-       (effect state side card))
-     (move state side (first (get-in @state [side :play-area])) :discard))))
+      (let [c (move state side card :play-area)]
+        (system-msg state side (str "plays " title))
+        (trigger-event state side (if (= side :corp) :play-operation :play-event) [card])
+        (when-let [effect (:effect cdef)] (effect state side c))
+        (move state side (first (get-in @state [side :play-area])) :discard)))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
                (get-in @state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
+(defn card-init [state side card]
+  (let [cdef (card-def card)
+        abilities (if (= (:type card) "ICE")
+                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
+                    (for [ab (split-lines (:text card))
+                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
+                      (second matches)))
+        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
+    (update! state side c)
+    (when-let [effect (:effect cdef)] (effect state side c))
+    (when-let [events (:events cdef)] (register-events state side events c))
+    c))
+
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
-  (let [dest [:rig (keyword (.toLowerCase type))]
-        cdef (card-def card)]
+  (let [dest [:rig (keyword (.toLowerCase type))]]
     (when (and (can-move? state side card dest)
                (or (not uniqueness) (not (in-play? state card)))
-               (if-let [req (:req cdef)] (req state card) true)
+               (if-let [req (card-def card)] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
-      (let [abilities (for [ab (split-lines (:text card))
-                            :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                        (second matches))
-            c (merge card (:data cdef) {:abilities abilities})
-            moved-card (move state side c dest)]
-        (when-let [effect (:effect cdef)]
-          (effect state side moved-card))
-        (when-let [events (:events cdef)]
-          (register-events state side events moved-card)))
-      (system-msg state side (str "installs " title)))))
+      (let [c (move state side card dest)]
+        (system-msg state side (str "installs " title))
+        (trigger-event state side :runner-install [card])
+        (card-init state side c)))))
 
 (defn corp-install [state side card server]
   (let [dest (case server
@@ -376,4 +382,4 @@
     (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points")))
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game"))
-  (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen)))
+  (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen) [card]))
