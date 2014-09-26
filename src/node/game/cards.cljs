@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop once system-msg end-run unregister-event mill] :as core]
+                               set-prop resolve-ability system-msg end-run unregister-event mill] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -165,8 +165,8 @@
 
    "House of Knives"
    {:data {:counter 3}
-    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state))
-                 :effect #(once %1 %2 %3 :per-run (effect (damage :net 1)))}]}
+    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
+                 :effect (effect (damage :net 1))}]}
 
    "Human First"
    {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
@@ -185,11 +185,10 @@
 
    "Kati Jones"
    {:abilities
-    [{:cost [:click 1] :msg "store 3 [Credits]"
-      :effect #(once %1 %2 %3 :per-turn (effect (add-prop card :counter 3)))}
-     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
-      :effect #(once %1 %2 %3 :per-turn (effect (gain :credit (:counter card))
-                                               (set-prop card :counter 0)))}]}
+    [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
+      :effect (effect (add-prop card :counter 3))}
+     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
+      :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
@@ -253,10 +252,10 @@
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
                         (fn [k ref old new]
-                          (when (zero? (get-in new [:runner :credit]))
-                            (once % :runner %3 :per-turn
-                                  (effect (system-msg "gain 1 credit with Order of Sol") (gain :credit 1))
-                                  :order-of-sol))))
+                          (when (and (not (zero? (get-in old [:runner :credit])))
+                                     (zero? (get-in new [:runner :credit])))
+                            (resolve-ability ref %2 {:msg "gain 1 [Credits]" :once :per-turn
+                                                    :effect (effect (gain :credit 1))} %3 nil))))
     :leave-play #(remove-watch % :order-of-sol)}
 
    "Paper Tripping"
@@ -316,8 +315,9 @@
                                                  (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
 
    "Subliminal Messaging"
-   {:effect #(do (gain % :corp :credit 1)
-                 (once %1 %2 %3 :per-turn (effect (gain :click 1)) :subliminal-messaging))}
+   {:effect (effect (gain :credit 1)
+                    (resolve-ability {:once :per-turn :once-key :subliminal-messaging
+                                      :effect #(gain state :corp :click 1)} card nil))}
 
    "Successful Demonstration"
    {:req (req (:unsucessful-run runner-reg)) :effect (gain :credit 7)}
@@ -341,8 +341,8 @@
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}
 
    "Tri-maf Contact"
-   {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]"
-                 :effect #(once %1 %2 %3 :per-turn (effect (gain :credit 2)))}]
+   {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
+                 :effect (effect (gain :credit 2))}]
     :leave-play (effect (damage :meat 3))}
 
    "Underworld Contact"
@@ -580,8 +580,7 @@
 
    "Imp"
    {:data {:counter 2}
-    :abilities [{:counter-cost 1 :msg "trash at no cost"
-                 :effect #(once %1 %2 %3 :per-turn (fn []))}]}
+    :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn :effect #()}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}]}

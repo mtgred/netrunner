@@ -70,16 +70,16 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
-(defn resolve-ability [state side {:keys [counter-cost cost effect msg req] :as ability}
+(defn resolve-ability [state side {:keys [counter-cost cost effect msg req once once-key] :as ability}
                        {:keys [title cid counter] :as card} targets]
-  (when (and (not (get-in @state [:once-per-turn cid]))
+  (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state card targets))
              (<= counter-cost counter)
              (apply pay (concat [state side] cost)))
-    (when (<= counter-cost (:counter card))
-      (let [c (update-in card [:counter] #(- % counter-cost))]
-        (update! state side c)
-        (effect state side c targets)))
+    (let [c (update-in card [:counter] #(- % counter-cost))]
+      (update! state side c)
+      (effect state side c targets))
+    (when once (swap! state assoc-in [once (or once-key cid)] true))
     (when msg
       (let [desc (if (string? msg) msg (msg state side card targets))]
         (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
@@ -128,13 +128,6 @@
     (if (apply pay (concat [state side] cost))
       (effect state side args)
       false)))
-
-(defn once
-  ([state side card per f] (once state side card per f (:cid card)))
-  ([state side card per f key]
-     (when-not (get-in @state [per key])
-       (swap! state assoc-in [per key] true)
-       (f state side card))))
 
 (defn change [state side {:keys [key delta]}]
   (let [kw (keyword (.toLowerCase key))]
