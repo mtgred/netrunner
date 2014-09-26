@@ -91,9 +91,9 @@
 (defn unregister-event [state side event card]
   (swap! state update-in [:events event] #(remove (fn [effect] (= (:card effect) card)) %)))
 
-(defn trigger-event [state side event targets]
+(defn trigger-event [state side event target]
   (doseq [e (get-in @state [:events event])]
-    (resolve-ability state side (:ability e) (get-card state (:card e)) targets)))
+    (resolve-ability state side (:ability e) (get-card state (:card e)) [target])))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -297,7 +297,7 @@
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
       (let [c (move state side card :play-area)]
         (system-msg state side (str "plays " title))
-        (trigger-event state side (if (= side :corp) :play-operation :play-event) [card])
+        (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
         (when-let [effect (:effect cdef)] (effect state side c))
         (move state side (first (get-in @state [side :play-area])) :discard)))))
 
@@ -325,10 +325,10 @@
                (or (not uniqueness) (not (in-play? state card)))
                (if-let [req (:req (card-def card))] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
-      (let [c (move state side card dest)]
-        (system-msg state side (str "installs " title))
-        (trigger-event state side :runner-install [card])
-        (card-init state side c)))))
+      (let [c (move state side card dest)
+            installed-card (card-init state side c)]
+        (trigger-event state side :runner-install installed-card)
+        (system-msg state side (str "installs " title))))))
 
 (defn corp-install [state side card server]
   (let [dest (case server
@@ -373,7 +373,7 @@
   (let [c (card-init state side (assoc card :counter nil))]
     (move state side c :scored)
     (swap! state update-in [side :agenda-point] #(+ % (:agendapoints c)))
-    (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points")))
-  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-    (system-msg state side "wins the game"))
-  (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen) [card]))
+    (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
+    (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+      (system-msg state side "wins the game"))
+    (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen) c)))

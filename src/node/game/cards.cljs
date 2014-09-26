@@ -142,6 +142,11 @@
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
 
+   "Grimoire"
+   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
+    :events {:runner-install {:req (req (has? target :subtype "Virus"))
+                              :effect (effect (add-prop target :counter 1))}}}
+
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
@@ -533,9 +538,6 @@
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
-
-   "Grimoire"
-   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
 
    "Desperado"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
