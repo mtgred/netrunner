@@ -10,9 +10,9 @@
 
    "Adonis Campaign"
    {:data {:counter 12}
-    :events {:turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
-                           :effect #(do (gain %1 :corp :credit 3)
-                                        (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
+    :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
+                                :effect #(do (gain %1 :corp :credit 3)
+                                             (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
@@ -90,9 +90,9 @@
 
    "Daily Casts"
    {:data {:counter 8}
-    :events {:turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
-                           :effect #(do (gain %1 :runner :credit 2)
-                                        (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
+    :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
+                                  :effect #(do (gain %1 :runner :credit 2)
+                                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Data Leak Reversal"
    {:req (req (some #{"HQ" "R&D" "Archives"} (:successful-run runner-reg)))
@@ -120,9 +120,9 @@
 
    "Eve Campaign"
    {:data {:counter 16}
-    :events {:turn-begins {:msg "gain 3 [Credits]" :counter-cost 2
-                           :effect #(do (gain %1 :corp :credit 2)
-                                        (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
+    :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 2
+                                :effect #(do (gain %1 :corp :credit 2)
+                                             (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
@@ -146,8 +146,8 @@
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
    "Hard at Work"
-   {:events {:turn-begins {:msg "gain 2 [Credits] and lose [Click]"
-                           :effect (effect (lose :click 1) (gain :credit 2))}}}
+   {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
+                                  :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Harmony Medtech: Biomedical Pioneer"
    {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))}
@@ -200,8 +200,8 @@
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
                  :effect (effect (add-prop card :counter 3))}]
-    :events {:turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
-                           :effect (effect (gain :credit 1))}}}
+    :events {:corp-turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
+                                :effect (effect (gain :credit 1))}}}
 
    "Market Research"
    {:req (req tagged) :effect (effect (gain :agenda-point 1))}
@@ -215,7 +215,7 @@
    "Mental Health Clinic"
    {:effect (effect (gain :runner :max-hand-size 1))
     :leave-play (effect (lose :runner :max-hand-size 1))
-    :events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+    :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :max-hand-size 1))}
@@ -232,7 +232,7 @@
                               :req (req (has? target :subtype "Virus"))}}}
 
    "PAD Campaign"
-   {:events {:turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
@@ -318,8 +318,8 @@
     :leave-play (effect (damage :meat 3))}
 
    "Underworld Contact"
-   {:events {:turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
-                           :effect (effect (gain :credit 1))}}}
+   {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
+                                  :effect (effect (gain :credit 1))}}}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -332,8 +332,8 @@
    {:effect (effect (lose :bad-publicity 2))}
 
    "Wyldside"
-   {:events {:turn-begins {:msg "draw 2 cards and lose [Click]"
-                           :effect (effect (lose :click 1) (draw 2))}}}
+   {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
+                                  :effect (effect (lose :click 1) (draw 2))}}}
 
    ;; ICE
    "Bastion"
@@ -488,8 +488,8 @@
 
    "Breaking News"
    {:effect (effect (gain :runner :tag 2))
-    :events {:turn-end {:effect #(do (lose %1 :runner :tag 2)
-                                     (unregister-event %1 %2 :turn-ends %3))}}}
+    :events {:corp-turn-end {:effect #(do (lose %1 :runner :tag 2)
+                                          (unregister-event %1 %2 :corp-turn-ends %3))}}}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}

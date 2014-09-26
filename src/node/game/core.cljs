@@ -86,13 +86,13 @@
 
 (defn register-events [state side events card]
   (doseq [e events]
-    (swap! state update-in [side :events (first e)] #(conj % {:ability (last e) :card card}))))
+    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card}))))
 
 (defn unregister-event [state side event card]
-  (swap! state update-in [side :events event] #(remove (fn [effect] (= (:card effect) card)) %)))
+  (swap! state update-in [:events event] #(remove (fn [effect] (= (:card effect) card)) %)))
 
 (defn trigger-event [state side event targets]
-  (doseq [e (get-in @state [side :events event])]
+  (doseq [e (get-in @state [:events event])]
     (resolve-ability state side (:ability e) (get-card state (:card e)) targets)))
 
 (defn card-init [state side card]
@@ -268,7 +268,8 @@
 
 (defn end-run [state side]
   (swap! state update-in [:runner :register :unsucessful-run] #(conj % (get-in @state [:run :server])))
-  (swap! state assoc :run nil))
+  (swap! state assoc :run nil)
+  (trigger-event state side (if (= side :corp) :corp-turn-ends :runner-turn-ends) nil))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
   (resolve-ability state side (get-in (card-def card) [:abilities ability]) card targets))
@@ -278,7 +279,7 @@
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
-  (trigger-event state side :turn-begins nil)
+  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil)
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
