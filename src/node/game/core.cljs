@@ -76,7 +76,7 @@
              (or (not req) (req state card targets))
              (<= counter-cost counter)
              (apply pay (concat [state side] cost)))
-    (when (>= counter-cost (:counter card))
+    (when (<= counter-cost (:counter card))
       (let [c (update-in card [:counter] #(- % counter-cost))]
         (update! state side c)
         (effect state side c targets)))
@@ -329,7 +329,7 @@
   (let [dest [:rig (keyword (.toLowerCase type))]]
     (when (and (can-move? state side card dest)
                (or (not uniqueness) (not (in-play? state card)))
-               (if-let [req (card-def card)] (req state card) true)
+               (if-let [req (:req (card-def card))] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
       (let [c (move state side card dest)]
         (system-msg state side (str "installs " title))
