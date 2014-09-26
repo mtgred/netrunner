@@ -23,7 +23,8 @@
         ~@expr)))
 
 (defmacro msg [& expr]
-  `(fn ~['state 'side 'card]
+  `(fn ~['state 'side 'card 'targets]
      (let ~['runner '(:runner @state)
-            'corp '(:corp @state)]
+            'corp '(:corp @state)
+            'target '(first targets)]
        (str ~@expr))))

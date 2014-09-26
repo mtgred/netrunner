@@ -81,7 +81,7 @@
         (update! state side c)
         (effect state side c targets)))
     (when msg
-      (let [desc (if (string? msg) msg (msg state side card))]
+      (let [desc (if (string? msg) msg (msg state side card targets))]
         (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
 
 (defn register-events [state side events card]

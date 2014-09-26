@@ -155,6 +155,11 @@
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
 
+   "High-Risk Investment"
+   {:data {:counter 1}
+    :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
+                 :effect (effect (gain :credit (:credit runner)))}]}
+
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
@@ -163,9 +168,20 @@
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state))
                  :effect #(once %1 %2 %3 :per-run (effect (damage :net 1)))}]}
 
+   "Human First"
+   {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
+                             :effect (effect (gain :runner :credit (:agendapoints target)))}
+             :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
+                             :effect (effect (gain :credit (:agendapoints target)))}}}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+
+   "Investigative Journalism"
+   {:req (req (> (:bad-publicity corp) 0))
+    :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
+                 :effect (effect (gain :corp :bad-publicity 1) (trash card))}]}
 
    "Kati Jones"
    {:abilities
@@ -290,6 +306,15 @@
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
 
+   "Stim Dealer"
+   {:events {:runner-turn-begins {:effect #(if (>= (:counter %3) 2)
+                                             (do (set-prop %1 %2 %3 :counter 0)
+                                                 (damage %1 %2 :brain 1)
+                                                 (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
+                                             (do (add-prop %1 %2 %3 :counter 1)
+                                                 (gain %1 %2 :click 1)
+                                                 (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
+
    "Subliminal Messaging"
    {:effect #(do (gain % :corp :credit 1)
                  (once %1 %2 %3 :per-turn (effect (gain :click 1)) :subliminal-messaging))}
@@ -311,6 +336,9 @@
                                 (when (not= (get-in old [:runner :credit]) credit)
                                   (swap! ref assoc-in [:runner :max-hand-size] credit))))))
     :leave-play #(remove-watch % :theophilius-bagbiter)}
+
+   "Traffic Accident"
+   {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]"
@@ -601,6 +629,14 @@
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+
+   "Tallie Perrault"
+   {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
+                 :msg (msg "draw " (:bad-publicity corp) " cards")}]
+    :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
+                              :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
+                              :req (req (or (has? target :subtype "Black Ops")
+                                            (has? target :subtype "Gray Ops")))}}}
 
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
