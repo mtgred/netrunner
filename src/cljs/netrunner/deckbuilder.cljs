@@ -10,6 +10,7 @@
             [netrunner.ajax :refer [POST GET]]))
 
 (def select-channel (chan))
+(def zoom-channel (chan))
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
@@ -268,6 +269,9 @@
     (will-mount [this]
       (let [edit-channel (om/get-state owner :edit-channel)]
         (go (while true
+            (let [card (<! zoom-channel)]
+              (om/set-state! owner :zoom card))))
+        (go (while true
               (let [edit (<! edit-channel)
                     card (:card edit)
                     max-qty (or (:limit card) 3)
@@ -305,7 +309,10 @@
                    [:div.float-right.invalid "Invalid deck"])
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
-                 [:p (get-in deck [:identity :title])]]))]]
+                 [:p (get-in deck [:identity :title])]]))]
+           [:div {:class (when (:edit state) "edit")}
+            (when-let [card (om/get-state owner :zoom)]
+              (om/build card-view card))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
@@ -323,7 +330,8 @@
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
-                 [:h4.fake-link (:title identity) (om/build card-view identity)]
+                 [:h4.fake-link {:on-mouse-enter #((put! zoom-channel identity))
+                                 :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
                        min-count (:minimumdecksize identity)]
                    [:div count " cards"
@@ -359,8 +367,9 @@
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)]
                            [:span
-                            [:span {:class (if (allowed? card identity) "fake-link" "invalid")}
-                             name (om/build card-view card)]
+                            [:span {:class (if (allowed? card identity) "fake-link" "invalid")
+                                    :on-mouse-enter #((put! zoom-channel card))
+                                    :on-mouse-leave #(put! zoom-channel false)} name]
                             (when-not (or (= (:faction card) (:faction identity))
                                           (zero? (:factioncost card)))
                               (let [influence (* (:factioncost card) (:qty line))]

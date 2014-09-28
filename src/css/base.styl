@@ -627,12 +627,6 @@ nav ul
   .viewport.edit
     left: -497px
 
-    .decklist .card-preview
-      left: auto
-      right: 50%
-      transform: translateX(100%)
-      margin-right: -12px
-
   .viewport
     position: relative
     width: 1491px
@@ -650,6 +644,7 @@ nav ul
         padding: 0 15px
 
     .decks
+      position: relative
       display-flex()
       flex-direction(column)
       padding: 0
@@ -660,6 +655,18 @@ nav ul
         button
           width: 135px
           margin-right: 5px
+
+      .card-preview
+        position: absolute
+        left: auto
+        z-index: 10
+        right: 5px
+        top: 0
+
+      .edit .card-preview
+        right: -100%
+        transform: translateX(100%)
+        margin-right: -17px
 
     .decklist
       position: relative
@@ -684,18 +691,6 @@ nav ul
       input.deckname
         height: 30px
 
-      .card-preview
-        display: none
-        position: fixed
-        z-index: 10
-        margin-left: -12px
-        left: 50%
-        top: 65px
-        transform: translateX(-100%)
-
-      .fake-link:hover .card-preview
-        display: block
-
       .cards
         columns(2, 5px)
 
@@ -703,9 +698,6 @@ nav ul
         position: relative
         overflow: visible
         line-height: 20px
-
-        .card-preview
-          color: white
 
         button.small
           margin: 3px 5px 3px 0
