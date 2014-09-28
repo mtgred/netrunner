@@ -173,7 +173,7 @@
        (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
 (defn html-escape [st]
-  (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \' "#039;" \" "#034;"}))
+  (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
 (defn not-alternate [card]
   (if (= (:setname card) "Alternates")
