@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :refer [split split-lines join]]
+            [clojure.string :refer [split split-lines join escape]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
@@ -171,9 +171,18 @@
        (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
        (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
+(defn html-escape [st]
+  (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \' "#039;" \" "#034;"}))
+
+(defn not-alternate [card]
+  (if (= (:setname card) "Alternates")
+    (some #(when (and (not= (:setname %) "Alternates") (= (:title %) (:title card))) %)
+          (:cards @app-state))
+    card))
+
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
-        identity (:identity deck)
+        identity (not-alternate (:identity deck))
         id "bc0f047c-01b1-427f-a439-d451eda"
         xml (str
              "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
@@ -181,7 +190,7 @@
              "<section name=\"R&amp;D / Stack\">"
              (apply str (for [c (:cards deck)]
                           (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
-                               (get-in c [:card :title]) "</card>")))
+                               (html-escape (get-in c [:card :title])) "</card>")))
              "</section></deck>")
         blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
     (.createObjectURL js/URL blob)))
