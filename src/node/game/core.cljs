@@ -276,9 +276,11 @@
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
+  (system-msg state side (str "is ending his or her turn"))
+  (when (and (= side :runner) (< (get-in @state [:runner :max-hand-size]) 0))
+    (flatline state))
   (trigger-event state side :turn-ends nil)
-  (swap! state assoc :end-turn true)
-  (system-msg state side (str "is ending his or her turn")))
+  (swap! state assoc :end-turn true))
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ % n))))
