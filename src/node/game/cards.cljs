@@ -33,6 +33,10 @@
    "Anonymous Tip"
    {:effect (effect (draw 3))}
 
+   "Astrolabe"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
+
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
 
@@ -240,6 +244,9 @@
    "NBN: The World is Yours*"
    {:effect (effect (gain :max-hand-size 1))}
 
+   "Near-Earth Hub: Broadcast Center"
+   {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
+
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
 
@@ -349,6 +356,9 @@
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
     :leave-play (effect (damage :meat 3))}
+
+   "Turtlebacks"
+   {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Underworld Contact"
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
@@ -512,9 +522,6 @@
    ;; partial implementation
    "AstroScript Pilot Program"
    {:data {:counter 1}}
-
-   "Astrolabe"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Bad Times"
    {:req (req tagged)}

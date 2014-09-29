@@ -339,6 +339,9 @@
               "Archives" [:servers :archives]
               "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
               [:servers :remote (-> (split server " ") last js/parseInt)])]
+    (system-msg state side (str "installs a card in " server))
+    (when (= server "New remote")
+      (trigger-event state side :server-created card))
     (if (= (:type card) "ICE")
       (let [slot (conj dest :ices)]
         (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
@@ -352,8 +355,7 @@
               (when (#{"Asset" "Agenda"} (:type c))
                 (trash state side c)
                 (system-msg state side (str "trash a card in " server)))))
-          (move state side card slot)))
-      (system-msg state side (str "installs a card in " server)))))
+          (move state side card slot))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
