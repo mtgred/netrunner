@@ -110,7 +110,7 @@
 
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3]
-                 :effect #(do (when (zero? (:counter %3)) (gain :agenda-point 1))
+                 :effect #(do (when (zero? (:counter %3)) (gain %1 %2 :agenda-point 1))
                               (add-prop %1 %2 %3 :counter 1))}]}
 
    "Duggars"
@@ -443,7 +443,8 @@
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Hourglass"
-   {:abilities [{:msg "force the runner to lose 1 [Click] if able"
+   {:abilities [{:label "The runner lose 1 [Click] if able"
+                 :msg "force the runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}]}
 
    "Ice Wall"
