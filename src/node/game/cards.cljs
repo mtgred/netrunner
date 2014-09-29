@@ -1,7 +1,8 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run unregister-event mill] :as core]
+                               set-prop resolve-ability system-msg end-run unregister-event mill
+                               gain-agenda-point] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -110,8 +111,8 @@
 
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3]
-                 :effect #(do (when (zero? (:counter %3)) (gain %1 %2 :agenda-point 1))
-                              (add-prop %1 %2 %3 :counter 1))}]}
+                 :effect #(do (when (zero? (:counter %3)) (gain-agenda-point %1 %2 1))
+                              (set-prop %1 %2 %3 :counter 1 :agendapoints 1))}]}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 card"}]}
@@ -297,6 +298,10 @@
    "Professional Contacts"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
+
+   "Project Beale"
+   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
+                                   :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
    "Quality Time"
    {:effect (effect (draw 5))}
@@ -527,6 +532,9 @@
    "Bad Times"
    {:req (req tagged)}
 
+   "Braintrust"
+   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
+
    "Breaking News"
    {:effect (effect (gain :runner :tag 2))
     :events {:corp-turn-end {:effect #(do (lose %1 :runner :tag 2)
@@ -619,6 +627,12 @@
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
+
+   "Project Atlas"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))}
+
+   "Project Vitruvius"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))}
 
    "Psychographics"
    {:req (req tagged)}

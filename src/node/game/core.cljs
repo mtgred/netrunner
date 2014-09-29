@@ -361,12 +361,16 @@
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advance a card")))
 
+(defn gain-agenda-point [state side n]
+  (gain state side :agenda-point n)
+  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+    (system-msg state side "wins the game")))
+
 (defn score [state side {:keys [card]}]
   (when (>= (:advance-counter card) (:advancementcost card))
-    (let [moved-card (move state side (assoc card :advance-counter nil) :scored)
+    (let [moved-card (move state side card  :scored)
           c (card-init state side moved-card)]
-      (swap! state update-in [side :agenda-point] #(+ % (:agendapoints c)))
       (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
-      (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-        (system-msg state side "wins the game"))
+      (gain-agenda-point state side (:agendapoints c))
+      (set-prop state side c :advance-counter 0)
       (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen) c))))
