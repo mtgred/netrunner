@@ -72,7 +72,8 @@
 
 (defn resolve-ability [state side {:keys [counter-cost cost effect msg req once once-key] :as ability}
                        {:keys [title cid counter] :as card} targets]
-  (when (and (not (get-in @state [once (or once-key cid)]))
+  (when (and effect
+             (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state card targets))
              (<= counter-cost counter)
              (apply pay (concat [state side] cost)))
@@ -104,9 +105,9 @@
                       (second matches)))
         c (merge card (:data cdef) {:abilities abilities :rezzed true})]
     (update! state side c)
-    (when-let [effect (:effect cdef)] (effect state side c nil))
+    (resolve-ability state side cdef c nil)
     (when-let [events (:events cdef)] (register-events state side events c))
-    c))
+    (get-card state c)))
 
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
@@ -308,19 +309,6 @@
                (get-in @state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn card-init [state side card]
-  (let [cdef (card-def card)
-        abilities (if (= (:type card) "ICE")
-                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
-                    (for [ab (split-lines (:text card))
-                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                      (second matches)))
-        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
-    (update! state side c)
-    (when-let [effect (:effect cdef)] (effect state side c))
-    (when-let [events (:events cdef)] (register-events state side events c))
-    c))
-
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
   (let [dest [:rig (keyword (.toLowerCase type))]]
     (when (and (can-move? state side card dest)
@@ -375,8 +363,8 @@
 
 (defn score [state side {:keys [card]}]
   (when (>= (:advance-counter card) (:advancementcost card))
-    (let [c (card-init state side (assoc card :advance-counter nil))]
-      (move state side c :scored)
+    (let [moved-card (move state side (assoc card :advance-counter nil) :scored)
+          c (card-init state side moved-card)]
       (swap! state update-in [side :agenda-point] #(+ % (:agendapoints c)))
       (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
       (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))

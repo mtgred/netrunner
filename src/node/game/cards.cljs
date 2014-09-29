@@ -228,7 +228,7 @@
                                 :effect (effect (gain :credit 1))}}}
 
    "Market Research"
-   {:req (req tagged) :effect (effect (gain :agenda-point 1))}
+   {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
