@@ -39,10 +39,11 @@
       moved-card)))
 
 (defn trash [state side {:keys [zone] :as card}]
-  (when (#{:servers :rig} (first zone))
-    (when-let [effect (:leave-play (card-def card))]
-      (effect state side card nil)))
-  (move state side card :discard))
+  (let [c (assoc card :counter nil :advance-counter nil)]
+    (when (#{:servers :rig} (first zone))
+      (when-let [effect (:leave-play (card-def c))]
+        (effect state side c nil)))
+    (move state side c :discard)))
 
 (defn draw
   ([state side] (draw state side 1))
@@ -70,14 +71,18 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
-(defn resolve-ability [state side {:keys [counter-cost cost effect msg req once once-key] :as ability}
-                       {:keys [title cid counter] :as card} targets]
+(defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
+                                          once-key] :as ability}
+                       {:keys [title cid counter advance-counter] :as card} targets]
   (when (and effect
              (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state card targets))
              (<= counter-cost counter)
+             (<= advance-counter-cost advance-counter)
              (apply pay (concat [state side] cost)))
-    (let [c (update-in card [:counter] #(- % counter-cost))]
+    (let [c (-> card
+                (update-in [:counter] #(- % counter-cost))
+                (update-in [:advance-counter] #(- % advance-counter-cost)))]
       (update! state side c)
       (effect state side c targets))
     (when once (swap! state assoc-in [once (or once-key cid)] true))
@@ -330,20 +335,21 @@
     (system-msg state side (str "installs a card in " server))
     (when (= server "New remote")
       (trigger-event state side :server-created card))
-    (if (= (:type card) "ICE")
-      (let [slot (conj dest :ices)]
-        (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
-          (move state side card slot)
-          (system-msg state side (str "install an ICE on " server))))
-      (let [slot (conj dest :content)]
-        (when (and (can-move? state side card slot)
-                   (pay state side :click 1))
-          (when (#{"Asset" "Agenda"} (:type card))
-            (doseq [c (get-in @state (cons :corp slot))]
-              (when (#{"Asset" "Agenda"} (:type c))
-                (trash state side c)
-                (system-msg state side (str "trash a card in " server)))))
-          (move state side card slot))))))
+    (let [c (assoc card :advanceable (:advanceable (card-def card)))]
+      (if (= (:type c) "ICE")
+        (let [slot (conj dest :ices)]
+          (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
+            (move state side c slot)
+            (system-msg state side (str "install an ICE on " server))))
+        (let [slot (conj dest :content)]
+          (when (and (can-move? state side c slot)
+                     (pay state side :click 1))
+            (when (#{"Asset" "Agenda"} (:type c))
+              (doseq [installed-card (get-in @state (cons :corp slot))]
+                (when (#{"Asset" "Agenda"} (:type installed-card))
+                  (trash state side installed-card)
+                  (system-msg state side (str "trash a card in " server)))))
+            (move state side c slot)))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)

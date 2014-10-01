@@ -155,6 +155,14 @@
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
+   "GRNDL Refinery"
+   {:advanceable :always
+    :abilities [{:cost [:click 1] :effect (effect (gain :credit (* 4 (:advance-counter card))) (trash card))}]}
+
+   "Haas Arcology AI"
+   {:advanceable :while-unrezzed
+    :abilities [{:cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
+
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
@@ -319,6 +327,11 @@
    "Restructure"
    {:effect (effect (gain :credit 15))}
 
+   "Ronin"
+   {:advanceable :always
+    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
+                 :effect (effect (damage :net 3) (trash card))}]}
+
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
 
@@ -353,6 +366,10 @@
                                 (when (not= (get-in old [:runner :credit]) credit)
                                   (swap! ref assoc-in [:runner :max-hand-size] credit))))))
     :leave-play #(remove-watch % :theophilius-bagbiter)}
+
+   "Thomas Haas"
+   {:advanceable :always
+    :abilities [{:effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}

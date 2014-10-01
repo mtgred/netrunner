@@ -3,6 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [clojure.string :refer [capitalize]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]))
@@ -43,12 +44,27 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn handle-abilities [card owner]
-  (let [count (count (:abilities card))]
-    (cond (> count 1) (-> (om/get-node owner "abilities") js/$ .toggle)
-          (= count 1) (send-command "ability" {:card card :ability 0}))))
+(defn action-list [{:keys [type rezzed advanceable advance-counter advancementcost] :as card}]
+  (-> []
+      (#(if (or (= type "Agenda")
+                (= advanceable "always")
+                (and rezzed (= advanceable "while-rezzed"))
+                (and (not rezzed) (= advanceable "while-unrezzed")))
+          (cons "advance" %) %))
+      (#(if (and (= type "Agenda") (>= advance-counter advancementcost))
+          (cons "score" %) %))
+      (#(if (and (#{"Asset" "ICE" "Upgrade"} type) (not rezzed))
+          (cons "rez" %) %))))
 
-(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost] :as card} owner]
+(defn handle-abilities [{:keys [abilities] :as card} owner]
+  (let [actions (action-list card)
+        c (+ (count actions) (count abilities))]
+    (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
+          (= c 1) (if (= (count abilities) 1)
+                        (send-command "ability" {:card card :ability 0})
+                        (send-command (first actions) {:card card})))))
+
+(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable] :as card} owner]
   (if (= (:side @game-state) :runner)
     (case (first zone)
       "hand" (send-command "play" {:card card})
@@ -61,14 +77,8 @@
                                     (send-command "play" {:card card :server "New remote"})
                                     (-> (om/get-node owner "servers") js/$ .toggle))
                (send-command "play" {:card card}))
-      "servers" (if (:rezzed card)
-                  (handle-abilities card owner)
-                  (if (= type "Agenda")
-                    (if (>= advance-counter advancementcost)
-                      (-> (om/get-node owner "agenda") js/$ .toggle)
-                      (send-command "advance" {:card card}))
-                    (send-command "rez" {:card card})))
-      "scored" (handle-abilities card owner))))
+      ("servers" "scored") (handle-abilities card owner)
+      nil)))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -110,8 +120,8 @@
 (defn remote-list []
   (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
 
-(defn card-view [{:keys [zone code type counter advance-counter advancementcost] :as cursor} owner
-                 {:keys [flipped] :as opts}]
+(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost
+                         advanceable rezzed] :as cursor} owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
@@ -126,15 +136,6 @@
        [:div.counters
         (when (> counter 0) [:div.darkbg.counter counter])
         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
-       (when-let [abilities (:abilities cursor)]
-         (when (> (count abilities 1))
-           [:div.blue-shade.panel.abilities {:ref "abilities"}
-            (map-indexed
-             (fn [i label]
-               [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
-                                     (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                      :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
-             abilities)]))
        (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
          (let [centrals ["HQ" "R&D" "Archives"]
                remotes (conj (remote-list) "New remote")
@@ -147,10 +148,28 @@
                                          (-> (om/get-node owner "servers") js/$ .fadeOut))}
                     label])
                  servers)]))
-       (when (and (= (first zone) "servers") (= type "Agenda") (>= advance-counter advancementcost))
-         [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
-          [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
-          [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]])]))))
+       (let [actions (action-list cursor)]
+         (when (> (+ (count actions) (count abilities)) 1)
+           [:div.blue-shade.panel.abilities {:ref "abilities"}
+            (map (fn [action]
+                   [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
+                 actions)
+            (map-indexed
+             (fn [i label]
+               [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
+                                     (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                      :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
+             abilities)]))
+       (when (= (first zone) "servers")
+         (cond
+          (and (= type "Agenda") (>= advance-counter advancementcost))
+          [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
+           [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
+           [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
+          (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
+          [:div.blue-shade.panel.menu.abilities {:ref "advance"}
+           [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
+           [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]))))
 
 (defn label [cursor owner opts]
   (om/component
