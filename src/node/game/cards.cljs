@@ -443,13 +443,14 @@
    "Guard"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Hadrians Wall"
+   {:advanceable :always
+    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+
    "Himitsu-Bako"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Hive"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
-
-   "Hadrians Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Heimdall 1.0"
@@ -470,7 +471,8 @@
                  :effect (effect (lose :runner :click 1))}]}
 
    "Ice Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always
+    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -509,11 +511,29 @@
    {:abilities [{:label "Trash 1 program" :msg "trash 1 program"}
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
+   "Salvage"
+   {:advanceable :while-rezzed
+    :abilities [{:msg "trace 2" :label "Trace 2 - If successful, give the Runner 1 tag"}]}
+
+   "Shadow"
+   {:advanceable :always
+    :abilities [{:label "Gain 2 [Credits]" :msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+                [:label "Trace 3 - If successful, give the Runner 1 tag" :msg "trace 3"]]}
+
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
 
+   "Swarm"
+   {:advanceable :always
+    :abilities [{:label "Trash 1 program unless the Runner pays 3 [Credits]"
+                 :msg "trash 1 program unless the Runner pays 3 [Credits]"}]}
+
    "Swordsman"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
+   "Tyrant"
+   {:advanceable :while-rezzed
+    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "TMI"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -533,10 +553,19 @@
    {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2))}
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
-   "Wraparound"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   "Wendigo"
+   {:advanceable :always
+    :abilities [{:label "Prevent the runner from using a chosen program for the remaining of this run"
+                 :msg "prevent the runner from using a chosen program for the remaining of this run"}]}
+
+   "Woodcutter"
+   {:advanceable :while-rezzed
+    :abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Wotan"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Wraparound"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Yagura"
