@@ -18,7 +18,7 @@
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
 (defn image-url [card]
-  (when (or (not (empty? (:imagesrc card))) (= (:type card) "Identity"))
+  (when (or (:imagesrc card) (= (:type card) "Identity"))
     (str "/img/cards/" (:code card) ".png")))
 
 (defn add-symbols [card-text]
@@ -69,16 +69,6 @@
      (when-let [url (image-url card)]
        [:img {:src url :onError #(-> % .-target js/$ .hide)}])])))
 
-(defn set-view [{:keys [set set-filter]} owner]
-  (reify
-    om/IRenderState
-    (render-state [this state]
-      (let [name (:name set)]
-        (sab/html
-         [:div {:class (if (= set-filter name) "active" "")
-                :on-click #(put! (:ch state) {:filter :set-filter :value name})}
-          name])))))
-
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
         corp-types ["Agenda" "Asset" "ICE" "Operation" "Upgrade"]]
@@ -98,7 +88,7 @@
 (defn options [list]
   (let [options (cons "All" list)]
     (for [option options]
-      [:option {:value option} option])))
+      [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])))
 
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
@@ -130,7 +120,7 @@
     (om/set-state! owner filter "All"))
   (om/set-state! owner :search-query (.. e -target -value)))
 
-(defn card-browser [cursor owner]
+(defn card-browser [{:keys [sets] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -167,30 +157,44 @@
          [:div
           [:h4 "Sort by"]
           [:select {:value (:sort-filter state)
-                    :on-change #(om/set-state! owner :sort-field (.. % -target -value))}
+                    :on-change #(om/set-state! owner :sort-field (.trim (.. % -target -value)))}
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (for [filter [["Set" :set-filter (map :name (sort-by :available (:sets cursor)))]
-                       ["Side" :side-filter ["Corp" "Runner"]]
-                       ["Faction" :faction-filter (factions (:side-filter state))]
-                       ["Type" :type-filter (types (:side-filter state))]]]
-           [:div
-            [:h4 (first filter)]
-            [:select {:value ((second filter) state)
-                      :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
-             (options (last filter))]])]
+         (let [cycles (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
+                        {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+               cycle-sets (map #(if (:cycle %)
+                                  (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
+                                  %)
+                               sets)]
+           (for [filter [["Set" :set-filter (map :name (sort-by :available (concat cycles cycle-sets)))]
+                         ["Side" :side-filter ["Corp" "Runner"]]
+                         ["Faction" :faction-filter (factions (:side-filter state))]
+                         ["Type" :type-filter (types (:side-filter state))]]]
+             [:div
+              [:h4 (first filter)]
+              [:select {:value ((second filter) state)
+                        :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
+               (options (last filter))]]))]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
-                       (->> (:cards cursor)
-                            (filter-cards (:set-filter state) :setname)
-                            (filter-cards (:side-filter state) :side)
-                            (filter-cards (:faction-filter state) :faction)
-                            (filter-cards (:type-filter state) :type)
-                            (match (.toLowerCase (:search-query state)))
-                            (sort-by (sort-field (:sort-field state)))
-                            (take (* (:page state) 28)))
+                       (let [s (-> (:set-filter state)
+                                     (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
+                                     (.replace " cycle" ""))
+                             cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
+                             cards (if (= s "All")
+                                     (:cards cursor)
+                                     (if (= (.indexOf (:set-filter state) "cycle") -1)
+                                       (filter #(= (:setname %) s) (:cards cursor))
+                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                         (->> cards
+                              (filter-cards (:side-filter state) :side)
+                              (filter-cards (:faction-filter state) :faction)
+                              (filter-cards (:type-filter state) :type)
+                              (match (.toLowerCase (:search-query state)))
+                              (sort-by (sort-field (:sort-field state)))
+                              (take (* (:page state) 28))))
                        {:key :code})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})

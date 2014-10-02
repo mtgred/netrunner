@@ -1,0 +1,91 @@
+[{
+    "name": "Alternates",
+    "available": ""
+}, {
+    "name": "Special",
+    "available": ""
+}, , {
+    "name": "Core Set",
+    "available": "2012-11-06"
+}, {
+    "name": "What Lies Ahead",
+    "cycle": "Genesis",
+    "available": "2012-12-14"
+}, {
+    "name": "Trace Amount",
+    "cycle": "Genesis",
+    "available": "2013-01-09"
+}, {
+    "name": "Cyber Exodus",
+    "cycle": "Genesis",
+    "available": "2013-02-14"
+}, {
+    "name": "A Study in Static",
+    "cycle": "Genesis",
+    "available": "2013-03-21"
+}, {
+    "name": "Humanity's Shadow",
+    "cycle": "Genesis",
+    "available": "2013-05-02"
+}, {
+    "name": "Future Proof",
+    "cycle": "Genesis",
+    "available": "2013-05-30"
+}, {
+    "name": "Creation and Control",
+    "available": "2013-07-29"
+}, {
+    "name": "Opening Moves",
+    "cycle": "Spin",
+    "available": "2013-09-27"
+}, {
+    "name": "Second Thoughts",
+    "cycle": "Spin",
+    "available": "2013-11-07"
+}, {
+    "name": "Mala Tempora",
+    "cycle": "Spin",
+    "available": "2013-12-13"
+}, {
+    "name": "True Colors",
+    "cycle": "Spin",
+    "available": "2014-01-17"
+}, {
+    "name": "Fear and Loathing",
+    "cycle": "Spin",
+    "available": "2014-02-21"
+}, {
+    "name": "Double Time",
+    "cycle": "Spin",
+    "available": "2014-03-28"
+}, {
+    "name": "Honor and Profit",
+    "available": "2014-05-02"
+}, {
+    "name": "Upstalk",
+    "cycle": "Lunar",
+    "available": "2014-07-25"
+}, {
+    "name": "The Spaces Between",
+    "cycle": "Lunar",
+    "available": "2014-08-15"
+}, {
+    "name": "First Contact",
+    "cycle": "Lunar",
+    "available": "2014-09-15"
+}, {
+    "name": "Up and Over",
+    "cycle": "Lunar",
+    "available": "2014-10-15"
+}, {
+    "name": "All That Remains",
+    "cycle": "Lunar",
+    "available": "2014-11-15"
+}, {
+    "name": "The Source",
+    "cycle": "Lunar",
+    "available": "2014-12-15"
+}, {
+    "name": "Order and Chaos",
+    "available": "2015-01-31"
+}]
