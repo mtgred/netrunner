@@ -299,7 +299,9 @@
   (om/component
    (sab/html
     [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
-     [:div.ices (for [ice ices] (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))]
+     [:div.ices
+      [:div.run-arrow]
+      (for [ice ices] (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))]
      [:div.content {:class (when (= (count content) 1) "center")}
       (for [card (reverse content)] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
       (when opts (om/build label content {:opts opts}))]])))

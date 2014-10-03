@@ -938,10 +938,6 @@ nav ul
     justify-content(center)
     align-items(center)
 
-  .ices
-    .counter
-      transform(rotate(90deg))
-
   .counter
     padding: 0
     font-size: 12px
@@ -1106,10 +1102,41 @@ nav ul
           position: relative
 
           .ices
+            position: relative
             width: 86px
             margin-top: 12px
 
-            > div
+            .run-arrow
+              position: absolute
+              z-index: 10
+              left: 50%
+              top: 5px
+              bottom: -50px
+              width: 18px
+              border: 1px solid orange
+              border-top: none
+              background-color: rgba(255, 165, 0, 0.5)
+              transform(translateX(-50%))
+              border-radius: 0 0 4px 4px
+
+              &:before
+                content: ""
+                display: block
+                position: absolute
+                right: 8px
+                width: 0
+                height: 0
+                border-left: 16px solid transparent
+                border-right: 16px solid transparent
+                bottom: 100%
+                left: 50%
+                transform(translateX(-50%))
+                border-bottom: 22px solid rgba(255, 165, 0, 0.5)
+
+            .counter
+              transform(rotate(90deg))
+
+            > .card
               position: relative
               left: 13px
               margin-top: -22px
