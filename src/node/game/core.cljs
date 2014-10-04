@@ -34,7 +34,7 @@
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]
       (swap! state update-in (cons side dest) #(vec (conj % moved-card)))
-      (swap! state update-in (cons side zone)
+      (swap! state update-in (cons (keyword (.toLowerCase (:side card))) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
@@ -231,6 +231,33 @@
       (swap! state assoc-in [side (first r)] 0)
       (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
 
+(defn gain-agenda-point [state side n]
+  (gain state side :agenda-point n)
+  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+    (system-msg state side "wins the game")))
+
+(defn add-prop [state side card key n]
+  (update! state side (update-in card [key] #(+ % n))))
+
+(defn set-prop [state side card & args]
+  (update! state side (apply assoc (cons card args))))
+
+(defn score [state side {:keys [card]}]
+  (when (>= (:advance-counter card) (:advancementcost card))
+    (let [moved-card (move state side card :scored)
+          c (card-init state side moved-card)]
+      (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
+      (gain-agenda-point state side (:agendapoints c))
+      (set-prop state side c :advance-counter 0)
+      (trigger-event state side :agenda-scored c))))
+
+(defn steal [state side card]
+  (let [c (move state side card :scored)]
+    (system-msg state side (str "steals " (:titlte c) " and gains " (:agendapoints c) " agenda poitns"))
+    (gain-agenda-point state side (:agendapoints c))
+    (set-prop state side c :advance-counter 0)
+    (trigger-event state side :agenda-scored c)))
+
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
   (let [s (case server
@@ -242,11 +269,15 @@
     (swap! state update-in [:runner :register :made-run] #(conj % server)))
   (system-msg state :runner (str "makes a run on " server)))
 
+(defn handle-access [state side cards]
+  (doseq [c cards]
+    (when (= (:type c) "Agenda")
+      (steal state side c))))
+
 (defmulti access (fn [state side server] (first server)))
 
 (defmethod access :hq [state side server n]
-  (let [hq (get-in @state [:corp :hand])]
-    (take n (shuffle hq))))
+  (take n (shuffle (get-in @state [:corp :hand]))))
 
 (defmethod access :rd [state side server n]
   (take n (get-in @state [:corp :deck])))
@@ -255,13 +286,14 @@
   (get-in @state [:corp :discard]))
 
 (defmethod access :remote [state side server]
-  (get-in @state [:corp :servers :remote (last server) :content]))
+  (get-in @state [:corp :servers :remote (js/parseInt (last server)) :content]))
 
 (defn successful-run [state side]
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
     (trigger-event state side :successful-run (first server))
     (let [cards (access state side server 1)]
+      (handle-access state side cards)
       (system-msg state side (str "accesses " (join ", "(map :title cards)))))
     (swap! state assoc :run nil)))
 
@@ -298,12 +330,6 @@
     (flatline state))
   (trigger-event state side :turn-ends nil)
   (swap! state assoc :end-turn true))
-
-(defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ % n))))
-
-(defn set-prop [state side card & args]
-  (update! state side (apply assoc (cons card args))))
 
 (defn purge [state side]
   (doseq [card (get-in @state [:runner :rig :program])]
@@ -377,17 +403,3 @@
   (when (pay state side :click 1 :credit 1)
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advance a card")))
-
-(defn gain-agenda-point [state side n]
-  (gain state side :agenda-point n)
-  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-    (system-msg state side "wins the game")))
-
-(defn score [state side {:keys [card]}]
-  (when (>= (:advance-counter card) (:advancementcost card))
-    (let [moved-card (move state side card  :scored)
-          c (card-init state side moved-card)]
-      (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
-      (gain-agenda-point state side (:agendapoints c))
-      (set-prop state side c :advance-counter 0)
-      (trigger-event state side (if (= side :corp) :agenda-scored :agenda-stolen) c))))
