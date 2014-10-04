@@ -307,8 +307,10 @@
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        [:div.content {:class (when (= (count content) 1) "center")}
-        (for [card (reverse content)] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
-        (when content (om/build label content {:opts opts}))]]))))
+        (for [card (reverse content)]
+          (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
+        (when content
+          (om/build label content {:opts opts}))]]))))
 
 (defmulti board-view #(get-in % [:player :identity :side]))
 
@@ -316,14 +318,20 @@
   (om/component
    (sab/html
     (let [servers (:servers player)
-          run-server (first (:server run))]
+          s (:server run)
+          server-type (first s)]
+      (.log js/console (clj->js s))
       [:div.corp-board
-       (om/build server-view {:server (:archives servers) :run (when (= run-server "archives") run)})
-       (om/build server-view {:server (:rd servers) :run (when (= run-server "rd") run)})
-       (om/build server-view {:server (:hq servers) :run (when (= run-server "hq") run)})
-       (map-indexed (fn [i server]
-                      (om/build server-view {:server server :run run} {:opts {:name (str "Server " i)}}))
-                    (:remote servers))]))))
+       (om/build server-view {:server (:archives servers) :run (when (= server-type "archives") run)})
+       (om/build server-view {:server (:rd servers) :run (when (= server-type "rd") run)})
+       (om/build server-view {:server (:hq servers) :run (when (= server-type "hq") run)})
+       (map-indexed
+        (fn [i server]
+          (om/build server-view {:server server
+                                 :run (when (and (= server-type "remote")
+                                                 (= (js/parseInt (second s)) i)) run)}
+                    {:opts {:name (str "Server " i)}}))
+        (:remote servers))]))))
 
 (defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
