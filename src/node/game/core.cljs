@@ -253,7 +253,7 @@
 
 (defn steal [state side card]
   (let [c (move state side card :scored)]
-    (system-msg state side (str "steals " (:titlte c) " and gains " (:agendapoints c) " agenda poitns"))
+    (system-msg state side (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
     (gain-agenda-point state side (:agendapoints c))
     (set-prop state side c :advance-counter 0)
     (trigger-event state side :agenda-scored c)))
