@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]
-            [clojure.string :refer [split-lines split]]))
+            [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
 
@@ -242,33 +242,44 @@
     (swap! state update-in [:runner :register :made-run] #(conj % server)))
   (system-msg state :runner (str "makes a run on " server)))
 
-(defmulti access #(first %3))
+(defmulti access (fn [state side server] (first server)))
 
-(defmethod access :hq
-  ([state side server] (access side server 1))
-  ([state side server n]
-     (let [hq (get-in @state [:corp :servers :hq])]
-       (take n (shuffle (count hq))))))
+(defmethod access :hq [state side server n]
+  (let [hq (get-in @state [:corp :hand])]
+    (take n (shuffle hq))))
 
-(defmethod access :rd
-  ([state side server] (access side server 1))
-  ([state side server n] (take n (get-in @state [:corp :servers :rd]))))
+(defmethod access :rd [state side server n]
+  (take n (get-in @state [:corp :deck])))
 
 (defmethod access :archives [state side server]
-  (get-in @state [:corp :servers :archives]))
+  (get-in @state [:corp :discard]))
 
 (defmethod access :remote [state side server]
-  (get-in @state [:corp :servers :remote (last server)]))
+  (get-in @state [:corp :servers :remote (last server) :content]))
 
 (defn successful-run [state side]
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
-    (access server)))
+    (trigger-event state side :successful-run (first server))
+    (let [cards (access state side server 1)]
+      (system-msg state side (str "accesses " (join ", "(map :title cards)))))
+    (swap! state assoc :run nil)))
 
 (defn end-run [state side]
-  (swap! state update-in [:runner :register :unsucessful-run] #(conj % (get-in @state [:run :server])))
-  (swap! state assoc :run nil)
-  (trigger-event state side (if (= side :corp) :corp-turn-ends :runner-turn-ends) nil))
+  (let [server (first (get-in @state [:run :server]))]
+    (swap! state update-in [:runner :register :unsucessful-run] #(conj % server))
+    (swap! state assoc :run nil)
+    (trigger-event state side (if (= side :corp) :corp-turn-ends :runner-turn-ends) nil)))
+
+(defn no-action [state side]
+  (swap! state assoc-in [:run :no-action] true)
+  (system-msg state side "has no further action"))
+
+(defn continue [state side]
+  (when (get-in @state [:run :no-action])
+    (swap! state update-in [:run :position] inc)
+    (swap! state assoc-in [:run :no-action] false)
+    (system-msg state side "continues the run")))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
   (resolve-ability state side (get-in (card-def card) [:abilities ability]) card targets))

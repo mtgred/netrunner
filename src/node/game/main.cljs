@@ -1,7 +1,7 @@
 (ns game.main
   (:require-macros [game.macros :refer [effect]])
   (:require [cljs.nodejs :as node]
-            [game.core :refer [game-states do! system-msg pay gain draw] :as core]))
+            [game.core :refer [game-states do! system-msg pay gain draw end-run] :as core]))
 
 (aset js/exports "main" game.main)
 (enable-console-print!)
@@ -22,6 +22,10 @@
    "play" core/play
    "rez" core/rez
    "run" core/run
+   "no-action" core/no-action
+   "continue" core/continue
+   "access" core/successful-run
+   "jack-out" (effect (end-run) (system-msg "jacks out"))
    "advance" core/advance
    "score" core/score
    "ability" core/play-ability})

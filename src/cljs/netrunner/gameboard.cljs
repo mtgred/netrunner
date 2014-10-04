@@ -295,35 +295,42 @@
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defn server-view [{:keys [ices content] :as cursor} owner opts]
+(defn server-view [{:keys [server run] :as cursor} owner opts]
   (om/component
    (sab/html
-    [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
-     [:div.ices
-      [:div.run-arrow]
-      (for [ice ices] (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))]
-     [:div.content {:class (when (= (count content) 1) "center")}
-      (for [card (reverse content)] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
-      (when opts (om/build label content {:opts opts}))]])))
+    (let [content (:content server)]
+      [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
+       (let [ices (:ices server)]
+         [:div.ices
+          (when run
+            [:div.run-arrow {:style {:top (str (+ 8 (* 64 (- (count ices) (:position run)))) "px")}}])
+          (for [ice ices]
+            (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
+       [:div.content {:class (when (= (count content) 1) "center")}
+        (for [card (reverse content)] (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
+        (when content (om/build label content {:opts opts}))]]))))
 
-(defmulti board-view #(get-in % [:identity :side]))
+(defmulti board-view #(get-in % [:player :identity :side]))
 
-(defmethod board-view "Corp" [{:keys [servers]}]
+(defmethod board-view "Corp" [{:keys [player run]}]
   (om/component
    (sab/html
-    [:div.corp-board
-     (om/build server-view (:archives servers))
-     (om/build server-view (:rd servers))
-     (om/build server-view (:hq servers))
-     (map-indexed (fn [i server] (om/build server-view server {:opts {:name (str "Server " i)}}))
-                  (:remote servers))])))
+    (let [servers (:servers player)
+          run-server (first (:server run))]
+      [:div.corp-board
+       (om/build server-view {:server (:archives servers) :run (when (= run-server "archives") run)})
+       (om/build server-view {:server (:rd servers) :run (when (= run-server "rd") run)})
+       (om/build server-view {:server (:hq servers) :run (when (= run-server "hq") run)})
+       (map-indexed (fn [i server]
+                      (om/build server-view {:server server :run run} {:opts {:name (str "Server " i)}}))
+                    (:remote servers))]))))
 
-(defmethod board-view "Runner" [{:keys [rig]}]
+(defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
    (sab/html
     [:div.runner-board
      (for [zone [:program :resource :hardware]]
-       [:div (for [c (zone rig)]
+       [:div (for [c (zone (:rig player))]
                [:div.card-wrapper {:class (when (playable? c) "playable")}
                 (om/build card-view c)])])])))
 
@@ -340,10 +347,10 @@
 (defn cond-button [text cond f]
   (sab/html
    (if cond
-     [:button.disabled text]
-     [:button {:on-click f} text])))
+     [:button {:on-click f} text]
+     [:button.disabled text])))
 
-(defn gameboard [{:keys [side gameid active-player end-turn] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -380,35 +387,51 @@
                   [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
                (when (:keep me)
-                 [:div.panel.blue-shade
-                  (if (= (keyword active-player) side)
-                    (when (and (zero? (:click me)) (not end-turn))
-                      [:button {:on-click #(send-command "end-turn")} "End Turn"])
-                    (when end-turn
-                      [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
-                  (when (= side :runner)
-                    (cond-button "Remove Tag"
-                                 (or (< (:click me) 1) (< (:credit me) 2) (< (:tag me) 1))
-                                 #(send-command "remove-tag")))
-                  (when (= side :runner)
-                    [:div.run-button
-                     (cond-button "Run" (< (:click me) 1)
-                                  #(-> (om/get-node owner "servers") js/$ .toggle))
-                     (let [servers (concat (remote-list) ["HQ" "R&D" "Archives"])]
-                       [:div.blue-shade.panel.servers-menu {:ref "servers"}
-                        (map (fn [label]
-                               [:div {:on-click #(do (send-command "run" {:server label})
-                                                     (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                                label])
-                             servers)])])
-                  (when (= side :corp)
-                    (cond-button "Purge" (< (:click me) 3) #(send-command "purge")))
-                  (cond-button "Draw" (< (:click me) 1) #(send-command "draw"))
-                  (cond-button "Gain Credit" (< (:click me) 1) #(send-command "credit"))])]
+                 (if run
+                   (let [s (:server run)
+                         kw (keyword (first s))
+                         server (if-let [n (second s)]
+                                  (get-in cursor [:corp :servers kw n])
+                                  (get-in cursor [:corp :servers kw]))]
+                     (if (= side :runner)
+                       [:div.panel.blue-shade
+                        (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
+                        (if (= (:position run) (count server))
+                          (cond-button "Access" (:no-action run) #(send-command "access"))
+                          (cond-button "Continue" (:no-action run) #(send-command "continue")))
+                        (cond-button "Jack Out" (:no-action run) #(send-command "jack-out"))]
+                       [:div.panel.blue-shade
+                        (cond-button "Rez ICE" (>= (:credit me) 0) #(send-command "rez-ice"))
+                        [:button {:on-click #(send-command "no-action")} "No more action" ]]))
+                   [:div.panel.blue-shade
+                    (if (= (keyword active-player) side)
+                      (when (and (zero? (:click me)) (not end-turn))
+                        [:button {:on-click #(send-command "end-turn")} "End Turn"])
+                      (when end-turn
+                        [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                    (when (= side :runner)
+                      [:div
+                       (cond-button "Remove Tag"
+                                    (and (>= (:click me) 1) (>= (:credit me) 2) (>= (:tag me) 1))
+                                    #(send-command "remove-tag"))
+                       [:div.run-button
+                        (cond-button "Run" (>= (:click me) 1)
+                                     #(-> (om/get-node owner "servers") js/$ .toggle))
+                        (let [servers (concat (remote-list) ["HQ" "R&D" "Archives"])]
+                          [:div.blue-shade.panel.servers-menu {:ref "servers"}
+                           (map (fn [label]
+                                  [:div {:on-click #(do (send-command "run" {:server label})
+                                                        (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                                   label])
+                                servers)])]])
+                    (when (= side :corp)
+                      (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
+                    (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
+                    (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))]))]
 
               [:div.board
-               (om/build board-view opponent)
-               (om/build board-view me)]]
+               (om/build board-view {:player opponent :run run})
+               (om/build board-view {:player me :run run})]]
              (om/build zones me)]
             [:div.rightpane {}
              [:div.card-zoom
