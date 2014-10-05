@@ -337,6 +337,10 @@
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :effect (effect (damage :net 3) (trash card))}]}
 
+   "Sentinel Defense Program"
+   {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
+                      :effect (effect (damage :net 1)) }}}
+
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
 

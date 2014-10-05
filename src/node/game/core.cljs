@@ -83,12 +83,12 @@
     (let [c (-> card
                 (update-in [:counter] #(- % counter-cost))
                 (update-in [:advance-counter] #(- % advance-counter-cost)))]
+      (when msg
+        (let [desc (if (string? msg) msg (msg state side card targets))]
+          (system-msg state side (str "uses " title (when desc (str " to " desc))))))
       (update! state side c)
       (effect state side c targets))
-    (when once (swap! state assoc-in [once (or once-key cid)] true))
-    (when msg
-      (let [desc (if (string? msg) msg (msg state side card targets))]
-        (system-msg state side (str "uses " title (when desc (str " to " desc))))))))
+    (when once (swap! state assoc-in [once (or once-key cid)] true))))
 
 (defn register-events [state side events card]
   (doseq [e events]
@@ -122,13 +122,14 @@
   (let [hand (get-in @state [:runner :hand])]
     (when (< (count hand) n)
       (flatline state))
-    (do (when (= type :brain)
-          (swap! state update-in [:runner :brain-damage] inc)
-          (swap! state update-in [:runner :max-hand-size] dec))
-        (let [shuffled-hand (shuffle hand)
-              discarded (zone :discard (take n shuffled-hand))]
-          (swap! state update-in [:runner :discard] #(concat % discarded))
-          (swap! state assoc-in [:runner :hand] (drop n shuffled-hand))))))
+    (when (= type :brain)
+      (swap! state update-in [:runner :brain-damage] inc)
+      (swap! state update-in [:runner :max-hand-size] dec))
+    (let [shuffled-hand (shuffle hand)
+          discarded (zone :discard (take n shuffled-hand))]
+      (swap! state update-in [:runner :discard] #(concat % discarded))
+      (swap! state assoc-in [:runner :hand] (drop n shuffled-hand)))
+    (trigger-event state side :damage type)))
 
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
