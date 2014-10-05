@@ -253,10 +253,11 @@
 
 (defn steal [state side card]
   (let [c (move state side card :scored)]
+    (resolve-ability state side (:stolen (card-def c)) c nil)
     (system-msg state side (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
     (gain-agenda-point state side (:agendapoints c))
     (set-prop state side c :advance-counter 0)
-    (trigger-event state side :agenda-scored c)))
+    (trigger-event state side :agenda-stolen c)))
 
 (defn run [state side {:keys [server] :as args}]
   (pay state :runner :click 1)
@@ -293,8 +294,8 @@
     (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
     (trigger-event state side :successful-run (first server))
     (let [cards (access state side server 1)]
-      (handle-access state side cards)
-      (system-msg state side (str "accesses " (join ", "(map :title cards)))))
+      (system-msg state side (str "accesses " (join ", "(map :title cards))))
+      (handle-access state side cards))
     (swap! state assoc :run nil)))
 
 (defn end-run [state side]

@@ -76,6 +76,11 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
+   "Clone Retirement"
+   {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
+    :stolen {:msg "force the Corp to take 1 bad publicity"
+             :effect (effect (gain :corp :bad-publicity 1))}}
+
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
@@ -388,6 +393,11 @@
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
+
+   "Vulcan Coverup"
+   {:msg "do 2 meat damages" :effect (effect (damage :meat 2))
+    :stolen {:msg "force the Corp to take 1 bad publicity"
+             :effect (effect (gain :corp :bad-publicity 1))}}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
