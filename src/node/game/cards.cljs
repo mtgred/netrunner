@@ -275,6 +275,9 @@
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Pup"
+   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
+
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
                         (fn [k ref old new]
@@ -416,16 +419,17 @@
 
    ;; ICE
    "Bastion"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Chimera"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Curtain Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Data Mine"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage"
+                 :effect (effect (trash card) (damage :net 1))}]}
 
    "Datapike"
    {:abilities [{:label "The runner must pay 2 [Credits] if able"
@@ -434,7 +438,7 @@
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Eli 1.0"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Enigma"
    {:abilities [{:label "The runner lose 1 [Click] if able"
@@ -449,23 +453,23 @@
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Galahad"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
 
    "Guard"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Hadrians Wall"
    {:advanceable :always
     :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Himitsu-Bako"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Hive"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Heimdall 1.0"
    {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
@@ -476,7 +480,7 @@
    {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
                  :effect (effect (damage :brain 1))}
                 {:label "Do 1 brain damage and end the run" :msg "do 1 brain damage and end the run"
-                 :effect (effect (damage :brain 1))}
+                 :effect (effect (damage :brain 1) (end-run))}
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Hourglass"
@@ -489,37 +493,39 @@
     :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "IQ"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Janus 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}
+   {:abilities [{:msg "do 1 brain damage" :label "Do 1 brain damage"
+                 :effect (effect (damage :brain 1))}]}
 
    "Komainu"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage"
+                 :effect (effect (damage :net 1))}]}
 
    "Lotus Field"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Mother Goddess"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Neural Katana"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+   {:abilities [{:msg "do 3 net damage" :label "Do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "NEXT Bronze"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "NEXT Silver"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Paper Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Quandary"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Rainbow"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Rototurret"
    {:abilities [{:label "Trash 1 program" :msg "trash 1 program"}
@@ -543,17 +549,17 @@
                  :msg "trash 1 program unless the Runner pays 3 [Credits]"}]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Tyrant"
    {:advanceable :while-rezzed
     :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "TMI"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Viktor 1.0"
    {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
@@ -561,7 +567,7 @@
                 {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
 
    "Wall of Static"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Wall of Thorns"
    {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2))}
@@ -577,13 +583,13 @@
     :abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Wotan"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Wraparound"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
 
    ;; partial implementation
    "AstroScript Pilot Program"
