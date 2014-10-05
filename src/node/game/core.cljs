@@ -99,7 +99,8 @@
 
 (defn trigger-event [state side event target]
   (doseq [e (get-in @state [:events event])]
-    (resolve-ability state side (:ability e) (get-card state (:card e)) [target])))
+    (let [card (get-card state (:card e))]
+      (resolve-ability state (:side card) (:ability e) card [target]))))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
