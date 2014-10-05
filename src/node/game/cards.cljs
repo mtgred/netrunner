@@ -108,6 +108,14 @@
    {:req (req (some #{"HQ" "R&D" "Archives"} (:successful-run runner-reg)))
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
 
+   "Dedicated Response Team"
+   {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damages"
+                                   :effect (effect (damage :meat 2))}}}
+
+   "Desperado"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
    "Diversified Portfolio"
    {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
 
@@ -138,6 +146,14 @@
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
+   "Fester"
+   {:events {:purge {:msg "force the corp to lose 2 [Credits] if able"
+                     :effect (effect (pay :corp :credit 2))}}}
+
+   "Gabriel Santiago: Consummate Professional"
+   {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
+                              :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
+
    "Geothermal Fracking"
    {:data {:counter 2}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
@@ -167,6 +183,10 @@
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
     :abilities [{:cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
+
+   "Haas-Bioroid: Engineering the Future"
+   {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
+                            :effect (effect (gain :credit 1))}}}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -201,6 +221,10 @@
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 
+   "John Masanori"
+   {:events {:successful-run {:msg "draw 1 card" :once :per-turn :effect (effect (draw))}
+             :unsuccessful-run {:msg "take 1 tag" :once :per-turn :effect (effect (gain :tag 1))}}}
+
    "Investigative Journalism"
    {:req (req (> (:bad-publicity corp) 0))
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
@@ -212,6 +236,11 @@
       :effect (effect (add-prop card :counter 3))}
      {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
       :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
+
+   "Lamprey"
+   {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
+                              :effect (effect (lose :corp :credit 1))}
+             :purge {:effect (effect (trash card))}}}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
@@ -247,6 +276,9 @@
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
+   "Medium"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
+
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
@@ -261,12 +293,14 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
+   "Nerve Agent"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :hq))}}}
+
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
 
    "Nisei MK II"
-   {:data {:counter 1}
-    :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
+   {:data {:counter 1} :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
 
    "Noise: Hacker Extraordinaire"
    {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
@@ -291,7 +325,8 @@
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
 
    "Philotic Entanglement"
-   {:effect (effect (damage :net (count (:scored runner))))}
+   {:msg (msg "do " (count (:scored runner)) " net damages")
+    :effect (effect (damage :net (count (:scored runner))))}
 
    "Private Contracts"
    {:data {:counter 14}
@@ -362,7 +397,7 @@
                                       :effect #(gain state :corp :click 1)} card nil))}
 
    "Successful Demonstration"
-   {:req (req (:unsucessful-run runner-reg)) :effect (gain :credit 7)}
+   {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
 
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
@@ -606,6 +641,9 @@
     :events {:corp-turn-end {:effect #(do (lose %1 :runner :tag 2)
                                           (unregister-event %1 %2 :corp-turn-ends %3))}}}
 
+   "Chakana"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
+
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (add-prop card :strengh 1))}
@@ -621,8 +659,11 @@
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
 
-   "Desperado"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+   "Datasucker"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1))
+                              :req (req (#{:hq :rd :archives} target))}}}
+   "Deep Thought"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
    "Doppelgänger"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
@@ -658,6 +699,9 @@
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
                  :msg (msg "gain " (:counter card) " [Credits]")}]}
+
+   "Hemorrhage"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))}
@@ -714,7 +758,7 @@
     :leave-play (effect (lose :max-hand-size 2))}
 
    "SEA Source"
-   {:req (req (:sucessful-run runner-reg))}
+   {:req (req (:successful-run runner-reg))}
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}

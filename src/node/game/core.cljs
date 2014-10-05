@@ -100,7 +100,7 @@
 (defn trigger-event [state side event target]
   (doseq [e (get-in @state [:events event])]
     (let [card (get-card state (:card e))]
-      (resolve-ability state (:side card) (:ability e) card [target]))))
+      (resolve-ability state (keyword (.toLowerCase (:side card))) (:ability e) card [target]))))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -298,13 +298,15 @@
     (let [cards (access state side server 1)]
       (system-msg state side (str "accesses " (join ", "(map :title cards))))
       (handle-access state side cards))
+    (trigger-event state side :successful-run-ends (first server))
     (swap! state assoc :run nil)))
 
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]
-    (swap! state update-in [:runner :register :unsucessful-run] #(conj % server))
+    (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+    (trigger-event state side :unsuccessful-run nil)
     (swap! state assoc :run nil)
-    (trigger-event state side (if (= side :corp) :corp-turn-ends :runner-turn-ends) nil)))
+    (trigger-event state side :run-ends nil)))
 
 (defn no-action [state side]
   (swap! state assoc-in [:run :no-action] true)
@@ -337,7 +339,8 @@
 (defn purge [state side]
   (doseq [card (get-in @state [:runner :rig :program])]
     (when (has? card :subtype "Virus")
-      (set-prop state :runner card :counter 0))))
+      (set-prop state :runner card :counter 0)))
+  (trigger-event state side :purge nil))
 
 (defn play-instant [state side {:keys [title] :as card} & args]
   (let [cdef (card-def card)]
@@ -378,8 +381,9 @@
       (if (= (:type c) "ICE")
         (let [slot (conj dest :ices)]
           (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
-            (move state side c slot)
-            (system-msg state side (str "install an ICE on " server))))
+            (system-msg state side (str "install an ICE on " server))
+            (let [moved-card (move state side c slot)]
+              (trigger-event state side :corp-install moved-card))))
         (let [slot (conj dest :content)]
           (when (and (can-move? state side c slot)
                      (pay state side :click 1))
@@ -389,7 +393,8 @@
                   (trash state side installed-card)
                   (system-msg state side (str "trash a card in " server)))))
             (system-msg state side (str "installs a card in " server))
-            (move state side c slot)))))))
+            (let [moved-card (move state side c slot)]
+              (trigger-event state side :corp-install moved-card))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
