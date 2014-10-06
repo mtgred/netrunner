@@ -14,9 +14,6 @@ db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}")
 
 setFields = [
   "name",
-  "code",
-  "total",
-  "known",
   "available"
 ]
 
@@ -36,7 +33,6 @@ cardFields = [
   "factioncost", # influence
   "number",
   "setname",
-  "number",
   "side",
   "uniqueness",
   "memoryunits",
@@ -45,28 +41,28 @@ cardFields = [
   "imagesrc"
 ]
 
-baseurl = "http://netrunnerdb.com/api/"
+baseurl = "http://netrunnerdb.ca/api/"
 
-restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment"]
+restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment", "Hades Shard", "Hades Fragment", "Uptopia Shard", "Uptopia Fragment"]
 
 selectFields = (fields, objectList) ->
   ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj.title in restricted; newObj), {}) for obj in objectList)
 
-request.get baseurl + "sets", (error, response, body) ->
-  if !error and response.statusCode is 200
-    sets = selectFields(setFields, JSON.parse(body))
-    db.collection("sets").remove ->
-    db.collection('sets').insert sets, (err, result) ->
-    fs.writeFile "sets.json", JSON.stringify(sets), ->
-      if mongoUser
-        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
-      else
-        exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file sets.json")
+# request.get baseurl + "sets", (error, response, body) ->
+#   if !error and response.statusCode is 200
+#     sets = selectFields(setFields, JSON.parse(body))
+#     db.collection("sets").remove ->
+#     db.collection('sets').insert sets, (err, result) ->
+#     fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
+#       if mongoUser
+#         exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file andb-sets.json")
+#       else
+#         exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file andb-sets.json")
 
 fetchImg = (code, t) ->
   setTimeout ->
     console.log code
-    url = "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
+    url = "http://netrunnerdb.ca/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
     imgDir = if mongoUser then "#{process.env.OPENSHIFT_DATA_DIR}/img" else "img"
     request(url).pipe(fs.createWriteStream("#{imgDir}/#{code}.png"))
   , t
@@ -81,8 +77,8 @@ request.get baseurl + "cards", (error, response, body) ->
 
     db.collection("cards").remove ->
     db.collection("cards").insert cards, (err, result) ->
-    fs.writeFile "cards.json", JSON.stringify(cards), ->
+    fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
       if mongoUser
-        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
+        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file andb-cards.json")
       else
-        exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file cards.json")
+        exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file andb-cards.json")
