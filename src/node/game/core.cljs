@@ -296,8 +296,9 @@
     (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
     (trigger-event state side :successful-run (first server))
     (let [cards (access state side server 1)]
-      (system-msg state side (str "accesses " (join ", "(map :title cards))))
-      (handle-access state side cards))
+      (when-not (empty? cards)
+        (system-msg state side (str "accesses " (join ", "(map :title cards))))
+        (handle-access state side cards)))
     (trigger-event state side :successful-run-ends (first server))
     (swap! state assoc :run nil)))
 

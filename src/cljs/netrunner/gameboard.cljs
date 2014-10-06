@@ -409,8 +409,8 @@
                           (cond-button "Continue" (:no-action run) #(send-command "continue")))
                         (cond-button "Jack Out" (:no-action run) #(send-command "jack-out"))]
                        [:div.panel.blue-shade
-                        (cond-button "Rez ICE" (>= (:credit me) 0) #(send-command "rez-ice"))
-                        [:button {:on-click #(send-command "no-action")} "No more action" ]]))
+                        (cond-button "No more action" (not (:no-action run))
+                                     #(send-command "no-action"))]))
                    [:div.panel.blue-shade
                     (if (= (keyword active-player) side)
                       (when (and (zero? (:click me)) (not end-turn))
