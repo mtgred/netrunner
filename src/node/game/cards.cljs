@@ -146,6 +146,10 @@
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
+   "Fetal AI"
+   {:access {:req (req (not= (:zone card) :archives)) :msg "do 2 net damages"
+             :effect (effect (damage :net 2))}}
+
    "Fester"
    {:events {:purge {:msg "force the corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp :credit 2))}}}
@@ -379,6 +383,9 @@
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
                       :effect (effect (damage :net 1)) }}}
 
+   "Shock!"
+   {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
+
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
 
@@ -404,6 +411,9 @@
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
+
+   "TGTBT"
+   {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
    "Theophilius Bagbiter"
    {:effect #(do (lose % :runner :credit :all)
@@ -773,6 +783,9 @@
 
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
+
+   "The Source"
+   {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
 
    "The Toolbox"
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))}

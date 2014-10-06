@@ -1,5 +1,5 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid]]
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword]]
             [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
@@ -61,7 +61,7 @@
 
 (defn get-card [state {:keys [cid zone side] :as card}]
   (if zone
-    (some #(when (= cid (:cid %)) %) (get-in @state (cons (keyword (.toLowerCase side)) zone)))
+    (some #(when (= cid (:cid %)) %) (get-in @state (cons (to-keyword side) zone)))
     card))
 
 (defn update! [state side card]
@@ -274,8 +274,8 @@
 
 (defn handle-access [state side cards]
   (doseq [c cards]
-    (when (= (:type c) "Agenda")
-      (steal state side c))))
+    (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
+    (when (= (:type c) "Agenda") (steal state side c))))
 
 (defmulti access (fn [state side server] (first server)))
 

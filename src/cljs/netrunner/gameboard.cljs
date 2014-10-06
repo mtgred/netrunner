@@ -320,7 +320,6 @@
     (let [servers (:servers player)
           s (:server run)
           server-type (first s)]
-      (.log js/console (clj->js s))
       [:div.corp-board
        (om/build server-view {:server (:archives servers) :run (when (= server-type "archives") run)})
        (om/build server-view {:server (:rd servers) :run (when (= server-type "rd") run)})

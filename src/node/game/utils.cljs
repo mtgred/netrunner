@@ -21,3 +21,6 @@
 (defn zone [zone coll]
   (let [dest (if (sequential? zone) zone [zone])]
     (map #(assoc % :zone dest) coll)))
+
+(defn to-keyword [string]
+  (keyword (.toLowerCase string)))
