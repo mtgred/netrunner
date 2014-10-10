@@ -333,9 +333,6 @@
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
-   "Pup"
-   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
-
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
                         (fn [k ref old new]
@@ -489,178 +486,183 @@
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
    ;; ICE
+   "Ashigaru"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
    "Bastion"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Caduceus"
+   {:abilities [{:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
+                {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Changeling"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Chimera"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Curtain Wall"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Data Mine"
-   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage"
-                 :effect (effect (trash card) (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1))}]}
 
    "Datapike"
-   {:abilities [{:label "The runner must pay 2 [Credits] if able"
-                 :msg "force the runner to pay 2 [Credits] if able"
+   {:abilities [{:msg "force the runner to pay 2 [Credits] if able"
                  :effect (effect (pay :runner :credit 2))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Eli 1.0"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Enigma"
-   {:abilities [{:label "The runner lose 1 [Click] if able"
-                 :msg "force the runner to lose 1 [Click] if able"
+   {:abilities [{:msg "force the runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
-                 :effect (effect (damage :brain 1))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Galahad"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
 
    "Guard"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Hadrians Wall"
    {:advanceable :always
-    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Himitsu-Bako"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Hive"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Heimdall 1.0"
-   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
-                 :effect (effect (damage :brain 1))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Heimdall 2.0"
-   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
-                 :effect (effect (damage :brain 1))}
-                {:label "Do 1 brain damage and end the run" :msg "do 1 brain damage and end the run"
-                 :effect (effect (damage :brain 1) (end-run))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+                {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1) (end-run))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Hourglass"
-   {:abilities [{:label "The runner lose 1 [Click] if able"
-                 :msg "force the runner to lose 1 [Click] if able"
+   {:abilities [{:msg "force the runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}]}
 
+   "Hunter"
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+
    "Ice Wall"
-   {:advanceable :always
-    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "IQ"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Janus 1.0"
-   {:abilities [{:msg "do 1 brain damage" :label "Do 1 brain damage"
-                 :effect (effect (damage :brain 1))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}
 
    "Komainu"
-   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage"
-                 :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Lotus Field"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Mother Goddess"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Neural Katana"
-   {:abilities [{:msg "do 3 net damage" :label "Do 3 net damage" :effect (effect (damage :net 3))}]}
+   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "NEXT Bronze"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "NEXT Silver"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Paper Wall"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Quandary"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rototurret"
-   {:abilities [{:label "Trash 1 program" :msg "trash 1 program"}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "trash 1 program"}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Salvage"
    {:advanceable :while-rezzed
-    :abilities [{:msg "trace 2" :label "Trace 2 - If successful, give the Runner 1 tag"}]}
+    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Shadow"
    {:advanceable :always
-    :abilities [{:label "Gain 2 [Credits]" :msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                [:label "Trace 3 - If successful, give the Runner 1 tag" :msg "trace 3"]]}
+    :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+                {:msg "give the runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
 
    "Swarm"
    {:advanceable :always
-    :abilities [{:label "Trash 1 program unless the Runner pays 3 [Credits]"
-                 :msg "trash 1 program unless the Runner pays 3 [Credits]"}]}
+    :abilities [{:msg "trash 1 program unless the Runner pays 3 [Credits]"}]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Tyrant"
    {:advanceable :while-rezzed
-    :abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "TMI"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Universal Connectivity Fee"
+   {:abilities [{:msg (msg "force the Runner to lose " (if (> (:tag runner) 0) "all credits" "1 [Credits]"))
+                 :effect #(if (> (get-in @%1 [:runner :tag]) 0)
+                            (do (lose %1 :runner :credit :all) (trash %1 %2 %3))
+                            (lose %1 :runner :credit 1))}]}
 
    "Viktor 1.0"
-   {:abilities [{:label "Do 1 brain damage" :msg "do 1 brain damage"
-                 :effect (effect (damage :brain 1))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Wall of Static"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Wall of Thorns"
-   {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2))}
-                {:label "End the run" :msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Wendigo"
    {:advanceable :always
-    :abilities [{:label "Prevent the runner from using a chosen program for the remaining of this run"
-                 :msg "prevent the runner from using a chosen program for the remaining of this run"}]}
+    :abilities [{:msg "prevent the runner from using a chosen program for the remaining of this run"}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed
-    :abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Wotan"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Wraparound"
-   {:abilities [{:msg "end the run" :label "End the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :label "Do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    ;; partial implementation
    "AstroScript Pilot Program"

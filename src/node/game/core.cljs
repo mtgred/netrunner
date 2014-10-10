@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword]]
-            [clojure.string :refer [split-lines split join]]))
+            [clojure.string :refer [split-lines split join capitalize]]))
 
 (def game-states (atom {}))
 
@@ -105,7 +105,8 @@
 (defn card-init [state side card]
   (let [cdef (card-def card)
         abilities (if (= (:type card) "ICE")
-                    (for [ab (:abilities cdef) :when (:label ab)] (:label ab))
+                    (for [ab (:abilities cdef)]
+                      (or (:label ab) (capitalize (:msg ab))))
                     (for [ab (split-lines (:text card))
                           :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
                       (second matches)))
