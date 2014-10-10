@@ -412,3 +412,13 @@
   (when (pay state side :click 1 :credit 1)
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advance a card")))
+
+(defn click-draw [state side]
+  (when (pay state side :click 1)
+    (draw state side)
+    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
+
+(defn click-credit [state side]
+  (when (pay state side :click 1)
+    (gain state side :credit 1)
+    (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))

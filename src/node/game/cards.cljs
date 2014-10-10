@@ -38,6 +38,12 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
 
+   "Autoscripter"
+   {:events {:runner-install {:req (req (has? target :type "Program")) :once :per-turn
+                              :msg "gain 1 [Click]" :effect (effect (gain :click 1))}
+             :unsuccessful-run {:effect (effect (trash card)
+                                                (system-msg "Autoscripter is trashed"))}}}
+
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
 
@@ -165,6 +171,12 @@
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
+
+   "Gorman Drip v1"
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
+                 :msg (msg "gain " (:counter card) " [Credits]")}]
+    :events {:corp-click-credit {:effect (effect (add-prop card :counter 1))}
+             :corp-click-draw {:effect (effect (add-prop card :counter 1))}}}
 
    "Government Contracts"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 4)) :msg "gain 4 [Credits]"}]}
@@ -310,6 +322,14 @@
    {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
                               :req (req (has? target :subtype "Virus"))}}}
 
+   "Origami"
+   {:effect (effect (gain :max-hand-size
+                          (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                   (get-in runner [:rig :program])))))))
+    :leave-play (effect (lose :max-hand-size
+                              (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                       (get-in runner [:rig :program])))))))}
+
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
@@ -327,6 +347,12 @@
 
    "Paper Tripping"
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
+
+   "Peak Efficiency"
+   {:effect (effect (gain :credit
+                          (reduce (fn [c server]
+                                    (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
+                                  0 (flatten (seq (:servers corp))))))}
 
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damages")
@@ -705,10 +731,6 @@
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect #(do (gain %1 :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
-
-   "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
-                 :msg (msg "gain " (:counter card) " [Credits]")}]}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}}
