@@ -9,6 +9,7 @@
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]))
 
 (defonce game-state (atom {}))
+(defonce lock (atom false))
 
 (defn init-game [game side]
   (swap! game-state merge game)
@@ -22,7 +23,7 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "state" (swap! game-state merge (:state msg))
+          "state" (do (swap! game-state merge (:state msg)) (reset! lock false))
           nil))))
 
 (defn send [msg]
@@ -31,9 +32,11 @@
 (defn send-command
   ([command] (send-command command nil))
   ([command args]
-     (try (js/ga "send" "event" "game" command) (catch js/Error e))
-     (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
-            :command command :args args})))
+     (when-not @lock
+       (try (js/ga "send" "event" "game" command) (catch js/Error e))
+       (reset! lock true)
+       (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
+              :command command :args args}))))
 
 (defn send-msg [event owner]
   (.preventDefault event)

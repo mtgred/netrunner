@@ -25,10 +25,6 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
-(defn can-move? [state side {:keys [cid] :as card} to]
-  (let [dest (if (sequential? to) to [to])]
-    (not (some #(= (:cid %) cid) (get-in @state (cons side to))))))
-
 (defn move [state side {:keys [zone cid] :as card} to]
   (when card
     (let [dest (if (sequential? to) to [to])
@@ -361,8 +357,7 @@
 
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
   (let [dest [:rig (keyword (.toLowerCase type))]]
-    (when (and (can-move? state side card dest)
-               (or (not uniqueness) (not (in-play? state card)))
+    (when (and (or (not uniqueness) (not (in-play? state card)))
                (if-let [req (:req (card-def card))] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
       (let [c (move state side card dest)
@@ -387,8 +382,7 @@
             (let [moved-card (move state side c slot)]
               (trigger-event state side :corp-install moved-card))))
         (let [slot (conj dest :content)]
-          (when (and (can-move? state side c slot)
-                     (pay state side :click 1))
+          (when (pay state side :click 1)
             (when (#{"Asset" "Agenda"} (:type c))
               (doseq [installed-card (get-in @state (cons :corp slot))]
                 (when (#{"Asset" "Agenda"} (:type installed-card))
