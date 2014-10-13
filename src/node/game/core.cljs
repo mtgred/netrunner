@@ -93,10 +93,12 @@
 (defn unregister-event [state side event card]
   (swap! state update-in [:events event] #(remove (fn [effect] (= (:card effect) card)) %)))
 
-(defn trigger-event [state side event target]
-  (doseq [e (get-in @state [:events event])]
-    (let [card (get-card state (:card e))]
-      (resolve-ability state (keyword (.toLowerCase (:side card))) (:ability e) card [target]))))
+(defn trigger-event
+  ([state side event] (trigger-event state side event nil))
+  ([state side event target]
+     (doseq [e (get-in @state [:events event])]
+       (let [card (get-card state (:card e))]
+         (resolve-ability state (keyword (.toLowerCase (:side card))) (:ability e) card [target])))))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -302,9 +304,9 @@
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-    (trigger-event state side :unsuccessful-run nil)
+    (trigger-event state side :unsuccessful-run)
     (swap! state assoc :run nil)
-    (trigger-event state side :run-ends nil)))
+    (trigger-event state side :run-ends)))
 
 (defn no-action [state side]
   (swap! state assoc-in [:run :no-action] true)
@@ -324,21 +326,21 @@
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
-  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil)
+  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
   (system-msg state side (str "is ending his or her turn"))
   (when (and (= side :runner) (< (get-in @state [:runner :max-hand-size]) 0))
     (flatline state))
-  (trigger-event state side :turn-ends nil)
+  (trigger-event state side :turn-ends)
   (swap! state assoc :end-turn true))
 
 (defn purge [state side]
   (doseq [card (get-in @state [:runner :rig :program])]
     (when (has? card :subtype "Virus")
       (set-prop state :runner card :counter 0)))
-  (trigger-event state side :purge nil))
+  (trigger-event state side :purge))
 
 (defn play-instant [state side {:keys [title] :as card} & args]
   (let [cdef (card-def card)]
