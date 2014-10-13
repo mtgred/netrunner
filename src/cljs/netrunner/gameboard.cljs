@@ -123,12 +123,15 @@
 (defn remote-list []
   (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
 
-(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost
-                         advanceable rezzed] :as cursor} owner {:keys [flipped] :as opts}]
+(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
+                         advanceable rezzed strength current-strength] :as cursor}
+                 owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
-      [:div.blue-shade.card {:on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
+      [:div.blue-shade.card {:draggable true
+                             :on-drag-start #(-> % .-dataTransfer .setData "application/card")
+                             :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
                                                 (put! zoom-channel cursor))
                              :on-mouse-leave #(put! zoom-channel false)
                              :on-click #(handle-card-click @cursor owner)}
@@ -139,6 +142,7 @@
        [:div.counters
         (when (> counter 0) [:div.darkbg.counter counter])
         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
+       (when current-strength [:div.darkbg.strength current-strength])
        (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
          (let [centrals ["HQ" "R&D" "Archives"]
                remotes (conj (remote-list) "New remote")

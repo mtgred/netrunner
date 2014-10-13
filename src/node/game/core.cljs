@@ -83,7 +83,7 @@
         (let [desc (if (string? msg) msg (msg state side card targets))]
           (system-msg state side (str "uses " title (when desc (str " to " desc))))))
       (update! state side c)
-      (effect state side c targets))
+      (when effect (effect state side c targets)))
     (when once (swap! state assoc-in [once (or once-key cid)] true))))
 
 (defn register-events [state side events card]
@@ -102,7 +102,7 @@
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
-        abilities (if (= (:type card) "ICE")
+        abilities (if (or (= (:type card) "ICE") (has? card :subtype "Icebreaker"))
                     (for [ab (:abilities cdef)]
                       (or (:label ab) (capitalize (:msg ab))))
                     (for [ab (split-lines (:text card))
@@ -243,6 +243,13 @@
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
 
+(defn pump
+  ([state side card n] (pump state side card n false))
+  ([state side {:keys [strength current-strength] :as card} n all-run]
+     (let [c (if current-strength card (assoc card :current-strength strength :all-run all-run))]
+       (update! state side (update-in c [:current-strength] #(+ % n))))))
+
+
 (defn score [state side {:keys [card]}]
   (when (>= (:advance-counter card) (:advancementcost card))
     (let [moved-card (move state side card :scored)
@@ -316,6 +323,10 @@
   (when (get-in @state [:run :no-action])
     (swap! state update-in [:run :position] inc)
     (swap! state assoc-in [:run :no-action] false)
+    (swap! state assoc-in [:runner :rig :program]
+           (for [p (get-in @state [:runner :rig :program])]
+             (if (or (not (:current-strength p)) (:all-run p))
+               p (assoc p :current-strength nil))))
     (system-msg state side "continues the run")))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]

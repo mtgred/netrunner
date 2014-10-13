@@ -2,7 +2,7 @@
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill
-                               gain-agenda-point] :as core]
+                               gain-agenda-point pump] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -397,6 +397,10 @@
    "Restructure"
    {:effect (effect (gain :credit 15))}
 
+   "Reversed Accounts"
+   {:advanceable :always
+    :abilities [{:cost [:click 1]
+                 :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
@@ -484,6 +488,175 @@
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
                                   :effect (effect (lose :click 1) (draw 2))}}}
+
+   ;; Icebreakers
+
+   "Alpha"
+   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Alias"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Atman"
+   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]}
+
+   "Aurora"
+   {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Battering Ram"
+   {:abilities [{:cost [:credit 2] :msg "break up to 2 barrier subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
+                 :effect (effect (pump card 1 true))}]}
+
+   "BlacKat"
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Breach"
+   {:abilities [{:cost [:credit 2] :msg "break 3 barrier subroutine"}
+                {:cost [:credit 2] :msg "add 4 strength" :effect (effect (pump card 4))}]}
+
+   "Cerberus \"Cuj.0\" H3"
+   {:data {:counter 4}
+    :abilities [{:counter-cost 1 :msg "break up to 2 sentry subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Cerberus \"Rex\" H2"
+   {:data {:counter 4}
+    :abilities [{:counter-cost 1 :msg "break up to 2 code gate subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Cerberus \"Lady\" H1"
+   {:data {:counter 4}
+    :abilities [{:counter-cost 1 :msg "break up to 2 barrier subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Corroder"
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Creeper"
+   {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Crypsis"
+   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}
+                {:cost [:click 1] :msg "place 1 virus counter"
+                 :effect (effect (add-prop card :counter 1))}
+                {:counter-cost 1 :label "Remove 1 hosted virus counter" :msg "remove 1 virus counter"}]}
+
+   "Cyber-Cypher"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Dagger"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 1] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+
+   "Darwin"
+   {:abilities [{:cost [:credit 2] :msg "break ICE subroutine"}
+                {:cost [:credit 1] :once :per-turn :msg "place 1 virus counter"
+                 :effect (effect (add-prop card :counter 1))}]}
+
+   "Deus X"
+   {:abilities [{:msg "break any number of AP subroutine" :effect (effect (trash card))}
+                {:msg "Prevent any number of net damage" :effect (effect (trash card))}]}
+
+   "Faerie"
+   {:abilities [{:msg "break any number of sentry subroutine" :effect (effect (trash card))}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Femme Fatale"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Force of Nature"
+   {:abilities [{:cost [:credit 2] :msg "break up to 2 code gate subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Garrote"
+   {:abilities [{:cost [:credit 1] :msg "break up to 1 sentry subroutines"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Gordian Blade"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Gingerbread"
+   {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
+                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Inti"
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Leviathan"
+   {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
+                {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+
+   "Morning Star"
+   {:abilities [{:cost [:credit 1] :msg "break any number of barrier subroutines"}]}
+
+   "Mimic"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}]}
+
+   "Ninja"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+
+   "Passport"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 2] :msg "add 2 strength" :effect (effect (pump card 2))}]}
+
+   "Omega"
+   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Overmind"
+   {:effect (effect (set-prop card :counter (:memory runner)))
+    :abilities [{:counter-cost 1 :msg "break 1 subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Peacock"
+   {:abilities [{:cost [:credit 2] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Pipeline"
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
+                 :effect (effect (pump card 1 true))}]}
+
+   "Refractor"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Snowball"
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength for the remainder of the run"
+                  :effect (effect (pump card 1 true))}]}
+
+   "Sharpshooter"
+   {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card))}
+                {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
+
+   "Switchblade"
+   {:abilities [{:cost [:credit 1] :msg "break any number sentry subroutines"}
+                {:cost [:credit 1] :msg "add 7 strength" :effect (effect (pump card 7))}]}
+
+   "Torch"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Yog.0"
+   {:abilities [{:msg "break 1 code gate subroutine"}]}
+
+   "ZU.13 Key Master"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    ;; ICE
    "Ashigaru"
@@ -591,6 +764,9 @@
    "Paper Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Pup"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
    "Quandary"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -681,12 +857,6 @@
 
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
-
-   "Crypsis"
-   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (add-prop card :strengh 1))}
-                {:cost [:click 1] :msg "place 1 virus counter"
-                 :effect (effect (add-prop card :counter 1))}]}
 
    "D4v1d"
    {:data {:counter 3}}
