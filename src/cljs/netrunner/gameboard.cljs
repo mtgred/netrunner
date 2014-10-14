@@ -47,9 +47,9 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn action-list [{:keys [type rezzed advanceable advance-counter advancementcost] :as card}]
+(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost] :as card}]
   (-> []
-      (#(if (or (= type "Agenda")
+      (#(if (or (and (= type "Agenda") (= (first zone) "servers"))
                 (= advanceable "always")
                 (and rezzed (= advanceable "while-rezzed"))
                 (and (not rezzed) (= advanceable "while-unrezzed")))

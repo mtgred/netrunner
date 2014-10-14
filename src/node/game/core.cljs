@@ -101,12 +101,8 @@
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
-        abilities (if (or (= (:type card) "ICE") (has? card :subtype "Icebreaker"))
-                    (for [ab (:abilities cdef)]
-                      (or (:label ab) (capitalize (:msg ab))))
-                    (for [ab (split-lines (:text card))
-                          :let [matches (re-matches #".*: (.*)" ab)] :when (second matches)]
-                      (second matches)))
+        abilities (for [ab (:abilities cdef)]
+                    (or (:label ab) (capitalize (:msg ab))))
         c (merge card (:data cdef) {:abilities abilities :rezzed true})]
     (update! state side c)
     (resolve-ability state side cdef c nil)
