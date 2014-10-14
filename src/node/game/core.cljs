@@ -428,11 +428,11 @@
 (defn click-draw [state side]
   (when (pay state side :click 1)
     (draw state side)
-    (system-msg state side "Spend 1 [Click] to draw a card")
+    (system-msg state side "spends 1 [Click] to draw a card")
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
 
 (defn click-credit [state side]
   (when (pay state side :click 1)
     (gain state side :credit 1)
-    (system-msg state side "Spend 1 [Click] to gain 1 [Credits]")
+    (system-msg state side "spends 1 [Click] to gain 1 [Credits]")
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
