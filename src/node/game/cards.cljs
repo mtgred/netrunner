@@ -492,15 +492,19 @@
    ;; Icebreakers
 
    "Alpha"
-   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
+   {:abilities [{:cost [:credit 1] :req (req (and run (zero? (:position run))))
+                 :msg "break 1 subroutine on the outermost ICE protecting this server"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Alias"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+   {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
+                 :msg "break 1 sentry subroutine"}
                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
 
    "Atman"
-   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]}
+   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
+                {:cost [:credit 1] :msg "place 1 power counter"
+                 :effect (effect (add-prop card :counter 1))}]}
 
    "Aurora"
    {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
@@ -516,7 +520,8 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Breach"
-   {:abilities [{:cost [:credit 2] :msg "break 3 barrier subroutine"}
+   {:abilities [{:cost [:credit 2] :req (req (#{:hq :rd :archives} (first (:server run))))
+                 :msg "break 3 barrier subroutine"}
                 {:cost [:credit 2] :msg "add 4 strength" :effect (effect (pump card 4))}]}
 
    "Cerberus \"Cuj.0\" H3"
@@ -579,7 +584,7 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Garrote"
-   {:abilities [{:cost [:credit 1] :msg "break up to 1 sentry subroutines"}
+   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutines"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Gordian Blade"
@@ -609,11 +614,13 @@
                 {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
 
    "Passport"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+   {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
+                 :msg "break 1 code gate subroutine"}
                 {:cost [:credit 2] :msg "add 2 strength" :effect (effect (pump card 2))}]}
 
    "Omega"
-   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
+   {:abilities [{:cost [:credit 1] :req (req (= (:position run) (dec (count (:ices run)))))
+                 :msg "break 1 subroutine on the innermost ICE protecting this server"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Overmind"
@@ -649,6 +656,11 @@
 
    "Torch"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Wyrm"
+   {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
+                {:cost [:credit 1] :msg "reduce ICE strength by 1"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Yog.0"
@@ -764,6 +776,10 @@
    "Paper Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Pop-up Window"
+   {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
    "Pup"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
@@ -804,7 +820,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:msg "force the runner to lose 3 [Credits]" :effect (effect (lose :runner :credit 3))
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Universal Connectivity Fee"
    {:abilities [{:msg (msg "force the Runner to lose " (if (> (:tag runner) 0) "all credits" "1 [Credits]"))

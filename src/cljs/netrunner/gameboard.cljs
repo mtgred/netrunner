@@ -88,13 +88,14 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
+(defn playable? [{:keys [title side zone cost type uniqueness abilities memoryunits] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
+              (or (not memoryunits) (<= memoryunits (:memory me)))
               (> (:click me) 0)))))
 
 (defn log-pane [messages owner]
@@ -410,7 +411,7 @@
                      (if (= side :runner)
                        [:div.panel.blue-shade
                         (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
-                        (if (= (:position run) (count server))
+                        (if (= (:position run) (count (:ices server)))
                           (cond-button "Access" (:no-action run) #(send-command "access"))
                           (cond-button "Continue" (:no-action run) #(send-command "continue")))
                         (cond-button "Jack Out" (:no-action run) #(send-command "jack-out"))]

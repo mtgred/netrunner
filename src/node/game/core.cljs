@@ -35,7 +35,7 @@
       moved-card)))
 
 (defn trash [state side {:keys [zone] :as card}]
-  (let [c (assoc card :counter nil :advance-counter nil)]
+  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)]
     (when (#{:servers :rig} (first zone))
       (when-let [effect (:leave-play (card-def c))]
         (effect state side c nil)))
@@ -70,8 +70,7 @@
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
-  (when (and effect
-             (not (get-in @state [once (or once-key cid)]))
+  (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state card targets))
              (<= counter-cost counter)
              (<= advance-counter-cost advance-counter)
@@ -246,9 +245,10 @@
 (defn pump
   ([state side card n] (pump state side card n false))
   ([state side {:keys [strength current-strength] :as card} n all-run]
-     (let [c (if current-strength card (assoc card :current-strength strength :all-run all-run))]
+     (let [c (if current-strength
+               card
+               (assoc card :current-strength strength :all-run all-run))]
        (update! state side (update-in c [:current-strength] #(+ % n))))))
-
 
 (defn score [state side {:keys [card]}]
   (when (>= (:advance-counter card) (:advancementcost card))
@@ -273,8 +273,9 @@
             "HQ" [:hq]
             "R&D" [:rd]
             "Archives" [:archives]
-            [:remote (last (split server " "))])]
-    (swap! state assoc :run {:server s :position 0} :per-run nil)
+            [:remote (last (split server " "))])
+        ices (get-in @state (concat [:corp :servers] s [:ices]))]
+    (swap! state assoc :run {:server s :position 0 :ices ices} :per-run nil)
     (swap! state update-in [:runner :register :made-run] #(conj % server)))
   (system-msg state :runner (str "makes a run on " server)))
 
@@ -312,6 +313,9 @@
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (trigger-event state side :unsuccessful-run)
+    (swap! state assoc-in [:runner :rig :program]
+           (for [p (get-in @state [:runner :rig :program])]
+             (assoc p :current-strength nil)))
     (swap! state assoc :run nil)
     (trigger-event state side :run-ends)))
 
