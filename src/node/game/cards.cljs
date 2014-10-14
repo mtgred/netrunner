@@ -111,7 +111,7 @@
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Data Leak Reversal"
-   {:req (req (some #{"HQ" "R&D" "Archives"} (:successful-run runner-reg)))
+   {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
 
    "Dedicated Response Team"
@@ -238,8 +238,10 @@
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 
    "John Masanori"
-   {:events {:successful-run {:msg "draw 1 card" :once :per-turn :effect (effect (draw))}
-             :unsuccessful-run {:msg "take 1 tag" :once :per-turn :effect (effect (gain :tag 1))}}}
+   {:events {:successful-run {:msg "draw 1 card" :once :per-turn :once-key :john-masanori-draw
+                              :effect (effect (draw))}
+             :unsuccessful-run {:msg "take 1 tag" :once :per-turn :once-key :john-masanori-tag
+                                :effect (effect (gain :tag 1))}}}
 
    "Investigative Journalism"
    {:req (req (> (:bad-publicity corp) 0))
@@ -906,7 +908,7 @@
                  :msg "gain [Click][Click]"}]}
 
    "Emergency Shutdown"
-   {:req (req (some :hq (:successful-run runner-reg)))}
+   {:req (req (some #{:hq} (:successful-run runner-reg)))}
 
    "Fall Guy"
    {:abilities [{:effect (effect (trash card)) :msg "prevent another resource from being trashed"}

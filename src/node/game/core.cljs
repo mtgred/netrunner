@@ -276,7 +276,7 @@
             [:remote (last (split server " "))])
         ices (get-in @state (concat [:corp :servers] s [:ices]))]
     (swap! state assoc :run {:server s :position 0 :ices ices} :per-run nil)
-    (swap! state update-in [:runner :register :made-run] #(conj % server)))
+    (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
   (system-msg state :runner (str "makes a run on " server)))
 
 (defn handle-access [state side cards]
@@ -300,7 +300,7 @@
 
 (defn successful-run [state side]
   (let [server (get-in @state [:run :server])]
-    (swap! state update-in [:runner :register :sucessful-run] #(conj % (first server)))
+    (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (trigger-event state side :successful-run (first server))
     (let [cards (access state side server 1)]
       (when-not (empty? cards)
@@ -428,9 +428,11 @@
 (defn click-draw [state side]
   (when (pay state side :click 1)
     (draw state side)
+    (system-msg state side "Spend 1 [Click] to draw a card")
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
 
 (defn click-credit [state side]
   (when (pay state side :click 1)
     (gain state side :credit 1)
+    (system-msg state side "Spend 1 [Click] to gain 1 [Credits]")
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
