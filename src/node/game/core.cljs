@@ -1,6 +1,6 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword]]
-            [clojure.string :refer [split-lines split join capitalize]]))
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize]]
+            [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
 
@@ -95,7 +95,7 @@
 (defn card-init [state side card]
   (let [cdef (card-def card)
         abilities (for [ab (:abilities cdef)]
-                    (or (:label ab) (capitalize (:msg ab))))
+                    (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
         c (merge card (:data cdef) {:abilities abilities :rezzed true})]
     (update! state side c)
     (resolve-ability state side cdef c nil)

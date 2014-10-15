@@ -24,3 +24,6 @@
 
 (defn to-keyword [string]
   (keyword (.toLowerCase string)))
+
+(defn capitalize [string]
+  (str (.toUpperCase (first string)) (subs string 1)))
