@@ -383,6 +383,14 @@
      [:button {:on-click f} text]
      [:button.disabled text])))
 
+(defn handle-end-turn [cursor owner]
+  (let [me ((:side @game-state) @game-state)
+        max-size (:max-hand-size me)]
+    (if (> (count (:hand me)) max-size)
+      (om/set-state! owner :warning (str "Discard to " max-size " cards"))
+      (do (om/set-state! owner :warning nil)
+          (send-command "end-turn")))))
+
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
   (reify
     om/IWillMount
@@ -437,9 +445,10 @@
                         (cond-button "No more action" (not (:no-action run))
                                      #(send-command "no-action"))]))
                    [:div.panel.blue-shade
+                    (when-let [warning (:warning state)] [:h4 warning])
                     (if (= (keyword active-player) side)
                       (when (and (zero? (:click me)) (not end-turn))
-                        [:button {:on-click #(send-command "end-turn")} "End Turn"])
+                        [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                       (when end-turn
                         [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
                     (when (= side :runner)

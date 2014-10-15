@@ -343,11 +343,13 @@
   (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side]
-  (system-msg state side (str "is ending his or her turn"))
-  (when (and (= side :runner) (< (get-in @state [:runner :max-hand-size]) 0))
-    (flatline state))
-  (trigger-event state side :turn-ends)
-  (swap! state assoc :end-turn true))
+  (let [max-hand-size (get-in @state [side :max-hand-size])]
+    (when (<= (count (get-in @state [side :hand])) max-hand-size)
+      (system-msg state side (str "is ending his or her turn"))
+      (when (and (= side :runner) (< (get-in @state [:runner :max-hand-size]) 0))
+        (flatline state))
+      (trigger-event state side :turn-ends)
+      (swap! state assoc :end-turn true))))
 
 (defn purge [state side]
   (doseq [card (get-in @state [:runner :rig :program])]
