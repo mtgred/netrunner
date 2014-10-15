@@ -65,7 +65,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     switch msg.action
       when "create"
         game = {date: new Date(), gameid: ++gameid, title: msg.title,\
-                players: [{user: socket.request.user, side: "Runner"}]}
+                players: [{user: socket.request.user, side: "Corp"}]}
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
