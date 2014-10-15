@@ -34,13 +34,6 @@
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
-(defn trash [state side {:keys [zone] :as card}]
-  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)]
-    (when (#{:servers :rig} (first zone))
-      (when-let [effect (:leave-play (card-def c))]
-        (effect state side c nil)))
-    (move state side c :discard)))
-
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
@@ -237,6 +230,15 @@
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
+
+(defn trash [state side {:keys [zone] :as card}]
+  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)]
+    (when (#{:servers :rig} (first zone))
+      (when-let [effect (:leave-play (card-def c))]
+        (effect state side c nil))
+      (when-let [mu (:memoryunits c)]
+        (gain state :runner :memory mu)))
+    (move state side c :discard)))
 
 (defn pump
   ([state side card n] (pump state side card n false))
