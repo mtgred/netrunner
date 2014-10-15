@@ -324,7 +324,7 @@
   (om/component
    (sab/html
     (let [content (:content server)]
-      [:div.server {:class (when (= (:side @game-state) :runner) "opponent")}
+      [:div.server 
        (let [ices (:ices server)]
          [:div.ices
           (when run
@@ -346,7 +346,7 @@
     (let [servers (:servers player)
           s (:server run)
           server-type (first s)]
-      [:div.corp-board
+      [:div.corp-board {:class (when (= (:side @game-state) :runner) "opponent")}
        (om/build server-view {:server (:archives servers) :run (when (= server-type "archives") run)})
        (om/build server-view {:server (:rd servers) :run (when (= server-type "rd") run)})
        (om/build server-view {:server (:hq servers) :run (when (= server-type "hq") run)})
