@@ -124,6 +124,15 @@
 (defn remote-list []
   (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
 
+(defn handle-dragstart [e cursor]
+  (-> e .-target js/$ (.addClass "dragged"))
+  (-> e .-dataTransfer (.setData "card" (JSON/stringify (clj->js @cursor)))))
+
+(defn handle-drop [e server]
+  (-> e .-target js/$ (.removeClass "dragover"))
+  (let [card (-> e .-dataTransfer (.getData "card") JSON/parse (js->clj :keywordize-keys true))]
+    (send-command "move" {:card card :server server})))
+
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
                          advanceable rezzed strength current-strength] :as cursor}
                  owner {:keys [flipped] :as opts}]
@@ -131,7 +140,8 @@
    (when code
      (sab/html
       [:div.blue-shade.card {:draggable true
-                             :on-drag-start #(-> % .-dataTransfer .setData "application/card")
+                             :on-drag-start #(handle-dragstart % cursor)
+                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                              :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
                                                 (put! zoom-channel cursor))
                              :on-mouse-leave #(put! zoom-channel false)
@@ -220,12 +230,19 @@
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
 
+(defn drop-area [side server]
+  (when (= (:side @game-state) side)
+    {:on-drop #(handle-drop % server)
+     :on-drag-enter #(-> % .-target js/$ (.addClass "dragover"))
+     :on-drag-leave #(-> % .-target js/$ (.removeClass "dragover"))
+     :on-drag-over #(.preventDefault %)}))
+
 (defmulti discard-view #(get-in % [:identity :side]))
 
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
+    [:div.panel.blue-shade.discard (drop-area :runner "Heap")
      (om/build label discard {:opts {:name "Heap"}})
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -233,7 +250,7 @@
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
+    [:div.panel.blue-shade.discard (drop-area :corp "Archives")
      (om/build label discard {:opts {:name "Archives"}})
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -314,11 +331,12 @@
             [:div.run-arrow {:style {:top (str (+ 8 (* 64 (- (count ices) (:position run)))) "px")}}])
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
-       [:div.content {:class (when (= (count content) 1) "center")}
-        (for [card (reverse content)]
-          (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
-        (when content
-          (om/build label content {:opts opts}))]]))))
+       (when content
+         [:div.content {:class (when (= (count content) 1) "center")}
+          (for [card (reverse content)]
+            (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
+          (when content
+            (om/build label content {:opts opts}))])]))))
 
 (defmulti board-view #(get-in % [:player :identity :side]))
 

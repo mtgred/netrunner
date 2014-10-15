@@ -423,6 +423,12 @@
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advance a card")))
 
+(defn move-card [state side {:keys [card server]}]
+  (case server
+    ("Heap" "Archives") (do (trash state side card)
+                            (system-msg state side (str "trashes " (:title card))))
+    nil))
+
 (defn click-draw [state side]
   (when (pay state side :click 1)
     (draw state side)

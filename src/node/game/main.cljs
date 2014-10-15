@@ -11,6 +11,7 @@
 (def commands
   {"say" core/say
    "change" core/change
+   "move" core/move-card
    "mulligan" core/mulligan
    "keep" core/keep-hand
    "start-turn" core/start-turn
