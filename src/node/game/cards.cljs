@@ -876,12 +876,30 @@
    "Yagura"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
+   "Zona Sul Shipping"
+   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
+                 :label "Take all credits"
+                 :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]
+    :effect #(add-watch % (keyword (str "zona-sul-shipping" (:cid %3)))
+                        (fn [k ref old new]
+                          (when (> (get-in new [:runner :tag]) 0)
+                            (trash ref :runner %3)
+                            (system-msg ref %2 "trash Zona Sul Shipping for being tagged"))))
+    :leave-play #(remove-watch % (keyword (str "zona-sul-shipping" (:cid %3))))}
+
    ;; partial implementation
    "AstroScript Pilot Program"
    {:data {:counter 1}}
 
    "Bad Times"
    {:req (req tagged)}
+
+   "Bank Job"
+   {:data {:counter 8}
+    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
+                 :effect #(do (gain %1 :credit 1)
+                              (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
