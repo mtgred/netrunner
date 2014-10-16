@@ -2,7 +2,7 @@
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill
-                               gain-agenda-point pump] :as core]
+                               gain-agenda-point pump access-bonus] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -233,6 +233,9 @@
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
 
+   "HQ Interface"
+   {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -296,7 +299,9 @@
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Medium"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
+   {:events {:successful-run {:req (req (= target :rd))
+                              :effect (effect (access-bonus (:counter card))
+                                              (add-prop card :counter 1))}}}
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
@@ -313,7 +318,9 @@
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
    "Nerve Agent"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :hq))}}}
+   {:events {:successful-run {:req (req (= target :hq))
+                              :effect (effect (access-bonus (:counter card))
+                                              (add-prop card :counter 1))}}}
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
@@ -386,6 +393,9 @@
 
    "Quality Time"
    {:effect (effect (draw 5))}
+
+   "R&D Interface"
+   {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}
 
    "Rachel Beckman"
    {:effect #(do (gain % :runner :click 1 :click-per-turn 1)

@@ -177,6 +177,8 @@
                               :memory 4
                               :link 0
                               :tag 0
+                              :hq-access 1
+                              :rd-access 1
                               :agenda-point 0
                               :max-hand-size 5
                               :brain-damage 0
@@ -273,7 +275,7 @@
             "Archives" [:archives]
             [:remote (last (split server " "))])
         ices (get-in @state (concat [:corp :servers] s [:ices]))]
-    (swap! state assoc :run {:server s :position 0 :ices ices} :per-run nil)
+    (swap! state assoc :run {:server s :position 0 :ices ices :access-bonus 0} :per-run nil)
     (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
   (system-msg state :runner (str "makes a run on " server)))
 
@@ -284,11 +286,13 @@
 
 (defmulti access (fn [state side server] (first server)))
 
-(defmethod access :hq [state side server n]
-  (take n (shuffle (get-in @state [:corp :hand]))))
+(defmethod access :hq [state side server]
+  (let [n (+ (get-in @state [:runner :hq-access]) (get-in @state [:run :access-bonus]))]
+    (take n (shuffle (get-in @state [:corp :hand])))))
 
-(defmethod access :rd [state side server n]
-  (take n (get-in @state [:corp :deck])))
+(defmethod access :rd [state side server]
+  (let [n (+ (get-in @state [:runner :rd-access]) (get-in @state [:run :access-bonus]))]
+    (take n (get-in @state [:corp :deck]))))
 
 (defmethod access :archives [state side server]
   (get-in @state [:corp :discard]))
@@ -296,11 +300,14 @@
 (defmethod access :remote [state side server]
   (get-in @state [:corp :servers :remote (js/parseInt (last server)) :content]))
 
+(defn access-bonus [state side n]
+  (swap! state update-in [:run :access-bonus] #(+ % n)))
+
 (defn successful-run [state side]
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (trigger-event state side :successful-run (first server))
-    (let [cards (access state side server 1)]
+    (let [cards (access state side server)]
       (when-not (empty? cards)
         (system-msg state side (str "accesses " (join ", "(map :title cards))))
         (handle-access state side cards)))
