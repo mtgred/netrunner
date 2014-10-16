@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run unregister-event mill
+                               set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus] :as core]
             [game.utils :refer [has?]]))
 
