@@ -267,6 +267,9 @@
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
 
+   "Legwork"
+   {:effect (effect (run :hq) (access-bonus 2))}
+
    "Levy AR Lab Access"
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
                     (move (first (:play-area runner)) :rfg))}
@@ -454,6 +457,9 @@
 
    "TGTBT"
    {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+
+   "The Makers Eye"
+   {:effect (effect (run :rd) (access-bonus 2))}
 
    "Theophilius Bagbiter"
    {:effect #(do (lose % :runner :credit :all)

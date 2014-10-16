@@ -22,7 +22,7 @@
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag"))})
    "play" core/play
    "rez" core/rez
-   "run" core/run
+   "run" core/click-run
    "no-action" core/no-action
    "continue" core/continue
    "access" core/successful-run

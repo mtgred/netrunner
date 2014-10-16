@@ -267,17 +267,11 @@
     (set-prop state side c :advance-counter 0)
     (trigger-event state side :agenda-stolen c)))
 
-(defn run [state side {:keys [server] :as args}]
-  (pay state :runner :click 1)
-  (let [s (case server
-            "HQ" [:hq]
-            "R&D" [:rd]
-            "Archives" [:archives]
-            [:remote (last (split server " "))])
+(defn run [state side server]
+  (let [s (if (sequential? server) server [server])
         ices (get-in @state (concat [:corp :servers] s [:ices]))]
     (swap! state assoc :run {:server s :position 0 :ices ices :access-bonus 0} :per-run nil)
-    (swap! state update-in [:runner :register :made-run] #(conj % (first s))))
-  (system-msg state :runner (str "makes a run on " server)))
+    (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))
 
 (defn handle-access [state side cards]
   (doseq [c cards]
@@ -437,6 +431,16 @@
     ("Heap" "Archives") (do (trash state side card)
                             (system-msg state side (str "trashes " (:title card))))
     nil))
+
+(defn click-run [state side {:keys [server] :as args}]
+  (when (pay state :runner :click 1)
+    (system-msg state :runner (str "makes a run on " server))
+    (let [s (case server
+              "HQ" :hq
+              "R&D" :rd
+              "Archives" :archives
+              [:remote (last (split server " "))])]
+      (run state side s))))
 
 (defn click-draw [state side]
   (when (pay state side :click 1)
