@@ -41,7 +41,7 @@ cardFields = [
   "imagesrc"
 ]
 
-baseurl = "http://netrunnerdb.ca/api/"
+baseurl = "http://netrunnerdb.com/api/"
 
 restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment", "Hades Shard", "Hades Fragment", "Uptopia Shard", "Uptopia Fragment"]
 
@@ -62,7 +62,7 @@ selectFields = (fields, objectList) ->
 fetchImg = (code, t) ->
   setTimeout ->
     console.log code
-    url = "http://netrunnerdb.ca/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
+    url = "http://netrunnerdb.ccom/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
     imgDir = if mongoUser then "#{process.env.OPENSHIFT_DATA_DIR}/img" else "img"
     request(url).pipe(fs.createWriteStream("#{imgDir}/#{code}.png"))
   , t
