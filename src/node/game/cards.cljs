@@ -39,8 +39,9 @@
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
 
    "Autoscripter"
-   {:events {:runner-install {:req (req (has? target :type "Program")) :once :per-turn
-                              :msg "gain 1 [Click]" :effect (effect (gain :click 1))}
+   {:events {:runner-install {:req (req (and (= (:active-player @state) :runner)
+                                             (has? target :type "Program")))
+                              :once :per-turn :msg "gain 1 [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "Autoscripter is trashed"))}}}
 
@@ -235,6 +236,13 @@
 
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
+
+   "Inject"
+   {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
+               (if (= (:type c) "Program")
+                 (do (trash %1 %2 c) (gain %1 %2 :credit 1)
+                     (system-msg %1 %2 (str "trashes " (:title c) " and gains 1 [Credits]")))
+                 (do (move %1 %2 c :hand) (system-msg %1 %2 (str "adds " (:title c) " to Grip")))))}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
