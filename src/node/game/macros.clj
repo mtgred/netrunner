@@ -13,7 +13,7 @@
            ~@actions))))
 
 (defmacro req [& expr]
-  `(fn ~['state 'card 'targets]
+  `(fn ~['state 'side 'card 'targets]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
             'run '(:run @state)

@@ -64,7 +64,7 @@
                                           once-key] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and (not (get-in @state [once (or once-key cid)]))
-             (or (not req) (req state card targets))
+             (or (not req) (req state side card targets))
              (<= counter-cost counter)
              (<= advance-counter-cost advance-counter)
              (apply pay (concat [state side] cost)))
@@ -240,7 +240,8 @@
         (effect state side c nil))
       (when-let [mu (:memoryunits c)]
         (gain state :runner :memory mu)))
-    (move state side c :discard)))
+    (move state side c :discard)
+    (trigger-event state side :trash c)))
 
 (defn pump
   ([state side card n] (pump state side card n false))

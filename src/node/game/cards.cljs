@@ -143,6 +143,13 @@
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
 
+   "Ekomind"
+   {:effect #(add-watch % :ekomind (fn [k ref old new]
+                                     (let [hand-size (count (get-in new [:runner :hand]))]
+                                       (when (not= (get-in old [:runner :hand]) hand-size)
+                                         (swap! ref assoc-in [:runner :memory] hand-size)))))
+    :leave-play #(remove-watch % :ekomind)}
+
    "Eve Campaign"
    {:data {:counter 16}
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 2
@@ -233,6 +240,10 @@
                              :effect (effect (gain :runner :credit (:agendapoints target)))}
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
+
+   "Hostile Infrastructure"
+   {:events {:trash {:req (req (and (= (:side target) :corp) (= side :runner)))
+                     :effect (effect (damage :net 1))}}}
 
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
@@ -433,6 +444,14 @@
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
                       :effect (effect (damage :net 1)) }}}
+
+   "Shell Corporation"
+   {:abilities
+    [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
+      :effect (effect (add-prop card :counter 3))}
+     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
+      :label "Take all credits"
+      :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
 
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
