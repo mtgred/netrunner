@@ -41,7 +41,7 @@
    "Autoscripter"
    {:events {:runner-install {:req (req (and (= (:active-player @state) :runner)
                                              (has? target :type "Program")))
-                              :once :per-turn :msg "gain 1 [Click]" :effect (effect (gain :click 1))}
+                              :once :per-turn :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "Autoscripter is trashed"))}}}
 
@@ -80,8 +80,16 @@
                             (when (not= (get-in old [:corp :credit]) credit)
                               (swap! ref assoc-in [:corp :max-hand-size] credit)))))}
 
+   "Chairman Hiro"
+   {:effect (effect (lose :runner :max-hand-size 2))
+    :leave-play (effect (gain :runner :max-hand-size 2))
+    :trash {:effect (effect (move :runner card :scored) (gain :runner :agendapoints 2))}}
+
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
+
+   "Chronos Project"
+   {:effect (effect (move :runner :discard :rfg))}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -129,6 +137,10 @@
    "Diesel"
    {:effect (effect (draw 3))}
 
+   "Director Haas"
+   {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
+    :trash {:effect (effect (move :runner card :Scored) (gain :runner :agendapoints 2))}}
+
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3]
                  :effect #(do (when (zero? (:counter %3)) (gain-agenda-point %1 %2 1))
@@ -144,10 +156,11 @@
    {:effect (effect (gain :credit 3))}
 
    "Ekomind"
-   {:effect #(add-watch % :ekomind (fn [k ref old new]
-                                     (let [hand-size (count (get-in new [:runner :hand]))]
-                                       (when (not= (get-in old [:runner :hand]) hand-size)
-                                         (swap! ref assoc-in [:runner :memory] hand-size)))))
+   {:effect #(do (swap! %1 assoc-in [:runner :memory] (count (get-in @%1 [:runner :hand])))
+                 (add-watch % :ekomind (fn [k ref old new]
+                                         (let [hand-size (count (get-in new [:runner :hand]))]
+                                           (when (not= (count (get-in old [:runner :hand])) hand-size)
+                                             (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play #(remove-watch % :ekomind)}
 
    "Eve Campaign"
@@ -744,6 +757,12 @@
                  :effect (effect (pay :runner :credit 2))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Data Raven"
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
+                {:msg "give the Runner 1 tag using 1 power counter"
+                 :counter-cost 1 :effect (effect (gain :runner :tag 1))}
+                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+
    "Eli 1.0"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -806,6 +825,12 @@
 
    "Lotus Field"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Mamba"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+                {:msg "do 1 net damage using 1 power counter"
+                 :counter-cost 1 :effect (effect (damage :net 1))}
+                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
 
    "Mother Goddess"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -879,6 +904,12 @@
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Viktor 2.0"
+   {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
+                 :effect (effect (damage :brain 1))}
+                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
+
    "Wall of Static"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -941,9 +972,6 @@
 
    "D4v1d"
    {:data {:counter 3}}
-
-   "Director Haas"
-   {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}

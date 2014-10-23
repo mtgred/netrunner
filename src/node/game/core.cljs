@@ -25,7 +25,16 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
-(defn move [state side {:keys [zone cid] :as card} to]
+(defmulti move (fn [state side target to] (type target)))
+
+(defmethod move clojure.lang.PersistentVector [state side server to]
+  (let [from-zone (cons side server)
+        to-zone (cons side to)]
+    (swap! state assoc-in to-zone (concat (get-in @state to-zone)
+                                          (zone to (get-in @state from-zone))))
+    (swap! state assoc-in from-zone)))
+
+(defmethod move clojure.lang.PersistentArrayMap [state side {:keys [zone cid] :as card} to]
   (when card
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]

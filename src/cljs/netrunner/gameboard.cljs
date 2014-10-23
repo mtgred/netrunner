@@ -440,7 +440,7 @@
                         (if (= (:position run) (count (:ices server)))
                           (cond-button "Access" (:no-action run) #(send-command "access"))
                           (cond-button "Continue" (:no-action run) #(send-command "continue")))
-                        (cond-button "Jack Out" (:no-action run) #(send-command "jack-out"))]
+                        [:button {:on-click #(send-command "jack-out")} "Jack Out"]]
                        [:div.panel.blue-shade
                         (cond-button "No more action" (not (:no-action run))
                                      #(send-command "no-action"))]))
