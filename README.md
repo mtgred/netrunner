@@ -44,7 +44,9 @@ Launch MongoDB and fetch card data:
 
 ```
 $ mongod
-$ coffee data/fetch.coffee
+$ cd data
+$ mkdir img
+$ coffee fetch.coffee
 ```
 
 ## Usage
@@ -55,10 +57,16 @@ To launch the server:
 $ coffee server.coffee
 ```
 
-To compile and watch Clojurescript files:
+To compile and watch client side Clojurescript files:
 
 ```
 $ lein cljsbuild auto dev
+```
+
+To compile and watch server side Clojurescript files:
+
+```
+$ lein cljsbuild auto node
 ```
 
 To launch a Clojurescript Browser nREPL:
