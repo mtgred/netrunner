@@ -1,4 +1,5 @@
 (ns game.core
+  (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize]]
             [clojure.string :refer [split-lines split join]]))
 
@@ -86,6 +87,16 @@
       (update! state side c)
       (when effect (effect state side c targets)))
     (when once (swap! state assoc-in [once (or once-key cid)] true))))
+
+(defn optional-ability [state side card msg ability targets]
+  (swap! state assoc :prompt {:msg msg :choices ["Yes" "No"]
+                              :effect #(when (= % "Yes")
+                                         (resolve-ability state side ability card targets))}))
+
+(defn resolve-prompt [state side {:keys [choice] :as args}]
+  (let [effect (get-in @state [:prompt :effect])]
+    (swap! state assoc :prompt nil)
+    (effect choice)))
 
 (defn register-events [state side events card]
   (doseq [e events]
@@ -285,8 +296,19 @@
 
 (defn handle-access [state side cards]
   (doseq [c cards]
-    (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
-    (when (= (:type c) "Agenda") (steal state side c))))
+    (let [name (:title c)]
+      (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
+      (when-let [trash-cost (:trash c)]
+        (optional-ability state side c (str "Pay " trash-cost " [Credits] to trash " name "?")
+                          {:cost [:credit (js/parseInt trash-cost)]
+                           :effect (effect (trash :corp c)
+                                           (system-msg (str "pays " trash-cost "[Credits] to trash "
+                                                            (:title c))))} nil))
+      (when (= (:type c) "Agenda")
+        (if-let [cost (:steal-cost c)]
+          (optional-ability state side c (str "Pay the additional cost to steal " name "?")
+                            {:cost cost :effect (effect (steal c))} nil)
+          (steal state side c))))))
 
 (defmulti access (fn [state side server] (first server)))
 

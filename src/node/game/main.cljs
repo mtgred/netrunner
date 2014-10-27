@@ -29,6 +29,7 @@
    "jack-out" (effect (end-run) (system-msg "jacks out"))
    "advance" core/advance
    "score" core/score
+   "choice" core/resolve-prompt
    "ability" core/play-ability})
 
 (defn convert [args]
