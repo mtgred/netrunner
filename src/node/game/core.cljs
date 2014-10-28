@@ -67,7 +67,7 @@
 (defn update! [state side card]
   (if (= (:type card) "Identity")
     (swap! state assoc-in [side :identity] card)
-    (let [zone (cons (:side card) (:zone card))
+    (let [zone (cons (to-keyword (:side card)) (:zone card))
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
@@ -92,9 +92,9 @@
 (defn optional-ability [state side card msg ability targets]
   (swap! state update-in [side :prompt]
          (fn [p]
-           (conj p {:msg msg :choices ["Yes" "No"]
-                    :effect #(when (= % "Yes")
-                               (resolve-ability state side ability card targets))}))))
+           (conj (vec p) {:msg msg :choices ["Yes" "No"]
+                          :effect #(when (= % "Yes")
+                                     (resolve-ability state side ability card targets))}))))
 
 (defn resolve-prompt [state side {:keys [choice] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]
