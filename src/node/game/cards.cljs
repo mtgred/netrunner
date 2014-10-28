@@ -83,7 +83,7 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
     :leave-play (effect (gain :runner :max-hand-size 2))
-    :trash {:effect (effect (move :runner card :scored) (gain :runner :agendapoints 2))}}
+    :trash-effect {:effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
@@ -139,7 +139,7 @@
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
-    :trash {:effect (effect (move :runner card :Scored) (gain :runner :agendapoints 2))}}
+    :trash-effect {:effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3]

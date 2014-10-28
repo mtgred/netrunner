@@ -257,14 +257,16 @@
   (update! state side (apply assoc (cons card args))))
 
 (defn trash [state side {:keys [zone] :as card}]
-  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)]
+  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)
+        cdef (card-def c)
+        moved-card (move state side c :discard)]
     (when (#{:servers :rig} (first zone))
-      (when-let [effect (:leave-play (card-def c))]
-        (effect state side c nil))
-      (when-let [mu (:memoryunits c)]
-        (gain state :runner :memory mu)))
-    (move state side c :discard)
-    (trigger-event state side :trash c)))
+      (when-let [leave-effect (:leave-play cdef)]
+        (leave-effect state side moved-card nil))
+      (when-let [mu (:memoryunits moved-card)] (gain state :runner :memory mu)))
+    (when-let [trash-effect (:trash-effect cdef)]
+      (resolve-ability state side trash-effect moved-card nil))
+    (trigger-event state side :trash moved-card)))
 
 (defn pump
   ([state side card n] (pump state side card n false))
@@ -309,7 +311,7 @@
           (optional-ability state side c (str "Pay " trash-cost "[Credits] to trash " name "?")
                             {:cost [:credit trash-cost]
                              :effect (effect (trash :corp c)
-                                             (system-msg (str "pays " trash-cost " to trash "
+                                             (system-msg (str "pays " trash-cost "[Credits] to trash "
                                                               (:title c))))} nil)))
       (when (= (:type c) "Agenda")
         (if-let [cost (:steal-cost (card-def c))]
