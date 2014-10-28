@@ -40,7 +40,7 @@
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]
       (swap! state update-in (cons side dest) #(vec (conj % moved-card)))
-      (swap! state update-in (cons (keyword (.toLowerCase (:side card))) zone)
+      (swap! state update-in (cons (to-keyword (:side card)) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
@@ -110,7 +110,7 @@
   ([state side event target]
      (doseq [e (get-in @state [:events event])]
        (let [card (get-card state (:card e))]
-         (resolve-ability state (keyword (.toLowerCase (:side card))) (:ability e) card [target])))))
+         (resolve-ability state (to-keyword (:side card)) (:ability e) card [target])))))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -145,7 +145,7 @@
       false)))
 
 (defn change [state side {:keys [key delta]}]
-  (let [kw (keyword (.toLowerCase key))]
+  (let [kw (to-keyword key)]
     (swap! state update-in [side kw] (partial + delta))
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
@@ -402,11 +402,11 @@
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
-               (get-in @state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
+               (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
 (defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
-  (let [dest [:rig (keyword (.toLowerCase type))]]
+  (let [dest [:rig (to-keyword type)]]
     (when (and (or (not uniqueness) (not (in-play? state card)))
                (if-let [req (:req (card-def card))] (req state card) true)
                (pay state side :click 1 :credit cost :memory memoryunits))
