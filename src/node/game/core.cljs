@@ -90,13 +90,15 @@
     (when once (swap! state assoc-in [once (or once-key cid)] true))))
 
 (defn optional-ability [state side card msg ability targets]
-  (swap! state assoc-in [side :prompt] {:msg msg :choices ["Yes" "No"]
-                                        :effect #(when (= % "Yes")
-                                                   (resolve-ability state side ability card targets))}))
+  (swap! state update-in [side :prompt]
+         (fn [p]
+           (conj p {:msg msg :choices ["Yes" "No"]
+                    :effect #(when (= % "Yes")
+                               (resolve-ability state side ability card targets))}))))
 
 (defn resolve-prompt [state side {:keys [choice] :as args}]
-  (let [effect (get-in @state [side :prompt :effect])]
-    (swap! state assoc-in [side :prompt] nil)
+  (let [effect (:effect (first (get-in @state [side :prompt])))]
+    (swap! state update-in [side :prompt] rest)
     (effect choice)))
 
 (defn register-events [state side events card]

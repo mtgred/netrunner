@@ -428,7 +428,7 @@
                   [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
                (when (:keep me)
-                 (if-let [prompt (:prompt me)]
+                 (if-let [prompt (first (:prompt me))]
                    [:div.panel.blue-shade
                     [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
                     (for [c (:choices prompt)]
