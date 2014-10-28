@@ -1,6 +1,7 @@
 (ns game.core
   (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize]]
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
+                                costs-to-symbol]]
             [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
@@ -66,7 +67,7 @@
 (defn update! [state side card]
   (if (= (:type card) "Identity")
     (swap! state assoc-in [side :identity] card)
-    (let [zone (cons side (:zone card))
+    (let [zone (cons (:side card) (:zone card))
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
@@ -89,13 +90,13 @@
     (when once (swap! state assoc-in [once (or once-key cid)] true))))
 
 (defn optional-ability [state side card msg ability targets]
-  (swap! state assoc :prompt {:msg msg :choices ["Yes" "No"]
-                              :effect #(when (= % "Yes")
-                                         (resolve-ability state side ability card targets))}))
+  (swap! state assoc-in [side :prompt] {:msg msg :choices ["Yes" "No"]
+                                        :effect #(when (= % "Yes")
+                                                   (resolve-ability state side ability card targets))}))
 
 (defn resolve-prompt [state side {:keys [choice] :as args}]
-  (let [effect (get-in @state [:prompt :effect])]
-    (swap! state assoc :prompt nil)
+  (let [effect (get-in @state [side :prompt :effect])]
+    (swap! state assoc-in [side :prompt] nil)
     (effect choice)))
 
 (defn register-events [state side events card]
@@ -281,33 +282,40 @@
       (trigger-event state side :agenda-scored c))))
 
 (defn steal [state side card]
-  (let [c (move state side card :scored)]
-    (resolve-ability state side (:stolen (card-def c)) c nil)
-    (system-msg state side (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
-    (gain-agenda-point state side (:agendapoints c))
-    (set-prop state side c :advance-counter 0)
-    (trigger-event state side :agenda-stolen c)))
+  (let [c (move state :runner card :scored)]
+    (resolve-ability state :runner (:stolen (card-def c)) c nil)
+    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
+    (gain-agenda-point state :runner (:agendapoints c))
+    (set-prop state :runner c :advance-counter 0)
+    (trigger-event state :runner :agenda-stolen c)))
 
-(defn run [state side server]
-  (let [s (if (sequential? server) server [server])
-        ices (get-in @state (concat [:corp :servers] s [:ices]))]
-    (swap! state assoc :run {:server s :position 0 :ices ices :access-bonus 0} :per-run nil)
-    (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))
+(defn run
+  ([state side server] (run state side server nil))
+  ([state side server run-effect]
+   (let [s (if (sequential? server) server [server])
+         ices (get-in @state (concat [:corp :servers] s [:ices]))]
+     (swap! state assoc :per-run nil
+            :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
+     (swap! state update-in [:runner :register :made-run] #(conj % (first s))))))
 
 (defn handle-access [state side cards]
   (doseq [c cards]
     (let [name (:title c)]
       (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
-      (when-let [trash-cost (:trash c)]
-        (optional-ability state side c (str "Pay " trash-cost " [Credits] to trash " name "?")
-                          {:cost [:credit (js/parseInt trash-cost)]
-                           :effect (effect (trash :corp c)
-                                           (system-msg (str "pays " trash-cost "[Credits] to trash "
-                                                            (:title c))))} nil))
+      (when (not= (:zone c) [:discard])
+        (when-let [trash-cost (:trash c)]
+          (optional-ability state side c (str "Pay " trash-cost "[Credits] to trash " name "?")
+                            {:cost [:credit trash-cost]
+                             :effect (effect (trash :corp c)
+                                             (system-msg (str "pays " trash-cost " to trash "
+                                                              (:title c))))} nil)))
       (when (= (:type c) "Agenda")
-        (if-let [cost (:steal-cost c)]
-          (optional-ability state side c (str "Pay the additional cost to steal " name "?")
-                            {:cost cost :effect (effect (steal c))} nil)
+        (if-let [cost (:steal-cost (card-def c))]
+          (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                            {:cost cost
+                             :effect (effect (steal c)
+                                             (system-msg (str "pays " (costs-to-symbol cost)
+                                                              " to steal " (:title c))))} nil)
           (steal state side c))))))
 
 (defmulti access (fn [state side server] (first server)))

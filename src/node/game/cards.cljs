@@ -175,7 +175,8 @@
 
    "Fetal AI"
    {:access {:req (req (not= (:zone card) :archives)) :msg "do 2 net damages"
-             :effect (effect (damage :net 2))}}
+             :effect (effect (damage :net 2))}
+    :steal-cost [:credit 2]}
 
    "Fester"
    {:events {:purge {:msg "force the corp to lose 2 [Credits] if able"
@@ -345,6 +346,9 @@
    {:effect (effect (gain :runner :max-hand-size 1))
     :leave-play (effect (lose :runner :max-hand-size 1))
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "NAPD Contract"
+   {:steal-cost [:credit 4]}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :max-hand-size 1))}

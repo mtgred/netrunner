@@ -428,9 +428,9 @@
                   [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
 
                (when (:keep me)
-                 (if-let [prompt (:prompt @game-state)]
+                 (if-let [prompt (:prompt me)]
                    [:div.panel.blue-shade
-                    [:h4 (:msg prompt)]
+                    [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
                     (for [c (:choices prompt)]
                       [:button {:on-click #(send-command "choice" {:choice c})} c])]
                    (if run
