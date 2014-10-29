@@ -67,7 +67,7 @@
 (defn update! [state side card]
   (if (= (:type card) "Identity")
     (swap! state assoc-in [side :identity] card)
-    (let [zone (cons (to-keyword (:side card)) (:zone card))
+    (let [zone (cons side (:zone card))
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
@@ -82,10 +82,11 @@
     (let [c (-> card
                 (update-in [:counter] #(- % counter-cost))
                 (update-in [:advance-counter] #(- % advance-counter-cost)))]
+      (when (or counter-cost advance-counter-cost)
+        (update! state side c))
       (when msg
         (let [desc (if (string? msg) msg (msg state side card targets))]
           (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-      (update! state side c)
       (when effect (effect state side c targets)))
     (when once (swap! state assoc-in [once (or once-key cid)] true))))
 
@@ -99,7 +100,9 @@
 (defn resolve-prompt [state side {:keys [choice] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]
     (swap! state update-in [side :prompt] rest)
-    (effect choice)))
+    (effect choice)
+    (when (empty? (:prompt @state))
+      (swap! state assoc :access true))))
 
 (defn register-events [state side events card]
   (doseq [e events]
@@ -303,6 +306,7 @@
      (swap! state update-in [:runner :register :made-run] #(conj % (first s))))))
 
 (defn handle-access [state side cards]
+  (swap! state assoc :access true)
   (doseq [c cards]
     (let [name (:title c)]
       (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
