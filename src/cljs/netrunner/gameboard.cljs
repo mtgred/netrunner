@@ -71,8 +71,7 @@
   (if (= (:side @game-state) :runner)
     (case (first zone)
       "hand" (send-command "play" {:card card})
-      "rig" (handle-abilities card owner)
-      nil)
+      ("rig" nil) (handle-abilities card owner))
     (case (first zone)
       "hand" (case type
                ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
@@ -324,7 +323,7 @@
   (om/component
    (sab/html
     (let [content (:content server)]
-      [:div.server 
+      [:div.server
        (let [ices (:ices server)]
          [:div.ices
           (when run

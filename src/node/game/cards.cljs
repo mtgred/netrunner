@@ -124,6 +124,11 @@
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
 
+   "Datasucker"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1))
+                              :req (req (#{:hq :rd :archives} target))}}
+    :abilities [{:counter-cost 1 :msg "to give -1 strengh to the encountered ICE"}]}
+
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damages"
                                    :effect (effect (damage :meat 2))}}}
@@ -154,8 +159,16 @@
    "Dyson Mem Chip"
    {:effect (effect (gain :link 1 :memory 1)) :leave-play (effect (lose :link 1 :memory 1))}
 
+   "e3 Feedback Implants"
+   {:abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
+
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
+
+   "Efficiency Committee"
+   {:data {:counter 3}
+    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (gain :click 2))
+                 :msg "gain [Click][Click]"}]}
 
    "Ekomind"
    {:effect #(do (swap! %1 assoc-in [:runner :memory] (count (get-in @%1 [:runner :hand])))
@@ -174,6 +187,10 @@
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
+
+   "Feedback Filter"
+   {:abilities [{:cost [:credit 3] :msg "prevent 1 net damage"}
+                {:effect (effect (trash card)) :msg "prevent 2 brain damage"}]}
 
    "Fetal AI"
    {:access {:req (req (not= (:zone card) :archives)) :msg "do 2 net damages"
@@ -238,6 +255,10 @@
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
 
+   "Hemorrhage"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:counter-cost 2 :cost [:click 1] :msg "force the Corp to trash 1 card from HQ"}]}
+
    "High-Risk Investment"
    {:data {:counter 1}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
@@ -263,6 +284,11 @@
 
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
+
+   "Iain Stirling: Retired Spook"
+   {:effect (effect (gain :link 1))
+    :events {:runner-turn-begins {:req (req (> (:agenda-point corp) (:agenda-point runner)))
+                                  :msg "to gain 2[Credits]" :effect (effect (gain :credit 2))}}}
 
    "Inject"
    {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
@@ -293,6 +319,10 @@
      {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
       :label "Take all credits"
       :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
+
+   "Ken \"Express\" Tenma: Disappeared Clone"
+   {:events {:play-event {:req (req (has? target :subtype "Run")) :once :per-turn
+                          :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
@@ -362,6 +392,9 @@
    {:events {:successful-run {:req (req (= target :hq))
                               :effect (effect (access-bonus (:counter card))
                                               (add-prop card :counter 1))}}}
+   "Net Shield"
+   {:abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"}]}
+
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
@@ -406,6 +439,10 @@
    {:msg (msg "do " (count (:scored runner)) " net damages")
     :effect (effect (damage :net (count (:scored runner))))}
 
+   "Plascrete Carapace"
+   {:data [:counter 4]
+    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
+
    "Private Contracts"
    {:data {:counter 14}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
@@ -435,6 +472,9 @@
    "Quality Time"
    {:effect (effect (draw 5))}
 
+   "Quetzal: Free Spirit"
+   {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
+
    "R&D Interface"
    {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}
 
@@ -459,6 +499,10 @@
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :effect (effect (damage :net 3) (trash card))}]}
+
+   "Sacrificial Construct"
+   {:abilities [{:msg "prevent an installed program or hardware from being trash"
+                 :effect (effect (trash card))}]}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
@@ -520,6 +564,9 @@
    {:advanceable :always
     :abilities [{:effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
 
+   "Toshiyuki Sakai"
+   {:advanceable :always}
+
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}
 
@@ -546,6 +593,10 @@
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
                               :req (req (has? target :subtype "Transaction"))}}}
+
+   "Window"
+   {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of his Stack"
+                 :effect (effect (move (last (:deck runner)) :hand))}]}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}
@@ -796,7 +847,8 @@
     :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Himitsu-Bako"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}
+                {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
 
    "Hive"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -982,9 +1034,6 @@
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
 
-   "Datasucker"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1))
-                              :req (req (#{:hq :rd :archives} target))}}}
    "Deep Thought"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
@@ -997,11 +1046,6 @@
    "Eden Shard"
    {:abilities [{:effect (effect (trash card) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]}
-
-   "Efficiency Committee"
-   {:data {:counter 3}
-    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (gain :click 2))
-                 :msg "gain [Click][Click]"}]}
 
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))}
@@ -1018,12 +1062,6 @@
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect #(do (gain %1 :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
-
-   "Hemorrhage"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}}
-
-   "Iain Stirling: Retired Spook"
-   {:effect (effect (gain :link 1))}
 
    "Imp"
    {:data {:counter 2}

@@ -309,7 +309,8 @@
   (swap! state assoc :access true)
   (doseq [c cards]
     (let [name (:title c)]
-      (resolve-ability state (to-keyword (:side c)) (:access (card-def c)) c nil)
+      (when-let [access-effect (:access (card-def c))]
+        (resolve-ability state (to-keyword (:side c)) access-effect c nil))
       (when (not= (:zone c) [:discard])
         (when-let [trash-cost (:trash c)]
           (optional-ability state side c (str "Pay " trash-cost "[Credits] to trash " name "?")
