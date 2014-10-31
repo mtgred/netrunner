@@ -21,6 +21,7 @@
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
+            'installed '(#{:rig :servers} (first (:zone card)))
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
 

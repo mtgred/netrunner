@@ -71,9 +71,14 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
+(declare optional-ability)
+
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key] :as ability}
+                                          once-key optional] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
+  (when (and optional
+             (or (not (:req optional)) ((:req optional) state side card targets)))
+    (optional-ability state side card (:prompt optional) optional nil))
   (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state side card targets))
              (<= counter-cost counter)
@@ -136,8 +141,8 @@
     (when (< (count hand) n)
       (flatline state))
     (when (= type :brain)
-      (swap! state update-in [:runner :brain-damage] inc)
-      (swap! state update-in [:runner :max-hand-size] dec))
+      (swap! state update-in [:runner :brain-damage] #(+ % n))
+      (swap! state update-in [:runner :max-hand-size] #(- % n)))
     (let [shuffled-hand (shuffle hand)
           discarded (zone :discard (take n shuffled-hand))]
       (swap! state update-in [:runner :discard] #(concat % discarded))
@@ -414,7 +419,7 @@
       (let [c (move state side card :play-area)]
         (system-msg state side (str "plays " title))
         (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
-        (when-let [effect (:effect cdef)] (effect state side c))
+        (resolve-ability state side cdef card nil)
         (move state side (first (get-in @state [side :play-area])) :discard)))))
 
 (defn in-play? [state card]

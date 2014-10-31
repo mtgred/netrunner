@@ -15,6 +15,11 @@
                                 :effect #(do (gain %1 :corp :credit 3)
                                              (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
+   "Aggressive Secretary"
+   {:advanceable :always
+    :access {:optional {:req (req installed) :prompt "Pay 3[Credits] to use Aggresive Secretary ability?"
+                        :cost [:credit 3] :msg (msg "trash " (:advance-counter card) " programs")}}}
+
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
@@ -79,6 +84,13 @@
                           (let [credit (get-in new [:corp :credit])]
                             (when (not= (get-in old [:corp :credit]) credit)
                               (swap! ref assoc-in [:corp :max-hand-size] credit)))))}
+
+   "Cerebral Overwriter"
+   {:advanceable :always
+    :access {:optional {:req (req installed)
+                        :prompt "Pay 3[Credits] to use Cerebral Overwriter ability?"
+                        :cost [:credit 3] :msg (msg "do " (:advance-counter card) " brain damage")
+                        :effect (effect (damage :brain (:advance-counter card)))}}}
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
@@ -209,6 +221,13 @@
    {:data {:counter 2}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
                  :effect (effect (gain :credit 7 :bad-publicity 1))}]}
+
+   "Ghost Branch"
+   {:advanceable :always
+    :access {:optional {:req (req installed) :prompt "Use Ghost Branch ability?"
+                        :msg (msg "give the Runner " (:advance-counter card) " tag"
+                                  (when (> (:advance-counter card) 1) "s"))
+                        :effect (effect (gain :runner :tag (:advance-counter card)))}}}
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
@@ -395,6 +414,10 @@
    "Net Shield"
    {:abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"}]}
 
+   "Networking"
+   {:effect (effect (lose :tag 1))
+    :optional {:cost [:credit 1] :prompt "Pay 1[Credits] to add Networking to Grip?"
+               :msg "add it to his Grip" :effect (effect (move (first (:discard runner)) :hand))}}
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
@@ -461,6 +484,12 @@
    {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double"))
                                                       (:discard runner))))))}
 
+   "Project Junebug"
+   {:advanceable :always
+    :access {:optional {:prompt "Pay 1[Credits] to use Project Junebug ability?" :cost [:credit 1]
+                        :req (req installed) :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
+                        :effect (effect (damage :net (* 2 (:advance-counter card))))}}}
+
    "Professional Contacts"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
@@ -484,7 +513,7 @@
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
                                 (trash ref :runner %3)
-                                (system-msg ref %2 "trash Rachel Beckman for being tagged")))))
+                                (system-msg ref %2 "trashes Rachel Beckman for being tagged")))))
     :leave-play #(do (remove-watch % :rachel-beckman)
                      (lose %1 %2 :click 1 :click-per-turn 1))}
 
@@ -508,6 +537,12 @@
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
                       :effect (effect (damage :net 1)) }}}
 
+   "Shattered Remains"
+   {:advanceable :always
+    :access {:optional {:req (req installed)
+                        :prompt "Pay 1[Credits] to use Shaterred Remains ability?" :cost [:credit 1]
+                        :msg (msg "trash " (:advance-counter card) " pieces of hardware")}}}
+
    "Shell Corporation"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
@@ -521,6 +556,12 @@
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
+
+   "Snare!"
+   {:access {:optional {:req (req (not= (first (:zone card)) :discard))
+                        :prompt "Pay 4[Credits] to use Snare! ability?" :cost [:credit 4]
+                        :msg (msg "do 3 net damage and give the Runner 1 tag")
+                        :effect (effect (damage :net 3) (gain :runner :tag 1))}}}
 
    "Stim Dealer"
    {:events {:runner-turn-begins {:effect #(if (>= (:counter %3) 2)
@@ -1088,9 +1129,6 @@
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
-
-   "Networking"
-   {:effect (effect (lose :tag 1))}
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
