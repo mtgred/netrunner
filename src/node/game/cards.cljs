@@ -429,6 +429,17 @@
    {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
                               :req (req (has? target :subtype "Virus"))}}}
 
+   "Oracle May"
+   {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
+                 :choices ["Event" "Hardware" "Program" "Resource"]
+                 :effect #(let [c (first (get-in @%1 [:runner :deck]))]
+                            (system-msg %1 %2 (str "uses Oracle May, names " (first %4)
+                                                   " and reveals " (:title c)))
+                            (if (= (:type c) (first %4))
+                              (do (system-msg %1 %2 (str "gains 2 [Credits] and draw " (:title c)))
+                                  (gain %1 %2 :credit 2) (draw %1 %2))
+                              (do (system-msg %1 %2 (str "trashes " (:title c))) (mill %1 %2))))}]}
+
    "Origami"
    {:effect (effect (gain :max-hand-size
                           (dec (* 2 (count (filter #(= (:title %) "Origami")

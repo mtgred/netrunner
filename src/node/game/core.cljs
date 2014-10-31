@@ -71,29 +71,38 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
+(declare prompt!)
 (declare optional-ability)
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional] :as ability}
+                                          once-key optional prompt choices] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
              (or (not (:req optional)) ((:req optional) state side card targets)))
     (optional-ability state side card (:prompt optional) optional nil))
-  (when (and (not (get-in @state [once (or once-key cid)]))
-             (or (not req) (req state side card targets))
-             (<= counter-cost counter)
-             (<= advance-counter-cost advance-counter)
-             (apply pay (concat [state side] cost)))
-    (let [c (-> card
-                (update-in [:counter] #(- % counter-cost))
-                (update-in [:advance-counter] #(- % advance-counter-cost)))]
-      (when (or counter-cost advance-counter-cost)
-        (update! state side c))
-      (when msg
-        (let [desc (if (string? msg) msg (msg state side card targets))]
-          (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-      (when effect (effect state side c targets)))
-    (when once (swap! state assoc-in [once (or once-key cid)] true))))
+  (if choices
+    (prompt! state side card prompt choices (dissoc ability :choices))
+    (when (and (not (get-in @state [once (or once-key cid)]))
+               (or (not req) (req state side card targets))
+               (<= counter-cost counter)
+               (<= advance-counter-cost advance-counter)
+               (apply pay (concat [state side] cost)))
+      (let [c (-> card
+                  (update-in [:counter] #(- % counter-cost))
+                  (update-in [:advance-counter] #(- % advance-counter-cost)))]
+        (when (or counter-cost advance-counter-cost)
+          (update! state side c))
+        (when msg
+          (let [desc (if (string? msg) msg (msg state side card targets))]
+            (system-msg state side (str "uses " title (when desc (str " to " desc))))))
+        (when effect (effect state side c targets)))
+      (when once (swap! state assoc-in [once (or once-key cid)] true)))))
+
+(defn prompt! [state side card msg choices ability]
+  (swap! state update-in [side :prompt]
+         (fn [p]
+           (conj (vec p) {:msg msg :choices choices
+                          :effect #(resolve-ability state side ability card [%])}))))
 
 (defn optional-ability [state side card msg ability targets]
   (swap! state update-in [side :prompt]
