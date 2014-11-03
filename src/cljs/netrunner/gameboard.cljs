@@ -407,7 +407,6 @@
            [:div.gameboard
             [:div.mainpane
              (om/build zones opponent)
-
              [:div.centralpane
               [:div.leftpane
                [:div
@@ -431,7 +430,10 @@
                    [:div.panel.blue-shade
                     [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
                     (for [c (:choices prompt)]
-                      [:button {:on-click #(send-command "choice" {:choice c})} c])]
+                      (let [choice {:choice choice}]
+                        (if (string? c)
+                          [:button {:on-click #(send-command "choice" {:choice c})} c]
+                          [:button {:on-click #(send-command "choice" {:card @c})} (:title c)])))]
                    (if run
                      (let [s (:server run)
                            kw (keyword (first s))

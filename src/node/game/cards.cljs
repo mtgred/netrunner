@@ -2,7 +2,7 @@
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
-                               gain-agenda-point pump access-bonus] :as core]
+                               gain-agenda-point pump access-bonus shuffle! runner-install] :as core]
             [game.utils :refer [has?]]))
 
 (def cards
@@ -26,6 +26,10 @@
    "All-nighter"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
+
+   "Archived Memories"
+   {:prompt "Choose a card from Archives" :choices (req (:discard corp))
+    :effect (effect (move target :hand) (system-msg (str "adds " (:title target) " to HQ")))}
 
    "Armitage Codebusting"
    {:data {:counter 12}
@@ -104,6 +108,12 @@
    "Chronos Project"
    {:effect (effect (move :runner :discard :rfg))}
 
+   "Clone Chip"
+   {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
+                 :choices (req (filter #(and (has? % :type "Program")
+                                             (<= (:cost %) (:credit runner))) (:discard runner)))
+                 :effect (effect (runner-install target) (trash card))}]}
+
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
     :stolen {:msg "force the Corp to take 1 bad publicity"
@@ -125,6 +135,9 @@
 
    "CyberSolutions Mem Chip"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
+
+   "D4v1d"
+   {:data {:counter 3} :abilities [{:counter-cost 1 :msg "break 1 suroutine"}]}
 
    "Daily Casts"
    {:data {:counter 8}
@@ -154,6 +167,11 @@
 
    "Diesel"
    {:effect (effect (draw 3))}
+
+   "Djinn"
+   {:abilities [{:prompt "Choose an Virus" :msg (msg "adds " (:title target) "to his grip")
+                 :choices (req (filter #(has? % :subtype "Virus") (:deck runner)))
+                 :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
@@ -199,6 +217,11 @@
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
+
+   "Fast Track"
+   {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+    :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
+                    (move target :hand) (shuffle! :deck))}
 
    "Feedback Filter"
    {:abilities [{:cost [:credit 3] :msg "prevent 1 net damage"}
@@ -358,6 +381,11 @@
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
                     (move (first (:play-area runner)) :rfg))}
 
+   "Levy University"
+   {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
+                 :choices (req (filter #(has? % :type "ICE") (:deck corp)))
+                 :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
+
    "Liberated Account"
    {:data {:counter 16}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
@@ -460,6 +488,10 @@
                                                     :effect (effect (gain :credit 1))} %3 nil))))
     :leave-play #(remove-watch % :order-of-sol)}
 
+   "Panic Button"
+    {:abilities [{:cost [:credit 1] :effect (effect (draw))
+                  :req (req (and run (= (first (:server run)) :hq)))}]}
+
    "Paper Tripping"
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
 
@@ -544,6 +576,13 @@
    {:abilities [{:msg "prevent an installed program or hardware from being trash"
                  :effect (effect (trash card))}]}
 
+   "Self-modifying Code"
+   {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
+                 :choices (req (filter #(and (has? % :type "Program")
+                                             (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
+                 :cost [:credit 2]
+                 :effect (effect (runner-install target) (trash card) (shuffle! :deck))}]}
+
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
                       :effect (effect (damage :net 1)) }}}
@@ -574,14 +613,21 @@
                         :msg (msg "do 3 net damage and give the Runner 1 tag")
                         :effect (effect (damage :net 3) (gain :runner :tag 1))}}}
 
+   "Special Order"
+   {:prompt "Choose an Icebreaker"
+    :effect (effect (system-msg (str "adds " (:title target) " to his grip and shuffle his stack"))
+                    (move target :hand) (shuffle! :deck))
+    :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
+
    "Stim Dealer"
-   {:events {:runner-turn-begins {:effect #(if (>= (:counter %3) 2)
-                                             (do (set-prop %1 %2 %3 :counter 0)
-                                                 (damage %1 %2 :brain 1)
-                                                 (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
-                                             (do (add-prop %1 %2 %3 :counter 1)
-                                                 (gain %1 %2 :click 1)
-                                                 (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
+   {:events {:runner-turn-begins
+             {:effect #(if (>= (:counter %3) 2)
+                         (do (set-prop %1 %2 %3 :counter 0)
+                             (damage %1 %2 :brain 1)
+                             (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
+                         (do (add-prop %1 %2 %3 :counter 1)
+                             (gain %1 %2 :click 1)
+                             (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -1079,9 +1125,6 @@
 
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
-
-   "D4v1d"
-   {:data {:counter 3}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}

@@ -34,7 +34,7 @@
 
 (defn convert [args]
   (let [params (js->clj args :keywordize-keys true)]
-    (if (get-in params [:args :card])
+    (if (or (get-in params [:args :card]))
       (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
       params)))
 

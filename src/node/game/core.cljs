@@ -81,7 +81,8 @@
              (or (not (:req optional)) ((:req optional) state side card targets)))
     (optional-ability state side card (:prompt optional) optional nil))
   (if choices
-    (prompt! state side card prompt choices (dissoc ability :choices))
+    (let [cs (if (sequential? choices) choices (choices state side card targets))]
+      (prompt! state side card prompt cs (dissoc ability :choices)))
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets))
                (<= counter-cost counter)
@@ -99,10 +100,11 @@
       (when once (swap! state assoc-in [once (or once-key cid)] true)))))
 
 (defn prompt! [state side card msg choices ability]
-  (swap! state update-in [side :prompt]
-         (fn [p]
-           (conj (vec p) {:msg msg :choices choices
-                          :effect #(resolve-ability state side ability card [%])}))))
+  (when (> (count choices) 0)
+    (swap! state update-in [side :prompt]
+           (fn [p]
+             (conj (vec p) {:msg msg :choices choices
+                            :effect #(resolve-ability state side ability card [%])})))))
 
 (defn optional-ability [state side card msg ability targets]
   (swap! state update-in [side :prompt]
@@ -111,10 +113,10 @@
                           :effect #(when (= % "Yes")
                                      (resolve-ability state side ability card targets))}))))
 
-(defn resolve-prompt [state side {:keys [choice] :as args}]
+(defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]
     (swap! state update-in [side :prompt] rest)
-    (effect choice)
+    (effect (or choice card))
     (when (empty? (:prompt @state))
       (swap! state assoc :access true))))
 
@@ -163,6 +165,9 @@
     (if (apply pay (concat [state side] cost))
       (effect state side args)
       false)))
+
+(defn shuffle! [state side kw]
+  (swap! state update-in [side kw] shuffle))
 
 (defn change [state side {:keys [key delta]}]
   (let [kw (to-keyword key)]
