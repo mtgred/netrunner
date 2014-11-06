@@ -338,6 +338,12 @@
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
 
+   "Hostage"
+   {:prompt "Choose a Connection to install"
+    :choices (req (filter #(and (has? % :subtype "Connection")
+                                (<= (:cost %) (:credit runner))) (:deck runner)))
+    :effect (effect (runner-install target) (shuffle! :deck))}
+
    "Hostile Infrastructure"
    {:events {:trash {:req (req (and (= (:side target) :corp) (= side :runner)))
                      :effect (effect (damage :net 1))}}}
@@ -484,6 +490,12 @@
    {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
                               :req (req (has? target :subtype "Virus"))}}}
 
+   "Notoriety"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+    :effect (effect (gain :agenda-point 1) (move (first (:play-area runner)) :scored))}
+
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
@@ -505,6 +517,11 @@
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Profiteering"
+   {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
+    :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
+    :effect (effect (gain :credit (* 5 (js/parseInt target)) :bad-publicity (js/parseInt target)))}
 
    "Omni-Drive"
    {:recurring 1}
@@ -602,6 +619,13 @@
     :leave-play #(do (remove-watch % :rachel-beckman)
                      (lose %1 %2 :click 1 :click-per-turn 1))}
 
+   "Research Station"
+   {:effect (effect (gain :max-hand-size 2))
+    :leave-play (effect (lose :max-hand-size 2))}
+
+   "Restoring Face"
+   {:effect (effect (lose :bad-publicity 2))}
+
    "Restructure"
    {:effect (effect (gain :credit 15))}
 
@@ -637,6 +661,12 @@
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
                       :effect (effect (damage :net 1)) }}}
+
+   "Server Diagnostics"
+   {:events {:corp-turn-begins {:effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}
+             :corp-install {:req (req (has? target :type "ICE"))
+                            :effect (effect (trash card)
+                                            (system-msg "trashes Server Diagnostic"))}}}
 
    "Shattered Remains"
    {:advanceable :always
@@ -1262,10 +1292,6 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
-
-   "Research Station"
-   {:effect (effect (gain :max-hand-size 2))
-    :leave-play (effect (lose :max-hand-size 2))}
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))}
