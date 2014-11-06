@@ -108,6 +108,9 @@
    "Chronos Project"
    {:effect (effect (move :runner :discard :rfg))}
 
+   "Cloak"
+   {:recurring 1}
+
    "Clone Chip"
    {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
@@ -122,6 +125,9 @@
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
+   "Compromised Employee"
+   {:recurring 1}
+
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
@@ -130,8 +136,14 @@
                (gain % :corp :credit 7)
                (lose % :corp :credit :all))}
 
+   "Cybsoft MacroDrive"
+   {:recurring 1}
+
    "Cyberdex Trial"
    {:effect (effect (purge))}
+
+   "Cyberfeeder"
+   {:recurring 1}
 
    "CyberSolutions Mem Chip"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
@@ -157,6 +169,9 @@
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damages"
                                    :effect (effect (damage :meat 2))}}}
+
+   "Dedicated Server"
+   {:recurring 2}
 
    "Desperado"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
@@ -185,6 +200,9 @@
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 card"}]}
+
+   "Dyson Fractal Generator"
+   {:recurring 1}
 
    "Dyson Mem Chip"
    {:effect (effect (gain :link 1 :memory 1)) :leave-play (effect (lose :link 1 :memory 1))}
@@ -339,6 +357,9 @@
                      (system-msg %1 %2 (str "trashes " (:title c) " and gains 1 [Credits]")))
                  (do (move %1 %2 c :hand) (system-msg %1 %2 (str "adds " (:title c) " to Grip")))))}
 
+   "Inside Man"
+   {:recurring 2}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -392,6 +413,9 @@
                  :effect #(do (gain %1 :runner :credit 4)
                               (when (= (:counter %3) 0) (trash %1 :runner %3)))}]}
 
+   "Lockpick"
+   {:recurring 1}
+
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
 
@@ -428,6 +452,9 @@
 
    "NAPD Contract"
    {:steal-cost [:credit 4]}
+
+   "NBN: Making News"
+   {:recurring 2}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :max-hand-size 1))}
@@ -479,6 +506,9 @@
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Omni-Drive"
+   {:recurring 1}
+
    "Order of Sol"
    {:effect #(add-watch % :order-of-sol
                         (fn [k ref old new]
@@ -494,6 +524,9 @@
 
    "Paper Tripping"
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
+
+   "Paricia"
+   {:recurring 2}
 
    "Peak Efficiency"
    {:effect (effect (gain :credit
@@ -523,9 +556,18 @@
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
+   "Public Terminal"
+   {:recurring 1}
+
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double"))
                                                       (:discard runner))))))}
+
+   "Prepaid VoicePAD"
+   {:recurring 1}
+
+   "Primary Transmission Dish"
+   {:recurring 3}
 
    "Project Junebug"
    {:advanceable :always
@@ -576,6 +618,15 @@
    {:abilities [{:msg "prevent an installed program or hardware from being trash"
                  :effect (effect (trash card))}]}
 
+   "Sahasrara"
+   {:recurring 2}
+
+   "Scorched Earth"
+   {:req (req tagged) :effect (effect (damage :meat 4))}
+
+   "Scrubber"
+   {:recurring 2}
+
    "Self-modifying Code"
    {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
@@ -604,8 +655,8 @@
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
 
-   "Scorched Earth"
-   {:req (req tagged) :effect (effect (damage :meat 4))}
+   "Silencer"
+   {:recurring 1}
 
    "Snare!"
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
@@ -658,6 +709,13 @@
                                   (swap! ref assoc-in [:runner :max-hand-size] credit))))))
     :leave-play #(remove-watch % :theophilius-bagbiter)}
 
+   "The Root"
+   {:recurring 3}
+
+   "The Toolbox"
+   {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
+    :recurring 2}
+
    "Thomas Haas"
    {:advanceable :always
     :abilities [{:effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
@@ -695,6 +753,9 @@
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of his Stack"
                  :effect (effect (move (last (:deck runner)) :hand))}]}
+
+   "Whizzard: Master Gamer"
+   {:recurring 3}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1210,7 +1271,8 @@
    {:req (req (:successful-run runner-reg))}
 
    "Spinal Modem"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :recurring 2}
 
    "Tallie Perrault"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
@@ -1225,9 +1287,6 @@
 
    "The Source"
    {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
-
-   "The Toolbox"
-   {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))}
 
    "Three Steps Ahead"
    {:req (req (not (:spent-click runner-reg)))}})

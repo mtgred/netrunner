@@ -134,11 +134,27 @@
        (let [card (get-card state (:card e))]
          (resolve-ability state (to-keyword (:side card)) (:ability e) card [target])))))
 
+(defn add-prop [state side card key n]
+  (update! state side (update-in card [key] #(+ % n))))
+
+(defn set-prop [state side card & args]
+  (update! state side (apply assoc (cons card args))))
+
 (defn card-init [state side card]
   (let [cdef (card-def card)
-        abilities (for [ab (:abilities cdef)]
+        abilities (if (:recurring cdef)
+                    (conj (:abilities cdef) "Use [Recurring Credits]")
+                    (:abilities cdef))
+        abilities (for [ab abilities]
                     (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
-        c (merge card (:data cdef) {:abilities abilities :rezzed true})]
+        data (if-let [recurring (:recurring cdef)]
+               (assoc (:data cdef) :counter recurring)
+               (:data cdef))
+        c (merge card data {:abilities abilities :rezzed true })]
+    (when-let [recurring (:recurring cdef)]
+      (register-events state side
+                       {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
+                        {:effect (effect (set-prop card :counter recurring))}} c))
     (update! state side c)
     (resolve-ability state side cdef c nil)
     (when-let [events (:events cdef)] (register-events state side events c))
@@ -272,12 +288,6 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ % n))))
-
-(defn set-prop [state side card & args]
-  (update! state side (apply assoc (cons card args))))
-
 (defn trash [state side {:keys [zone] :as card}]
   (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)
         cdef (card-def c)
@@ -401,7 +411,12 @@
     (system-msg state side "continues the run")))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
-  (resolve-ability state side (get-in (card-def card) [:abilities ability]) card targets))
+  (let [cdef (card-def card)
+        abilities (:abilities cdef)
+        ab (if (= ability (count abilities))
+             {:msg "take 1 [Recurring Credits]" :counter-cost 1 :effect (effect (gain :credit 1))}
+             (get-in cdef [:abilities ability]))]
+    (resolve-ability state side ab card targets)))
 
 (defn start-turn [state side]
   (system-msg state side (str "started his or her turn"))
