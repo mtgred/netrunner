@@ -976,11 +976,23 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    ;; ICE
+   "Archer"
+   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+                {:prompt "Choose a program to trash" :label "Trash a program"
+                 :msg (msg "trash " (:title target))
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+                {:msg "end the run" :effect (effect (end-run))}]}
+
    "Ashigaru"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Bastion"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Burke Bugs"
+   {:abilities [{:prompt "Choose a program to trash" :label "Trash a program"
+                 :msg (msg "trash " (:title target))
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
 
    "Caduceus"
    {:abilities [{:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
@@ -1026,7 +1038,10 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Grim"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}]}
 
    "Guard"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -1061,6 +1076,20 @@
    "Ice Wall"
    {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Ichi 1.0"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}
+                {:msg "give the runner 1 tag and do 1 brain"
+                 :effect (effect (damage :brain 1) (gain :runner :tag 1))}]}
+
+   "Ichi 2.0"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}
+                {:msg "give the runner 1 tag and do 1 brain"
+                 :effect (effect (damage :brain 1) (gain :runner :tag 1))}]}
+
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -1070,8 +1099,19 @@
    "Komainu"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
+   "Lancelot"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}]}
+
    "Lotus Field"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Lycan"
+   {:advanceable :always
+    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}]}
 
    "Mamba"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
@@ -1108,8 +1148,14 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rototurret"
-   {:abilities [{:msg "trash 1 program"}
+   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
                 {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Sagittarius"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}]}
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -1125,20 +1171,30 @@
 
    "Swarm"
    {:advanceable :always
-    :abilities [{:msg "trash 1 program unless the Runner pays 3 [Credits]"}]}
+    :abilities [{:prompt "Choose a program to trash" :msg (msg "trashes " (:title target))
+                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
+                 :effect (effect (trash target))}]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+                {:prompt "Choose an AI program to trash" :msg (msg "trashes " (:title target))
+                 :label "Trash an AI program" :effect (effect (trash target))
+                 :choices (req (filter #(has? % :subtype "AI") (get-in runner [:rig :program])))}]}
 
-   "Tyrant"
-   {:advanceable :while-rezzed
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   "Taurus"
+   {:abilities [{:prompt "Choose a Hardware to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a Hardware" :choices (req (get-in runner [:rig :hardware]))
+                 :effect (effect (trash target))}]}
 
    "TMI"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
    {:msg "force the runner to lose 3 [Credits]" :effect (effect (lose :runner :credit 3))
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Tyrant"
+   {:advanceable :while-rezzed
     :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Universal Connectivity Fee"
