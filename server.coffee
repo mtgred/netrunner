@@ -148,7 +148,7 @@ app.configure ->
 
 # Auth
 passport.use new localStrategy (username, password, done) ->
-  db.collection('users').findOne {username: username}, (err, user) ->
+  db.collection('users').findOne {username: RegExp("^#{username}$", "i")}, (err, user) ->
     return done(err) if err or not user
     if bcrypt.compareSync(password, user.password)
       done(null, {username: user.username, emailhash: user.emailhash, _id: user._id})
