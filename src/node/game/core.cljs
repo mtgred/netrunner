@@ -341,12 +341,14 @@
       (when-let [access-effect (:access (card-def c))]
         (resolve-ability state (to-keyword (:side c)) access-effect c nil))
       (when (not= (:zone c) [:discard])
-        (when-let [trash-cost (:trash c)]
+        (if-let [trash-cost (:trash c)]
           (optional-ability state side c (str "Pay " trash-cost "[Credits] to trash " name "?")
                             {:cost [:credit trash-cost]
                              :effect (effect (trash :corp c)
                                              (system-msg (str "pays " trash-cost "[Credits] to trash "
-                                                              (:title c))))} nil)))
+                                                              (:title c))))} nil)
+          (when-not (= (:type c) "Agenda")
+            (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
       (when (= (:type c) "Agenda")
         (if-let [cost (:steal-cost (card-def c))]
           (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
@@ -381,7 +383,10 @@
     (trigger-event state side :successful-run (first server))
     (let [cards (access state side server)]
       (when-not (empty? cards)
-        (system-msg state side (str "accesses " (join ", "(map :title cards))))
+        (if (= (first server) :rd)
+          (let [n (count cards)]
+            (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
+          (system-msg state side (str "accesses " (join ", "(map :title cards)))))
         (handle-access state side cards)))
     (trigger-event state side :successful-run-ends (first server))
     (swap! state assoc :run nil)))
