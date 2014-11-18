@@ -256,17 +256,18 @@
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard (assoc (drop-area :corp "Archives")
+    [:div.panel.blue-shade.discard (assoc (drop-area :corp "Archives" {})
                                      :on-click #(-> (om/get-node owner "popup") js/$ .toggle))
      (om/build label discard {:opts {:name "Archives"}})
-     (if (= (:side @game-state) :corp)
-       [:div.panel.blue-shade.popup {:ref "popup"}
-        (om/build-all card-view discard {:key :cid})]
-       [:div.panel.blue-shade.popup.opponent {:ref "popup"}
-        (for [c discard]
-          (if (or (:seen c) (:rezzed c))
-            (om/build card-view c)
-            [:img.card {:src "/img/corp.png"}]))])
+
+     [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
+      (for [c discard]
+        (if (or (:seen c) (:rezzed c))
+          (om/build card-view c)
+          (if (= (:side @game-state) :runner)
+            [:img.card {:src "/img/corp.png"}]
+            [:div.unseen (om/build card-view c)])))]
+
      (when-not (empty? discard)
        (let [c (last discard)]
          (if (= (:side @game-state) :corp)
