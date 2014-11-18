@@ -189,6 +189,14 @@
            [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
            [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]))))
 
+(defn drop-area [side server hmap]
+  (if (= (:side @game-state) side)
+    (merge hmap {:on-drop #(handle-drop % server)
+                 :on-drag-enter #(-> % .-target js/$ (.addClass "dragover"))
+                 :on-drag-leave #(-> % .-target js/$ (.removeClass "dragover"))
+                 :on-drag-over #(.preventDefault %)})
+    hmap))
+
 (defn label [cursor owner opts]
   (om/component
    (sab/html
@@ -200,9 +208,11 @@
   (om/component
    (sab/html
     (let [side (:side identity)
-          size (count hand)]
-      [:div.panel.blue-shade.hand {:class (when (> size 6) "squeeze")}
-       (om/build label hand {:opts {:name (if (= side "Corp") "HQ" "Grip")}})
+          size (count hand)
+          name (if (= side "Corp") "HQ" "Grip")]
+      [:div.panel.blue-shade.hand
+       (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
+       (om/build label hand {:opts {:name name}})
        (map-indexed (fn [i card]
                       (sab/html
                        [:div.card-wrapper {:class (if (playable? card) "playable" "")
@@ -230,20 +240,13 @@
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
 
-(defn drop-area [side server]
-  (when (= (:side @game-state) side)
-    {:on-drop #(handle-drop % server)
-     :on-drag-enter #(-> % .-target js/$ (.addClass "dragover"))
-     :on-drag-leave #(-> % .-target js/$ (.removeClass "dragover"))
-     :on-drag-over #(.preventDefault %)}))
-
 (defmulti discard-view #(get-in % [:identity :side]))
 
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard (assoc (drop-area :runner "Heap")
-                                     :on-click #(-> (om/get-node owner "popup") js/$ .toggle))
+    [:div.panel.blue-shade.discard
+     (drop-area :runner "Heap" {:on-click #(-> (om/get-node owner "popup") js/$ .toggle)})
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
       (om/build-all card-view discard {:key :cid})]

@@ -520,6 +520,8 @@
   (case server
     ("Heap" "Archives") (do (trash state side card)
                             (system-msg state side (str "trashes " (:title card))))
+    ("HQ" "Grip") (do (move state side card :hand)
+                      (system-msg state side (str "moves " (:title card) " to " server)))
     nil))
 
 (defn click-run [state side {:keys [server] :as args}]
