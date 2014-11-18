@@ -71,7 +71,8 @@
   (if (= (:side @game-state) :runner)
     (case (first zone)
       "hand" (send-command "play" {:card card})
-      ("rig" nil) (handle-abilities card owner))
+      "rig" (handle-abilities card owner)
+      nil)
     (case (first zone)
       "hand" (case type
                ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
@@ -241,18 +242,35 @@
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard (drop-area :runner "Heap")
+    [:div.panel.blue-shade.discard (assoc (drop-area :runner "Heap")
+                                     :on-click #(-> (om/get-node owner "popup") js/$ .toggle))
      (om/build label discard {:opts {:name "Heap"}})
+     [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
+      (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
 
-(defmethod discard-view "Corp" [{:keys [discard] :as cursor}]
+(defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard (drop-area :corp "Archives")
+    [:div.panel.blue-shade.discard (assoc (drop-area :corp "Archives")
+                                     :on-click #(-> (om/get-node owner "popup") js/$ .toggle))
      (om/build label discard {:opts {:name "Archives"}})
+     (if (= (:side @game-state) :corp)
+       [:div.panel.blue-shade.popup {:ref "popup"}
+        (om/build-all card-view discard {:key :cid})]
+       [:div.panel.blue-shade.popup.opponent {:ref "popup"}
+        (for [c discard]
+          (if (or (:seen c) (:rezzed c))
+            (om/build card-view c)
+            [:img.card {:src "/img/corp.png"}]))])
      (when-not (empty? discard)
-       (om/build card-view (last discard)))])))
+       (let [c (last discard)]
+         (if (= (:side @game-state) :corp)
+           (om/build card-view c)
+           (if (or (:seen c) (:rezzed c))
+             (om/build card-view c)
+             [:img.card {:src "/img/corp.png"}]))))])))
 
 (defn rfg-view [{:keys [rfg] :as cursor}]
   (om/component
@@ -430,10 +448,9 @@
                    [:div.panel.blue-shade
                     [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
                     (for [c (:choices prompt)]
-                      (let [choice {:choice choice}]
-                        (if (string? c)
-                          [:button {:on-click #(send-command "choice" {:choice c})} c]
-                          [:button {:on-click #(send-command "choice" {:card @c})} (:title c)])))]
+                      (if (string? c)
+                        [:button {:on-click #(send-command "choice" {:choice c})} c]
+                        [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))]
                    (if run
                      (let [s (:server run)
                            kw (keyword (first s))

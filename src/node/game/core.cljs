@@ -342,11 +342,12 @@
         (resolve-ability state (to-keyword (:side c)) access-effect c nil))
       (when (not= (:zone c) [:discard])
         (if-let [trash-cost (:trash c)]
-          (optional-ability state side c (str "Pay " trash-cost "[Credits] to trash " name "?")
-                            {:cost [:credit trash-cost]
-                             :effect (effect (trash :corp c)
-                                             (system-msg (str "pays " trash-cost "[Credits] to trash "
-                                                              (:title c))))} nil)
+          (let [card (assoc c :seen true)]
+            (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                              {:cost [:credit trash-cost]
+                               :effect (effect (trash :corp card)
+                                               (system-msg (str "pays " trash-cost "[Credits] to trash "
+                                                                (:title card))))} nil))
           (when-not (= (:type c) "Agenda")
             (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
       (when (= (:type c) "Agenda")
@@ -369,6 +370,7 @@
     (take n (get-in @state [:corp :deck]))))
 
 (defmethod access :archives [state side server]
+  (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
   (get-in @state [:corp :discard]))
 
 (defmethod access :remote [state side server]
