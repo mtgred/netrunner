@@ -328,11 +328,16 @@
 (defn run
   ([state side server] (run state side server nil))
   ([state side server run-effect]
-   (let [s (if (sequential? server) server [server])
-         ices (get-in @state (concat [:corp :servers] s [:ices]))]
-     (swap! state assoc :per-run nil
-            :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
-     (swap! state update-in [:runner :register :made-run] #(conj % (first s))))))
+     (let [s (cond
+              (= server "HQ") [:hq]
+              (= server "R&D") [:rd]
+              (= server "Archives") [:archives]
+              (keyword? server) [server]
+              :else [:remote (last (split server " "))])
+           ices (get-in @state (concat [:corp :servers] s [:ices]))]
+       (swap! state assoc :per-run nil
+              :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
+       (swap! state update-in [:runner :register :made-run] #(conj % (first s))))))
 
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
@@ -379,29 +384,50 @@
 (defn access-bonus [state side n]
   (swap! state update-in [:run :access-bonus] #(+ % n)))
 
+(defn handle-end-run [state side]
+  (let [server (get-in @state [:run :server])]
+    (trigger-event state side :run-ends (first server))
+    (swap! state assoc-in [:runner :rig :program]
+           (for [p (get-in @state [:runner :rig :program])]
+             (assoc p :current-strength nil)))
+    (when-let [end-run-effect (get-in @state [:run :run-effect :end-run])]
+      (resolve-ability state side end-run-effect nil [(first server)])))
+  (swap! state assoc :run nil))
+
+(defn do-access [state side server]
+  (let [cards (access state side server)]
+    (when-not (empty? cards)
+      (if (= (first server) :rd)
+        (let [n (count cards)]
+          (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
+        (system-msg state side (str "accesses " (join ", "(map :title cards)))))
+      (handle-access state side cards)))
+  (handle-end-run state side))
+
 (defn successful-run [state side]
+  (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
+    (resolve-ability state side successful-run-effect nil nil))
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
+    (swap! state assoc-in [:run :successful] true)
     (trigger-event state side :successful-run (first server))
-    (let [cards (access state side server)]
-      (when-not (empty? cards)
-        (if (= (first server) :rd)
-          (let [n (count cards)]
-            (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
-          (system-msg state side (str "accesses " (join ", "(map :title cards)))))
-        (handle-access state side cards)))
-    (trigger-event state side :successful-run-ends (first server))
-    (swap! state assoc :run nil)))
+    (if-let [replace-access (get-in @state [:run :run-effect :replace-access])]
+      (swap! state update-in [side :prompt]
+         (fn [p]
+           (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
+                          :choices ["Run ability" "Access"]
+                          :effect #(if (= % "Run ability")
+                                     (do (resolve-ability state side replace-access nil nil)
+                                         (handle-end-run state side))
+                                     (do-access state side server))})))
+      (do-access state side server))))
 
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+    (swap! state assoc-in [:run :unsuccessful] true)
     (trigger-event state side :unsuccessful-run)
-    (swap! state assoc-in [:runner :rig :program]
-           (for [p (get-in @state [:runner :rig :program])]
-             (assoc p :current-strength nil)))
-    (swap! state assoc :run nil)
-    (trigger-event state side :run-ends)))
+    (handle-end-run state side)))
 
 (defn no-action [state side]
   (swap! state assoc-in [:run :no-action] true)
@@ -529,12 +555,7 @@
 (defn click-run [state side {:keys [server] :as args}]
   (when (pay state :runner :click 1)
     (system-msg state :runner (str "makes a run on " server))
-    (let [s (case server
-              "HQ" :hq
-              "R&D" :rd
-              "Archives" :archives
-              [:remote (last (split server " "))])]
-      (run state side s))))
+    (run state side server)))
 
 (defn click-draw [state side]
   (when (pay state side :click 1)

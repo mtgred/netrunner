@@ -22,6 +22,8 @@
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
             'installed '(#{:rig :servers} (first (:zone card)))
+            'servers '(concat ["HQ" "R&D" "Archives"]
+                              (map #(str "Server " %) (range (count (get-in corp [:servers :remote])))))
             'tagged '(> (get-in @state [:runner :tag]) 0)]
         ~@expr)))
 

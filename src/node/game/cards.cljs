@@ -9,6 +9,12 @@
   {"Access to Globalsec"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
 
+   "Account Siphon"
+   {:effect (effect (run :hq
+                      {:replace-access
+                       {:effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
+                                        (lose :corp :credit (min 5 (:credit corp))))}}))}
+
    "Adonis Campaign"
    {:data {:counter 12}
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
@@ -182,6 +188,11 @@
 
    "Diesel"
    {:effect (effect (draw 3))}
+
+   "Dirty Laundry"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target {:end-run {:req (req (:successful run))
+                                           :effect (effect (gain :credit 5))}}))}
 
    "Djinn"
    {:abilities [{:prompt "Choose an Virus" :msg (msg "adds " (:title target) "to his grip")
@@ -362,6 +373,9 @@
                  (do (trash %1 %2 c) (gain %1 %2 :credit 1)
                      (system-msg %1 %2 (str "trashes " (:title c) " and gains 1 [Credits]")))
                  (do (move %1 %2 c :hand) (system-msg %1 %2 (str "adds " (:title c) " to Grip")))))}
+
+   "Inside Job"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Inside Man"
    {:recurring 2}
@@ -687,6 +701,12 @@
 
    "Silencer"
    {:recurring 1}
+
+   "Sneakdoor Beta"
+   {:abilities [{:cost [:click 1] :msg "make run on Archives"
+                 :effect (effect (run :archives
+                                   {:successful-run
+                                    {:effect #(swap! %1 assoc-in [:run :server] [:hq])}}))}]}
 
    "Snare!"
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
