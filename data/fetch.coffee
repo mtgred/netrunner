@@ -78,7 +78,4 @@ request.get baseurl + "cards", (error, response, body) ->
     db.collection("cards").remove ->
     db.collection("cards").insert cards, (err, result) ->
     fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
-      if mongoUser
-        exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file andb-cards.json")
-      else
-        exec("mongoimport --db netrunner --upsert --upsertFields code --collection cards --jsonArray --file andb-cards.json")
+    console.log("#{cards.length} cards fetched")
