@@ -546,7 +546,9 @@
   (case server
     ("Heap" "Archives")
     (do (trash state side card)
-        (system-msg state side (str "trashes " (if (:rezzed card) (:title card) "a card"))))
+        (system-msg state side (str "trashes " (if (or (= (:side card) "Runner") (:rezzed card))
+                                                 (:title card)
+                                                 "a card"))))
     ("HQ" "Grip")
     (do (move state side (dissoc card :seen :rezzed) :hand)
         (system-msg state side (str "moves " (:title card) " to " server)))
