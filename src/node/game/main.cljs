@@ -26,7 +26,7 @@
    "no-action" core/no-action
    "continue" core/continue
    "access" core/successful-run
-   "jack-out" (effect (end-run) (system-msg "jacks out"))
+   "jack-out" core/jack-out
    "advance" core/advance
    "score" core/score
    "choice" core/resolve-prompt

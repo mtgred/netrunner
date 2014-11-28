@@ -33,6 +33,9 @@
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
+   "Amped"
+   {:effect (effect (gain :click 3) (damage :brain 1))}
+
    "Archived Memories"
    {:prompt "Choose a card from Archives" :choices (req (:discard corp))
     :effect (effect (move target :hand) (system-msg (str "adds " (:title target) " to HQ")))}
@@ -52,6 +55,9 @@
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
+
+   "Au Revoir"
+   {:events {:jack-out {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}}}
 
    "Autoscripter"
    {:events {:runner-install {:req (req (and (= (:active-player @state) :runner)
@@ -131,8 +137,14 @@
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
+   "Collective Consciousness"
+   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
+                   :effect (effect (draw :runner))}}}
+
    "Compromised Employee"
-   {:recurring 1}
+   {:recurring 1
+    :events {:rez {:req (req (= (:type target) "ICE")) :msg "gain 1 [Credits]"
+                   :effect (effect (gain :runner :credit 1))}}}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
@@ -163,6 +175,10 @@
                                   :effect #(do (gain %1 :runner :credit 2)
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
+   "Data Folding"
+   {:events {:runner-turn-begins {:req (req (>= (:memory runner) 2)) :msg "gain 1 [Credits]"
+                                  :effect (effect (gain :credit 1))}}}
+
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
@@ -177,6 +193,9 @@
                                    :effect (effect (damage :meat 2))}}}
 
    "Dedicated Server"
+   {:recurring 2}
+
+   "Dedicated Technician Team"
    {:recurring 2}
 
    "Desperado"
@@ -220,6 +239,12 @@
 
    "e3 Feedback Implants"
    {:abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
+
+   "Earthrise Hotel"
+   {:data {:counter 3}
+    :events {:runner-turn-begins {:msg "draw 2 cards" :counter-cost 1
+                                  :effect #(do (draw %1 :runner 2)
+                                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
@@ -265,6 +290,11 @@
    {:events {:purge {:msg "force the corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp :credit 2))}}}
 
+   "Firmware Updates"
+   {:data [:counter 3]
+    :abilities [{:counter-cost 1
+                 :msg "place 1 advancement token on a piece of ICE that can be advanced"}]}
+
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
@@ -292,6 +322,9 @@
 
    "Government Contracts"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 4)) :msg "gain 4 [Credits]"}]}
+
+   "Government Takeover"
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
@@ -439,6 +472,10 @@
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
 
+   "MaxX: Maximum Punk Rock"
+   {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
+                                  :effect (effect (mill 2) (draw))}}}
+
    "Magnum Opus"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
@@ -464,6 +501,9 @@
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
+
+   "MemStrips"
+   {:effect (effect (gain :memory 3))}
 
    "Mental Health Clinic"
    {:effect (effect (gain :runner :max-hand-size 1))
@@ -720,6 +760,9 @@
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
 
+   "Steelskin"
+   {:effect (effect (draw 3))}
+
    "Stim Dealer"
    {:events {:runner-turn-begins
              {:effect #(if (>= (:counter %3) 2)
@@ -788,8 +831,16 @@
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
                                   :effect (effect (gain :credit 1))}}}
 
+   "Valencia Estevez: The Angel of Cayambe"
+   {:effect (effect (gain :corp :bad-publicity 1))}
+
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
+
+   "Vigil"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:runner-turn-begins {:req (req (= (count (:hand corp)) (:max-hand-size corp)))
+                                  :msg "draw 1 card" :effect (effect (draw 1))}}}
 
    "Vulcan Coverup"
    {:msg "do 2 meat damages" :effect (effect (damage :meat 2))
@@ -1181,6 +1232,10 @@
    {:advanceable :while-rezzed
     :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
+   "Searchlight"
+   {:advanceable :always
+    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
@@ -1232,6 +1287,9 @@
                  :effect (effect (damage :brain 1))}
                 {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Virgo"
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Wall of Static"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

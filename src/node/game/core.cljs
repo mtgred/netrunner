@@ -535,7 +535,8 @@
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
     (card-init state side card)
-    (system-msg state side (str "rez " (:title card)))))
+    (system-msg state side (str "rez " (:title card)))
+    (trigger-event state side :rez card)))
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side :click 1 :credit 1)
@@ -570,3 +571,8 @@
     (gain state side :credit 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
+
+(defn jack-out [state side]
+  (end-run state side)
+  (system-msg state side "jacks out")
+  (trigger-event state side :jack-out))
