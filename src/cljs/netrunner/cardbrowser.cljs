@@ -67,7 +67,7 @@
                                             "" (str ": " (:subtype card)))]
       [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
      (when-let [url (image-url card)]
-       [:img {:src url :onError #(-> % .-target js/$ .hide)}])])))
+       [:img {:src url :onError #(-> % .-target js/$ .hide) :onLoad #(-> % .-target js/$ .show)}])])))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]

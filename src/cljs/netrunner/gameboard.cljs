@@ -134,7 +134,7 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
-                         advanceable rezzed strength current-strength] :as cursor}
+                         advanceable rezzed strength current-strength title] :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
@@ -149,7 +149,9 @@
        (when-let [url (image-url cursor)]
          (if flipped
            [:img.card.bg {:src "/img/corp.png"}]
-           [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]))
+           [:div
+            [:span.cardname title]
+            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
        [:div.counters
         (when (> counter 0) [:div.darkbg.counter counter])
         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
@@ -505,7 +507,7 @@
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
-                [:img.card.bg {:src (image-url card)}])]
+                (om/build cb/card-view card))]
              (om/build log-pane (:log cursor))]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})

@@ -32,7 +32,7 @@ h3
 
 h4
   font-size: 14px
-  line-height: 20px
+  line-height: 18px
   margin: 0 0 2px
 
 a
@@ -52,13 +52,14 @@ pre
   white-space: -moz-pre-wrap
   white-space: -o-pre-wrap
   white-space: pre-wrap
+  margin: 8px 0
 
 ul
   margin: 0
   padding: 0
 
 p
-  margin: 10px 0
+  margin: 8px 0
 
 input, select, textarea
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
@@ -582,7 +583,7 @@ nav ul
   padding: 10px
 
   > h4
-    margin-bottom: 10px
+    margin-bottom: 5px
 
   > h4, .type
     text-transform: uppercase
@@ -595,7 +596,7 @@ nav ul
     bottom: 10px
     left: 10px
     right: 10px
-    height: 220px
+    height: 245px
 
   > img
     position: absolute
@@ -923,7 +924,7 @@ nav ul
     left: 0
     z-index: 2
     padding: 1px 4px
-    font-size: 12px
+    font-size: 10px
     line-height: 14px
 
   .darkbg
@@ -942,6 +943,10 @@ nav ul
       top: auto
       width: 120px
       bottom: -5px
+
+    .cardname
+      font-size: 10px
+      line-height: 14px
 
   .counters
     position: absolute
@@ -1056,7 +1061,7 @@ nav ul
     width: 382px
 
   .card-wrapper
-    display: inline-block
+    float: left
     margin: 0 4px 0 0
     transition(all 0.3s ease-in-out)
 
@@ -1210,8 +1215,6 @@ nav ul
             height: 86px
 
             .card
-              margin-left: -34px
-
               &:first-child
                 margin-left: -1px
 
@@ -1250,10 +1253,13 @@ nav ul
       position: relative
       transition(all 0.2s ease-in-out)
 
-      .card
+      .card-preview
         width: 100%
         height: 100%
         transition(all 0.2s ease-in-out)
+
+        .text
+          height: 210px
 
     .log
       width: 225px
