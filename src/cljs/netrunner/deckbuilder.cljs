@@ -330,7 +330,7 @@
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
-                 [:h4.fake-link {:on-mouse-enter #((put! zoom-channel identity))
+                 [:h4.fake-link {:on-mouse-enter #(put! zoom-channel identity)
                                  :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
                        min-count (:minimumdecksize identity)]
@@ -368,7 +368,7 @@
                          (let [card (:card line)]
                            [:span
                             [:span {:class (if (allowed? card identity) "fake-link" "invalid")
-                                    :on-mouse-enter #((put! zoom-channel card))
+                                    :on-mouse-enter #(put! zoom-channel card)
                                     :on-mouse-leave #(put! zoom-channel false)} name]
                             (when-not (or (= (:faction card) (:faction identity))
                                           (zero? (:factioncost card)))
