@@ -40,7 +40,7 @@
   (when card
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]
-      (swap! state update-in (cons side dest) #(vec (conj % moved-card)))
+      (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
       (swap! state update-in (cons (to-keyword (:side card)) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
@@ -553,6 +553,10 @@
     ("HQ" "Grip")
     (do (move state side (dissoc card :seen :rezzed) :hand)
         (system-msg state side (str "moves " (:title card) " to " server)))
+    ("Stack" "R&D")
+    (do (move state side (dissoc card :seen :rezzed) :deck)
+        (system-msg state side (str "moves " (:title card) " to the top of " server)))
+
     nil))
 
 (defn click-run [state side {:keys [server] :as args}]

@@ -229,7 +229,7 @@
 (defmethod deck-view "Runner" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck {}
+    [:div.panel.blue-shade.deck (drop-area (:side @game-state) "Stack" {})
      (om/build label deck {:opts {:name "Stack"}})
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png"}])])))
@@ -237,7 +237,7 @@
 (defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck {}
+    [:div.panel.blue-shade.deck (drop-area (:side @game-state) "R&D" {})
      (om/build label deck {:opts {:name "R&D"}})
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
@@ -253,7 +253,7 @@
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
-       (om/build card-view (last discard)))])))
+       (om/build card-view (first discard)))])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
   (om/component
@@ -271,7 +271,7 @@
             [:div.unseen (om/build card-view c)])))]
 
      (when-not (empty? discard)
-       (let [c (last discard)]
+       (let [c (first discard)]
          (if (= (:side @game-state) :corp)
            (om/build card-view c)
            (if (or (:seen c) (:rezzed c))
