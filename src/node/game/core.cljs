@@ -291,7 +291,7 @@
 (defn trash [state side {:keys [zone] :as card}]
   (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)
         cdef (card-def c)
-        moved-card (move state side c :discard)]
+        moved-card (move state (to-keyword (:side card)) c :discard)]
     (when (#{:servers :rig} (first zone))
       (when-let [leave-effect (:leave-play cdef)]
         (leave-effect state side moved-card nil))
