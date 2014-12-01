@@ -224,6 +224,18 @@
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
                     hand)]))))
 
+(defn show-deck [event owner ref]
+  (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
+  (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
+  (send-command "system-msg" {:msg "looks at his deck"}))
+
+(defn close-popup [event owner ref shuffle?]
+  (-> (om/get-node owner ref) js/$ .fadeOut)
+  (if shuffle?
+    (send-command "shuffle" {:close "true"})
+    (send-command "system-msg" {:msg "stops looking at his deck"}))
+  (.stopPropagation event))
+
 (defmulti deck-view #(get-in % [:identity :side]))
 
 (defmethod deck-view "Runner" [{:keys [deck] :as cursor} owner]
@@ -231,12 +243,19 @@
    (sab/html
     [:div.panel.blue-shade.deck
      (drop-area (:side @game-state) "Stack"
-                {:on-click #(-> (om/get-node owner "deck-menu") js/$ .toggle)})
+                {:on-click #(-> (om/get-node owner "stack-menu") js/$ .toggle)})
      (om/build label deck {:opts {:name "Stack"}})
      (when (= (:side @game-state) :runner)
-       [:div.panel.blue-shade.menu {:ref "deck-menu"}
+       [:div.panel.blue-shade.menu {:ref "stack-menu"}
         [:div {:on-click #(do (send-command "shuffle")
-                              (-> (om/get-node owner "deck-menu") js/$ .fadeOut))} "Shuffle"]])
+                              (-> (om/get-node owner "stack-menu") js/$ .fadeOut))} "Shuffle"]
+        [:div {:on-click #(show-deck % owner "stack")} "Show"]])
+     (when (= (:side @game-state) :runner)
+       [:div.panel.blue-shade.popup {:ref "stack-content"}
+        [:div
+         [:a {:on-click #(close-popup % owner "stack-content" false)} "Close"]
+         [:a {:on-click #(close-popup % owner "stack-content" true)} "Close & Shuffle"]]
+        (om/build-all card-view deck {:key :cid})])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png"}])])))
 
@@ -245,12 +264,19 @@
    (sab/html
     [:div.panel.blue-shade.deck
      (drop-area (:side @game-state) "R&D"
-                {:on-click #(-> (om/get-node owner "deck-menu") js/$ .toggle)})
+                {:on-click #(-> (om/get-node owner "rd-menu") js/$ .toggle)})
      (om/build label deck {:opts {:name "R&D"}})
      (when (= (:side @game-state) :corp)
-       [:div.panel.blue-shade.menu {:ref "deck-menu"}
+       [:div.panel.blue-shade.menu {:ref "rd-menu"}
         [:div {:on-click #(do (send-command "shuffle")
-                              (-> (om/get-node owner "deck-menu") js/$ .fadeOut))} "Shuffle"]])
+                              (-> (om/get-node owner "rd-menu") js/$ .fadeOut))} "Shuffle"]
+        [:div {:on-click #(show-deck % owner "rd")} "Show"]])
+     (when (= (:side @game-state) :corp)
+       [:div.panel.blue-shade.popup {:ref "rd-content"}
+        [:div
+         [:a {:on-click #(close-popup % owner "rd-content" false)} "Close"]
+         [:a {:on-click #(close-popup % owner "rd-content" true)} "Close & Shuffle"]]
+        (om/build-all card-view deck {:key :cid})])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
 

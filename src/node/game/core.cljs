@@ -581,6 +581,8 @@
   (system-msg state side "jacks out")
   (trigger-event state side :jack-out))
 
-(defn shuffle-deck [state side]
+(defn shuffle-deck [state side {:keys [close] :as args}]
   (swap! state update-in [side :deck] shuffle)
-  (system-msg state side "shuffles his deck"))
+  (if close
+    (system-msg state side "stops looking at his deck and shuffles it")
+    (system-msg state side "shuffles his deck")))

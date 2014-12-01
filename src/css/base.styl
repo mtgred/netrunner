@@ -1036,19 +1036,23 @@ nav ul
   .discard
     position: relative
 
-  .discard .popup
+  .discard .popup, .deck .popup
     display: none
     position: absolute
     left: 0
     bottom: 85px
-    left: -8px
-    width: 382px
+    left: -271px
+    width: 590px
     min-height: 92px
     z-index: 10
 
-    .card, img
+    .card
       float: left
+      margin: 2px
 
+    a
+      display: inline-block
+      margin: 0 10px 8px 4px
 
   .discard .popup.opponent
     top: 85px

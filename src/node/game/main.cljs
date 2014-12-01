@@ -10,6 +10,7 @@
 
 (def commands
   {"say" core/say
+   "system-msg" #(system-msg %1 %2 (:msg %3))
    "change" core/change
    "move" core/move-card
    "mulligan" core/mulligan
