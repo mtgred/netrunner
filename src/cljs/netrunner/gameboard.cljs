@@ -226,19 +226,31 @@
 
 (defmulti deck-view #(get-in % [:identity :side]))
 
-(defmethod deck-view "Runner" [{:keys [deck] :as cursor}]
+(defmethod deck-view "Runner" [{:keys [deck] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck (drop-area (:side @game-state) "Stack" {})
+    [:div.panel.blue-shade.deck
+     (drop-area (:side @game-state) "Stack"
+                {:on-click #(-> (om/get-node owner "deck-menu") js/$ .toggle)})
      (om/build label deck {:opts {:name "Stack"}})
+     (when (= (:side @game-state) :runner)
+       [:div.panel.blue-shade.menu {:ref "deck-menu"}
+        [:div {:on-click #(do (send-command "shuffle")
+                              (-> (om/get-node owner "deck-menu") js/$ .fadeOut))} "Shuffle"]])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png"}])])))
 
-(defmethod deck-view "Corp" [{:keys [deck] :as cursor}]
+(defmethod deck-view "Corp" [{:keys [deck] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck (drop-area (:side @game-state) "R&D" {})
+    [:div.panel.blue-shade.deck
+     (drop-area (:side @game-state) "R&D"
+                {:on-click #(-> (om/get-node owner "deck-menu") js/$ .toggle)})
      (om/build label deck {:opts {:name "R&D"}})
+     (when (= (:side @game-state) :corp)
+       [:div.panel.blue-shade.menu {:ref "deck-menu"}
+        [:div {:on-click #(do (send-command "shuffle")
+                              (-> (om/get-node owner "deck-menu") js/$ .fadeOut))} "Shuffle"]])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
 
@@ -284,7 +296,7 @@
     (let [size (count rfg)]
       (when (> size 0)
         [:div.panel.blue-shade.rfg {:class (when (> size 3) "squeeze")}
-         (om/build label rfg {:opts {:name "Removed"}})
+         (om/build label rfg {:opts {:name "Removed from the game"}})
          (map-indexed (fn [i card]
                         (sab/html
                          [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}

@@ -30,6 +30,7 @@
    "advance" core/advance
    "score" core/score
    "choice" core/resolve-prompt
+   "shuffle" core/shuffle-deck
    "ability" core/play-ability})
 
 (defn convert [args]

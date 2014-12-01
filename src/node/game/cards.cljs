@@ -1388,7 +1388,9 @@
     :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn :effect #()}]}
 
    "Jackson Howard"
-   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}]}
+   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
+                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
+                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))}

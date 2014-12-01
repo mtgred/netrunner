@@ -580,3 +580,7 @@
   (end-run state side)
   (system-msg state side "jacks out")
   (trigger-event state side :jack-out))
+
+(defn shuffle-deck [state side]
+  (swap! state update-in [side :deck] shuffle)
+  (system-msg state side "shuffles his deck"))
