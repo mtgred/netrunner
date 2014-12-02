@@ -548,20 +548,19 @@
     (system-msg state side "advance a card")))
 
 (defn move-card [state side {:keys [card server]}]
-  (case server
-    ("Heap" "Archives")
-    (do (trash state side card)
-        (system-msg state side (str "trashes " (if (or (= (:side card) "Runner") (:rezzed card))
-                                                 (:title card)
-                                                 "a card"))))
-    ("HQ" "Grip")
-    (do (move state side (dissoc card :seen :rezzed) :hand)
-        (system-msg state side (str "moves " (:title card) " to " server)))
-    ("Stack" "R&D")
-    (do (move state side (dissoc card :seen :rezzed) :deck)
-        (system-msg state side (str "moves " (:title card) " to the top of " server)))
-
-    nil))
+  (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card))
+                (:title card) "a card")]
+    (case server
+      ("Heap" "Archives")
+      (do (trash state side card)
+          (system-msg state side (str "trashes " label)))
+      ("HQ" "Grip")
+      (do (move state side (dissoc card :seen :rezzed) :hand)
+          (system-msg state side (str "moves " label " to " server)))
+      ("Stack" "R&D")
+      (do (move state side (dissoc card :seen :rezzed) :deck)
+          (system-msg state side (str "moves " label " to the top of " server)))
+      nil)))
 
 (defn click-run [state side {:keys [server] :as args}]
   (when (pay state :runner :click 1)
