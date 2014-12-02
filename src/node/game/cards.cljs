@@ -21,6 +21,10 @@
                                 :effect #(do (gain %1 :corp :credit 3)
                                              (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
+   "Aggressive Negotiation"
+   {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
+    :effect (effect (move target :hand) (shuffle! :deck))}
+
    "Aggressive Secretary"
    {:advanceable :always
     :access {:optional {:req (req installed) :prompt "Pay 3[Credits] to use Aggresive Secretary ability?"
@@ -33,7 +37,7 @@
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
-   "Amped"
+   "Amped Up"
    {:effect (effect (gain :click 3) (damage :brain 1))}
 
    "Archived Memories"
@@ -272,6 +276,12 @@
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
+   "Expert Schedule Analyzer"
+   {:abilities
+    [{:cost [:click 1] :msg "make run on HQ"
+      :effect (effect (run :hq {:replace-access
+                                {:msg (msg "reveal all cards in HQ: " (map :title (:hand corp)))}}))}]}
+
    "Fast Track"
    {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
@@ -328,6 +338,13 @@
 
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
+
+   "Grifter"
+   {:events {:runner-turn-ends
+             {:effect #(let [ab (if (get-in @%1 [:runner :register :successful-run])
+                                  {:effect (effect (gain [:credit 1])) :msg "gain 1 [Credits]"}
+                                  {:effect (effect (trash %3)) :msg "trash Gifter"})]
+                         (resolve-ability %1 %2 ab %3 nil))}}}
 
    "Grimoire"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
@@ -550,6 +567,18 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain :agenda-point 1) (move (first (:play-area runner)) :scored))}
 
+   "Project Atlas"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
+    :abilities [{:counter-cost 1 :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+                 :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
+
+   "Project Vitruvius"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
+    :abilities [{:counter-cost 1 :prompt "Choose a card"
+                 :msg (msg "add " (if (:seen target)
+                                    (:title target) "an unseen card ") " to HQ from Archives")
+                 :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
+
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
@@ -687,6 +716,11 @@
    {:advanceable :always
     :abilities [{:cost [:click 1]
                  :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
+
+   "Rework"
+   {:prompt "Choose a card to shuffle into R&D" :choices (req (:hand corp))
+    :effect (effect (move target :deck) (shuffle! :deck))}
+
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
@@ -846,6 +880,9 @@
    {:msg "do 2 meat damages" :effect (effect (damage :meat 2))
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain :corp :bad-publicity 1))}}
+
+   "Weyland Consortium: Because We Built It"
+   {:recurring 2}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
@@ -1074,6 +1111,9 @@
 
    "Chimera"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Chum"
+   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Curtain Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -1354,6 +1394,9 @@
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
 
+   "Deep Red"
+   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
+
    "Deep Thought"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
@@ -1413,12 +1456,6 @@
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
-
-   "Project Atlas"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))}
-
-   "Project Vitruvius"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))}
 
    "Psychographics"
    {:req (req tagged)}

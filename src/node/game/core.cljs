@@ -313,6 +313,7 @@
     (let [moved-card (move state side card :scored)
           c (card-init state side moved-card)]
       (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
+      (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
       (gain-agenda-point state side (:agendapoints c))
       (set-prop state side c :advance-counter 0)
       (trigger-event state side :agenda-scored c))))
@@ -321,6 +322,7 @@
   (let [c (move state :runner card :scored)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
     (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ % (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
     (trigger-event state :runner :agenda-stolen c)))
@@ -463,9 +465,11 @@
   (let [max-hand-size (get-in @state [side :max-hand-size])]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (system-msg state side (str "is ending his or her turn"))
-      (when (and (= side :runner) (< (get-in @state [:runner :max-hand-size]) 0))
-        (flatline state))
-      (trigger-event state side :turn-ends)
+      (if (= side :runner)
+        (do (when (< (get-in @state [:runner :max-hand-size]) 0)
+              (flatline state))
+            (trigger-event state side :runner-turn-ends))
+        (trigger-event state side :corp-turn-ends))
       (swap! state assoc :end-turn true))))
 
 (defn purge [state side]
