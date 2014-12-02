@@ -68,20 +68,22 @@
                         (send-command (first actions) {:card card})))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable] :as card} owner]
-  (if (= (:side @game-state) :runner)
-    (case (first zone)
-      "hand" (send-command "play" {:card card})
-      "rig" (handle-abilities card owner)
-      nil)
-    (case (first zone)
-      "hand" (case type
-               ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
-               ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                                    (send-command "play" {:card card :server "New remote"})
-                                    (-> (om/get-node owner "servers") js/$ .toggle))
-               (send-command "play" {:card card}))
-      ("servers" "scored") (handle-abilities card owner)
-      nil)))
+  (if (= (:type card) "Identity")
+    (handle-abilities card owner)
+    (if (= (:side @game-state) :runner)
+      (case (first zone)
+        "hand" (send-command "play" {:card card})
+        "rig" (handle-abilities card owner)
+        nil)
+      (case (first zone)
+        "hand" (case type
+                 ("Upgrade" "ICE") (-> (om/get-node owner "servers") js/$ .toggle)
+                 ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                                      (send-command "play" {:card card :server "New remote"})
+                                      (-> (om/get-node owner "servers") js/$ .toggle))
+                 (send-command "play" {:card card}))
+        ("servers" "scored") (handle-abilities card owner)
+        nil))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
