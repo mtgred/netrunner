@@ -27,7 +27,7 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
-(defmulti move (fn [state side target to] (map? target)))
+(defmulti move (fn [state side target to front] (map? target)))
 
 (defmethod move false [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
@@ -36,11 +36,13 @@
                                           (zone to (get-in @state from-zone))))
     (swap! state assoc-in from-zone)))
 
-(defmethod move true [state side {:keys [zone cid] :as card} to]
+(defmethod move true [state side {:keys [zone cid] :as card} to front]
   (when card
     (let [dest (if (sequential? to) to [to])
           moved-card (assoc card :zone dest)]
-      (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
+      (if front
+        (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
+        (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
       (swap! state update-in (cons (to-keyword (:side card)) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
@@ -558,7 +560,7 @@
       (do (move state side (dissoc card :seen :rezzed) :hand)
           (system-msg state side (str "moves " label " to " server)))
       ("Stack" "R&D")
-      (do (move state side (dissoc card :seen :rezzed) :deck)
+      (do (move state side (dissoc card :seen :rezzed) :deck true)
           (system-msg state side (str "moves " label " to the top of " server)))
       nil)))
 
