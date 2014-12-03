@@ -133,7 +133,7 @@
   ([state side event] (trigger-event state side event nil))
   ([state side event target]
      (doseq [e (get-in @state [:events event])]
-       (let [card (get-card state (:card e))]
+       (when-let [card (get-card state (:card e))]
          (resolve-ability state (to-keyword (:side card)) (:ability e) card [target])))))
 
 (defn add-prop [state side card key n]
@@ -346,7 +346,7 @@
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
   (doseq [c cards]
-    (let [name (:title c)]
+    (when-let [name (:title c)]
       (when-let [access-effect (:access (card-def c))]
         (resolve-ability state (to-keyword (:side c)) access-effect c nil))
       (when (not= (:zone c) [:discard])
