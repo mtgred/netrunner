@@ -418,6 +418,12 @@
     :events {:runner-turn-begins {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                                   :msg "to gain 2[Credits]" :effect (effect (gain :credit 2))}}}
 
+   "Ice Analyzer"
+   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "place 1 [Credits] on ICE Analyzer"
+                   :effect (effect (add-prop card :counter 1))}}
+    :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
+                 :msg "take 1 [Credits] to install programs"}]}
+
    "Inject"
    {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
                (if (= (:type c) "Program")
@@ -457,6 +463,16 @@
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (has? target :subtype "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Keyhole"
+   {:abilities [{:cost [:click 1] :msg "make run on R&D"
+                 :effect (effect (run :rd
+                                   {:replace-access
+                                    {:prompt "Choose a card to trash"
+                                     :msg (msg "trash " (:title target))
+                                     :choices (req (take 3 (:deck corp)))
+                                     :effect (effect (trash (assoc target :seen true))
+                                                     (shuffle! :corp :deck))}}))}]}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
@@ -1308,6 +1324,10 @@
    "Tollbooth"
    {:msg "force the runner to lose 3 [Credits]" :effect (effect (lose :runner :credit 3))
     :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Tsurugi"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}
+                {:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Tyrant"
    {:advanceable :while-rezzed
