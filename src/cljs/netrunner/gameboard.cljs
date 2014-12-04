@@ -293,7 +293,7 @@
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
-       (om/build card-view (first discard)))])))
+       (om/build card-view (last discard)))])))
 
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
   (om/component
@@ -311,7 +311,7 @@
             [:div.unseen (om/build card-view c)])))]
 
      (when-not (empty? discard)
-       (let [c (first discard)]
+       (let [c (last discard)]
          (if (= (:side @game-state) :corp)
            (om/build card-view c)
            (if (or (:seen c) (:rezzed c))
