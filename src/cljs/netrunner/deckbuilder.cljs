@@ -141,7 +141,7 @@
      (end-edit owner)
      (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
-           cards (for [card (:cards deck)]
+           cards (for [card (:cards deck) :when (get-in card [:card :title])]
                    {:qty (:qty card) :card (get-in card [:card :title])})
            data (assoc deck :cards cards)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
@@ -189,7 +189,7 @@
              "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
              id (:code identity) "\">" (:title identity) "</card></section>"
              "<section name=\"R&amp;D / Stack\">"
-             (apply str (for [c (:cards deck)]
+             (apply str (for [c (:cards deck) :when (get-in c [:card :title])]
                           (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
                                (html-escape (get-in c [:card :title])) "</card>")))
              "</section></deck>")
