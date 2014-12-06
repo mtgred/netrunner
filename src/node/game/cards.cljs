@@ -229,7 +229,7 @@
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
    "Domestic Sleepers"
-   {:abilities [{:cost [:click 3]
+   {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect #(do (when (zero? (:counter %3)) (gain-agenda-point %1 %2 1))
                               (set-prop %1 %2 %3 :counter 1 :agendapoints 1))}]}
 
@@ -492,6 +492,7 @@
    "Levy University"
    {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
                  :choices (req (filter #(has? % :type "ICE") (:deck corp)))
+                 :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Liberated Account"
@@ -1390,7 +1391,9 @@
 
    ;; partial implementation
    "AstroScript Pilot Program"
-   {:data {:counter 1}}
+   {:data {:counter 1}
+    :abilities [{:counter-cost 1 :msg "place 1 advancement token on a card that can be advanced"
+                 :label "Place 1 advancement token on a card that can be advanced"}]}
 
    "Bad Times"
    {:req (req tagged)}

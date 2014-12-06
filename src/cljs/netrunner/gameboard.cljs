@@ -56,8 +56,10 @@
           (cons "advance" %) %))
       (#(if (and (= type "Agenda") (>= advance-counter advancementcost))
           (cons "score" %) %))
-      (#(if (and (#{"Asset" "ICE" "Upgrade"} type) (not rezzed))
-          (cons "rez" %) %))))
+      (#(if (= (first zone) "scored") (cons "forfeit" %) %))
+      (#(if (#{"Asset" "ICE" "Upgrade"} type)
+          (if (not rezzed) (cons "rez" %) (cons "derez" %))
+          %))))
 
 (defn handle-abilities [{:keys [abilities] :as card} owner]
   (let [actions (action-list card)

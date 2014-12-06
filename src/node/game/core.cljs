@@ -152,7 +152,7 @@
         data (if-let [recurring (:recurring cdef)]
                (assoc (:data cdef) :counter recurring)
                (:data cdef))
-        c (merge card data {:abilities abilities :rezzed true })]
+        c (merge card data {:abilities abilities})]
     (when-let [recurring (:recurring cdef)]
       (register-events state side
                        {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
@@ -290,14 +290,15 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
+(defn desactivate [state side card]
+  (when-let [leave-effect (:leave-play (card-def card))] (leave-effect state side card nil))
+  (when-let [mu (:memoryunits card)] (gain state :runner :memory mu)))
+
 (defn trash [state side {:keys [zone] :as card}]
   (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)
         cdef (card-def c)
         moved-card (move state (to-keyword (:side card)) c :discard)]
-    (when (#{:servers :rig} (first zone))
-      (when-let [leave-effect (:leave-play cdef)]
-        (leave-effect state side moved-card nil))
-      (when-let [mu (:memoryunits moved-card)] (gain state :runner :memory mu)))
+    (when (#{:servers :rig} (first zone)) (desactivate state side card))
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card nil))
     (trigger-event state side :trash moved-card)))
@@ -540,14 +541,25 @@
 
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
-    (card-init state side card)
+    (card-init state side (assoc card :rezzed true))
     (system-msg state side (str "rez " (:title card)))
     (trigger-event state side :rez card)))
+
+(defn derez [state side {:keys [card]}]
+  (system-msg state side (str "derez " (:title card)))
+  (update! state side (dissoc card :rezzed))
+  (desactivate state side card))
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side :click 1 :credit 1)
     (add-prop state side card :advance-counter 1)
-    (system-msg state side "advance a card")))
+    (system-msg state side "advances a card")))
+
+(defn forfeit [state side {:keys [card]}]
+  (system-msg state side (str "forfeits " (:title card)))
+  (desactivate state side card)
+  (move state side card :rfg)
+  (gain state side :agenda-point (- (:agendapoints card))))
 
 (defn move-card [state side {:keys [card server]}]
   (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card))

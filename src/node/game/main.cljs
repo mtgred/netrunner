@@ -23,12 +23,14 @@
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag"))})
    "play" core/play
    "rez" core/rez
+   "derez" core/derez
    "run" core/click-run
    "no-action" core/no-action
    "continue" core/continue
    "access" core/successful-run
    "jack-out" core/jack-out
    "advance" core/advance
+   "forfeit" core/forfeit
    "score" core/score
    "choice" core/resolve-prompt
    "shuffle" core/shuffle-deck
