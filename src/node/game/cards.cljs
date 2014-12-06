@@ -2,7 +2,8 @@
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
-                               gain-agenda-point pump access-bonus shuffle! runner-install] :as core]
+                               gain-agenda-point pump access-bonus shuffle! runner-install
+                               play-instant] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -129,10 +130,10 @@
    {:recurring 1}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (runner-install target) (trash card))}]}
+                 :effect (effect (gain :click 1) (runner-install target) (trash card))}]}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -179,6 +180,10 @@
     :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                   :effect #(do (gain %1 :runner :credit 2)
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
+
+   "Data Dealer"
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 10))
+                 :msg "forfeit an Agenda and gain 10 [Credits]"}]}
 
    "Data Folding"
    {:events {:runner-turn-begins {:req (req (>= (:memory runner) 2)) :msg "gain 1 [Credits]"
@@ -643,6 +648,9 @@
    "Paper Tripping"
    {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
 
+   "Parasite"
+   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}}
+
    "Paricia"
    {:recurring 2}
 
@@ -751,6 +759,13 @@
    "Sahasrara"
    {:recurring 2}
 
+   "Same Old Thing"
+   {:abilities [{:cost [:click 2]
+                 :prompt "Choose an event to install" :msg (msg "play " (:title target))
+                 :choices (req (filter #(and (has? % :type "Event")
+                                             (<= (:cost %) (:credit runner))) (:discard runner)))
+                 :effect (effect (gain :click 1) (play-instant target) (trash card))}]}
+
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
 
@@ -758,11 +773,12 @@
    {:recurring 2}
 
    "Self-modifying Code"
-   {:abilities [{:prompt "Choose an program to install" :msg (msg "installs " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
                  :cost [:credit 2]
-                 :effect (effect (runner-install target) (trash card) (shuffle! :deck))}]}
+                 :effect (effect (gain :click 1) (runner-install target) (trash card)
+                                 (shuffle! :deck))}]}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
