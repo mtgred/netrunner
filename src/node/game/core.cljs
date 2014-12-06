@@ -485,7 +485,7 @@
   (let [cdef (card-def card)]
     (when (and (if-let [req (:req cdef)] (req state card (first args)) true)
                (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
-      (let [c (move state side card :play-area)]
+      (let [c (move state side (assoc card :seen true) :play-area)]
         (system-msg state side (str "plays " title))
         (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
         (resolve-ability state side cdef card nil)
