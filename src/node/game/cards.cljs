@@ -2,7 +2,7 @@
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
-                               gain-agenda-point pump access-bonus shuffle! runner-install
+                               gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
@@ -288,6 +288,10 @@
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal all cards in HQ: " (map :title (:hand corp)))}}))}]}
 
+   "Express Delivery"
+   {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
+    :effect (effect (move target :hand) (shuffle! :deck))}
+
    "Fast Track"
    {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
@@ -550,6 +554,13 @@
     :leave-play (effect (lose :runner :max-hand-size 1))
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Motivation"
+   {:events
+    {:runner-turn-begins
+     {:msg "to look at the top card of his Stack"
+      :effect (effect (prompt! card (str "The top card of your Stack is "
+                                         (:title (first (:deck runner)))) ["OK"] {}))}}}
+
    "NAPD Contract"
    {:steal-cost [:credit 4]}
 
@@ -809,6 +820,9 @@
 
    "Silencer"
    {:recurring 1}
+
+   "Simone Diego"
+   {:recurring 2}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make run on Archives"
