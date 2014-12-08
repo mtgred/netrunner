@@ -30,7 +30,7 @@
    "Aggressive Secretary"
    {:advanceable :always
     :access {:optional {:req (req installed) :prompt "Pay 3[Credits] to use Aggresive Secretary ability?"
-                        :cost [:credit 3] :msg (msg "trash " (:advance-counter card) " programs")}}}
+                        :cost [:credit 2] :msg (msg "trash " (:advance-counter card) " programs")}}}
 
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
@@ -182,8 +182,8 @@
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Data Dealer"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 10))
-                 :msg "forfeit an Agenda and gain 10 [Credits]"}]}
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 9))
+                 :msg "forfeit an Agenda and gain 9 [Credits]"}]}
 
    "Data Folding"
    {:events {:runner-turn-begins {:req (req (>= (:memory runner) 2)) :msg "gain 1 [Credits]"
@@ -413,7 +413,7 @@
    {:prompt "Choose a Connection to install"
     :choices (req (filter #(and (has? % :subtype "Connection")
                                 (<= (:cost %) (:credit runner))) (:deck runner)))
-    :effect (effect (runner-install target) (shuffle! :deck))}
+    :effect (effect (gain :click 1) (runner-install target) (shuffle! :deck))}
 
    "Hostile Infrastructure"
    {:events {:trash {:req (req (and (= (:side target) :corp) (= side :runner)))
