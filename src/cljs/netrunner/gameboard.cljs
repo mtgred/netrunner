@@ -125,8 +125,8 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
-(defn remote-list []
-  (map #(str "Server " %) (-> (get-in @game-state [:corp :servers :remote]) count range reverse)))
+(defn remote-list [remotes]
+  (map #(str "Server " %) (-> remotes count range reverse)))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -138,7 +138,7 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
-                         advanceable rezzed strength current-strength title] :as cursor}
+                         advanceable rezzed strength current-strength title remotes] :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
@@ -162,7 +162,7 @@
        (when current-strength [:div.darkbg.strength current-strength])
        (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
          (let [centrals ["HQ" "R&D" "Archives"]
-               remotes (conj (remote-list) "New remote")
+               remotes (conj (remote-list remotes) "New remote")
                servers (case type
                          ("Upgrade" "ICE") (concat remotes centrals)
                          ("Agenda" "Asset") remotes)]
@@ -210,23 +210,23 @@
       [:div.header {:class (when (> (count cursor) 0) "darkbg")}
        (str (:name opts) " (" (fn cursor) ")")]))))
 
-(defn hand-view [{:keys [identity hand max-hand-size user] :as cursor}]
+(defn hand-view [{:keys [player remotes] :as cursor}]
   (om/component
    (sab/html
-    (let [side (:side identity)
-          size (count hand)
+    (let [side (get-in player [:identity :side])
+          size (count (:hand player))
           name (if (= side "Corp") "HQ" "Grip")]
       [:div.panel.blue-shade.hand
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
-       (om/build label hand {:opts {:name name}})
+       (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
                       (sab/html
                        [:div.card-wrapper {:class (if (playable? card) "playable" "")
                                            :style {:left (* (/ 320 (dec size)) i)}}
-                        (if (= user (:user @app-state))
-                          (om/build card-view card)
+                        (if (= (:user player) (:user @app-state))
+                          (om/build card-view (assoc card :remotes remotes))
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
-                    hand)]))))
+                    (:hand player))]))))
 
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
@@ -432,15 +432,15 @@
                [:div.card-wrapper {:class (when (playable? c) "playable")}
                 (om/build card-view c)])])])))
 
-(defn zones [cursor]
+(defn zones [{:keys [player remotes]} cursor]
   (om/component
    (sab/html
     [:div.dashboard
-     (om/build hand-view cursor)
-     (om/build discard-view cursor)
-     (om/build deck-view cursor)
+     (om/build hand-view {:player player :remotes remotes})
+     (om/build discard-view player)
+     (om/build deck-view player)
      [:div.panel.blue-shade.identity
-      (om/build card-view (:identity cursor))]])))
+      (om/build card-view (:identity player))]])))
 
 (defn cond-button [text cond f]
   (sab/html
@@ -472,7 +472,7 @@
                opponent ((if (= side :corp) :runner :corp) cursor)]
            [:div.gameboard
             [:div.mainpane
-             (om/build zones opponent)
+             (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})
              [:div.centralpane
               [:div.leftpane
                [:div
@@ -530,7 +530,8 @@
                          [:div.run-button
                           (cond-button "Run" (>= (:click me) 1)
                                        #(-> (om/get-node owner "servers") js/$ .toggle))
-                          (let [servers (concat (remote-list) ["HQ" "R&D" "Archives"])]
+                          (let [remotes (get-in cursor [:corp :servers :remote])
+                                servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
                             [:div.blue-shade.panel.servers-menu {:ref "servers"}
                              (map (fn [label]
                                     [:div {:on-click #(do (send-command "run" {:server label})
@@ -545,7 +546,7 @@
               [:div.board
                (om/build board-view {:player opponent :run run})
                (om/build board-view {:player me :run run})]]
-             (om/build zones me)]
+             (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})]
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
