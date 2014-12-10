@@ -472,7 +472,7 @@
                opponent ((if (= side :corp) :runner :corp) cursor)]
            [:div.gameboard
             [:div.mainpane
-             (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})
+             (om/build zones {:player opponent :remotes (get-in cursor [:corp :servers :remote])})
              [:div.centralpane
               [:div.leftpane
                [:div
