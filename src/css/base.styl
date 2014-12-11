@@ -1038,6 +1038,10 @@ nav ul
       margin-right: 16px
       flex-shrink: 0
 
+    .shift
+      position: relative
+      left: -16px
+
   .discard
     position: relative
 
@@ -1158,6 +1162,11 @@ nav ul
       .runner-board
         padding: 10px
 
+      .content.shift > .card
+        left: 8px
+        top: -8px
+
+
       .corp-board
         display-flex()
 
@@ -1225,9 +1234,6 @@ nav ul
             height: 86px
 
             .card
-              &:first-child
-                margin-left: -1px
-
               .abilities
                 left: -145px
                 bottom: 85px

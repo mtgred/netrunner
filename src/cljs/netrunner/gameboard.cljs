@@ -263,13 +263,14 @@
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png"}])])))
 
-(defmethod deck-view "Corp" [{:keys [deck] :as cursor} owner]
+(defmethod deck-view "Corp" [{:keys [deck servers] :as cursor} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade.deck
      (drop-area (:side @game-state) "R&D"
-                {:on-click #(-> (om/get-node owner "rd-menu") js/$ .toggle)})
-     (om/build label deck {:opts {:name "R&D"}})
+                {:on-click #(-> (om/get-node owner "rd-menu") js/$ .toggle)
+                 :class (when (> (count (get-in servers [:rd :content])) 0) "shift")})
+      (om/build label deck {:opts {:name "R&D"}})
      (when (= (:side @game-state) :corp)
        [:div.panel.blue-shade.menu {:ref "rd-menu"}
         [:div {:on-click #(do (send-command "shuffle")
@@ -300,8 +301,10 @@
 (defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard (assoc (drop-area :corp "Archives" {})
-                                     :on-click #(-> (om/get-node owner "popup") js/$ .toggle))
+    [:div.panel.blue-shade.discard
+     (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
+                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)
+})
      (om/build label discard {:opts {:name "Archives"}})
 
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
@@ -385,7 +388,7 @@
         (when me? (controls :bad-publicity))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
 
-(defn server-view [{:keys [server run] :as cursor} owner opts]
+(defn server-view [{:keys [server central run] :as cursor} owner opts]
   (om/component
    (sab/html
     (let [content (:content server)]
@@ -397,11 +400,10 @@
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        (when content
-         [:div.content {:class (when (= (count content) 1) "center")}
+         [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
           (for [card (reverse content)]
             (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
-          (when content
-            (om/build label content {:opts opts}))])]))))
+          (om/build label content {:opts opts})])]))))
 
 (defmulti board-view #(get-in % [:player :identity :side]))
 
@@ -412,9 +414,12 @@
           s (:server run)
           server-type (first s)]
       [:div.corp-board {:class (when (= (:side @game-state) :runner) "opponent")}
-       (om/build server-view {:server (:archives servers) :run (when (= server-type "archives") run)})
-       (om/build server-view {:server (:rd servers) :run (when (= server-type "rd") run)})
-       (om/build server-view {:server (:hq servers) :run (when (= server-type "hq") run)})
+       (om/build server-view {:server (:archives servers) :central true
+                              :run (when (= server-type "archives") run)})
+       (om/build server-view {:server (:rd servers) :central true
+                              :run (when (= server-type "rd") run)})
+       (om/build server-view {:server (:hq servers) :central true
+                              :run (when (= server-type "hq") run)})
        (map-indexed
         (fn [i server]
           (om/build server-view {:server server
@@ -440,6 +445,7 @@
      (om/build discard-view player)
      (om/build deck-view player)
      [:div.panel.blue-shade.identity
+      {:class (when (> (count (get-in player [:servers :hq :content])) 0) "shift")}
       (om/build card-view (:identity player))]])))
 
 (defn cond-button [text cond f]
