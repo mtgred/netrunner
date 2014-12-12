@@ -601,18 +601,6 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain :agenda-point 1) (move (first (:play-area runner)) :scored))}
 
-   "Project Atlas"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
-    :abilities [{:counter-cost 1 :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
-                 :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
-
-   "Project Vitruvius"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
-    :abilities [{:counter-cost 1 :prompt "Choose a card"
-                 :msg (msg "add " (if (:seen target)
-                                    (:title target) "an unseen card ") " to HQ from Archives")
-                 :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
-
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
@@ -689,6 +677,18 @@
    "Private Security Force"
    {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage :meat 1))
                  :msg "do 1 meat damage"}]}
+
+   "Project Atlas"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
+    :abilities [{:counter-cost 1 :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+                 :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
+
+   "Project Vitruvius"
+   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
+    :abilities [{:counter-cost 1 :prompt "Choose a card"
+                 :msg (msg "add " (if (:seen target)
+                                    (:title target) "an unseen card ") " to HQ from Archives")
+                 :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
 
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -1032,6 +1032,10 @@
    {:abilities [{:msg "break any number of AP subroutine" :effect (effect (trash card))}
                 {:msg "Prevent any number of net damage" :effect (effect (trash card))}]}
 
+   "Eater"
+   {:abilities [{:cost [:credit 1] :msg "Break ICE subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
    "Faerie"
    {:abilities [{:msg "break any number of sentry subroutine" :effect (effect (trash card))}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
@@ -1101,6 +1105,14 @@
    "Refractor"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
                 {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+
+   "Sage"
+   {:abilities [{:cost [:credit 2] :msg "break 1 code gate or barrier subroutine"}]
+    :effect #(add-watch % (keyword (str "sage" (:cid %3)))
+                        (fn [k ref old new]
+                          (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
+                            (set-prop ref %2 %3 :counter 0))))
+    :leave-play #(remove-watch % (keyword (str "sage" (:cid %3))))}
 
    "Snowball"
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
@@ -1187,6 +1199,10 @@
    {:abilities [{:msg "force the runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Errand Boy"
+   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
+                {:msg "draw 1 card" :effect (effect (draw))}]}
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -1278,6 +1294,11 @@
                  :counter-cost 1 :effect (effect (damage :net 1))}
                 {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
 
+   "Markus 1.0"
+   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+                {:msg "end the run" :effect (effect (end-run))}]}
+
    "Mother Goddess"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -1294,8 +1315,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Pop-up Window"
-   {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Pup"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
