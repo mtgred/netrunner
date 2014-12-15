@@ -27,6 +27,15 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
+(defn desactivate [state side card]
+  (let [c (dissoc card :counter :advance-counter :current-strength :abilities)
+        cdef (card-def card)]
+    (when-let [leave-effect (:leave-play (card-def card))]
+      (leave-effect state side card nil))
+    (when-let [mu (:memoryunits card)]
+      (gain state :runner :memory mu))
+    c))
+
 (defmulti move (fn [state side target to front] (map? target)))
 
 (defmethod move false [state side server to]
@@ -39,11 +48,12 @@
 (defmethod move true [state side {:keys [zone cid] :as card} to front]
   (when card
     (let [dest (if (sequential? to) to [to])
-          moved-card (assoc card :zone dest)]
+          c (if (#{:discard :hand :deck} to) (desactivate state side card) card)
+          moved-card (assoc c :zone dest)]
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (swap! state update-in (cons (to-keyword (:side card)) zone)
+      (swap! state update-in (cons (to-keyword (:side c)) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
@@ -290,15 +300,9 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn desactivate [state side card]
-  (when-let [leave-effect (:leave-play (card-def card))] (leave-effect state side card nil))
-  (when-let [mu (:memoryunits card)] (gain state :runner :memory mu)))
-
 (defn trash [state side {:keys [zone] :as card}]
-  (let [c (assoc card :counter nil :advance-counter nil :current-strength nil)
-        cdef (card-def c)
-        moved-card (move state (to-keyword (:side card)) c :discard)]
-    (when (#{:servers :rig} (first zone)) (desactivate state side card))
+  (let [cdef (card-def card)
+        moved-card (move state (to-keyword (:side card)) card :discard)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card nil))
     (trigger-event state side :trash moved-card)))
