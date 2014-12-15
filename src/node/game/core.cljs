@@ -112,18 +112,20 @@
       (when once (swap! state assoc-in [once (or once-key cid)] true)))))
 
 (defn prompt! [state side card msg choices ability]
-  (when (> (count choices) 0)
-    (swap! state update-in [side :prompt]
-           (fn [p]
-             (conj (vec p) {:msg msg :choices choices
-                            :effect #(resolve-ability state side ability card [%])})))))
+  (let [prompt (if (string? msg) msg (msg state side card targets))]
+    (when (> (count choices) 0)
+      (swap! state update-in [side :prompt]
+             (fn [p]
+               (conj (vec p) {:msg prompt :choices choices
+                              :effect #(resolve-ability state side ability card [%])}))))))
 
 (defn optional-ability [state side card msg ability targets]
-  (swap! state update-in [side :prompt]
-         (fn [p]
-           (conj (vec p) {:msg msg :choices ["Yes" "No"]
-                          :effect #(when (= % "Yes")
-                                     (resolve-ability state side ability card targets))}))))
+  (let [prompt (if (string? msg) msg (msg state side card targets))]
+    (swap! state update-in [side :prompt]
+           (fn [p]
+             (conj (vec p) {:msg prompt :choices ["Yes" "No"]
+                            :effect #(when (= % "Yes")
+                                       (resolve-ability state side ability card targets))})))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]

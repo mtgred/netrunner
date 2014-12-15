@@ -376,6 +376,16 @@
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
+   "Hades Fragment"
+   {:events {:corp-turn-begins
+             {:optional
+              {:prompt "Add 1 card from Archives to bottom of R&D?"
+               :effect (effect (resolve-ability
+                                {:prompt "Choose a card" :choices (:discard corp)
+                                 :effect (effect (move target :deck))
+                                 :msg (msg "add " (if (:seen target) (:title target) "a card")
+                                           " to the bottom of R&D")} card target))}}}}
+
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
@@ -527,7 +537,7 @@
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
    "Marked Accounts"
-   {:abilities [{:cost [:click 1] :message "store 3 [Credits]"
+   {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
                  :effect (effect (add-prop card :counter 3))}]
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
                                 :effect (effect (gain :credit 1))}}}
@@ -560,6 +570,13 @@
      {:msg "to look at the top card of his Stack"
       :effect (effect (prompt! card (str "The top card of your Stack is "
                                          (:title (first (:deck runner)))) ["OK"] {}))}}}
+   "Mr. Li"
+   {:abilities [{:cost [:click 1] :prompt "Card to keep?"
+                 :choices (req (take 2 (:deck runner))) :msg "choose 1 card to draw"
+                 :effect (req (move state side target :hand)
+                              (if (= target (first (:deck runner)))
+                                (move state side (second (:deck runner)) :deck)
+                                (move state side (first (:deck runner)) :deck)))}]}
 
    "NAPD Contract"
    {:steal-cost [:credit 4]}
@@ -1426,7 +1443,11 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+                {:msg "look at the top card of R&D"
+                 :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
+                            :msg "add the top card of R&D to the bottom"
+                            :effect (effect (move (first (:deck corp)) :deck))}}]}
 
    "Zona Sul Shipping"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
