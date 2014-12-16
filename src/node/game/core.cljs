@@ -27,6 +27,10 @@
              (swap! state update-in [side (first c)] #(- % (last c)))))
       false)))
 
+(defn gain [state side & args]
+  (doseq [r (partition 2 args)]
+    (swap! state update-in [side (first r)] #(+ % (last r)))))
+
 (defn desactivate [state side card]
   (let [c (dissoc card :counter :advance-counter :current-strength :abilities)
         cdef (card-def card)]
@@ -108,7 +112,7 @@
         (when msg
           (let [desc (if (string? msg) msg (msg state side card targets))]
             (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-        (when effect (effect state side c targets)))
+        (when effect (effect state side c nil)))
       (when once (swap! state assoc-in [once (or once-key cid)] true)))))
 
 (defn prompt! [state side card msg choices ability]
@@ -286,10 +290,6 @@
 (defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "keeps his or her hand"))
-
-(defn gain [state side & args]
-  (doseq [r (partition 2 args)]
-    (swap! state update-in [side (first r)] #(+ % (last r)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
