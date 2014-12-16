@@ -43,4 +43,13 @@
                :data-target "#main" :data-slide-to (last page)}
           [:a {:href route} (first page)]]))])))
 
+(defn status [cursor owner]
+  (om/component
+   (sab/html
+    [:div.float-right
+     (let [c (count (:games cursor))]
+       (str c " Game" (when (> c 1) "s")))])))
+
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
+(om/root status app-state {:target (. js/document (getElementById "status"))})
+

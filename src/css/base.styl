@@ -324,7 +324,7 @@ nav ul
   #right-menu > ul li
     margin-left: 20px
 
-  li
+  li, #status
     display: inline-block
     height: 30px
     line-height: 29px
@@ -352,6 +352,7 @@ nav ul
   margin: 0 auto
 
 .blue-shade
+  color: white
   background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
 
@@ -393,8 +394,13 @@ nav ul
 #left-menu
   float: left
 
-#right-menu
+#right-menu, #status
   float: right
+
+#status
+  > div
+    padding-right: 12px
+    border-right: 1px solid white
 
 // Auth
 
