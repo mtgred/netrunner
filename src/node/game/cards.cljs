@@ -175,6 +175,16 @@
    "D4v1d"
    {:data {:counter 3} :abilities [{:counter-cost 1 :msg "break 1 suroutine"}]}
 
+   "Daily Business Show"
+   {:events {:corp-draw
+             {:msg "draw 1 additional card" :once :per-turn
+              :effect (req (let [c (move state side (first (:deck corp)) :hand)]
+                             (resolve-ability state side
+                              {:prompt "Choose a card to add to the bottom of R&D"
+                               :choices [(last (:hand corp)) c]
+                               :msg (msg "add 1 card to bottom of R&D" )
+                               :effect (effect (move target :deck))} card targets)))}}}
+
    "Daily Casts"
    {:data {:counter 8}
     :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2

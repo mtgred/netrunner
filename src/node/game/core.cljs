@@ -61,12 +61,15 @@
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
+(declare trigger-event)
+
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
      (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
        (swap! state update-in [side :hand] #(concat % drawn)))
-     (swap! state update-in [side :deck] (partial drop n))))
+     (swap! state update-in [side :deck] (partial drop n))
+     (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)))
 
 (defn mill
   ([state side] (mill state side 1))
@@ -112,11 +115,11 @@
         (when msg
           (let [desc (if (string? msg) msg (msg state side card targets))]
             (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-        (when effect (effect state side c nil)))
+        (when effect (effect state side c targets)))
       (when once (swap! state assoc-in [once (or once-key cid)] true)))))
 
 (defn prompt! [state side card msg choices ability]
-  (let [prompt (if (string? msg) msg (msg state side card targets))]
+  (let [prompt (if (string? msg) msg (msg state side card nil))]
     (when (> (count choices) 0)
       (swap! state update-in [side :prompt]
              (fn [p]
@@ -589,14 +592,14 @@
 
 (defn click-draw [state side]
   (when (pay state side :click 1)
-    (draw state side)
     (system-msg state side "spends [Click] to draw a card")
+    (draw state side)
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
 
 (defn click-credit [state side]
   (when (pay state side :click 1)
-    (gain state side :credit 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
+    (gain state side :credit 1)
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
 
 (defn jack-out [state side]
