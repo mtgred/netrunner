@@ -150,12 +150,13 @@
                                                 (put! zoom-channel cursor))
                              :on-mouse-leave #(put! zoom-channel false)
                              :on-click #(handle-card-click @cursor owner)}
-       (when-let [url (image-url cursor)]
-         (if flipped
-           [:img.card.bg {:src "/img/corp.png"}]
-           [:div
-            [:span.cardname title]
-            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
+       (if flipped
+         [:img.card.bg {:src "/img/corp.png"}]
+         [:div
+          [:span.cardname title]
+          (when-let [url (image-url cursor)]
+            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)
+                           :onLoad #(-> % .-target js/$ .show)}])])
        [:div.counters
         (when (> counter 0) [:div.darkbg.counter counter])
         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
