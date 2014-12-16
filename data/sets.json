@@ -88,4 +88,12 @@
 }, {
     "name": "Order and Chaos",
     "available": "2015-01-31"
+}, {
+    "name": "The Valley",
+    "cycle": "SanSan",
+    "available": "2015-03-10"
+}, {
+    "name": "Breaker Bay",
+    "cycle": "SanSan",
+    "available": "2015-04-10"
 }]
