@@ -382,15 +382,17 @@
 
 (defmethod access :hq [state side server]
   (let [n (+ (get-in @state [:runner :hq-access]) (get-in @state [:run :access-bonus]))]
-    (take n (shuffle (get-in @state [:corp :hand])))))
+    (concat (take n (shuffle (get-in @state [:corp :hand])))
+            (get-in @state [:corp :servers :hq :content]))))
 
 (defmethod access :rd [state side server]
   (let [n (+ (get-in @state [:runner :rd-access]) (get-in @state [:run :access-bonus]))]
-    (take n (get-in @state [:corp :deck]))))
+    (concat (take n (get-in @state [:corp :deck]))
+            (get-in @state [:corp :servers :rd :content]))))
 
 (defmethod access :archives [state side server]
   (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-  (get-in @state [:corp :discard]))
+  (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
 
 (defmethod access :remote [state side server]
   (get-in @state [:corp :servers :remote (js/parseInt (last server)) :content]))
