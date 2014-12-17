@@ -32,7 +32,7 @@
     (swap! state update-in [side (first r)] #(+ % (last r)))))
 
 (defn desactivate [state side card]
-  (let [c (dissoc card :counter :advance-counter :current-strength :abilities)
+  (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed)
         cdef (card-def card)]
     (when-let [leave-effect (:leave-play (card-def card))]
       (leave-effect state side card nil))
@@ -556,8 +556,7 @@
 
 (defn derez [state side {:keys [card]}]
   (system-msg state side (str "derez " (:title card)))
-  (update! state side (dissoc card :rezzed))
-  (desactivate state side card))
+  (update! state side (desactivate state side card)))
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side :click 1 :credit 1)
@@ -566,8 +565,7 @@
 
 (defn forfeit [state side {:keys [card]}]
   (system-msg state side (str "forfeits " (:title card)))
-  (desactivate state side card)
-  (move state side card :rfg)
+  (move state side (desactivate state side card) :rfg)
   (gain state side :agenda-point (- (:agendapoints card))))
 
 (defn move-card [state side {:keys [card server]}]
