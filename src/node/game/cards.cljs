@@ -415,6 +415,10 @@
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
+   "Hokusai Grid"
+   {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
+                              :effect (req (damage state side :net 1))}}}
+
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
@@ -747,6 +751,11 @@
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
                                    :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
+   "Q-Coherence Chip"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:trash {:msg "trash itself" :req (req (= (:type target) "Program"))
+                     :effect (effect (trash card))}}}
+
    "Quality Time"
    {:effect (effect (draw 5))}
 
@@ -755,6 +764,17 @@
 
    "R&D Interface"
    {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}
+
+   "Rabbit Hole"
+   {:effect
+    (effect (gain :link 1)
+            (resolve-ability
+             {:optional {:prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
+                         :effect (req (gain state side :click 1)
+                                      (let [c (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner))]
+                                        (runner-install state side c)
+                                        (shuffle! state :runner :deck)))}} card nil))
+    :leave-play (effect (lose :link 1))}
 
    "Rachel Beckman"
    {:effect #(do (gain % :runner :click 1 :click-per-turn 1)
@@ -1565,9 +1585,6 @@
 
    "Psychographics"
    {:req (req tagged)}
-
-   "Rabbit Hole"
-   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
