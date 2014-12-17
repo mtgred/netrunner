@@ -115,6 +115,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         for game, i in games
           if game.gameid is msg.gameid
             state = gameEngine.main.exec("init", game)
+            game.started = true
             lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
