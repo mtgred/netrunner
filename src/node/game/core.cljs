@@ -40,7 +40,7 @@
       (gain state :runner :memory mu))
     c))
 
-(defmulti move (fn [state side target to front] (map? target)))
+(defmulti move (fn [state side target to front cross] (map? target)))
 
 (defmethod move false [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
@@ -49,7 +49,7 @@
                                           (zone to (get-in @state from-zone))))
     (swap! state assoc-in from-zone)))
 
-(defmethod move true [state side {:keys [zone cid] :as card} to front]
+(defmethod move true [state side {:keys [zone cid] :as card} to front cross]
   (when card
     (let [dest (if (sequential? to) to [to])
           c (if (#{:discard :hand :deck} to) (desactivate state side card) card)
@@ -57,7 +57,7 @@
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (swap! state update-in (cons (to-keyword (:side c)) zone)
+      (swap! state update-in (cons (if cross (if (= side :corp) :runner :corp) side) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       moved-card)))
 
@@ -331,7 +331,7 @@
       (trigger-event state side :agenda-scored c))))
 
 (defn steal [state side card]
-  (let [c (move state :runner card :scored)]
+  (let [c (move state :runner card :scored false true)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
     (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
     (swap! state update-in [:runner :register :stole-agenda] #(+ % (:agendapoints c)))
@@ -572,16 +572,17 @@
 
 (defn move-card [state side {:keys [card server]}]
   (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card))
-                (:title card) "a card")]
+                (:title card) "a card")
+        s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state side card)
+      (do (trash state s card)
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
-      (do (move state side (dissoc card :seen :rezzed) :hand)
+      (do (move state s (dissoc card :seen :rezzed) :hand false (not= s side))
           (system-msg state side (str "moves " label " to " server)))
       ("Stack" "R&D")
-      (do (move state side (dissoc card :seen :rezzed) :deck true)
+      (do (move state s (dissoc card :seen :rezzed) :deck true (not= s side))
           (system-msg state side (str "moves " label " to the top of " server)))
       nil)))
 

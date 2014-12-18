@@ -84,6 +84,10 @@
    "Biotic Labor"
    {:effect (effect (gain :click 2))}
 
+   "Blackmail"
+   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target))}
+
    "Borrowed Satellite"
    {:effect (effect (gain :link 1 :max-hand-size 1))
     :leave-play (effect (lose :link 1 :max-hand-size 1))}
@@ -457,6 +461,12 @@
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
 
+   "Indexing"
+   {:effect (effect (run :rd {:replace-access
+                              {:msg "rearrange the top 5 cards of R&D"
+                               :effect (req (doseq [c (take 5 (:deck corp))]
+                                              (move state side c :play-area false true)))}}))}
+
    "Inject"
    {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
                (if (= (:type c) "Program")
@@ -654,6 +664,9 @@
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Precognition"
+   {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
+
    "Profiteering"
    {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
     :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
@@ -711,7 +724,8 @@
 
    "Project Atlas"
    {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
-    :abilities [{:counter-cost 1 :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+    :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
+                 :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Vitruvius"
@@ -808,7 +822,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :effect (effect (damage :net 3) (trash card))}]}
+                 :msg "do 3 net damage" :effect (effect (damage :net 3) (trash card))}]}
 
    "Sacrificial Construct"
    {:abilities [{:msg "prevent an installed program or hardware from being trash"
