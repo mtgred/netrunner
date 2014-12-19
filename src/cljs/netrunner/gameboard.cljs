@@ -298,7 +298,7 @@
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
 
-(defmethod discard-view "Corp" [{:keys [discard] :as cursor} owner]
+(defmethod discard-view "Corp" [{:keys [discard servers] :as cursor} owner]
   (om/component
    (sab/html
     [:div.panel.blue-shade.discard

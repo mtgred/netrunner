@@ -57,13 +57,13 @@
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (swap! state update-in (cons (if cross (if (= side :corp) :runner :corp) side) zone)
+      (swap! state update-in (cons (if cross (if (= side :corp) :runner :corp) side) (vec zone))
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-      (let [z (cons :corp (butlast zone))
+      (let [z (vec (cons :corp (butlast zone)))
             n (last z)]
         (when (and (number? n)
-                   (empty? (get-in @state (conj (vec z) :content)))
-                   (empty? (get-in @state (conj (vec z) :ices))))
+                   (empty? (get-in @state (conj z :content)))
+                   (empty? (get-in @state (conj z :ices))))
           (swap! state update-in [:corp :servers :remote] vdissoc n)
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
