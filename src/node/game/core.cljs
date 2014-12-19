@@ -1,7 +1,7 @@
 (ns game.core
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol]]
+                                costs-to-symbol vdissoc]]
             [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
@@ -59,6 +59,18 @@
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
       (swap! state update-in (cons (if cross (if (= side :corp) :runner :corp) side) zone)
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+      (let [z (cons :corp (butlast zone))
+            n (last z)]
+        (when (and (number? n)
+                   (empty? (get-in @state (conj (vec z) :content)))
+                   (empty? (get-in @state (conj (vec z) :ices))))
+          (swap! state update-in [:corp :servers :remote] vdissoc n)
+          (swap! state assoc-in [:corp :servers :remote]
+                 (vec (map-indexed
+                       (fn [i s]
+                         {:content (for [c (:content s)] (update-in c [:zone] assoc 2 i))
+                          :ices (for [c (:ices s)] (update-in c [:zone] assoc 2 i))})
+                       (get-in @state [:corp :servers :remote]))))))
       moved-card)))
 
 (declare trigger-event)

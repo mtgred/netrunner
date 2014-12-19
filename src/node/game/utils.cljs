@@ -35,3 +35,6 @@
                :credit (str %1 value "[Credits]")
                :click (reduce str %1 (for [i (range value)] "[Click]"))
                (str %1 value " " (str key)))) "" (partition 2 (flatten costs))))
+
+(defn vdissoc [v n]
+  (vec (concat (subvec v 0 n) (subvec v (inc n)))))
