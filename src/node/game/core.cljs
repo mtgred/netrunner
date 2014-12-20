@@ -317,12 +317,14 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash [state side {:keys [zone] :as card} cross]
-  (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard false cross)]
-    (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card nil))
-    (trigger-event state side :trash moved-card)))
+(defn trash
+  ([state side card] (trash state side card false))
+  ([state side {:keys [zone] :as card} cross]
+     (let [cdef (card-def card)
+           moved-card (move state (to-keyword (:side card)) card :discard false cross)]
+       (when-let [trash-effect (:trash-effect cdef)]
+         (resolve-ability state side trash-effect moved-card nil))
+       (trigger-event state side :trash moved-card))))
 
 (defn pump
   ([state side card n] (pump state side card n false))
@@ -376,7 +378,7 @@
           (let [card (assoc c :seen true)]
             (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
                               {:cost [:credit trash-cost]
-                               :effect (effect (trash :corp card false)
+                               :effect (effect (trash :corp card)
                                                (system-msg (str "pays " trash-cost "[Credits] to trash "
                                                                 (:title card))))} nil))
           (when-not (= (:type c) "Agenda")
@@ -550,7 +552,7 @@
             (when (#{"Asset" "Agenda"} (:type c))
               (doseq [installed-card (get-in @state (cons :corp slot))]
                 (when (#{"Asset" "Agenda"} (:type installed-card))
-                  (trash state side installed-card false)
+                  (trash state side installed-card)
                   (system-msg state side (str "trash a card in " server)))))
             (system-msg state side (str "installs a card in " server))
             (let [moved-card (move state side c slot)]
