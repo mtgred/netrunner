@@ -19,7 +19,7 @@
     (> (.indexOf p value) -1)))
 
 (defn zone [zone coll]
-  (let [dest (if (sequential? zone) zone [zone])]
+  (let [dest (if (sequential? zone) (vec zone) [zone])]
     (map #(assoc % :zone dest) coll)))
 
 (defn to-keyword [string]

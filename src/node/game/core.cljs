@@ -51,8 +51,8 @@
 
 (defmethod move true [state side {:keys [zone cid] :as card} to front cross]
   (when card
-    (let [dest (if (sequential? to) to [to])
-          c (if (#{:discard :hand :deck} to) (desactivate state side card) card)
+    (let [dest (if (sequential? to) (vec to) [to])
+          c (if (#{:discard :hand :deck} (first dest)) (desactivate state side card) card)
           moved-card (assoc c :zone dest)]
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
@@ -317,9 +317,9 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash [state side {:keys [zone] :as card}]
+(defn trash [state side {:keys [zone] :as card} cross]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard)]
+        moved-card (move state (to-keyword (:side card)) card :discard false cross)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card nil))
     (trigger-event state side :trash moved-card)))
@@ -376,7 +376,7 @@
           (let [card (assoc c :seen true)]
             (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
                               {:cost [:credit trash-cost]
-                               :effect (effect (trash :corp card)
+                               :effect (effect (trash :corp card false)
                                                (system-msg (str "pays " trash-cost "[Credits] to trash "
                                                                 (:title card))))} nil))
           (when-not (= (:type c) "Agenda")
@@ -550,7 +550,7 @@
             (when (#{"Asset" "Agenda"} (:type c))
               (doseq [installed-card (get-in @state (cons :corp slot))]
                 (when (#{"Asset" "Agenda"} (:type installed-card))
-                  (trash state side installed-card)
+                  (trash state side installed-card false)
                   (system-msg state side (str "trash a card in " server)))))
             (system-msg state side (str "installs a card in " server))
             (let [moved-card (move state side c slot)]
@@ -588,7 +588,7 @@
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state s card)
+      (do (trash state s card (not= s side))
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
       (do (move state s (dissoc card :seen :rezzed) :hand false (not= s side))
