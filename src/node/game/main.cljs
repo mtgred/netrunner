@@ -46,7 +46,9 @@
   (let [params (convert args)
         gameid (:gameid params)
         state (@game-states (:gameid params))]
-    (case action
-      "init" (core/init-game params)
-      "do" ((commands (:command params)) state (keyword (:side params)) (:args params)))
+    (try (case action
+           "init" (core/init-game params)
+           "do" ((commands (:command params)) state (keyword (:side params)) (:args params)))
+         (catch :default e
+           (prn e)))
     (clj->js @(@game-states gameid))))
