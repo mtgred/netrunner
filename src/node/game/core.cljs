@@ -387,9 +387,9 @@
         (if-let [cost (:steal-cost (card-def c))]
           (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                             {:cost cost
-                             :effect (effect (steal c)
-                                             (system-msg (str "pays " (costs-to-symbol cost)
-                                                              " to steal " (:title c))))} nil)
+                             :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                              " to steal " (:title c)))
+                                             (steal c))} nil)
           (steal state side c))))))
 
 (defmulti access (fn [state side server] (first server)))
