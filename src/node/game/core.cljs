@@ -68,8 +68,8 @@
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
                        (fn [i s]
-                         {:content (for [c (:content s)] (update-in c [:zone] assoc 2 i))
-                          :ices (for [c (:ices s)] (update-in c [:zone] assoc 2 i))})
+                         {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
+                          :ices (for [c (:ices s)] (update-in c [:zone] #(assoc 2 i)))})
                        (get-in @state [:corp :servers :remote]))))))
       moved-card)))
 
