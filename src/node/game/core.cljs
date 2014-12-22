@@ -109,8 +109,9 @@
                                           once-key optional prompt choices] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
+             (not (get-in @state [once (or once-key cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
-    (optional-ability state side card (:prompt optional) optional nil))
+    (optional-ability state side card (:prompt optional) optional targets))
   (if choices
     (let [cs (if (sequential? choices) choices (choices state side card targets))]
       (prompt! state side card prompt cs (dissoc ability :choices)))

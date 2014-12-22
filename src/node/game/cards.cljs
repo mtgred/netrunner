@@ -288,7 +288,7 @@
 
    "Eve Campaign"
    {:data {:counter 16}
-    :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 2
+    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                 :effect #(do (gain %1 :corp :credit 2)
                                              (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
@@ -933,6 +933,16 @@
    "TGTBT"
    {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
+   "The Foundry: Refining the Process"
+   {:events
+    {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
+           :once :per-turn
+           :optional
+           {:prompt (msg "Add a copy of " (:title target) " from R&D to HQ?")
+            :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
+                            (shuffle! :deck))
+            :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
+
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
 
@@ -958,6 +968,15 @@
 
    "Toshiyuki Sakai"
    {:advanceable :always}
+
+   "Trade-In"
+   {:prompt "Choose a hardware to trash" :choices (req (get-in runner [:rig :hardware]))
+    :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
+    :effect (effect (trash target) (gain [:credit (quot (:cost target) 2)])
+                    (resolve-ability {:prompt "Choose a Hardware to add to Grip from Stack"
+                                      :choices (req (filter #(= (:type %) "Hardware") (:deck runner)))
+                                      :msg (msg "adds " (:title target) " to his grip")
+                                      :effect (effect (move target :hand))} card nil))}
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}
