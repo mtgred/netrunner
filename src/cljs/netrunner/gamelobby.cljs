@@ -24,7 +24,10 @@
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "game" (swap! app-state assoc :gameid (:gameid msg))
-          "games" (swap! app-state assoc :games (sort-by :date > (:games msg)))
+          "games" (do (swap! app-state assoc :games (sort-by :date > (:games msg)))
+                      (when-let [sound (:notification msg)]
+                        (when-not (:gameid @app-state)
+                          (.play (.getElementById js/document sound)))))
           "say" (do (swap! app-state update-in [:messages]
                            #(conj % {:user (:user msg) :text (:text msg)}))
                     (when-let [sound (:notification msg)]

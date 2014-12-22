@@ -69,7 +69,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         games.push(game)
         socket.join(gameid)
         socket.emit("netrunner", {type: "game", gameid: gameid})
-        lobby.emit('netrunner', {type: "games", games: games})
+        lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
 
       when "leave"
         removePlayer(socket, socket.request.user.username)
