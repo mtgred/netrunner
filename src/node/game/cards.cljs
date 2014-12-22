@@ -3,7 +3,7 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant] :as core]
+                               play-instant corp-install] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -1230,6 +1230,17 @@
                  :msg (msg "trash " (:title target))
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
                 {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Architect"
+   {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
+                 :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (map? target))
+                 :effect (effect (gain :click 1) (corp-install target nil true))}
+                {:msg "install a card from Archives" :choices (req (:discard corp))
+                 :prompt "Choose a card to install"
+                 :effect (effect (gain :click 1) (corp-install target nil))}
+                {:msg "install a card from HQ" :choices (req (:hand corp))
+                 :prompt "Choose a card to install"
+                 :effect (effect (gain :click 1) (corp-install target nil))}]}
 
    "Ashigaru"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

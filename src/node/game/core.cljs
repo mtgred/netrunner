@@ -532,32 +532,45 @@
         (trigger-event state side :runner-install installed-card)
         (system-msg state side (str "installs " title))))))
 
-(defn corp-install [state side card server]
-  (let [dest (case server
-              "HQ" [:servers :hq]
-              "R&D" [:servers :rd]
-              "Archives" [:servers :archives]
-              "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
-              [:servers :remote (-> (split server " ") last js/parseInt)])]
-    (when (= server "New remote")
-      (trigger-event state side :server-created card))
-    (let [c (assoc card :advanceable (:advanceable (card-def card)))]
-      (if (= (:type c) "ICE")
-        (let [slot (conj dest :ices)]
-          (when (pay state side :click 1 :credit (count (get-in @state (cons :corp slot))))
-            (system-msg state side (str "install an ICE on " server))
-            (let [moved-card (move state side c slot)]
-              (trigger-event state side :corp-install moved-card))))
-        (let [slot (conj dest :content)]
-          (when (pay state side :click 1)
-            (when (#{"Asset" "Agenda"} (:type c))
-              (doseq [installed-card (get-in @state (cons :corp slot))]
-                (when (#{"Asset" "Agenda"} (:type installed-card))
-                  (trash state side installed-card)
-                  (system-msg state side (str "trash a card in " server)))))
-            (system-msg state side (str "installs a card in " server))
-            (let [moved-card (move state side c slot)]
-              (trigger-event state side :corp-install moved-card))))))))
+(defn server-list [state card]
+  (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote] )))]
+                                     (str "Server " i)))]
+    (if (#{"Asset" "Agenda"} (:type card))
+        remotes
+        (concat ["HQ" "R&D" "Archives"] remotes))))
+
+(defn corp-install
+  ([state side card server] (corp-install state side card server nil))
+  ([state side card server ignore-cost]
+     (if-not server
+       (prompt! state side card "Choose a server" (server-list state card)
+                {:effect (effect (corp-install card target ignore-cost))} )
+       (let [dest (case server
+                    "HQ" [:servers :hq]
+                    "R&D" [:servers :rd]
+                    "Archives" [:servers :archives]
+                    "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
+                    [:servers :remote (-> (split server " ") last js/parseInt)])]
+         (when (= server "New remote")
+           (trigger-event state side :server-created card))
+         (let [c (assoc card :advanceable (:advanceable (card-def card)))]
+           (if (= (:type c) "ICE")
+             (let [slot (conj dest :ices)]
+               (when (pay state side :click 1
+                          :credit (if ignore-cost 0 (count (get-in @state (cons :corp slot)))))
+                 (system-msg state side (str "install an ICE on " server))
+                 (let [moved-card (move state side c slot)]
+                   (trigger-event state side :corp-install moved-card))))
+             (let [slot (conj dest :content)]
+               (when (pay state side :click 1)
+                 (when (#{"Asset" "Agenda"} (:type c))
+                   (doseq [installed-card (get-in @state (cons :corp slot))]
+                     (when (#{"Asset" "Agenda"} (:type installed-card))
+                       (trash state side installed-card)
+                       (system-msg state side (str "trash a card in " server)))))
+                 (system-msg state side (str "installs a card in " server))
+                 (let [moved-card (move state side c slot)]
+                   (trigger-event state side :corp-install moved-card))))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
