@@ -87,6 +87,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.broadcast.to(msg.gameid).emit 'netrunner',
           type: "say"
           user: "__system__"
+          notification: "ting"
           text: "#{socket.request.user.username} joined the game."
 
       when "say"

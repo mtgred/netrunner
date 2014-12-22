@@ -18,7 +18,9 @@
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
-        (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
+        (swap! app-state assoc-in [:channels ch] (conj messages msg))
+        (when-not (and (.hasFocus js/document) (#{"/" "play"} (:active-page @app-state)))
+          (.play (.getElementById js/document "ting"))))))
 
 (defn send-msg [event channel owner]
   (.preventDefault event)
