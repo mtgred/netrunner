@@ -4,7 +4,8 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :refer [avatar authenticated] :as auth]
-            [netrunner.ajax :refer [GET]]))
+            [netrunner.ajax :refer [GET]]
+            [netrunner.main :as main]))
 
 (def app-state
   (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :francais []}}))
@@ -19,7 +20,7 @@
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
         (swap! app-state assoc-in [:channels ch] (conj messages msg))
-        (when-not (and (.hasFocus js/document) (#{"/" "play"} (:active-page @app-state)))
+        (when-not (and (.hasFocus js/document) (#{["/"] ["/play"]} (:active-page @main/app-state)))
           (.play (.getElementById js/document "ting"))))))
 
 (defn send-msg [event channel owner]
