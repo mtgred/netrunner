@@ -599,7 +599,8 @@
   (gain state side :agenda-point (- (:agendapoints card))))
 
 (defn move-card [state side {:keys [card server]}]
-  (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card))
+  (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card)
+                      (= (last (:zone card)) :deck))
                 (:title card) "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server

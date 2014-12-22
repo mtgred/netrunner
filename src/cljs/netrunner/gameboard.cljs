@@ -519,7 +519,7 @@
                           [:div.panel.blue-shade
                            (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
                            (if (= (:position run) (count (:ices server)))
-                             (cond-button "Access" (:no-action run) #(send-command "access"))
+                             (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
                              (cond-button "Continue" (:no-action run) #(send-command "continue")))
                            [:button {:on-click #(send-command "jack-out")} "Jack Out"]]
                           [:div.panel.blue-shade
