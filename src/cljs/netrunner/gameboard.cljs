@@ -56,7 +56,6 @@
           (cons "advance" %) %))
       (#(if (and (= type "Agenda") (>= advance-counter advancementcost))
           (cons "score" %) %))
-      (#(if (= (first zone) "scored") (cons "forfeit" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if (not rezzed) (cons "rez" %) (cons "derez" %))
           %))))
@@ -220,12 +219,11 @@
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
-                      (sab/html
-                       [:div.card-wrapper {:class (if (playable? card) "playable" "")
-                                           :style {:left (* (/ 320 (dec size)) i)}}
-                        (if (= (:user player) (:user @app-state))
-                          (om/build card-view (assoc card :remotes remotes))
-                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])]))
+                      [:div.card-wrapper {:class (if (playable? card) "playable" "")
+                                          :style {:left (* (/ 320 (dec size)) i)}}
+                       (if (= (:user player) (:user @app-state))
+                         (om/build card-view (assoc card :remotes remotes))
+                         [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                     (:hand player))]))))
 
 (defn show-deck [event owner ref]
@@ -323,17 +321,16 @@
              (om/build card-view c)
              [:img.card {:src "/img/corp.png"}]))))])))
 
-(defn rfg-view [{:keys [cards label] :as cursor}]
+(defn rfg-view [{:keys [cards name] :as cursor}]
   (om/component
    (sab/html
-    (let [size (count cards)]
-      (when (> size 0)
+    (when-not (empty? cards)
+      (let [size (count cards)]
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
-         (when label (om/build label cards {:opts {:name label}}))
+         (om/build label cards {:opts {:name name}})
          (map-indexed (fn [i card]
-                        (sab/html
-                         [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
-                          [:div (om/build card-view card)]]))
+                        [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
+                         [:div (om/build card-view card)]])
                       cards)])))))
 
 (defn scored-view [{:keys [scored] :as cursor}]
@@ -343,9 +340,8 @@
       [:div.panel.blue-shade.scored {:class (when (> size 3) "squeeze")}
        (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
-                      (sab/html
-                       [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
-                        [:div (om/build card-view card)]]))
+                      [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
+                       [:div (om/build card-view card)]])
                     scored)]))))
 
 (defn controls [key]
@@ -490,8 +486,8 @@
 
               [:div.secondary-pane
                [:div
-                (om/build rfg-view {:cards (:rfg opponent) :label "Removed from the game"})
-                (om/build rfg-view {:cards (:rfg me) :label "Removed from the game"})
+                (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
+                (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:play-area me)})]
 
                [:div.button-pane

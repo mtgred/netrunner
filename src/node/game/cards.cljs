@@ -3,7 +3,7 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install] :as core]
+                               play-instant corp-install forfeit] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -196,8 +196,9 @@
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Data Dealer"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 9))
-                 :msg "forfeit an Agenda and gain 9 [Credits]"}]}
+   {:abilities [{:prompt "Choose an Agenda to forfeit" :cost [:click 1] :choices (req (:scored runner))
+                 :effect (effect (forfeit target) (gain :credit 9))
+                 :msg (msg "forfeit " (:title target) " and gain 9 [Credits]")}]}
 
    "Data Folding"
    {:events {:runner-turn-begins {:req (req (>= (:memory runner) 2)) :msg "gain 1 [Credits]"
@@ -306,6 +307,10 @@
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
     :effect (effect (move target :hand) (shuffle! :deck))}
 
+   "False Lead"
+   {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
+                 :effect (effect (forfeit card) (lose :runner :click 2))}]}
+
    "Fast Track"
    {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
@@ -328,6 +333,11 @@
    {:data [:counter 3]
     :abilities [{:counter-cost 1
                  :msg "place 1 advancement token on a piece of ICE that can be advanced"}]}
+
+   "Frame Job"
+   {:prompt "Choose an Agenda to forfeit" :choices (req (:scored runner))
+    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")
+    :effect (effect (forfeit target) (gain :corp :bad-publicity 1))}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
@@ -663,6 +673,11 @@
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Posted Bounty"
+   {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
+               :msg "give the Runner 1 tag and take 1 bad publicity"
+               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
 
    "Precognition"
    {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
@@ -1225,7 +1240,9 @@
 
    ;; ICE
    "Archer"
-   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+   {:prompt "Choose an Agenda to forfeit" :choices (req (:scored corp))
+    :effect (effect (forfeit target)) :msg (msg "forfeit " (:title target))
+    :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:prompt "Choose a program to trash" :label "Trash a program"
                  :msg (msg "trash " (:title target))
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}

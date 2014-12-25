@@ -52,7 +52,7 @@
 (defmethod move true [state side {:keys [zone cid] :as card} to front cross]
   (when card
     (let [dest (if (sequential? to) (vec to) [to])
-          c (if (#{:discard :hand :deck} (first dest)) (desactivate state side card) card)
+          c (if (#{:discard :hand :deck :rfg} (first dest)) (desactivate state side card) card)
           moved-card (assoc c :zone dest)]
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
@@ -593,10 +593,9 @@
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advances a card")))
 
-(defn forfeit [state side {:keys [card]}]
-  (system-msg state side (str "forfeits " (:title card)))
-  (move state side (desactivate state side card) :rfg)
-  (gain state side :agenda-point (- (:agendapoints card))))
+(defn forfeit [state side card]
+  (gain state side :agenda-point (- (:agendapoints card)))
+  (move state :corp card :rfg false (= side :runner)))
 
 (defn move-card [state side {:keys [card server]}]
   (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card)

@@ -30,7 +30,6 @@
    "access" core/successful-run
    "jack-out" core/jack-out
    "advance" core/advance
-   "forfeit" core/forfeit
    "score" core/score
    "choice" core/resolve-prompt
    "shuffle" core/shuffle-deck
