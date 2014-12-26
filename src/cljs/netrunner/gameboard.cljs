@@ -517,7 +517,9 @@
                            (if (= (:position run) (count (:ices server)))
                              (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
                              (cond-button "Continue" (:no-action run) #(send-command "continue")))
-                           [:button {:on-click #(send-command "jack-out")} "Jack Out"]]
+                           (cond-button "Jack Out" (and (>= (:click me) 1)
+                                                        (not (get-in cursor [:run :cannot-jack-out])))
+                                        #(-> (om/get-node owner "servers") js/$ .toggle))]
                           [:div.panel.blue-shade
                            (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))

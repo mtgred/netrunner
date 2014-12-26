@@ -3,7 +3,7 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit prevent-run] :as core]
+                               play-instant corp-install forfeit prevent-run prevent-jack-out] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -526,6 +526,11 @@
                                      :choices (req (take 3 (:deck corp)))
                                      :effect (effect (trash (assoc target :seen true))
                                                      (shuffle! :corp :deck))}}))}]}
+
+   "Labyrinthine Servers"
+   {:data {:counter 2}
+    :abilities [{:counter-cost 1 :effect (effect (prevent-jack-out))
+                 :msg "prevent the Runner from jacking out"}]}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
@@ -1544,7 +1549,11 @@
 
    "Wendigo"
    {:advanceable :always
-    :abilities [{:msg "prevent the runner from using a chosen program for the remaining of this run"}]}
+    :abilities [{:msg "prevent the Runner from using a chosen program for the remaining of this run"}]}
+
+   "Whirlpool"
+   {:abilities [{:msg "prevent the Runner from jacking out"
+                 :effect (effect (trash card) (prevent-jack-out))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed

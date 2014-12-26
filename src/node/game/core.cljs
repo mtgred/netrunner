@@ -601,6 +601,9 @@
 (defn prevent-run [state side]
   (swap! state assoc-in [:runner :register :cannot-run] true))
 
+(defn prevent-jack-out [state side]
+  (swap! state assoc-in [:run :cannot-jack-out] true))
+
 (defn move-card [state side {:keys [card server]}]
   (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card)
                       (= (last (:zone card)) :deck))
