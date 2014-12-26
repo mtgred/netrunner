@@ -3,7 +3,7 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit] :as core]
+                               play-instant corp-install forfeit prevent-run] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -1312,6 +1312,9 @@
    {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
                 {:msg "draw 1 card" :effect (effect (draw))}]}
 
+   "Excalibur"
+   {:abilities [{:msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
+
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
@@ -1514,6 +1517,10 @@
                  :effect #(if (> (get-in @%1 [:runner :tag]) 0)
                             (do (lose %1 :runner :credit :all) (trash %1 %2 %3))
                             (lose %1 :runner :credit 1))}]}
+
+   "Uroboros"
+   {:abilities [{:msg "prevent the Runner from making another run" :effect (effect (prevent-run))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Viktor 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}

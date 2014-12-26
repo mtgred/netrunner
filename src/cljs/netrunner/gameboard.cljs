@@ -534,7 +534,8 @@
                                        (and (>= (:click me) 1) (>= (:credit me) 2) (>= (:tag me) 1))
                                        #(send-command "remove-tag"))
                           [:div.run-button
-                           (cond-button "Run" (>= (:click me) 1)
+                           (cond-button "Run" (and (>= (:click me) 1)
+                                                   (not (get-in me [:register :cannot-run])))
                                         #(-> (om/get-node owner "servers") js/$ .toggle))
                            (let [remotes (get-in cursor [:corp :servers :remote])
                                  servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]

@@ -357,16 +357,17 @@
 (defn run
   ([state side server] (run state side server nil))
   ([state side server run-effect]
-     (let [s (cond
-              (= server "HQ") [:hq]
-              (= server "R&D") [:rd]
-              (= server "Archives") [:archives]
-              (keyword? server) [server]
-              :else [:remote (last (split server " "))])
-           ices (get-in @state (concat [:corp :servers] s [:ices]))]
-       (swap! state assoc :per-run nil
-              :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
-       (swap! state update-in [:runner :register :made-run] #(conj % (first s))))))
+     (when-not (get-in @state [:runner :register :cannot-run])
+       (let [s (cond
+                (= server "HQ") [:hq]
+                (= server "R&D") [:rd]
+                (= server "Archives") [:archives]
+                (keyword? server) [server]
+                :else [:remote (last (split server " "))])
+             ices (get-in @state (concat [:corp :servers] s [:ices]))]
+         (swap! state assoc :per-run nil
+                :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
+         (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))))
 
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
@@ -597,6 +598,9 @@
   (gain state side :agenda-point (- (:agendapoints card)))
   (move state :corp card :rfg false (= side :runner)))
 
+(defn prevent-run [state side]
+  (swap! state assoc-in [:runner :register :cannot-run] true))
+
 (defn move-card [state side {:keys [card server]}]
   (let [label (if (or (= (:side card) "Runner") (:rezzed card) (:seen card)
                       (= (last (:zone card)) :deck))
@@ -615,7 +619,7 @@
       nil)))
 
 (defn click-run [state side {:keys [server] :as args}]
-  (when (pay state :runner :click 1)
+  (when (and (not (get-in @state [:runner :register :cannot-run])) (pay state :runner :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)))
 
