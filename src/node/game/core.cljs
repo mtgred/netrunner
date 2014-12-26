@@ -580,8 +580,8 @@
 
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
-    (card-init state side (assoc card :rezzed true))
     (system-msg state side (str "rez " (:title card)))
+    (card-init state side (assoc card :rezzed true))
     (trigger-event state side :rez card)))
 
 (defn derez [state side {:keys [card]}]

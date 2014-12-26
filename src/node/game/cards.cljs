@@ -29,7 +29,7 @@
 
    "Aggressive Secretary"
    {:advanceable :always
-    :access {:optional {:req (req installed) :prompt "Pay 3[Credits] to use Aggresive Secretary ability?"
+    :access {:optional {:req (req installed) :prompt "Pay 2[Credits] to use Aggresive Secretary ability?"
                         :cost [:credit 2] :msg (msg "trash " (:advance-counter card) " programs")}}}
 
    "Akamatsu Mem Chip"
@@ -1317,6 +1317,13 @@
     :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Flare"
+   {:abilities [{:prompt "Choose a piece of hardware to trash"
+                 :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
+                 :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))}
+                {:msg "do 2 meat damage and end the run"
+                 :effect (effect (damage :meat 2) (end-run))}]}
+
    "Galahad"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -1410,6 +1417,12 @@
    "Mother Goddess"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Muckraker"
+   {:effect (effect (gain :bad-publicity 1))
+    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
+                {:msg "end the run if the runner is tagged" :req (req tagged)
+                 :effect (effect (end-run))}]}
+
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
@@ -1459,7 +1472,10 @@
                 {:msg "give the runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Shinobi"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))}
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+                {:msg "do 2 net damage" :effect (effect (damage :net 2))}
+                {:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Swarm"
    {:advanceable :always
