@@ -137,7 +137,7 @@
    {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (gain :click 1) (runner-install target) (trash card))}]}
+                 :effect (effect (runner-install target) (trash card))}]}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -212,6 +212,9 @@
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))
                               :req (req (#{:hq :rd :archives} target))}}
     :abilities [{:counter-cost 1 :msg "to give -1 strengh to the encountered ICE"}]}
+
+   "Day Job"
+   {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damages"
@@ -451,7 +454,7 @@
    {:prompt "Choose a Connection to install"
     :choices (req (filter #(and (has? % :subtype "Connection")
                                 (<= (:cost %) (:credit runner))) (:deck runner)))
-    :effect (effect (gain :click 1) (runner-install target) (shuffle! :deck))}
+    :effect (effect (runner-install target) (shuffle! :deck))}
 
    "Hostile Infrastructure"
    {:events {:trash {:req (req (and (= (:side target) :corp) (= side :runner)))
@@ -489,6 +492,16 @@
 
    "Inside Man"
    {:recurring 2}
+
+   "Interns"
+   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
+    :msg (msg "install a card from " target)
+    :effect (effect (resolve-ability
+                     {:prompt "Choose a card to install"
+                      :choices (req (filter #(not= (:type %) "Operation")
+                                            ((if (= target "HQ") :hand :discard) corp)))
+                      :effect (effect (corp-install target nil {:no-install-cost true}))}
+                     card targets))}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
@@ -603,6 +616,11 @@
     :leave-play (effect (lose :runner :max-hand-size 1))
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Modded"
+   {:prompt "Choose a card to install"
+    :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
+    :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
+
    "Motivation"
    {:events
     {:runner-turn-begins
@@ -616,6 +634,11 @@
                               (if (= target (first (:deck runner)))
                                 (move state side (second (:deck runner)) :deck)
                                 (move state side (first (:deck runner)) :deck)))}]}
+
+   "Mushin No Shin"
+   {:prompt "Choose a card to install"
+    :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
+    :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "NAPD Contract"
    {:steal-cost [:credit 4]}
@@ -804,8 +827,8 @@
     (effect (gain :link 1)
             (resolve-ability
              {:optional {:prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
-                         :effect (req (gain state side :click 1)
-                                      (let [c (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner))]
+                         :effect (req (let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                                    (:deck runner))]
                                         (runner-install state side c)
                                         (shuffle! state :runner :deck)))}} card nil))
     :leave-play (effect (lose :link 1))}
@@ -856,7 +879,7 @@
                  :prompt "Choose an event to install" :msg (msg "play " (:title target))
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (gain :click 1) (play-instant target) (trash card))}]}
+                 :effect (effect (play-instant target) (trash card))}]}
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
@@ -869,8 +892,7 @@
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
                  :cost [:credit 2]
-                 :effect (effect (gain :click 1) (runner-install target) (trash card)
-                                 (shuffle! :deck))}]}
+                 :effect (effect (runner-install target) (trash card) (shuffle! :deck))}]}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
@@ -1256,13 +1278,13 @@
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
                  :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (map? target))
-                 :effect (effect (gain :click 1) (corp-install target nil true))}
+                 :effect (effect (corp-install target nil {:no-install-cost true}))}
                 {:msg "install a card from Archives" :choices (req (:discard corp))
                  :prompt "Choose a card to install"
-                 :effect (effect (gain :click 1) (corp-install target nil))}
+                 :effect (effect (corp-install target nil))}
                 {:msg "install a card from HQ" :choices (req (:hand corp))
                  :prompt "Choose a card to install"
-                 :effect (effect (gain :click 1) (corp-install target nil))}]}
+                 :effect (effect (corp-install target nil))}]}
 
    "Ashigaru"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

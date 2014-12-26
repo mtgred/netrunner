@@ -508,33 +508,38 @@
       (set-prop state :runner card :counter 0)))
   (trigger-event state side :purge))
 
-(defn play-instant [state side {:keys [title] :as card} & args]
-  (let [cdef (card-def card)]
-    (when (and (if-let [req (:req cdef)] (req state card (first args)) true)
-               (pay state side :click 1 :credit (:cost card) (when (has? card :subtype "Double") [:click 1])))
-      (let [c (move state side (assoc card :seen true) :play-area)]
-        (system-msg state side (str "plays " title))
-        (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
-        (resolve-ability state side cdef card nil)
-        (move state side (first (get-in @state [side :play-area])) :discard)))))
+(defn play-instant
+  ([state side card] (play-instant state side card nil))
+  ([state side {:keys [title] :as card} {:keys [targets extra-cost]}]
+     (let [cdef (card-def card)]
+       (when (and (if-let [req (:req cdef)] (req state card targets) true)
+                  (pay state side :credit (:cost card) (or extra-cost []) (or (:additional-cost cdef) [])
+                       (when (has? card :subtype "Double") [:click 1])))
+         (let [c (move state side (assoc card :seen true) :play-area)]
+           (system-msg state side (str "plays " title))
+           (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
+           (resolve-ability state side cdef card nil)
+           (move state side (first (get-in @state [side :play-area])) :discard))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn runner-install [state side {:keys [title type cost memoryunits uniqueness] :as card}]
-  (let [dest [:rig (to-keyword type)]]
-    (when (and (or (not uniqueness) (not (in-play? state card)))
-               (if-let [req (:req (card-def card))] (req state card) true)
-               (pay state side :click 1 :credit cost :memory memoryunits))
-      (let [c (move state side card dest)
-            installed-card (card-init state side c)]
-        (trigger-event state side :runner-install installed-card)
-        (system-msg state side (str "installs " title))))))
+(defn runner-install
+  ([state side card] (runner-install state side card nil))
+  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost]}]
+     (let [dest [:rig (to-keyword type)]]
+       (when (and (or (not uniqueness) (not (in-play? state card)))
+                  (if-let [req (:req (card-def card))] (req state card) true)
+                  (pay state side :credit cost :memory memoryunits (or extra-cost [])))
+         (let [c (move state side card dest)
+               installed-card (card-init state side c)]
+           (system-msg state side (str "installs " title))
+           (trigger-event state side :runner-install installed-card))))))
 
 (defn server-list [state card]
-  (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote] )))]
+  (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
                                      (str "Server " i)))]
     (if (#{"Asset" "Agenda"} (:type card))
         remotes
@@ -542,10 +547,10 @@
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
-  ([state side card server ignore-cost]
+  ([state side card server {:keys [extra-cost no-install-cost] :as args}]
      (if-not server
        (prompt! state side card "Choose a server" (server-list state card)
-                {:effect (effect (corp-install card target ignore-cost))} )
+                {:effect (effect (corp-install card target args))})
        (let [dest (case server
                     "HQ" [:servers :hq]
                     "R&D" [:servers :rd]
@@ -557,13 +562,13 @@
          (let [c (assoc card :advanceable (:advanceable (card-def card)))]
            (if (= (:type c) "ICE")
              (let [slot (conj dest :ices)]
-               (when (pay state side :click 1
-                          :credit (if ignore-cost 0 (count (get-in @state (cons :corp slot)))))
+               (when (pay state side (or extra-cost [])
+                          :credit (if no-install-cost 0 (count (get-in @state (cons :corp slot)))))
                  (system-msg state side (str "install an ICE on " server))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card))))
              (let [slot (conj dest :content)]
-               (when (pay state side :click 1)
+               (when (pay state side (or extra-cost []))
                  (when (#{"Asset" "Agenda"} (:type c))
                    (doseq [installed-card (get-in @state (cons :corp slot))]
                      (when (#{"Asset" "Agenda"} (:type installed-card))
@@ -575,9 +580,9 @@
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
-    ("Event" "Operation") (play-instant state side card)
-    ("Hardware" "Resource" "Program") (runner-install state side card)
-    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server)))
+    ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
+    ("Hardware" "Resource" "Program") (runner-install state side card {:extra-cost [:click 1]})
+    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]})))
 
 (defn rez [state side {:keys [card]}]
   (when (pay state side :credit (:cost card))
