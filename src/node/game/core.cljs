@@ -63,7 +63,10 @@
 (defmethod move true [state side {:keys [zone cid] :as card} to front cross]
   (when card
     (let [dest (if (sequential? to) (vec to) [to])
-          c (if (#{:discard :hand :deck :rfg} (first dest)) (desactivate state side card) card)
+          c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
+              (assoc card :seen true) card)
+          c (if (#{:discard :hand :deck :rfg} (first dest))
+              (desactivate state side c) c)
           moved-card (assoc c :zone dest)]
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
