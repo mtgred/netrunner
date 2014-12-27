@@ -196,9 +196,8 @@
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
    "Data Dealer"
-   {:abilities [{:prompt "Choose an Agenda to forfeit" :cost [:click 1] :choices (req (:scored runner))
-                 :effect (effect (forfeit target) (gain :credit 9))
-                 :msg (msg "forfeit " (:title target) " and gain 9 [Credits]")}]}
+   {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain :credit 9))
+                 :msg (msg "gain 9 [Credits]")}]}
 
    "Data Folding"
    {:events {:runner-turn-begins {:req (req (>= (:memory runner) 2)) :msg "gain 1 [Credits]"
@@ -338,9 +337,7 @@
                  :msg "place 1 advancement token on a piece of ICE that can be advanced"}]}
 
    "Frame Job"
-   {:prompt "Choose an Agenda to forfeit" :choices (req (:scored runner))
-    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")
-    :effect (effect (forfeit target) (gain :corp :bad-publicity 1))}
+   {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
@@ -1267,8 +1264,7 @@
 
    ;; ICE
    "Archer"
-   {:prompt "Choose an Agenda to forfeit" :choices (req (:scored corp))
-    :effect (effect (forfeit target)) :msg (msg "forfeit " (:title target))
+   {:additional-cost [:forfeit]
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:prompt "Choose a program to trash" :label "Trash a program"
                  :msg (msg "trash " (:title target))

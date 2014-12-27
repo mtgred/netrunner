@@ -18,13 +18,24 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
-(defn pay [state side & args]
-  (let [costs (merge-costs args)]
-    (if (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
-      (not (doseq [c costs]
-             (when (= (first c) :click)
-               (swap! state assoc-in [side :register :spent-click] true))
-             (swap! state update-in [side (first c)] #(- % (last c)))))
+(declare prompt!)
+(declare forfeit)
+
+(defn pay [state side card & args]
+  (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
+        forfeit-cost (some #{[:forfeit] :forfeit} args)
+        scored (get-in @state [side :scored])]
+    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+             (or (not forfeit-cost) (not (empty? scored))))
+      (do (when forfeit-cost
+            (if (= (count scored) 1)
+              (forfeit state side (first scored))
+              (prompt! state side card "Choose an Agenda to forfeit" scored
+                       {:effect (effect (forfeit target))})))
+          (not (doseq [c costs]
+                 (when (= (first c) :click)
+                   (swap! state assoc-in [side :register :spent-click] true))
+                 (swap! state update-in [side (first c)] #(- % (last c))))))
       false)))
 
 (defn gain [state side & args]
@@ -102,7 +113,6 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
-(declare prompt!)
 (declare optional-ability)
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
@@ -119,7 +129,7 @@
                (or (not req) (req state side card targets))
                (<= counter-cost counter)
                (<= advance-counter-cost advance-counter)
-               (apply pay (concat [state side] cost)))
+               (apply pay (concat [state side card] cost)))
       (let [c (-> card
                   (update-in [:counter] #(- % counter-cost))
                   (update-in [:advance-counter] #(- % advance-counter-cost)))]
@@ -212,7 +222,7 @@
 
 (defn do! [{:keys [cost effect]}]
   (fn [state side args]
-    (if (apply pay (concat [state side] cost))
+    (if (apply pay (concat [state side nil] cost))
       (effect state side args)
       false)))
 
@@ -513,8 +523,8 @@
   ([state side {:keys [title] :as card} {:keys [targets extra-cost]}]
      (let [cdef (card-def card)]
        (when (and (if-let [req (:req cdef)] (req state card targets) true)
-                  (pay state side :credit (:cost card) (or extra-cost []) (or (:additional-cost cdef) [])
-                       (when (has? card :subtype "Double") [:click 1])))
+                  (pay state side card :credit (:cost card) (:additional-cost cdef)
+                       extra-cost (when (has? card :subtype "Double") [:click 1])))
          (let [c (move state side (assoc card :seen true) :play-area)]
            (system-msg state side (str "plays " title))
            (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
@@ -532,7 +542,7 @@
      (let [dest [:rig (to-keyword type)]]
        (when (and (or (not uniqueness) (not (in-play? state card)))
                   (if-let [req (:req (card-def card))] (req state card) true)
-                  (pay state side :credit cost :memory memoryunits (or extra-cost [])))
+                  (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
          (let [c (move state side card dest)
                installed-card (card-init state side c)]
            (system-msg state side (str "installs " title))
@@ -562,13 +572,13 @@
          (let [c (assoc card :advanceable (:advanceable (card-def card)))]
            (if (= (:type c) "ICE")
              (let [slot (conj dest :ices)]
-               (when (pay state side (or extra-cost [])
+               (when (pay state side card extra-cost
                           :credit (if no-install-cost 0 (count (get-in @state (cons :corp slot)))))
                  (system-msg state side (str "install an ICE on " server))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card))))
              (let [slot (conj dest :content)]
-               (when (pay state side (or extra-cost []))
+               (when (pay state side card extra-cost)
                  (when (#{"Asset" "Agenda"} (:type c))
                    (doseq [installed-card (get-in @state (cons :corp slot))]
                      (when (#{"Asset" "Agenda"} (:type installed-card))
@@ -585,21 +595,23 @@
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]})))
 
 (defn rez [state side {:keys [card]}]
-  (when (pay state side :credit (:cost card))
-    (system-msg state side (str "rez " (:title card)))
-    (card-init state side (assoc card :rezzed true))
-    (trigger-event state side :rez card)))
+  (let [cdef (card-def card)]
+    (when (pay state side card :credit (:cost card) (:additional-cost cdef))
+      (system-msg state side (str "rez " (:title card)))
+      (card-init state side (assoc card :rezzed true))
+      (trigger-event state side :rez card))))
 
 (defn derez [state side {:keys [card]}]
   (system-msg state side (str "derez " (:title card)))
   (update! state side (desactivate state side card)))
 
 (defn advance [state side {:keys [card]}]
-  (when (pay state side :click 1 :credit 1)
+  (when (pay state side card :click 1 :credit 1)
     (add-prop state side card :advance-counter 1)
     (system-msg state side "advances a card")))
 
 (defn forfeit [state side card]
+  (system-msg state side (str "forfeit " (:title card)))
   (gain state side :agenda-point (- (:agendapoints card)))
   (move state :corp card :rfg false (= side :runner)))
 
@@ -632,13 +644,13 @@
     (run state side server)))
 
 (defn click-draw [state side]
-  (when (pay state side :click 1)
+  (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
 
 (defn click-credit [state side]
-  (when (pay state side :click 1)
+  (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
