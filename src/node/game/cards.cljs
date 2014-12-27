@@ -35,6 +35,12 @@
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+   "Alix T4LB07"
+   {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
+                 :msg (msg "gain " (* 2 (:counter card)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (:counter card))) (trash card))}]}
+
    "All-nighter"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
@@ -224,6 +230,9 @@
 
    "Dedicated Technician Team"
    {:recurring 2}
+
+   "Demolition Run"
+   {:prompt "Choose a server" :choices ["HQ" "R&D"] :effect (effect (run target))}
 
    "Desperado"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
@@ -621,7 +630,7 @@
    "Motivation"
    {:events
     {:runner-turn-begins
-     {:msg "to look at the top card of his Stack"
+     {:msg "look at the top card of his Stack"
       :effect (effect (prompt! card (str "The top card of your Stack is "
                                          (:title (first (:deck runner)))) ["OK"] {}))}}}
    "Mr. Li"
@@ -663,6 +672,10 @@
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
+
+   "New Angeles City Hall"
+   {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
+    :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (lose :tag 1))}]}
 
    "Nisei MK II"
    {:data {:counter 1} :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
@@ -768,12 +781,26 @@
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
 
+   "Project Beale"
+   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
+                                   :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
+
+   "Project Junebug"
+   {:advanceable :always
+    :access {:optional {:prompt "Pay 1[Credits] to use Project Junebug ability?" :cost [:credit 1]
+                        :req (req installed) :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
+                        :effect (effect (damage :net (* 2 (:advance-counter card))))}}}
+
    "Project Vitruvius"
    {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
     :abilities [{:counter-cost 1 :prompt "Choose a card"
                  :msg (msg "add " (if (:seen target)
                                     (:title target) "an unseen card ") " to HQ from Archives")
                  :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
+
+   "Project Wotan"
+   {:data [:counter 3]
+    :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -791,19 +818,9 @@
    "Primary Transmission Dish"
    {:recurring 3}
 
-   "Project Junebug"
-   {:advanceable :always
-    :access {:optional {:prompt "Pay 1[Credits] to use Project Junebug ability?" :cost [:credit 1]
-                        :req (req installed) :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
-                        :effect (effect (damage :net (* 2 (:advance-counter card))))}}}
-
    "Professional Contacts"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
-
-   "Project Beale"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
-                                   :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
@@ -840,6 +857,9 @@
     :leave-play #(do (remove-watch % :rachel-beckman)
                      (lose %1 %2 :click 1 :click-per-turn 1))}
 
+   "Recon"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+
    "Research Station"
    {:effect (effect (gain :max-hand-size 2))
     :leave-play (effect (lose :max-hand-size 2))}
@@ -849,6 +869,13 @@
 
    "Restructure"
    {:effect (effect (gain :credit 15))}
+
+   "Retrieval Run"
+   {:effect (effect (run :archives
+                      {:replace-access
+                       {:prompt "Choose a program to install"
+                        :choices (req (filter #(= (:type %) "Program") (:discard runner)))
+                        :effect (effect (runner-install target {:no-cost true}))}}))}
 
    "Reversed Accounts"
    {:advanceable :always
@@ -863,6 +890,9 @@
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :msg "do 3 net damage" :effect (effect (damage :net 3) (trash card))}]}
+
+   "Running Interference"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Sacrificial Construct"
    {:abilities [{:msg "prevent an installed program or hardware from being trash"
@@ -1436,9 +1466,11 @@
                 {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
 
    "Markus 1.0"
-   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+   {:abilities [{:msg "force the runner to trash a card"}
                 {:msg "end the run" :effect (effect (end-run))}]}
+
+   "Merlin"
+   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
 
    "Mother Goddess"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -1502,6 +1534,13 @@
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
                 {:msg "do 2 net damage" :effect (effect (damage :net 2))}
                 {:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+
+   "Snoop"
+   {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
+                {:counter-cost 1 :label "Look at all cards in Grip and trash 1 card"
+                 :msg (msg "Look at all cards in Grip and trashes " (:title target))
+                 :choices (req (:hand runner)) :prompt "Choose a card to trash"
+                 :effect (effect (trash target))}]}
 
    "Swarm"
    {:advanceable :always
@@ -1635,7 +1674,11 @@
    {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
 
    "Deep Thought"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
+             :runner-turn-begins
+             {:req (req (>= (:counter card) 3)) :msg "look at the top card of R&D"
+              :effect (effect (prompt! card (str "The top card of your R&D is "
+                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Doppelgänger"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}

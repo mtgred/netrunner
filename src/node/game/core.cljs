@@ -541,8 +541,9 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost]}]
-     (let [dest [:rig (to-keyword type)]]
+  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost no-cost]}]
+     (let [dest [:rig (to-keyword type)]
+           cost (if no-cost 0 cost)]
        (when (and (or (not uniqueness) (not (in-play? state card)))
                   (if-let [req (:req (card-def card))] (req state card) true)
                   (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
@@ -562,8 +563,8 @@
   ([state side card server] (corp-install state side card server nil))
   ([state side card server {:keys [extra-cost no-install-cost] :as args}]
      (if-not server
-       (prompt! state side card "Choose a server" (server-list state card)
-                {:effect (effect (corp-install card target args))})
+       (prompt! state side card (str "Choose a server to install " (:title card))
+                (server-list state card) {:effect (effect (corp-install card target args))})
        (let [dest (case server
                     "HQ" [:servers :hq]
                     "R&D" [:servers :rd]
