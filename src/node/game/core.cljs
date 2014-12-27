@@ -643,7 +643,7 @@
       nil)))
 
 (defn click-run [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (pay state :runner :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run])) (pay state :runner nil :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)))
 
