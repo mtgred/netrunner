@@ -1368,11 +1368,9 @@
                  :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (map? target))
                  :effect (effect (corp-install target nil {:no-install-cost true}))}
                 {:msg "install a card from Archives" :choices (req (:discard corp))
-                 :prompt "Choose a card to install"
-                 :effect (effect (corp-install target nil))}
+                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}
                 {:msg "install a card from HQ" :choices (req (:hand corp))
-                 :prompt "Choose a card to install"
-                 :effect (effect (corp-install target nil))}]}
+                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
 
    "Ashigaru"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

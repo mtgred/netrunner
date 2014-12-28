@@ -29,7 +29,7 @@
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
                             (and (= (first r) (first s))
-                                 (= (last r) (str (last s)))))]
+                                 (= (last r) (last s))))]
         ~@expr)))
 
 (defmacro msg [& expr]

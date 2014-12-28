@@ -25,18 +25,17 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+    (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
              (or (not forfeit-cost) (not (empty? scored))))
-      (do (when forfeit-cost
-            (if (= (count scored) 1)
-              (forfeit state side (first scored))
-              (prompt! state side card "Choose an Agenda to forfeit" scored
-                       {:effect (effect (forfeit target))})))
-          (not (doseq [c costs]
-                 (when (= (first c) :click)
-                   (swap! state assoc-in [side :register :spent-click] true))
-                 (swap! state update-in [side (first c)] #(- % (last c))))))
-      false)))
+      (when forfeit-cost
+           (if (= (count scored) 1)
+             (forfeit state side (first scored))
+             (prompt! state side card "Choose an Agenda to forfeit" scored
+                      {:effect (effect (forfeit target))})))
+      (not (doseq [c costs]
+             (when (= (first c) :click)
+               (swap! state assoc-in [side :register :spent-click] true))
+             (swap! state update-in [side (first c)] #(- % (last c))))))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -255,49 +254,23 @@
         runner-deck (create-deck (:deck runner))
         corp-identity (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"})
         runner-identity (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"})
-        state (atom {:gameid gameid
-                     :log []
-                     :active-player :runner
-                     :end-turn true
-                     :corp {:user (:user corp)
-                            :identity corp-identity
-                            :deck (zone :deck (drop 5 corp-deck))
-                            :hand (zone :hand (take 5 corp-deck))
-                            :discard []
-                            :scored []
-                            :rfg []
-                            :play-area []
-                            :servers {:hq {} :rd{} :archives {} :remote []}
-                            :click 3
-                            :credit 5
-                            :bad-publicity 0
-                            :agenda-point 0
-                            :max-hand-size 5
-                            :click-per-turn 3
-                            :agenda-point-req 7
-                            :keep false}
-                     :runner {:user (:user runner)
-                              :identity runner-identity
-                              :deck (zone :deck (drop 5 runner-deck))
-                              :hand (zone :hand (take 5 runner-deck))
-                              :discard []
-                              :scored []
-                              :rfg []
-                              :play-area []
-                              :rig {:program [] :resource [] :hardware []}
-                              :click 4
-                              :credit 5
-                              :memory 4
-                              :link 0
-                              :tag 0
-                              :hq-access 1
-                              :rd-access 1
-                              :agenda-point 0
-                              :max-hand-size 5
-                              :brain-damage 0
-                              :click-per-turn 4
-                              :agenda-point-req 7
-                              :keep false}})]
+        state (atom
+               {:gameid gameid :log [] :active-player :runner :end-turn true
+                :corp {:user (:user corp) :identity corp-identity
+                       :deck (zone :deck (drop 5 corp-deck))
+                       :hand (zone :hand (take 5 corp-deck))
+                       :discard [] :scored [] :rfg [] :play-area []
+                       :servers {:hq {} :rd{} :archives {} :remote []}
+                       :click 3 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
+                       :click-per-turn 3 :agenda-point-req 7 :keep false}
+                :runner {:user (:user runner) :identity runner-identity
+                         :deck (zone :deck (drop 5 runner-deck))
+                         :hand (zone :hand (take 5 runner-deck))
+                         :discard [] :scored [] :rfg [] :play-area []
+                         :rig {:program [] :resource [] :hardware []}
+                         :click 4 :credit 5 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
+                         :hq-access 1 :rd-access 1
+                         :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (swap! game-states assoc gameid state)))
@@ -381,7 +354,7 @@
                 (= server "R&D") [:rd]
                 (= server "Archives") [:archives]
                 (keyword? server) [server]
-                :else [:remote (last (split server " "))])
+                :else [:remote (-> (split server " ") last js/parseInt)])
              ices (get-in @state (concat [:corp :servers] s [:ices]))]
          (swap! state assoc :per-run nil
                 :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
@@ -429,7 +402,7 @@
   (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
 
 (defmethod access :remote [state side server]
-  (get-in @state [:corp :servers :remote (js/parseInt (last server)) :content]))
+  (get-in @state [:corp :servers :remote (last server) :content]))
 
 (defn access-bonus [state side n]
   (swap! state update-in [:run :access-bonus] #(+ % n)))
