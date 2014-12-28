@@ -286,6 +286,9 @@
                                   :effect #(do (draw %1 :runner 2)
                                                (when (zero? (:counter %3)) (trash %1 :runner %3)))}}}
 
+   "Early Bird"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target))}
+
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
 
@@ -760,7 +763,7 @@
                   :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Paper Tripping"
-   {:req (req (not (:spent-click runner-reg))) :effect (effect (lose :tag :all))}
+   {:effect (effect (lose :tag :all))}
 
    "Parasite"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}}
@@ -1064,6 +1067,9 @@
    "The Toolbox"
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
     :recurring 2}
+
+   "Three Steps Ahead"
+   {}
 
    "Thomas Haas"
    {:advanceable :always
@@ -1717,9 +1723,6 @@
    "Doppelgänger"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
-   "Early Bird"
-   {:req (req (not (:spent-click runner-reg)))}
-
    "Eden Shard"
    {:abilities [{:effect (effect (trash card) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]}
@@ -1793,6 +1796,4 @@
 
    "The Source"
    {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
-
-   "Three Steps Ahead"
-   {:req (req (not (:spent-click runner-reg)))}})
+})

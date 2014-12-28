@@ -531,6 +531,8 @@
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)] (req state card targets) true)
+                  (not (and (has? card :subtype "Priority")
+                            (get-in @state [side :register :spent-click])))
                   (pay state side card :credit (:cost card) extra-cost
                        (when-not no-additional-cost additional-cost)))
          (let [c (move state side (assoc card :seen true) :play-area)]
