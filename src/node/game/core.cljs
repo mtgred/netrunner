@@ -119,7 +119,7 @@
 (declare optional-ability)
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices] :as ability}
+                                          once-key optional prompt choices end-turn] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
              (not (get-in @state [once (or once-key cid)]))
@@ -141,7 +141,10 @@
         (when msg
           (let [desc (if (string? msg) msg (msg state side card targets))]
             (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-        (when effect (effect state side c targets)))
+        (when effect (effect state side c targets))
+        (when end-turn
+          (swap! state update-in [side :register :end-turn]
+                 #(conj % {:ability end-turn :card card :targets targets}))))
       (when once (swap! state assoc-in [once (or once-key cid)] true)))))
 
 (defn prompt! [state side card msg choices ability]
@@ -515,6 +518,8 @@
               (flatline state))
             (trigger-event state side :runner-turn-ends))
         (trigger-event state side :corp-turn-ends))
+      (doseq [a (get-in @state [side :register :end-turn])]
+        (resolve-ability state side (:ability a) (:card a) (:targets a)))
       (swap! state assoc :end-turn true))))
 
 (defn purge [state side]

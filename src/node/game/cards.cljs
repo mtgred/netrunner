@@ -529,6 +529,12 @@
              :unsuccessful-run {:msg "take 1 tag" :once :per-turn :once-key :john-masanori-tag
                                 :effect (effect (gain :tag 1))}}}
 
+   "Joshua B."
+   {:events {:runner-turn-begins
+             {:optional {:prompt "Use Joshua B. to gain [Click]?" :msg "gain [Click]"
+                         :effect (effect (gain :click 1))
+                         :end-turn {:effect (effect (gain :tag 1)) :msg "gain 1 tag"}}}}}
+
    "Investigative Journalism"
    {:req (req (> (:bad-publicity corp) 0))
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
@@ -1036,6 +1042,21 @@
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
 
+   "Test Run"
+   {:prompt "Install a card from Stack or Heap?" :choices ["Stack" "Heap"]
+    :msg (msg "install a card from " target) :effect
+    (effect (resolve-ability
+             {:prompt "Choose a card to install"
+              :choices (req (filter #(= (:type %) "Program")
+                                    ((if (= target "Heap") :discard :deck) runner)))
+              :effect (effect (runner-install target {:no-cost true}))
+              :end-turn
+              {:req (some #(when (= (:cid target) (:cid %))) (get-in runner [:rig :program]))
+               :msg (msg "move " (:title target) " on top of Stack")
+               :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
+                                                   (get-in runner [:rig :program])) :deck true))}}
+             card targets))}
+
    "TGTBT"
    {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
@@ -1069,7 +1090,8 @@
     :recurring 2}
 
    "Three Steps Ahead"
-   {}
+   {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
+               :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Thomas Haas"
    {:advanceable :always
@@ -1700,9 +1722,8 @@
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
 
    "Breaking News"
-   {:effect (effect (gain :runner :tag 2))
-    :events {:corp-turn-end {:effect #(do (lose %1 :runner :tag 2)
-                                          (unregister-event %1 %2 :corp-turn-ends %3))}}}
+   {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
+    :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}

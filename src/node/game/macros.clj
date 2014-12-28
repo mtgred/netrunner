@@ -8,8 +8,9 @@
                          expr)]
         `(let ~['runner '(:runner @state)
                 'corp '(:corp @state)
-                'target '(first targets)
-                'register '(:register @state)]
+                'corp-reg '(get-in @state [:corp :register])
+                'runner-reg '(get-in @state [:runner :register])
+                'target '(first targets)]
            ~@actions))))
 
 (defmacro req [& expr]
@@ -35,5 +36,7 @@
   `(fn ~['state 'side 'card 'targets]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
+            'corp-reg '(get-in @state [:corp :register])
+            'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)]
        (str ~@expr))))
