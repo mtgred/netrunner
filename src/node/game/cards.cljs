@@ -170,6 +170,10 @@
                (gain % :corp :credit 7)
                (lose % :corp :credit :all))}
 
+   "Crash Space"
+   {:recurring 2
+    :abilities [{:msg "prevent 3 meat damages" :effect (effect (trash card))}]}
+
    "Cybsoft MacroDrive"
    {:recurring 1}
 
@@ -379,6 +383,9 @@
    "Government Takeover"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Grappling Hook"
+   {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card))}]}
+
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
 
@@ -581,6 +588,13 @@
    "Lockpick"
    {:recurring 1}
 
+   "Logos"
+   {:effect (effect (gain :memory 1 :max-hand-size 1))
+    :leave-play (effect (lose :memory 1 :max-hand-size 1))
+    :events {:agenda-scored
+             {:prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+              :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
+
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
 
@@ -657,6 +671,10 @@
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
+
+   "NeoTokyo Grid"
+   {:events {:advance {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
+                       :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Nerve Agent"
    {:events {:successful-run {:req (req (= target :hq))
@@ -760,6 +778,10 @@
    {:msg (msg "do " (count (:scored runner)) " net damages")
     :effect (effect (damage :net (count (:scored runner))))}
 
+   "Planned Assault"
+   {:msg (msg "play " (:title target)) :choices (req (filter #(has? % :subtype "Run") (:deck runner)))
+    :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
+
    "Plascrete Carapace"
    {:data [:counter 4]
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
@@ -860,6 +882,12 @@
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Reclamation Order"
+   {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
+    :choices (req (filter #(not= (:title %) "Reclamation Order") (:discard corp)))
+    :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
+               (move state side c :hand)))}
+
    "Research Station"
    {:effect (effect (gain :max-hand-size 2))
     :leave-play (effect (lose :max-hand-size 2))}
@@ -907,6 +935,12 @@
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (play-instant target) (trash card))}]}
+
+   "Savoir-faire"
+   {:abilities [{:cost [:credit 2] :once :per-turn :msg (msg "install " (:title target))
+                 :prompt "Choose a program to install"
+                 :choices (req (filter #(= (:type %) "Program") (:hand runner)))
+                 :effect (effect (runner-install target))}]}
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
@@ -1720,10 +1754,6 @@
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg))}
-
-   "Logos"
-   {:effect (effect (gain :memory 1 :max-hand-size 1))
-    :leave-play (effect (lose :memory 1 :max-hand-size 1))}
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))}

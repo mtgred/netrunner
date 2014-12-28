@@ -182,7 +182,9 @@
          (resolve-ability state (to-keyword (:side card)) (:ability e) card [target])))))
 
 (defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ % n))))
+  (update! state side (update-in card [key] #(+ % n)))
+  (when (= key :advance-counter)
+    (trigger-event state side :advance card)))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -523,11 +525,14 @@
 
 (defn play-instant
   ([state side card] (play-instant state side card nil))
-  ([state side {:keys [title] :as card} {:keys [targets extra-cost]}]
-     (let [cdef (card-def card)]
+  ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
+     (let [cdef (card-def card)
+           additional-cost (if (has? card :subtype "Double")
+                             (concat (:additional-cost cdef) [:click 1])
+                             (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)] (req state card targets) true)
-                  (pay state side card :credit (:cost card) (:additional-cost cdef)
-                       extra-cost (when (has? card :subtype "Double") [:click 1])))
+                  (pay state side card :credit (:cost card) extra-cost
+                       (when-not no-additional-cost additional-cost)))
          (let [c (move state side (assoc card :seen true) :play-area)]
            (system-msg state side (str "plays " title))
            (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
@@ -611,8 +616,8 @@
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
-    (add-prop state side card :advance-counter 1)
-    (system-msg state side "advances a card")))
+    (system-msg state side "advances a card")
+    (add-prop state side card :advance-counter 1)))
 
 (defn forfeit [state side card]
   (system-msg state side (str "forfeit " (:title card)))
