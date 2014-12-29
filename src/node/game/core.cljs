@@ -20,6 +20,7 @@
 
 (declare prompt!)
 (declare forfeit)
+(declare trigger-event)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -34,6 +35,7 @@
                       {:effect (effect (forfeit target))})))
       (not (doseq [c costs]
              (when (= (first c) :click)
+               (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
                (swap! state assoc-in [side :register :spent-click] true))
              (swap! state update-in [side (first c)] #(- % (last c))))))))
 
@@ -86,7 +88,6 @@
                        (get-in @state [:corp :servers :remote]))))))
       moved-card)))
 
-(declare trigger-event)
 
 (defn draw
   ([state side] (draw state side 1))

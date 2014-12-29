@@ -17,6 +17,12 @@
                        {:effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
                                         (lose :corp :credit (min 5 (:credit corp))))}}))}
 
+   "Activist Support"
+   {:events
+    {:corp-turn-begins {:req (req (not tagged)) :msg "take 1 tag" :effect (effect (gain :runner :tag 1))}
+     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) :msg "give the Corp 1 bad publicity"
+                          :effect (effect (gain :corp :bad-publicity 1))}}}
+
    "Adonis Campaign"
    {:data {:counter 12}
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
@@ -89,6 +95,9 @@
 
    "Biotic Labor"
    {:effect (effect (gain :click 2))}
+
+   "Blackguard"
+   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
@@ -315,11 +324,14 @@
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
+   "Executive Wiretaps"
+   {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}
+
    "Expert Schedule Analyzer"
    {:abilities
     [{:cost [:click 1] :msg "make run on HQ"
       :effect (effect (run :hq {:replace-access
-                                {:msg (msg "reveal all cards in HQ: " (map :title (:hand corp)))}}))}]}
+                                {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}}))}]}
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
@@ -788,7 +800,9 @@
     :effect (effect (damage :net (count (:scored runner))))}
 
    "Planned Assault"
-   {:msg (msg "play " (:title target)) :choices (req (filter #(has? % :subtype "Run") (:deck runner)))
+   {:msg (msg "play " (:title target))
+    :choices (req (filter #(and (has? % :subtype "Run")
+                                (<= (:cost %) (:credit runner))) (:deck runner)))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
 
    "Plascrete Carapace"
@@ -923,6 +937,21 @@
    {:prompt "Choose a card to shuffle into R&D" :choices (req (:hand corp))
     :effect (effect (move target :deck) (shuffle! :deck))}
 
+   "Rex Campaign"
+   {:data [:counter 3]
+    :events {:corp-turn-begins
+             {:effect (req (add-prop state side card :counter -1)
+                           (when (= (:counter card) 1)
+                             (trash state side card)
+                             (resolve-ability state side
+                                              {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+                                               :choices ["Remove 1 bad publicity" "Gain 5 credits"]
+                                               :msg (msg (.toLowerCase target))
+                                               :effect (req (if (= target "Remove 1 bad publicity")
+                                                              (lose state side :bad-publicity 1)
+                                                              (gain state side :credit 5)))}
+                                              card targets)))}}}
+
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
@@ -997,6 +1026,13 @@
    "Simone Diego"
    {:recurring 2}
 
+   "Singularity"
+   {:prompt "Choose a server" :choices (req remotes)
+    :effect (effect (run target
+                      {:replace-access
+                       {:effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
+                                       (trash state side c)))}}))}
+
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make run on Archives"
                  :effect (effect (run :archives
@@ -1035,6 +1071,10 @@
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
+
+   "Sundew"
+   {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
+                                  :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
@@ -1126,6 +1166,9 @@
 
    "Valencia Estevez: The Angel of Cayambe"
    {:effect (effect (gain :corp :bad-publicity 1))}
+
+   "Vamp"
+   {:effect (effect (run :hq {:replace-access {:effect (effect (gain :tag 1))}}))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1235,9 +1278,10 @@
                 {:cost [:credit 1] :msg "add 5 strength" :effect (effect (pump card 5))}]}
 
    "Darwin"
-   {:abilities [{:cost [:credit 2] :msg "break ICE subroutine"}
-                {:cost [:credit 1] :once :per-turn :msg "place 1 virus counter"
-                 :effect (effect (add-prop card :counter 1))}]}
+   {:events {:runner-turn-begins
+             {:optional {:cost [:credit 1] :prompt "Place 1 virus counter on Darwin?"
+                         :msg "place 1 virus counter" :effect (effect (add-prop card :counter 1))}}}
+    :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
 
    "Deus X"
    {:abilities [{:msg "break any number of AP subroutine" :effect (effect (trash card))}
@@ -1498,6 +1542,9 @@
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Ireress"
+   {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}

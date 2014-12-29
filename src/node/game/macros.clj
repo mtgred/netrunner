@@ -23,8 +23,8 @@
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
             'installed '(#{:rig :servers} (first (:zone card)))
-            'servers '(concat ["HQ" "R&D" "Archives"]
-                              (map #(str "Server " %) (range (count (get-in corp [:servers :remote])))))
+            'remotes '(map #(str "Server " %) (range (count (get-in corp [:servers :remote]))))
+            'servers '(concat ["HQ" "R&D" "Archives"] remotes)
             'tagged '(> (get-in @state [:runner :tag]) 0)
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
