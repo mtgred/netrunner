@@ -88,7 +88,6 @@
                        (get-in @state [:corp :servers :remote]))))))
       moved-card)))
 
-
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
@@ -245,7 +244,10 @@
                      " (" (if (> delta 0) (str "+" delta) delta) ")"))))
 
 (defn create-deck [deck]
-  (shuffle (mapcat #(map (fn [c] (assoc c :cid (make-cid))) (repeat (:qty %) (:card %)))
+  (shuffle (mapcat #(map (fn [card]
+                           (let [c (assoc card :cid (make-cid))]
+                             (if-let [init (:init (card-def c))] (merge c init) c)))
+                         (repeat (:qty %) (:card %)))
                    (:cards deck))))
 
 (defn init-game [{:keys [players gameid] :as game}]

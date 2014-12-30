@@ -777,8 +777,8 @@
     :leave-play #(remove-watch % :order-of-sol)}
 
    "Panic Button"
-    {:abilities [{:cost [:credit 1] :effect (effect (draw))
-                  :req (req (and run (= (first (:server run)) :hq)))}]}
+   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
+                                     :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Paper Tripping"
    {:effect (effect (lose :tag :all))}
@@ -912,8 +912,8 @@
                (move state side c :hand)))}
 
    "Research Station"
-   {:effect (effect (gain :max-hand-size 2))
-    :leave-play (effect (lose :max-hand-size 2))}
+   {:init {:root "HQ"}
+    :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
    "Restoring Face"
    {:effect (effect (lose :bad-publicity 2))}
