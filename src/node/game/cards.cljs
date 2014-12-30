@@ -628,6 +628,15 @@
                  :effect #(do (gain %1 :runner :credit 4)
                               (when (= (:counter %3) 0) (trash %1 :runner %3)))}]}
 
+   "License Acquisition"
+   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
+    :msg (msg "install a card from " target)
+    :effect (effect (resolve-ability
+                     {:prompt "Choose a card to install" :msg (msg "install and rez " (:title target))
+                      :choices (req (filter #(#{"Asset" "Upgrade"} (:type %))
+                                            ((if (= target "HQ") :hand :discard) corp)))
+                      :effect (effect (corp-install target nil {:rezzed true}))} card targets))}
+
    "Lockpick"
    {:recurring 1}
 

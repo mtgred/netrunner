@@ -22,7 +22,7 @@
    "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses"))})
    "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag"))})
    "play" core/play
-   "rez" core/rez
+   "rez" core/rez-card
    "derez" core/derez
    "run" core/click-run
    "no-action" core/no-action
