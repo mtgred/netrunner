@@ -142,8 +142,19 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
+   "Character Assassination"
+   {:prompt "Choose a resource to trash" :choices (req (get-in runner [:rig :resource]))
+    :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+
    "Chronos Project"
    {:effect (effect (move :runner :discard :rfg))}
+
+   "City Surveillance"
+   {:events {:runner-turn-begins
+             {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 credit" "Take 1 tag"]
+              :player :runner
+              :effect (req (when-not (and (= target "Pay 1 credit") (pay state side card :credit 1))
+                             (gain state side :tag 1)))}}}
 
    "Cloak"
    {:recurring 1}
@@ -243,6 +254,17 @@
 
    "Dedicated Technician Team"
    {:recurring 2}
+
+   "Déjà Vu"
+   {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
+    :msg (msg "add " (:title target) " to his Grip")
+    :effect (req (move state side target :hand)
+                 (when (has? target :subtype "Virus")
+                   (resolve-ability state side
+                                    {:prompt "Choose a virus to add to Grip"
+                                     :msg (msg "add " (:title target) " to his Grip")
+                                     :choices (req (filter #(has? % :subtype "Virus") (:discard runner)))
+                                     :effect (effect (move target :hand))} card nil)))}
 
    "Demolition Run"
    {:prompt "Choose a server" :choices ["HQ" "R&D"] :effect (effect (run target))}
@@ -357,7 +379,7 @@
 
    "Fester"
    {:events {:purge {:msg "force the corp to lose 2 [Credits] if able"
-                     :effect (effect (pay :corp :credit 2))}}}
+                     :effect (effect (pay :corp card :credit 2))}}}
 
    "Firmware Updates"
    {:data [:counter 3]
@@ -1448,7 +1470,7 @@
 
    "Datapike"
    {:abilities [{:msg "force the runner to pay 2 [Credits] if able"
-                 :effect (effect (pay :runner :credit 2))}
+                 :effect (effect (pay :runner card :credit 2))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Data Raven"

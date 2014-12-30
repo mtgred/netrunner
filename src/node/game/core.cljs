@@ -118,7 +118,7 @@
 (declare optional-ability)
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices end-turn] :as ability}
+                                          once-key optional prompt choices end-turn player] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
              (not (get-in @state [once (or once-key cid)]))
@@ -126,7 +126,7 @@
     (optional-ability state side card (:prompt optional) optional targets))
   (if choices
     (let [cs (if (sequential? choices) choices (choices state side card targets))]
-      (prompt! state side card prompt cs (dissoc ability :choices)))
+      (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets))
                (<= counter-cost counter)
