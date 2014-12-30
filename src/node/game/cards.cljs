@@ -8,14 +8,25 @@
             [game.utils :refer [has?]]))
 
 (def cards
-  {"Access to Globalsec"
+  {"Accelerated Beta Test"
+   {:optional {:prompt "Look at the top 3 cards of R&D?"
+               :msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                           (str "install " c " ICE and trash " (- 3 c) " cards")))
+               :effect (req (doseq [c (take 3 (:deck corp))]
+                              (if (= (:type c) "ICE")
+                                (corp-install state side c nil {:no-install-cost true :rezzed true})
+                                (trash state side c))))}}
+
+   "Access to Globalsec"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
 
    "Account Siphon"
-   {:effect (effect (run :hq
-                      {:replace-access
-                       {:effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
-                                        (lose :corp :credit (min 5 (:credit corp))))}}))}
+   {:effect (effect (run :hq {:replace-access
+                              {:msg (msg "Account Siphon to force the Corp to lose " (min 5 (:credit corp))
+                                         " [Credits], gain " (* 2 (min 5 (:credit corp)))
+                                         " [Credits] and take 2 tags")
+                               :effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
+                                               (lose :corp :credit (min 5 (:credit corp))))}}))}
 
    "Activist Support"
    {:events
@@ -69,6 +80,16 @@
 
    "Anonymous Tip"
    {:effect (effect (draw 3))}
+
+   "Argus Security: Protection Guaranteed"
+   {:events {:agenda-stolen
+             {:prompt "Take 1 tag or suffer 2 meat damage?"
+              :choices ["1 tag" "2 meat damages"] :player :runner
+              :msg "make the Runner take 1 tag or suffer 2 meat damage"
+              :effect (req (if (= target "1 tag")
+                             (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
+                             (do (damage state :runner :meat 2)
+                                 (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
@@ -152,9 +173,10 @@
    "City Surveillance"
    {:events {:runner-turn-begins
              {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 credit" "Take 1 tag"]
-              :player :runner
-              :effect (req (when-not (and (= target "Pay 1 credit") (pay state side card :credit 1))
-                             (gain state side :tag 1)))}}}
+              :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
+              :effect (req (if-not (and (= target "Pay 1 credit") (pay state side card :credit 1))
+                             (do (gain state side :tag 1) (system-msg state side "takes 1 tag"))
+                             (system-msg state side "pays 1 [Credits]")))}}}
 
    "Cloak"
    {:recurring 1}
@@ -172,6 +194,16 @@
 
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
+
+   "Code Siphon"
+   {:effect (effect (run :rd
+                      {:replace-access
+                       {:prompt "Choose a program to install"
+                        :msg (msg "Code Siphon to install " (:title target) " and take 1 tag")
+                        :choices (req (filter #(and (has? % :type "Program")
+                                                    (<= (:cost %) (:credit runner))) (:deck runner)))
+                        :effect (effect (gain :tag 1)
+                                        (runner-install target) (shuffle! :deck))}}))}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
@@ -1701,8 +1733,9 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
-   {:msg "force the runner to lose 3 [Credits]" :effect (effect (lose :runner :credit 3))
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "force the runner to lose 3 [Credits]"
+                 :effect (effect (lose :runner :credit 3))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Tsurugi"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
