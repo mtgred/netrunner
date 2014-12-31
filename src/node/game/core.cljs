@@ -552,6 +552,7 @@
   (let [cdef (card-def card)]
     (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
       (card-init state side (assoc card :rezzed true))
+      (system-msg state side (str "rez " (:title card)))
       (trigger-event state side :rez card))))
 
 (defn corp-install
@@ -589,7 +590,6 @@
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]})))
 
 (defn rez-card [state side {:keys [card]}]
-  (system-msg state side (str "rez " (:title card)))
   (rez state side card nil))
 
 (defn derez [state side {:keys [card]}]
