@@ -179,9 +179,10 @@
 (defn trigger-event
   ([state side event] (trigger-event state side event nil))
   ([state side event target]
-     (doseq [e (get-in @state [:events event])]
+     (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
        (when-let [card (get-card state (:card e))]
-         (resolve-ability state (to-keyword (:side card)) (:ability e) card [target])))))
+         (when (or (not (:req ability)) ((:req ability) state side card [target]))
+           (resolve-ability state (to-keyword (:side card)) ability card [target]))))))
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ % n)))
