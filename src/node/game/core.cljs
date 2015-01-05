@@ -122,16 +122,12 @@
                                once-key optional prompt choices end-turn player] :as ability}
                        {:keys [title cid counter advance-counter] :as card}
                        targets]
-  (.log js/console "in resolve-ability")
-  (.log js/console (str "check it " (pr-str choices)))
-  (.log js/console (str "corp got " (pr-str (-> @state side :credit))))
   (when (and optional
              (not (get-in @state [once (or once-key cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
     (optional-ability state side card (:prompt optional) optional targets))
   (if choices
     (let [cs (if (sequential? choices) choices (choices state side card targets))]
-      (.log js/console (str "resolve-ability called for " (:title card)))
       (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets))
@@ -146,8 +142,7 @@
         (when msg
           (let [desc (if (string? msg) msg (msg state side card targets))]
             (system-msg state side (str "uses " title (when desc (str " to " desc))))))        
-        (when effect (.log js/console "'bout to call effect") (effect state side c targets)
-              (.log js/console "called effect"))
+        (when effect (effect state side c targets))
         (when end-turn
           (swap! state update-in [side :register :end-turn]
                  #(conj % {:ability end-turn :card card :targets targets}))))
@@ -268,6 +263,7 @@
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
                 :access-queue []
+                :cards-accessed 0
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
@@ -358,25 +354,20 @@
     (trigger-event state :runner :agenda-stolen c)))
 
 (declare register-pending-input)
+(declare deregister-pending-input)
 (defn psi-game [{:keys [ability-corp-win ability-runner-win]}]
   (effect-with-pending-input
    (resolve-ability
-    {:prompt (do (.log js/console "NI")
-                 #(str "Secretly spend how many credits for " (:title %3) "?"))
-     :choices (req (do (.log js/console (pr-str (str "heerrrrp "
-                                                     (->
-                                                      @state
-                                                      side :credit))))
-                       (map str
-                            (filter #(>= (-> @state side :credit) %)
-                                    [0 1 2]))))
+    {:prompt #(str "Secretly spend how many credits for " (:title %3) "?")
+     :choices (req (map str
+                        (filter #(>= (-> @state side :credit) %)
+                                [0 1 2])))
      :effect
      (effect-with-pending-input    
       (resolve-ability
        :runner
        {:prompt
-        (do ; (.log js/console "HAO")
-            #(str "Secretly spend how many credits for " (:title %3) "?"))
+        #(str "Secretly spend how many credits for " (:title %3) "?")
         :choices
         (req (map str
                   (filter #(>= (-> @state :runner :credit) %)
@@ -386,6 +377,8 @@
           (effect-with-pending-input
            (system-msg :runner (str "paid " target))
            (system-msg :corp (str "paid " corp-paid))
+           (pay :runner card :credit (let [runner-paid (int target)] runner-paid))
+           (pay :corp card :credit corp-paid)
            ; NB: here target is bound to result of runner prompt
            (resolve-ability (let [runner-paid (int target)]
                               (if (not= runner-paid corp-paid)
@@ -423,8 +416,6 @@
   (swap! state assoc :access true)
   (let [c card]    
     (when-let [access-effect (:access (card-def c))]
-      (.log js/console "in handle-access")
-      (.log js/console (str "before entering " (pr-str (keys access-effect))))
       (resolve-ability state (to-keyword (:side c)) access-effect c nil))
     (when (not (:pending-input @state))
       (normal-access state side c))))
@@ -477,24 +468,25 @@
       (resolve-ability state side end-run-effect nil [(first server)])))
   (swap! state assoc :run nil))
 
-(defn access-queue [state side cards]
+(defn access-queue [state side cards first-card-num]
   (let [f (fn [n cards]
             (let [c (first cards)]
-              (system-msg state side (str "Accessing card #: " n))
-              (.log js/console "calling access-queue for " (:title c))
-              (handle-access state side c)
-              (if-not (or (:pending-input state)
-                          (empty? (rest cards)))
-                (recur (inc n) (rest cards))                 
-                (rest cards))))
-        cards-pending (f 1 cards)]
+              (if-not (or (:pending-input @state)
+                          (empty? cards))
+                (do (system-msg state side (str "Accessing card #: " n))
+                    (handle-access state side c)
+                    (recur (inc n) (rest cards)))                 
+                cards)))
+        number-to-access (count cards)
+        cards-pending (f first-card-num cards)]
     (swap! state assoc-in [:pending-accesses] cards-pending)
+    (swap! state assoc-in [:cards-accessed] (- number-to-access (count cards-pending)))
     (if (empty? cards-pending) ; FIXME: Add logic here for Raymond Flint, Shiro, et al
       (handle-end-run state side))))
 
 (defn do-access [state side server]
-  (let [cards (access state side server)]    
-    (access-queue state side cards)))
+  (let [cards (access state side server)]
+    (access-queue state side cards 1)))
 
 (defn successful-run [state side]
   (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
@@ -678,11 +670,16 @@
   (swap! state assoc-in [:runner :register :prevent-steal] true))
 
 (defn register-pending-input [state side card targets]
-  (.log js/console "registering pending input")
-  (swap! state assoc-in [:pending-input] true))
+  (swap! state assoc-in [:pending-input] true)
+  (let [other-side (if (= side :corp) :runner :corp)]
+    (prompt! state other-side card
+             (str "Waiting for other player's input on card: " (:title card))
+             ["OK"] {})))
 
 (defn deregister-pending-input [state side card targets]
-  (swap! state assoc-in [:pending-input] false))
+  (swap! state assoc-in [:pending-input] false)
+  (let [other-side (if (= side :corp) :runner :corp)]
+    (swap! state update-in [other-side :prompt] rest)))
 
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))

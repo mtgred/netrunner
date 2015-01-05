@@ -1183,15 +1183,15 @@
              (psi-game
               {:ability-corp-win
                {:msg "The Future Perfect's ability prevents it from being stolen."
-                :effect (effect
-                 (deregister-pending-input card nil)
-                 (access-queue (:pending-accesses @state)))}
+                :effect (effect                 
+                         (access-queue (:pending-accesses @state)
+                                       (+ 1 (:cards-accessed @state))))}
                :ability-runner-win
                {:msg "The Future Perfect's ability does not prevent it from being stolen."
                 :effect (effect
-                 (deregister-pending-input card nil)
                  (maybe-steal-agenda card)
-                 (access-queue (:pending-accesses @state)))}})}}
+                 (access-queue (:pending-accesses @state)
+                               (+ 1 (:cards-accessed @state))))}})}}
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}

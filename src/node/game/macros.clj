@@ -52,6 +52,9 @@
                 'corp-reg '(get-in @state [:corp :register])
                 'runner-reg '(get-in @state [:runner :register])
                 'target '(first targets)]
+           (when ~'target
+             (~'deregister-pending-input ~'state ~'side ~'card nil))
            (do ~@actions)
-           (~'register-pending-input ~'state ~'side ~'card nil)
+           (when-not ~'target
+             (~'register-pending-input ~'state ~'side ~'card nil))
              ))))
