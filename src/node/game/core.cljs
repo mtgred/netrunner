@@ -66,7 +66,7 @@
     (let [dest (if (sequential? to) (vec to) [to])
           c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
               (assoc card :seen true) card)
-          c (if (#{:servers :rig :scored} (first zone))
+          c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest)))
               (desactivate state side c) c)
           moved-card (assoc c :zone dest)]
       (if front

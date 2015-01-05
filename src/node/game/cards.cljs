@@ -128,7 +128,7 @@
    {:effect (effect (gain :link 1 :max-hand-size 1))
     :leave-play (effect (lose :link 1 :max-hand-size 1))}
 
-   "BOX-E"
+   "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}
 
