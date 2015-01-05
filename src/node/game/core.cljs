@@ -124,27 +124,27 @@
              (not (get-in @state [once (or once-key cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
     (optional-ability state side card (:prompt optional) optional targets))
-  (if choices
-    (let [cs (if (sequential? choices) choices (choices state side card targets))]
-      (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
-    (when (and (not (get-in @state [once (or once-key cid)]))
-               (or (not req) (req state side card targets))
-               (<= counter-cost counter)
-               (<= advance-counter-cost advance-counter)
-               (apply pay (concat [state side card] cost)))
-      (let [c (-> card
-                  (update-in [:counter] #(- % counter-cost))
-                  (update-in [:advance-counter] #(- % advance-counter-cost)))]
-        (when (or counter-cost advance-counter-cost)
-          (update! state side c))
-        (when msg
-          (let [desc (if (string? msg) msg (msg state side card targets))]
-            (system-msg state side (str "uses " title (when desc (str " to " desc))))))
-        (when effect (effect state side c targets))
-        (when end-turn
-          (swap! state update-in [side :register :end-turn]
-                 #(conj % {:ability end-turn :card card :targets targets}))))
-      (when once (swap! state assoc-in [once (or once-key cid)] true)))))
+  (when (and (not (get-in @state [once (or once-key cid)]))
+             (or (not req) (req state side card targets)))
+    (if choices
+      (let [cs (if (sequential? choices) choices (choices state side card targets))]
+        (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
+      (when (and (<= counter-cost counter)
+                 (<= advance-counter-cost advance-counter)
+                 (apply pay (concat [state side card] cost)))
+        (let [c (-> card
+                    (update-in [:counter] #(- % counter-cost))
+                    (update-in [:advance-counter] #(- % advance-counter-cost)))]
+          (when (or counter-cost advance-counter-cost)
+            (update! state side c))
+          (when msg
+            (let [desc (if (string? msg) msg (msg state side card targets))]
+              (system-msg state side (str "uses " title (when desc (str " to " desc))))))
+          (when effect (effect state side c targets))
+          (when end-turn
+            (swap! state update-in [side :register :end-turn]
+                   #(conj % {:ability end-turn :card card :targets targets}))))
+        (when once (swap! state assoc-in [once (or once-key cid)] true))))))
 
 (defn prompt! [state side card msg choices ability]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
@@ -182,7 +182,7 @@
      (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
        (when-let [card (get-card state (:card e))]
          (when (or (not (:req ability)) ((:req ability) state side card [target]))
-           (resolve-ability state (to-keyword (:side card)) ability card [target]))))))
+           (resolve-ability state side ability card [target]))))))
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ % n)))
@@ -316,11 +316,11 @@
 (defn trash
   ([state side card] (trash state side card false))
   ([state side {:keys [zone] :as card} cross]
+     (trigger-event state side :trash card)
      (let [cdef (card-def card)
            moved-card (move state (to-keyword (:side card)) card :discard false cross)]
        (when-let [trash-effect (:trash-effect cdef)]
-         (resolve-ability state side trash-effect moved-card nil))
-       (trigger-event state side :trash moved-card))))
+         (resolve-ability state side trash-effect moved-card nil)))))
 
 (defn pump
   ([state side card n] (pump state side card n false))
@@ -375,8 +375,8 @@
           (let [card (assoc c :seen true)]
             (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
                               {:cost [:credit trash-cost]
-                               :effect (effect (trash :corp card)
-                                               (system-msg (str "pays " trash-cost "[Credits] to trash "
+                               :effect (effect (trash card)
+                                               (system-msg (str "pays " trash-cost " [Credits] to trash "
                                                                 (:title card))))} nil))
           (when-not (= (:type c) "Agenda")
             (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
@@ -552,7 +552,7 @@
   (let [cdef (card-def card)]
     (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
       (card-init state side (assoc card :rezzed true))
-      (system-msg state side (str "rez " (:title card)))
+      (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
       (trigger-event state side :rez card))))
 
 (defn corp-install

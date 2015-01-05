@@ -374,6 +374,12 @@
                                 :effect #(do (gain %1 :corp :credit 2)
                                              (when (zero? (:counter %3)) (trash %1 :corp %3)))}}}
 
+   "Executive Boot Camp"
+   {:abilities [{:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
+                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :cost [:credit 1] :label "Search R&D for an asset"
+                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
+
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
@@ -518,6 +524,17 @@
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
                               :effect (req (damage state side :net 1))}}}
 
+   "Hostage"
+   {:prompt "Choose a Connection to install"
+    :choices (req (filter #(and (has? % :subtype "Connection")
+                                (<= (:cost %) (:credit runner))) (:deck runner)))
+    :effect (effect (runner-install target) (shuffle! :deck))}
+
+   "Hostile Infrastructure"
+   {:events {:trash {:req (req (and (= (:side target) "Corp") (= side :runner)))
+                     :msg "do 1 net damage" :effect (effect (damage :net 1))}}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
@@ -531,16 +548,6 @@
                              :effect (effect (gain :runner :credit (:agendapoints target)))}
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
-
-   "Hostage"
-   {:prompt "Choose a Connection to install"
-    :choices (req (filter #(and (has? % :subtype "Connection")
-                                (<= (:cost %) (:credit runner))) (:deck runner)))
-    :effect (effect (runner-install target) (shuffle! :deck))}
-
-   "Hostile Infrastructure"
-   {:events {:trash {:req (req (and (= (:side target) :corp) (= side :runner)))
-                     :effect (effect (damage :net 1))}}}
 
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
@@ -584,6 +591,11 @@
                                             ((if (= target "HQ") :hand :discard) corp)))
                       :effect (effect (corp-install target nil {:no-install-cost true}))}
                      card targets))}
+
+   "IT Department"
+   {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
+                 :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
+                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
@@ -1227,6 +1239,16 @@
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
                                   :effect (effect (gain :credit 1))}}}
 
+   "Unregistered S&W 35"
+   {:abilities
+    [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
+      :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a card to trash"
+      :choices (req (filter #(and (:rezzed %)
+                                  (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
+                                      (has? % :subtype "Executive") (has? % :subtype "Sysop")))
+                            (mapcat :content (flatten (seq (:servers corp))))))
+      :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
+
    "Valencia Estevez: The Angel of Cayambe"
    {:effect (effect (gain :corp :bad-publicity 1))}
 
@@ -1549,6 +1571,9 @@
 
    "Galahad"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Gemini"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
