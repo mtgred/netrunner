@@ -139,7 +139,8 @@
             (update! state side c))
           (when msg
             (let [desc (if (string? msg) msg (msg state side card targets))]
-              (system-msg state side (str "uses " title (when desc (str " to " desc))))))
+              (system-msg state (to-keyword (:side card))
+                          (str "uses " title (when desc (str " to " desc))))))
           (when effect (effect state side c targets))
           (when end-turn
             (swap! state update-in [side :register :end-turn]
