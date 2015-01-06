@@ -14,6 +14,8 @@
 
   :source-paths ["src/node" "src/cljs"]
 
+  :java-cmd "/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home/bin/java"
+
   :cljsbuild {
     :builds [
       {:id "node"

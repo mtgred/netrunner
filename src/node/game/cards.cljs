@@ -1,9 +1,13 @@
 (ns game.cards
-  (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run unregister-event mill run
-                               gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit prevent-run prevent-jack-out] :as core]
+  (:require-macros [game.macros :refer [effect req msg effect-with-pending-input]])
+  (:require [game.core :refer
+             [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
+              set-prop resolve-ability system-msg end-run unregister-event mill run
+              gain-agenda-point pump access-bonus shuffle! runner-install prompt!
+              play-instant corp-install forfeit prevent-run prevent-jack-out
+              psi-game register-pending-input deregister-pending-input maybe-steal-agenda
+              access-queue]
+             :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -1184,6 +1188,22 @@
             :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                             (shuffle! :deck))
             :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
+
+   "The Future Perfect"
+   {:access {:req (req (some #(= (first (:zone card)) %) [:deck :hand :discard]))
+             :effect
+             (psi-game
+              {:ability-corp-win
+               {:msg "The Future Perfect's ability prevents it from being stolen."
+                :effect (effect                 
+                         (access-queue (:pending-accesses @state)
+                                       (+ 1 (:cards-accessed @state))))}
+               :ability-runner-win
+               {:msg "The Future Perfect's ability does not prevent it from being stolen."
+                :effect (effect
+                 (maybe-steal-agenda card)
+                 (access-queue (:pending-accesses @state)
+                               (+ 1 (:cards-accessed @state))))}})}}
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}

@@ -40,3 +40,21 @@
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)]
        (str ~@expr))))
+
+(defmacro effect-with-pending-input [& expr]
+  `(fn ~['state 'side 'card 'targets]
+     ~(let [actions (map #(if (#{:runner :corp} (second %))
+                            (concat [(first %) 'state (second %)] (drop 2 %))
+                            (concat [(first %) 'state 'side] (rest %)))
+                         expr)]
+        `(let ~['runner '(:runner @state)
+                'corp '(:corp @state)
+                'corp-reg '(get-in @state [:corp :register])
+                'runner-reg '(get-in @state [:runner :register])
+                'target '(first targets)]
+           (when ~'target
+             (~'deregister-pending-input ~'state ~'side ~'card nil))
+           (do ~@actions)
+           (when-not ~'target
+             (~'register-pending-input ~'state ~'side ~'card nil))
+             ))))

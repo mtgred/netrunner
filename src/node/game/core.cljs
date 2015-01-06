@@ -1,5 +1,5 @@
 (ns game.core
-  (:require-macros [game.macros :refer [effect req msg]])
+  (:require-macros [game.macros :refer [effect req msg effect-with-pending-input]])
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc]]
             [clojure.string :refer [split-lines split join]]))
@@ -117,9 +117,11 @@
 
 (declare optional-ability)
 
-(defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices end-turn player] :as ability}
-                       {:keys [title cid counter advance-counter] :as card} targets]
+(defn resolve-ability [state side
+                       {:keys [counter-cost advance-counter-cost cost effect msg req once
+                               once-key optional prompt choices end-turn player] :as ability}
+                       {:keys [title cid counter advance-counter] :as card}
+                       targets]
   (when (and optional
              (not (get-in @state [once (or once-key cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
@@ -146,6 +148,7 @@
             (swap! state update-in [side :register :end-turn]
                    #(conj % {:ability end-turn :card card :targets targets}))))
         (when once (swap! state assoc-in [once (or once-key cid)] true))))))
+
 
 (defn prompt! [state side card msg choices ability]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
@@ -247,7 +250,7 @@
 
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [card]
-                           (let [c (assoc card :cid (make-cid))]
+                           (let [c (assoc card :cid (make-cid) :zone [:deck])]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))
@@ -261,6 +264,8 @@
         runner-identity (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"})
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
+                :access-queue []
+                :cards-accessed 0
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
@@ -344,11 +349,44 @@
 (defn steal [state side card]
   (let [c (move state :runner card :scored false true)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
-    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
+    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda points"))
     (swap! state update-in [:runner :register :stole-agenda] #(+ % (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
     (trigger-event state :runner :agenda-stolen c)))
+
+(declare register-pending-input)
+(declare deregister-pending-input)
+(defn psi-game [{:keys [ability-corp-win ability-runner-win]}]
+  (effect-with-pending-input
+   (resolve-ability
+    {:prompt #(str "Secretly spend how many credits for " (:title %3) "?")
+     :choices (req (map str
+                        (filter #(>= (-> @state side :credit) %)
+                                [0 1 2])))
+     :effect
+     (effect-with-pending-input    
+      (resolve-ability
+       :runner
+       {:prompt
+        #(str "Secretly spend how many credits for " (:title %3) "?")
+        :choices
+        (req (map str
+                  (filter #(>= (-> @state :runner :credit) %)
+                          [0 1 2])))
+        :effect
+        (let [corp-paid (int target)] ; NB: here target is bound to result of corp prompt
+          (effect-with-pending-input
+           (system-msg :runner (str "paid " target))
+           (system-msg :corp (str "paid " corp-paid))
+           (pay :runner card :credit (let [runner-paid (int target)] runner-paid))
+           (pay :corp card :credit corp-paid)
+           ; NB: here target is bound to result of runner prompt
+           (resolve-ability (let [runner-paid (int target)]
+                              (if (not= runner-paid corp-paid)
+                                ability-corp-win
+                                ability-runner-win)) card nil)))}
+       card nil))} card nil)))
 
 (defn run
   ([state side server] (run state side server nil))
@@ -365,30 +403,40 @@
                 :run {:server s :position 0 :ices ices :access-bonus 0 :run-effect run-effect})
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))))
 
-(defn handle-access [state side cards]
+(declare normal-access)
+(defn maybe-steal-agenda [state side c]
+  (if-let [cost (:steal-cost (card-def c))]
+    (optional-ability state side c
+                      (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                      {:cost cost
+                       :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                        " to steal " (:title c)))
+                                       (steal c))} nil)
+    (steal state side c)))
+
+(defn handle-access [state side card]
   (swap! state assoc :access true)
-  (doseq [c cards]
-    (when-let [name (:title c)]
-      (when-let [access-effect (:access (card-def c))]
-        (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-      (when (not= (:zone c) [:discard])
-        (if-let [trash-cost (:trash c)]
-          (let [card (assoc c :seen true)]
-            (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                              {:cost [:credit trash-cost]
-                               :effect (effect (trash card)
-                                               (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                (:title card))))} nil))
-          (when-not (= (:type c) "Agenda")
-            (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
-      (when (= (:type c) "Agenda")
-        (if-let [cost (:steal-cost (card-def c))]
-          (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                            {:cost cost
-                             :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                              " to steal " (:title c)))
-                                             (steal c))} nil)
-          (steal state side c))))))
+  (let [c card]    
+    (when-let [access-effect (:access (card-def c))]
+      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+    (when (not (:pending-input @state))
+      (normal-access state side c))))
+
+(defn normal-access [state side c]
+  (when (not= (:zone c) [:discard])
+    (if-let [trash-cost (:trash c)]
+      (let [card (assoc c :seen true)]
+        (optional-ability state side card
+                          (str "Pay " trash-cost "[Credits] to trash " (:title card) "?")
+                          {:cost [:credit trash-cost]
+                           :effect
+                           (effect (trash :corp card)
+                                   (system-msg (str "pays " trash-cost "[Credits] to trash "
+                                                    (:title card))))} nil))
+      (when-not (= (:type c) "Agenda")
+        (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
+  (when (= (:type c) "Agenda")
+    (maybe-steal-agenda state side c)))
 
 (defmulti access (fn [state side server] (first server)))
 
@@ -422,15 +470,25 @@
       (resolve-ability state side end-run-effect nil [(first server)])))
   (swap! state assoc :run nil))
 
+(defn access-queue [state side cards first-card-num]
+  (let [f (fn [n cards]
+            (let [c (first cards)]
+              (if-not (or (:pending-input @state)
+                          (empty? cards))
+                (do (system-msg state side (str "Accessing card #: " n))
+                    (handle-access state side c)
+                    (recur (inc n) (rest cards)))                 
+                cards)))
+        number-to-access (count cards)
+        cards-pending (f first-card-num cards)]
+    (swap! state assoc-in [:pending-accesses] cards-pending)
+    (swap! state assoc-in [:cards-accessed] (- number-to-access (count cards-pending)))
+    (if (empty? cards-pending) ; FIXME: Add logic here for Raymond Flint, Shiro, et al
+      (handle-end-run state side))))
+
 (defn do-access [state side server]
   (let [cards (access state side server)]
-    (when-not (empty? cards)
-      (if (= (first server) :rd)
-        (let [n (count cards)]
-          (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
-        (system-msg state side (str "accesses " (join ", "(map :title cards)))))
-      (handle-access state side cards)))
-  (handle-end-run state side))
+    (access-queue state side cards 1)))
 
 (defn successful-run [state side]
   (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
@@ -609,6 +667,21 @@
 
 (defn prevent-run [state side]
   (swap! state assoc-in [:runner :register :cannot-run] true))
+
+(defn prevent-steal [state said]
+  (swap! state assoc-in [:runner :register :prevent-steal] true))
+
+(defn register-pending-input [state side card targets]
+  (swap! state assoc-in [:pending-input] true)
+  (let [other-side (if (= side :corp) :runner :corp)]
+    (prompt! state other-side card
+             (str "Waiting for other player's input on card: " (:title card))
+             ["OK"] {})))
+
+(defn deregister-pending-input [state side card targets]
+  (swap! state assoc-in [:pending-input] false)
+  (let [other-side (if (= side :corp) :runner :corp)]
+    (swap! state update-in [other-side :prompt] rest)))
 
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
