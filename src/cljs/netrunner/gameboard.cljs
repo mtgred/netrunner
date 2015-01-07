@@ -506,7 +506,8 @@
                      [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
                      (for [c (:choices prompt)]
                        (if (string? c)
-                         [:button {:on-click #(send-command "choice" {:choice c})} c]
+                         [:button {:on-click #(send-command "choice" {:choice c})
+                                   :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
                          [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))]
                     (if run
                       (let [s (:server run)
