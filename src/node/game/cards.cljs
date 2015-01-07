@@ -3,7 +3,8 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run unregister-event mill run
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit prevent-run prevent-jack-out] :as core]
+                               play-instant corp-install forfeit prevent-run prevent-jack-out
+                               steal] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -139,6 +140,17 @@
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
                                                  (get-in runner [:rig :resource])))))}
+
+   "Caprice Nisei"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
+
+   "Cerebral Cast"
+   {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
+                      :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
+                      :effect (req (if (= target "1 tag")
+                                     (gain state side :tag 1)
+                                     (damage state side :brain 1)))}}}
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect #(add-watch % :cerebral-imaging
@@ -791,6 +803,9 @@
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
     :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (lose :tag 1))}]}
 
+   "Nisei Division: The Next Generation"
+   {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
+
    "Nisei MK II"
    {:data {:counter 1} :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
 
@@ -921,6 +936,11 @@
    "Project Wotan"
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
+
+   "Psychic Field"
+   {:access {:psi {:req (req installed)
+                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
+                               :effect (effect (damage :net (count (:hand runner))))}}}}
 
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -1184,6 +1204,10 @@
             :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                             (shuffle! :deck))
             :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
+
+   "The Future Perfect"
+   {:steal-req (req installed)
+    :access {:psi {:req (req (not installed)) :equal {:effect (effect (steal card))}}}}
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
@@ -1658,7 +1682,9 @@
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
                 {:msg "do 1 net damage using 1 power counter"
                  :counter-cost 1 :effect (effect (damage :net 1))}
-                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+                {:msg "start a Psi game"
+                 :psi {:not-equal {:msg "add 1 power counter"
+                                   :effect (effect (add-prop :runner card :counter 1))}}}]}
 
    "Markus 1.0"
    {:abilities [{:msg "force the runner to trash a card"}
@@ -1736,6 +1762,10 @@
                  :msg (msg "Look at all cards in Grip and trashes " (:title target))
                  :choices (req (:hand runner)) :prompt "Choose a card to trash"
                  :effect (effect (trash target))}]}
+
+   "Snowflake"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
 
    "Swarm"
    {:advanceable :always

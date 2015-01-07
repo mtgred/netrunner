@@ -43,6 +43,12 @@
   (doseq [r (partition 2 args)]
     (swap! state update-in [side (first r)] #(+ % (last r)))))
 
+(defn lose [state side & args]
+  (doseq [r (partition 2 args)]
+    (if (= (last r) :all)
+      (swap! state assoc-in [side (first r)] 0)
+      (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
+
 (defn desactivate [state side card]
   (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed)
         cdef (card-def card)]
@@ -115,15 +121,48 @@
           [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
       (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
-(declare optional-ability)
+(declare resolve-ability)
+
+(defn show-prompt [state side card msg choices f]
+  (let [prompt (if (string? msg) msg (msg state side card nil))]
+    (when (> (count choices) 0)
+      (swap! state update-in [side :prompt] #(conj (vec %) {:msg prompt :choices choices :effect f})))))
+
+(defn resolve-psi [state side card psi bet]
+  (swap! state assoc-in [:psi side] bet)
+  (let [opponent (if (= side :corp) :runner :corp)]
+    (when-let [opponent-bet (get-in @state [:psi opponent])]
+      (lose state opponent :credit opponent-bet)
+      (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
+      (lose state side :credit bet)
+      (system-msg state side (str "spends " bet " [Credits]"))
+      (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+        (resolve-ability state (:side card) ability card nil)))))
+
+(defn psi-game [state side card psi]
+  (swap! state assoc :psi {})
+  (trigger-event state side :psi-game nil)
+  (doseq [s [:corp :runner]]
+    (show-prompt state s card (str "Choose an amount to spend for the Psi game")
+                 (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
+                 #(resolve-psi state s card psi (js/parseInt %)))))
+
+(defn prompt! [state side card msg choices ability]
+  (show-prompt state side card msg choices #(resolve-ability state side ability card [%])))
+
+(defn optional-ability [state side card msg ability targets]
+  (show-prompt state side card msg ["Yes" "No"]
+               #(when (= % "Yes") (resolve-ability state side ability card targets))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices end-turn player] :as ability}
+                                          once-key optional prompt choices end-turn player psi] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
-             (not (get-in @state [once (or once-key cid)]))
+             (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
     (optional-ability state side card (:prompt optional) optional targets))
+  (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
+    (psi-game state side card psi))
   (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state side card targets)))
     (if choices
@@ -147,21 +186,6 @@
                    #(conj % {:ability end-turn :card card :targets targets}))))
         (when once (swap! state assoc-in [once (or once-key cid)] true))))))
 
-(defn prompt! [state side card msg choices ability]
-  (let [prompt (if (string? msg) msg (msg state side card nil))]
-    (when (> (count choices) 0)
-      (swap! state update-in [side :prompt]
-             (fn [p]
-               (conj (vec p) {:msg prompt :choices choices
-                              :effect #(resolve-ability state side ability card [%])}))))))
-
-(defn optional-ability [state side card msg ability targets]
-  (let [prompt (if (string? msg) msg (msg state side card targets))]
-    (swap! state update-in [side :prompt]
-           (fn [p]
-             (conj (vec p) {:msg prompt :choices ["Yes" "No"]
-                            :effect #(when (= % "Yes")
-                                       (resolve-ability state side ability card targets))})))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]
@@ -303,12 +327,6 @@
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "keeps his or her hand"))
 
-(defn lose [state side & args]
-  (doseq [r (partition 2 args)]
-    (if (= (last r) :all)
-      (swap! state assoc-in [side (first r)] 0)
-      (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
-
 (defn gain-agenda-point [state side n]
   (gain state side :agenda-point n)
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
@@ -368,27 +386,29 @@
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
   (doseq [c cards]
-    (when-let [name (:title c)]
-      (when-let [access-effect (:access (card-def c))]
-        (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-      (when (not= (:zone c) [:discard])
-        (if-let [trash-cost (:trash c)]
-          (let [card (assoc c :seen true)]
-            (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                              {:cost [:credit trash-cost]
-                               :effect (effect (trash card)
-                                               (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                (:title card))))} nil))
-          (when-not (= (:type c) "Agenda")
-            (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
-      (when (= (:type c) "Agenda")
-        (if-let [cost (:steal-cost (card-def c))]
-          (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                            {:cost cost
-                             :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                              " to steal " (:title c)))
-                                             (steal c))} nil)
-          (steal state side c))))))
+    (let [cdef (card-def c)]
+      (when-let [name (:title c)]
+        (when-let [access-effect (:access cdef)]
+          (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+        (when (not= (:zone c) [:discard])
+          (if-let [trash-cost (:trash c)]
+            (let [card (assoc c :seen true)]
+              (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                {:cost [:credit trash-cost]
+                                 :effect (effect (trash card)
+                                                 (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                  (:title card))))} nil))
+            (when-not (= (:type c) "Agenda")
+              (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
+        (when (= (:type c) "Agenda")
+          (if-let [cost (:steal-cost (card-def c))]
+            (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                              {:cost cost
+                               :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                " to steal " (:title c)))
+                                               (steal c))} nil)
+            (when (or (not (:steal-req cdef)) ((:steal-req cdef) state side c nil))
+              (steal state side c))))))))
 
 (defmulti access (fn [state side server] (first server)))
 
