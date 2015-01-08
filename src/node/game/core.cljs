@@ -152,7 +152,9 @@
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"]
-               #(when (= % "Yes") (resolve-ability state side ability card targets))))
+               #(if (= % "Yes")
+                  (resolve-ability state side ability card targets)
+                  (system-msg state side (:no-msg ability)))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi] :as ability}
@@ -160,7 +162,7 @@
   (when (and optional
              (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
              (or (not (:req optional)) ((:req optional) state side card targets)))
-    (optional-ability state side card (:prompt optional) optional targets))
+    (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))
   (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
     (psi-game state side card psi))
   (when (and (not (get-in @state [once (or once-key cid)]))

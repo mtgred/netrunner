@@ -343,6 +343,15 @@
                  :effect #(do (when (zero? (:counter %3)) (gain-agenda-point %1 %2 1))
                               (set-prop %1 %2 %3 :counter 1 :agendapoints 1))}]}
 
+   "Doppelgänger"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:successful-run-ends
+             {:optional
+              {:once :per-turn :prompt "Use Doppelgänger to run again?"
+               :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
+                                                 :msg (msg "to make a run on " target)
+                                                 :effect (effect (run target))} card targets))}}}}
+
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 card"}]}
 
@@ -366,6 +375,15 @@
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
+
+   "Edge of World"
+   {:access {:optional
+             {:req (req installed) :cost [:credit 3]
+              :prompt "Pay 3[Credits] to use Edge of World ability?"
+              :msg (msg "do " (count (get-in corp [:servers :remote (last (:server run)) :ices]))
+                        " brain damage")
+              :effect (req (damage state side :brain
+                                   (count (get-in corp [:servers :remote (last (:server run)) :ices]))))}}}
 
    "Efficiency Committee"
    {:data {:counter 3}
@@ -1011,7 +1029,13 @@
     :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
    "Restoring Face"
-   {:effect (effect (lose :bad-publicity 2))}
+   {:prompt "Choose a sysops, executive or clone to trash"
+    :msg (msg "trash " (:title target) " to remove 2 bad publicities")
+    :choices (req (filter #(and (:rezzed %)
+                                (or (has? % :subtype "Clone") (has? % :subtype "Executive")
+                                    (has? % :subtype "Sysop")))
+                          (mapcat :content (flatten (seq (:servers corp))))))
+    :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
    {:effect (effect (gain :credit 15))}
@@ -1227,6 +1251,14 @@
    "The Toolbox"
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
     :recurring 2}
+
+   "Woman in the Red Dress"
+   {:events {:runner-turn-begins
+             {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
+              :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
+                         :msg (msg "draw " (:title (first (:deck corp))))
+                         :no-msg "doesn't draw with Woman in the Red Dress"
+                         :player :corp :effect (effect (draw))}}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
@@ -1904,9 +1936,6 @@
              {:req (req (>= (:counter card) 3)) :msg "look at the top card of R&D"
               :effect (effect (prompt! card (str "The top card of your R&D is "
                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
-
-   "Doppelgänger"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card) (draw :corp 2))
