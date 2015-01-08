@@ -99,9 +99,15 @@
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
                        (fn [i s]
-                         {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
-                          :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))})
-                       (get-in @state [:corp :servers :remote]))))))
+                         (if (< i n) s
+                           {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
+                            :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))}))
+                       (get-in @state [:corp :servers :remote]))))
+          (doseq [s (drop n (get-in @state [:corp :servers :remote]))
+                  c (concat (:content s) (:ices s))]
+            (unregister-events state side c)
+            (when-let [events (:events (card-def c))]
+              (register-events state side events c)))))
       moved-card)))
 
 (defn draw
