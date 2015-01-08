@@ -186,13 +186,30 @@
                    #(conj % {:ability end-turn :card card :targets targets}))))
         (when once (swap! state assoc-in [once (or once-key cid)] true))))))
 
+(defn handle-end-run [state side]
+  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+    (swap! state assoc-in [:run :ended] true)
+    (do (let [server (get-in @state [:run :server])]
+          (trigger-event state side :run-ends (first server))
+          (if (get-in @state [:run :successful])
+            (trigger-event state side :successful-run-ends (first server))
+            (trigger-event state side :unsuccessful-run-ends (first server)))
+          (swap! state assoc-in [:runner :rig :program]
+                 (for [p (get-in @state [:runner :rig :program])]
+                   (assoc p :current-strength nil)))
+          ;; (prn (get-in @state [:run :run-effect :end-run]))
+          (when-let [end-run-effect (get-in @state [:run :run-effect :end-run])]
+            (resolve-ability state side end-run-effect nil [(first server)])))
+        (swap! state assoc :run nil))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [effect (:effect (first (get-in @state [side :prompt])))]
     (swap! state update-in [side :prompt] rest)
     (effect (or choice card))
-    (when (empty? (:prompt @state))
-      (swap! state assoc :access true))))
+    (when-let [run (:run @state)]
+      (when (and (:ended run)
+                 (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+        (handle-end-run state :runner)))))
 
 (defn register-events [state side events card]
   (doseq [e events]
@@ -384,7 +401,6 @@
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))))
 
 (defn handle-access [state side cards]
-  (swap! state assoc :access true)
   (doseq [c cards]
     (let [cdef (card-def c)]
       (when-let [name (:title c)]
@@ -431,16 +447,6 @@
 
 (defn access-bonus [state side n]
   (swap! state update-in [:run :access-bonus] #(+ % n)))
-
-(defn handle-end-run [state side]
-  (let [server (get-in @state [:run :server])]
-    (trigger-event state side :run-ends (first server))
-    (swap! state assoc-in [:runner :rig :program]
-           (for [p (get-in @state [:runner :rig :program])]
-             (assoc p :current-strength nil)))
-    (when-let [end-run-effect (get-in @state [:run :run-effect :end-run])]
-      (resolve-ability state side end-run-effect nil [(first server)])))
-  (swap! state assoc :run nil))
 
 (defn do-access [state side server]
   (let [cards (access state side server)]
