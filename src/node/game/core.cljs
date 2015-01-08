@@ -49,11 +49,21 @@
       (swap! state assoc-in [side (first r)] 0)
       (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
 
+(defn register-events [state side events card]
+  (doseq [e events]
+    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card}))))
+
+(defn unregister-events [state side card]
+  (doseq [e (:events (card-def card))]
+    (swap! state update-in [:events e]
+           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+
 (defn desactivate [state side card]
   (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed)
         cdef (card-def card)]
     (when-let [leave-effect (:leave-play (card-def card))]
       (leave-effect state side card nil))
+    (unregister-events state side card)
     (when-let [mu (:memoryunits card)]
       (gain state :runner :memory mu))
     c))
@@ -199,7 +209,6 @@
           (swap! state assoc-in [:runner :rig :program]
                  (for [p (get-in @state [:runner :rig :program])]
                    (assoc p :current-strength nil)))
-          ;; (prn (get-in @state [:run :run-effect :end-run]))
           (when-let [end-run-effect (get-in @state [:run :run-effect :end-run])]
             (resolve-ability state side end-run-effect nil [(first server)])))
         (swap! state assoc :run nil))))
@@ -212,13 +221,6 @@
       (when (and (:ended run)
                  (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
         (handle-end-run state :runner)))))
-
-(defn register-events [state side events card]
-  (doseq [e events]
-    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card}))))
-
-(defn unregister-event [state side event card]
-  (swap! state update-in [:events event] #(remove (fn [effect] (= (:card effect) card)) %)))
 
 (defn trigger-event
   ([state side event] (trigger-event state side event nil))
