@@ -419,22 +419,22 @@
         (when (not= (:zone c) [:discard])
           (if-let [trash-cost (:trash c)]
             (let [card (assoc c :seen true)]
-              (optional-ability state side card (str "Pay " trash-cost "[Credits] to trash " name "?")
+              (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
                                 {:cost [:credit trash-cost]
                                  :effect (effect (trash card)
                                                  (system-msg (str "pays " trash-cost " [Credits] to trash "
                                                                   (:title card))))} nil))
             (when-not (= (:type c) "Agenda")
-              (prompt! state side c (str "You accessed " (:title c)) ["OK"] {}))))
+              (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
         (when (= (:type c) "Agenda")
           (if-let [cost (:steal-cost (card-def c))]
-            (optional-ability state side c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+            (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                               {:cost cost
                                :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
                                                                 " to steal " (:title c)))
                                                (steal c))} nil)
-            (when (or (not (:steal-req cdef)) ((:steal-req cdef) state side c nil))
-              (steal state side c))))))))
+            (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
+              (steal state :runner c))))))))
 
 (defmulti access (fn [state side server] (first server)))
 
@@ -626,10 +626,7 @@
     ("Hardware" "Resource" "Program") (runner-install state side card {:extra-cost [:click 1]})
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]})))
 
-(defn rez-card [state side {:keys [card]}]
-  (rez state side card nil))
-
-(defn derez [state side {:keys [card]}]
+(defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))
   (update! state side (desactivate state side card)))
 

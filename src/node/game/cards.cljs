@@ -1,10 +1,10 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run unregister-event mill run
+                               set-prop resolve-ability system-msg end-run mill run derez
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
-                               steal] :as core]
+                               steal handle-access] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -132,6 +132,10 @@
    "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}
+
+   "Breaking News"
+   {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
+    :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Cache"
    {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
@@ -599,6 +603,12 @@
                                :effect (req (doseq [c (take 5 (:deck corp))]
                                               (move state side c :play-area false true)))}}))}
 
+   "Infiltration"
+   {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
+    :effect (req (if (= target "Expose a card")
+                   (system-msg state side "exposes a card")
+                   (do (system-msg state side "gains 2 [Credits]") (gain state :runner :credit 2))))}
+
    "Inject"
    {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
                (if (= (:type c) "Program")
@@ -669,6 +679,10 @@
                                      :choices (req (take 3 (:deck corp)))
                                      :effect (effect (trash (assoc target :seen true))
                                                      (shuffle! :corp :deck))}}))}]}
+
+   "Kraken"
+   {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
+    :msg (msg "force the Corp to trash an ICE protecting " target)}
 
    "Labyrinthine Servers"
    {:data {:counter 2}
@@ -766,6 +780,12 @@
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
     :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
+
+   "Monolith"
+   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+    :abilities [{:msg (msg "prevent 1 damage by trashing " (:title target))
+                 :choices (req (filter #(= (:type %) "Program") (:hand runner)))
+                 :prompt "Choose a program to trash" :effect (effect (trash target))}]}
 
    "Motivation"
    {:events
@@ -1023,6 +1043,15 @@
     :choices (req (filter #(not= (:title %) "Reclamation Order") (:discard corp)))
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                (move state side c :hand)))}
+
+   "Replicator"
+   {:events {:runner-install
+             {:optional {:req (req (= (:type target) "Hardware"))
+                         :prompt "Use Replicator to add a copy?"
+                         :msg (msg "add a copy of " (:title target) " to his Grip")
+                         :effect (effect (move (some #(when (= (:title %) (:title target)) %)
+                                                     (:deck runner)) :hand)
+                                         (shuffle! :deck))}}}}
 
    "Research Station"
    {:init {:root "HQ"}
@@ -1576,7 +1605,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Chimera"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :end-turn {:effect (effect (derez card))}}
 
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
@@ -1692,6 +1722,12 @@
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}
+
+   "Kitsune"
+   {:abilities [{:prompt "Choose a card in HQ" :choices (req (:hand corp))
+                 :label "Force the Runner to access a card in HQ"
+                 :msg (msg "force the Runner to access " (:title target))
+                 :effect (effect (handle-access targets) (trash card))}]}
 
    "Komainu"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
@@ -1917,10 +1953,6 @@
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
 
-   "Breaking News"
-   {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
-    :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
-
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
@@ -1969,14 +2001,8 @@
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))}
 
-   "Kraken"
-   {:req (req (:stole-agenda runner-reg))}
-
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))}
-
-   "Monolith"
-   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
