@@ -380,7 +380,8 @@
   (when (>= (:advance-counter card) (:advancementcost card))
     (let [moved-card (move state side card :scored)
           c (card-init state side moved-card)]
-      (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c) " agenda points"))
+      (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c)
+                                  " agenda point" (when (> (:agendapoints c) 1) "s")))
       (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
       (gain-agenda-point state side (:agendapoints c))
       (set-prop state side c :advance-counter 0)
@@ -389,7 +390,8 @@
 (defn steal [state side card]
   (let [c (move state :runner card :scored false true)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
-    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c) " agenda poitns"))
+    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c)
+                                   " agenda point" (when (> (:agendapoints c) 1) "s")))
     (swap! state update-in [:runner :register :stole-agenda] #(+ % (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
