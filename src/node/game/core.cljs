@@ -68,7 +68,7 @@
       (gain state :runner :memory mu))
     c))
 
-(defmulti move (fn [state side target to front cross] (map? target)))
+(defmulti move (fn [state side target to front] (map? target)))
 
 (defmethod move false [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
@@ -77,7 +77,7 @@
                                           (zone to (get-in @state from-zone))))
     (swap! state assoc-in from-zone)))
 
-(defmethod move true [state side {:keys [zone cid] :as card} to front cross]
+(defmethod move true [state side {:keys [zone cid] :as card} to front]
   (when card
     (let [dest (if (sequential? to) (vec to) [to])
           c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
@@ -88,7 +88,7 @@
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (swap! state update-in (cons (if cross (if (= side :corp) :runner :corp) side) (vec zone))
+      (swap! state update-in (cons (to-keyword (:side moved-card)) (vec zone))
              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
       (let [z (vec (cons :corp (butlast zone)))
             n (last z)]
@@ -359,14 +359,12 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash
-  ([state side card] (trash state side card false))
-  ([state side {:keys [zone] :as card} cross]
-     (trigger-event state side :trash card)
-     (let [cdef (card-def card)
-           moved-card (move state (to-keyword (:side card)) card :discard false cross)]
-       (when-let [trash-effect (:trash-effect cdef)]
-         (resolve-ability state side trash-effect moved-card nil)))))
+(defn trash [state side {:keys [zone] :as card}]
+  (trigger-event state side :trash card)
+  (let [cdef (card-def card)
+        moved-card (move state (to-keyword (:side card)) card :discard false)]
+    (when-let [trash-effect (:trash-effect cdef)]
+      (resolve-ability state side trash-effect moved-card nil))))
 
 (defn pump
   ([state side card n] (pump state side card n false))
@@ -655,13 +653,13 @@
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state s card (not= s side))
+      (do (trash state s card)
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
-      (do (move state s (dissoc card :seen :rezzed) :hand false (not= s side))
+      (do (move state s (dissoc card :seen :rezzed) :hand false)
           (system-msg state side (str "moves " label " to " server)))
       ("Stack" "R&D")
-      (do (move state s (dissoc card :seen :rezzed) :deck true (not= s side))
+      (do (move state s (dissoc card :seen :rezzed) :deck true)
           (system-msg state side (str "moves " label " to the top of " server)))
       nil)))
 
