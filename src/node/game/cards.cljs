@@ -483,8 +483,8 @@
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
                  :msg (msg "gain " (:counter card) " [Credits]")}]
-    :events {:corp-click-credit {:effect (effect (add-prop card :counter 1))}
-             :corp-click-draw {:effect (effect (add-prop card :counter 1))}}}
+    :events {:corp-click-credit {:effect (effect (add-prop :runner card :counter 1))}
+             :corp-click-draw {:effect (effect (add-prop :runner card :counter 1))}}}
 
    "Government Contracts"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 4)) :msg "gain 4 [Credits]"}]}
