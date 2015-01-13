@@ -611,7 +611,9 @@
                dest-zone (get-in @state (cons :corp slot))
                install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
                               (count dest-zone) 0)]
-           (when (pay state side card extra-cost :credit install-cost)
+           (when (and (not (and (has? c :subtype "Region")
+                                (some #(has? % :subtype "Region") dest-zone)))
+                      (pay state side card extra-cost :credit install-cost))
              (when (#{"Asset" "Agenda"} (:type c))
                (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
                  (system-msg state side (str "trashes " (if (:rezzed prev-card)
