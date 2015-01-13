@@ -608,9 +608,15 @@
            (trigger-event state side :server-created card))
          (let [c (assoc card :advanceable (:advanceable (card-def card)))
                slot (conj dest (if (= (:type c) "ICE") :ices :content))
+               dest-zone (get-in @state (cons :corp slot))
                install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
-                              (count (get-in @state (cons :corp slot))) 0)]
+                              (count dest-zone) 0)]
            (when (pay state side card extra-cost :credit install-cost)
+             (when (#{"Asset" "Agenda"} (:type c))
+               (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
+                 (system-msg state side (str "trashes " (if (:rezzed prev-card)
+                                                          (:title prev-card) "a card") " in " server))
+                 (trash state side prev-card)))
              (let [card-name (if rezzed (:title card) "a card")]
                (if (> install-cost 0)
                  (system-msg state side (str "pays " install-cost " [Credits] to install "
