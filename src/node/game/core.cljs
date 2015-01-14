@@ -88,8 +88,8 @@
       (if front
         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (swap! state update-in (cons (to-keyword (:side moved-card)) (vec zone))
-             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+      (doseq [s [:runner :corp]]
+        (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
       (let [z (vec (cons :corp (butlast zone)))
             n (last z)]
         (when (and (number? n)
