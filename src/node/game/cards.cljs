@@ -66,6 +66,12 @@
    "Amped Up"
    {:effect (effect (gain :click 3) (damage :brain 1))}
 
+   "Andromeda: Dispossessed Ristie"
+   {:effect (effect (gain :link 1) (draw 4))}
+
+   "Anonymous Tip"
+   {:effect (effect (draw 3))}
+
    "Archived Memories"
    {:prompt "Choose a card from Archives" :choices (req (:discard corp))
     :effect (effect (move target :hand) (system-msg (str "adds " (:title target) " to HQ")))}
@@ -76,11 +82,6 @@
                  :effect #(do (gain %1 :runner :credit 2)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
-   "Andromeda: Dispossessed Ristie"
-   {:effect (effect (gain :link 1) (draw 4))}
-
-   "Anonymous Tip"
-   {:effect (effect (draw 3))}
 
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
@@ -534,6 +535,10 @@
                                  :effect (effect (move target :deck))
                                  :msg (msg "add " (if (:seen target) (:title target) "a card")
                                            " to the bottom of R&D")} card target))}}}}
+
+   "Hades Shard"
+   {:abilities [{:msg "access all cards in Archives"
+                 :effect (effect (handle-access (:discard corp)) (trash card))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -1295,7 +1300,8 @@
 
    "Thomas Haas"
    {:advanceable :always
-    :abilities [{:effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
+    :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (:advance-counter card)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
 
    "Toshiyuki Sakai"
    {:advanceable :always}
@@ -1601,6 +1607,10 @@
    {:abilities [{:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Cell Portal"
+   {:abilities [{:msg "make the Runner to approach the outermost ICE"
+                 :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
+
    "Changeling"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -1778,6 +1788,11 @@
 
    "NEXT Silver"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Orion"
+   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Paper Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
