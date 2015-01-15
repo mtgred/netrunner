@@ -249,6 +249,11 @@
    "Cyberdex Trial"
    {:effect (effect (purge))}
 
+   "Cyberdex Virus Suite"
+   {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
+                        :msg (msg "purge viruses") :effect (effect (purge))}}
+    :abilities [{:msg "purge viruses" :effect (effect (purge) (trash card))}]}
+
    "Cyberfeeder"
    {:recurring 1}
 
@@ -446,7 +451,7 @@
                 {:effect (effect (trash card)) :msg "prevent 2 brain damage"}]}
 
    "Fetal AI"
-   {:access {:req (req (not= (:zone card) :archives)) :msg "do 2 net damages"
+   {:access {:req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damages"
              :effect (effect (damage :net 2))}
     :steal-cost [:credit 2]}
 
@@ -1608,7 +1613,7 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Cell Portal"
-   {:abilities [{:msg "make the Runner to approach the outermost ICE"
+   {:abilities [{:msg "make the Runner approach the outermost ICE"
                  :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
 
    "Changeling"
@@ -1790,7 +1795,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Orion"
-   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program"
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
@@ -1811,7 +1817,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rototurret"
-   {:abilities [{:prompt "Choose a program to trash" :msg "Trash a program" :label "Trash a program"
+   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program"
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
