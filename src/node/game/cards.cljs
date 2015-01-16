@@ -90,7 +90,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
-                             (do (damage state :runner :meat 2)
+                               (do (damage state :runner :meat 2)
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Astrolabe"
@@ -742,7 +742,8 @@
    {:effect (effect (gain :memory 1 :max-hand-size 1))
     :leave-play (effect (lose :memory 1 :max-hand-size 1))
     :events {:agenda-scored
-             {:prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+             {:player :runner
+              :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
 
    "Lucky Find"
@@ -1028,7 +1029,8 @@
    {:effect
     (effect (gain :link 1)
             (resolve-ability
-             {:optional {:prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
+             {:optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
+                         :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
                          :effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                          (:deck runner))]
                                         (runner-install state side c)
