@@ -1029,8 +1029,8 @@
     (effect (gain :link 1)
             (resolve-ability
              {:optional {:prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
-                         :effect (req (let [c (some #(when (= (:title %) "Rabbit Hole") %)
-                                                    (:deck runner))]
+                         :effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                                         (:deck runner))]
                                         (runner-install state side c)
                                         (shuffle! state :runner :deck)))}} card nil))
     :leave-play (effect (lose :link 1))}
