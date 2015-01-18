@@ -1651,7 +1651,8 @@
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
-                 :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (not (string? target)))
+                 :req (req (not (string? target))) :not-distinct true
+                 :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install target nil {:no-install-cost true}))}
                 {:msg "install a card from Archives" :choices (req (:discard corp))
                  :prompt "Choose a card to install" :effect (effect (corp-install target nil))}

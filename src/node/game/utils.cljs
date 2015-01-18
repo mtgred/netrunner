@@ -38,3 +38,12 @@
 
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))
+
+(defn distinct-by [f coll]
+  (letfn [(step [xs seen]
+            (lazy-seq (when-let [[x & more] (seq xs)]
+                        (let [k (f x)]
+                          (if (seen k)
+                            (step more seen)
+                            (cons x (step more (conj seen k))))))))]
+    (step coll #{}))))

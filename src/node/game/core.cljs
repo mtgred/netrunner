@@ -1,7 +1,7 @@
 (ns game.core
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc]]
+                                costs-to-symbol vdissoc distinct-by]]
             [clojure.string :refer [split-lines split join]]))
 
 (def game-states (atom {}))
@@ -174,7 +174,8 @@
                   (system-msg state side (:no-msg ability)))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices end-turn player psi] :as ability}
+                                          once-key optional prompt choices end-turn player psi
+                                          not-distinct] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
              (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
@@ -185,7 +186,10 @@
   (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state side card targets)))
     (if choices
-      (let [cs (if (sequential? choices) choices (choices state side card targets))]
+      (let [cs (if (sequential? choices)
+                 choices (let [cards (choices state side card targets)]
+                           (if not-distinct
+                             cards (distinct-by :title cards))))]
         (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
       (when (and (<= counter-cost counter)
                  (<= advance-counter-cost advance-counter)
