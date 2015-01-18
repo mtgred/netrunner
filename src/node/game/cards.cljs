@@ -4,7 +4,7 @@
                                set-prop resolve-ability system-msg end-run mill run derez
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
-                               steal handle-access] :as core]
+                               steal handle-access card-init] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -133,6 +133,13 @@
    "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}
+
+   "Bifrost Array"
+   {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
+    :msg (msg "trigger the score ability on " (:title target))
+    :prompt "Choose an agenda to trigger"
+    :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
+    :effect (effect (card-init target))}
 
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
@@ -409,6 +416,13 @@
                                              (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play #(remove-watch % :ekomind)}
 
+   "Encrypted Portals"
+   {:effect (effect (gain :credit
+                          (reduce (fn [c server]
+                                    (+ c (count (filter (fn [ice] (and (has? ice :subtype "Code Gate")
+                                                                      (:rezzed ice))) (:ices server)))))
+                                  0 (flatten (seq (:servers corp))))))}
+
    "Eve Campaign"
    {:data {:counter 16}
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
@@ -464,6 +478,9 @@
    {:data [:counter 3]
     :abilities [{:counter-cost 1
                  :msg "place 1 advancement token on a piece of ICE that can be advanced"}]}
+
+   "Forked"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Frame Job"
    {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
@@ -545,6 +562,11 @@
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
                  :effect (effect (handle-access (:discard corp)) (trash card))}]}
+
+   "Harbinger"
+   {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
+                     :effect (effect (add-prop :runner card :counter 1))}}
+    :abilities [{:counter-cost 1 :cost [:click 1] :effect (effect (mill :corp))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -696,6 +718,9 @@
                                      :effect (effect (trash (assoc target :seen true))
                                                      (shuffle! :corp :deck))}}))}]}
 
+   "Knifed"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)}
@@ -1217,6 +1242,9 @@
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
 
+   "Spooned"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+
    "Steelskin"
    {:effect (effect (draw 3))}
 
@@ -1242,6 +1270,13 @@
    {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
+   "Superior Cyberwalls"
+   {:effect (effect (gain :credit
+                          (reduce (fn [c server]
+                                    (+ c (count (filter (fn [ice] (and (has? ice :subtype "Barrier")
+                                                                      (:rezzed ice))) (:ices server)))))
+                                  0 (flatten (seq (:servers corp))))))}
+   
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
 
@@ -1370,6 +1405,18 @@
    {:msg "do 2 meat damages" :effect (effect (damage :meat 2))
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain :corp :bad-publicity 1))}}
+
+   "Wanton Destruction"
+   {:effect (effect
+             (run :hq {:replace-access
+                       {:msg (msg "Wanton Destruction to force the Corp to trash " target
+                                  " cards from HQ at random")
+                        :prompt "How many [Click] do you want to spend?"
+                        :choices (req (map str (range 1 (inc (:click runner)))))
+                        :effect (req (let [n (js/parseInt target)]
+                                       (when (pay state :runner card :click n)
+                                         (doseq [c (take n (shuffle (:hand corp)))]
+                                           (trash state side c)))))}}))}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 2}
