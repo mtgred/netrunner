@@ -119,7 +119,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             game.started = true
             lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
             break
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
+        lobby.emit('netrunner', {type: "games", games: games})
 
       when "do"
         try
