@@ -45,6 +45,7 @@
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
+    (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
       (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))

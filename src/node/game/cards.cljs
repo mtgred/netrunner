@@ -90,7 +90,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
-                               (do (damage state :runner :meat 2)
+                             (do (damage state :runner :meat 2)
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Astrolabe"
@@ -189,9 +189,9 @@
 
    "City Surveillance"
    {:events {:runner-turn-begins
-             {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 credit" "Take 1 tag"]
+             {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
               :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
-              :effect (req (if-not (and (= target "Pay 1 credit") (pay state side card :credit 1))
+              :effect (req (if-not (and (= target "Pay 1 [Credits]") (pay state side card :credit 1))
                              (do (gain state side :tag 1) (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
 
@@ -328,7 +328,8 @@
     :events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Diversified Portfolio"
-   {:effect (effect (gain :credit (count (get-in corp [:servers :remote]))))}
+   {:effect (effect (gain :credit (count (filter #(not (empty? (:content %)))
+                                                 (get-in corp [:servers :remote])))))}
 
    "Diesel"
    {:effect (effect (draw 3))}
@@ -647,6 +648,11 @@
                  :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
                 {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
 
+   "Ixodidae"
+   {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
+                         :effect (effect (gain :runner :credit 1))}
+             :purge {:effect (effect (trash card))}}}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -859,7 +865,7 @@
    {:data {:counter 1} :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
 
    "Noise: Hacker Extraordinaire"
-   {:events {:runner-install {:msg "trash the top card of R&D" :effect (effect (mill :corp))
+   {:events {:runner-install {:msg "force the Corp to trash the top card of R&D" :effect (effect (mill :corp))
                               :req (req (has? target :subtype "Virus"))}}}
 
    "Notoriety"
@@ -1263,9 +1269,8 @@
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
-           :once :per-turn
            :optional
-           {:prompt (msg "Add a copy of " (:title target) " from R&D to HQ?")
+           {:prompt "Add another copy to HQ?" :once :per-turn
             :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                             (shuffle! :deck))
             :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
@@ -1884,6 +1889,13 @@
                  :effect (effect (lose :runner :credit 3))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Troll"
+   {:abilities [{:player :runner :prompt "Choose one" :choices ["Lose [Click]" "End the run"]
+                 :label "Force the runner to lose [Click] or end the run"
+                 :effect (req (if-not (and (= target "Lose [Click]") (pay state side card :click 1))
+                             (do (end-run state side) (system-msg state side "ends the run"))
+                             (system-msg state side "loses [Click]")))}]}
+
    "Tsurugi"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
                 {:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
@@ -1970,8 +1982,8 @@
 
    "Bank Job"
    {:data {:counter 8}
-    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
-                 :effect #(do (gain %1 :credit 1)
+    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]"
+                 :effect #(do (gain %1 :runner :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
    "Braintrust"
