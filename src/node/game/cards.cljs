@@ -773,8 +773,7 @@
    {:effect (effect (gain :memory 1 :max-hand-size 1))
     :leave-play (effect (lose :memory 1 :max-hand-size 1))
     :events {:agenda-scored
-             {:player :runner
-              :prompt "Choose a card" :msg (msg "add " (:title target) " to HQ from R&D")
+             {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
 
    "Lucky Find"
@@ -1652,7 +1651,7 @@
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
-                 :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (map? target))
+                 :choices (req (conj (take 5 (:deck corp)) "No install")) :req (req (not (string? target)))
                  :effect (effect (corp-install target nil {:no-install-cost true}))}
                 {:msg "install a card from Archives" :choices (req (:discard corp))
                  :prompt "Choose a card to install" :effect (effect (corp-install target nil))}

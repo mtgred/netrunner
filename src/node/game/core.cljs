@@ -56,7 +56,7 @@
 
 (defn unregister-events [state side card]
   (doseq [e (:events (card-def card))]
-    (swap! state update-in [:events e]
+    (swap! state update-in [:events (first e)]
            #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
 
 (defn desactivate [state side card]
