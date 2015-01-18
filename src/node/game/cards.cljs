@@ -1151,6 +1151,14 @@
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Sacrificial Clone"
+   {:abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
+                                                (filter #(not (has? % :subtype "Virtual"))
+                                                        (get-in runner [:rig :resource]))
+                                                (:hand runner))]
+                                (trash state side c))
+                              (lose state side :credit :all :tag :all))}]}
+
    "Sacrificial Construct"
    {:abilities [{:msg "prevent an installed program or hardware from being trash"
                  :effect (effect (trash card))}]}
@@ -1717,6 +1725,9 @@
     :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Fire Wall"
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
    "Flare"
    {:abilities [{:prompt "Choose a piece of hardware to trash"
                  :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
@@ -1839,6 +1850,12 @@
                 {:msg "end the run if the runner is tagged" :req (req tagged)
                  :effect (effect (end-run))}]}
 
+   "Nebula"
+   {:advanceable :always
+    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                 :label "Trash a program"
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
+   
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
@@ -1849,7 +1866,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Orion"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+   {:advanceable :always
+    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program"
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
                 {:msg "end the run" :effect (effect (end-run))}]}
