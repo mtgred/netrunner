@@ -43,7 +43,7 @@ cardFields = [
 
 baseurl = "http://netrunnerdb.com/api/"
 
-restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment", "Hades Shard", "Hades Fragment", "Uptopia Shard", "Uptopia Fragment", "Government Takeover"]
+restricted = ["Director Haas' Pet Project", "Philotic Entanglement", "Eden Shard", "Eden Fragment", "Hades Shard", "Hades Fragment", "Utopia Shard", "Uptopia Fragment", "Government Takeover"]
 
 selectFields = (fields, objectList) ->
   ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj.title in restricted; newObj), {}) for obj in objectList)

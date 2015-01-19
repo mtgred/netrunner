@@ -364,12 +364,17 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash [state side {:keys [zone] :as card}]
+(defmulti trash (fn [state side cards] (map? cards)))
+
+(defmethod trash true [state side {:keys [zone] :as card}]
   (trigger-event state side :trash card)
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card nil))))
+
+(defmethod trash false [state side cards]
+  (doseq [c cards] (trash state side c)))
 
 (defn pump
   ([state side card n] (pump state side card n false))

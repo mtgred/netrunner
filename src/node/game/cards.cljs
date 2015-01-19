@@ -1394,6 +1394,10 @@
                             (mapcat :content (flatten (seq (:servers corp))))))
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
+   "Utopia Shard"
+   {:abilities [{:effect (effect (trash :corp (take 2 (shuffle (:hand corp)))) (trash card))
+                 :msg "force the Corp to discard 2 cards from HQ at random"}]}
+
    "Valencia Estevez: The Angel of Cayambe"
    {:effect (effect (gain :corp :bad-publicity 1))}
 
@@ -1416,14 +1420,13 @@
    "Wanton Destruction"
    {:effect (effect
              (run :hq {:replace-access
-                       {:msg (msg "Wanton Destruction to force the Corp to trash " target
+                       {:msg (msg "Wanton Destruction to force the Corp to discard " target
                                   " cards from HQ at random")
                         :prompt "How many [Click] do you want to spend?"
                         :choices (req (map str (range 1 (inc (:click runner)))))
                         :effect (req (let [n (js/parseInt target)]
                                        (when (pay state :runner card :click n)
-                                         (doseq [c (take n (shuffle (:hand corp)))]
-                                           (trash state side c)))))}}))}
+                                         (trash state :corp (take n (shuffle (:hand corp)))))))}}))}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 2}
@@ -1661,6 +1664,9 @@
 
    "Ashigaru"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Asteroid Belt"
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Bastion"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2010,6 +2016,9 @@
    "Woodcutter"
    {:advanceable :while-rezzed
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
+   "Wormhole"
+   {:advanceable :always}
 
    "Wotan"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
