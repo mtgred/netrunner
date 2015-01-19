@@ -1855,7 +1855,7 @@
     :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program"
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
-   
+
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 

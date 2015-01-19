@@ -46,4 +46,4 @@
                           (if (seen k)
                             (step more seen)
                             (cons x (step more (conj seen k))))))))]
-    (step coll #{}))))
+    (step coll #{})))
