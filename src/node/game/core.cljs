@@ -168,10 +168,10 @@
   (show-prompt state side card msg choices #(resolve-ability state side ability card [%])))
 
 (defn optional-ability [state side card msg ability targets]
-  (show-prompt state side card msg ["Yes" "No"]
-               #(if (= % "Yes")
-                  (resolve-ability state side ability card targets)
-                  (system-msg state side (:no-msg ability)))))
+  (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
+                                                   (resolve-ability state side ability card targets)
+                                                   (when-let [no-msg (:no-msg ability)]
+                                                     (system-msg state side (:no-msg ability))))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi
