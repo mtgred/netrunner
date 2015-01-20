@@ -53,12 +53,14 @@
        (om/set-state! owner :flash-message "Please fill a game title.")
        (do
          (om/set-state! owner :editing false)
+         (swap! app-state assoc :messages [])
          (send {:action "create" :title (om/get-state owner :title)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
    (fn [user]
      (om/set-state! owner :editing false)
+     (swap! app-state assoc :messages [])
      (send {:action "join" :gameid gameid}))))
 
 (defn leave-game [cursor owner]
@@ -128,7 +130,7 @@
           [:input {:ref "msg-input" :placeholder "Say something"}]
           [:button "Send"]]]]))))
 
-(defn game-lobby [{:keys [games gameid user] :as cursor} owner]
+(defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -189,7 +191,7 @@
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
-                (om/build chat-view (:messages cursor) {:state state})])))]
+                (om/build chat-view messages {:state state})])))]
         (om/build deckselect-modal cursor)]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})
