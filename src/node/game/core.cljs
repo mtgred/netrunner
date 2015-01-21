@@ -160,7 +160,7 @@
   (swap! state assoc :psi {})
   (trigger-event state side :psi-game nil)
   (doseq [s [:corp :runner]]
-    (show-prompt state s card (str "Choose an amount to spend for the Psi game")
+    (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
                  #(resolve-psi state s card psi (js/parseInt %)))))
 
