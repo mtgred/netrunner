@@ -301,7 +301,7 @@
    "Datasucker"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))
                               :req (req (#{:hq :rd :archives} target))}}
-    :abilities [{:counter-cost 1 :msg "to give -1 strengh to the encountered ICE"}]}
+    :abilities [{:counter-cost 1 :msg "to give -1 strength to the encountered ICE"}]}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -1189,7 +1189,7 @@
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
                  :cost [:credit 2]
-                 :effect (effect (runner-install target) (trash card) (shuffle! :deck))}]}
+                 :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
