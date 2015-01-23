@@ -106,8 +106,8 @@
                        (get-in @state [:corp :servers :remote]))))
           (doseq [s (drop n (get-in @state [:corp :servers :remote]))
                   c (concat (:content s) (:ices s))]
-            (unregister-events state side c)
             (when-let [events (:events (card-def c))]
+              (unregister-events state side c)
               (register-events state side events c)))))
       moved-card)))
 
@@ -180,8 +180,12 @@
     (pay state :runner card :credit boost)
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
-    (when (> strength (+ (:link runner) boost))
-      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)]))))
+    (let [ability (if (> strength (+ (:link runner) boost))
+                   ability (:unsuccessful ability))]
+      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)]))
+    (when-let [kicker (:kicker ability)]
+      (when (>= strength (:min kicker))
+        (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
   (let [boost (min (get-in @state [:corp :credit]) boost)
@@ -196,39 +200,41 @@
                                           once-key optional prompt choices end-turn player psi trace
                                           not-distinct] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
-  (when (and optional
-             (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
-             (or (not (:req optional)) ((:req optional) state side card targets)))
-    (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))
-  (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
-    (psi-game state side card psi))
-  (when (and trace (or (not (:req trace)) ((:req trace) state side card targets)))
-    (show-prompt state :corp card "Boost trace strength?" :credit #(init-trace state :corp card trace %)))
-  (when (and (not (get-in @state [once (or once-key cid)]))
-             (or (not req) (req state side card targets)))
-    (if choices
-      (let [cs (if (sequential? choices)
-                 choices (let [cards (choices state side card targets)]
-                           (if not-distinct
-                             cards (distinct-by :title cards))))]
-        (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
-      (when (and (<= counter-cost counter)
-                 (<= advance-counter-cost advance-counter)
-                 (apply pay (concat [state side card] cost)))
-        (let [c (-> card
-                    (update-in [:counter] #(- % counter-cost))
-                    (update-in [:advance-counter] #(- % advance-counter-cost)))]
-          (when (or counter-cost advance-counter-cost)
-            (update! state side c))
-          (when msg
-            (let [desc (if (string? msg) msg (msg state side card targets))]
-              (system-msg state (to-keyword (:side card))
-                          (str "uses " title (when desc (str " to " desc))))))
-          (when effect (effect state side c targets))
-          (when end-turn
-            (swap! state update-in [side :register :end-turn]
-                   #(conj % {:ability end-turn :card card :targets targets}))))
-        (when once (swap! state assoc-in [once (or once-key cid)] true))))))
+  (when ability
+    (when (and optional
+               (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
+               (or (not (:req optional)) ((:req optional) state side card targets)))
+      (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))
+    (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
+      (psi-game state side card psi))
+    (when (and trace (or (not (:req trace)) ((:req trace) state side card targets)))
+      (show-prompt state :corp card "Boost trace strength?" :credit
+                   #(init-trace state :corp card trace %)))
+    (when (and (not (get-in @state [once (or once-key cid)]))
+               (or (not req) (req state side card targets)))
+      (if choices
+        (let [cs (if (sequential? choices)
+                   choices (let [cards (choices state side card targets)]
+                             (if not-distinct
+                               cards (distinct-by :title cards))))]
+          (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
+        (when (and (<= counter-cost counter)
+                   (<= advance-counter-cost advance-counter)
+                   (apply pay (concat [state side card] cost)))
+          (let [c (-> card
+                      (update-in [:counter] #(- % counter-cost))
+                      (update-in [:advance-counter] #(- % advance-counter-cost)))]
+            (when (or counter-cost advance-counter-cost)
+              (update! state side c))
+            (when msg
+              (let [desc (if (string? msg) msg (msg state side card targets))]
+                (system-msg state (to-keyword (:side card))
+                            (str "uses " title (when desc (str " to " desc))))))
+            (when effect (effect state side c targets))
+            (when end-turn
+              (swap! state update-in [side :register :end-turn]
+                     #(conj % {:ability end-turn :card card :targets targets}))))
+          (when once (swap! state assoc-in [once (or once-key cid)] true)))))))
 
 (defn handle-end-run [state side]
   (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))

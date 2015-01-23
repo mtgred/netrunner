@@ -1766,7 +1766,9 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Gemini"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:label "Trace 2"
+                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1))
+                         :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1))}}}]}
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -1974,7 +1976,8 @@
                  :effect (effect (trash target))}]}
 
    "TMI"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:trace {:base 2 :unsuccessful {:effect (effect (derez card))}}
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tollbooth"
    {:abilities [{:msg "force the runner to lose 3 [Credits]"
