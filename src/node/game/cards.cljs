@@ -482,6 +482,14 @@
    "Forked"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Foxfire"
+   {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
+            :choices (req (filter #(or (has? % :subtype "Virtual") (has? % :subtype "Link"))
+                                  (concat (get-in runner [:rig :hardware])
+                                          (get-in runner [:rig :resource])
+                                          (get-in runner [:rig :program]))))
+            :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
+
    "Frame Job"
    {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
 
@@ -817,6 +825,11 @@
     :leave-play (effect (lose :runner :max-hand-size 1))
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Midseason Replacements"
+   {:req (req (:stole-agenda runner-reg))
+    :trace {:base 6 :msg (msg "give the Runner" (- target (second targets)) " tags")
+            :effect (effect (gain :runner :tag (- target (second targets))))}}
+
    "Modded"
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
@@ -1041,6 +1054,10 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
+   "Punitive Counterstrike"
+   {:trace {:base 5 :msg (msg "do " (:stole-agenda runner-reg) " meat damages")
+            :effect (effect (damage :meat (get-in runner [:register :stole-agenda])))}}
+
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:trash {:msg "trash itself" :req (req (= (:type target) "Program"))
@@ -1184,6 +1201,10 @@
    "Scrubber"
    {:recurring 2}
 
+   "SEA Source"
+   {:req (req (:successful-run runner-reg))
+    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
@@ -1283,7 +1304,7 @@
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Barrier")
                                                                       (:rezzed ice))) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
-   
+
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
 
@@ -2111,9 +2132,6 @@
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))}
 
-   "Midseason Replacements"
-   {:req (req (:stole-agenda runner-reg))}
-
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
 
@@ -2125,9 +2143,6 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
-
-   "SEA Source"
-   {:req (req (:successful-run runner-reg))}
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))

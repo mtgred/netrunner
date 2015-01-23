@@ -142,7 +142,7 @@
 
 (defn show-prompt [state side card msg choices f]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
-    (when (> (count choices) 0)
+    (when (or (= choices :credit) (> (count choices) 0))
       (swap! state update-in [side :prompt] #(conj (vec %) {:msg prompt :choices choices :effect f})))))
 
 (defn resolve-psi [state side card psi bet]
@@ -173,8 +173,27 @@
                                                    (when-let [no-msg (:no-msg ability)]
                                                      (system-msg state side (:no-msg ability))))))
 
+(defn resolve-trace [state side boost]
+  (let [runner (:runner @state)
+        boost (min (:credit runner) boost)
+        {:keys [strength ability card]} (:trace @state)]
+    (pay state :runner card :credit boost)
+    (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
+                                   (+ (:link runner) boost)))
+    (when (> strength (+ (:link runner) boost))
+      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)]))))
+
+(defn init-trace [state side card {:keys [base] :as ability} boost]
+  (let [boost (min (get-in @state [:corp :credit]) boost)
+        s (+ base boost)]
+    (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
+                                 s " (" base " + " boost " [Credits])"))
+    (pay state :corp card :credit boost)
+    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
+    (swap! state assoc :trace {:strength s :ability ability :card card})))
+
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
-                                          once-key optional prompt choices end-turn player psi
+                                          once-key optional prompt choices end-turn player psi trace
                                           not-distinct] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when (and optional
@@ -183,6 +202,8 @@
     (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))
   (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
     (psi-game state side card psi))
+  (when (and trace (or (not (:req trace)) ((:req trace) state side card targets)))
+    (show-prompt state :corp card "Boost trace strength?" :credit #(init-trace state :corp card trace %)))
   (when (and (not (get-in @state [once (or once-key cid)]))
              (or (not req) (req state side card targets)))
     (if choices
