@@ -17,6 +17,7 @@
 (defn launch-game [game]
   (let [side (if (= (get-in game [:runner :user]) (:user @app-state)) :runner :corp)]
     (init-game game side))
+  (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
 

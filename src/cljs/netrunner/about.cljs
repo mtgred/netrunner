@@ -37,11 +37,11 @@
        [:h4 "How do I quit a game when it's finished?"]
        [:p "A quit button will be added in the future. In the meanwhile, simply refresh your browser."]]
       [:li
-       [:h4 "How can I make donation?"]
-       [:p "If you would like to contribute to running costs of Jinteki.net, my PayPal account is mtgred@gmail.com"]]
+       [:h4 "How can I make a donation?"]
+       [:p "My PayPal account is mtgred@gmail.com. Contributions are appreciated and will help financing faster servers."]]
       [:li
        [:h4 "What is the best supported browser?"]
-       [:p "Google Chrome on a desktop/laptop is recommended. Safari and Firefox are supported. Drag and dropping cards during gameplay sometime causes Firefox to navigate to the card image and disconnect from the game. Internet Explorer is not supported."]]]
+       [:p "Google Chrome on a desktop/laptop is recommended. Firefox and Safari should fine also."]]]
 
      [:h3 "Disclaimer"]
      [:p "Netrunner and Android are trademarks of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
