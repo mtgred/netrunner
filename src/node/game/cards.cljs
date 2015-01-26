@@ -1053,7 +1053,7 @@
    "Priority Requisition"
    {:optional {:prompt "Perform a Priority Requsition order?"
                :effect (effect (resolve-ability 
-                        {:prompt "Choose a piece of ICE." :choices (req (filter #(not (:rezzed %)) (mapcat :ices (flatten (seq (:servers corp))))))
+                        {:prompt "Choose a piece of ICE." :not-distinct true :choices (req (filter #(not (:rezzed %)) (mapcat :ices (flatten (seq (:servers corp))))))
                          :msg (msg "rez " (:title target) " at no cost.")
                          :effect (effect (resolve-ability (rez state side target {:no-cost true}) card targets)) } card targets))}}
 
