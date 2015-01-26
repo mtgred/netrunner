@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run mill run derez
+                               set-prop resolve-ability system-msg end-run mill run derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
                                steal handle-access card-init] :as core]
@@ -720,7 +720,7 @@
    {:abilities [{:cost [:click 1] :msg "make run on R&D"
                  :effect (effect (run :rd
                                    {:replace-access
-                                    {:prompt "Choose a card to trash"
+                                    {:prompt "Choose a card to trash" :not-distinct true
                                      :msg (msg "trash " (:title target))
                                      :choices (req (take 3 (:deck corp)))
                                      :effect (effect (trash (assoc target :seen true))
@@ -728,7 +728,7 @@
 
    "Knifed"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
-   
+
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)}
@@ -980,6 +980,20 @@
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damages")
     :effect (effect (damage :net (count (:scored runner))))}
+
+   "Plan B"
+   {:advanceable :always
+    :access {:optional
+             {:prompt "Score an Agenda from HQ?" :req (req installed)
+              :effect (effect
+                       (resolve-ability
+                        {:prompt "Choose an Agenda to score"
+                         :choices (req (filter #(and (has? % :type "Agenda")
+                                                     (<= (:advancementcost %) (:advance-counter card)))
+                                               (:hand corp)))
+                         :msg (msg "score " (:title target))
+                         :effect (effect (score (assoc target :advance-counter (:advancementcost target))))}
+                        card targets))}}}
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
@@ -1423,7 +1437,11 @@
    {:effect (effect (gain :corp :bad-publicity 1))}
 
    "Vamp"
-   {:effect (effect (run :hq {:replace-access {:effect (effect (gain :tag 1))}}))}
+   {:effect (effect (run :hq {:replace-access
+                              {:prompt "How many [Credits]?" :choices :credit
+                               :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
+                               :effect (effect (lose :credit target) (lose :corp :credit target)
+                                               (gain :tag 1))}}))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1483,9 +1501,9 @@
                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
 
    "Atman"
-   {:abilities [{:cost [:credit 1] :msg "break 1 subroutine"}
-                {:cost [:credit 1] :msg "place 1 power counter"
-                 :effect (effect (add-prop card :counter 1))}]}
+   {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
+    :effect (effect (lose :credit target) (set-prop card :counter target))
+    :abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]}
 
    "Aurora"
    {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
@@ -1731,6 +1749,13 @@
                 {:msg "give the Runner 1 tag using 1 power counter"
                  :counter-cost 1 :effect (effect (gain :runner :tag 1))}
                 {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+
+   "Dracō"
+   {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
+    :effect (effect (lose :credit target) (set-prop card :counter target))
+    :abilities [{:label "Trace 2"
+                 :trace {:base 2 :msg "give the Runner 1 tag and end the run"
+                         :effect (effect (gain :runner :tag 1) (end-run))}}]}
 
    "Eli 1.0"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

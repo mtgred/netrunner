@@ -213,7 +213,7 @@
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets)))
       (if choices
-        (let [cs (if (sequential? choices)
+        (let [cs (if-not (fn? choices)
                    choices (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
@@ -411,16 +411,17 @@
                (assoc card :current-strength strength :all-run all-run))]
        (update! state side (update-in c [:current-strength] #(+ % n))))))
 
-(defn score [state side {:keys [card]}]
-  (when (>= (:advance-counter card) (:advancementcost card))
-    (let [moved-card (move state side card :scored)
-          c (card-init state side moved-card)]
-      (system-msg state side (str "scores " (:title c) " and gains " (:agendapoints c)
-                                  " agenda point" (when (> (:agendapoints c) 1) "s")))
-      (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
-      (gain-agenda-point state side (:agendapoints c))
-      (set-prop state side c :advance-counter 0)
-      (trigger-event state side :agenda-scored c))))
+(defn score [state side args]
+  (let [card (or (:card args) args)]
+    (when (>= (:advance-counter card) (:advancementcost card))
+      (let [moved-card (move state :corp card :scored)
+            c (card-init state :corp moved-card)]
+        (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
+                                    " agenda point" (when (> (:agendapoints c) 1) "s")))
+        (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
+        (gain-agenda-point state :corp (:agendapoints c))
+        (set-prop state :corp c :advance-counter 0)
+        (trigger-event state :corp :agenda-scored c)))))
 
 (defn steal [state side card]
   (let [c (move state :runner card :scored false true)]
