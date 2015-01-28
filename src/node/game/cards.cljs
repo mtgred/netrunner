@@ -527,6 +527,11 @@
    "Grappling Hook"
    {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card))}]}
 
+   "Gravedigger"
+   {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
+                     :effect (effect (add-prop :runner card :counter 1))}}
+    :abilities [{:counter-cost 1 :cost [:click 1] :effect (effect (mill :corp))}]}
+
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
 
@@ -570,11 +575,6 @@
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
                  :effect (effect (handle-access (:discard corp)) (trash card))}]}
-
-   "Harbinger"
-   {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
-                     :effect (effect (add-prop :runner card :counter 1))}}
-    :abilities [{:counter-cost 1 :cost [:click 1] :effect (effect (mill :corp))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -677,6 +677,9 @@
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
                  :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
                 {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
+
+   "I've Had Worse"
+   {:effect (effect (draw 3))}
 
    "Ixodidae"
    {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
@@ -1289,9 +1292,6 @@
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
-   "Steelskin"
-   {:effect (effect (draw 3))}
-
    "Stim Dealer"
    {:events {:runner-turn-begins
              {:effect #(if (>= (:counter %3) 2)
@@ -1376,14 +1376,6 @@
    "The Toolbox"
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
     :recurring 2}
-
-   "Woman in the Red Dress"
-   {:events {:runner-turn-begins
-             {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
-              :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
-                         :msg (msg "draw " (:title (first (:deck corp))))
-                         :no-msg "doesn't draw with Woman in the Red Dress"
-                         :player :corp :effect (effect (draw))}}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
@@ -1485,6 +1477,14 @@
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}
+
+   "Woman in the Red Dress"
+   {:events {:runner-turn-begins
+             {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
+              :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
+                         :msg (msg "draw " (:title (first (:deck corp))))
+                         :no-msg "doesn't draw with Woman in the Red Dress"
+                         :player :corp :effect (effect (draw))}}}}
 
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
