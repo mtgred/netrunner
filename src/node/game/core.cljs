@@ -107,9 +107,10 @@
                        (get-in @state [:corp :servers :remote]))))
           (doseq [s (drop n (get-in @state [:corp :servers :remote]))
                   c (concat (:content s) (:ices s))]
-            (when-let [events (:events (card-def c))]
-              (unregister-events state side c)
-              (register-events state side events c)))))
+            (when (:rezzed c)
+              (when-let [events (:events (card-def c))]
+                (unregister-events state side c)
+                (register-events state side events c))))))
       moved-card)))
 
 (defn draw
