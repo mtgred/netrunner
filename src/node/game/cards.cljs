@@ -23,11 +23,11 @@
 
    "Account Siphon"
    {:effect (effect (run :hq {:replace-access
-                              {:msg (msg "Account Siphon to force the Corp to lose " (min 5 (:credit corp))
+                              {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
                                :effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
-                                               (lose :corp :credit (min 5 (:credit corp))))}}))}
+                                               (lose :corp :credit (min 5 (:credit corp))))}} card))}
 
    "Activist Support"
    {:events
@@ -227,7 +227,7 @@
                         :choices (req (filter #(and (has? % :type "Program")
                                                     (<= (:cost %) (:credit runner))) (:deck runner)))
                         :effect (effect (gain :tag 1)
-                                        (runner-install target) (shuffle! :deck))}}))}
+                                        (runner-install target) (shuffle! :deck))}} card))}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
@@ -342,9 +342,9 @@
    {:effect (effect (draw 3))}
 
    "Dirty Laundry"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req servers) :msg " gain 5 [Credits]"
     :effect (effect (run target {:end-run {:req (req (:successful run))
-                                           :effect (effect (gain :credit 5))}}))}
+                                           :effect (effect (gain :credit 5))}} card))}
 
    "Djinn"
    {:abilities [{:prompt "Choose an Virus" :msg (msg "adds " (:title target) "to his grip")
@@ -446,7 +446,7 @@
    {:abilities
     [{:cost [:click 1] :msg "make run on HQ"
       :effect (effect (run :hq {:replace-access
-                                {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}}))}]}
+                                {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
@@ -642,7 +642,7 @@
    {:effect (effect (run :rd {:replace-access
                               {:msg "rearrange the top 5 cards of R&D"
                                :effect (req (doseq [c (take 5 (:deck corp))]
-                                              (move state side c :play-area false true)))}}))}
+                                              (move state side c :play-area false true)))}} card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -722,9 +722,9 @@
                                    {:replace-access
                                     {:prompt "Choose a card to trash" :not-distinct true
                                      :msg (msg "trash " (:title target))
-                                     :choices (req (take 3 (:deck corp)))
+                                     :choices (req (take 3 (:deck corp))) :mandatory true
                                      :effect (effect (trash (assoc target :seen true))
-                                                     (shuffle! :corp :deck))}}))}]}
+                                                     (shuffle! :corp :deck))}} card))}]}
 
    "Knifed"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -1145,9 +1145,9 @@
    "Retrieval Run"
    {:effect (effect (run :archives
                       {:replace-access
-                       {:prompt "Choose a program to install"
+                       {:prompt "Choose a program to install" :msg (msg "install " (:title target))
                         :choices (req (filter #(= (:type %) "Program") (:discard runner)))
-                        :effect (effect (runner-install target {:no-cost true}))}}))}
+                        :effect (effect (runner-install target {:no-cost true}))}} card))}
 
    "Reversed Accounts"
    {:advanceable :always
@@ -1263,14 +1263,16 @@
    {:prompt "Choose a server" :choices (req remotes)
     :effect (effect (run target
                       {:replace-access
-                       {:effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
-                                       (trash state side c)))}}))}
+                       {:msg "destroy all in the server at no cost"
+                        :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
+                                       (trash state side c)))}} card))}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make run on Archives"
                  :effect (effect (run :archives
                                    {:successful-run
-                                    {:effect #(swap! %1 assoc-in [:run :server] [:hq])}}))}]}
+                                    {:msg "make a successful run on HQ"
+                                     :effect #(swap! %1 assoc-in [:run :server] [:hq])}} card))}]}
 
    "Snare!"
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
@@ -1441,7 +1443,7 @@
                               {:prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                                :effect (effect (lose :credit target) (lose :corp :credit target)
-                                               (gain :tag 1))}}))}
+                                               (gain :tag 1))}} card))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1465,7 +1467,7 @@
                         :choices (req (map str (range 1 (inc (:click runner)))))
                         :effect (req (let [n (js/parseInt target)]
                                        (when (pay state :runner card :click n)
-                                         (trash state :corp (take n (shuffle (:hand corp)))))))}}))}
+                                         (trash state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 2}
