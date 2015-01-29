@@ -63,7 +63,8 @@
   (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed)
         cdef (card-def card)]
     (when-let [leave-effect (:leave-play (card-def card))]
-      (leave-effect state side card nil))
+      (when (or (= (:side card) "Runner") (:rezzed card))
+        (leave-effect state side card nil)))
     (unregister-events state side card)
     (when-let [mu (:memoryunits card)]
       (gain state :runner :memory mu))
@@ -83,8 +84,7 @@
     (let [dest (if (sequential? to) (vec to) [to])
           c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
               (assoc card :seen true) card)
-          c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest))
-                     (or (= (:side card) "Runner") (:rezzed card)))
+          c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest)))
               (desactivate state side c) c)
           moved-card (assoc c :zone dest)]
       (if front
