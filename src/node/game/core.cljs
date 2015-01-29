@@ -177,9 +177,7 @@
 
 (defn resolve-trace [state side boost]
   (let [runner (:runner @state)
-        boost (min (:credit runner) boost)
         {:keys [strength ability card]} (:trace @state)]
-    (pay state :runner card :credit boost)
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
     (let [ability (if (> strength (+ (:link runner) boost))
@@ -190,11 +188,9 @@
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
-  (let [boost (min (get-in @state [:corp :credit]) boost)
-        s (+ base boost)]
+  (let [s (+ base boost)]
     (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
                                  s " (" base " + " boost " [Credits])"))
-    (pay state :corp card :credit boost)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
     (swap! state assoc :trace {:strength s :ability ability :card card})))
 
@@ -254,9 +250,13 @@
         (swap! state assoc :run nil))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
-  (let [effect (:effect (first (get-in @state [side :prompt])))]
+  (let [prompt (first (get-in @state [side :prompt]))
+        choice (if (= (:choices prompt) :credit)
+                 (min choice (get-in @state [side :credit])) choice)]
+    (when (= (:choices prompt) :credit)
+      (pay state :corp card :credit choice))
     (swap! state update-in [side :prompt] rest)
-    (effect (or choice card))
+    ((:effect prompt) (or choice card))
     (when-let [run (:run @state)]
       (when (and (:ended run)
                  (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
@@ -423,7 +423,7 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
-        (trigger-event state :corp :agenda-scored c)))))
+        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
 
 (defn steal [state side card]
   (let [c (move state :runner card :scored false true)]

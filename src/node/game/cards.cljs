@@ -830,7 +830,7 @@
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
-    :trace {:base 6 :msg (msg "give the Runner" (- target (second targets)) " tags")
+    :trace {:base 6 :msg (msg "give the Runner " (- target (second targets)) " tags")
             :effect (effect (gain :runner :tag (- target (second targets))))}}
 
    "Modded"
@@ -1253,6 +1253,21 @@
       :label "Take all credits"
       :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
 
+   "Shi.Kyū"
+   {:access {:req (req (not= (first (:zone card)) :deck))
+             :prompt "How many [Credits] for Shi.Kyū?" :choices :credit
+             :msg (msg "attempt to do " target " net damage")
+             :effect (effect (resolve-ability
+                              {:player :runner :msg (msg target)
+                               :prompt (str "Take " target " net damage or lose 1 agenda point?")
+                               :choices [(str "take " target " net damage") "lose 1 agenda point"]
+                               :effect (let [dmg target]
+                                         (req (if (= target "lose 1 agenda point")
+                                                (do (gain state :runner :agenda-point -1)
+                                                    (move state :runner card :scored nil))
+                                                (damage state :corp :net dmg))))}
+                              card targets))}}
+
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
 
@@ -1385,6 +1400,10 @@
    {:advanceable :always
     :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (:advance-counter card)) " [Credits]")
                  :effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
+
+   "Titan Transnational: Investing In Your Future"
+   {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))
+                             :effect (effect (add-prop target :counter 1))}}}
 
    "Toshiyuki Sakai"
    {:advanceable :always}
@@ -1984,6 +2003,11 @@
    "Snowflake"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
+
+   "Susanoo-No-Mikoto"
+   {:abilities [{:req (req (not= (:server run) [:discard]))
+                 :msg "make the Runner continue the run on Archives"
+                 :effect (req (swap! state assoc :run (assoc run :server [:archives] :position 0)))}]}
 
    "Swarm"
    {:advanceable :always
