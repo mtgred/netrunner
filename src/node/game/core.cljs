@@ -255,7 +255,7 @@
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit])) choice)]
     (when (= (:choices prompt) :credit)
-      (pay state :corp card :credit choice))
+      (pay state side card :credit choice))
     (swap! state update-in [side :prompt] rest)
     ((:effect prompt) (or choice card))
     (when-let [run (:run @state)]
