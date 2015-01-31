@@ -97,6 +97,7 @@
         (when (and (number? n)
                    (empty? (get-in @state (conj z :content)))
                    (empty? (get-in @state (conj z :ices))))
+          (swap! state assoc :run nil)
           (swap! state update-in [:corp :servers :remote] vdissoc n)
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
