@@ -448,7 +448,7 @@
                 :else [:remote (-> (split server " ") last js/parseInt)])
              ices (get-in @state (concat [:corp :servers] s [:ices]))]
          (swap! state assoc :per-run nil
-                :run {:server s :position 0 :ices ices :access-bonus 0
+                :run {:server s :position (count ices) :ices ices :access-bonus 0
                       :run-effect (assoc run-effect :card card)})
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))))
 
@@ -547,7 +547,7 @@
 
 (defn continue [state side]
   (when (get-in @state [:run :no-action])
-    (swap! state update-in [:run :position] inc)
+    (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
     (swap! state assoc-in [:runner :rig :program]
            (for [p (get-in @state [:runner :rig :program])]

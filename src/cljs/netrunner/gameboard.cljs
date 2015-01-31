@@ -394,7 +394,7 @@
        (let [ices (:ices server)]
          [:div.ices
           (when run
-            [:div.run-arrow {:style {:top (str (+ 8 (* 64 (- (count ices) (:position run)))) "px")}}])
+            [:div.run-arrow {:style {:top (str (+ 8 (* 64 (:position run))) "px")}}])
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        (when content
@@ -524,7 +524,7 @@
                         (if (= side :runner)
                           [:div.panel.blue-shade
                            (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
-                           (if (= (:position run) (count (:ices server)))
+                           (if (zero? (:position run))
                              (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
                              (cond-button "Continue" (:no-action run) #(send-command "continue")))
                            (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
