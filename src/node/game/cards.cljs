@@ -678,7 +678,7 @@
                  :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
                 {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
 
-   "I've Had Worse"
+   "Ive Had Worse"
    {:effect (effect (draw 3))}
 
    "Ixodidae"
@@ -1317,6 +1317,12 @@
                              (gain %1 %2 :click 1)
                              (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
 
+   "Stimhack"
+   {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
+    :effect (effect (gain :credit 9)
+                    (run target {:end-run {:req (req (:successful run))
+                                           :effect (effect (damage :brain 1))}} card))}
+
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
@@ -1915,6 +1921,12 @@
 
    "Merlin"
    {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
+
+   "Minelayer"
+   {:abilities [{:msg "install an ICE from HQ"
+                 :choices (req (filter #(has? % :type "ICE") (:hand corp)))
+                 :prompt "Choose an ICE to install"
+                 :effect (req (corp-install state side target (:server run)))}]}
 
    "Mother Goddess"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

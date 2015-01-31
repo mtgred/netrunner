@@ -646,12 +646,14 @@
      (if-not server
        (prompt! state side card (str "Choose a server to install " (:title card))
                 (server-list state card) {:effect (effect (corp-install card target args))})
-       (let [dest (case server
-                    "HQ" [:servers :hq]
-                    "R&D" [:servers :rd]
-                    "Archives" [:servers :archives]
-                    "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
-                    [:servers :remote (-> (split server " ") last js/parseInt)])]
+       (let [dest (if (sequential? server)
+                    (vec (cons :servers server))
+                    (case server
+                      "HQ" [:servers :hq]
+                      "R&D" [:servers :rd]
+                      "Archives" [:servers :archives]
+                      "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
+                      [:servers :remote (-> (split server " ") last js/parseInt)]))]
          (when (= server "New remote")
            (trigger-event state side :server-created card))
          (let [c (assoc card :advanceable (:advanceable (card-def card)))
