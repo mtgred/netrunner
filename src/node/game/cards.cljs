@@ -74,7 +74,8 @@
 
    "Archived Memories"
    {:prompt "Choose a card from Archives" :choices (req (:discard corp))
-    :effect (effect (move target :hand) (system-msg (str "adds " (:title target) " to HQ")))}
+    :effect (effect (move target :hand)
+                    (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
 
    "Armitage Codebusting"
    {:data {:counter 12}
