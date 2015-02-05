@@ -287,4 +287,4 @@ for signal in ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
   process.on(signal, terminate)
 
 server.listen app.get('port'), app.get('ipaddr'), ->
-  console.log("Express server listening on port " + app.get('port'))
+  console.log(new Date().toString() + ": Express server listening on port " + app.get('port'))
