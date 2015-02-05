@@ -67,7 +67,7 @@
    {:effect (effect (gain :click 3) (damage :brain 1))}
 
    "Andromeda: Dispossessed Ristie"
-   {:effect (effect (gain :link 1) (draw 4))}
+   {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Anonymous Tip"
    {:effect (effect (draw 3))}
@@ -1355,9 +1355,10 @@
              {:prompt "Choose a card to install"
               :choices (req (filter #(= (:type %) "Program")
                                     ((if (= target "Heap") :discard :deck) runner)))
-              :effect (effect (runner-install target {:no-cost true}))
+              :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
               :end-turn
-              {:req (some #(when (= (:cid target) (:cid %))) (get-in runner [:rig :program]))
+              {:req (req (some #(when (and (= (:cid target) (:cid %)) (get-in % [:special :test-run])) %)
+                               (get-in runner [:rig :program])))
                :msg (msg "move " (:title target) " on top of Stack")
                :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
                                                    (get-in runner [:rig :program])) :deck true))}}
@@ -1487,7 +1488,7 @@
                                          (trash state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
    "Weyland Consortium: Because We Built It"
-   {:recurring 2}
+   {:recurring 1}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))

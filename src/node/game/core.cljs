@@ -60,7 +60,7 @@
            #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
 
 (defn desactivate [state side card]
-  (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed)
+  (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed :special)
         cdef (card-def card)]
     (when-let [leave-effect (:leave-play (card-def card))]
       (when (or (= (:side card) "Runner") (:rezzed card))
@@ -97,7 +97,9 @@
         (when (and (number? n)
                    (empty? (get-in @state (conj z :content)))
                    (empty? (get-in @state (conj z :ices))))
-          (swap! state assoc :run nil)
+          (when-let [run (:run @state)]
+            (when (= (last (:server run)) n)
+              (swap! state assoc :run nil)))
           (swap! state update-in [:corp :servers :remote] vdissoc n)
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
@@ -377,11 +379,10 @@
   (doseq [p args] (swap! state assoc-in [side p])))
 
 (defn mulligan [state side args]
-  (swap! state update-in [side] #(merge % (side reset-value)))
   (shuffle-into-deck state side :hand)
   (draw state side 5)
   (when-let [cdef (card-def (get-in @state [side :identity]))]
-    (when-let [effect (:effect cdef)] (effect state side nil)))
+    (when-let [mul (:mulligan cdef)] (mul state side nil)))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan"))
 
