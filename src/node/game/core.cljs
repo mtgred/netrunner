@@ -354,14 +354,14 @@
                        :hand (zone :hand (take 5 corp-deck))
                        :discard [] :scored [] :rfg [] :play-area []
                        :servers {:hq {} :rd{} :archives {} :remote []}
-                       :click 3 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
+                       :click 0 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
                        :click-per-turn 3 :agenda-point-req 7 :keep false}
                 :runner {:user (:user runner) :identity runner-identity
                          :deck (zone :deck (drop 5 runner-deck))
                          :hand (zone :hand (take 5 runner-deck))
                          :discard [] :scored [] :rfg [] :play-area []
                          :rig {:program [] :resource [] :hardware []}
-                         :click 4 :credit 5 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
+                         :click 0 :credit 5 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
                          :hq-access 1 :rd-access 1
                          :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (card-init state :corp corp-identity)
