@@ -21,6 +21,7 @@
 (declare prompt!)
 (declare forfeit)
 (declare trigger-event)
+(declare handle-end-run)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -99,7 +100,7 @@
                    (empty? (get-in @state (conj z :ices))))
           (when-let [run (:run @state)]
             (when (= (last (:server run)) n)
-              (swap! state assoc :run nil)))
+              (handle-end-run state side)))
           (swap! state update-in [:corp :servers :remote] vdissoc n)
           (swap! state assoc-in [:corp :servers :remote]
                  (vec (map-indexed
@@ -242,8 +243,9 @@
     (swap! state assoc-in [:run :ended] true)
     (do (let [server (get-in @state [:run :server])]
           (trigger-event state side :run-ends (first server))
-          (if (get-in @state [:run :successful])
-            (trigger-event state side :successful-run-ends (first server))
+          (when (get-in @state [:run :successful])
+            (trigger-event state side :successful-run-ends (first server)))
+          (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
           (swap! state assoc-in [:runner :rig :program]
                  (for [p (get-in @state [:runner :rig :program])]
