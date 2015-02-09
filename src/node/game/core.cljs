@@ -184,9 +184,10 @@
         {:keys [strength ability card]} (:trace @state)]
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
-    (let [ability (if (> strength (+ (:link runner) boost))
-                   ability (:unsuccessful ability))]
-      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)]))
+    (let [succesful (> strength (+ (:link runner) boost))
+          ability (if succesful ability (:unsuccessful ability))]
+      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)])
+      (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace)))
     (when-let [kicker (:kicker ability)]
       (when (>= strength (:min kicker))
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))

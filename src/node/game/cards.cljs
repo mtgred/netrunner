@@ -111,6 +111,11 @@
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
 
+   "Bernice Mai"
+   {:events {:successful-run {:req (req this-server)
+                              :trace {:base 5 :msg "give the Runner 1 tag"
+                                      :effect (effect (gain :runner :tag 1))}}}}
+
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
 
@@ -674,6 +679,11 @@
                       :effect (effect (corp-install target nil {:no-install-cost true}))}
                      card targets))}
 
+   "Invasion of Privacy"
+   {:trace {:base 2 :msg (msg "reveal the Runner's Grip")
+            :effect (req (doseq [c (:hand runner)] (move state side c :play-area false true)))
+            :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
+
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
                  :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
@@ -1146,6 +1156,10 @@
    "Restructure"
    {:effect (effect (gain :credit 15))}
 
+   "Restructured Datapool"
+   {:abilities [{:cost [:click 1]
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+
    "Retrieval Run"
    {:effect (effect (run :archives
                       {:replace-access
@@ -1304,6 +1318,10 @@
     :effect (effect (system-msg (str "adds " (:title target) " to his grip and shuffle his stack"))
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
+
+   "Spinal Modem"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1)) :recurring 2
+    :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1))}}}
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -1745,8 +1763,10 @@
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
 
    "Caduceus"
-   {:abilities [{:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
+                 :trace {:base 3 :msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}}
+                {:label "Trace 2 - End the run"
+                 :trace {:base 2 :msg "end the run" :effect (effect (end-run))}}]}
 
    "Cell Portal"
    {:abilities [{:msg "make the Runner approach the outermost ICE"
@@ -1765,6 +1785,12 @@
    "Curtain Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Data Hound"
+   {:abilities [{:label "Trace 2 - Look at the top of Stack"
+                 :trace {:base 2 :msg (msg "look at the top " (- target (second targets)) " cards of Stack")
+                         :effect (req (doseq [c (take (- target (second targets)) (:deck runner))]
+                                        (move state side c :play-area false true)))}}]}
+
    "Data Mine"
    {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1))}]}
 
@@ -1777,7 +1803,8 @@
    {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
                 {:msg "give the Runner 1 tag using 1 power counter"
                  :counter-cost 1 :effect (effect (gain :runner :tag 1))}
-                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+                {:label "Trace 3 - Add 1 power counter"
+                 :trace {:base 3 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}]}
 
    "Dracō"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
@@ -1858,7 +1885,8 @@
                  :effect (effect (lose :runner :click 1))}]}
 
    "Hunter"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+   {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Ice Wall"
    {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -1867,15 +1895,17 @@
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
                  :effect (effect (trash target))}
-                {:msg "give the runner 1 tag and do 1 brain"
-                 :effect (effect (damage :brain 1) (gain :runner :tag 1))}]}
+                {:label "Trace 1 - Give ther Runner 1 tag and do 1 brain damage"
+                 :trace {:base 1 :msg "give the Runner 1 tag and do 1 brain damage"
+                         :effect (effect (damage :brain 1) (gain :runner :tag 1))}}]}
 
    "Ichi 2.0"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
                  :effect (effect (trash target))}
-                {:msg "give the runner 1 tag and do 1 brain"
-                 :effect (effect (damage :brain 1) (gain :runner :tag 1))}]}
+                {:label "Trace 3 - Give ther Runner 1 tag and do 1 brain damage"
+                 :trace {:base 3 :msg "give the Runner 1 tag and do 1 brain damage"
+                         :effect (effect (damage :brain 1) (gain :runner :tag 1))}}]}
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -1921,6 +1951,10 @@
    {:abilities [{:msg "force the runner to trash a card"}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Matrix Analyzer"
+   {:abilities [{:label "Trace 2 - Give the Runner 1 tag"
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+
    "Merlin"
    {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
 
@@ -1935,7 +1969,12 @@
 
    "Muckraker"
    {:effect (effect (gain :bad-publicity 1))
-    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
+    :abilities [{:label "Trace 1 - Give the Runner 1 tag"
+                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                {:label "Trace 2 - Give the Runner 1 tag"
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                {:label "Trace 3 - Give the Runner 1 tag"
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
                 {:msg "end the run if the runner is tagged" :req (req tagged)
                  :effect (effect (end-run))}]}
 
@@ -1984,9 +2023,13 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Sagittarius"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}]}
+   {:abilities [{:label "Trace 2"
+                 :trace {:base 2 :prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+                         :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))
+                         :kicker {:min 5 :prompt "Choose a program to trash"
+                                  :msg (msg "trash " (:title target)) :not-distinct true
+                                  :choices (req (get-in runner [:rig :program]))
+                                  :effect (effect (trash target))}}}]}
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -1999,13 +2042,17 @@
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                {:msg "give the runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+                {:label "Trace 3 - Give the Runner 1 tag"
+                 :trace {:base 3 :msg "give the runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
-                {:msg "do 2 net damage" :effect (effect (damage :net 2))}
-                {:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+    :abilities [{:label "Trace 1 - Do 1 net damage"
+                 :trace {:base 1 :msg "do 1 net damage" :effect (effect (damage :net 1))}}
+                {:label "Trace 2 - Do 2 net damage"
+                 :trace {:base 2 :msg "do 2 net damage" :effect (effect (damage :net 2))}}
+                {:label "Trace 3 - Do 3 net damage"
+                 :trace {:base 3 :msg "do 3 net damage" :effect (effect (damage :net 3))}}]}
 
    "Snoop"
    {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
@@ -2036,9 +2083,13 @@
                  :choices (req (filter #(has? % :subtype "AI") (get-in runner [:rig :program])))}]}
 
    "Taurus"
-   {:abilities [{:prompt "Choose a Hardware to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a Hardware" :choices (req (get-in runner [:rig :hardware]))
-                 :effect (effect (trash target))}]}
+   {:abilities [{:label "Trace 2"
+                 :trace {:base 2 :prompt "Choose a Hardware to trash" :msg (msg "trash " (:title target))
+                         :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))
+                         :kicker {:min 5 :prompt "Choose a Hardware to trash"
+                                  :msg (msg "trash " (:title target)) :not-distinct true
+                                  :choices (req (get-in runner [:rig :hardware]))
+                                  :effect (effect (trash target))}}}]}
 
    "TMI"
    {:trace {:base 2 :unsuccessful {:effect (effect (derez card))}}
@@ -2081,11 +2132,22 @@
    "Viktor 2.0"
    {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
                  :effect (effect (damage :brain 1))}
-                {:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}
+                {:label "Trace 2 - Add 1 power counter"
+                 :trace {:base 2 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Viper"
+   {:abilities [{:label "Trace 3 - The Runner loses 1 [Click] if able"
+                 :trace {:base 3 :msg  "force the runner to lose 1 [Click] if able"
+                         :effect (effect (lose :runner :click 1))}}
+                {:label "Trace 3 - End the run"
+                 :trace {:base 3 :msg "end the run" :effect (effect (end-run))}}]}
+
    "Virgo"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+   {:abilities [{:label "Trace 2"
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))
+                         :kicker {:min 5 :msg "give the Runner 1 tag"
+                                  :effect (effect (gain :runner :tag 1))}}}]}
 
    "Wall of Static"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2211,10 +2273,6 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
-
-   "Spinal Modem"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :recurring 2}
 
    "Tallie Perrault"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
