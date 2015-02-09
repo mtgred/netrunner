@@ -1531,7 +1531,7 @@
 
    "Atman"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
-    :effect (effect (lose :credit target) (set-prop card :counter target))
+    :effect (effect (set-prop card :counter target))
     :abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]}
 
    "Aurora"
@@ -1781,7 +1781,7 @@
 
    "Dracō"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
-    :effect (effect (lose :credit target) (set-prop card :counter target))
+    :effect (effect (set-prop card :counter target))
     :abilities [{:label "Trace 2"
                  :trace {:base 2 :msg "give the Runner 1 tag and end the run"
                          :effect (effect (gain :runner :tag 1) (end-run))}}]}
