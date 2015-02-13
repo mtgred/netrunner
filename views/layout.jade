@@ -14,13 +14,8 @@ html
     script(src='/lib/moment/min/moment.min.js')
     script(src='/socket.io/socket.io.js')
     script(type="text/javascript")!= "var user = " + JSON.stringify(user) + ";"
-
-    if env === 'dev'
-      script(type="text/javascript").
-        var iourl = window.location.hostname;
-    else
-      script(type="text/javascript").
-        var iourl = window.location.hostname + ":8000";
+    script(type="text/javascript").
+      var iourl = window.location.hostname;
 
     if user
       script(type="text/javascript").
