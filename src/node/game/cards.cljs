@@ -536,7 +536,8 @@
    "Gravedigger"
    {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
                      :effect (effect (add-prop :runner card :counter 1))}}
-    :abilities [{:counter-cost 1 :cost [:click 1] :effect (effect (mill :corp))}]}
+    :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
+                 :effect (effect (mill :corp))}]}
 
    "Green Level Clearance"
    {:effect (effect (gain :credit 3) (draw))}
