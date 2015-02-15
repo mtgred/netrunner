@@ -286,5 +286,8 @@ for signal in ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
                'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM']
   process.on(signal, terminate)
 
+process.on 'uncaughtException', (err) ->
+  console.log(err.stack)
+
 server.listen app.get('port'), app.get('ipaddr'), ->
   console.log(new Date().toString() + ": Express server listening on port " + app.get('port'))
