@@ -302,7 +302,8 @@
 
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-    :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))}]}
+    :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))
+                 :msg "force the Corp to trash the top card of R&D"}]}
 
    "Datasucker"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))
@@ -2034,7 +2035,8 @@
 
    "Salvage"
    {:advanceable :while-rezzed
-    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+    :abilities [{:label "Trace 2 - Give the Runner 1 tag"
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Searchlight"
    {:advanceable :always
@@ -2044,7 +2046,7 @@
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -2248,7 +2250,7 @@
    "Ghost Runner"
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
-                 :effect #(do (gain %1 :credit 1)
+                 :effect #(do (gain %1 %2 :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
    "Imp"
