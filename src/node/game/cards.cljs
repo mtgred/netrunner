@@ -4,7 +4,7 @@
                                set-prop resolve-ability system-msg end-run mill run derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
-                               steal handle-access card-init] :as core]
+                               steal handle-access card-init rez] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -1078,6 +1078,13 @@
 
    "Primary Transmission Dish"
    {:recurring 3}
+
+   "Priority Requisition"
+   {:optional {:prompt "Perform a Priority Requsition order?"
+               :effect (effect (resolve-ability 
+                        {:prompt "Choose a piece of ICE." :not-distinct true :choices (req (filter #(not (:rezzed %)) (mapcat :ices (flatten (seq (:servers corp))))))
+                         :msg (msg "rez " (:title target) " at no cost.")
+                         :effect (effect (resolve-ability (rez state side target {:no-cost true}) card targets)) } card targets))}}
 
    "Professional Contacts"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
