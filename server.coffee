@@ -131,7 +131,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 # Express config
 app.configure ->
   app.use express.favicon(__dirname + "/resources/public/img/jinteki.ico")
-  app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 1045
+  app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 1042
   app.set 'ipaddr', process.env.OPENSHIFT_NODEJS_IP || "0.0.0.0"
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()
