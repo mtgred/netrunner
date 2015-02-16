@@ -14,13 +14,8 @@ jwt = require('jsonwebtoken')
 gameEngine = require('./game')
 
 # MongoDB connection
-mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
-mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
-login = if process.env.OPENSHIFT_MONGODB_DB_PASSWORD then "#{mongoUser}:#{mongoPassword}@" else ""
-mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
-mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
-appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
-mongoUrl = "mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}"
+appName = 'netrunner'
+mongoUrl = "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
 
 # Game lobby
@@ -131,8 +126,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 # Express config
 app.configure ->
   app.use express.favicon(__dirname + "/resources/public/img/jinteki.ico")
-  app.set 'port', process.env.OPENSHIFT_NODEJS_PORT || 1042
-  app.set 'ipaddr', process.env.OPENSHIFT_NODEJS_IP || "0.0.0.0"
+  app.set 'port', 1042
+  app.set 'ipaddr', "0.0.0.0"
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()
   app.use express.urlencoded()

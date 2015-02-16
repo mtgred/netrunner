@@ -21,3 +21,4 @@ pom.xml
 /data/andb-*.json
 /data/img
 game.js
+deploy.sh
