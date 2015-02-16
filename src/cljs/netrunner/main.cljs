@@ -46,9 +46,13 @@
 (defn status [cursor owner]
   (om/component
    (sab/html
-    [:div.float-right
-     (let [c (count (:games cursor))]
-       (str c " Game" (when (> c 1) "s")))])))
+    [:div
+     [:div.float-right
+      (let [c (count (:games cursor))]
+        (str c " Game" (when (> c 1) "s")))]
+     (when (:side @netrunner.gameboard/game-state)
+       [:div.float-right
+        [:a {:on-click #(netrunner.gamelobby/quit-game)} "Leave game"]])])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})

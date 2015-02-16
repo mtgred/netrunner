@@ -47,7 +47,8 @@
         state (@game-states (:gameid params))]
     (try (case action
            "init" (core/init-game params)
-           "do" ((commands (:command params)) state (keyword (:side params)) (:args params)))
+           "do" ((commands (:command params)) state (keyword (:side params)) (:args params))
+           "quit" (system-msg state (keyword (:side params)) "left the game" ))
          (catch :default e
            (prn e)))
     (clj->js @(@game-states gameid))))

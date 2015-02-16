@@ -6,7 +6,7 @@
             [clojure.string :refer [join]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game]]
+            [netrunner.gameboard :refer [init-game game-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.deckbuilder :refer [valid?]]))
 
@@ -68,6 +68,14 @@
   (send {:action "leave" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
   (om/update! cursor :message []))
+
+(defn quit-game []
+  (send {:action "quit" :gameid (:gameid @app-state) :side (:side @game-state)})
+  (reset! netrunner.gameboard/game-state nil)
+  (swap! app-state assoc :gameid nil)
+  (set! (.-onbeforeunload js/window) nil)
+  (-> "#gameboard" js/$ .fadeOut)
+  (-> "#gamelobby" js/$ .fadeIn))
 
 (defn send-msg [event owner]
   (.preventDefault event)

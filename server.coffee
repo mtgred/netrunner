@@ -71,6 +71,13 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.leave(msg.gameid)
         lobby.emit('netrunner', {type: "games", games: games})
 
+      when "quit"
+        removePlayer(socket, socket.request.user.username)
+        socket.leave(msg.gameid)
+        lobby.emit('netrunner', {type: "games", games: games})
+        state = gameEngine.main.exec("quit", msg)
+        lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+
       when "join"
         for game in games
           if game.gameid is msg.gameid and game.players.length < 2 and game.players[0].user.username isnt socket.request.user.username
