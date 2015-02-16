@@ -4,7 +4,7 @@
                                set-prop resolve-ability system-msg end-run mill run derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
-                               steal handle-access card-init] :as core]
+                               steal handle-access card-init trash-no-cost] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -692,7 +692,9 @@
                 {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
 
    "Ive Had Worse"
-   {:effect (effect (draw 3))}
+   {:effect (effect (draw 3))
+    :trash-effect {:req (req (#{:meat :net} target))
+                   :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Ixodidae"
    {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
@@ -2237,6 +2239,10 @@
    {:abilities [{:effect (effect (trash card) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]}
 
+   "Edward Kim: Humanitys Hammer"
+   {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
+                      :msg (msg "trash " (:title target)) :effect (effect (trash-no-cost))}}}
+
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))}
 
@@ -2255,7 +2261,8 @@
 
    "Imp"
    {:data {:counter 2}
-    :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn :effect #()}]}
+    :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn
+                 :effect (effect (trash-no-cost))}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}

@@ -18,10 +18,7 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
-(declare prompt!)
-(declare forfeit)
-(declare trigger-event)
-(declare handle-end-run)
+(declare prompt! forfeit trigger-event handle-end-run trash)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -149,7 +146,8 @@
 (defn show-prompt [state side card msg choices f]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
     (when (or (= choices :credit) (> (count choices) 0))
-      (swap! state update-in [side :prompt] #(conj (vec %) {:msg prompt :choices choices :effect f})))))
+      (swap! state update-in [side :prompt]
+             #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -268,13 +266,20 @@
                  (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
         (handle-end-run state :runner)))))
 
-(defn trigger-event
-  ([state side event] (trigger-event state side event nil))
-  ([state side event target]
-     (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
-       (when-let [card (get-card state (:card e))]
-         (when (or (not (:req ability)) ((:req ability) state side card [target]))
-           (resolve-ability state side ability card [target]))))))
+(defn trash-no-cost [state side]
+  (when-let [card (:card (first (get-in @state [side :prompt])))]
+    (trash state side card)
+    (swap! state update-in [side :prompt] rest)
+    (when-let [run (:run @state)]
+      (when (and (:ended run)
+                 (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+        (handle-end-run state :runner)))))
+
+(defn trigger-event [state side event & targets]
+  (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
+    (when-let [card (get-card state (:card e))]
+      (when (or (not (:req ability)) ((:req ability) state side card targets))
+        (resolve-ability state side ability card targets)))))
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ % n)))
@@ -314,10 +319,8 @@
     (when (= type :brain)
       (swap! state update-in [:runner :brain-damage] #(+ % n))
       (swap! state update-in [:runner :max-hand-size] #(- % n)))
-    (let [shuffled-hand (shuffle hand)
-          discarded (zone :discard (take n shuffled-hand))]
-      (swap! state update-in [:runner :discard] #(concat % discarded))
-      (swap! state assoc-in [:runner :hand] (drop n shuffled-hand)))
+    (doseq [c (take n (shuffle hand))]
+      (trash state side c type))
     (trigger-event state side :damage type)))
 
 (defn do! [{:keys [cost effect]}]
@@ -398,14 +401,14 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defmulti trash (fn [state side cards] (map? cards)))
+(defmulti trash (fn [state side cards target] (map? cards)))
 
-(defmethod trash true [state side {:keys [zone] :as card}]
-  (trigger-event state side :trash card)
+(defmethod trash true [state side {:keys [zone] :as card} & targets]
+  (trigger-event state side :trash card targets)
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card nil))))
+      (resolve-ability state side trash-effect moved-card targets))))
 
 (defmethod trash false [state side cards]
   (doseq [c cards] (trash state side c)))
@@ -458,7 +461,8 @@
 
 (defn handle-access [state side cards]
   (doseq [c cards]
-    (let [cdef (card-def c)]
+    (let [cdef (card-def c)
+          c (assoc c :seen true)]
       (when-let [name (:title c)]
         (when-let [access-effect (:access cdef)]
           (resolve-ability state (to-keyword (:side c)) access-effect c nil))
@@ -480,7 +484,8 @@
                                                                 " to steal " (:title c)))
                                                (steal c))} nil)
             (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-              (steal state :runner c))))))))
+              (steal state :runner c))))
+        (trigger-event state side :access c)))))
 
 (defmulti access (fn [state side server] (first server)))
 
