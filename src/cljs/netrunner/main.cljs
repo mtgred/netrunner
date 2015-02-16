@@ -50,7 +50,7 @@
      [:div.float-right
       (let [c (count (:games cursor))]
         (str c " Game" (when (> c 1) "s")))]
-     (when (:side @netrunner.gameboard/game-state)
+     (when (.-onbeforeunload js/window)
        [:div.float-right
         [:a {:on-click #(netrunner.gamelobby/quit-game)} "Leave game"]])])))
 
