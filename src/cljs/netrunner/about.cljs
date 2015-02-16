@@ -34,9 +34,6 @@
        [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
         " and create an account with the same email used to register on Jinteki.net."]]
       [:li
-       [:h4 "How do I quit a game when it's finished?"]
-       [:p "A quit button will be added in the future. In the meanwhile, simply refresh your browser."]]
-      [:li
        [:h4 "How can I make a donation?"]
        [:p "My PayPal account is mtgred@gmail.com. Contributions are appreciated and will help financing faster servers."]]
       [:li
