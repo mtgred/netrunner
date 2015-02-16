@@ -274,7 +274,7 @@
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
 
    "D4v1d"
-   {:data {:counter 3} :abilities [{:counter-cost 1 :msg "break 1 suroutine"}]}
+   {:data {:counter 3} :abilities [{:counter-cost 1 :msg "break 1 subroutine"}]}
 
    "Daily Business Show"
    {:events {:corp-draw
