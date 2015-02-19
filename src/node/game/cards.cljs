@@ -1422,6 +1422,10 @@
    {:steal-req (req installed)
     :access {:psi {:req (req (not installed)) :equal {:effect (effect (steal card))}}}}
 
+   "The Helpful AI"
+   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
+    :abilities [{:msg "give an icebreaker +2 strength" :effect (effect (trash card))}]}
+
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
 
@@ -1674,6 +1678,10 @@
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
                 {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
+   "Knight"
+   {:abilities [{:cost [:click 1] :msg "host it on an ICE"}
+                {:cost [:credit 2] :msg "break 1 subroutine on the hosted ICE"}]}
+
    "Leviathan"
    {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
                 {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
@@ -1799,6 +1807,15 @@
    "Changeling"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Checkpoint"
+   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+    :abilities [{:label "Trace 5 - Do 3 meat damage when this run is successful"
+                 :trace {:base 5
+                         :effect #(do (swap! %1 assoc-in [:run :run-effect :end-run]
+                                             {:req (req (:successful run)) :msg "do 3 meat damage"
+                                              :effect (effect (damage :meat 3))})
+                                      (swap! %1 assoc-in [:run :run-effect :card] %3))}}]}
+
    "Chimera"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :end-turn {:effect (effect (derez card))}}
@@ -1905,7 +1922,7 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Hourglass"
-   {:abilities [{:msg "force the runner to lose 1 [Click] if able"
+   {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}]}
 
    "Hudson 1.0"
@@ -2053,7 +2070,8 @@
    "Sagittarius"
    {:abilities [{:label "Trace 2"
                  :trace {:base 2 :prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                         :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))
+                         :choices (req (get-in runner [:rig :program])) :not-distinct true
+                         :effect (effect (trash target))
                          :kicker {:min 5 :prompt "Choose a program to trash"
                                   :msg (msg "trash " (:title target)) :not-distinct true
                                   :choices (req (get-in runner [:rig :program]))
@@ -2114,7 +2132,8 @@
    "Taurus"
    {:abilities [{:label "Trace 2"
                  :trace {:base 2 :prompt "Choose a Hardware to trash" :msg (msg "trash " (:title target))
-                         :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))
+                         :choices (req (get-in runner [:rig :hardware])) :not-distinct true
+                         :effect (effect (trash target))
                          :kicker {:min 5 :prompt "Choose a Hardware to trash"
                                   :msg (msg "trash " (:title target)) :not-distinct true
                                   :choices (req (get-in runner [:rig :hardware]))
@@ -2309,9 +2328,6 @@
                               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
                               :req (req (or (has? target :subtype "Black Ops")
                                             (has? target :subtype "Gray Ops")))}}}
-
-   "The Helpful AI"
-   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
 
    "The Source"
    {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
