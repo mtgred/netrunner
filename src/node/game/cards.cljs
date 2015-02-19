@@ -108,6 +108,12 @@
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "Autoscripter is trashed"))}}}
 
+   "Bank Job"
+   {:data {:counter 8}
+    :abilities [{:label "Take any number of [Credits] on Bank Job"
+                 :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
+                 :effect (effect (gain :credit target))}]}
+
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
 
@@ -1237,6 +1243,19 @@
    "Scrubber"
    {:recurring 2}
 
+   "Sealed Vault"
+   {:abilities [{:label "Store any number of [Credits] on Sealed Vault" :cost [:credit 1]
+                 :prompt "How many [Credits]?" :choices :credit :msg (msg "store " target " [Credits]")
+                 :effect (effect (add-prop card :counter target))}
+                {:label "Spend [Click] to move any number of [Credits] to your credit pool"
+                 :cost [:click 1] :prompt "How many [Credits]?"
+                 :choices :counter :msg (msg "spend [Click] to gain " target " [Credits]")
+                 :effect (effect (gain :credit target))}
+                {:label "Trash Sealed Vault to move any number of [Credits] to your credit pool"
+                 :prompt "How many [Credits]?" :choices :counter
+                 :msg (msg "trash it and gain " target " [Credits]")
+                 :effect (effect (gain :credit target) (trash card))}]}
+
    "SEA Source"
    {:req (req (:successful-run runner-reg))
     :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
@@ -2214,12 +2233,6 @@
 
    "Bad Times"
    {:req (req tagged)}
-
-   "Bank Job"
-   {:data {:counter 8}
-    :abilities [{:counter-cost 1 :msg "gain 1 [Credits]"
-                 :effect #(do (gain %1 :runner :credit 1)
-                              (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}

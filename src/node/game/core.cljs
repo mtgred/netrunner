@@ -253,12 +253,22 @@
             (resolve-ability state side end-run-effect nil [(first server)])))
         (swap! state assoc :run nil))))
 
+(defn add-prop [state side card key n]
+  (update! state side (update-in card [key] #(+ % n)))
+  (when (= key :advance-counter)
+    (trigger-event state side :advance card)))
+
+(defn set-prop [state side card & args]
+  (update! state side (apply assoc (cons card args))))
+
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit])) choice)]
     (when (= (:choices prompt) :credit)
       (pay state side card :credit choice))
+    (when (= (:choices prompt) :counter)
+      (add-prop state side (:card prompt) :counter (- choice)))
     (swap! state update-in [side :prompt] rest)
     ((:effect prompt) (or choice card))
     (when-let [run (:run @state)]
@@ -280,14 +290,6 @@
     (when-let [card (get-card state (:card e))]
       (when (or (not (:req ability)) ((:req ability) state side card targets))
         (resolve-ability state side ability card targets)))))
-
-(defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ % n)))
-  (when (= key :advance-counter)
-    (trigger-event state side :advance card)))
-
-(defn set-prop [state side card & args]
-  (update! state side (apply assoc (cons card args))))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
