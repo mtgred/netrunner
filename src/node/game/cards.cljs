@@ -898,6 +898,10 @@
    {:events {:successful-run {:req (req (= target :hq))
                               :effect (effect (access-bonus (:counter card))
                                               (add-prop card :counter 1))}}}
+   
+   "Net Police"
+   {:recurring (:link runner)}
+   
    "Net Shield"
    {:abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"}]}
 
