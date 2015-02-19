@@ -4,7 +4,7 @@
                                set-prop resolve-ability system-msg end-run mill run derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
-                               steal handle-access card-init trash-no-cost] :as core]
+                               steal handle-access card-init trash-no-cost max-access] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -1623,7 +1623,8 @@
                 {:msg "Prevent any number of net damage" :effect (effect (trash card))}]}
 
    "Eater"
-   {:abilities [{:cost [:credit 1] :msg "Break ICE subroutine"}
+   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine and access 0 card this run"
+                 :effect (effect (max-access 0))}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Faerie"
@@ -1887,6 +1888,10 @@
    "Hourglass"
    {:abilities [{:msg "force the runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}]}
+
+   "Hudson 1.0"
+   {:abilities [{:msg "prevent the Runner from accessing more than 1 card during this run"
+                 :effect (effect (max-access 1))}]}
 
    "Hunter"
    {:abilities [{:label "Trace 3 - Give the Runner 1 tag"

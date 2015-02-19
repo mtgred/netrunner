@@ -487,17 +487,24 @@
               (steal state :runner c))))
         (trigger-event state side :access c)))))
 
+(defn max-access [state side n]
+  (swap! state assoc-in [:run :max-access] n))
+
+(defn access-count [state side kw]
+  (let [run (:run @state)
+        accesses (+ (get-in @state [:runner kw]) (:access-bonus run))]
+    (if-let [max-access (:max-access run)]
+      (min max-access accesses) accesses)))
+
 (defmulti access (fn [state side server] (first server)))
 
 (defmethod access :hq [state side server]
-  (let [n (+ (get-in @state [:runner :hq-access]) (get-in @state [:run :access-bonus]))]
-    (concat (take n (shuffle (get-in @state [:corp :hand])))
-            (get-in @state [:corp :servers :hq :content]))))
+  (concat (take (access-count state side :hq-access) (shuffle (get-in @state [:corp :hand])))
+          (get-in @state [:corp :servers :hq :content])))
 
 (defmethod access :rd [state side server]
-  (let [n (+ (get-in @state [:runner :rd-access]) (get-in @state [:run :access-bonus]))]
-    (concat (take n (get-in @state [:corp :deck]))
-            (get-in @state [:corp :servers :rd :content]))))
+  (concat (take (access-count state side :rd-access) (get-in @state [:corp :deck]))
+          (get-in @state [:corp :servers :rd :content])))
 
 (defmethod access :archives [state side server]
   (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
