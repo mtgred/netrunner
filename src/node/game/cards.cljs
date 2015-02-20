@@ -369,6 +369,9 @@
     :trash-effect {:req (req access)
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
+   "Docklands Crackdown"
+   {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect #(do (when (zero? (:counter %3)) (gain-agenda-point %1 %2 1))
@@ -780,6 +783,10 @@
 
    "Legwork"
    {:effect (effect (run :hq) (access-bonus 2))}
+
+   "Lemuria Codecracker"
+   {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
+                 :msg "expose 1 card"}]}
 
    "Levy AR Lab Access"
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
