@@ -428,7 +428,15 @@
                                            (when (not= (count (get-in old [:runner :hand])) hand-size)
                                              (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play #(remove-watch % :ekomind)}
-
+  
+   "Elizabeth Mills"
+   {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
+    :abilities [{:cost [:click 1]
+                 :prompt "Choose a location to trash" :label "Trash a location"
+                 :msg (msg "trash " (:title target) "and take 1 bad publicity")
+                 :choices (req (filter #(has? % :subtype "Location")) (get-in runner [:rig :resource]))
+                 :effect (effect (gain :bad-publicity 1) (trash target) (trash card))}]}
+   
    "Encrypted Portals"
    {:effect (effect (gain :credit
                           (reduce (fn [c server]
