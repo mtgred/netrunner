@@ -427,7 +427,7 @@
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1]
                  :prompt "Choose a location to trash" :label "Trash a location"
-                 :msg (msg "trashes " (:title target) "and takes 1 bad publicity")
+                 :msg (msg "trash " (:title target) "and take 1 bad publicity")
                  :choices (req (filter #(has? % :subtype "Location")) (get-in runner [:rig :resource]))
                  :effect (effect (gain :bad-publicity 1) (trash target) (trash card))}]}
    
