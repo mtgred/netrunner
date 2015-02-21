@@ -2,6 +2,7 @@ fs = require('fs')
 exec = require('child_process').exec
 request = require('request')
 mongoskin = require('mongoskin')
+async = require('async')
 
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
 mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
@@ -46,16 +47,15 @@ baseurl = "http://netrunnerdb.com/api/"
 selectFields = (fields, objectList) ->
   ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj["limited"]; newObj), {}) for obj in objectList)
 
-# request.get baseurl + "sets", (error, response, body) ->
-#   if !error and response.statusCode is 200
-#     sets = selectFields(setFields, JSON.parse(body))
-#     db.collection("sets").remove ->
-#     db.collection('sets').insert sets, (err, result) ->
-#     fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
-#       if mongoUser
-#         exec("mongoimport --host $OPENSHIFT_MONGODB_DB_HOST --port $OPENSHIFT_MONGODB_DB_PORT --username $OPENSHIFT_MONGODB_DB_USERNAME --password $OPENSHIFT_MONGODB_DB_PASSWORD --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file andb-sets.json")
-#       else
-#         exec("mongoimport --db netrunner --upsert --upsertFields code --collection sets --jsonArray --file andb-sets.json")
+fetchSets = (callback) ->
+  request.get baseurl + "sets", (error, response, body) ->
+    if !error and response.statusCode is 200
+      sets = selectFields(setFields, JSON.parse(body))
+      db.collection("sets").remove ->
+      db.collection("sets").insert sets, (err, result) ->
+        fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
+          console.log("#{sets.length} sets fetched")
+        callback(null, sets.length)
 
 fetchImg = (code, t) ->
   setTimeout ->
@@ -65,15 +65,20 @@ fetchImg = (code, t) ->
     request(url).pipe(fs.createWriteStream("#{imgDir}/#{code}.png"))
   , t
 
-request.get baseurl + "cards", (error, response, body) ->
-  if !error and response.statusCode is 200
-    cards = selectFields(cardFields, JSON.parse(body))
-    i = 0
-    for card in cards
-      if card.imagesrc and !fs.existsSync("img/#{card.code}.png")
-        fetchImg(card.code, i++ * 200)
+fetchCards = (callback) ->
+  request.get baseurl + "cards", (error, response, body) ->
+    if !error and response.statusCode is 200
+      cards = selectFields(cardFields, JSON.parse(body))
+      i = 0
+      for card in cards
+        if card.imagesrc and !fs.existsSync("img/#{card.code}.png")
+          fetchImg(card.code, i++ * 200)
 
-    db.collection("cards").remove ->
-    db.collection("cards").insert cards, (err, result) ->
-    fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
-    console.log("#{cards.length} cards fetched")
+      db.collection("cards").remove ->
+      db.collection("cards").insert cards, (err, result) ->
+        fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
+          console.log("#{cards.length} cards fetched")
+        callback(null, cards.length)
+
+async.parallel [fetchSets, fetchCards], (error, results) ->
+  db.close()
