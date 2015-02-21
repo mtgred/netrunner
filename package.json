@@ -6,6 +6,7 @@
   },
   "main": "server.coffee",
   "dependencies": {
+    "async": "*",
     "bcrypt": "~0.7.8",
     "connect-mongo": "~0.4.1",
     "express": "~3.4.7",
