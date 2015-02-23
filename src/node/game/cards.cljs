@@ -1577,6 +1577,10 @@
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
+   "Zaibatsu Loyalty"
+   {:abilities [{:cost [:credit 1] :msg "prevent 1 card from being exposed"}
+                {:effect (effect (trash card)) :msg "prevent 1 card from being exposed"}]}
+
    ;; Icebreakers
 
    "Alpha"
