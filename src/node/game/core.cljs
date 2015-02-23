@@ -78,7 +78,8 @@
     (swap! state assoc-in from-zone)))
 
 (defmethod move true [state side {:keys [zone cid] :as card} to front]
-  (when card
+  (when (and card (or (some #(= cid (:cid %)) (get-in @state (cons :runner (vec zone))))
+                      (some #(= cid (:cid %)) (get-in @state (cons :corp (vec zone))))))
     (let [dest (if (sequential? to) (vec to) [to])
           c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
               (assoc card :seen true) card)
