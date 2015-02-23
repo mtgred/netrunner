@@ -28,7 +28,7 @@ swapSide = (side) ->
 removePlayer = (socket, username, reason) ->
   for game, i in games
     for player, j in game.players
-      if player.user.username is username
+      if player and player.user.username is username
         game.players.splice(j, 1)
         if reason is "disconnect"
           if game.started
