@@ -6,11 +6,11 @@
   },
   "main": "server.coffee",
   "dependencies": {
-    "async": "*",
+    "async": "~0.9.0",
     "bcrypt": "~0.7.8",
     "connect-mongo": "~0.4.1",
     "express": "~3.4.7",
-    "jade": "*",
+    "jade": "~1.9.2",
     "jsonwebtoken": "~0.4.1",
     "mongoskin": "~1.4.1",
     "passport": "~0.2.0",
