@@ -44,7 +44,6 @@ Launch MongoDB and fetch card data:
 ```
 $ mongod
 $ cd data
-$ mkdir img
 $ coffee fetch.coffee
 ```
 

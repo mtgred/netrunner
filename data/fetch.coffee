@@ -2,6 +2,8 @@ fs = require('fs')
 exec = require('child_process').exec
 request = require('request')
 mongoskin = require('mongoskin')
+mkdirp = require('mkdirp')
+path = require('path')
 async = require('async')
 
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
@@ -57,22 +59,26 @@ fetchSets = (callback) ->
           console.log("#{sets.length} sets fetched")
         callback(null, sets.length)
 
-fetchImg = (code, t) ->
+fetchImg = (code, imgPath, t) ->
   setTimeout ->
     console.log code
     url = "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
-    imgDir = if mongoUser then "#{process.env.OPENSHIFT_DATA_DIR}/img" else "img"
-    request(url).pipe(fs.createWriteStream("#{imgDir}/#{code}.png"))
+    request(url).pipe(fs.createWriteStream(imgPath))
   , t
 
 fetchCards = (callback) ->
   request.get baseurl + "cards", (error, response, body) ->
     if !error and response.statusCode is 200
       cards = selectFields(cardFields, JSON.parse(body))
+      imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
+      mkdirp imgDir, (err) ->
+        if err
+          console.error("Failed to create card image resource directory #{imgDir}")
       i = 0
       for card in cards
-        if card.imagesrc and !fs.existsSync("img/#{card.code}.png")
-          fetchImg(card.code, i++ * 200)
+        imgPath = path.join(imgDir, "#{card.code}.png")
+        if card.imagesrc and !fs.existsSync(imgPath)
+          fetchImg(card.code, imgPath, i++ * 200)
 
       db.collection("cards").remove ->
       db.collection("cards").insert cards, (err, result) ->
