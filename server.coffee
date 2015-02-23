@@ -36,10 +36,9 @@ removePlayer = (socket, username, reason) ->
             lobby.to(game.gameid).emit("netrunner", {type: "state", state: state})
           else
             socket.to(game.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{username} left the game."})
-        break
     if game.players.length is 0
       games.splice(i, 1)
-      break
+  lobby.emit('netrunner', {type: "games", games: games})
 
 # Socket.io
 io.use (socket, next) ->
@@ -59,7 +58,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
   socket.on 'disconnect', () ->
     removePlayer(socket, socket.request.user.username, "disconnect") if socket.request.user
-    lobby.emit('netrunner', {type: "games", games: games})
 
   socket.on 'netrunner', (msg) ->
     switch msg.action
@@ -74,7 +72,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "leave"
         removePlayer(socket, socket.request.user.username)
         socket.leave(msg.gameid)
-        lobby.emit('netrunner', {type: "games", games: games})
 
       when "quit"
         removePlayer(socket, socket.request.user.username, "quit")
