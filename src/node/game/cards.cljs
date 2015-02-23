@@ -69,6 +69,15 @@
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
+   "Angel Arena"
+   {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
+    :effect (effect (set-prop card :counter target))
+    :abilities [{:counter-cost 1 :msg "look at the top card of Stack"
+                 :effect (req (when (zero? (:counter card)) (trash state :runner card)))
+                 :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                            :msg "add the top card of Stack to the bottom"
+                            :effect (req (move state side (first (:deck runner)) :deck))}}]}
+
    "Anonymous Tip"
    {:effect (effect (draw 3))}
 
@@ -112,7 +121,8 @@
    {:data {:counter 8}
     :abilities [{:label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
-                 :effect (effect (gain :credit target))}]}
+                 :effect (req (gain state side :credit target)
+                                 (when (= target (:counter card)) (trash state :runner card)))}]}
 
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
@@ -156,6 +166,12 @@
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
+
+   "Bribery"
+   {:prompt "How many [Credits]?" :choices :credit
+    :msg (msg "increase the rez cost of the 1st unrezzed ice approached by " target " [Credits]")
+    :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
+                                      :effect (effect (run target nil card))} card nil))}
 
    "Cache"
    {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
@@ -1377,8 +1393,7 @@
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:req (req (:successful run))
-                                           :effect (effect (damage :brain 1))}} card))}
+                    (run target {:end-run {:effect (effect (damage :brain 1))}} card))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -1683,7 +1698,8 @@
 
    "Gordian Blade"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1 true))}]}
+                {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
+                 :effect (effect (pump card 1 true))}]}
 
    "Gingerbread"
    {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
@@ -1691,7 +1707,8 @@
 
    "Inti"
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+                {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
+                 :effect (effect (pump card 1 true))}]}
 
    "Knight"
    {:abilities [{:cost [:click 1] :msg "host it on an ICE"}
@@ -1969,6 +1986,10 @@
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Information Overload"
+   {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
+                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Ireress"
    {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}

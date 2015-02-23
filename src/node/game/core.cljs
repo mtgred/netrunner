@@ -145,7 +145,7 @@
 
 (defn show-prompt [state side card msg choices f]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
-    (when (or (= choices :credit) (> (count choices) 0))
+    (when (or (#{:credit :counter} choices) (> (count choices) 0))
       (swap! state update-in [side :prompt]
              #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))
 
