@@ -1578,8 +1578,8 @@
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
    "Zaibatsu Loyalty"
-   {:abilities [{:cost [:credit 1] :msg "prevent 1 card from being exposed"}
-                {:effect (effect (trash card)) :msg "prevent 1 card from being exposed"}]}
+   {:abilities [{:cost [:credit 1] :msg "pay 1 [Credits] and prevent 1 card from being exposed"}
+                {:effect (effect (trash card)) :msg "trash it and prevent 1 card from being exposed"}]}
 
    ;; Icebreakers
 
