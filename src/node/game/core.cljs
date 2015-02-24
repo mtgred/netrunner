@@ -297,7 +297,7 @@
                     (conj (:abilities cdef) "Use [Recurring Credits]")
                     (:abilities cdef))
         abilities (for [ab abilities]
-                    (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
+                    (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "Use [Recurring Credits]"))
         data (if-let [recurring (:recurring cdef)]
                (assoc (:data cdef) :counter recurring)
                (:data cdef))
