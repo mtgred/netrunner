@@ -28,7 +28,7 @@ swapSide = (side) ->
 removePlayer = (socket, username, reason) ->
   for game, i in games
     for player, j in game.players
-      if player and player.user.username is username
+      if not player.user or player.user.username is username
         game.players.splice(j, 1)
         if reason is "disconnect"
           if game.started
@@ -70,7 +70,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
 
       when "leave"
-        removePlayer(socket, socket.request.user.username)
+        removePlayer(socket, socket.request.user.username, "leave")
         socket.leave(msg.gameid)
 
       when "quit"
