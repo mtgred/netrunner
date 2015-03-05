@@ -295,7 +295,7 @@
 (defn card-init [state side card]
   (let [cdef (card-def card)
         abilities (if (:recurring cdef)
-                    (conj (:abilities cdef) "Use [Recurring Credits]")
+                    (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
                     (:abilities cdef))
         abilities (for [ab abilities]
                     (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))

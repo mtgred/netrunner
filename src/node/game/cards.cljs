@@ -237,7 +237,7 @@
    {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (runner-install target) (trash card))}]}
+                 :effect (effect (trash card) (runner-install target))}]}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -376,7 +376,7 @@
                                            :effect (effect (gain :credit 5))}} card))}
 
    "Djinn"
-   {:abilities [{:prompt "Choose a Virus" :msg (msg "adds " (:title target) "to his Grip")
+   {:abilities [{:prompt "Choose a Virus" :msg (msg "adds " (:title target) " to his Grip")
                  :choices (req (filter #(has? % :subtype "Virus") (:deck runner)))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
@@ -1260,7 +1260,7 @@
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (play-instant target) (trash card))}]}
+                 :effect (effect (trash card) (play-instant target))}]}
 
    "Savoir-faire"
    {:abilities [{:cost [:credit 2] :once :per-turn :msg (msg "install " (:title target))
