@@ -70,24 +70,27 @@
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
-  (if (= (:type card) "Identity")
-    (handle-abilities card owner)
-    (if (= (:side @game-state) :runner)
-      (case (first zone)
-        "hand" (send-command "play" {:card card})
-        "rig" (handle-abilities card owner)
-        nil)
-      (case (first zone)
-        "hand" (case type
-                 ("Upgrade" "ICE") (if root
-                                     (send-command "play" {:card card :server root})
-                                     (-> (om/get-node owner "servers") js/$ .toggle))
-                 ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                                      (send-command "play" {:card card :server "New remote"})
-                                      (-> (om/get-node owner "servers") js/$ .toggle))
-                 (send-command "play" {:card card}))
-        ("servers" "scored") (handle-abilities card owner)
-        nil))))
+  (let [side (:side @game-state)]
+    (if (get-in @game-state [side :selected])
+      (send-command "select" {:card card})
+      (if (= (:type card) "Identity")
+        (handle-abilities card owner)
+        (if (= side :runner)
+          (case (first zone)
+            "hand" (send-command "play" {:card card})
+            "rig" (handle-abilities card owner)
+            nil)
+          (case (first zone)
+            "hand" (case type
+                     ("Upgrade" "ICE") (if root
+                                         (send-command "play" {:card card :server root})
+                                         (-> (om/get-node owner "servers") js/$ .toggle))
+                     ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                                          (send-command "play" {:card card :server "New remote"})
+                                          (-> (om/get-node owner "servers") js/$ .toggle))
+                     (send-command "play" {:card card}))
+            ("servers" "scored") (handle-abilities card owner)
+            nil))))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -141,12 +144,13 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
-                         advanceable rezzed strength current-strength title remotes] :as cursor}
+                         advanceable rezzed strength current-strength title remotes selected]
+                  :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
-      [:div.blue-shade.card {:draggable true
+      [:div.blue-shade.card {:class (when selected "selected") :draggable true
                              :on-drag-start #(handle-dragstart % cursor)
                              :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                              :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))

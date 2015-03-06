@@ -32,6 +32,7 @@
    "advance" core/advance
    "score" core/score
    "choice" core/resolve-prompt
+   "select" core/select
    "shuffle" core/shuffle-deck
    "ability" core/play-ability})
 

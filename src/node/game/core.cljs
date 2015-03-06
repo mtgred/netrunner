@@ -198,6 +198,23 @@
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
     (swap! state assoc :trace {:strength s :ability ability :card card})))
 
+(defn resolve-select [state side]
+  (let [selected (get-in @state [side :selected])]
+    (when-not (empty? (:cards selected))
+      (resolve-ability state side (:ability selected) (-> (get-in @state [side :prompt]) first :card)
+                       (:cards selected))))
+  (swap! state assoc-in [side :selected] nil)
+  (swap! state update-in [side :prompt] rest))
+
+(defn show-select [state side card ability]
+  (swap! state assoc-in [side :selected]
+         {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])})
+  (show-prompt state side card
+               (if-let [m (get-in [:choices :max] ability)]
+                 (str "Select up to " m " targets for " (:title card))
+                 (str "Select a target for " (:title card)))
+               ["Done"] #(resolve-select state side)))
+
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
                                           not-distinct] :as ability}
@@ -215,11 +232,15 @@
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets)))
       (if choices
-        (let [cs (if-not (fn? choices)
-                   choices (let [cards (choices state side card targets)]
+        (if (map? choices)
+          (show-select state side card ability)
+          (let [cs (if-not (fn? choices)
+                     choices
+                     (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-          (prompt! state (or player side) card prompt cs (dissoc ability :choices)))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
+
         (when (and (<= counter-cost counter)
                    (<= advance-counter-cost advance-counter)
                    (apply pay (concat [state side card] cost)))
@@ -285,6 +306,19 @@
       (when (and (:ended run)
                  (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
         (handle-end-run state :runner)))))
+
+(defn select [state side {:keys [card] :as args}]
+  (let [r (get-in @state [side :selected :req])]
+    (when (or (not r) (r card))
+      (let [c (assoc card :selected (not (:selected card)))]
+        (update! state side c)
+        (if (:selected c)
+          (swap! state update-in [side :selected :cards] #(conj % c))
+          (swap! state update-in [side :selected :cards]
+                 (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
+        (let [selected (get-in @state [side :selected])]
+          (when (= (count (:cards selected)) (or (:max selected) 1))
+            (resolve-select state side)))))))
 
 (defn trigger-event [state side event & targets]
   (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
@@ -652,12 +686,14 @@
         remotes
         (concat ["HQ" "R&D" "Archives"] remotes))))
 
-(defn rez [state side card {:keys [no-cost] :as args}]
-  (let [cdef (card-def card)]
-    (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
-      (card-init state side (assoc card :rezzed true))
-      (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
-      (trigger-event state side :rez card))))
+(defn rez
+  ([state side card] (rez state side card nil))
+  ([state side card {:keys [no-cost] :as args}]
+     (let [cdef (card-def card)]
+       (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
+         (card-init state side (assoc card :rezzed true))
+         (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
+         (trigger-event state side :rez card)))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))

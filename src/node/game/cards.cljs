@@ -1,7 +1,7 @@
 (ns game.cards
   (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run mill run derez score
+                               set-prop resolve-ability system-msg end-run mill run rez derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out
                                steal handle-access card-init trash-no-cost max-access] :as core]
@@ -92,6 +92,12 @@
                  :effect #(do (gain %1 :runner :credit 2)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
 
+   "AstroScript Pilot Program"
+   {:data {:counter 1}
+    :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
+                                           (if (:rezzed target) (:title target) "a card"))
+                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
@@ -134,6 +140,11 @@
 
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
+
+   "Blue Sun: Powering the Future"
+   {:abilities [{:msg (msg "add " (:title target) " to HQ and gain " (:cost target) " [Credits]")
+                 :choices {:req #(:rezzed %)}
+                 :effect (effect (gain :credit (:cost target)) (move target :hand))}]}
 
    "Big Brother"
    {:req (req tagged) :effect (effect (gain :runner :tag 2))}
@@ -265,6 +276,10 @@
    {:recurring 1
     :events {:rez {:req (req (= (:type target) "ICE")) :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
+
+   "Commercialization"
+   {:msg (msg "gain " (:advance-counter target) " [Credits] from " (:title target))
+    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
@@ -797,6 +812,12 @@
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
 
+   "Leela Patel: Trained Pragmatist"
+   {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
+                             :effect (effect (move :corp target :hand))}
+             :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
+                             :effect (effect (move :corp target :hand))}}}
+
    "Legwork"
    {:effect (effect (run :hq) (access-bonus 2))}
 
@@ -985,6 +1006,11 @@
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
                                                        (get-in runner [:rig :program])))))))}
 
+   "Oversight AI"
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
+    :msg (msg "rez " (:title target) " at not cost")
+    :effect (effect (rez target {:no-cost true}))}
+
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
@@ -1059,6 +1085,11 @@
    "Plascrete Carapace"
    {:data [:counter 4]
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
+
+   "Priority Requisition"
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
+    :msg (msg "rez " (:title target) " at not cost")
+    :effect (effect (rez target {:no-cost true}))}
 
    "Private Contracts"
    {:data {:counter 14}
@@ -1291,6 +1322,12 @@
    {:req (req (:successful-run runner-reg))
     :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
+   "Security Subcontract"
+   {:abilities [{:choices {:req #(and (= (:type %) "ICE") (:rezzed %))} :cost [:click 1]
+                 :msg (msg "trash " (:title target) " to gain 4 [Credits]")
+                 :label "Trash a rezzed ICE to gain 4 [Credits]"
+                 :effect (effect (trash target) (gain :credit 4))}]}
+
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
@@ -1417,8 +1454,18 @@
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
 
+   "Surge"
+   {:msg (msg "place 2 virus token on " (:title target))
+    :choices {:req #(has? % :subtype "Virus")}
+    :effect (effect (add-prop target :counter 2))}
+
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
+
+   "Tennin Institute: The Secrets Within"
+   {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
+                 :req (req (not (:successful-run runner-reg))) :once :per-turn
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Test Run"
    {:prompt "Install a card from Stack or Heap?" :choices ["Stack" "Heap"]
@@ -2281,11 +2328,6 @@
     :leave-play #(remove-watch % (keyword (str "zona-sul-shipping" (:cid %3))))}
 
    ;; partial implementation
-   "AstroScript Pilot Program"
-   {:data {:counter 1}
-    :abilities [{:counter-cost 1 :msg "place 1 advancement token on a card that can be advanced"
-                 :label "Place 1 advancement token on a card that can be advanced"}]}
-
    "Bad Times"
    {:req (req tagged)}
 
