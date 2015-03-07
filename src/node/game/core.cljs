@@ -233,7 +233,7 @@
                (or (not req) (req state side card targets)))
       (if choices
         (if (map? choices)
-          (show-select state side card ability)
+          (show-select state (or player side) card ability)
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]

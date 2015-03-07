@@ -814,7 +814,7 @@
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
-                             :effect (effect (move :corp target :hand))}
+                             :player :runner :effect (effect (move :corp target :hand))}
              :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
                              :effect (effect (move :corp target :hand))}}}
 
