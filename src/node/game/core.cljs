@@ -260,7 +260,7 @@
           (when once (swap! state assoc-in [once (or once-key cid)] true)))))))
 
 (defn handle-end-run [state side]
-  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+  (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
     (do (let [server (get-in @state [:run :server])]
           (trigger-event state side :run-ends (first server))
@@ -294,8 +294,7 @@
     (swap! state update-in [side :prompt] rest)
     ((:effect prompt) (or choice card))
     (when-let [run (:run @state)]
-      (when (and (:ended run)
-                 (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
         (handle-end-run state :runner)))))
 
 (defn trash-no-cost [state side]
@@ -303,8 +302,7 @@
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
     (when-let [run (:run @state)]
-      (when (and (:ended run)
-                 (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
         (handle-end-run state :runner)))))
 
 (defn select [state side {:keys [card] :as args}]
