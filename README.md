@@ -11,7 +11,7 @@ http://www.jinteki.net
 
 The deck builder implements all the deck building constraints. It is optimised for fast deck edition. It is possible for instance to copy & paste a decklist from a forum and it will be parsed.
 
-The implemention of the game rules is in progress. About 60% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
+The implemention of the game rules is in progress. About 70% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
 
 [Card rules implementation status](https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx).
 
