@@ -3,7 +3,7 @@
   (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
                                set-prop resolve-ability system-msg end-run mill run rez derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit prevent-run prevent-jack-out
+                               play-instant corp-install forfeit prevent-run prevent-jack-out expose
                                steal handle-access card-init trash-no-cost max-access] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
@@ -741,9 +741,11 @@
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
-    :effect (req (if (= target "Expose a card")
-                   (system-msg state side "exposes a card")
-                   (do (system-msg state side "gains 2 [Credits]") (gain state :runner :credit 2))))}
+    :effect (effect (resolve-ability (if (= target "Expose a card")
+                                       {:choices {:req #(= (first (:zone %)) :servers)}
+                                        :effect (effect (expose target)) :msg "expose 1 card"}
+                                       {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
+                                     card nil))}
 
    "Inject"
    {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
@@ -862,6 +864,7 @@
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
+                 :choices {:req #(= (first (:zone %)) :servers)} :effect (effect (expose target))
                  :msg "expose 1 card"}]}
 
    "Levy AR Lab Access"
@@ -1169,7 +1172,10 @@
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Psychic Field"
-   {:access {:psi {:req (req installed)
+   {:expose {:psi {:req (req installed)
+                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
+                               :effect (effect (damage :net (count (:hand runner))))}}}
+    :access {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
                                :effect (effect (damage :net (count (:hand runner))))}}}}
 
@@ -1418,6 +1424,13 @@
 
    "Silencer"
    {:recurring 1}
+
+   "Silhouette: Stealth Operative"
+   {:events {:successful-run
+             {:req (req (= target :hq)) :once :per-turn
+              :effect (effect (resolve-ability {:choices {:req #(= (first (:zone %)) :servers)}
+                                                :effect (effect (expose target)) :msg "expose 1 card"}
+                                               card nil))}}}
 
    "Simone Diego"
    {:recurring 2}
