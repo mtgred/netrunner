@@ -76,24 +76,36 @@
 }, {
     "name": "Up and Over",
     "cycle": "Lunar",
-    "available": "2014-10-15"
+    "available": "2014-10-16"
 }, {
     "name": "All That Remains",
     "cycle": "Lunar",
-    "available": "2014-11-15"
+    "available": "2014-11-13"
 }, {
     "name": "The Source",
     "cycle": "Lunar",
-    "available": "2014-12-15"
+    "available": "2014-12-18"
 }, {
     "name": "Order and Chaos",
-    "available": "2015-01-31"
+    "available": "2015-01-28"
 }, {
     "name": "The Valley",
     "cycle": "SanSan",
-    "available": "2015-03-10"
+    "available": "2015-03-05"
 }, {
     "name": "Breaker Bay",
     "cycle": "SanSan",
     "available": "2015-04-10"
+}, {
+    "name": "Chrome City",
+    "cycle": "SanSan",
+    "available": "2015-05-10"
+}, {
+    "name": "The Underway",
+    "cycle": "SanSan",
+    "available": "2015-06-10"
+}, {
+    "name": "Old Hollywood",
+    "cycle": "SanSan",
+    "available": "2015-07-10"
 }]
