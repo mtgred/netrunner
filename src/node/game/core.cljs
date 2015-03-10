@@ -195,7 +195,8 @@
     (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
                                  s " (" base " + " boost " [Credits])"))
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
-    (swap! state assoc :trace {:strength s :ability ability :card card})))
+    (swap! state assoc :trace {:strength s :ability ability :card card})
+    (trigger-event state side :trace nil)))
 
 (defn resolve-select [state side]
   (let [selected (get-in @state [side :selected])]
