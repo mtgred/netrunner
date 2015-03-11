@@ -754,7 +754,8 @@
 (defn expose [state side target]
   (system-msg state side (str "exposes " (:title target)))
   (when-let [ability (:expose (card-def target))]
-    (resolve-ability state side ability target nil)))
+    (resolve-ability state side ability target nil))
+  (trigger-event state side :expose target))
 
 (defn prevent-run [state side]
   (swap! state assoc-in [:runner :register :cannot-run] true))

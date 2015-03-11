@@ -158,7 +158,9 @@
    {:effect (effect (gain :click 2))}
 
    "Blackguard"
-   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
+   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
+    :events {:expose {:msg (msg "attempt to force the rez of " (:title target))
+                      :effect (effect (rez :corp target))}}}
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
@@ -300,6 +302,15 @@
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
+   "Corporate Troubleshooter"
+   {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
+                 :prompt "How many credits?"
+                 :effect (req (let [boost target]
+                                (resolve-ability state side
+                                 {:choices {:req #(and (has? % :type "ICE") (:rezzed %))}
+                                  :msg (msg "add " boost " strength to " (:title target))
+                                  :effect (effect (trash card))} card nil)))}]}
+
    "Corporate War"
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
     :effect (req (if (> (:credit corp) 6)
@@ -402,9 +413,9 @@
    {:effect (effect (draw 3))}
 
    "Dirty Laundry"
-   {:prompt "Choose a server" :choices (req servers) :msg " gain 5 [Credits]"
-    :effect (effect (run target {:end-run {:req (req (:successful run))
-                                           :effect (effect (gain :credit 5))}} card))}
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 5 [Credits]"
+                                           :effect (effect (gain :runner :credit 5))}} card))}
 
    "Djinn"
    {:abilities [{:prompt "Choose a Virus" :msg (msg "adds " (:title target) " to his Grip")
@@ -1259,6 +1270,13 @@
                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c))}
                     card nil)))}
 
+   "Quest Completed"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+    :choices {:req #(= (first (:zone %)) :servers)} :msg (msg "access " (:title target))
+    :effect (effect (handle-access targets))}
+
    "Quetzal: Free Spirit"
    {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
 
@@ -1763,6 +1781,12 @@
 
    "Whizzard: Master Gamer"
    {:recurring 3}
+
+   "Will-o-the-Wisp"
+   {:abilities [{:label "Add an icebreaker to the bottom of Stack"
+                 :choices {:req #(has? % :subtype "Icebreaker")}
+                 :msg (msg "add " (:title target) " to the bottom of Stack")
+                 :effect (effect (trash card) (move :runner target :deck))}]}
 
    "Witness Tampering"
    {:effect (effect (lose :bad-publicity 2))}
