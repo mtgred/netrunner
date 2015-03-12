@@ -799,6 +799,10 @@
             :effect (req (doseq [c (:hand runner)] (move state side c :play-area false true)))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
+   "Isabel McGuire"
+   {:abilities [{:label "Add an installed card to HQ" :choices {:req #(= (first (:zone %)) :servers)}
+                 :msg (msg "move " (:title target) " to HQ") :effect (effect (move target :hand))}]}
+
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
                  :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
@@ -1236,6 +1240,15 @@
    "Professional Contacts"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
+
+   "Psychographics"
+   {:req (req (<= target (:tag runner))) :choices :credit :prompt "How many credits?"
+    :effect (req (let [c (min target (:tag runner))]
+                   (resolve-ability state side
+                                    {:msg (msg "place " c " advancement tokens on "
+                                               (if (:rezzed target) (:title target) "a card"))
+                                     :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                                     :effect (effect (add-prop target :advance-counter c))} card nil)))}
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg (msg "do " (:stole-agenda runner-reg) " meat damage")
@@ -1713,6 +1726,10 @@
    {:choices {:req #(and (= (first (:zone %)) :rig) (#{"Program" "Hardware"} (:type %)))}
     :msg (msg "move " (:title target) " to his or her grip")
     :effect (effect (move target :hand))}
+
+   "Unorthodox Predictions"
+   {:prompt "Choose an ICE type for Unorthodox Prediction" :choices ["Sentry", "Code Gate", "Barrier"]
+    :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Unregistered S&W 35"
    {:abilities
@@ -2559,9 +2576,6 @@
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
-
-   "Psychographics"
-   {:req (req tagged)}
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))}
