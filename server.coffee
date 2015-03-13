@@ -27,17 +27,20 @@ swapSide = (side) ->
 
 removePlayer = (socket, reason) ->
   for game, i in games
-    for player, j in game.players
-      if not player.user or player.id is socket.id
-        game.players.splice(j, 1)
-        if reason is "disconnect" and game.started
-          state = gameEngine.main.exec("disconnect", {gameid: game.gameid, text: "#{player.user.username} disconnected."})
-          lobby.to(game.gameid).emit("netrunner", {type: "state", state: state})
-        if reason is "leave"
-          socket.to(game.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{player.user.username} left the game."})
-        if game.players.length is 0
-          games.splice(i, 1)
-        break
+    if game
+      for player, j in game.players
+        if not player.user or player.id is socket.id
+          game.players.splice(j, 1)
+          if reason is "disconnect" and game.started
+            state = gameEngine.main.exec("disconnect", {gameid: game.gameid, text: "#{player.user.username} disconnected."})
+            lobby.to(game.gameid).emit("netrunner", {type: "state", state: state})
+          if reason is "leave"
+            socket.to(game.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{player.user.username} left the game."})
+          if game.players.length is 0
+            games.splice(i, 1)
+          break
+    else
+      games.splice(i, 1)
   lobby.emit('netrunner', {type: "games", games: games})
 
 # Socket.io
