@@ -296,7 +296,7 @@
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target) " [Credits] from " (:title target))
+   {:msg (msg "gain " (:advance-counter target) " [Credits]")
     :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
 
    "Corporate Shuffle"
@@ -1158,7 +1158,7 @@
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at not cost")
+    :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true}))}
 
    "Private Contracts"
