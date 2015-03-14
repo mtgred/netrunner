@@ -20,27 +20,21 @@ db = mongoskin.db(mongoUrl)
 
 # Game lobby
 gameid = 0
-games = []
+games = {}
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
 
-removePlayer = (socket, reason) ->
-  for game, i in games
-    if game
-      for player, j in game.players
-        if not player.user or player.id is socket.id
-          game.players.splice(j, 1)
-          if reason is "disconnect" and game.started
-            state = gameEngine.main.exec("disconnect", {gameid: game.gameid, text: "#{player.user.username} disconnected."})
-            lobby.to(game.gameid).emit("netrunner", {type: "state", state: state})
-          if reason is "leave"
-            socket.to(game.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{player.user.username} left the game."})
-          if game.players.length is 0
-            games.splice(i, 1)
-          break
-    else
-      games.splice(i, 1)
+removePlayer = (socket) ->
+  players = games[socket.gameid].players
+  for player, i in players
+    if player.id is socket.id
+      players.splice(i, 1)
+      break
+  if players.length is 0
+    delete games[socket.gameid]
+  socket.leave(socket.gameid)
+  socket.gameid = false
   lobby.emit('netrunner', {type: "games", games: games})
 
 # Socket.io
@@ -60,36 +54,38 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   lobby.emit('netrunner', {type: "games", games: games})
 
   socket.on 'disconnect', () ->
-    removePlayer(socket,  "disconnect") if socket.request.user
+    if socket.gameid
+      if games[socket.gameid].started
+        state = gameEngine.main.exec("disconnect", {gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."})
+        lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
+      removePlayer(socket)
 
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
         game = {date: new Date(), gameid: ++gameid, title: msg.title,\
                 players: [{user: socket.request.user, id: socket.id, side: "Corp"}]}
-        games.push(game)
+        games[gameid] = game
         socket.join(gameid)
+        socket.gameid = gameid
         socket.emit("netrunner", {type: "game", gameid: gameid})
         lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
 
-      when "leave"
-        removePlayer(socket, "leave")
-        socket.leave(msg.gameid)
+      when "leave-lobby"
+        socket.to(socket.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
+        removePlayer(socket)
 
-      when "quit"
-        removePlayer(socket, "quit")
-        socket.leave(msg.gameid)
-        lobby.emit('netrunner', {type: "games", games: games})
+      when "leave-game"
         state = gameEngine.main.exec("quit", msg)
-        lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+        lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
+        removePlayer(socket)
 
       when "join"
-        for game in games
-          if game.gameid is msg.gameid and game.players.length < 2 and game.players[0].user.username isnt socket.request.user.username
-            game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
-            socket.join(game.gameid)
-            socket.emit("netrunner", {type: "game", gameid: game.gameid})
-            break
+        game = games[msg.gameid]
+        game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
+        socket.join(msg.gameid)
+        socket.gameid = msg.gameid
+        socket.emit("netrunner", {type: "game", gameid: game.gameid})
         lobby.emit('netrunner', {type: "games", games: games})
         socket.broadcast.to(msg.gameid).emit 'netrunner',
           type: "say"
@@ -101,31 +97,22 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
 
       when "swap"
-        for game in games
-          if game.gameid is msg.gameid
-            for player in game.players
-              player.side = swapSide(player.side)
-              player.deck = null
-            break
+        for player in games[socket.gameid].players
+          player.side = swapSide(player.side)
+          player.deck = null
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "deck"
-        for game in games
-          if game.gameid is msg.gameid
-            for player in game.players
-              if player.user.username is socket.request.user.username
-                player.deck = msg.deck
-                break
+        for player in games[socket.gameid].players
+          if player.user.username is socket.request.user.username
+            player.deck = msg.deck
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "start"
-        for game, i in games
-          if game.gameid is msg.gameid
-            state = gameEngine.main.exec("init", game)
-            game.started = true
-            lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
-            break
+        games[socket.gameid].started = true
+        state = gameEngine.main.exec("init", games[socket.gameid])
+        lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
         lobby.emit('netrunner', {type: "games", games: games})
 
       when "do"

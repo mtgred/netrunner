@@ -25,7 +25,7 @@
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "game" (swap! app-state assoc :gameid (:gameid msg))
-          "games" (do (swap! app-state assoc :games (sort-by :date > (:games msg)))
+          "games" (do (swap! app-state assoc :games (sort-by :date > (vals (:games msg))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
                           (.play (.getElementById js/document sound)))))
@@ -64,13 +64,13 @@
      (swap! app-state assoc :messages [])
      (send {:action "join" :gameid gameid}))))
 
-(defn leave-game [cursor owner]
-  (send {:action "leave" :gameid (:gameid @app-state)})
+(defn leave-lobby [cursor owner]
+  (send {:action "leave-lobby" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
   (om/update! cursor :message []))
 
-(defn quit-game []
-  (send {:action "quit" :gameid (:gameid @app-state) :side (:side @game-state)})
+(defn leave-game []
+  (send {:action "leave-game" :gameid (:gameid @app-state) :side (:side @game-state)})
   (reset! netrunner.gameboard/game-state nil)
   (swap! app-state assoc :gameid nil)
   (set! (.-onbeforeunload js/window) nil)
@@ -180,7 +180,7 @@
                    (if (every? :deck players)
                      [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"]
                      [:button {:class "disabled"} "Start"]))
-                 [:button {:on-click #(leave-game cursor owner)} "Leave"]
+                 [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
                  (when (= (-> players first :user) user)
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
                 [:div.content

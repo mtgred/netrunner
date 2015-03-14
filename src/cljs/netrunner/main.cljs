@@ -52,7 +52,7 @@
         (str c " Game" (when (> c 1) "s")))]
      (when (.-onbeforeunload js/window)
        [:div.float-right
-        [:a {:on-click #(netrunner.gamelobby/quit-game)} "Leave game"]])])))
+        [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]])])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
