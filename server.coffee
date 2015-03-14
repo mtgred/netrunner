@@ -39,7 +39,17 @@ removePlayer = (socket) ->
   socket.gameid = false
   lobby.emit('netrunner', {type: "games", games: games})
 
+joinGame = (socket, gameid) ->
+  game = games[gameid]
+  if game
+    game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
+    socket.join(gameid)
+    socket.gameid = gameid
+    socket.emit("netrunner", {type: "game", gameid: gameid})
+    lobby.emit('netrunner', {type: "games", games: games})
+
 # Socket.io
+io.set("heartbeat timeout", 30000)
 io.use (socket, next) ->
   if socket.handshake.query.token
     jwt.verify socket.handshake.query.token, config.salt, (err, user) ->
@@ -58,7 +68,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'disconnect', () ->
     if socket.gameid
       if games[socket.gameid].started
-        state = gameEngine.main.exec("disconnect", {gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."})
+        state = gameEngine.main.exec("notification", {gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."})
         lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
       removePlayer(socket)
 
@@ -83,17 +93,18 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         removePlayer(socket)
 
       when "join"
-        game = games[msg.gameid]
-        game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
-        socket.join(msg.gameid)
-        socket.gameid = msg.gameid
-        socket.emit("netrunner", {type: "game", gameid: game.gameid})
-        lobby.emit('netrunner', {type: "games", games: games})
+        joinGame(socket, msg.gameid)
         socket.broadcast.to(msg.gameid).emit 'netrunner',
           type: "say"
           user: "__system__"
           notification: "ting"
           text: "#{socket.request.user.username} joined the game."
+
+      when "reconnect"
+        if games[msg.gameid]
+          joinGame(socket, msg.gameid)
+          state = gameEngine.main.exec("notification", {gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."})
+          lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
 
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})

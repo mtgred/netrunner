@@ -12,13 +12,20 @@
 (defonce lock (atom false))
 
 (defn init-game [game side]
+  (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
   (swap! game-state assoc :side side))
+
+(defn notify [text]
+  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text})))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."))
+(.on socket "reconnect" #(do (notify "Reconnected to the server.")
+                             (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
 (go (while true
       (let [msg (<! socket-channel)]

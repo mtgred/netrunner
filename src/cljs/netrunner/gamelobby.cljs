@@ -72,7 +72,8 @@
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state) :side (:side @game-state)})
   (reset! netrunner.gameboard/game-state nil)
-  (swap! app-state assoc :gameid nil)
+  (swap! app-state dissoc :gameid)
+  (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
