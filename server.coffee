@@ -33,6 +33,8 @@ removePlayer = (socket) ->
       break
   if players.length is 0
     delete games[socket.gameid]
+    gameEngine.main.removegame(socket.gameid)
+
   socket.leave(socket.gameid)
   socket.gameid = false
   lobby.emit('netrunner', {type: "games", games: games})

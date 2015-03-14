@@ -475,7 +475,7 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       (when (> gameid 0)
+       (when side
          (let [me (side cursor)
                opponent ((if (= side :corp) :runner :corp) cursor)]
            [:div.gameboard

@@ -42,6 +42,9 @@
       (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
       params)))
 
+(defn removegame [gameid]
+  (swap! game-states dissoc gameid))
+
 (defn exec [action args]
   (let [params (convert args)
         gameid (:gameid params)
