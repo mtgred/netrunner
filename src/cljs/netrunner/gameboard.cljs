@@ -24,8 +24,9 @@
 (def socket-channel (chan))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 (.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."))
-(.on socket "reconnect" #(do (notify "Reconnected to the server.")
-                             (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
+(.on socket "reconnect" #(when (.-onbeforeunload js/window)
+                           (notify "Reconnected to the server.")
+                           (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
 (go (while true
       (let [msg (<! socket-channel)]

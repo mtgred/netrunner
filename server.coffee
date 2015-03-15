@@ -41,7 +41,7 @@ removePlayer = (socket) ->
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
-  if game
+  if game and game.players.length is 1 and game.players[0].user.username isnt socket.request.user.username
     game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
     socket.join(gameid)
     socket.gameid = gameid
@@ -101,7 +101,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           text: "#{socket.request.user.username} joined the game."
 
       when "reconnect"
-        if games[msg.gameid]
+        game = games[msg.gameid]
+        if game and game.started
           joinGame(socket, msg.gameid)
           state = gameEngine.main.exec("notification", {gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."})
           lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
