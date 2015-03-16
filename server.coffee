@@ -26,18 +26,18 @@ swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
 
 removePlayer = (socket) ->
-  players = games[socket.gameid].players
-  for player, i in players
-    if player.id is socket.id
-      players.splice(i, 1)
-      break
-  if players.length is 0
-    delete games[socket.gameid]
-    gameEngine.main.removegame(socket.gameid)
-
-  socket.leave(socket.gameid)
-  socket.gameid = false
-  lobby.emit('netrunner', {type: "games", games: games})
+  game = games[socket.gameid]
+  if game
+    for player, i in game.players
+      if player.id is socket.id
+        game.players.splice(i, 1)
+        break
+    if game.players.length is 0
+      gameEngine.main.removegame(socket.gameid) if game.started
+      delete games[socket.gameid]
+    socket.leave(socket.gameid)
+    socket.gameid = false
+    lobby.emit('netrunner', {type: "games", games: games})
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -124,10 +124,12 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
 
       when "start"
-        games[socket.gameid].started = true
-        state = gameEngine.main.exec("init", games[socket.gameid])
-        lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
-        lobby.emit('netrunner', {type: "games", games: games})
+        game = games[socket.gameid]
+        if game
+          game.started = true
+          state = gameEngine.main.exec("init", games[socket.gameid])
+          lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
+          lobby.emit('netrunner', {type: "games", games: games})
 
       when "do"
         try
