@@ -157,12 +157,12 @@
       (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
       (lose state side :credit bet)
       (system-msg state side (str "spends " bet " [Credits]"))
+      (trigger-event state side :psi-game nil)
       (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
         (resolve-ability state (:side card) ability card nil)))))
 
 (defn psi-game [state side card psi]
   (swap! state assoc :psi {})
-  (trigger-event state side :psi-game nil)
   (doseq [s [:corp :runner]]
     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
@@ -687,11 +687,12 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
-     (let [cdef (card-def card)]
-       (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
-         (card-init state side (assoc card :rezzed true))
-         (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
-         (trigger-event state side :rez card)))))
+     (when (#{"Asset" "ICE" "Upgrade"} (:type card))
+       (let [cdef (card-def card)]
+         (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
+           (card-init state side (assoc card :rezzed true))
+           (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
+           (trigger-event state side :rez card))))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
