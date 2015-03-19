@@ -4,7 +4,8 @@
                                set-prop resolve-ability system-msg end-run mill run rez derez score
                                gain-agenda-point pump access-bonus shuffle! runner-install prompt!
                                play-instant corp-install forfeit prevent-run prevent-jack-out expose
-                               steal handle-access card-init trash-no-cost max-access jack-out] :as core]
+                               steal handle-access card-init trash-no-cost max-access jack-out
+                               server->zone] :as core]
             [clojure.string :refer [join]]
             [game.utils :refer [has?]]))
 
@@ -320,6 +321,10 @@
    {:recurring 2
     :abilities [{:msg "prevent 3 meat damage" :effect (effect (trash card))}]}
 
+   "Crescentus"
+   {:abilities [{:msg (msg "derez " (:title ((:ices run) (dec (:position run)))))
+                 :effect (effect (trash card) (derez ((:ices run) (dec (:position run)))))}]}
+
    "Cybsoft MacroDrive"
    {:recurring 1}
 
@@ -372,7 +377,8 @@
    "Datasucker"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))
                               :req (req (#{:hq :rd :archives} target))}}
-    :abilities [{:counter-cost 1 :msg "to give -1 strength to the encountered ICE"}]}
+    :abilities [{:counter-cost 1
+                 :msg (msg "give -1 strength to " (:title ((:ices run) (dec (:position run)))))}]}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -749,6 +755,11 @@
                    :effect (effect (add-prop card :counter 1))}}
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
+
+   "Imp"
+   {:data {:counter 2}
+    :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn
+                 :effect (effect (trash-no-cost))}]}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
@@ -1552,9 +1563,8 @@
                         :effect (effect (damage :net 3) (gain :runner :tag 1))}}}
 
    "Snitch"
-   {:abilities [{:once :per-run :msg (msg "expose " (let [run (:run @state)]
-                                                      (:title ((:ices run) (dec (:position run))))))
-                 :effect (effect (expose (let [run (:run @state)] ((:ices run) (dec (:position run)))))
+   {:abilities [{:once :per-run :msg (msg "expose " (:title ((:ices run) (dec (:position run)))))
+                 :effect (effect (expose ((:ices run) (dec (:position run))))
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
                                                               :effect (effect (jack-out))}}
                                                   card nil))}]}
@@ -2049,6 +2059,27 @@
    "Bastion"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Builder"
+   {:abilities [{:label "Move Builder to the outermost position of any server"
+                 :cost [:click 1] :prompt "Choose a server" :choices (req servers)
+                 :msg (msg "move it to the outmost position of " target)
+                 :effect (effect (move card (conj (server->zone state target) :ices)))}
+                {:label "Place 1 advancement token on an ICE that can be advance on this server"
+                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                 :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}]}
+
+   "Bullfrog"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal
+                       {:player :corp :prompt "Choose a server" :choices (req servers)
+                        :msg (msg "move it to the outmost position of " target)
+                        :effect (req (let [dest (server->zone state target)]
+                                       (swap! state update-in [:run]
+                                              #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                        :server (rest dest))))
+                                     (move state side card (conj (server->zone state target) :ices)))}}}]}
+
    "Burke Bugs"
    {:abilities [{:prompt "Choose a program to trash" :label "Trash a program"
                  :msg (msg "trash " (:title target))
@@ -2077,8 +2108,9 @@
                                       (swap! %1 assoc-in [:run :run-effect :card] %3))}}]}
 
    "Chimera"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :end-turn {:effect (effect (derez card))}}
+   {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
+    :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
@@ -2389,7 +2421,9 @@
    "Susanoo-No-Mikoto"
    {:abilities [{:req (req (not= (:server run) [:discard]))
                  :msg "make the Runner continue the run on Archives"
-                 :effect (req (swap! state assoc :run (assoc run :server [:archives] :position 0)))}]}
+                 :effect (req (swap! state update-in [:run]
+                                     #(assoc % :position (count (get-in corp [:servers :archives :ices]))
+                                               :server [:archives])))}]}
 
    "Swarm"
    {:advanceable :always
@@ -2444,8 +2478,11 @@
                             (lose %1 :runner :credit 1))}]}
 
    "Uroboros"
-   {:abilities [{:msg "prevent the Runner from making another run" :effect (effect (prevent-run))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:label "Trace 4 - Prevent the Runner from making another run"
+                 :trace {:base 4 :msg "prevent the Runner from making another run"
+                         :effect (effect (prevent-run))}}
+                {:label "Trace 4 - End the run"
+                 :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
 
    "Viktor 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
@@ -2557,11 +2594,6 @@
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect #(do (gain %1 %2 :credit 1)
                               (when (zero? (:counter %3)) (trash %1 :runner %3)))}]}
-
-   "Imp"
-   {:data {:counter 2}
-    :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn
-                 :effect (effect (trash-no-cost))}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}

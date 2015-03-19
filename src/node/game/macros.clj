@@ -10,6 +10,7 @@
                 'corp '(:corp @state)
                 'corp-reg '(get-in @state [:corp :register])
                 'runner-reg '(get-in @state [:runner :register])
+                'run '(:run @state)
                 'target '(first targets)]
            ~@actions))))
 
