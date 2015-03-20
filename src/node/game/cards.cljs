@@ -322,8 +322,8 @@
     :abilities [{:msg "prevent 3 meat damage" :effect (effect (trash card))}]}
 
    "Crescentus"
-   {:abilities [{:msg (msg "derez " (:title ((:ices run) (dec (:position run)))))
-                 :effect (effect (trash card) (derez ((:ices run) (dec (:position run)))))}]}
+   {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
+                 :effect (effect (trash card) (derez current-ice))}]}
 
    "Cybsoft MacroDrive"
    {:recurring 1}
@@ -377,8 +377,7 @@
    "Datasucker"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))
                               :req (req (#{:hq :rd :archives} target))}}
-    :abilities [{:counter-cost 1
-                 :msg (msg "give -1 strength to " (:title ((:ices run) (dec (:position run)))))}]}
+    :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))}]}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -1563,8 +1562,8 @@
                         :effect (effect (damage :net 3) (gain :runner :tag 1))}}}
 
    "Snitch"
-   {:abilities [{:once :per-run :msg (msg "expose " (:title ((:ices run) (dec (:position run)))))
-                 :effect (effect (expose ((:ices run) (dec (:position run))))
+   {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
+                 :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
                                                               :effect (effect (jack-out))}}
                                                   card nil))}]}
