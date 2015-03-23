@@ -5,23 +5,20 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2311"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
+                 [org.zeromq/jeromq "0.3.4"]
+                 [cheshire "5.4.0"]
                  [figwheel "0.1.4-SNAPSHOT"]
                  [om "0.7.1"]
                  [sablono "0.2.20"]]
+  :main game.main
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-figwheel "0.1.4-SNAPSHOT"]]
 
-  :source-paths ["src/node" "src/cljs"]
+  :source-paths ["src/clj" "src/cljs"]
 
   :cljsbuild {
     :builds [
-      {:id "node"
-       :source-paths ["src/node"]
-       :compiler {:output-to "game.js"
-                  :target :nodejs
-                  :optimizations :simple
-                  :pretty-print true}}
       {:id "dev"
        :source-paths ["src/cljs"]
        :compiler {:output-to "resources/public/cljs/app.js"

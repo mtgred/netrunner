@@ -31,7 +31,7 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "state" (do (swap! game-state merge (:state msg)) (reset! lock false))
+          ("do" "notification" "quit") (do (swap! game-state merge (:state msg)) (reset! lock false))
           nil))))
 
 (defn send [msg]

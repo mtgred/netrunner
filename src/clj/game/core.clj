@@ -1,14 +1,17 @@
 (ns game.core
-  (:require-macros [game.macros :refer [effect req msg]])
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by]]
+            [game.macros :refer [effect req msg]]
+            [clojure.string :refer [join]]
             [clojure.string :refer [split-lines split join]]))
+
+(declare cards)
 
 (def game-states (atom {}))
 
 (defn card-def [card]
   (when-let [title (:title card)]
-    (game.cards/cards (.replace title "'" ""))))
+    (cards (.replace title "'" ""))))
 
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
@@ -25,7 +28,7 @@
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
     (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
-             (or (not forfeit-cost) (not (empty? scored))))
+               (or (not forfeit-cost) (not (empty? scored))))
       (when forfeit-cost
            (if (= (count scored) 1)
              (forfeit state side (first scored))
@@ -67,52 +70,52 @@
       (gain state :runner :memory mu))
     c))
 
-(defmulti move (fn [state side target to front] (map? target)))
-
-(defmethod move false [state side server to]
+(defn move-cards [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
         to-zone (cons side (if (sequential? to) to [to]))]
     (swap! state assoc-in to-zone (concat (get-in @state to-zone)
                                           (zone to (get-in @state from-zone))))
     (swap! state assoc-in from-zone)))
 
-(defmethod move true [state side {:keys [zone cid] :as card} to front]
-  (when (and card (or (some #(= cid (:cid %)) (get-in @state (cons :runner (vec zone))))
-                      (some #(= cid (:cid %)) (get-in @state (cons :corp (vec zone))))))
-    (let [dest (if (sequential? to) (vec to) [to])
-          c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
-              (assoc card :seen true) card)
-          c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest)))
-              (desactivate state side c) c)
-          moved-card (assoc c :zone dest)]
-      (if front
-        (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
-        (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-      (doseq [s [:runner :corp]]
-        (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
-      (let [z (vec (cons :corp (butlast zone)))
-            n (last z)]
-        (when (and (number? n)
-                   (empty? (get-in @state (conj z :content)))
-                   (empty? (get-in @state (conj z :ices))))
-          (when-let [run (:run @state)]
-            (when (= (last (:server run)) n)
-              (handle-end-run state side)))
-          (swap! state update-in [:corp :servers :remote] vdissoc n)
-          (swap! state assoc-in [:corp :servers :remote]
-                 (vec (map-indexed
-                       (fn [i s]
-                         (if (< i n) s
-                           {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
-                            :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))}))
-                       (get-in @state [:corp :servers :remote]))))
-          (doseq [s (drop n (get-in @state [:corp :servers :remote]))
-                  c (concat (:content s) (:ices s))]
-            (when (:rezzed c)
-              (when-let [events (:events (card-def c))]
-                (unregister-events state side c)
-                (register-events state side events c))))))
-      moved-card)))
+(defn move
+  ([state side {:keys [zone cid] :as card} to] (move state side card to nil))
+  ([state side {:keys [zone cid] :as card} to front]
+     (when (and card (or (some #(= cid (:cid %)) (get-in @state (cons :runner (vec zone))))
+                         (some #(= cid (:cid %)) (get-in @state (cons :corp (vec zone))))))
+       (let [dest (if (sequential? to) (vec to) [to])
+             c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
+                 (assoc card :seen true) card)
+             c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest)))
+                 (desactivate state side c) c)
+             moved-card (assoc c :zone dest)]
+         (if front
+           (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
+           (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
+         (doseq [s [:runner :corp]]
+           (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
+         (let [z (vec (cons :corp (butlast zone)))
+               n (last z)]
+           (when (and (number? n)
+                      (empty? (get-in @state (conj z :content)))
+                      (empty? (get-in @state (conj z :ices))))
+             (when-let [run (:run @state)]
+               (when (= (last (:server run)) n)
+                 (handle-end-run state side)))
+             (swap! state update-in [:corp :servers :remote] vdissoc n)
+             (swap! state assoc-in [:corp :servers :remote]
+                    (vec (map-indexed
+                          (fn [i s]
+                            (if (< i n) s
+                                {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
+                                 :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))}))
+                          (get-in @state [:corp :servers :remote]))))
+             (doseq [s (drop n (get-in @state [:corp :servers :remote]))
+                     c (concat (:content s) (:ices s))]
+               (when (:rezzed c)
+                 (when-let [events (:events (card-def c))]
+                   (unregister-events state side c)
+                   (register-events state side events c))))))
+         moved-card))))
 
 (defn draw
   ([state side] (draw state side 1))
@@ -166,7 +169,7 @@
   (doseq [s [:corp :runner]]
     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                 #(resolve-psi state s card psi (js/parseInt %)))))
+                 #(resolve-psi state s card psi (Integer/parseInt %)))))
 
 (defn prompt! [state side card msg choices ability]
   (show-prompt state side card msg choices #(resolve-ability state side ability card [%])))
@@ -240,13 +243,12 @@
                              (if not-distinct
                                cards (distinct-by :title cards))))]
             (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
-
-        (when (and (<= counter-cost counter)
-                   (<= advance-counter-cost advance-counter)
+        (when (and (or (not counter-cost) (<= counter-cost counter))
+                   (or (not advance-counter-cost) (<= advance-counter-cost advance-counter))
                    (apply pay (concat [state side card] cost)))
           (let [c (-> card
-                      (update-in [:counter] #(- % counter-cost))
-                      (update-in [:advance-counter] #(- % advance-counter-cost)))]
+                      (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                      (update-in [:counter] #(- (or % 0) (or counter-cost 0))))]
             (when (or counter-cost advance-counter-cost)
               (update! state side c))
             (when msg
@@ -276,7 +278,7 @@
         (swap! state assoc :run nil))))
 
 (defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ % n)))
+  (update! state side (update-in card [key] #(+ (or % 0) n)))
   (when (= key :advance-counter)
     (trigger-event state side :advance card)))
 
@@ -417,7 +419,8 @@
   (let [player (side @state)
         deck (shuffle (reduce concat (:deck player) (for [p args] (zone :deck (p player)))))]
     (swap! state assoc-in [side :deck] deck))
-  (doseq [p args] (swap! state assoc-in [side p])))
+  (doseq [p args]
+    (swap! state assoc-in [side p] [])))
 
 (defn mulligan [state side args]
   (shuffle-into-deck state side :hand)
@@ -436,17 +439,15 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defmulti trash (fn [state side cards target] (map? cards)))
-
-(defmethod trash true [state side {:keys [zone] :as card} & targets]
+(defn trash [state side {:keys [zone] :as card} & targets]
   (trigger-event state side :trash card targets)
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card targets))))
 
-(defmethod trash false [state side cards]
-  (doseq [c cards] (trash state side c)))
+;; (defn trash-cards [state side cards]
+;;   (doseq [c cards] (trash state side c)))
 
 (defn pump
   ([state side card n] (pump state side card n false))
@@ -463,17 +464,17 @@
             c (card-init state :corp moved-card)]
         (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
                                     " agenda point" (when (> (:agendapoints c) 1) "s")))
-        (swap! state update-in [:corp :register :scored-agenda] #(+ % (:agendapoints c)))
+        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
 
 (defn steal [state side card]
-  (let [c (move state :runner card :scored false true)]
+  (let [c (move state :runner card :scored)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
     (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c)
                                    " agenda point" (when (> (:agendapoints c) 1) "s")))
-    (swap! state update-in [:runner :register :stole-agenda] #(+ % (:agendapoints c)))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
     (trigger-event state :runner :agenda-stolen c)))
@@ -486,7 +487,7 @@
       "R&D" [:servers :rd]
       "Archives" [:servers :archives]
       "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
-      [:servers :remote (-> (split server " ") last js/parseInt)])))
+      [:servers :remote (-> (split server #" ") last Integer/parseInt)])))
 
 (defn run
   ([state side server] (run state side server nil nil))
@@ -497,7 +498,7 @@
                 (= server "R&D") [:rd]
                 (= server "Archives") [:archives]
                 (keyword? server) [server]
-                :else [:remote (-> (split server " ") last js/parseInt)])
+                :else [:remote (-> (split server #" ") last Integer/parseInt)])
              ices (get-in @state (concat [:corp :servers] s [:ices]))]
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
@@ -575,7 +576,7 @@
   (resolve-ability state side ability card nil)
   (handle-end-run state side))
 
-(defn successful-run [state side]
+(defn successful-run [state side args]
   (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
     (resolve-ability state side successful-run-effect (:card successful-run-effect) nil))
   (let [server (get-in @state [:run :server])
@@ -602,11 +603,11 @@
     (trigger-event state side :unsuccessful-run)
     (handle-end-run state side)))
 
-(defn no-action [state side]
+(defn no-action [state side args]
   (swap! state assoc-in [:run :no-action] true)
   (system-msg state side "has no further action"))
 
-(defn continue [state side]
+(defn continue [state side args]
   (when (get-in @state [:run :no-action])
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
@@ -624,7 +625,7 @@
              (get-in cdef [:abilities ability]))]
     (resolve-ability state side ab card targets)))
 
-(defn start-turn [state side]
+(defn start-turn [state side args]
   (system-msg state side (str "started his or her turn"))
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
@@ -632,7 +633,7 @@
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
   (when (= side :corp) (draw state :corp)))
 
-(defn end-turn [state side]
+(defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (system-msg state side (str "is ending his or her turn"))
@@ -658,7 +659,9 @@
            additional-cost (if (has? card :subtype "Double")
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
-       (when (and (if-let [req (:req cdef)] (req state card targets) true)
+       (when (and (if-let [req (:req cdef)]
+                    (req state side card targets)
+                    true)
                   (not (and (has? card :subtype "Priority")
                             (get-in @state [side :register :spent-click])))
                   (pay state side card :credit (:cost card) extra-cost
@@ -788,19 +791,19 @@
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)))
 
-(defn click-draw [state side]
+(defn click-draw [state side args]
   (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
 
-(defn click-credit [state side]
+(defn click-credit [state side args]
   (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
 
-(defn jack-out [state side]
+(defn jack-out [state side args]
   (end-run state side)
   (system-msg state side "jacks out")
   (trigger-event state side :jack-out))
@@ -810,3 +813,5 @@
   (if close
     (system-msg state side "stops looking at his deck and shuffles it")
     (system-msg state side "shuffles his deck")))
+
+(load "cards")

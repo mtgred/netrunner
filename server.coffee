@@ -11,7 +11,7 @@ bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
-gameEngine = require('./game')
+zmq = require('zmq')
 
 # MongoDB connection
 appName = 'netrunner'
@@ -33,7 +33,7 @@ removePlayer = (socket) ->
         game.players.splice(i, 1)
         break
     if game.players.length is 0
-      gameEngine.main.removegame(socket.gameid) if game.started
+      requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
       delete games[socket.gameid]
     socket.leave(socket.gameid)
     socket.gameid = false
@@ -47,6 +47,14 @@ joinGame = (socket, gameid) ->
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
     lobby.emit('netrunner', {type: "games", games: games})
+
+# ZeroMQ
+requester = zmq.socket('req')
+requester.connect('tcp://127.0.0.1:1043')
+requester.on 'message', (data) ->
+  response = JSON.parse(data)
+  unless response is "ok"
+    lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response})
 
 # Socket.io
 io.set("heartbeat timeout", 30000)
@@ -68,8 +76,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'disconnect', () ->
     if socket.gameid
       if games[socket.gameid].started
-        state = gameEngine.main.exec("notification", {gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."})
-        lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
+        requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."}))
       removePlayer(socket)
 
   socket.on 'netrunner', (msg) ->
@@ -88,8 +95,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         removePlayer(socket)
 
       when "leave-game"
-        state = gameEngine.main.exec("quit", msg)
-        lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
+        msg.action = "quit"
+        requester.send(JSON.stringify(msg)) if games[socket.gameid].players.length > 1
         removePlayer(socket)
 
       when "join"
@@ -104,8 +111,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         game = games[msg.gameid]
         if game and game.started
           joinGame(socket, msg.gameid)
-          state = gameEngine.main.exec("notification", {gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."})
-          lobby.to(socket.gameid).emit("netrunner", {type: "state", state: state})
+          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."}))
 
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
@@ -127,14 +133,15 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         game = games[socket.gameid]
         if game
           game.started = true
-          state = gameEngine.main.exec("init", games[socket.gameid])
-          lobby.to(msg.gameid).emit("netrunner", {type: "start", state: state})
+          msg = games[socket.gameid]
+          msg.action = "start"
+          msg.gameid = socket.gameid
+          requester.send(JSON.stringify(msg))
           lobby.emit('netrunner', {type: "games", games: games})
 
       when "do"
         try
-          state = gameEngine.main.exec("do", msg)
-          lobby.to(msg.gameid).emit("netrunner", {type: "state", state: state})
+          requester.send(JSON.stringify(msg))
         catch err
           console.log(err)
 

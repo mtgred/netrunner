@@ -11,7 +11,7 @@ http://www.jinteki.net
 
 The deck builder implements all the deck building constraints. It is optimised for fast deck edition. It is possible for instance to copy & paste a decklist from a forum and it will be parsed.
 
-The implemention of the game rules is in progress. About 70% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
+The implemention of the game rules is in progress. About 75% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
 
 [Card rules implementation status](https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx).
 
@@ -53,13 +53,19 @@ Compile and watch client side Clojurescript files:
 $ lein cljsbuild auto dev
 ```
 
-Compile and watch server side Clojurescript files:
+Compile server side Clojure files:
 
 ```
-$ lein cljsbuild auto node
+$ lein uberjar
 ```
 
-Launch the server:
+Launch game server:
+
+```
+$ java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar
+```
+
+Launch the Node server:
 
 ```
 $ coffee server.coffee
@@ -67,7 +73,7 @@ $ coffee server.coffee
 
 ## Optional
 
-If you use nREPL, you can launch a Clojurescript Browser nREPL:
+If you use nREPL, you can launch a Clojurescript Browser REPL:
 
 ```
 $ lein repl

@@ -1,13 +1,4 @@
-(ns game.cards
-  (:require-macros [game.macros :refer [effect req msg]])
-  (:require [game.core :refer [pay gain lose draw move damage shuffle-into-deck trash purge add-prop
-                               set-prop resolve-ability system-msg end-run mill run rez derez score
-                               gain-agenda-point pump access-bonus shuffle! runner-install prompt!
-                               play-instant corp-install forfeit prevent-run prevent-jack-out expose
-                               steal handle-access card-init trash-no-cost max-access jack-out
-                               server->zone] :as core]
-            [clojure.string :refer [join]]
-            [game.utils :refer [has?]]))
+(in-ns 'game.core)
 
 (def cards
   {"Accelerated Beta Test"
@@ -1105,7 +1096,8 @@
    "Profiteering"
    {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
     :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
-    :effect (effect (gain :credit (* 5 (js/parseInt target)) :bad-publicity (js/parseInt target)))}
+    :effect (effect (gain :credit (* 5 (Integer/parseInt target))
+                          :bad-publicity (Integer/parseInt target)))}
 
    "Omni-Drive"
    {:recurring 1}
@@ -1286,7 +1278,7 @@
 
    "Queens Gambit"
    {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
-    :effect (req (let [c (js/parseInt target)]
+    :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability state side
                     {:choices {:req #(= (last (:zone %)) :content)}
                      :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
@@ -1790,7 +1782,7 @@
                                   " cards from HQ at random")
                         :prompt "How many [Click] do you want to spend?"
                         :choices (req (map str (range 1 (inc (:click runner)))))
-                        :effect (req (let [n (js/parseInt target)]
+                        :effect (req (let [n (Integer/parseInt target)]
                                        (when (pay state :runner card :click n)
                                          (trash state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
