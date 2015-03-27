@@ -2613,4 +2613,9 @@
 
    "The Source"
    {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
+   
+   "Bioroid Efficiency Research"
+   {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
+    :msg (msg "rez " (:title target) " at not cost")
+    :effect (effect (rez target {:no-cost true}))}
 })
