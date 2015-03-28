@@ -135,6 +135,11 @@
                               :trace {:base 5 :msg "give the Runner 1 tag"
                                       :effect (effect (gain :runner :tag 1))}}}}
 
+   "Bioroid Efficiency Research"
+   {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
+    :msg (msg "rez " (:title target) " at not cost")
+    :effect (effect (rez target {:no-cost true}))}
+
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
 
@@ -182,6 +187,11 @@
     :msg (msg "increase the rez cost of the 1st unrezzed ice approached by " target " [Credits]")
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                       :effect (effect (run target nil card))} card nil))}
+
+   "Broadcast Square"
+   {:abilities [{:label "Trace 3 - Avoid taking a bad publicity"
+                 :trace {:base 3 :msg "avoid taking a bad publicity"
+                         :effect (effect (lose :bad-publicity 1))}}]}
 
    "Cache"
    {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
@@ -1111,6 +1121,11 @@
                                                     :effect (effect (gain :credit 1))} %3 nil))))
     :leave-play #(remove-watch % :order-of-sol)}
 
+   "Paintbrush"
+   {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
+                                            " sentry, code gate and barrier until the end of next run this turn")
+                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
+
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
                                      :req (req (and run (= (first (:server run)) :hq)))}]}
@@ -1500,6 +1515,14 @@
                                                 (damage state :corp :net dmg))))}
                               card targets))}}
 
+   "Shipment from SanSan"
+   {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
+    :effect (req (let [c (Integer/parseInt target)]
+                   (resolve-ability state side
+                    {:choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                     :msg (msg "add " c " advancement tokens on a card")
+                     :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}
+
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
 
@@ -1577,6 +1600,9 @@
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+
+   "Starlight Crusade Funding"
+   {:events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Stim Dealer"
    {:events {:runner-turn-begins
@@ -2613,9 +2639,4 @@
 
    "The Source"
    {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}
-   
-   "Bioroid Efficiency Research"
-   {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at not cost")
-    :effect (effect (rez target {:no-cost true}))}
 })
