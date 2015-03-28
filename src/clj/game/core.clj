@@ -680,7 +680,7 @@
      (let [dest [:rig (to-keyword type)]
            cost (if no-cost 0 cost)]
        (when (and (or (not uniqueness) (not (in-play? state card)))
-                  (if-let [req (:req (card-def card))] (req state card) true)
+                  (if-let [req (:req (card-def card))] (req state side card nil) true)
                   (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
          (let [c (move state side card dest)
                installed-card (card-init state side c)]

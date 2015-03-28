@@ -787,7 +787,7 @@
    {:effect (effect (run :rd {:replace-access
                               {:msg "rearrange the top 5 cards of R&D"
                                :effect (req (doseq [c (take 5 (:deck corp))]
-                                              (move state side c :play-area false true)))}} card))}
+                                              (move state side c :play-area)))}} card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
