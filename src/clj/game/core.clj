@@ -168,7 +168,7 @@
   (doseq [s [:corp :runner]]
     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                 #(resolve-psi state s card psi (Integer/parseInt %)))))
+                 #(resolve-psi state s card psi (Integer/parseInt (first (split % #" ")))))))
 
 (defn prompt! [state side card msg choices ability]
   (show-prompt state side card msg choices #(resolve-ability state side ability card [%])))
