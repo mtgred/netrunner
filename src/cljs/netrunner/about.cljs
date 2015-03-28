@@ -38,7 +38,11 @@
        [:p "My PayPal account is mtgred@gmail.com. Contributions are appreciated and will help financing faster servers."]]
       [:li
        [:h4 "What is the best supported browser?"]
-       [:p "Google Chrome on a desktop/laptop is recommended. Firefox and Safari should work fine too."]]]
+       [:p "Google Chrome on a desktop/laptop is recommended. Firefox and Safari should work fine too."]]
+      [:li
+       [:h4 "Is there some documenation on how to use the jinteki.net?"]
+       [:p "A "
+        [:a {:href "https://mythbuilder.wordpress.com/2015/03/25/the-definitive-guide-to-netiquette-on-jinteki-net-wip/" :target "_blank"} "guide"] " has been written by Mythbuilder." ]]]
 
      [:h3 "Disclaimer"]
      [:p "Netrunner and Android are trademarks of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
