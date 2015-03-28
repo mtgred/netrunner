@@ -37,18 +37,18 @@
              (when (= (first c) :click)
                (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
                (swap! state assoc-in [side :register :spent-click] true))
-             (swap! state update-in [side (first c)] #(- % (last c))))))))
+             (swap! state update-in [side (first c)] #(- (or % 0) (last c))))))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
-    (swap! state update-in [side (first r)] #(+ % (last r)))))
+    (swap! state update-in [side (first r)] #(+ (or % 0) (last r)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
-      (swap! state update-in [side (first r)] #(max (- % (last r)) 0)))))
+      (swap! state update-in [side (first r)] #(max (- (or % 0) (last r)) 0)))))
 
 (defn register-events [state side events card]
   (doseq [e events]

@@ -852,7 +852,7 @@
    {:events {:successful-run {:msg "draw 1 card" :once :per-turn :once-key :john-masanori-draw
                               :effect (effect (draw))}
              :unsuccessful-run {:msg "take 1 tag" :once :per-turn :once-key :john-masanori-tag
-                                :effect (effect (gain :tag 1))}}}
+                                :effect (effect (gain :runner :tag 1))}}}
 
    "Joshua B."
    {:events {:runner-turn-begins
@@ -1602,7 +1602,7 @@
                  :effect (effect (run :archives
                                    {:successful-run
                                     {:msg "make a successful run on HQ"
-                                     :effect #(swap! %1 assoc-in [:run :server] [:hq])}} card))}]}
+                                     :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
 
    "Snare!"
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
