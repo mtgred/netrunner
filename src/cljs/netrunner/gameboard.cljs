@@ -233,8 +233,8 @@
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
-                      [:div.card-wrapper {:class (when (and (not (:selected card)) (playable? card))
-                                                   "playable")
+                      [:div.card-wrapper {:class (if (and (not (:selected card)) (playable? card))
+                                                   "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
                        (if (= (:user player) (:user @app-state))
                          (om/build card-view (assoc card :remotes remotes))
