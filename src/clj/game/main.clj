@@ -3,7 +3,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [game-states do! system-msg pay gain draw end-run] :as core])
+            [game.core :refer [game-states system-msg pay gain draw end-run] :as core])
   (:gen-class :main true))
 
 (add-encoder java.lang.Object encode-str)
@@ -21,8 +21,8 @@
    "end-turn" core/end-turn
    "draw" core/click-draw
    "credit" core/click-credit
-   "purge" (do! {:cost [:click 3] :effect (effect (core/purge) (system-msg "purges viruses"))})
-   "remove-tag" (do! {:cost [:click 1 :credit 2 :tag 1] :effect (effect (system-msg "removes 1 tag"))})
+   "purge" core/do-purge
+   "remove-tag" core/remove-tag
    "play" core/play
    "rez" #(core/rez %1 %2 (:card %3) nil)
    "derez" #(core/derez %1 %2 (:card %3))

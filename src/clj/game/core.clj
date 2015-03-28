@@ -361,12 +361,6 @@
       (trash state side c type))
     (trigger-event state side :damage type)))
 
-(defn do! [{:keys [cost effect]}]
-  (fn [state side args]
-    (if (apply pay (concat [state side nil] cost))
-      (effect state side args)
-      false)))
-
 (defn shuffle! [state side kw]
   (swap! state update-in [side kw] shuffle))
 
@@ -805,6 +799,15 @@
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
+
+(defn do-purge [state side args]
+  (when (pay state side nil :click 3)
+    (system-msg state side "purges viruses")
+    (purge state side)))
+
+(defn remove-tag [state side args]
+  (when (pay state side nil :click 1 :credit 2 :tag 1)
+    (system-msg state side "spend [Click] and 2 [Credits] to remove 1 tag")))
 
 (defn jack-out [state side args]
   (end-run state side)
