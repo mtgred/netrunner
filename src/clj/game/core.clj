@@ -426,8 +426,10 @@
 (defn mulligan [state side args]
   (shuffle-into-deck state side :hand)
   (draw state side 5)
-  (when-let [cdef (card-def (get-in @state [side :identity]))]
-    (when-let [mul (:mulligan cdef)] (mul state side nil)))
+  (let [card (get-in @state [side :identity])]
+    (when-let [cdef (card-def card)]
+      (when-let [mul (:mulligan cdef)]
+        (mul state side card nil))))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan"))
 
