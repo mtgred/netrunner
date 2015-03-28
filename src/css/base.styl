@@ -785,10 +785,6 @@ nav ul
               background-color: transparent-orange
               border-color: orange
 
-          .selected
-            background-color: transparent-orange
-            border-color: orange
-
       .qty
         width: 30px
         text-align: center
@@ -973,7 +969,7 @@ nav ul
       font-size: 10px
       line-height: 14px
 
-  .card.selected:before
+  .card.selected
     box-shadow(0 0 1px 2px limegreen)
 
   .counters
@@ -1039,11 +1035,8 @@ nav ul
     cursor: pointer
     border-radius: 4px
 
-    img
+    .card
       box-shadow(0 0 1px 2px orange)
-
-      &:hover
-        box-shadow(0 0 1px 2px blue)
 
   .bg
     position: absolute

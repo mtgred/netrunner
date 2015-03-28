@@ -205,6 +205,11 @@
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
 
+   "Celebrity Gift"
+   {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+    :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+    :effect (effect (gain :credit (* 2 (count targets))))}
+
    "Cerebral Cast"
    {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
@@ -610,6 +615,15 @@
    "Frame Job"
    {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
 
+   "Freelance Coding Contract"
+   {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
+    :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+    :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
+
+   "Freelancer"
+   {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
+    :choices {:max 2 :req #(= (:zone %) [:rig :resource])} :effect (effect (trash-cards :runner targets))}
+
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
@@ -962,6 +976,11 @@
 
    "Market Research"
    {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
+
+   "Mass Install"
+   {:choices {:max 3 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
+    :msg (msg "install " (join ", " (map :title targets)))
+    :effect (req (doseq [c targets] (runner-install state side c)))}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
@@ -1380,6 +1399,11 @@
                         :choices (req (filter #(= (:type %) "Program") (:discard runner)))
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
 
+   "Reuse"
+   {:choices {:max 100 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+    :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+    :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
+
    "Reversed Accounts"
    {:advanceable :always
     :abilities [{:cost [:click 1]
@@ -1433,6 +1457,11 @@
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (play-instant target))}]}
+
+   "Satellite Uplink"
+   {:req (req tagged) :msg (msg "expose " (join ", " (map :title targets)))
+    :choices {:max 2 :req #(= (first (:zone %)) :servers)}
+    :effect (req (doseq [c targets] (expose state side c)))}
 
    "Savoir-faire"
    {:abilities [{:cost [:credit 2] :once :per-turn :msg (msg "install " (:title target))
@@ -1514,6 +1543,11 @@
                                                     (move state :runner card :scored nil))
                                                 (damage state :corp :net dmg))))}
                               card targets))}}
+
+   "Shipment from Kaguya"
+   {:choices {:max 2 :req #(or (= (:type %) "Agenda") (:advanceable %))}
+    :msg (msg "1 advancement tokens on " (count targets) " cards")
+    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
 
    "Shipment from SanSan"
    {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
@@ -2602,9 +2636,6 @@
    "Fall Guy"
    {:abilities [{:effect (effect (trash card)) :msg "prevent another resource from being trashed"}
                 {:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
-
-   "Freelancer"
-   {:req (req tagged)}
 
    "Ghost Runner"
    {:data {:counter 3}

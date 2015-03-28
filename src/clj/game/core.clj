@@ -2,7 +2,6 @@
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
-            [clojure.string :refer [join]]
             [clojure.string :refer [split-lines split join]]))
 
 (declare cards)
@@ -202,21 +201,23 @@
     (trigger-event state side :trace nil)))
 
 (defn resolve-select [state side]
-  (let [selected (get-in @state [side :selected])]
-    (when-not (empty? (:cards selected))
-      (resolve-ability state side (:ability selected) (-> (get-in @state [side :prompt]) first :card)
-                       (:cards selected))))
+  (let [selected (get-in @state [side :selected])
+        cards (map #(dissoc % :selected) (:cards selected))]
+    (when-not (empty? cards)
+      (doseq [card cards] (update! state side card))
+      (resolve-ability state side (:ability selected) (-> (get-in @state [side :prompt]) first :card) cards)))
   (swap! state assoc-in [side :selected] nil)
   (swap! state update-in [side :prompt] rest))
 
 (defn show-select [state side card ability]
   (swap! state assoc-in [side :selected]
-         {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])})
+         {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+          :max (get-in ability [:choices :max])})
   (show-prompt state side card
-               (if-let [m (get-in [:choices :max] ability)]
+               (if-let [m (get-in ability [:choices :max])]
                  (str "Select up to " m " targets for " (:title card))
                  (str "Select a target for " (:title card)))
-               ["Done"] #(resolve-select state side)))
+               ["Done"] (fn [choice] (resolve-select state side))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
@@ -446,8 +447,8 @@
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card targets))))
 
-;; (defn trash-cards [state side cards]
-;;   (doseq [c cards] (trash state side c)))
+(defn trash-cards [state side cards]
+  (doseq [c cards] (trash state side c)))
 
 (defn pump
   ([state side card n] (pump state side card n false))
