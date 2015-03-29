@@ -746,6 +746,12 @@
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
+   "Housekeeping"
+   {:events {:play {:req (req (= side :runner)) :choices (req (:hand runner))
+                    :prompt "Choose a card to trash for Housekeeping" :once :per-turn
+                    :msg (msg "to force the Runner to trash " (:title target) " from Grip")
+                    :effect (effect (trash target))}}}
+
    "House of Knives"
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
@@ -969,6 +975,10 @@
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
+   "Manhunt"
+   {:events {:successful-run {:trace {:base 3 :msg "give the Runner 1 tag"
+                                      :effect (effect (gain :runner :tag 1))}}}}
+
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
                  :effect (effect (add-prop card :counter 3))}]
@@ -1057,6 +1067,9 @@
    {:events {:successful-run {:req (req (= target :hq))
                               :effect (effect (access-bonus (:counter card))
                                               (add-prop card :counter 1))}}}
+   "Net Celebrity"
+   {:recurring 1}
+
    "Net Shield"
    {:abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"}]}
 
@@ -1158,6 +1171,9 @@
 
    "Paricia"
    {:recurring 2}
+
+   "Paywall Implementation"
+   {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
    "Peak Efficiency"
    {:effect (effect (gain :credit

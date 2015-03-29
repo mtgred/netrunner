@@ -84,7 +84,8 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (and (#{:servers :rig :scored} (first zone)) (#{:hand :deck :discard} (first dest)))
+             c (if (and (#{:servers :rig :scored :current} (first zone))
+                        (#{:hand :deck :discard} (first dest)))
                  (desactivate state side c) c)
              moved-card (assoc c :zone dest)]
          (if front
@@ -464,6 +465,9 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
+        (when-let [current (first (get-in @state [:runner :current]))]
+          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+          (trash state side current))
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
 
 (defn steal [state side card]
@@ -474,6 +478,9 @@
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
+    (when-let [current (first (get-in @state [:corp :current]))]
+      (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+      (trash state side current))
     (trigger-event state :runner :agenda-stolen c)))
 
 (defn server->zone [state server]
@@ -657,8 +664,7 @@
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
-                    (req state side card targets)
-                    true)
+                    (req state side card targets) true)
                   (not (and (has? card :subtype "Priority")
                             (get-in @state [side :register :spent-click])))
                   (pay state side card :credit (:cost card) extra-cost
@@ -667,7 +673,14 @@
            (system-msg state side (str "plays " title))
            (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
            (resolve-ability state side cdef card nil)
-           (move state side (first (get-in @state [side :play-area])) :discard))))))
+           (if (has? c :subtype "Current")
+             (do (doseq [s [:corp :runner]]
+                   (when-let [current (first (get-in @state [s :current]))]
+                     (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                     (trash state side current)))
+                 (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
+                   (card-init state side moved-card)))
+             (move state side (first (get-in @state [side :play-area])) :discard)))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
@@ -738,7 +751,8 @@
   (case (:type card)
     ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
     ("Hardware" "Resource" "Program") (runner-install state side card {:extra-cost [:click 1]})
-    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]})))
+    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
+  (trigger-event state side :play card))
 
 (defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))

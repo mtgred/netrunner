@@ -86,7 +86,7 @@
         (if (= side :runner)
           (case (first zone)
             "hand" (send-command "play" {:card card})
-            "rig" (handle-abilities card owner)
+            ("rig" "current") (handle-abilities card owner)
             nil)
           (case (first zone)
             "hand" (case type
@@ -97,7 +97,7 @@
                                           (send-command "play" {:card card :server "New remote"})
                                           (-> (om/get-node owner "servers") js/$ .toggle))
                      (send-command "play" {:card card}))
-            ("servers" "scored") (handle-abilities card owner)
+            ("servers" "scored" "current") (handle-abilities card owner)
             nil))))))
 
 (defn in-play? [card]
@@ -503,7 +503,9 @@
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
-                (om/build rfg-view {:cards (:play-area me)})]
+                (om/build rfg-view {:cards (:play-area me)})
+                (om/build rfg-view {:cards (:current opponent) :name "Current"})
+                (om/build rfg-view {:cards (:current me) :name "Current"})]
 
                [:div.button-pane
                 (when-not (:keep me)
