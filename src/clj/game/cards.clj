@@ -804,11 +804,12 @@
                                      card nil))}
 
    "Inject"
-   {:effect #(doseq [c (take 4 (get-in @%1 [:runner :deck]))]
-               (if (= (:type c) "Program")
-                 (do (trash %1 %2 c) (gain %1 %2 :credit 1)
-                     (system-msg %1 %2 (str "trashes " (:title c) " and gains 1 [Credits]")))
-                 (do (move %1 %2 c :hand) (system-msg %1 %2 (str "adds " (:title c) " to Grip")))))}
+   {:effect (req (doseq [c (take 4 (get-in @state [:runner :deck]))]
+                   (if (= (:type c) "Program")
+                     (do (trash state side c) (gain state side :credit 1)
+                         (system-msg state side (str "trashes " (:title c) " and gains 1 [Credits]")))
+                     (do (move state side c :hand)
+                         (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
    "Inside Job"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -1294,7 +1295,7 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Psychographics"
-   {:req (req (<= target (:tag runner))) :choices :credit :prompt "How many credits?"
+   {:req (req tagged) :choices :credit :prompt "How many credits?"
     :effect (req (let [c (min target (:tag runner))]
                    (resolve-ability state side
                                     {:msg (msg "place " c " advancement tokens on "
