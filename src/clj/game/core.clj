@@ -74,7 +74,7 @@
         to-zone (cons side (if (sequential? to) to [to]))]
     (swap! state assoc-in to-zone (concat (get-in @state to-zone)
                                           (zone to (get-in @state from-zone))))
-    (swap! state assoc-in from-zone)))
+    (swap! state assoc-in from-zone [])))
 
 (defn move
   ([state side {:keys [zone cid] :as card} to] (move state side card to nil))

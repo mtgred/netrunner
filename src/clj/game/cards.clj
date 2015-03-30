@@ -1679,7 +1679,7 @@
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
-                                      :effect #(gain state :corp :click 1)} card nil))}
+                                      :effect (effect (gain :corp :click 1))} card nil))}
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
