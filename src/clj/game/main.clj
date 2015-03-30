@@ -51,7 +51,8 @@
            "do" ((commands command) state (keyword side) args)
            "quit" (system-msg state (keyword side) "left the game")
            "notification" (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
-         (catch Exception e (println "Error: " e))))
+         (catch Exception e
+           (println "Game error:" action command (get-in args [:card :title]) e))))
   (assoc @(@game-states gameid) :action action))
 
 (defn -main []
@@ -59,9 +60,10 @@
     (.bind socket "tcp://127.0.0.1:1043")
     (println "Listening on port 1043 for incoming commands...")
     (while true
-      (let [data (convert (.recv socket))]
-        ;; (println (:action data) data)
-        (if (= (:action data) "remove")
-          (do (swap! game-states dissoc (:gameid data))
-              (.send socket (generate-string "ok")))
-          (.send socket (generate-string (dissoc (exec data) :events))))))))
+      (try (let [data (convert (.recv socket))]
+             (if (= (:action data) "remove")
+               (do (swap! game-states dissoc (:gameid data))
+                   (.send socket (generate-string "ok")))
+               (.send socket (generate-string (dissoc (exec data) :events)))))
+           (catch Exception e
+             (println "Main error:" e))))))
