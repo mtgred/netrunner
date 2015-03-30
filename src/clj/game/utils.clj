@@ -12,7 +12,7 @@
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with pred coll)]
-    (concat head (rest tail))))
+    (vec (concat head (rest tail)))))
 
 (defn has? [card property value]
   (when-let [p (property card)]

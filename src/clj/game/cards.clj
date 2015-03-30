@@ -524,7 +524,12 @@
     :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
 
    "Encrypted Portals"
-   {:effect (effect (gain :credit
+   {:msg (msg "gain " (reduce (fn [c server]
+                                    (+ c (count (filter (fn [ice] (and (has? ice :subtype "Code Gate")
+                                                                      (:rezzed ice))) (:ices server)))))
+                              0 (flatten (seq (:servers corp))))
+              " [Credits]")
+    :effect (effect (gain :credit
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Code Gate")
                                                                       (:rezzed ice))) (:ices server)))))
@@ -1684,7 +1689,12 @@
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
    "Superior Cyberwalls"
-   {:effect (effect (gain :credit
+   {:msg (msg "gain " (reduce (fn [c server]
+                                    (+ c (count (filter (fn [ice] (and (has? ice :subtype "Barrier")
+                                                                      (:rezzed ice))) (:ices server)))))
+                              0 (flatten (seq (:servers corp))))
+              " [Credits]")
+    :effect (effect (gain :credit
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Barrier")
                                                                       (:rezzed ice))) (:ices server)))))
