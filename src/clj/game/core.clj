@@ -69,7 +69,7 @@
       (gain state :runner :memory mu))
     c))
 
-(defn move-cards [state side server to]
+(defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
         to-zone (cons side (if (sequential? to) to [to]))]
     (swap! state assoc-in to-zone (concat (get-in @state to-zone)

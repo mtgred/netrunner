@@ -256,7 +256,7 @@
                                                   (lose state side :tag 1)))} card nil))}]}
 
    "Chronos Project"
-   {:effect (effect (move :runner :discard :rfg))}
+   {:effect (effect (move-zone :runner :discard :rfg))}
 
    "City Surveillance"
    {:events {:runner-turn-begins
