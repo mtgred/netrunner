@@ -766,7 +766,7 @@
 (defn forfeit [state side card]
   (system-msg state side (str "forfeit " (:title card)))
   (gain state side :agenda-point (- (:agendapoints card)))
-  (move state :corp card :rfg false (= side :runner)))
+  (move state :corp card :rfg))
 
 (defn expose [state side target]
   (system-msg state side (str "exposes " (:title target)))
