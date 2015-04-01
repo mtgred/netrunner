@@ -60,10 +60,11 @@
     (.bind socket "tcp://127.0.0.1:1043")
     (println "Listening on port 1043 for incoming commands...")
     (while true
-      (try (let [data (convert (.recv socket))]
-             (if (= (:action data) "remove")
+      (let [{:keys [gameid action] :as data} (convert (.recv socket))]
+        (try (if (= (:action data) "remove")
                (do (swap! game-states dissoc (:gameid data))
                    (.send socket (generate-string "ok")))
-               (.send socket (generate-string (dissoc (exec data) :events)))))
-           (catch Exception e
-             (println "Main error:" e))))))
+               (.send socket (generate-string (dissoc (exec data) :events))))
+             (catch Exception e
+               (println "Main error:" e)
+               (.send socket (generate-string (assoc @(@game-states gameid) :action action)))))))))
