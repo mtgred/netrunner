@@ -2161,7 +2161,7 @@
                 {:label "Place 1 advancement token on an ICE that can be advanced on this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
                  :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                 ::effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Bullfrog"
    {:abilities [{:msg "start a Psi game"
