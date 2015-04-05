@@ -1,5 +1,5 @@
 (ns game.main
-  (:import [org.zeromq ZMQ])
+  (:import [org.zeromq ZMQ ZMQQueue])
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
@@ -7,8 +7,6 @@
   (:gen-class :main true))
 
 (add-encoder java.lang.Object encode-str)
-
-(def ctx (ZMQ/context 1))
 
 (def commands
   {"say" core/say
@@ -44,27 +42,32 @@
       (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
       params)))
 
-(defn exec [{:keys [action gameid command side args text] :as msg}]
-  (let [state (@game-states gameid)]
-    (try (case action
-           "start" (core/init-game msg)
-           "do" ((commands command) state (keyword side) args)
-           "quit" (system-msg state (keyword side) "left the game")
-           "notification" (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
-         (catch Exception e
-           (println "Game error:" action command (get-in args [:card :title]) e))))
-  (assoc @(@game-states gameid) :action action))
-
 (defn -main []
-  (let [socket (.socket ctx ZMQ/REP)]
-    (.bind socket "tcp://127.0.0.1:1043")
-    (println "Listening on port 1043 for incoming commands...")
-    (while true
-      (let [{:keys [gameid action] :as data} (convert (.recv socket))]
-        (try (if (= (:action data) "remove")
-               (do (swap! game-states dissoc (:gameid data))
-                   (.send socket (generate-string "ok")))
-               (.send socket (generate-string (dissoc (exec data) :events))))
-             (catch Exception e
-               (println "Main error:" e)
-               (.send socket (generate-string (assoc @(@game-states gameid) :action action)))))))))
+  (let [ctx (ZMQ/context 1)
+        worker-url "inproc://responders"
+        router (doto (.socket ctx ZMQ/ROUTER) (.bind "tcp://127.0.0.1:1043"))
+        dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
+    (dotimes [n 2]
+      (.start
+       (Thread.
+        (fn []
+          (let [socket (.socket ctx ZMQ/REP)]
+            (.connect socket worker-url)
+            (while true
+              (try
+                (let [{:keys [gameid action command side args text] :as msg} (convert (.recv socket))
+                      state (@game-states gameid)]
+                  (case action
+                    "start" (core/init-game msg)
+                    "remove" (swap! game-states dissoc gameid)
+                    "do" ((commands command) state (keyword side) args)
+                    "notification" (swap! state update-in [:log]
+                                          #(conj % {:user "__system__" :text text}))
+                    "quit" (system-msg state (keyword side) "left the game"))
+                  (.send socket (generate-string (assoc @(@game-states gameid) :action action)) ZMQ/NOBLOCK))
+                (catch Exception e
+                  (println "Error in Thread" n e)
+                  (.send socket (generate-string "error") ZMQ/NOBLOCK)))))))))
+
+    (.start (Thread. #(.run (ZMQQueue. ctx router dealer))))
+    (println "Listening on port 1043 for incoming commands...")))
