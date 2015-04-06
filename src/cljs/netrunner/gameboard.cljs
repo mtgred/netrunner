@@ -144,11 +144,11 @@
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
-  (-> e .-dataTransfer (.setData "card" (JSON/stringify (clj->js @cursor)))))
+  (-> e .-dataTransfer (.setData "card" (.stringify js/JSON (clj->js @cursor)))))
 
 (defn handle-drop [e server]
   (-> e .-target js/$ (.removeClass "dragover"))
-  (let [card (-> e .-dataTransfer (.getData "card") JSON/parse (js->clj :keywordize-keys true))
+  (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 

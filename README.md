@@ -70,15 +70,3 @@ Launch the Node server:
 ```
 $ coffee server.coffee
 ```
-
-## Optional
-
-If you use nREPL, you can launch a Clojurescript Browser REPL:
-
-```
-$ lein repl
-
-user> (brepl)
-<< started Weasel server on ws://0.0.0.0:9001 >>
-Type `:cljs/quit` to stop the ClojureScript REPL
-```

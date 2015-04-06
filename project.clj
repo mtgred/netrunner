@@ -3,17 +3,17 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2311"]
+                 [org.clojure/clojurescript "0.0-3126"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
-                 [figwheel "0.1.4-SNAPSHOT"]
-                 [om "0.7.1"]
-                 [sablono "0.2.20"]]
+                 [figwheel "0.2.5"]
+                 [org.omcljs/om "0.8.8"]
+                 [sablono "0.3.4"]]
   :main game.main
 
-  :plugins [[lein-cljsbuild "1.0.3"]
-            [lein-figwheel "0.1.4-SNAPSHOT"]]
+  :plugins [[lein-cljsbuild "1.0.5"]
+            [lein-figwheel "0.2.5"]]
 
   :source-paths ["src/clj" "src/cljs"]
 
