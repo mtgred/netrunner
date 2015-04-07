@@ -753,10 +753,10 @@
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
    "Housekeeping"
-   {:events {:play {:req (req (= side :runner)) :choices (req (:hand runner))
-                    :prompt "Choose a card to trash for Housekeeping" :once :per-turn
-                    :msg (msg "to force the Runner to trash " (:title target) " from Grip")
-                    :effect (effect (trash target))}}}
+   {:events {:runner-install {:req (req (= side :runner)) :choices (req (:hand runner))
+                              :prompt "Choose a card to trash for Housekeeping" :once :per-turn
+                              :msg (msg "to force the Runner to trash " (:title target) " from Grip")
+                              :effect (effect (trash target))}}}
 
    "House of Knives"
    {:data {:counter 3}
