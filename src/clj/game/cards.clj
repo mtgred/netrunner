@@ -137,7 +137,7 @@
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at not cost")
+    :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true}))}
 
    "Blue Level Clearance"
@@ -200,6 +200,9 @@
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
                                                  (get-in runner [:rig :resource])))))}
+
+   "Capital Investors"
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Caprice Nisei"
    {:abilities [{:msg "start a Psi game"
@@ -282,6 +285,9 @@
 
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
+
+   "Clot"
+   {:events {:purge {:effect (effect (trash card))}}}
 
    "Code Siphon"
    {:effect (effect (run :rd
@@ -387,6 +393,9 @@
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
+
+   "Decoy"
+   {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card))}]}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
@@ -516,7 +525,7 @@
 
    "Elizas Toybox"
    {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
-                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at not cost")
+                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
                  :effect (effect (rez target {:no-cost true}))}]}
 
    "Emergency Shutdown"
@@ -1129,7 +1138,7 @@
 
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at not cost")
+    :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true}))}
 
    "PAD Campaign"
@@ -1651,6 +1660,9 @@
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
 
+   "Spike"
+   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card))}]}
+
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1)) :recurring 2
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1))}}}
@@ -2135,24 +2147,27 @@
    "Asteroid Belt"
    {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Bandwidth"
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+
    "Bastion"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)
-                 :msg (msg "move it to the outmost position of " target)
+                 :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
-                {:label "Place 1 advancement token on an ICE that can be advance on this server"
+                {:label "Place 1 advancement token on an ICE that can be advanced on this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
                  :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                 :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Bullfrog"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal
                        {:player :corp :prompt "Choose a server" :choices (req servers)
-                        :msg (msg "move it to the outmost position of " target)
+                        :msg (msg "move it to the outermost position of " target)
                         :effect (req (let [dest (server->zone state target)]
                                        (swap! state update-in [:run]
                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
@@ -2193,6 +2208,9 @@
 
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+
+   "Cortex Lock"
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Curtain Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2408,6 +2426,12 @@
                  :label "Trash a program"
                  :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
 
+   "Negotiator"
+   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+                {:prompt "Choose a program to trash" :label "Trash a program"
+                 :msg (msg "trash " (:title target))
+                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}}
+
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
@@ -2596,7 +2620,7 @@
 
    "Wendigo"
    {:advanceable :always
-    :abilities [{:msg "prevent the Runner from using a chosen program for the remaining of this run"}]}
+    :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]}
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"
