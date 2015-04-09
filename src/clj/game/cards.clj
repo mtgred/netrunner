@@ -1843,7 +1843,7 @@
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Utopia Shard"
-   {:abilities [{:effect (effect (trash :corp (take 2 (shuffle (:hand corp)))) (trash card))
+   {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp)))) (trash card))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]}
 
    "Valencia Estevez: The Angel of Cayambe"
@@ -2148,7 +2148,7 @@
    {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Bandwidth"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Bastion"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2210,7 +2210,8 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Cortex Lock"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage for each unused memory the Runner has"
+                 :effect (effect (damage :net (:memory runner)))}]}
 
    "Curtain Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2429,8 +2430,8 @@
    "Negotiator"
    {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:prompt "Choose a program to trash" :label "Trash a program"
-                 :msg (msg "trash " (:title target))
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}}
+                 :choices {:req {:req #(= (:zone %) [:rig :program])}}
+                 :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
