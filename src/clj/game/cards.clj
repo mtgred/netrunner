@@ -1172,7 +1172,7 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
-                                            " sentry, code gate and barrier until the end of next run this turn")
+                                            " sentry, code gate or barrier until the end of next run this turn")
                  :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
 
    "Panic Button"
@@ -1722,6 +1722,12 @@
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
+
+   "Tech Startup"
+   {:abilities [{:prompt "Choose an asset to install from R&D" :msg (msg "installs " (:title target))
+                 :choices (req (filter #(and (has? % :type "Asset")
+                                             (<= (:cost %) (:credit corp))) (:deck corp)))
+                 :effect (effect (trash card) (corp-install target) (shuffle! :deck))}]}
 
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
