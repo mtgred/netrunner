@@ -1725,8 +1725,7 @@
 
    "Tech Startup"
    {:abilities [{:prompt "Choose an asset to install from R&D" :msg (msg "installs " (:title target))
-                 :choices (req (filter #(and (has? % :type "Asset")
-                                             (<= (:cost %) (:credit corp))) (:deck corp)))
+                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :effect (effect (trash card) (corp-install target) (shuffle! :deck))}]}
 
    "Tennin Institute: The Secrets Within"
