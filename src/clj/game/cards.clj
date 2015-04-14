@@ -273,7 +273,7 @@
    {:recurring 1}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (runner-install target))}]}
@@ -1531,7 +1531,7 @@
                  :effect (effect (trash target) (gain :credit 4))}]}
 
    "Self-modifying Code"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "installs " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
                  :cost [:credit 2]
@@ -1723,6 +1723,19 @@
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
 
+   "Symmetrical Visage"
+   {:events {:runner-click-draw {:once :per-turn :msg "gain 1 [Credits]"
+                                 :effect (effect (gain :credit 1))}}}
+
+   "Synthetic Blood"
+   {:events {:damage {:once :per-turn :msg "draw 1 card" :effect (effect (draw :runner))}}}
+
+   "Tech Startup"
+   {:abilities [{:label "Install an asset from R&D"
+                 :prompt "Choose an asset to install" :msg (msg "install " (:title target))
+                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
+
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
@@ -1884,7 +1897,7 @@
                         :choices (req (map str (range 1 (inc (:click runner)))))
                         :effect (req (let [n (Integer/parseInt target)]
                                        (when (pay state :runner card :click n)
-                                         (trash state :corp (take n (shuffle (:hand corp)))))))}} card))}
+                                         (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}
