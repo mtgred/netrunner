@@ -27,6 +27,10 @@
      :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
+   "Adjusted Chronotype"
+   {:events {:runner-loss {:req (req (some #{:click} target)) :once :per-turn
+                           :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
+
    "Adonis Campaign"
    {:data {:counter 12}
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
@@ -126,6 +130,10 @@
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
                                  (when (= target (:counter card)) (trash state :runner card)))}]}
+
+   "Beach Party"
+   {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
+    :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
@@ -644,6 +652,10 @@
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
+   "Game Day"
+   {:msg (msg "draw " (- (:max-hand-size runner) (count (:hand runner))) " cards")
+    :effect (effect (draw (- (:max-hand-size runner) (count (:hand runner)))))}
+
    "Geothermal Fracking"
    {:data {:counter 2}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
@@ -704,7 +716,8 @@
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
-    :abilities [{:cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
+    :abilities [{:label "Gain [Click]" :once :per-turn :msg "gain [Click]"
+                 :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -1177,7 +1190,7 @@
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
-                                     :req (req (and run (= (first (:server run)) :hq)))}]}
+                                    :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Paper Tripping"
    {:effect (effect (lose :tag :all))}
