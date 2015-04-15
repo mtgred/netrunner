@@ -91,21 +91,25 @@
 }, {
     "name": "The Valley",
     "cycle": "SanSan",
-    "available": "2015-03-05"
+    "available": "2015-03-31"
 }, {
     "name": "Breaker Bay",
     "cycle": "SanSan",
-    "available": "2015-04-10"
+    "available": "2015-04-30"
 }, {
     "name": "Chrome City",
     "cycle": "SanSan",
-    "available": "2015-05-10"
+    "available": "2015-05-30"
 }, {
     "name": "The Underway",
     "cycle": "SanSan",
-    "available": "2015-06-10"
+    "available": "2015-06-30"
 }, {
     "name": "Old Hollywood",
     "cycle": "SanSan",
-    "available": "2015-07-10"
+    "available": "2015-07-30"
+}, {
+    "name": "The Universe of Tomorrow",
+    "cycle": "SanSan",
+    "available": "2015-08-30"
 }]
