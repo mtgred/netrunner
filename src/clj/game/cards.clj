@@ -311,6 +311,15 @@
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
                    :effect (effect (draw :runner))}}}
 
+   "Comet"
+   {:events {:play-event
+             {:optional {:prompt "Play another event?" :once :per-turn
+                         :effect (effect (resolve-ability
+                                          {:prompt "Choose an Event to play"
+                                           :choices (req (filter #(has? % :type "Event") (:hand runner)))
+                                           :msg (msg "install " (:title target))
+                                           :effect (effect (play-instant target))} card nil))}}}}
+
    "Compromised Employee"
    {:recurring 1
     :events {:rez {:req (req (= (:type target) "ICE")) :msg "gain 1 [Credits]"
@@ -712,7 +721,9 @@
 
    "GRNDL Refinery"
    {:advanceable :always
-    :abilities [{:cost [:click 1] :effect (effect (gain :credit (* 4 (:advance-counter card))) (trash card))}]}
+    :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
+                 :cost [:click 1] :msg (msg "gain " (* 4 (:advance-counter card)) " [Credits]")
+                 :effect (effect (trash card) (gain :credit (* 4 (:advance-counter card))))}]}
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
@@ -743,6 +754,17 @@
 
    "Harmony Medtech: Biomedical Pioneer"
    {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))}
+
+   "Hayley Kaplan: Universal Scholar"
+   {:events {:runner-install
+             {:optional {:prompt (msg "Install another " (:type target) " from Grip?") :once :per-turn
+                         :effect (req (let [type (:type target)]
+                                        (resolve-ability
+                                         state side
+                                         {:prompt (msg "Choose a " type "to install")
+                                          :choices (req (filter #(has? % :type type) (:hand runner)))
+                                          :msg (msg "install " (:title target))
+                                          :effect (effect (runner-install target))} card nil)))}}}}
 
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
