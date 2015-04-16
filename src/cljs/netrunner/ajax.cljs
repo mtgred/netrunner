@@ -8,7 +8,7 @@
   (let [xhr (.-target event)
         status (.getStatus xhr)]
     (if (= status 200)
-      {:status status :json (-> xhr .getResponseText JSON/parse (js->clj :keywordize-keys true))}
+      {:status status :json (-> xhr .getResponseText ((.-parse js/JSON)) (js->clj :keywordize-keys true))}
       {:status status})))
 
 (defn GET [url]

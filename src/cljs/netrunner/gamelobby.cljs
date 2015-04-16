@@ -52,10 +52,9 @@
    (fn [user]
      (if (empty? (om/get-state owner :title))
        (om/set-state! owner :flash-message "Please fill a game title.")
-       (do
-         (om/set-state! owner :editing false)
-         (swap! app-state assoc :messages [])
-         (send {:action "create" :title (om/get-state owner :title)}))))))
+       (do (om/set-state! owner :editing false)
+           (swap! app-state assoc :messages [])
+           (send {:action "create" :title (om/get-state owner :title)}))))))
 
 (defn join-game [gameid owner]
   (authenticated

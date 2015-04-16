@@ -48,7 +48,8 @@
 (defn handle-post [event owner url ref]
   (.preventDefault event)
   (om/set-state! owner :flash-message "")
-  (let [params (-> event .-target js/$ .serialize)]
+  (let [params (-> event .-target js/$ .serialize)
+        _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
     (go (let [response (<! (POST url params))]
           (case (:status response)
             401 (om/set-state! owner :flash-message "Invalid login or password")

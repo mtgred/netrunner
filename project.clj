@@ -3,8 +3,8 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-3126"]
-                 [org.clojure/core.async "0.1.303.0-886421-alpha"]
+                 [org.clojure/clojurescript "0.0-3196"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
                  [figwheel "0.2.5"]
