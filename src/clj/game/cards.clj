@@ -1039,8 +1039,8 @@
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
    "Manhunt"
-   {:events {:successful-run {:trace {:base 3 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+   {:events {:successful-run {:once :per-turn :trace {:base 3 :msg "give the Runner 1 tag"
+                                                      :effect (effect (gain :runner :tag 1))}}}}
 
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
