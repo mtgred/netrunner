@@ -8,6 +8,7 @@
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
                  [figwheel "0.2.5"]
+                 [weasel "0.6.0"]
                  [org.omcljs/om "0.8.8"]
                  [sablono "0.3.4"]]
   :main game.main
