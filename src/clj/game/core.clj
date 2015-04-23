@@ -651,8 +651,10 @@
       (swap! state assoc :end-turn true))))
 
 (defn purge [state side]
-  (doseq [card (get-in @state [:runner :rig :program])]
-    (when (has? card :subtype "Virus")
+  (doseq [card (concat (get-in @state [:runner :rig :program])
+                       (get-in @state [:runner :rig :resource])
+                       (get-in @state [:runner :rig :hardware]))]
+    (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
       (set-prop state :runner card :counter 0)))
   (trigger-event state side :purge))
 

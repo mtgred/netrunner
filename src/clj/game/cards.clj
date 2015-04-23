@@ -1922,8 +1922,7 @@
    {:effect (effect (run :hq {:replace-access
                               {:prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :credit target) (lose :corp :credit target)
-                                               (gain :tag 1))}} card))}
+                               :effect (effect (lose :corp :credit target) (gain :tag 1))}} card))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1934,7 +1933,8 @@
                                   :msg "draw 1 card" :effect (effect (draw 1))}}}
 
    "Virus Breeding Ground"
-   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
+   {:data {:counter-type "Virus"}
+    :events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "move 1 virus counter to " (:title target))
                  :choices {:req #(and (has? % :subtype "Virus") (>= (:counter %) 1))}
                  :effect (effect (add-prop target :counter 1))}]}
@@ -2522,6 +2522,23 @@
 
    "NEXT Bronze"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "NEXT Gold"
+   {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
+                 :msg (msg "do "
+                           (reduce (fn [c server]
+                                     (+ c (count (filter (fn [ice]
+                                                           (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                         (:ices server)))))
+                                   0 (flatten (seq (:servers corp)))) " net damage")
+                 :effect (effect (damage :net (reduce (fn [c server]
+                                                        (+ c (count (filter (fn [ice]
+                                                                              (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                                            (:ices server)))))
+                                                      0 (flatten (seq (:servers corp))))))}
+                {:label "Trash a program" :prompt "Choose a program to trash"
+                 :choices {:req #(= (:zone %) [:rig :program])}
+                 :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "NEXT Silver"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
