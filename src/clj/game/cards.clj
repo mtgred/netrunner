@@ -216,6 +216,11 @@
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
 
+   "Career Fair"
+   {:prompt "Choose a Resource to install"
+    :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
+    :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
+
    "Celebrity Gift"
    {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
     :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
@@ -481,6 +486,13 @@
                :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                                  :msg (msg "to make a run on " target)
                                                  :effect (effect (run target))} card targets))}}}}
+
+   "Dorm Computer"
+   {:data {:counter 4}
+    :abilities [{:counter-cost 1 :cost [:click 1]
+                 :prompt "Choose a server" :choices (req servers) 
+                 :msg "make a run and avoid all tags for the remainder of the run"
+                 :effect (effect (run target))}]}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
@@ -1027,8 +1039,8 @@
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
    "Manhunt"
-   {:events {:successful-run {:trace {:base 3 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+   {:events {:successful-run {:once :per-turn :trace {:base 3 :msg "give the Runner 1 tag"
+                                                      :effect (effect (gain :runner :tag 1))}}}}
 
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
@@ -1151,6 +1163,10 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain :agenda-point 1) (move (first (:play-area runner)) :scored))}
+
+   "Off-Campus Apartment"
+   {:abilities [{:effect (effect (draw))
+                 :msg "host a Connection and draw 1 card"}]}
 
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
@@ -1867,6 +1883,11 @@
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Tyson Observatory"
+   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to his Grip")
+                 :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
+                 :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
+
    "Underworld Contact"
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
                                   :effect (effect (gain :credit 1))}}}
@@ -1901,8 +1922,7 @@
    {:effect (effect (run :hq {:replace-access
                               {:prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :credit target) (lose :corp :credit target)
-                                               (gain :tag 1))}} card))}
+                               :effect (effect (lose :corp :credit target) (gain :tag 1))}} card))}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
@@ -1913,7 +1933,8 @@
                                   :msg "draw 1 card" :effect (effect (draw 1))}}}
 
    "Virus Breeding Ground"
-   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
+   {:data {:counter-type "Virus"}
+    :events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "move 1 virus counter to " (:title target))
                  :choices {:req #(and (has? % :subtype "Virus") (>= (:counter %) 1))}
                  :effect (effect (add-prop target :counter 1))}]}
@@ -2150,6 +2171,10 @@
    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card))}
                 {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
 
+   "Study Guide"
+   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 2] :msg "place 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+
    "Switchblade"
    {:abilities [{:cost [:credit 1] :msg "break any number of sentry subroutines"}
                 {:cost [:credit 1] :msg "add 7 strength" :effect (effect (pump card 7))}]}
@@ -2261,6 +2286,10 @@
    {:abilities [{:msg "do 1 net damage for each unused memory the Runner has"
                  :effect (effect (damage :net (:memory runner)))}]}
 
+   "Crick"
+   {:abilities [{:msg "install a card from Archives" :choices (req (:discard corp))
+                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
+
    "Curtain Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -2338,6 +2367,10 @@
 
    "Guard"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Gutenberg"
+   {:abilities [{:label "Trace 7 - Give the Runner 1 tag"
+                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Hadrians Wall"
    {:advanceable :always
@@ -2449,6 +2482,9 @@
    "Merlin"
    {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
 
+   "Meru Mati"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
                  :choices (req (filter #(has? % :type "ICE") (:hand corp)))
@@ -2486,6 +2522,23 @@
 
    "NEXT Bronze"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "NEXT Gold"
+   {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
+                 :msg (msg "do "
+                           (reduce (fn [c server]
+                                     (+ c (count (filter (fn [ice]
+                                                           (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                         (:ices server)))))
+                                   0 (flatten (seq (:servers corp)))) " net damage")
+                 :effect (effect (damage :net (reduce (fn [c server]
+                                                        (+ c (count (filter (fn [ice]
+                                                                              (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                                            (:ices server)))))
+                                                      0 (flatten (seq (:servers corp))))))}
+                {:label "Trash a program" :prompt "Choose a program to trash"
+                 :choices {:req #(= (:zone %) [:rig :program])}
+                 :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "NEXT Silver"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2618,6 +2671,9 @@
    "Tsurugi"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
                 {:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+
+   "Turing"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Tyrant"
    {:advanceable :while-rezzed

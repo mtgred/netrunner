@@ -7,10 +7,12 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
-                 [figwheel "0.2.5"]
-                 [weasel "0.6.0"]
                  [org.omcljs/om "0.8.8"]
                  [sablono "0.3.4"]]
+
+  :profiles {:dev {:dependencies [[figwheel "0.2.5"]
+                                  [weasel "0.6.0"]]}}
+
   :main game.main
 
   :plugins [[lein-cljsbuild "1.0.5"]
