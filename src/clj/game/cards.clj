@@ -1247,6 +1247,41 @@
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
+   "Personal Workshop"
+   {
+    :events {:runner-turn-begins {:effect (effect
+                  (resolve-ability {
+                    :prompt "Choose a hosted card"
+                    :choices (req (filter #(= (:cid (:hosting-card %)) (:cid card)) (:hosted runner)))
+                    :effect (req (if (= (:counter target) 1)  (runner-install state side (assoc target :counter 0) {:no-cost true}) (add-prop state side target :counter -1))) 
+                  } card targets)
+          )}}
+    :abilities [
+      { 
+        :cost [:click 1] 
+        :msg "Host a card from HQ"
+        :effect (effect 
+                  (resolve-ability
+                    {:prompt "Choose a card to host"
+                     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
+                     :effect (req (move state side (assoc target :counter (:cost target) :hosting-card card) :hosted))
+                    } card targets
+                  )
+                )    
+      }
+      {
+        :cost [:credit 1]
+        :msg "Remove a power counter"
+        :effect (effect
+                  (resolve-ability {
+                    :prompt "Choose a hosted card"
+                    :choices (req (filter #(= (:cid (:hosting-card %)) (:cid card)) (:hosted runner)))
+                    :effect (req (if (= (:counter target) 1)  (runner-install state side (assoc target :counter 0) {:no-cost true}) (add-prop state side target :counter -1))) 
+                  } card targets)
+          )
+      }
+    ]
+   }
 
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
