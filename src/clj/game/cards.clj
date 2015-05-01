@@ -530,7 +530,7 @@
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
-                      :msg (msg "trash " (:title target)) :effect (effect (trash-no-cost))}}}
+                      :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Efficiency Committee"
    {:data {:counter 3}
@@ -758,7 +758,7 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (handle-access (:discard corp)) (trash card))}]}
+                 :effect (effect (trash card) (access [:archives]))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -835,7 +835,7 @@
 
    "Ice Analyzer"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "place 1 [Credits] on Ice Analyzer"
-                   :effect (effect (add-prop card :counter 1))}}
+                   :effect (effect (add-prop :runner card :counter 1))}}
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
 
@@ -1883,6 +1883,13 @@
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Tyrs Hand"
+   {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"
+                 :req (req (prn "tyr" (:zone current-ice) (:zone card))
+                       (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
+                                (has? current-ice :subtype "Bioroid"))) :effect (effect (trash card))
+                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
+
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to his Grip")
                  :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
@@ -2263,7 +2270,7 @@
                  :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
 
    "Changeling"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable true :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
