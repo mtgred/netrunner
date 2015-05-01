@@ -504,6 +504,8 @@
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
+                (om/build rfg-view {:cards (:hosted opponent) :name "Hosted Cards"})
+                (om/build rfg-view {:cards (:hosted me) :name "Hosted Cards"})
                 (om/build rfg-view {:cards (:play-area me)})
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
