@@ -1249,9 +1249,12 @@
                                   0 (flatten (seq (:servers corp))))))}
    "Personal Workshop"
    {
-    :events {:runner-turn-begins {:effect (effect
+    :events {:runner-turn-begins 
+      {
+        :req (req (not-empty (filter #(= (:cid (:hosting-card %)) (:cid card)) (:hosted runner))))
+        :effect (effect
                   (resolve-ability {
-                    :prompt "Choose a hosted card"
+                    :prompt "Remove 1 power counter from a hosted card on Personal Workshop"
                     :choices (req (filter #(= (:cid (:hosting-card %)) (:cid card)) (:hosted runner)))
                     :effect (req (if (= (:counter target) 1)  (runner-install state side (assoc target :counter 0) {:no-cost true}) (add-prop state side target :counter -1))) 
                   } card targets)
@@ -1264,7 +1267,7 @@
                   (resolve-ability
                     {:prompt "Choose a card to host"
                      :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
-                     :effect (req (move state side (assoc target :counter (:cost target) :hosting-card card) :hosted))
+                     :effect (effect (move (assoc target :counter (:cost target) :hosting-card card) :hosted))
                     } card targets
                   )
                 )    
@@ -1877,6 +1880,52 @@
 
    "The Root"
    {:recurring 3}
+
+   "The Supplier"
+   {
+    :events {:runner-turn-begins
+     {
+      :req (req (not-empty (filter 
+                          #(and 
+                            (= (:cid (:hosting-card %)) (:cid card)) 
+                            (>= (:credit runner) (- (:cost %) 2))
+                          ) 
+                          (:hosted runner)
+                        )))
+      :optional 
+        {:prompt "Install a card from the supplier?" 
+         :effect (effect
+            (resolve-ability
+              {:prompt "Choose a card to install"
+               :choices (req (filter 
+                                #(and 
+                                    (= (:cid (:hosting-card %)) (:cid card)) 
+                                    (>= (:credit runner) (- (:cost %) 2))
+                                ) 
+                                (:hosted runner)
+                              )
+                      )
+               :effect (effect (gain :credit (min 2 (:cost target))) (runner-install target))
+               :msg (msg "installs a card off of " (:title card) " for a discount of 2 [Credits]")
+              } card targets
+            )
+          )
+        }
+      }
+    }
+    :abilities [{
+      :cost [:click 1]
+      :msg (msg "Host a card on " (:title card)) 
+      :effect (effect
+          (resolve-ability
+            {:prompt "Choose a card to host"
+             :choices (req (filter #(#{"Hardware" "Resource"} (:type %)) (:hand runner)))
+             :effect (effect (move (assoc target :hosting-card card) :hosted))
+            } card targets
+          )
+        )
+    }]
+  }
 
    "The Toolbox"
    {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
