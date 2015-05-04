@@ -746,6 +746,11 @@
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
+   "Hacktivist Meeting"
+   {:events {:rez {:req (req (not= (:type target) "ICE"))
+                   :msg "force the Corp to trash 1 card from HQ at random"
+                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+
    "Hades Fragment"
    {:events {:corp-turn-begins
              {:optional
@@ -758,7 +763,7 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card) (access [:archives]))}]}
+                 :effect (effect (trash card) (handle-access (access state side [:archives])))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -1387,7 +1392,7 @@
 
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:trash {:msg "trash itself" :req (req (= (:type target) "Program"))
+    :events {:trash {:msg "trash itself" :req (req (= (last (:zone target)) :program))
                      :effect (effect (trash card))}}}
 
    "Quality Time"
@@ -1583,8 +1588,7 @@
 
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
-                 :choices (req (filter #(and (has? % :type "Program")
-                                             (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
+                 :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
                  :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
 
