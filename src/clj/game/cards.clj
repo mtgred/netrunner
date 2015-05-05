@@ -2283,7 +2283,7 @@
                  :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
 
    "Changeling"
-   {:advanceable true :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))

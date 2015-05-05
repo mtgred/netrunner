@@ -441,7 +441,8 @@
     (system-msg state side "wins the game")))
 
 (defn trash [state side {:keys [zone] :as card} & targets]
-  (trigger-event state side :trash card targets)
+  (when (not= (last zone) :current)
+    (trigger-event state side :trash card targets))
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
