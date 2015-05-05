@@ -573,6 +573,10 @@
                                                                       (:rezzed ice))) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Enhanced Vision"
+   {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
+                              :once :per-turn}}}
+
    "Eve Campaign"
    {:data {:counter 16}
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
@@ -676,6 +680,10 @@
    "Game Day"
    {:msg (msg "draw " (- (:max-hand-size runner) (count (:hand runner))) " cards")
     :effect (effect (draw (- (:max-hand-size runner) (count (:hand runner)))))}
+
+   "Genetic Resequencing"
+   {:choices {:req #(= (last (:zone %)) :scored)} :msg (msg "add 1 agenda counter on " (:title target))
+    :effect (effect (add-prop target :counter 1))}
 
    "Geothermal Fracking"
    {:data {:counter 2}
@@ -896,7 +904,8 @@
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg (msg "reveal the Runner's Grip")
-            :effect (req (doseq [c (:hand runner)] (move state side c :play-area false true)))
+            :effect (req (doseq [c (:hand runner)]
+                           (move state side c :play-area)))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Isabel McGuire"
