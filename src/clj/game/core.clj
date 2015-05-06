@@ -59,15 +59,18 @@
     (swap! state update-in [:events (first e)]
            #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
 
-(defn desactivate [state side card]
-  (let [c (dissoc card :counter :advance-counter :current-strength :abilities :rezzed :special)]
-    (when-let [leave-effect (:leave-play (card-def card))]
-      (when (or (= (:side card) "Runner") (:rezzed card))
-        (leave-effect state side card nil)))
-    (unregister-events state side card)
-    (when-let [mu (:memoryunits card)]
-      (gain state :runner :memory mu))
-    c))
+(defn desactivate
+  ([state side card] (desactivate state side card nil))
+  ([state side card keep-counter]
+   (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
+         c (if keep-counter c (dissoc card :advance-counter))]
+     (when-let [leave-effect (:leave-play (card-def card))]
+       (when (or (= (:side card) "Runner") (:rezzed card))
+         (leave-effect state side card nil)))
+     (unregister-events state side card)
+     (when-let [mu (:memoryunits card)]
+       (gain state :runner :memory mu))
+     c)))
 
 (defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
@@ -438,7 +441,8 @@
     (system-msg state side "wins the game")))
 
 (defn trash [state side {:keys [zone] :as card} & targets]
-  (trigger-event state side :trash card targets)
+  (when (not= (last zone) :current)
+    (trigger-event state side :trash card targets))
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
@@ -758,7 +762,7 @@
 
 (defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))
-  (update! state :corp (desactivate state :corp card)))
+  (update! state :corp (desactivate state :corp card true)))
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)

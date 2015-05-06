@@ -573,6 +573,10 @@
                                                                       (:rezzed ice))) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Enhanced Vision"
+   {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
+                              :once :per-turn}}}
+
    "Eve Campaign"
    {:data {:counter 16}
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
@@ -677,6 +681,10 @@
    {:msg (msg "draw " (- (:max-hand-size runner) (count (:hand runner))) " cards")
     :effect (effect (draw (- (:max-hand-size runner) (count (:hand runner)))))}
 
+   "Genetic Resequencing"
+   {:choices {:req #(= (last (:zone %)) :scored)} :msg (msg "add 1 agenda counter on " (:title target))
+    :effect (effect (add-prop target :counter 1))}
+
    "Geothermal Fracking"
    {:data {:counter 2}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
@@ -746,6 +754,11 @@
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
+   "Hacktivist Meeting"
+   {:events {:rez {:req (req (not= (:type target) "ICE"))
+                   :msg "force the Corp to trash 1 card from HQ at random"
+                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+
    "Hades Fragment"
    {:events {:corp-turn-begins
              {:optional
@@ -758,7 +771,7 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card) (access [:archives]))}]}
+                 :effect (effect (trash card) (handle-access (access state side [:archives])))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -891,7 +904,8 @@
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg (msg "reveal the Runner's Grip")
-            :effect (req (doseq [c (:hand runner)] (move state side c :play-area false true)))
+            :effect (req (doseq [c (:hand runner)]
+                           (move state side c :play-area)))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Isabel McGuire"
@@ -1387,7 +1401,7 @@
 
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:trash {:msg "trash itself" :req (req (= (:type target) "Program"))
+    :events {:trash {:msg "trash itself" :req (req (= (last (:zone target)) :program))
                      :effect (effect (trash card))}}}
 
    "Quality Time"
@@ -1583,8 +1597,7 @@
 
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
-                 :choices (req (filter #(and (has? % :type "Program")
-                                             (<= (:cost %) (- (:credit runner) 2))) (:deck runner)))
+                 :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
                  :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
 
@@ -2270,7 +2283,7 @@
                  :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
 
    "Changeling"
-   {:advanceable true :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
