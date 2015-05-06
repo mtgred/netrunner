@@ -1581,6 +1581,41 @@
                  :label "Trash a rezzed ICE to gain 4 [Credits]"
                  :effect (effect (trash target) (gain :credit 4))}]}
 
+   "Security Testing"
+   {:events {
+      :runner-turn-begins {
+	      :prompt "Choose a server for Security Testing" :choices (req servers)
+         ; Effect: give the Security Testing card a key to designate the chosen server,
+         ; then update the state with the card.
+		   :effect (req (let [c (assoc card :security-testing-target
+                            (vec (next (server->zone state target))))]
+            (update! state :runner c)
+         ))
+         :msg (msg "target " target)
+      }
+
+      :successful-run {
+         ; Only triggers if the run's target is the server chosen by the turn-begins prompt.
+         :req (req (= (get-in @state [:run :server]) 
+            (get (get-card state card) :security-testing-target))) 
+         :once :per-turn
+		   :effect (req (let [stcard card] (
+            ; Replace any existing replace-access function with this function granting 2cr.
+            swap! state assoc-in [:run :run-effect :replace-access] {
+		         :mandatory true 
+			      :effect (req
+                  ; using resolve-ability instead of effect, so the log will show 
+                  ; "uses Security Testing to gain 2 credits"
+                  (resolve-ability state side {
+			            :msg "gain 2 [Credits] instead of accessing"
+                     :effect (effect (gain :credit 2))
+                  } stcard nil)
+               )
+	         }
+         )))
+      }
+	}}
+   
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :choices (req (filter #(and (has? % :type "Program")
