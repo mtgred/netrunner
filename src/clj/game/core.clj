@@ -762,7 +762,8 @@
 
 (defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))
-  (update! state :corp (desactivate state :corp card true)))
+  (update! state :corp (desactivate state :corp card true))
+  (trigger-event state side :derez card))
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
