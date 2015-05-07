@@ -2547,7 +2547,55 @@
                  :effect (req (corp-install state side target (:server run)))}]}
 
    "Mother Goddess"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :events {
+      :rez {
+         :req (req (= (:type target) "ICE")) 
+         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
+                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)))))
+                            allsubtypes (->> allice 
+                              (map #(vec (.split (:subtype %) " - "))) flatten)
+                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
+            (resolve-ability state side {
+               :msg (msg "gain subtypes " newtypes)
+               :effect (req(let [c (assoc card :subtype newtypes)]
+                  (update! state side c)
+               ))
+            } card nil)
+         ))
+      }
+      :trash {
+         :req (req (= (:type target) "ICE")) 
+         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
+                              ; the trash event triggers while the ice is still installed, so the filter must rule out the target
+                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)) (not= (:cid target) (:cid %)))))
+                            allsubtypes (->> allice 
+                              (map #(vec (.split (:subtype %) " - "))) flatten)
+                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
+            (resolve-ability state side {
+               :msg (msg "gain subtypes " newtypes)
+               :effect (req(let [c (assoc card :subtype newtypes)]
+                  (update! state side c)
+               ))
+            } card nil)
+         ))
+      }
+      :derez {
+         :req (req (= (:type target) "ICE")) 
+         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
+                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)))))
+                            allsubtypes (->> allice 
+                              (map #(vec (.split (:subtype %) " - "))) flatten)
+                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
+            (resolve-ability state side {
+               :msg (msg "gain subtypes " newtypes)
+               :effect (req(let [c (assoc card :subtype newtypes)]
+                  (update! state side c)
+               ))
+            } card nil)
+         ))
+      }
+      }}
 
    "Muckraker"
    {:effect (effect (gain :bad-publicity 1))
