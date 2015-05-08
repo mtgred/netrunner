@@ -278,8 +278,9 @@
           (swap! state assoc-in [:runner :rig :program]
                  (for [p (get-in @state [:runner :rig :program])]
                    (assoc p :current-strength nil)))
-          (when-let [end-run-effect (get-in @state [:run :run-effect :end-run])]
-            (resolve-ability state side end-run-effect nil [(first server)])))
+          (let [run-effect (get-in @state [:run :run-effect])]
+            (when-let [end-run-effect (:end-run run-effect)]
+              (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state assoc :run nil))))
 
 (defn add-prop [state side card key n]
@@ -587,22 +588,22 @@
 (defn successful-run [state side args]
   (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
     (resolve-ability state side successful-run-effect (:card successful-run-effect) nil))
-  (let [server (get-in @state [:run :server])
-        card (get-in @state [:run :run-effect :card])]
+  (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (swap! state assoc-in [:run :successful] true)
     (trigger-event state side :successful-run (first server))
-    (if-let [replace-effect (get-in @state [:run :run-effect :replace-access])]
-      (if (:mandatory replace-effect)
-        (replace-access state side replace-effect card)
-        (swap! state update-in [side :prompt]
-               (fn [p]
-                 (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
-                                :choices ["Run ability" "Access"]
-                                :effect #(if (= % "Run ability")
-                                           (replace-access state side replace-effect card)
-                                           (do-access state side server))}))))
-      (do-access state side server))))
+    (let [card (get-in @state [:run :run-effect :card])]
+      (if-let [replace-effect (get-in @state [:run :run-effect :replace-access])]
+        (if (:mandatory replace-effect)
+          (replace-access state side replace-effect card)
+          (swap! state update-in [side :prompt]
+                 (fn [p]
+                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
+                                  :choices ["Run ability" "Access"]
+                                  :effect #(if (= % "Run ability")
+                                             (replace-access state side replace-effect card)
+                                             (do-access state side server))}))))
+        (do-access state side server)))))
 
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]

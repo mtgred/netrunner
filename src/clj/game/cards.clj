@@ -317,7 +317,8 @@
                    :effect (effect (draw :runner))}}}
 
    "Comet"
-   {:events {:play-event
+   (:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:play-event
              {:optional {:prompt "Play another event?" :once :per-turn
                          :effect (effect (resolve-ability
                                           {:prompt "Choose an Event to play"
@@ -1237,7 +1238,7 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
-                                            " sentry, code gate and barrier until the end of next run this turn")
+                                            " sentry, code gate or barrier until the end of next run this turn")
                  :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
 
    "Panic Button"
@@ -1596,40 +1597,20 @@
                  :effect (effect (trash target) (gain :credit 4))}]}
 
    "Security Testing"
-   {:events {
-      :runner-turn-begins {
-	      :prompt "Choose a server for Security Testing" :choices (req servers)
-         ; Effect: give the Security Testing card a key to designate the chosen server,
-         ; then update the state with the card.
-		   :effect (req (let [c (assoc card :security-testing-target
-                            (vec (next (server->zone state target))))]
-            (update! state :runner c)
-         ))
-         :msg (msg "target " target)
-      }
+   {:events {:runner-turn-begins
+             {:prompt "Choose a server for Security Testing" :choices (req servers)
+              :msg (msg "target " target)
+              :effect (effect (update! (assoc card :testing-target (vec (next (server->zone state target))))))}
+             :successful-run
+             {:req (req (= (get-in @state [:run :server]) (get (get-card state card) :testing-target)))
+              :once :per-turn
+              :effect (req (let [st card]
+                             (swap! state assoc-in [:run :run-effect :replace-access]
+                                    {:mandatory true
+                                     :effect (effect (resolve-ability
+                                                      {:msg "gain 2 [Credits] instead of accessing"
+                                                       :effect (gain :credit 2)} st nil))})))}}}
 
-      :successful-run {
-         ; Only triggers if the run's target is the server chosen by the turn-begins prompt.
-         :req (req (= (get-in @state [:run :server]) 
-            (get (get-card state card) :security-testing-target))) 
-         :once :per-turn
-		   :effect (req (let [stcard card] (
-            ; Replace any existing replace-access function with this function granting 2cr.
-            swap! state assoc-in [:run :run-effect :replace-access] {
-		         :mandatory true 
-			      :effect (req
-                  ; using resolve-ability instead of effect, so the log will show 
-                  ; "uses Security Testing to gain 2 credits"
-                  (resolve-ability state side {
-			            :msg "gain 2 [Credits] instead of accessing"
-                     :effect (effect (gain :credit 2))
-                  } stcard nil)
-               )
-	         }
-         )))
-      }
-	}}
-   
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
@@ -2547,55 +2528,16 @@
                  :effect (req (corp-install state side target (:server run)))}]}
 
    "Mother Goddess"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :events {
-      :rez {
-         :req (req (= (:type target) "ICE")) 
-         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
-                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)))))
-                            allsubtypes (->> allice 
-                              (map #(vec (.split (:subtype %) " - "))) flatten)
-                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
-            (resolve-ability state side {
-               :msg (msg "gain subtypes " newtypes)
-               :effect (req(let [c (assoc card :subtype newtypes)]
-                  (update! state side c)
-               ))
-            } card nil)
-         ))
-      }
-      :trash {
-         :req (req (= (:type target) "ICE")) 
-         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
-                              ; the trash event triggers while the ice is still installed, so the filter must rule out the target
-                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)) (not= (:cid target) (:cid %)))))
-                            allsubtypes (->> allice 
-                              (map #(vec (.split (:subtype %) " - "))) flatten)
-                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
-            (resolve-ability state side {
-               :msg (msg "gain subtypes " newtypes)
-               :effect (req(let [c (assoc card :subtype newtypes)]
-                  (update! state side c)
-               ))
-            } card nil)
-         ))
-      }
-      :derez {
-         :req (req (= (:type target) "ICE")) 
-         :effect (req (let [allice (->> (flatten (seq (:servers corp))) (map #(:ices %)) (filter #(not (nil? %))) flatten
-                              (filter #(and (:rezzed %) (not= (:cid card) (:cid %)))))
-                            allsubtypes (->> allice 
-                              (map #(vec (.split (:subtype %) " - "))) flatten)
-                            newtypes (clojure.string/join " - " (distinct (cons "Mythic" allsubtypes)))]
-            (resolve-ability state side {
-               :msg (msg "gain subtypes " newtypes)
-               :effect (req(let [c (assoc card :subtype newtypes)]
-                  (update! state side c)
-               ))
-            } card nil)
-         ))
-      }
-      }}
+   (let [ab {:req (req (= (:type target) "ICE"))
+             :effect (effect (update! (assoc card :subtype
+                                             (->> (mapcat :ices (flatten (seq (:servers corp))))
+                                                  (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
+                                                  (mapcat #(vec (.split (:subtype %) " - ")))
+                                                  (cons "Mythic")
+                                                  distinct
+                                                  (join " - ")))))}]
+     {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+      :events {:rez ab :trash ab :derez ab}})
 
    "Muckraker"
    {:effect (effect (gain :bad-publicity 1))
