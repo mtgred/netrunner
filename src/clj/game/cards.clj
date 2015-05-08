@@ -317,7 +317,8 @@
                    :effect (effect (draw :runner))}}}
 
    "Comet"
-   {:events {:play-event
+   (:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:play-event
              {:optional {:prompt "Play another event?" :once :per-turn
                          :effect (effect (resolve-ability
                                           {:prompt "Choose an Event to play"
@@ -1237,7 +1238,7 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
-                                            " sentry, code gate and barrier until the end of next run this turn")
+                                            " sentry, code gate or barrier until the end of next run this turn")
                  :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
 
    "Panic Button"
