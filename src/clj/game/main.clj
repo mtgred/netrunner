@@ -60,8 +60,10 @@
           (.send socket (generate-string (assoc @(@game-states gameid) :action action)))
           (.send socket (generate-string "ok")))
         (catch Exception e
-          (println "Error in Thread " action command (get-in args [:card :title]) e)
-          (.send socket (generate-string (assoc @(@game-states gameid) :action action))))))))
+          (println "Error " action command (get-in args [:card :title]) e)
+          (if (and (= action "do") state)
+            (.send socket (generate-string state))
+            (.send socket (generate-string "error"))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
