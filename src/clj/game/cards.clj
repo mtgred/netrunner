@@ -317,7 +317,7 @@
                    :effect (effect (draw :runner))}}}
 
    "Comet"
-   (:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:play-event
              {:optional {:prompt "Play another event?" :once :per-turn
                          :effect (effect (resolve-ability
@@ -1609,7 +1609,7 @@
                                     {:mandatory true
                                      :effect (effect (resolve-ability
                                                       {:msg "gain 2 [Credits] instead of accessing"
-                                                       :effect (gain :credit 2)} st nil))})))}}}
+                                                       :effect (effect (gain :credit 2))} st nil))})))}}}
 
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
