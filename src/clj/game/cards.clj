@@ -491,7 +491,7 @@
    "Dorm Computer"
    {:data {:counter 4}
     :abilities [{:counter-cost 1 :cost [:click 1]
-                 :prompt "Choose a server" :choices (req servers) 
+                 :prompt "Choose a server" :choices (req servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :effect (effect (run target))}]}
 
@@ -1908,6 +1908,27 @@
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
     :leave-play (effect (damage :meat 3))}
+
+   "Trick of Light"
+   {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
+    :effect  (req (let [fr target tol card]
+                       (resolve-ability state side
+                         {:prompt  "Move how many advancement tokens?"
+                          :choices (take (+ (:advance-counter fr) 1) ["0" "1" "2"])
+                          :effect  (req (let [c (Integer/parseInt target)]
+                                             (resolve-ability state side
+                                               {:prompt  "Move to where?"
+                                                ; valid targets: not the "from" card; advanceable always, or advanceable and rezzed, or agenda
+                                                :choices {:req #(and (not= (:cid fr) (:cid %))
+                                                                     (or (and (:advanceable %) (or (= (:advanceable %) "always") (:rezzed %)))
+                                                                         (= (:type %) "Agenda")))}
+                                                :effect  (effect (add-prop :corp target :advance-counter c)
+                                                                 (set-prop :corp fr :advance-counter (- (:advance-counter fr) c))
+                                                                 (system-msg (str "moves " c " advancement tokens from "
+                                                                                  (if (:rezzed fr) (:title fr) "a card") " to "
+                                                                                  (if (:rezzed target) (:title target) "a card"))))
+                                                } tol nil)))
+                          } card nil)))}
 
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
