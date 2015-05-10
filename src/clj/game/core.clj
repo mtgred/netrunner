@@ -395,14 +395,14 @@
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
-                       :discard [] :scored [] :rfg [] :play-area []
+                       :discard [] :scored [] :rfg [] :hosted [] :play-area [] 
                        :servers {:hq {} :rd{} :archives {} :remote []}
                        :click 0 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
                        :click-per-turn 3 :agenda-point-req 7 :keep false}
                 :runner {:user (:user runner) :identity runner-identity
                          :deck (zone :deck (drop 5 runner-deck))
                          :hand (zone :hand (take 5 runner-deck))
-                         :discard [] :scored [] :rfg [] :play-area []
+                         :discard [] :scored [] :rfg [] :hosted [] :play-area []
                          :rig {:program [] :resource [] :hardware []}
                          :click 0 :credit 5 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
                          :hq-access 1 :rd-access 1
