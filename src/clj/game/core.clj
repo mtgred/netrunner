@@ -63,7 +63,7 @@
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
    (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
-         c (if keep-counter c (dissoc card :advance-counter))]
+         c (if keep-counter c (dissoc c :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
