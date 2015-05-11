@@ -188,6 +188,10 @@
     :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
     :effect (effect (card-init target))}
 
+   "Brain Cage"
+   {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
+    :leave-play (effect (lose :max-hand-size 3))}
+
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
@@ -375,6 +379,9 @@
 
    "Cyberfeeder"
    {:recurring 1}
+
+   "Cybernetics Division: Humanity Upgraded"
+   {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
 
    "CyberSolutions Mem Chip"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
@@ -1536,6 +1543,10 @@
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Ryon Knight"
+   {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                 :effect (effect (trash card) (damage :brain 1))}]}
+
    "Sacrificial Clone"
    {:abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
@@ -1632,6 +1643,9 @@
                                      :effect (effect (resolve-ability
                                                       {:msg "gain 2 [Credits] instead of accessing"
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
+
+   "Self-Destruct Chips"
+   {:effect (effect (lose :runner :max-hand-size 1))}
 
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
