@@ -1569,19 +1569,21 @@
 
    "Scavenge"
    {:choices {:req #(= (:type %) "Program")}
-    :effect  (req (let [pr target]
-                       (trash state side pr)
+    :effect  (req (let [trashed target]
+                       (trash state side trashed)
                        (resolve-ability state side
                                         {:prompt  "Install a card from Grip or Heap?" :choices ["Grip" "Heap"]
-                                         :msg (msg "install a card from " target)
-
                                          :effect  (req (let [fr target]
+                                                            (system-msg state side (str "trashes " (:title trashed)
+                                                                                        " to install a card from " fr))
                                                             (resolve-ability state side
                                                               {:prompt "Choose a program to install"
-                                                               :choices (req (filter #(= (:type %) "Program")
+                                                               :choices (req (filter #(and (= (:type %) "Program")
+                                                                                           (<= (:cost %) (+ (:credit runner) (:cost trashed))))
                                                                                      ((if (= fr "Grip") :hand :discard ) runner)))
-                                                               :effect (effect (gain :credit (min (:cost target) (:cost pr)))
+                                                               :effect (effect (gain :credit (min (:cost target) (:cost trashed)))
                                                                                (runner-install target))
+
                                                                } card nil)))
                                          } card nil)))}
 
