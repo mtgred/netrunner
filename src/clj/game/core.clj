@@ -63,7 +63,7 @@
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
    (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
-         c (if keep-counter c (dissoc card :advance-counter))]
+         c (if keep-counter c (dissoc c :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
@@ -109,8 +109,10 @@
                     (vec (map-indexed
                           (fn [i s]
                             (if (< i n) s
-                                {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
-                                 :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))}))
+                                {:content (vec (for [c (:content s)]
+                                                 (update-in c [:zone] #(assoc (vec %) 2 i))))
+                                 :ices (vec (for [c (:ices s)]
+                                              (update-in c [:zone] #(assoc (vec %) 2 i))))}))
                           (get-in @state [:corp :servers :remote]))))
              (doseq [s (drop n (get-in @state [:corp :servers :remote]))
                      c (concat (:content s) (:ices s))]
