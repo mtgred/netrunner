@@ -97,7 +97,9 @@
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
                                            (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                 :choices {:req #(or (= (:advanceable %) "always")
+                                     (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                     (= (:type %) "Agenda"))}
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Argus Security: Protection Guaranteed"
@@ -1677,7 +1679,9 @@
                               card targets))}}
 
    "Shipment from Kaguya"
-   {:choices {:max 2 :req #(or (= (:type %) "Agenda") (:advanceable %))}
+   {:choices {:max 2 :req #(or (= (:advanceable %) "always")
+                               (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                               (= (:type %) "Agenda"))}
     :msg (msg "1 advancement tokens on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
 
@@ -1685,7 +1689,9 @@
    {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability state side
-                    {:choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                    {:choices {:req #(or (= (:advanceable %) "always")
+                                         (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                         (= (:type %) "Agenda"))}
                      :msg (msg "add " c " advancement tokens on a card")
                      :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}
 
