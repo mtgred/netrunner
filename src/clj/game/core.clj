@@ -109,8 +109,10 @@
                     (vec (map-indexed
                           (fn [i s]
                             (if (< i n) s
-                                {:content (for [c (:content s)] (update-in c [:zone] #(assoc (vec %) 2 i)))
-                                 :ices (for [c (:ices s)] (update-in c [:zone] #(assoc (vec %) 2 i)))}))
+                                {:content (vec (for [c (:content s)]
+                                                 (update-in c [:zone] #(assoc (vec %) 2 i))))
+                                 :ices (vec (for [c (:ices s)]
+                                              (update-in c [:zone] #(assoc (vec %) 2 i))))}))
                           (get-in @state [:corp :servers :remote]))))
              (doseq [s (drop n (get-in @state [:corp :servers :remote]))
                      c (concat (:content s) (:ices s))]
