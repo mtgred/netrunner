@@ -14,6 +14,7 @@
                                   [weasel "0.6.0"]]}}
 
   :main game.main
+  :aot :all
 
   :plugins [[lein-cljsbuild "1.0.5"]
             [lein-figwheel "0.2.5"]]
