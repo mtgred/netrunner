@@ -156,7 +156,7 @@
    "Blue Sun: Powering the Future"
    {:abilities [{:msg (msg "add " (:title target) " to HQ and gain " (:cost target) " [Credits]")
                  :choices {:req #(:rezzed %)}
-                 :effect (effect (gain :credit (:cost target)) (move (assoc target :rezzed false) :hand))}]}
+                 :effect (effect (gain :credit (:cost target)) (move target :hand))}]}
 
    "Big Brother"
    {:req (req tagged) :effect (effect (gain :runner :tag 2))}
