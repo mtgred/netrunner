@@ -154,7 +154,7 @@
    "Blue Sun: Powering the Future"
    {:abilities [{:msg (msg "add " (:title target) " to HQ and gain " (:cost target) " [Credits]")
                  :choices {:req #(:rezzed %)}
-                 :effect (effect (gain :credit (:cost target)) (move target :hand))}]}
+                 :effect (effect (gain :credit (:cost target)) (move (assoc target :rezzed false) :hand))}]}
 
    "Big Brother"
    {:req (req tagged) :effect (effect (gain :runner :tag 2))}
@@ -1566,6 +1566,24 @@
                  :prompt "Choose a program to install"
                  :choices (req (filter #(= (:type %) "Program") (:hand runner)))
                  :effect (effect (runner-install target))}]}
+
+   "Scavenge"
+   {:choices {:req #(= (:type %) "Program")}
+    :effect  (req (let [pr target]
+                       (trash state side pr)
+                       (resolve-ability state side
+                                        {:prompt  "Install a card from Grip or Heap?" :choices ["Grip" "Heap"]
+                                         :msg (msg "install a card from " target)
+
+                                         :effect  (req (let [fr target]
+                                                            (resolve-ability state side
+                                                              {:prompt "Choose a program to install"
+                                                               :choices (req (filter #(= (:type %) "Program")
+                                                                                     ((if (= fr "Grip") :hand :discard ) runner)))
+                                                               :effect (effect (gain :credit (min (:cost target) (:cost pr)))
+                                                                               (runner-install target))
+                                                               } card nil)))
+                                         } card nil)))}
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
