@@ -325,7 +325,7 @@
                          :effect (effect (resolve-ability
                                           {:prompt "Choose an Event to play"
                                            :choices (req (filter #(has? % :type "Event") (:hand runner)))
-                                           :msg (msg "install " (:title target))
+                                           :msg (msg "play " (:title target))
                                            :effect (effect (play-instant target))} card nil))}}}}
 
    "Compromised Employee"
@@ -1391,7 +1391,7 @@
             :effect (effect (damage :meat (get-in runner [:register :stole-agenda])))}}
 
    "Push Your Luck"
-   {:player :corp :prompt "Guess the amount the Runner will spend on Push the Luck"
+   {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
     :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
     :effect (req (let [guess target]
                    (resolve-ability state :runner
@@ -1981,7 +1981,7 @@
     :effect (effect (move target :hand))}
 
    "Unorthodox Predictions"
-   {:prompt "Choose an ICE type for Unorthodox Prediction" :choices ["Sentry", "Code Gate", "Barrier"]
+   {:prompt "Choose an ICE type for Unorthodox Predictions" :choices ["Sentry", "Code Gate", "Barrier"]
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Unregistered S&W 35"
