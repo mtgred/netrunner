@@ -61,9 +61,8 @@
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e)
-          (if (and (= action "do") state)
-            (.send socket (generate-string state))
-            (.send socket (generate-string "error"))))))))
+          (when (and state (= action "do"))
+            (.send socket (generate-string state))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
