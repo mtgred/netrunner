@@ -39,10 +39,13 @@
    "ability" core/play-ability})
 
 (defn convert [args]
-  (let [params (parse-string (String. args) true)]
-    (if (or (get-in params [:args :card]))
-      (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
-      params)))
+  (try
+    (let [params (parse-string (String. args) true)]
+      (if (or (get-in params [:args :card]))
+        (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
+        params))
+    (catch Exception e
+      (println "Convert error " e))))
 
 (defn run [socket]
   (while true
@@ -61,8 +64,9 @@
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e)
-          (when (and state (= action "do"))
-            (.send socket (generate-string state))))))))
+          (if (and state (#{"do" "start"} action))
+            (.send socket (generate-string state))
+            (.send socket (generate-string "error"))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
