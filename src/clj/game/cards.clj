@@ -256,7 +256,7 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
     :leave-play (effect (gain :runner :max-hand-size 2))
-    :trash-effect {:req (req access)
+    :trash-effect {:req (req (:access @state))
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
    "Chaos Theory: Wünderkind"
@@ -478,7 +478,7 @@
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
-    :trash-effect {:req (req access)
+    :trash-effect {:req (req (:access @state))
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
    "Docklands Crackdown"
@@ -545,7 +545,7 @@
                       :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Efficiency Committee"
-   {:data {:counter 3}
+   {:effect (effect (add-prop card :counter 3))
     :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
@@ -1170,6 +1170,13 @@
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
+
+   "Net-Ready Eyes"
+   {:effect (effect (damage :meat 2)) :msg "suffer 2 meat damage"
+    :events {:run {:choices {:req #(and (= (:zone %) [:rig :program])
+                                        (has? % :subtype "Icebreaker"))}
+                   :msg (msg "give " (:title target) " +1 strength")
+                   :effect (effect (pump target 1))}}}
 
    "New Angeles City Hall"
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
@@ -1888,6 +1895,16 @@
    "TGTBT"
    {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
+   "The Board"
+   {:effect (effect (lose :runner :agenda-point
+                          (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+    :leave-play (effect (gain :runner :agenda-point
+                              (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+    :trash-effect {:req (req (:access @state))
+                   :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}
+    :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
+                             :effect (effect (lose :runner :agenda-point 1))}}}
+
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
@@ -2390,7 +2407,7 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Cortex Lock"
-   {:abilities [{:msg "do 1 net damage for each unused memory the Runner has"
+   {:abilities [{:msg (msg "do " (:memory runner) " net damage")
                  :effect (effect (damage :net (:memory runner)))}]}
 
    "Crick"
