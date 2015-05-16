@@ -1196,7 +1196,7 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (gain :agenda-point 1) (move (first (:play-area runner)) :scored))}
+    :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
 
    "Off-Campus Apartment"
    {:abilities [{:effect (effect (draw))
