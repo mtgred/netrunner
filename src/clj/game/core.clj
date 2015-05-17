@@ -641,7 +641,6 @@
                p (assoc p :current-strength nil))))
     (system-msg state side "continues the run")))
 
-
 (defn play-ability [state side {:keys [card ability targets] :as args}]
   (let [cdef (card-def card)
         abilities (:abilities cdef)
