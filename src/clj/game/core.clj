@@ -151,11 +151,15 @@
 
 (declare resolve-ability)
 
-(defn show-prompt [state side card msg choices f]
-  (let [prompt (if (string? msg) msg (msg state side card nil))]
+(defn show-prompt
+  ([state side card msg choices f] (show-prompt state side card msg choices f nil))
+  ([state side card msg choices f priority]
+    (let [prompt (if (string? msg) msg (msg state side card nil))]
     (when (or (#{:credit :counter} choices) (> (count choices) 0))
       (swap! state update-in [side :prompt]
-             #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))
+             (if priority
+               #(cons {:msg prompt :choices choices :effect f :card card} (vec %))
+               #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -176,8 +180,10 @@
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
                  #(resolve-psi state s card psi (Integer/parseInt (first (split % #" ")))))))
 
-(defn prompt! [state side card msg choices ability]
-  (show-prompt state side card msg choices #(resolve-ability state side ability card [%])))
+(defn prompt!
+  ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
+  ([state side card msg choices ability priority]
+    (show-prompt state side card msg choices #(resolve-ability state side ability card [%]) priority)))
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
@@ -215,19 +221,21 @@
   (swap! state assoc-in [side :selected] nil)
   (swap! state update-in [side :prompt] rest))
 
-(defn show-select [state side card ability]
-  (swap! state assoc-in [side :selected]
-         {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
-          :max (get-in ability [:choices :max])})
-  (show-prompt state side card
-               (if-let [m (get-in ability [:choices :max])]
-                 (str "Select up to " m " targets for " (:title card))
-                 (str "Select a target for " (:title card)))
-               ["Done"] (fn [choice] (resolve-select state side))))
+(defn show-select
+  ([state side card ability] (show-select state side card ability nil))
+  ([state side card ability priority]
+    (swap! state assoc-in [side :selected]
+           {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+            :max (get-in ability [:choices :max])})
+    (show-prompt state side card
+                 (if-let [m (get-in ability [:choices :max])]
+                         (str "Select up to " m " targets for " (:title card))
+                         (str "Select a target for " (:title card)))
+                 ["Done"] (fn [choice] (resolve-select state side)) priority)))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
-                                          not-distinct] :as ability}
+                                          not-distinct priority] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when ability
     (when (and optional
@@ -243,13 +251,13 @@
                (or (not req) (req state side card targets)))
       (if choices
         (if (map? choices)
-          (show-select state (or player side) card ability)
+          (show-select state (or player side) card ability priority)
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices) priority)))
         (when (and (or (not counter-cost) (<= counter-cost counter))
                    (or (not advance-counter-cost) (<= advance-counter-cost advance-counter))
                    (apply pay (concat [state side card] cost)))
@@ -628,7 +636,9 @@
                p (assoc p :current-strength nil))))
     (system-msg state side "continues the run")))
 
+
 (defn play-ability [state side {:keys [card ability targets] :as args}]
+      (system-msg state side (str "play ability"))
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
@@ -664,6 +674,10 @@
     (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
       (set-prop state :runner card :counter 0)))
   (trigger-event state side :purge))
+
+(defn get-virus-counters [state side card]
+   (let [hiveminds (filter #(= (:title %) "Hivemind") (get-in @state [:runner :rig :program]))]
+        (reduce + (map :counter (cons card hiveminds)))))
 
 (defn play-instant
   ([state side card] (play-instant state side card nil))
