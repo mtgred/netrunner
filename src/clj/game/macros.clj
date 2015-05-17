@@ -21,7 +21,6 @@
             'corp '(:corp @state)
             'run '(:run @state)
             'current-ice '(when (and run (> (:position run) 0)) ((:ices run) (dec (:position run))))
-            'access '(:access @state)
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)

@@ -296,16 +296,19 @@
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
   (let [prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
-                 (min choice (get-in @state [side :credit])) choice)]
+                 (min choice (get-in @state [side :credit]))
+                 choice)]
     (when (= (:choices prompt) :credit)
       (pay state side card :credit choice))
     (when (= (:choices prompt) :counter)
       (add-prop state side (:card prompt) :counter (- choice)))
     (swap! state update-in [side :prompt] rest)
     ((:effect prompt) (or choice card))
-    (when-let [run (:run @state)]
-      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
-        (handle-end-run state :runner)))))
+    (when (empty? (get-in @state [:runner :prompt]))
+      (when-let [run (:run @state)]
+        (when (:ended run)
+          (handle-end-run state :runner)))
+      (swap! state dissoc :access))))
 
 (defn trash-no-cost [state side]
   (when-let [card (:card (first (get-in @state [side :prompt])))]
@@ -514,9 +517,11 @@
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
                       :run-effect (assoc run-effect :card card)})
-         (swap! state update-in [:runner :register :made-run] #(conj % (first s)))))))
+         (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+         (trigger-event state :runner :run s)))))
 
 (defn handle-access [state side cards]
+  (swap! state assoc :access true)
   (doseq [c cards]
     (let [cdef (card-def c)
           c (assoc c :seen true)]
