@@ -643,7 +643,6 @@
 
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
-      (system-msg state side (str "play ability"))
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
