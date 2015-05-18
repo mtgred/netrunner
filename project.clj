@@ -10,8 +10,7 @@
                  [org.omcljs/om "0.8.8"]
                  [sablono "0.3.4"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.2.5"]
-                                  [weasel "0.6.0"]]}}
+  :profiles {:dev {:dependencies [[figwheel "0.2.5"]]}}
 
   :main game.main
   :aot :all
