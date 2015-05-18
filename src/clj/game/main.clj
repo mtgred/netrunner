@@ -60,7 +60,7 @@
                                 #(conj % {:user "__system__" :text text}))
           "quit" (system-msg state (keyword side) "left the game"))
         (if (#{"start" "do"} action)
-          (.send socket (generate-string (assoc @(@game-states gameid) :action action)))
+          (.send socket (generate-string (assoc (dissoc @(@game-states gameid) :events) :action action)))
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e)
