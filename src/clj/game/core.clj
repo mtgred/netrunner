@@ -250,8 +250,8 @@
                              (if not-distinct
                                cards (distinct-by :title cards))))]
             (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
-        (when (and (or (not counter-cost) (<= counter-cost counter))
-                   (or (not advance-counter-cost) (<= advance-counter-cost advance-counter))
+        (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
+                   (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0)))
                    (apply pay (concat [state side card] cost)))
           (let [c (-> card
                       (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))

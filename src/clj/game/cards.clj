@@ -2407,7 +2407,8 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Cortex Lock"
-   {:abilities [{:msg (msg "do " (:memory runner) " net damage")
+   {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
+                 :msg (msg "do " (:memory runner) " net damage")
                  :effect (effect (damage :net (:memory runner)))}]}
 
    "Crick"
