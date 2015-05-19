@@ -365,11 +365,20 @@
     (when-let [events (:events cdef)] (register-events state side events c))
     (get-card state c)))
 
+(defn damage-count [state side dtype n]
+  (max 0 (if-let [bonus (get-in @state [:special :damage-bonus dtype])]
+                 (+ n bonus) n)))
+
+(defn damage-bonus [state side dtype n]
+      ;(system-msg state side (str (+ n (get-in state [:special :damage-bonus dtype]))))
+  (swap! state update-in [:special :damage-bonus dtype] (fnil #(+ % n) 0)))
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
 (defn damage [state side type n]
-  (let [hand (get-in @state [:runner :hand])]
+  (trigger-event state side :pre-damage type)
+  (let [n (damage-count state side type n) hand (get-in @state [:runner :hand])]
+       (system-msg state side (str n " " type))
     (when (< (count hand) n)
       (flatline state))
     (when (= type :brain)
@@ -377,7 +386,8 @@
       (swap! state update-in [:runner :max-hand-size] #(- % n)))
     (doseq [c (take n (shuffle hand))]
       (trash state side c type))
-    (trigger-event state side :damage type)))
+    (trigger-event state side :damage type))
+  (swap! state update-in [:special :damage-bonus] dissoc type))
 
 (defn shuffle! [state side kw]
   (swap! state update-in [side kw] shuffle))
