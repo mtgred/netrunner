@@ -714,8 +714,8 @@
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (:counter card)) (trash card))
-                 :msg (msg "gain " (:counter card) " [Credits]")}]
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card)) (trash card))
+                 :msg (msg "gain " (get-virus-counters state side card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-prop :runner card :counter 1))}
              :corp-click-draw {:effect (effect (add-prop :runner card :counter 1))}}}
 
@@ -815,6 +815,33 @@
    {:data {:counter 1}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
+
+
+   "Hivemind"
+   {:data {:counter 1 :counter-type "Virus"}
+    :abilities [{:req (req (> (:counter card) 0))
+                 :prompt "Move a virus counter to which card?"
+                 :priority true
+                 :choices {:req #(has? % :subtype "Virus")}
+                 :effect (req (let [abilities (:abilities (card-def target)) virus target]
+                              (add-prop state :runner virus :counter 1)
+                              (add-prop state :runner card :counter -1)
+                              (if (= (count abilities) 1)
+                                ((swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
+                                  (resolve-ability state side (first abilities) (get-card state virus) nil))
+                                (resolve-ability
+                                  state side {
+                                              :prompt "Choose an ability to trigger"
+                                              :choices (vec (map :msg abilities))
+                                              :effect (req
+                                                        (swap! state update-in [side :prompt] rest)
+                                                        (resolve-ability
+                                                             state side (first (filter #(= (:msg %) target) abilities))
+                                                             card nil))
+                                              } (get-card state virus) nil))
+                              ))
+                 :msg (msg "to trigger an ability on " (:title target))}]}
+
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
@@ -1087,9 +1114,11 @@
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Medium"
-   {:events {:successful-run {:req (req (= target :rd))
-                              :effect (effect (access-bonus (:counter card))
-                                              (add-prop card :counter 1))}}}
+   {:events
+    {:successful-run
+     {:req (req (= target :rd))
+      :effect (effect (add-prop card :counter 1)
+                      (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
@@ -1154,9 +1183,12 @@
                        :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Nerve Agent"
-   {:events {:successful-run {:req (req (= target :hq))
-                              :effect (effect (access-bonus (:counter card))
-                                              (add-prop card :counter 1))}}}
+   {:events
+    {:successful-run
+     {:req (req (= target :hq))
+      :effect (effect (add-prop card :counter 1)
+                      (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
+
    "Net Celebrity"
    {:recurring 1}
 
@@ -2916,7 +2948,7 @@
    "Deep Thought"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
              :runner-turn-begins
-             {:req (req (>= (:counter card) 3)) :msg "look at the top card of R&D"
+             {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
               :effect (effect (prompt! card (str "The top card of your R&D is "
                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
