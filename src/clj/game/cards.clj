@@ -1340,7 +1340,29 @@
 
    "Plascrete Carapace"
    {:data [:counter 4]
-    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
+    :events
+          {:pre-damage
+           {:req (req (and (= target :meat) (> (:counter card) 0)))
+            :effect (req (let [plasc card]
+                              (prompt! state :runner card "Use Plascrete Carapace tokens to prevent meat damage?"
+                                  (take (inc (:counter plasc)) ["0" "1" "2" "3" "4"])
+                                  {:effect (req (let [c (Integer/parseInt target)]
+                                                     (damage-bonus state side :meat (- c))
+                                                     (add-prop state :runner plasc :counter (- c))))
+                                   :msg (msg "prevent " target " meat damage")
+                                   })))
+            }}}
+                 ;(req (let [plasc card]
+                 ;             (resolve-ability
+                 ;               state :runner
+                 ;               {:prompt "Use Plascrete Carapace tokens to prevent meat damage?"
+                 ;                :choices (take (inc (:counter plasc)) ["0" "1" "2" "3" "4"])
+                 ;                :effect (req (let [c (Integer/parseInt target)]
+                 ;                                  (damage-bonus state side :meat (- c))
+                 ;                                  (add-prop state :runner plasc :counter (- c))))
+                 ;                :msg (msg "prevent " target " meat damage")
+                 ;                } card nil)))}}}
+    ;:abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -1936,6 +1958,13 @@
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}
     :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
+
+   "The Cleaners"
+   {:events
+    {:pre-damage
+     {:req (req (= target :meat))
+      :msg "to do 1 additional meat damage"
+      :effect (effect (damage-bonus :meat 1))}}}
 
    "The Foundry: Refining the Process"
    {:events
