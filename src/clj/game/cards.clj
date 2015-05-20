@@ -1810,7 +1810,7 @@
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
-                                                              :effect (effect (jack-out))}}
+                                                              :effect (effect (jack-out nil))}}
                                                   card nil))}]}
 
    "Space Camp"
