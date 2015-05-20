@@ -12,6 +12,7 @@ passport = require('passport')
 localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
+cors = require('cors')
 
 # MongoDB connection
 appName = 'netrunner'
@@ -182,6 +183,8 @@ passport.deserializeUser (id, done) ->
     done(err, {username: user.username, emailhash: user.emailhash, _id: user._id})
 
 # Routes
+app.options('*', cors())
+
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     throw err if err

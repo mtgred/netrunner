@@ -13,6 +13,7 @@
     "async": "~0.9.0",
     "bcrypt": "~0.8.1",
     "connect-mongo": "~0.4.1",
+    "cors": "^2.6.0",
     "express": "~3.4.7",
     "jade": "~1.9.2",
     "jsonwebtoken": "~0.4.1",
