@@ -816,32 +816,29 @@
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
-
    "Hivemind"
    {:data {:counter 1 :counter-type "Virus"}
-    :abilities [{:req (req (> (:counter card) 0))
+    :abilities [{:req (req (> (:counter card) 0)) :priority true
                  :prompt "Move a virus counter to which card?"
-                 :priority true
                  :choices {:req #(has? % :subtype "Virus")}
-                 :effect (req (let [abilities (:abilities (card-def target)) virus target]
-                              (add-prop state :runner virus :counter 1)
-                              (add-prop state :runner card :counter -1)
-                              (if (= (count abilities) 1)
-                                ((swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
-                                  (resolve-ability state side (first abilities) (get-card state virus) nil))
-                                (resolve-ability
-                                  state side {
-                                              :prompt "Choose an ability to trigger"
-                                              :choices (vec (map :msg abilities))
-                                              :effect (req
-                                                        (swap! state update-in [side :prompt] rest)
-                                                        (resolve-ability
-                                                             state side (first (filter #(= (:msg %) target) abilities))
-                                                             card nil))
-                                              } (get-card state virus) nil))
-                              ))
+                 :effect (req (let [abilities (:abilities (card-def target))
+                                    virus target]
+                                (add-prop state :runner virus :counter 1)
+                                (add-prop state :runner card :counter -1)
+                                (if (= (count abilities) 1)
+                                  (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
+                                      (resolve-ability state side (first abilities) (get-card state virus) nil))
+                                  (resolve-ability
+                                   state side
+                                   {:prompt "Choose an ability to trigger"
+                                    :choices (vec (map :msg abilities))
+                                    :effect (req (swap! state update-in [side :prompt] rest)
+                                                 (resolve-ability
+                                                  state side
+                                                  (first (filter #(= (:msg %) target) abilities))
+                                                  card nil))}
+                                   (get-card state virus) nil))))
                  :msg (msg "to trigger an ability on " (:title target))}]}
-
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
@@ -1813,7 +1810,7 @@
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
-                                                              :effect (effect (jack-out))}}
+                                                              :effect (effect (jack-out nil))}}
                                                   card nil))}]}
 
    "Space Camp"
@@ -2439,7 +2436,8 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Cortex Lock"
-   {:abilities [{:msg (msg "do " (:memory runner) " net damage")
+   {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
+                 :msg (msg "do " (:memory runner) " net damage")
                  :effect (effect (damage :net (:memory runner)))}]}
 
    "Crick"
