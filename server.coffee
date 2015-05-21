@@ -265,6 +265,10 @@ app.post '/data/decks/delete', (req, res) ->
   else
     res.send {message: 'Unauthorized'}, 401
 
+app.get '/data/donators', (req, res) ->
+  db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
+    res.json(200, (d.username or d.name for d in data))
+
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
     throw err if err
