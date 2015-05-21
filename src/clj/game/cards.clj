@@ -1761,6 +1761,7 @@
                              (reduce (fn [c server]
                                        (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
                                      0 (flatten (seq (:servers corp))))))}
+    :req (req tagged)
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
    "Silencer"
