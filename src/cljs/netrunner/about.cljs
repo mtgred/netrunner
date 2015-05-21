@@ -1,8 +1,12 @@
 (ns netrunner.about
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
-            [sablono.core :as sab :include-macros true]))
+            [sablono.core :as sab :include-macros true]
+            [netrunner.ajax :refer [GET]]))
 
 (def app-state (atom {}))
+
+(go (swap! app-state assoc :donators (:json (<! (GET "/data/donators")))))
 
 (defn about [cursor owner]
   (om/component
@@ -44,6 +48,11 @@
        [:p "A "
         [:a {:href "https://mythbuilder.wordpress.com/2015/03/25/the-definitive-guide-to-netiquette-on-jinteki-net-wip/" :target "_blank"} "guide"] " has been written by Mythbuilder." ]]]
 
+     [:h3 "Donators"]
+     [:p "Many thanks to all the donators. Your contributions and kind words are greatly appreciated and keep the developer motivated."]
+     [:ul.list.compact
+      (for [d (:donators cursor)]
+        [:li d])]
      [:h3 "Disclaimer"]
      [:p "Netrunner and Android are trademarks of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
      [:p "This is website is not affiliated with Fantasy Flight Games or Wizards of the Coast."]])))

@@ -1,16 +1,21 @@
 {
-  "name": "Manabase",
+  "name": "netrunner",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mtgred/netrunner.git"
+  },
   "scripts": {
     "start": "coffee server.coffee"
   },
   "main": "server.coffee",
   "dependencies": {
-    "async": "*",
+    "async": "~0.9.0",
     "bcrypt": "~0.8.1",
     "connect-mongo": "~0.4.1",
+    "cors": "^2.6.0",
     "express": "~3.4.7",
-    "jade": "*",
+    "jade": "~1.9.2",
     "jsonwebtoken": "~0.4.1",
     "mkdirp": "~0.5.0",
     "mongoskin": "~1.4.1",

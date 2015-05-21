@@ -40,8 +40,7 @@ cardFields = [
   "uniqueness",
   "memoryunits",
   "strength",
-  "trash",
-  "imagesrc"
+  "trash"
 ]
 
 baseurl = "http://netrunnerdb.com/api/"
@@ -77,7 +76,7 @@ fetchCards = (callback) ->
       i = 0
       for card in cards
         imgPath = path.join(imgDir, "#{card.code}.png")
-        if card.imagesrc and !fs.existsSync(imgPath)
+        if !fs.existsSync(imgPath)
           fetchImg(card.code, imgPath, i++ * 200)
 
       db.collection("cards").remove ->
