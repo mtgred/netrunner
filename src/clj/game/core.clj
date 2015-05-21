@@ -224,14 +224,15 @@
 (defn show-select
   ([state side card ability] (show-select state side card ability nil))
   ([state side card ability priority]
-    (swap! state assoc-in [side :selected]
-           {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
-            :max (get-in ability [:choices :max])})
-    (show-prompt state side card
-                 (if-let [m (get-in ability [:choices :max])]
-                         (str "Select up to " m " targets for " (:title card))
-                         (str "Select a target for " (:title card)))
-                 ["Done"] (fn [choice] (resolve-select state side)) priority)))
+    (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side card nil) %))]
+         (swap! state assoc-in [side :selected]
+                {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                 :max (get-in ability [:choices :max])})
+         (show-prompt state side card
+                      (if-let [m (get-in ability [:choices :max])]
+                              (str "Select up to " m " targets for " (:title card))
+                              (str "Select a target for " (:title card)))
+                      ["Done"] (fn [choice] (resolve-select state side)) priority))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
