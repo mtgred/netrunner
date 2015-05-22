@@ -153,14 +153,24 @@
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
 
+(defn distinct-by [f coll]
+  (letfn [(step [xs seen]
+            (lazy-seq (when-let [[x & more] (seq xs)]
+                        (let [k (f x)]
+                          (if (seen k)
+                            (step more seen)
+                            (cons x (step more (conj seen k))))))))]
+    (step coll #{})))
+
 (defn match [identity query]
   (if (empty? query)
     []
-    (let [cards (filter #(and (allowed? % identity)
-                              (not= "Special" (:setname %))
-                              (or (get-in @app-state [:user :special])
-                                  (not= "Alternates" (:setname %))))
-                        (:cards @app-state))]
+    (let [cards (->> (:cards @app-state)
+                     (filter #(and (allowed? % identity)
+                                   (not= "Special" (:setname %))
+                                   (or (get-in @app-state [:user :special])
+                                       (not= "Alternates" (:setname %)))))
+                     (distinct-by :title))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
 (defn handle-edit [owner]
