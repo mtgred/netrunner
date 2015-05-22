@@ -1768,19 +1768,13 @@
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
 
    "Shoot the Moon"
-   {:effect
-    (req (if (< (:tag runner)
-                (reduce (fn [c server]
-                            (+ c (count (filter (fn [ice] (not (:rezzed ice))) (:ices server)))))
-                        0 (flatten (seq (:servers corp)))))
-           (resolve-ability
-             state side
-             {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
-                        :max (req (:tag runner))}
-              :effect (req (doseq [t targets] (rez state side t {:no-cost true})))} card nil)
-           (doseq [ice (->> (mapcat :ices (flatten (seq (:servers corp))))
-                  (filter #(not (:rezzed %))))]
-                  (rez state side ice {:no-cost true}))))}
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
+              :max (req (min (:tag runner)
+                             (reduce (fn [c server]
+                                       (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
+                                     0 (flatten (seq (:servers corp))))))}
+    :req (req tagged)
+    :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
    "Silencer"
    {:recurring 1}
