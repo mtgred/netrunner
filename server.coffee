@@ -180,7 +180,7 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id})
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special})
 
 # Routes
 app.options('*', cors())
