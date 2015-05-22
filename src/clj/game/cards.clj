@@ -1686,6 +1686,19 @@
                                                       {:msg "gain 2 [Credits] instead of accessing"
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
 
+   "Self-destruct"
+   {:abilities [{:req (req this-server)
+                 :label "Trace X - Do 3 net damage"
+                 :effect (req (let [serv (card->server state card)
+                                    cards (concat (:ices serv) (:content serv))]
+                                   (trash state side card)
+                                   (doseq [c cards] (trash state side c))
+                                   (resolve-ability
+                                     state side
+                                     {:trace {:base (req (dec (count cards)))
+                                              :effect (effect (damage :net 3))
+                                              :msg "do 3 net damage"}} card nil)))}]}
+
    "Self-Destruct Chips"
    {:effect (effect (lose :runner :max-hand-size 1))}
 
@@ -2761,8 +2774,9 @@
 
    "Searchlight"
    {:advanceable :always
-    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
-
+    :abilities [{:label "Trace X - Give the runner 1 tag"
+                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (gain :runner :tag 1))
+                         :msg "give the Runner 1 tag"}}]}
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
