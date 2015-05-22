@@ -70,11 +70,14 @@
 
 (defn side-identities [side]
   (filter #(and (= (:side %) side)
-                (not (#{"Special" "Alternates"} (:setname %)))
+                (not= "Special" (:setname %))
                 (= (:type %) "Identity")) (:cards @app-state)))
 
 (defn get-card [title]
-  (some #(when (= (:title %) title) %) (:cards @app-state)))
+  (some #(when (and (= (:title %) title)
+                    (or (get-in @app-state [:user :special])
+                        (not= "Alternates" (:setname %)))) %)
+        (:cards @app-state)))
 
 (defn deck->str [owner]
   (let [cards (om/get-state owner [:deck :cards])
@@ -154,7 +157,9 @@
   (if (empty? query)
     []
     (let [cards (filter #(and (allowed? % identity)
-                              (not (#{"Special" "Alternates"} (:setname %))))
+                              (not= "Special" (:setname %))
+                              (or (get-in @app-state [:user :special])
+                                  (not= "Alternates" (:setname %))))
                         (:cards @app-state))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
