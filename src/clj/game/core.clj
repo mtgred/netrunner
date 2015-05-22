@@ -304,7 +304,7 @@
   (update! state side (apply assoc (cons card args))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
-  (let [prompt (get-in @state [side :prompt 0])
+  (let [prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
@@ -321,7 +321,7 @@
       (swap! state dissoc :access))))
 
 (defn trash-no-cost [state side]
-  (when-let [card (:card (get-in @state [side :prompt 0]))]
+  (when-let [card (:card (first (get-in @state [side :prompt])))]
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
     (when-let [run (:run @state)]
@@ -485,7 +485,7 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
-        (when-let [current (get-in @state [:runner :current 0])]
+        (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
           (trash state side current))
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
@@ -498,7 +498,7 @@
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
-    (when-let [current (get-in @state [:corp :current 0])]
+    (when-let [current (first (get-in @state [:corp :current]))]
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
     (trigger-event state :runner :agenda-stolen c)))
@@ -623,7 +623,7 @@
         (do-access state side server)))))
 
 (defn end-run [state side]
-  (let [server (get-in @state [:run :server 0])]
+  (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
     (trigger-event state side :unsuccessful-run)
@@ -703,12 +703,12 @@
            (resolve-ability state side cdef card nil)
            (if (has? c :subtype "Current")
              (do (doseq [s [:corp :runner]]
-                   (when-let [current (get-in @state [s :current 0])]
+                   (when-let [current (first (get-in @state [s :current]))]
                      (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                      (trash state side current)))
-                 (let [moved-card (move state side (get-in @state [side :play-area 0]) :current)]
+                 (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                    (card-init state side moved-card)))
-             (move state side (get-in @state [side :play-area 0]) :discard)))))))
+             (move state side (first (get-in @state [side :play-area])) :discard)))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
