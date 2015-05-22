@@ -350,8 +350,7 @@
              {:optional
               {:prompt "Trash 1 resource?"
                :effect (effect (resolve-ability
-                                 {:prompt "Choose a resource to trash" 
-                                  :choices (req (get-in runner [:rig :resource]))
+                                 {:choices {:req #(and (= (:type %) "Resource"))}
                                   :msg (msg "trash " (:title target)) 
                                   :effect (effect (trash target))}))}}}}
 
