@@ -1687,7 +1687,8 @@
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
 
    "Self-destruct"
-   {:abilities [{:label "Trace X - Do 3 net damage"
+   {:abilities [{:req (req this-server)
+                 :label "Trace X - Do 3 net damage"
                  :effect (req (let [serv (card->server state card)
                                     cards (concat (:ices serv) (:content serv))]
                                    (trash state side card)
