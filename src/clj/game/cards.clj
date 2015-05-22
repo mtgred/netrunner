@@ -2466,7 +2466,7 @@
 
    "Clairvoyant Monitor"
    {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card and end the run"))
+                 :psi {:not-equal {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " and end the run")
                                    :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
                                    :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
 
