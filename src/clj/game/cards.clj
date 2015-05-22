@@ -346,14 +346,14 @@
 
    "Corporate Town"
    {:additional-cost [:forfeit]
-    {:events {:corp-turn-begins
+    :events {:corp-turn-begins
              {:optional
               {:prompt "Trash 1 resource?"
                :effect (effect (resolve-ability
                                  {:prompt "Choose a resource to trash" 
                                   :choices (req (get-in runner [:rig :resource]))
                                   :msg (msg "trash " (:title target)) 
-                                  :effect (effect (trash target))}))}}}}}
+                                  :effect (effect (trash target))}))}}}}
 
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
