@@ -205,7 +205,7 @@
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
-  (let [s (+ base boost)]
+  (let [base (if (fn? base) (base state side card nil) base) s (+ base boost)]
     (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
                                  s " (" base " + " boost " [Credits])"))
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
@@ -501,6 +501,12 @@
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
     (trigger-event state :runner :agenda-stolen c)))
+
+(defn card->server [state card]
+  (let [z (:zone card)]
+       (if (= (second z) :remote)
+         (nth (get-in @state [:corp :servers :remote]) (nth z 2))
+         (get-in @state [:corp :servers (second z)]))))
 
 (defn server->zone [state server]
   (if (sequential? server)
