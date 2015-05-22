@@ -2774,7 +2774,7 @@
    "Searchlight"
    {:advanceable :always
     :abilities [{:label "Trace X - Give the runner 1 tag"
-                 :trace {:base (req (:advance-counter card)) :effect (effect (gain :runner :tag 1))
+                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (gain :runner :tag 1))
                          :msg "give the Runner 1 tag"}}]}
    "Shadow"
    {:advanceable :always
