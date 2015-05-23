@@ -1296,6 +1296,7 @@ nav ul
       align-items(flex-end)
 
   .rightpane
+    position: relative
     display-flex()
     flex-direction(column)
 
@@ -1317,10 +1318,9 @@ nav ul
 
     .log
       width: 225px
-      min-height: 1px
-      flex(1)
-      display-flex()
-      flex-direction(column)
+      position: absolute
+      top: 317px
+      bottom: 0
 
       .username
         font-size: 12px
@@ -1339,9 +1339,18 @@ nav ul
         flex(1)
         overflow: auto
         -webkit-overflow-scrolling: touch
+        position: absolute
+        top: 0
+        bottom: 36px
+        left: 0
+        right: 4px
+        margin: 0
 
       > form
-        margin: 0 5px 5px 0
+        position: absolute
+        bottom: 5px
+        left: 0
+        right: 4px
 
         input
           width: 100%
