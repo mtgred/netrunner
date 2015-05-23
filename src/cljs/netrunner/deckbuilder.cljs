@@ -24,7 +24,10 @@
 
 (defn lookup [side query]
   (let [q (.toLowerCase query)
-        cards (filter #(= (:side %) side) (:cards @app-state))]
+        cards (filter #(and (= (:side %) side)
+                            (or (get-in @app-state [:user :special])
+                                (not= "Alternates" (:setname %))))
+                      (:cards @app-state))]
     (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
       card
       (loop [i 2 matches cards]
