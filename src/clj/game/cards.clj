@@ -494,7 +494,7 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:successful-run-ends
              {:optional
-              {:once :per-turn :prompt "Use Doppelgänger to run again?"
+              {:once :per-turn :prompt "Use Doppelgänger to run again?" :player :runner
                :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                                  :msg (msg "to make a run on " target)
                                                  :effect (effect (run target))} card targets))}}}}
