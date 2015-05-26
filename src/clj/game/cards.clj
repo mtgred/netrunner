@@ -1311,6 +1311,21 @@
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Personal Workshop"
+   (let [remove-counter
+         {:msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
+          :effect (req (if (= (:counter target) 1)
+                         (runner-install state side (dissoc target :counter) {:no-cost true})
+                         (add-prop state side target :counter -1)))}]
+     {:abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
+                   :prompt "Choose a card to host on Personal Workshop"
+                   :choices (req (filter #(#{"Program" "Hardware"} (:type %)) (:hand runner)))
+                   :effect (effect (host card (assoc target :counter (:cost target))))
+                   :msg (msg "host " (:title target) "")}
+                  (assoc remove-counter
+                         :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
+      :events {:runner-turn-begins remove-counter}})
+
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
     :effect (effect (damage :net (count (:scored runner))))}
@@ -1975,6 +1990,19 @@
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
+
+   "The Supplier"
+   {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
+                 :prompt "Choose a card to host on The Supplier"
+                 :choices (req (filter #(#{"Resource" "Hardware"} (:type %)) (:hand runner)))
+                 :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
+    :events {:runner-turn-begins
+             {:prompt "Choose a card on The Supplier to install"
+              :choices (req (conj (filter #(<= (- (or (:cost %) 0) 2) (:credit runner)) (:hosted card))
+                                  "No install"))
+              :req (req (not (string? target)))
+              :msg (msg "install " (:title target) " lowering its install cost by 2")
+              :effect (effect (gain :credit (min 2 (:cost target))) (runner-install target))}}}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)

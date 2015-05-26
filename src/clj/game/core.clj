@@ -72,6 +72,18 @@
        (gain state :runner :memory mu))
      c)))
 
+(defn update! [state side {:keys [type zone cid host] :as card}]
+  (if (= type "Identity")
+    (swap! state assoc-in [side :identity] card)
+    (let [z (cons side zone)
+          cards (get-in @state z)]
+      (if host
+        (let [host-card (some #(when (= (:cid %) host) %) cards)
+              [head tail] (split-with #(not= (:cid %) cid) (:hosted host-card))]
+          (update! state side (assoc host-card :hosted (vec (concat head [card] (rest tail))))))
+        (let [[head tail] (split-with #(not= (:cid %) cid) cards)]
+          (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
+
 (defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
         to-zone (cons side (if (sequential? to) to [to]))]
@@ -80,47 +92,54 @@
     (swap! state assoc-in from-zone [])))
 
 (defn move
-  ([state side {:keys [zone cid] :as card} to] (move state side card to nil))
-  ([state side {:keys [zone cid] :as card} to front]
-     (when (and card (or (some #(= cid (:cid %)) (get-in @state (cons :runner (vec zone))))
-                         (some #(= cid (:cid %)) (get-in @state (cons :corp (vec zone))))))
-       (let [dest (if (sequential? to) (vec to) [to])
-             c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
-                 (assoc card :seen true) card)
-             c (if (and (#{:servers :rig :scored :current} (first zone))
-                        (#{:hand :deck :discard} (first dest)))
-                 (desactivate state side c) c)
-             moved-card (assoc c :zone dest)]
-         (if front
-           (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
-           (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
-         (doseq [s [:runner :corp]]
-           (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
-         (let [z (vec (cons :corp (butlast zone)))
-               n (last z)]
-           (when (and (number? n)
-                      (empty? (get-in @state (conj z :content)))
-                      (empty? (get-in @state (conj z :ices))))
-             (when-let [run (:run @state)]
-               (when (= (last (:server run)) n)
-                 (handle-end-run state side)))
-             (swap! state update-in [:corp :servers :remote] vdissoc n)
-             (swap! state assoc-in [:corp :servers :remote]
-                    (vec (map-indexed
-                          (fn [i s]
-                            (if (< i n) s
-                                {:content (vec (for [c (:content s)]
-                                                 (update-in c [:zone] #(assoc (vec %) 2 i))))
-                                 :ices (vec (for [c (:ices s)]
-                                              (update-in c [:zone] #(assoc (vec %) 2 i))))}))
-                          (get-in @state [:corp :servers :remote]))))
-             (doseq [s (drop n (get-in @state [:corp :servers :remote]))
-                     c (concat (:content s) (:ices s))]
-               (when (:rezzed c)
-                 (when-let [events (:events (card-def c))]
-                   (unregister-events state side c)
-                   (register-events state side events c))))))
-         moved-card))))
+  ([state side card to] (move state side card to nil))
+  ([state side {:keys [zone cid host] :as card} to front]
+   (when (and card (or (some #(#{cid host} (:cid %)) (get-in @state (cons :runner (vec zone))))
+                       (some #(#{cid host} (:cid %)) (get-in @state (cons :corp (vec zone))))))
+     (doseq [h (:hosted card)]
+       (trash state side (update-in h [:zone] #(map to-keyword %))))
+     (let [dest (if (sequential? to) (vec to) [to])
+           c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
+               (assoc card :seen true) card)
+           c (if (and (#{:servers :rig :scored :current} (first zone))
+                      (#{:hand :deck :discard} (first dest)))
+               (desactivate state side c) c)
+           moved-card (assoc c :zone dest :host nil :hosted nil)]
+       (if front
+         (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
+         (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
+       (doseq [s [:runner :corp]]
+         (if host
+           (when-let [host-card (some #(when (= host (:cid %)) %) (get-in @state (cons s (vec zone))))]
+             (update! state side (update-in host-card [:hosted]
+                                            (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+           (swap! state update-in (cons s (vec zone))
+                  (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+       (let [z (vec (cons :corp (butlast zone)))
+             n (last z)]
+         (when (and (number? n)
+                    (empty? (get-in @state (conj z :content)))
+                    (empty? (get-in @state (conj z :ices))))
+           (when-let [run (:run @state)]
+             (when (= (last (:server run)) n)
+               (handle-end-run state side)))
+           (swap! state update-in [:corp :servers :remote] vdissoc n)
+           (swap! state assoc-in [:corp :servers :remote]
+                  (vec (map-indexed
+                        (fn [i s]
+                          (if (< i n) s
+                              {:content (vec (for [c (:content s)]
+                                               (update-in c [:zone] #(assoc (vec %) 2 i))))
+                               :ices (vec (for [c (:ices s)]
+                                            (update-in c [:zone] #(assoc (vec %) 2 i))))}))
+                        (get-in @state [:corp :servers :remote]))))
+           (doseq [s (drop n (get-in @state [:corp :servers :remote]))
+                   c (concat (:content s) (:ices s))]
+             (when (:rezzed c)
+               (when-let [events (:events (card-def c))]
+                 (unregister-events state side c)
+                 (register-events state side events c))))))
+       moved-card))))
 
 (defn draw
   ([state side] (draw state side 1))
@@ -137,17 +156,13 @@
        (swap! state update-in [side :discard] #(concat % milled)))
      (swap! state update-in [side :deck] (partial drop n))))
 
-(defn get-card [state {:keys [cid zone side] :as card}]
+(defn get-card [state {:keys [cid zone side host] :as card}]
   (if zone
-    (some #(when (= cid (:cid %)) %) (get-in @state (cons (to-keyword side) zone)))
+    (if host
+      (let [h (some #(when (= host (:cid %)) %) (get-in @state (cons (to-keyword side) zone)))]
+        (some #(when (= cid (:cid %)) %) (:hosted h)))
+      (some #(when (= cid (:cid %)) %) (get-in @state (cons (to-keyword side) zone))))
     card))
-
-(defn update! [state side card]
-  (if (= (:type card) "Identity")
-    (swap! state assoc-in [side :identity] card)
-    (let [zone (cons side (:zone card))
-          [head tail] (split-with #(not= (:cid %) (:cid card)) (get-in @state zone))]
-      (swap! state assoc-in zone (vec (concat head [card] (rest tail)))))))
 
 (declare resolve-ability)
 
@@ -724,15 +739,15 @@
 (defn runner-install
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost no-cost]}]
-     (let [dest [:rig (to-keyword type)]
-           cost (if no-cost 0 cost)]
-       (when (and (or (not uniqueness) (not (in-play? state card)))
-                  (if-let [req (:req (card-def card))] (req state side card nil) true)
-                  (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
-         (let [c (move state side card dest)
-               installed-card (card-init state side c)]
-           (system-msg state side (str "installs " title))
-           (trigger-event state side :runner-install installed-card))))))
+   (let [dest [:rig (to-keyword type)]
+         cost (if no-cost 0 cost)]
+     (when (and (or (not uniqueness) (not (in-play? state card)))
+                (if-let [req (:req (card-def card))] (req state side card nil) true)
+                (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
+       (let [c (move state side card dest)
+             installed-card (card-init state side c)]
+         (system-msg state side (str "installs " title (when no-cost " at no cost")))
+         (trigger-event state side :runner-install installed-card))))))
 
 (defn server-list [state card]
   (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
@@ -787,6 +802,11 @@
     ("Hardware" "Resource" "Program") (runner-install state side card {:extra-cost [:click 1]})
     ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
   (trigger-event state side :play card))
+
+(defn host [state side card {:keys [zone cid] :as target}]
+  (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+  (update! state side (update-in card [:hosted]
+                                 #(conj % (assoc target :zone (:zone card) :host (:cid card))))))
 
 (defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))
