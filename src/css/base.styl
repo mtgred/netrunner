@@ -1254,6 +1254,16 @@ nav ul
                 transform(translateX(-50%))
                 border-bottom: 22px solid rgba(255, 165, 0, 0.5)
 
+            .hosted
+              position: absolute
+
+              .card-frame
+                transform(rotate(90deg))
+                margin: -44px 0 0 0
+
+                .counters
+                  transform(rotate(-90deg))
+
             .counter
               transform(rotate(90deg))
 
@@ -1295,6 +1305,15 @@ nav ul
 
           .content.center
             left: 13px
+
+          .ices
+            .hosted
+              .card-frame
+                transform(rotate(-90deg))
+
+                .counters
+                  transform(rotate(-90deg))
+
 
       .card-wrapper
         margin-right: 10px

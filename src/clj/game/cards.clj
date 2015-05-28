@@ -1297,7 +1297,15 @@
    {:effect (effect (lose :tag :all))}
 
    "Parasite"
-   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}}
+   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (req (when-let [h (:host card)]
+                   (when (<= (:strength h) (:counter card))
+                     (trash state side h))))
+    :events {:runner-turn-begins
+             {:effect (req (add-prop state side card :counter 1)
+                           (when-let [h (get-card state (:host card))]
+                             (when (>= (inc (:counter card)) (:strength h))
+                               (trash state side h))))}}}
 
    "Paricia"
    {:recurring 2}
@@ -1313,7 +1321,8 @@
 
    "Personal Workshop"
    (let [remove-counter
-         {:msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
+         {:req (req (not (empty? (:hosted card))))
+          :msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
           :effect (req (if (= (:counter target) 1)
                          (runner-install state side (dissoc target :counter) {:no-cost true})
                          (add-prop state side target :counter -1)))}]
