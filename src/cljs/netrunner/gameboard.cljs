@@ -412,7 +412,7 @@
        (let [ices (:ices server)]
          [:div.ices
           (when run
-            [:div.run-arrow {:style {:top (str (+ 8 (* 64 (:position run))) "px")}}])
+            [:div.run-arrow {:style {:top (str (+ 20 (* 64 (:position run))) "px")}}])
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        (when content

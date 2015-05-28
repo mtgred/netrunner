@@ -347,12 +347,8 @@
    "Corporate Town"
    {:additional-cost [:forfeit]
     :events {:corp-turn-begins
-             {:optional
-              {:prompt "Trash 1 resource?"
-               :effect (effect (resolve-ability
-                                 {:choices {:req #(and (= (:type %) "Resource"))}
-                                  :msg (msg "trash " (:title target)) 
-                                  :effect (effect (trash target))}))}}}}
+             {:choices {:req #(and (= (:type %) "Resource"))} :msg (msg "trash " (:title target))
+              :effect (effect (trash target))}}}
 
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
@@ -1416,12 +1412,10 @@
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Psychic Field"
-   {:expose {:psi {:req (req installed)
+   (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner))))}}}
-    :access {:psi {:req (req installed)
-                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner))))}}}}
+                               :effect (effect (damage :net (count (:hand runner))))}}}]
+     {:expose ab :access ab})
 
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -2515,7 +2509,10 @@
 
    "Clairvoyant Monitor"
    {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " and end the run")
+                 :psi {:not-equal {:player :corp
+                                   :prompt "Choose a target for Clairvoyant Monitor"
+                                   :msg (msg "place 1 advancement token on "
+                                             (if (:rezzed target) (:title target) "a card") " and end the run")
                                    :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
                                    :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
 
@@ -2687,7 +2684,10 @@
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
    "Lab Dog"
-   {:abilities [{:msg "force the Runner trash an installed piece of Hardware" :effect (effect (trash card))}]}
+   {:abilities [{:label "Force the Runner trash an installed piece of Hardware"
+                 :choices {:req #(= (:zone %) [:rig :hardware])} :player :runner
+                 :msg (msg "force the runner to trash " (:title target))
+                 :effect (effect (trash target) (trash card))}]}
 
    "Lancelot"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
@@ -2821,7 +2821,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Quicksand"
-   {:abilities [{:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}
+   {:abilities [{:msg "add 1 power counter"
+                 :effect (effect (add-prop card :counter 1) (add-prop card :strength 1))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
