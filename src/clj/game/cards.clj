@@ -344,6 +344,16 @@
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
+   "Corporate Town"
+   {:additional-cost [:forfeit]
+    :events {:corp-turn-begins
+             {:optional
+              {:prompt "Trash 1 resource?"
+               :effect (effect (resolve-ability
+                                 {:choices {:req #(and (= (:type %) "Resource"))}
+                                  :msg (msg "trash " (:title target)) 
+                                  :effect (effect (trash target))}))}}}}
+
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"
@@ -1822,6 +1832,9 @@
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
 
+   "Skulljack"
+   {:effect (effect (damage :brain 1))}
+
    "Snatch and Grab"
    {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
             :msg (msg "attempt to trash " (:title target))
@@ -2042,6 +2055,9 @@
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))
                              :effect (effect (add-prop target :counter 1))}}}
 
+   "Titanium Ribs"
+   {:effect (effect (damage :meat 2))}
+
    "Toshiyuki Sakai"
    {:advanceable :always}
 
@@ -2085,6 +2101,9 @@
                                                                 (if (:rezzed target) (:title target) "a card"))))}
                              tol nil)))}
             card nil)))}
+
+   "Turntable"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -2259,6 +2278,9 @@
    "Creeper"
    {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Crowbar"
+   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card))}]}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
@@ -2491,6 +2513,12 @@
     :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
     :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Clairvoyant Monitor"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " and end the run")
+                                   :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                                   :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
+
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
@@ -2658,10 +2686,17 @@
    "Komainu"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
+   "Lab Dog"
+   {:abilities [{:msg "force the Runner trash an installed piece of Hardware" :effect (effect (trash card))}]}
+
    "Lancelot"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
                  :effect (effect (trash target))}]}
+
+   "Little Engine"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}
+                {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}
 
    "Lotus Field"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2784,6 +2819,10 @@
 
    "Quandary"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Quicksand"
+   {:abilities [{:msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
