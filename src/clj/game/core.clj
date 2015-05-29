@@ -280,7 +280,7 @@
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices) priority)))
         (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
                    (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0)))
                    (apply pay (concat [state side card] cost)))
@@ -432,9 +432,7 @@
                       state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                       (fn [choice]
                           (let [prevent (get-in @state [:damage :damage-prevent type])]
-                               (system-msg state :runner
-                                           (if prevent (str "prevents " prevent " " (name type) " damage")
-                                                       "will not prevent damage"))
+                               (when-not prevent (system-msg state :runner "will not prevent damage"))
                                (resolve-damage state side type (max 0 (- n (or prevent 0))))))))
                 (resolve-damage state side type n))))))
 
