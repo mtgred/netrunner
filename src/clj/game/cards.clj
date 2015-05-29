@@ -344,6 +344,12 @@
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
+   "Corporate Town"
+   {:additional-cost [:forfeit]
+    :events {:corp-turn-begins
+             {:choices {:req #(and (= (:type %) "Resource"))} :msg (msg "trash " (:title target))
+              :effect (effect (trash target))}}}
+
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"
@@ -494,7 +500,7 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:successful-run-ends
              {:optional
-              {:once :per-turn :prompt "Use Doppelgänger to run again?"
+              {:once :per-turn :prompt "Use Doppelgänger to run again?" :player :runner
                :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                                  :msg (msg "to make a run on " target)
                                                  :effect (effect (run target))} card targets))}}}}
@@ -1297,7 +1303,15 @@
    {:effect (effect (lose :tag :all))}
 
    "Parasite"
-   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}}
+   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (req (when-let [h (:host card)]
+                   (when (<= (:strength h) (:counter card))
+                     (trash state side h))))
+    :events {:runner-turn-begins
+             {:effect (req (add-prop state side card :counter 1)
+                           (when-let [h (get-card state (:host card))]
+                             (when (>= (inc (:counter card)) (:strength h))
+                               (trash state side h))))}}}
 
    "Paricia"
    {:recurring 2}
@@ -1310,6 +1324,22 @@
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
+
+   "Personal Workshop"
+   (let [remove-counter
+         {:req (req (not (empty? (:hosted card))))
+          :msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
+          :effect (req (if (= (:counter target) 1)
+                         (runner-install state side (dissoc target :counter) {:no-cost true})
+                         (add-prop state side target :counter -1)))}]
+     {:abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
+                   :prompt "Choose a card to host on Personal Workshop"
+                   :choices (req (filter #(#{"Program" "Hardware"} (:type %)) (:hand runner)))
+                   :effect (effect (host card (assoc target :counter (:cost target))))
+                   :msg (msg "host " (:title target) "")}
+                  (assoc remove-counter
+                         :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
+      :events {:runner-turn-begins remove-counter}})
 
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
@@ -1382,12 +1412,10 @@
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Psychic Field"
-   {:expose {:psi {:req (req installed)
+   (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner))))}}}
-    :access {:psi {:req (req installed)
-                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner))))}}}}
+                               :effect (effect (damage :net (count (:hand runner))))}}}]
+     {:expose ab :access ab})
 
    "Public Sympathy"
    {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -1798,6 +1826,9 @@
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
 
+   "Skulljack"
+   {:effect (effect (damage :brain 1))}
+
    "Snatch and Grab"
    {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
             :msg (msg "attempt to trash " (:title target))
@@ -1976,6 +2007,19 @@
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
 
+   "The Supplier"
+   {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
+                 :prompt "Choose a card to host on The Supplier"
+                 :choices (req (filter #(#{"Resource" "Hardware"} (:type %)) (:hand runner)))
+                 :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
+    :events {:runner-turn-begins
+             {:prompt "Choose a card on The Supplier to install"
+              :choices (req (conj (filter #(<= (- (or (:cost %) 0) 2) (:credit runner)) (:hosted card))
+                                  "No install"))
+              :req (req (not (string? target)))
+              :msg (msg "install " (:title target) " lowering its install cost by 2")
+              :effect (effect (gain :credit (min 2 (:cost target))) (runner-install target))}}}
+
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
                  (add-watch state :theophilius-bagbiter
@@ -2004,6 +2048,9 @@
    "Titan Transnational: Investing In Your Future"
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))
                              :effect (effect (add-prop target :counter 1))}}}
+
+   "Titanium Ribs"
+   {:effect (effect (damage :meat 2))}
 
    "Toshiyuki Sakai"
    {:advanceable :always}
@@ -2048,6 +2095,9 @@
                                                                 (if (:rezzed target) (:title target) "a card"))))}
                              tol nil)))}
             card nil)))}
+
+   "Turntable"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -2222,6 +2272,9 @@
    "Creeper"
    {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Crowbar"
+   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card))}]}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
@@ -2454,6 +2507,15 @@
     :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
     :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Clairvoyant Monitor"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal {:player :corp
+                                   :prompt "Choose a target for Clairvoyant Monitor"
+                                   :msg (msg "place 1 advancement token on "
+                                             (if (:rezzed target) (:title target) "a card") " and end the run")
+                                   :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                                   :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
+
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
@@ -2621,10 +2683,20 @@
    "Komainu"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
 
+   "Lab Dog"
+   {:abilities [{:label "Force the Runner trash an installed piece of Hardware"
+                 :choices {:req #(= (:zone %) [:rig :hardware])} :player :runner
+                 :msg (msg "force the runner to trash " (:title target))
+                 :effect (effect (trash target) (trash card))}]}
+
    "Lancelot"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
                  :effect (effect (trash target))}]}
+
+   "Little Engine"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}
+                {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}
 
    "Lotus Field"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2747,6 +2819,11 @@
 
    "Quandary"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+
+   "Quicksand"
+   {:abilities [{:msg "add 1 power counter"
+                 :effect (effect (add-prop card :counter 1) (add-prop card :strength 1))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

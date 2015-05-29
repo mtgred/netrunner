@@ -153,63 +153,67 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
-                         advanceable rezzed strength current-strength title remotes selected]
+                         advanceable rezzed strength current-strength title remotes selected hosted]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
-      [:div.blue-shade.card {:class (when selected "selected") :draggable true
-                             :on-drag-start #(handle-dragstart % cursor)
-                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                             :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
-                                                (put! zoom-channel cursor))
-                             :on-mouse-leave #(put! zoom-channel false)
-                             :on-click #(handle-card-click @cursor owner)}
-       (when-let [url (image-url cursor)]
-         (if flipped
-           [:img.card.bg {:src "/img/corp.png"}]
-           [:div
-            [:span.cardname title]
-            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
-       [:div.counters
-        (when (> counter 0) [:div.darkbg.counter counter])
-        (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
-       (when current-strength [:div.darkbg.strength current-strength])
-       (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-         (let [centrals ["HQ" "R&D" "Archives"]
-               remotes (conj (remote-list remotes) "New remote")
-               servers (case type
-                         ("Upgrade" "ICE") (concat remotes centrals)
-                         ("Agenda" "Asset") remotes)]
-           [:div.blue-shade.panel.servers-menu {:ref "servers"}
-            (map (fn [label]
-                   [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
-                                         (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                    label])
-                 servers)]))
-       (let [actions (action-list cursor)]
-         (when (> (+ (count actions) (count abilities)) 1)
-           [:div.blue-shade.panel.abilities {:ref "abilities"}
-            (map (fn [action]
-                   [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
-                 actions)
-            (map-indexed
-             (fn [i label]
-               [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
-                                     (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                      :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
-             abilities)]))
-       (when (= (first zone) "servers")
-         (cond
-          (and (= type "Agenda") (>= advance-counter advancementcost))
-          [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
-           [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
-           [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
-          (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
-          [:div.blue-shade.panel.menu.abilities {:ref "advance"}
-           [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
-           [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]))))
+      [:div.card-frame
+       [:div.blue-shade.card {:class (when selected "selected") :draggable true
+                              :on-drag-start #(handle-dragstart % cursor)
+                              :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
+                              :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
+                                                 (put! zoom-channel cursor))
+                              :on-mouse-leave #(put! zoom-channel false)
+                              :on-click #(handle-card-click @cursor owner)}
+        (when-let [url (image-url cursor)]
+          (if flipped
+            [:img.card.bg {:src "/img/corp.png"}]
+            [:div
+             [:span.cardname title]
+             [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
+        [:div.counters
+         (when (> counter 0) [:div.darkbg.counter counter])
+         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
+        (when current-strength [:div.darkbg.strength current-strength])
+        (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
+          (let [centrals ["HQ" "R&D" "Archives"]
+                remotes (conj (remote-list remotes) "New remote")
+                servers (case type
+                          ("Upgrade" "ICE") (concat remotes centrals)
+                          ("Agenda" "Asset") remotes)]
+            [:div.blue-shade.panel.servers-menu {:ref "servers"}
+             (map (fn [label]
+                    [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
+                                          (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                     label])
+                  servers)]))
+        (let [actions (action-list cursor)]
+          (when (> (+ (count actions) (count abilities)) 1)
+            [:div.blue-shade.panel.abilities {:ref "abilities"}
+             (map (fn [action]
+                    [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
+                  actions)
+             (map-indexed
+              (fn [i label]
+                [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
+                                      (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                       :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
+              abilities)]))
+        (when (= (first zone) "servers")
+          (cond
+            (and (= type "Agenda") (>= advance-counter advancementcost))
+            [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
+             [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
+             [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
+            (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
+            [:div.blue-shade.panel.menu.abilities {:ref "advance"}
+             [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
+             [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
+       (when (> (count hosted) 0)
+         [:div.hosted
+          (om/build-all card-view hosted {:key :cid})])]))))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
@@ -408,7 +412,7 @@
        (let [ices (:ices server)]
          [:div.ices
           (when run
-            [:div.run-arrow {:style {:top (str (+ 8 (* 64 (:position run))) "px")}}])
+            [:div.run-arrow {:style {:top (str (+ 20 (* 64 (:position run))) "px")}}])
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        (when content

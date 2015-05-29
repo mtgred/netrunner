@@ -1204,6 +1204,15 @@ nav ul
         left: 8px
         top: -8px
 
+      .hosted
+        height: 84px
+        width: auto
+        margin-left: 30px
+        margin-top: -65px
+
+        > div
+          float: left
+          margin-left: -15px
 
       .corp-board
         display-flex()
@@ -1216,14 +1225,14 @@ nav ul
           .ices
             position: relative
             width: 86px
-            margin-top: 12px
+            margin-top: 22px
 
             .run-arrow
               position: absolute
               z-index: 10
               left: 50%
               top: 5px
-              bottom: -50px
+              bottom: -62px
               width: 16px
               border: 1px solid orange
               border-top: none
@@ -1245,12 +1254,22 @@ nav ul
                 transform(translateX(-50%))
                 border-bottom: 22px solid rgba(255, 165, 0, 0.5)
 
+            .hosted
+              position: absolute
+
+              .card-frame
+                transform(rotate(90deg))
+                margin: -44px 0 0 0
+
+                .counters
+                  transform(rotate(-90deg))
+
             .counter
               transform(rotate(90deg))
 
-            > .card
+            > .card-frame
               position: relative
-              left: 13px
+              left: -1px
               margin-top: -22px
               transform(rotate(90deg))
               cursor: pointer
@@ -1287,6 +1306,15 @@ nav ul
           .content.center
             left: 13px
 
+          .ices
+            .hosted
+              .card-frame
+                transform(rotate(-90deg))
+
+                .counters
+                  transform(rotate(-90deg))
+
+
       .card-wrapper
         margin-right: 10px
         margin-bottom: 5px
@@ -1296,6 +1324,7 @@ nav ul
       align-items(flex-end)
 
   .rightpane
+    position: relative
     display-flex()
     flex-direction(column)
 
@@ -1317,10 +1346,9 @@ nav ul
 
     .log
       width: 225px
-      min-height: 1px
-      flex(1)
-      display-flex()
-      flex-direction(column)
+      position: absolute
+      top: 317px
+      bottom: 0
 
       .username
         font-size: 12px
@@ -1339,9 +1367,18 @@ nav ul
         flex(1)
         overflow: auto
         -webkit-overflow-scrolling: touch
+        position: absolute
+        top: 0
+        bottom: 36px
+        left: 0
+        right: 4px
+        margin: 0
 
       > form
-        margin: 0 5px 5px 0
+        position: absolute
+        bottom: 5px
+        left: 0
+        right: 4px
 
         input
           width: 100%

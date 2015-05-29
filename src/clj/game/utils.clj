@@ -23,8 +23,9 @@
     (map #(assoc % :zone dest) coll)))
 
 (defn to-keyword [string]
-  (when string
-    (keyword (.toLowerCase string))))
+  (if (string? string)
+    (keyword (.toLowerCase string))
+    string))
 
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
