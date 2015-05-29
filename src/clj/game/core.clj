@@ -158,12 +158,12 @@
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f priority]
-    (let [prompt (if (string? msg) msg (msg state side card nil))]
-    (when (or (#{:credit :counter} choices) (> (count choices) 0))
-      (swap! state update-in [side :prompt]
-             (if priority
-               #(cons {:msg prompt :choices choices :effect f :card card} (vec %))
-               #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))))
+   (let [prompt (if (string? msg) msg (msg state side card nil))]
+     (when (or (#{:credit :counter} choices) (> (count choices) 0))
+       (swap! state update-in [side :prompt]
+              (if priority
+                #(cons {:msg prompt :choices choices :effect f :card card} (vec %))
+                #(conj (vec %) {:msg prompt :choices choices :effect f :card card})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -209,7 +209,7 @@
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
-  (let [s (+ base boost)]
+  (let [base (if (fn? base) (base state side card nil) base) s (+ base boost)]
     (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
                                  s " (" base " + " boost " [Credits])"))
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
@@ -217,25 +217,27 @@
     (trigger-event state side :trace nil)))
 
 (defn resolve-select [state side]
-  (let [selected (get-in @state [side :selected])
+  (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))]
     (when-not (empty? cards)
-      (doseq [card cards] (update! state side card))
-      (resolve-ability state side (:ability selected) (-> (get-in @state [side :prompt]) first :card) cards)))
-  (swap! state assoc-in [side :selected] nil)
+      (doseq [card cards]
+        (update! state side card))
+      (resolve-ability state side (:ability selected) (get-in @state [side :prompt 0 :card]) cards)))
+  (swap! state update-in [side :selected] #(vec (rest %)))
   (swap! state update-in [side :prompt] rest))
 
 (defn show-select
   ([state side card ability] (show-select state side card ability nil))
   ([state side card ability priority]
-    (swap! state assoc-in [side :selected]
-           {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
-            :max (get-in ability [:choices :max])})
-    (show-prompt state side card
-                 (if-let [m (get-in ability [:choices :max])]
-                         (str "Select up to " m " targets for " (:title card))
-                         (str "Select a target for " (:title card)))
-                 ["Done"] (fn [choice] (resolve-select state side)) priority)))
+   (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side card nil) %))]
+     (swap! state update-in [side :selected]
+            #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                            :max (get-in ability [:choices :max])}))
+     (show-prompt state side card
+                  (if-let [m (get-in ability [:choices :max])]
+                    (str "Select up to " m " targets for " (:title card))
+                    (str "Select a target for " (:title card)))
+                  ["Done"] (fn [choice] (resolve-select state side)) priority))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
@@ -261,9 +263,9 @@
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices) priority)))
-        (when (and (or (not counter-cost) (<= counter-cost counter))
-                   (or (not advance-counter-cost) (<= advance-counter-cost advance-counter))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices))))
+        (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
+                   (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0)))
                    (apply pay (concat [state side card] cost)))
           (let [c (-> card
                       (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
@@ -306,7 +308,7 @@
   (update! state side (apply assoc (cons card args))))
 
 (defn resolve-prompt [state side {:keys [choice card] :as args}]
-  (let [prompt (first (get-in @state [side :prompt]))
+  (let [prompt (get-in @state [side :prompt 0])
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
@@ -323,7 +325,7 @@
       (swap! state dissoc :access))))
 
 (defn trash-no-cost [state side]
-  (when-let [card (:card (first (get-in @state [side :prompt])))]
+  (when-let [card (:card (get-in @state [side :prompt 0]))]
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
     (when-let [run (:run @state)]
@@ -331,15 +333,15 @@
         (handle-end-run state :runner)))))
 
 (defn select [state side {:keys [card] :as args}]
-  (let [r (get-in @state [side :selected :req])]
+  (let [r (get-in @state [side :selected 0 :req])]
     (when (or (not r) (r card))
       (let [c (assoc card :selected (not (:selected card)))]
         (update! state side c)
         (if (:selected c)
-          (swap! state update-in [side :selected :cards] #(conj % c))
-          (swap! state update-in [side :selected :cards]
+          (swap! state update-in [side :selected 0 :cards] #(conj % c))
+          (swap! state update-in [side :selected 0 :cards]
                  (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
-        (let [selected (get-in @state [side :selected])]
+        (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side)))))))
 
@@ -522,7 +524,7 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
-        (when-let [current (first (get-in @state [:runner :current]))]
+        (when-let [current (get-in @state [:runner :current 0])]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
           (trash state side current))
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
@@ -535,10 +537,16 @@
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
     (gain-agenda-point state :runner (:agendapoints c))
     (set-prop state :runner c :advance-counter 0)
-    (when-let [current (first (get-in @state [:corp :current]))]
+    (when-let [current (get-in @state [:corp :current 0])]
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
     (trigger-event state :runner :agenda-stolen c)))
+
+(defn card->server [state card]
+  (let [z (:zone card)]
+       (if (= (second z) :remote)
+         (nth (get-in @state [:corp :servers :remote]) (nth z 2))
+         (get-in @state [:corp :servers (second z)]))))
 
 (defn server->zone [state server]
   (if (sequential? server)
@@ -660,7 +668,7 @@
         (do-access state side server)))))
 
 (defn end-run [state side]
-  (let [server (first (get-in @state [:run :server]))]
+  (let [server (get-in @state [:run :server 0])]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
     (trigger-event state side :unsuccessful-run)
@@ -740,12 +748,12 @@
            (resolve-ability state side cdef card nil)
            (if (has? c :subtype "Current")
              (do (doseq [s [:corp :runner]]
-                   (when-let [current (first (get-in @state [s :current]))]
+                   (when-let [current (get-in @state [s :current 0])]
                      (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                      (trash state side current)))
-                 (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
+                 (let [moved-card (move state side (get-in @state [side :play-area 0]) :current)]
                    (card-init state side moved-card)))
-             (move state side (first (get-in @state [side :play-area])) :discard)))))))
+             (move state side (get-in @state [side :play-area 0]) :discard)))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")

@@ -12,6 +12,7 @@ passport = require('passport')
 localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
+cors = require('cors')
 
 # MongoDB connection
 appName = 'netrunner'
@@ -179,9 +180,11 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id})
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special})
 
 # Routes
+app.options('*', cors())
+
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     throw err if err
@@ -261,6 +264,10 @@ app.post '/data/decks/delete', (req, res) ->
       res.send {message: 'OK'}, 200
   else
     res.send {message: 'Unauthorized'}, 401
+
+app.get '/data/donators', (req, res) ->
+  db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
+    res.json(200, (d.username or d.name for d in data))
 
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->

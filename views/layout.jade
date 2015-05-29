@@ -14,8 +14,16 @@ html
     script(src='/lib/moment/min/moment.min.js')
     script(src='/socket.io/socket.io.js')
     script(type="text/javascript")!= "var user = " + JSON.stringify(user) + ";"
-    script(type="text/javascript").
-      var iourl = window.location.hostname;
+
+    if env === "dev"
+      script(type="text/javascript").
+        var iourl = location.hostname;
+    else
+      script(type="text/javascript").
+        var tokens = location.hostname.split(".");
+        tokens.shift();
+        tokens.unshift("ws");
+        var iourl = tokens.join(".");
 
     if user
       script(type="text/javascript").
@@ -35,7 +43,6 @@ html
         goog.require("netrunner.cardbrowser");
         goog.require("netrunner.deckbuilder");
         goog.require("netrunner.about");
-        goog.require("dev.brepl");
         goog.require("dev.figwheel");
     else
       script(src='/lib/react/react.min.js')

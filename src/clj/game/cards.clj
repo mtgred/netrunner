@@ -821,32 +821,29 @@
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
-
    "Hivemind"
    {:data {:counter 1 :counter-type "Virus"}
-    :abilities [{:req (req (> (:counter card) 0))
+    :abilities [{:req (req (> (:counter card) 0)) :priority true
                  :prompt "Move a virus counter to which card?"
-                 :priority true
                  :choices {:req #(has? % :subtype "Virus")}
-                 :effect (req (let [abilities (:abilities (card-def target)) virus target]
-                              (add-prop state :runner virus :counter 1)
-                              (add-prop state :runner card :counter -1)
-                              (if (= (count abilities) 1)
-                                ((swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
-                                  (resolve-ability state side (first abilities) (get-card state virus) nil))
-                                (resolve-ability
-                                  state side {
-                                              :prompt "Choose an ability to trigger"
-                                              :choices (vec (map :msg abilities))
-                                              :effect (req
-                                                        (swap! state update-in [side :prompt] rest)
-                                                        (resolve-ability
-                                                             state side (first (filter #(= (:msg %) target) abilities))
-                                                             card nil))
-                                              } (get-card state virus) nil))
-                              ))
+                 :effect (req (let [abilities (:abilities (card-def target))
+                                    virus target]
+                                (add-prop state :runner virus :counter 1)
+                                (add-prop state :runner card :counter -1)
+                                (if (= (count abilities) 1)
+                                  (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
+                                      (resolve-ability state side (first abilities) (get-card state virus) nil))
+                                  (resolve-ability
+                                   state side
+                                   {:prompt "Choose an ability to trigger"
+                                    :choices (vec (map :msg abilities))
+                                    :effect (req (swap! state update-in [side :prompt] rest)
+                                                 (resolve-ability
+                                                  state side
+                                                  (first (filter #(= (:msg %) target) abilities))
+                                                  card nil))}
+                                   (get-card state virus) nil))))
                  :msg (msg "to trigger an ability on " (:title target))}]}
-
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
@@ -1703,6 +1700,19 @@
                                                       {:msg "gain 2 [Credits] instead of accessing"
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
 
+   "Self-destruct"
+   {:abilities [{:req (req this-server)
+                 :label "Trace X - Do 3 net damage"
+                 :effect (req (let [serv (card->server state card)
+                                    cards (concat (:ices serv) (:content serv))]
+                                   (trash state side card)
+                                   (doseq [c cards] (trash state side c))
+                                   (resolve-ability
+                                     state side
+                                     {:trace {:base (req (dec (count cards)))
+                                              :effect (effect (damage :net 3))
+                                              :msg "do 3 net damage"}} card nil)))}]}
+
    "Self-Destruct Chips"
    {:effect (effect (lose :runner :max-hand-size 1))}
 
@@ -1773,6 +1783,15 @@
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
 
+   "Shoot the Moon"
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
+              :max (req (min (:tag runner)
+                             (reduce (fn [c server]
+                                       (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
+                                     0 (flatten (seq (:servers corp))))))}
+    :req (req tagged)
+    :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
+
    "Silencer"
    {:recurring 1}
 
@@ -1828,7 +1847,7 @@
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
-                                                              :effect (effect (jack-out))}}
+                                                              :effect (effect (jack-out nil))}}
                                                   card nil))}]}
 
    "Space Camp"
@@ -2463,7 +2482,8 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
 
    "Cortex Lock"
-   {:abilities [{:msg (msg "do " (:memory runner) " net damage")
+   {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
+                 :msg (msg "do " (:memory runner) " net damage")
                  :effect (effect (damage :net (:memory runner)))}]}
 
    "Crick"
@@ -2778,8 +2798,9 @@
 
    "Searchlight"
    {:advanceable :always
-    :abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
-
+    :abilities [{:label "Trace X - Give the runner 1 tag"
+                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (gain :runner :tag 1))
+                         :msg "give the Runner 1 tag"}}]}
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
