@@ -65,7 +65,7 @@
                  :msg "gain [Click][Click]"}]}
 
    "Amped Up"
-   {:effect (effect (gain :click 3) (damage :brain 1))}
+   {:effect (effect (gain :click 3) (damage :brain 1 :unpreventable))}
 
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
@@ -292,7 +292,9 @@
    {:recurring 1}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:prevent [:net]
+    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+                 :priority true
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (runner-install target))}]}
@@ -366,8 +368,11 @@
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
    "Crash Space"
-   {:recurring 2
-    :abilities [{:msg "prevent 3 meat damage" :effect (effect (trash card))}]}
+   {:prevent [:meat]
+    :recurring 2
+    :abilities [{:label "Trash to prevent up to 3 meat damage"
+                 :msg "prevent up to 3 meat damage"
+                 :effect (effect (trash card) (damage-prevent :meat 3))}]}
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
@@ -634,8 +639,9 @@
                     (move target :hand) (shuffle! :deck))}
 
    "Feedback Filter"
-   {:abilities [{:cost [:credit 3] :msg "prevent 1 net damage"}
-                {:effect (effect (trash card)) :msg "prevent 2 brain damage"}]}
+   {:prevent [:net :brain]
+    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
+                {:msg "prevent 2 brain damage" :effect (effect (trash card) (damage-prevent :brain 2)) }]}
 
    "Feint"
    {:effect (effect (run :hq) (max-access 0))}
@@ -1164,6 +1170,12 @@
                                 (move state side (second (:deck runner)) :deck)
                                 (move state side (first (:deck runner)) :deck)))}]}
 
+   "Muresh Bodysuit"
+   {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
+                          :req (req (= target :meat))
+                          :msg "prevent the first meat damage this turn"
+                          :effect (effect (damage-prevent :meat 1))}}}
+
    "Mushin No Shin"
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
@@ -1196,7 +1208,9 @@
    {:recurring 1}
 
    "Net Shield"
-   {:abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"}]}
+   {:prevent [:net]
+    :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
+                 :effect (effect (damage-prevent :net 1))}]}
 
    "Networking"
    {:effect (effect (lose :tag 1))
@@ -1367,7 +1381,8 @@
 
    "Plascrete Carapace"
    {:data [:counter 4]
-    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"}]}
+    :prevent [:meat]
+    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage" :effect (effect (damage-prevent :meat 1))}]}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -1731,7 +1746,9 @@
    {:effect (effect (lose :runner :max-hand-size 1))}
 
    "Self-modifying Code"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:prevent [:net]
+    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+                 :priority true
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
                  :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
@@ -1894,7 +1911,7 @@
    {:events {:runner-turn-begins
              {:effect #(if (>= (:counter %3) 2)
                          (do (set-prop %1 %2 %3 :counter 0)
-                             (damage %1 %2 :brain 1)
+                             (damage %1 %2 :brain 1 :unpreventable)
                              (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
                          (do (add-prop %1 %2 %3 :counter 1)
                              (gain %1 %2 :click 1)
@@ -1903,7 +1920,7 @@
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1))}} card))}
+                    (run target {:end-run {:effect (effect (damage :brain 1 :unpreventable))}} card))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -1986,6 +2003,13 @@
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}
     :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
+
+   "The Cleaners"
+   {:events
+    {:pre-damage
+     {:req (req (= target :meat))
+      :msg "to do 1 additional meat damage"
+      :effect (effect (damage-bonus :meat 1))}}}
 
    "The Foundry: Refining the Process"
    {:events
@@ -2298,8 +2322,10 @@
     :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
 
    "Deus X"
-   {:abilities [{:msg "break any number of AP subroutines" :effect (effect (trash card))}
-                {:msg "prevent any amount of net damage" :effect (effect (trash card))}]}
+   {:prevent [:net]
+    :abilities [{:msg "break any number of AP subroutines" :effect (effect (trash card))}
+                {:msg "prevent any amount of net damage"
+                 :effect (effect (trash card) (damage-prevent :net Integer/MAX_VALUE))}]}
 
    "Eater"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine and access 0 cards this run"
@@ -2587,7 +2613,7 @@
                  :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
                  :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))}
                 {:msg "do 2 meat damage and end the run"
-                 :effect (effect (damage :meat 2) (end-run))}]}
+                 :effect (effect (damage :meat 2 :unpreventable) (end-run))}]}
 
    "Galahad"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
