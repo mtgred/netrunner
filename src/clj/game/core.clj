@@ -789,11 +789,12 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost no-cost host-card]}]
+  ([state side {:keys [title type cost memoryunits uniqueness] :as card}
+    {:keys [extra-cost no-cost host-card] :as params}]
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
                       {:choices hosting
-                       :effect (effect (runner-install card {:host-card target}))} card nil)
+                       :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
      (let [cost (if no-cost 0 cost)]
        (when (and (or (not uniqueness) (not (in-play? state card)))
                   (if-let [req (:req (card-def card))]
