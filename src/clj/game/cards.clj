@@ -2590,7 +2590,7 @@
                  :effect (effect (damage :meat 2) (end-run))}]}
 
    "Galahad"
-   {:abilities [{:label "Reveal up to 2 Grail ice from HQ"
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp") 
                                              (= (:zone %) [:hand])
                                              (has? % :subtype "Grail"))}
@@ -2695,7 +2695,7 @@
                  :effect (effect (trash target) (trash card))}]}
 
    "Lancelot"
-   {:abilities [{:label "Reveal up to 2 Grail ice from HQ"
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp") 
                                              (= (:zone %) [:hand])
                                              (has? % :subtype "Grail"))}
@@ -2738,7 +2738,7 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Merlin"
-   {:abilities [{:label "Reveal up to 2 Grail ice from HQ"
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp") 
                                              (= (:zone %) [:hand])
                                              (has? % :subtype "Grail"))}
