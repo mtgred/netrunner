@@ -91,7 +91,7 @@
     (if-let [h (get-card state host)]
       (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
         (update! state side (assoc h :hosted (vec (concat head [card] (rest tail))))))
-      (let [z (cons (to-keyword (:side card)) zone)
+      (let [z (cons side zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
         (swap! state assoc-in z (vec (concat head [card] (rest tail))))))))
 
