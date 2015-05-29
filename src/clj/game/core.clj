@@ -91,9 +91,10 @@
     (if-let [h (get-card state host)]
       (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
         (update! state side (assoc h :hosted (vec (concat head [card] (rest tail))))))
-      (let [z (cons side zone)
+      (let [z (cons (to-keyword (:side card)) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (swap! state assoc-in z (vec (concat head [card] (rest tail))))))))
+        (when-not (empty? tail)
+          (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
 (defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
