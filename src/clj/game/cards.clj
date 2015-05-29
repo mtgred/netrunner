@@ -294,6 +294,7 @@
    "Clone Chip"
    {:prevent [:net]
     :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+                 :priority true
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (runner-install target))}]}
@@ -1381,7 +1382,7 @@
    "Plascrete Carapace"
    {:data [:counter 4]
     :prevent [:meat]
-    :abilities [{:counter-cost 1 :effect (effect (damage-prevent :meat 1))}]}
+    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage" :effect (effect (damage-prevent :meat 1))}]}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -1747,6 +1748,7 @@
    "Self-modifying Code"
    {:prevent [:net]
     :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+                 :priority true
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
                  :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
