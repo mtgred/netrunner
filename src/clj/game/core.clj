@@ -67,6 +67,10 @@
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
+     (when-let [prevent (:prevent (card-def card))]
+               (doseq [dtype prevent]
+                      (swap! state update-in [:damage :prevent dtype]
+                             (fn [pv] (remove #(= (:cid %) (:cid card)) pv)))))
      (unregister-events state side card)
      (when-let [mu (:memoryunits card)]
        (gain state :runner :memory mu))
@@ -360,34 +364,59 @@
       (register-events state side
                        {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
                         {:effect (effect (set-prop card :counter recurring))}} c))
+    (when-let [prevent (:prevent cdef)]
+       (doseq [dtype prevent]
+              (swap! state update-in [:damage :prevent dtype] #(conj % card))))
     (update! state side c)
     (resolve-ability state side cdef c nil)
     (when-let [events (:events cdef)] (register-events state side events c))
     (get-card state c)))
 
 (defn damage-count [state side dtype n]
-  (max 0 (if-let [bonus (get-in @state [:special :damage-bonus dtype])]
-                 (+ n bonus) n)))
+  (-> n
+      (+ (or (get-in @state [:damage :damage-bonus dtype]) 0))
+      (- (or (get-in @state [:damage :damage-prevent dtype]) 0))
+      (max 0)))
 
 (defn damage-bonus [state side dtype n]
-      ;(system-msg state side (str (+ n (get-in state [:special :damage-bonus dtype]))))
-  (swap! state update-in [:special :damage-bonus dtype] (fnil #(+ % n) 0)))
+  (swap! state update-in [:damage :damage-bonus dtype] (fnil #(+ % n) 0)))
+
+(defn damage-prevent [state side dtype n]
+  (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0)))
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
-(defn damage [state side type n]
-  (trigger-event state side :pre-damage type)
-  (let [n (damage-count state side type n) hand (get-in @state [:runner :hand])]
-       (system-msg state side (str n " " type))
-    (when (< (count hand) n)
-      (flatline state))
-    (when (= type :brain)
-      (swap! state update-in [:runner :brain-damage] #(+ % n))
-      (swap! state update-in [:runner :max-hand-size] #(- % n)))
-    (doseq [c (take n (shuffle hand))]
-      (trash state side c type))
-    (trigger-event state side :damage type))
-  (swap! state update-in [:special :damage-bonus] dissoc type))
+(defn resolve-damage [state side type n]
+  (let [hand (get-in @state [:runner :hand])]
+       (when (< (count hand) n)
+             (flatline state))
+       (when (= type :brain)
+             (swap! state update-in [:runner :brain-damage] #(+ % n))
+             (swap! state update-in [:runner :max-hand-size] #(- % n)))
+       (doseq [c (take n (shuffle hand))]
+              (trash state side c type))
+       (trigger-event state side :damage type)))
+
+(defn damage
+  ([state side type n] (damage state side type n false))
+  ([state side type n unpreventable]
+    (swap! state update-in [:damage :damage-bonus] dissoc type)
+    (swap! state update-in [:damage :damage-prevent] dissoc type)
+    (trigger-event state side :pre-damage type)
+    (let [n (damage-count state side type n)]
+         (let [prevent (get-in @state [:damage :prevent type])]
+              (if (and (not unpreventable) prevent (> (count prevent) 0))
+                (do (system-msg state :runner "has the option to prevent damage")
+                    (show-prompt
+                      state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
+                      (fn [choice]
+                          (let [prevent (get-in @state [:damage :damage-prevent type])]
+                               (system-msg state :runner
+                                           (if prevent (str "prevents " prevent " " (name type) " damage")
+                                                       "will not prevent damage"))
+                               (resolve-damage state side type (max 0 (- n (or prevent 0))))))))
+                (resolve-damage state side type n))))))
 
 (defn shuffle! [state side kw]
   (swap! state update-in [side kw] shuffle))
@@ -725,7 +754,7 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost no-cost]}]
+  ([state side {:keys [title type cost memoryunits uniqueness prevent] :as card} {:keys [extra-cost no-cost]}]
      (let [dest [:rig (to-keyword type)]
            cost (if no-cost 0 cost)]
        (when (and (or (not uniqueness) (not (in-play? state card)))
