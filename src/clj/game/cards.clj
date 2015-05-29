@@ -292,8 +292,7 @@
    {:recurring 1}
 
    "Clone Chip"
-   {:prevent [:net]
-    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
@@ -1770,8 +1769,7 @@
    {:effect (effect (lose :runner :max-hand-size 1))}
 
    "Self-modifying Code"
-   {:prevent [:net]
-    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
