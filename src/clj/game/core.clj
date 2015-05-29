@@ -741,7 +741,8 @@
 (defn purge [state side]
   (doseq [card (concat (get-in @state [:runner :rig :program])
                        (get-in @state [:runner :rig :resource])
-                       (get-in @state [:runner :rig :hardware]))]
+                       (get-in @state [:runner :rig :hardware])
+                       (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted)))]
     (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
       (set-prop state :runner card :counter 0)))
   (trigger-event state side :purge))
