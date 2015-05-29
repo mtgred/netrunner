@@ -65,7 +65,7 @@
                  :msg "gain [Click][Click]"}]}
 
    "Amped Up"
-   {:effect (effect (gain :click 3) (damage :brain 1 :unpreventable))}
+   {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true}))}
 
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
@@ -109,7 +109,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
-                             (do (damage state :runner :meat 2)
+                             (do (damage state :runner :meat 2 {:unboostable true})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Astrolabe"
@@ -1053,6 +1053,22 @@
                  :choices {:req #(= (first (:zone %)) :servers)} :effect (effect (expose target))
                  :msg "expose 1 card"}]}
 
+   "Leverage"
+   {:player :corp
+    :prompt "Take 2 bad publicity?"
+    :choices ["Yes" "No"]
+    :effect (req (if (= target "Yes")
+                   (do (gain state :corp :bad-publicity 2) (system-msg state :corp "takes 2 bad publicity"))
+                   (do (register-events state side
+                                    {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
+                                                                  (damage-prevent :meat Integer/MAX_VALUE)
+                                                                  (damage-prevent :brain Integer/MAX_VALUE))}
+                                     :runner-turn-begins {:effect (effect (unregister-events card))}}
+                                    (assoc card :zone '(:discard)))
+                       (system-msg state :runner "is immune to damage until the beginning of the runner's next turn"))))
+    ; This :events is a hack so that the unregister-events above will fire.
+    :events {:runner-turn-begins nil :pre-damage nil}}
+
    "Levy AR Lab Access"
    {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
                     (move (first (:play-area runner)) :rfg))}
@@ -1151,10 +1167,14 @@
     :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
 
    "Monolith"
-   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+   {:prevent [:net :brain]
+    :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
     :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
+                 :priority true
                  :choices (req (filter #(= (:type %) "Program") (:hand runner)))
-                 :prompt "Choose a program to trash" :effect (effect (trash target))}]}
+                 :prompt "Choose a program to trash" :effect (effect (trash target)
+                                                                     (damage-prevent :brain 1)
+                                                                     (damage-prevent :net 1))}]}
 
    "Motivation"
    {:events
@@ -1221,7 +1241,7 @@
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
 
    "Net-Ready Eyes"
-   {:effect (effect (damage :meat 2)) :msg "suffer 2 meat damage"
+   {:effect (effect (damage :meat 2 {:unboostable true})) :msg "suffer 2 meat damage"
     :events {:run {:choices {:req #(and (= (:zone %) [:rig :program])
                                         (has? % :subtype "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
@@ -1632,12 +1652,16 @@
                  :effect (effect (trash card) (damage :brain 1))}]}
 
    "Sacrificial Clone"
-   {:abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
+   {:prevent [:meat :net :brain]
+    :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
                                 (trash state side c))
-                              (lose state side :credit :all :tag :all))}]}
+                              (lose state side :credit :all :tag :all)
+                              (damage-prevent state side :net Integer/MAX_VALUE)
+                              (damage-prevent state side :meat Integer/MAX_VALUE)
+                              (damage-prevent state side :brain Integer/MAX_VALUE))}]}
 
    "Sacrificial Construct"
    {:abilities [{:msg "prevent an installed program or hardware from being trashed"
@@ -1911,7 +1935,7 @@
    {:events {:runner-turn-begins
              {:effect #(if (>= (:counter %3) 2)
                          (do (set-prop %1 %2 %3 :counter 0)
-                             (damage %1 %2 :brain 1 :unpreventable)
+                             (damage %1 %2 :brain 1 {:unpreventable true})
                              (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
                          (do (add-prop %1 %2 %3 :counter 1)
                              (gain %1 %2 :click 1)
@@ -1920,7 +1944,7 @@
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1 :unpreventable))}} card))}
+                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true}))}} card))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -2094,7 +2118,7 @@
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :leave-play (effect (damage :meat 3))}
+    :leave-play (effect (damage :meat 3 {:unboostable true}))}
 
    "Trick of Light"
    {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
@@ -2613,7 +2637,7 @@
                  :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
                  :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))}
                 {:msg "do 2 meat damage and end the run"
-                 :effect (effect (damage :meat 2 :unpreventable) (end-run))}]}
+                 :effect (effect (damage :meat 2 {:unpreventable true}) (end-run))}]}
 
    "Galahad"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

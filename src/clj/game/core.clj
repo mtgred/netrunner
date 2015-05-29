@@ -392,10 +392,10 @@
       (register-events state side events c))
     (get-card state c)))
 
-(defn damage-count [state side dtype n]
+(defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
-      (+ (or (get-in @state [:damage :damage-bonus dtype]) 0))
-      (- (or (get-in @state [:damage :damage-prevent dtype]) 0))
+      (+ (or (when (not unboostable) (get-in @state [:damage :damage-bonus dtype])) 0))
+      (- (or (when (not unpreventable) (get-in @state [:damage :damage-prevent dtype])) 0))
       (max 0)))
 
 (defn damage-bonus [state side dtype n]
@@ -419,12 +419,12 @@
        (trigger-event state side :damage type)))
 
 (defn damage
-  ([state side type n] (damage state side type n false))
-  ([state side type n unpreventable]
+  ([state side type n] (damage state side type n nil))
+  ([state side type n {:keys [unpreventable unboostable] :as args}]
     (swap! state update-in [:damage :damage-bonus] dissoc type)
     (swap! state update-in [:damage :damage-prevent] dissoc type)
     (trigger-event state side :pre-damage type)
-    (let [n (damage-count state side type n)]
+    (let [n (damage-count state side type n args)]
          (let [prevent (get-in @state [:damage :prevent type])]
               (if (and (not unpreventable) prevent (> (count prevent) 0))
                 (do (system-msg state :runner "has the option to prevent damage")
@@ -432,7 +432,11 @@
                       state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                       (fn [choice]
                           (let [prevent (get-in @state [:damage :damage-prevent type])]
-                               (when-not prevent (system-msg state :runner "will not prevent damage"))
+                               (system-msg state :runner
+                                           (if prevent
+                                             (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
+                                                  " " (name type) " damage")
+                                             "will not prevent damage"))
                                (resolve-damage state side type (max 0 (- n (or prevent 0))))))))
                 (resolve-damage state side type n))))))
 
