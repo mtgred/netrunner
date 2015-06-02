@@ -956,6 +956,10 @@
                                :effect (req (doseq [c (take 5 (:deck corp))]
                                               (move state side c :play-area)))}} card))}
 
+   "Industrial Genomics: Growing Solutions"
+   {:events {:pre-trash {:effect (effect (trash-cost-bonus
+                                           (count (filter #(not (:seen %)) (:discard corp)))))}}}
+
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
@@ -1920,7 +1924,8 @@
                                        (trash state side c)))}} card))}
 
    "Skulljack"
-   {:effect (effect (damage :brain 1))}
+   {:effect (effect (damage :brain 1))
+    :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Snatch and Grab"
    {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
