@@ -1304,6 +1304,10 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
 
+   "Oaktown Grid"
+   {:events {:pre-trash {:req (req (= (:zone card) (:zone target)))
+                         :effect (effect (trash-cost-bonus 3))}}}
+
    "Oaktown Renovation"
    {:install-rezzed true
     :events {:advance {:req (req (= (:cid card) (:cid target)))
