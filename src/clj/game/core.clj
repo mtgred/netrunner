@@ -400,6 +400,14 @@
       (+ (or (get-in @state [:bonus :cost]) 0))
       (max 0)))
 
+(defn trash-cost-bonus [state side n]
+  (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
+
+(defn trash-cost [state side {:keys [cost] :as card}]
+  (-> cost
+      (+ (or (get-in @state [:bonus :trash]) 0))
+      (max 0)))
+
 (defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
       (+ (or (when (not unboostable) (get-in @state [:damage :damage-bonus dtype])) 0))
@@ -612,7 +620,7 @@
         (when-let [access-effect (:access cdef)]
           (resolve-ability state (to-keyword (:side c)) access-effect c nil))
         (when (not= (:zone c) [:discard])
-          (if-let [trash-cost (:trash c)]
+          (if-let [trash-cost (trash-cost state side (:trash c))]
             (let [card (assoc c :seen true)]
               (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
                                 {:cost [:credit trash-cost]
