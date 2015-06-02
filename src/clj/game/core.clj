@@ -403,8 +403,8 @@
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
 
-(defn trash-cost [state side {:keys [cost] :as card}]
-  (-> cost
+(defn trash-cost [state side {:keys [trash] :as card}]
+  (-> trash
       (+ (or (get-in @state [:bonus :trash]) 0))
       (max 0)))
 
@@ -613,6 +613,7 @@
 
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
+  (swap! state update-in [:bonus] dissoc :trash)
   (doseq [c cards]
     (let [cdef (card-def c)
           c (assoc c :seen true)]
@@ -620,7 +621,8 @@
         (when-let [access-effect (:access cdef)]
           (resolve-ability state (to-keyword (:side c)) access-effect c nil))
         (when (not= (:zone c) [:discard])
-          (if-let [trash-cost (trash-cost state side (:trash c))]
+          (trigger-event state side :pre-trash c)
+          (if-let [trash-cost (trash-cost state side c)]
             (let [card (assoc c :seen true)]
               (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
                                 {:cost [:credit trash-cost]
