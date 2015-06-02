@@ -73,6 +73,17 @@
    "Amped Up"
    {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true}))}
 
+   "Analog Dreamers"
+   {:abilities [{:cost [:click 1] :msg "make a run on R&D"
+                 :effect (effect (run :rd
+                                      {:replace-access
+                                       {:prompt "Choose a card to shuffle into R&D"
+                                        :choices {:req #(and (not (= (:type %) "ICE"))
+                                                             (not (:rezzed %))
+                                                             (not (:advance-counter %)))}
+                                        :effect (req (move state :corp target :deck) (shuffle! state :corp :deck))
+                                        :msg "shuffle a card into R&D"}}))}]}
+
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
@@ -1945,11 +1956,20 @@
                             card nil)))}}
 
    "Sneakdoor Beta"
-   {:abilities [{:cost [:click 1] :msg "make a run on Archives"
-                 :effect (effect (run :archives
-                                   {:successful-run
-                                    {:msg "make a successful run on HQ"
-                                     :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
+   {:abilities [{:cost [:click 1] :msg "make a run on R&D"
+                 :effect (effect (run :rd
+                                      {:replace-access
+                                       {:prompt "Choose a card to shuffle into R&D"
+                                        :choices {:req #(and (not (= (:type %) "ICE"))
+                                                             (not (:rezzed %))
+                                                             (not (:advance-counter %)))}
+                                        :effect (req (move state :corp target :deck) (shuffle! state :corp :deck))
+                                        :msg "shuffle a card into R&D"}} card))}]}
+   ;{:abilities [{:cost [:click 1] :msg "make a run on Archives"
+   ;              :effect (effect (run :archives
+   ;                                {:successful-run
+   ;                                 {:msg "make a successful run on HQ"
+   ;                                  :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
 
    "Snare!"
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
