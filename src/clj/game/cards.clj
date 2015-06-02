@@ -1279,6 +1279,12 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
 
+   "Oaktown Renovation"
+   {:install-rezzed true
+    :events {:advance {:req (req (= (:cid card) (:cid target)))
+                       :effect (req (gain state side :credit
+                                          (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
+
    "Off-Campus Apartment"
    {:abilities [{:effect (effect (draw))
                  :msg "host a Connection and draw 1 card"}]}
