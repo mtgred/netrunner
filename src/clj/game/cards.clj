@@ -1608,6 +1608,12 @@
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
+   "Reina Roja: Freedom Fighter"
+   {:effect (effect (gain :link 1))
+    :events {:pre-rez
+             {:req (req (= (:type target) "ICE")) :once :per-turn
+              :effect (effect (rez-cost-bonus -1))}}}
+
    "Replicator"
    {:events {:runner-install
              {:optional {:req (req (= (:type target) "Hardware"))
@@ -2296,6 +2302,9 @@
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
+   "Xanadu"
+   {:events {:pre-rez {:req (req (= (:type target) "ICE"))
+                       :effect (effect (rez-cost-bonus -1))}}}
    ;; Icebreakers
 
    "Alpha"
@@ -3156,9 +3165,6 @@
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
-
-   "Reina Roja: Freedom Fighter"
-   {:effect (effect (gain :link 1))}
 
    "Tallie Perrault"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
