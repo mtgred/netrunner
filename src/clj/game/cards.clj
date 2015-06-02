@@ -292,8 +292,7 @@
    {:recurring 1}
 
    "Clone Chip"
-   {:prevent [:net]
-    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
@@ -599,6 +598,19 @@
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :once :per-turn}}}
+
+   "Eureka!"
+   {:effect
+    (req (let [topcard (first (:deck runner))
+               caninst (some #(= % (:type topcard)) '("Hardware" "Resource" "Program"))
+               cost (min 10 (:cost topcard))]
+              (when caninst
+                    (do (gain state side :credit cost)
+                        (runner-install state side topcard)))
+              (when (get-card state topcard) ; only true if card was not installed
+                    (do (system-msg state side (str "reveals and trashes " (:title topcard)))
+                        (trash state side topcard)
+                        (when caninst (lose state side :credit cost))))))}
 
    "Eve Campaign"
    {:data {:counter 16}
@@ -1770,8 +1782,7 @@
    {:effect (effect (lose :runner :max-hand-size 1))}
 
    "Self-modifying Code"
-   {:prevent [:net]
-    :abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
