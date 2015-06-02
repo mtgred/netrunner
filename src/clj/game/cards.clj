@@ -58,7 +58,7 @@
    "Akitaro Watanabe"
    {:events {:pre-rez {:req (req (and (= (:type target) "ICE")
                                         (= (card->server state card) (card->server state target))))
-                       :effect (effect (rez-cost-bonus 2))}}}
+                       :effect (effect (rez-cost-bonus -2))}}}
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
@@ -201,17 +201,17 @@
    "Brain-Taping Warehouse"
    {:events {:pre-rez
              {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
-              :effect (effect (rez-cost-bonus (:click runner)))}}}
+              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
     :events {:pre-rez
              {:req (req (= (:type target) "ICE"))
-              :effect (effect (rez-cost-bonus (:counter (get-card state card))))}}}
+              :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaker Bay Grid"
    {:events {:pre-rez {:req (req (= (:zone card) (:zone target)))
-                       :effect (effect (rez-cost-bonus 5))}}}
+                       :effect (effect (rez-cost-bonus -5))}}}
 
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
@@ -1617,7 +1617,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-rez
              {:req (req (= (:type target) "ICE")) :once :per-turn
-              :effect (effect (rez-cost-bonus -1))}}}
+              :effect (effect (rez-cost-bonus 1))}}}
 
    "Replicator"
    {:events {:runner-install
@@ -2309,7 +2309,7 @@
 
    "Xanadu"
    {:events {:pre-rez {:req (req (= (:type target) "ICE"))
-                       :effect (effect (rez-cost-bonus -1))}}}
+                       :effect (effect (rez-cost-bonus 1))}}}
    ;; Icebreakers
 
    "Alpha"

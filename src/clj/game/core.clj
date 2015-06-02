@@ -397,7 +397,7 @@
 
 (defn rez-cost [state side {:keys [cost] :as card}]
   (-> cost
-      (- (or (get-in @state [:bonus :cost]) 0))
+      (+ (or (get-in @state [:bonus :cost]) 0))
       (max 0)))
 
 (defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
