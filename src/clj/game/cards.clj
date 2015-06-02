@@ -192,6 +192,10 @@
    {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
 
+   "Breaker Bay Grid"
+   {:events {:pre-rez {:req (req (= (:zone card) (:zone target)))
+                       :effect (effect (rez-cost-bonus 5))}}}
+
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
