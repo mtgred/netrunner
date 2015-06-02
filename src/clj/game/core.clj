@@ -820,7 +820,7 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
-     (when (#{"Asset" "ICE" "Upgrade"} (:type card))
+     (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (let [cdef (card-def card)]
          (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
@@ -839,7 +839,8 @@
                  slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
                  install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
-                                (count dest-zone) 0)]
+                                (count dest-zone) 0)
+                 rezzed (or rezzed (:install-rezzed (card-def card)))]
              (when (and (not (and (has? c :subtype "Region")
                                   (some #(has? % :subtype "Region") dest-zone)))
                         (pay state side card extra-cost :credit install-cost))
@@ -848,7 +849,7 @@
                    (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                             (:title prev-card) "a card") " in " server))
                    (trash state side prev-card)))
-               (let [card-name (if rezzed (:title card) "a card")]
+               (let [card-name (if (or rezzed (:rezzed c)) (:title card) "a card")]
                  (if (> install-cost 0)
                    (system-msg state side (str "pays " install-cost " [Credits] to install "
                                                card-name " in " server))
