@@ -198,6 +198,11 @@
    {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
 
+   "Brain-Taping Warehouse"
+   {:events {:pre-rez
+             {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+              :effect (effect (rez-cost-bonus (:click runner)))}}}
+
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
     :events {:pre-rez
