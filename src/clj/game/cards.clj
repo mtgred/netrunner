@@ -54,6 +54,12 @@
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+
+   "Akitaro Watanabe"
+   {:events {:pre-rez {:req (req (and (= (:type target) "ICE")
+                                        (= (card->server state card) (card->server state target))))
+                       :effect (effect (rez-cost-bonus 2))}}}
+
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -191,6 +197,12 @@
    "Brain Cage"
    {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
+
+   "Braintrust"
+   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
+    :events {:pre-rez
+             {:req (req (= (:type target) "ICE"))
+              :effect (effect (rez-cost-bonus (:counter (get-card state card))))}}}
 
    "Breaker Bay Grid"
    {:events {:pre-rez {:req (req (= (:zone card) (:zone target)))
@@ -3100,9 +3112,6 @@
    ;; partial implementation
    "Bad Times"
    {:req (req tagged)}
-
-   "Braintrust"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
 
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
