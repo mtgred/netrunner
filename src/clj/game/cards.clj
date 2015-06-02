@@ -616,6 +616,10 @@
                                                                        (:rezzed ice))) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Encryption Protocol"
+   {:events {:pre-trash {:req (req (= (first (:zone target)) :servers))
+                         :effect (effect (trash-cost-bonus 1))}}}
+
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :once :per-turn}}}
