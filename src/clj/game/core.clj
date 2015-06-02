@@ -93,7 +93,8 @@
         (update! state side (assoc h :hosted (vec (concat head [card] (rest tail))))))
       (let [z (cons (to-keyword (:side card)) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (swap! state assoc-in z (vec (concat head [card] (rest tail))))))))
+        (when-not (empty? tail)
+          (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
 (defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
@@ -758,7 +759,8 @@
 (defn purge [state side]
   (doseq [card (concat (get-in @state [:runner :rig :program])
                        (get-in @state [:runner :rig :resource])
-                       (get-in @state [:runner :rig :hardware]))]
+                       (get-in @state [:runner :rig :hardware])
+                       (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted)))]
     (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
       (set-prop state :runner card :counter 0)))
   (trigger-event state side :purge))
@@ -806,11 +808,12 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card} {:keys [extra-cost no-cost host-card]}]
+  ([state side {:keys [title type cost memoryunits uniqueness] :as card}
+    {:keys [extra-cost no-cost host-card] :as params}]
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
                       {:choices hosting
-                       :effect (effect (runner-install card {:host-card target}))} card nil)
+                       :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
      (let [cost (if no-cost 0 cost)]
        (when (and (or (not uniqueness) (not (in-play? state card)))
                   (if-let [req (:req (card-def card))]
