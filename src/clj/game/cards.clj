@@ -86,7 +86,6 @@
                                                          (handle-end-run state side)) ; remove the replace-access prompt
                                             :msg "shuffle a card into R&D"}} card))}]}
 
-
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
@@ -376,6 +375,30 @@
    "Commercialization"
    {:msg (msg "gain " (:advance-counter target) " [Credits]")
     :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
+
+   "Constellation Protocol"
+   {:events {:corp-turn-begins
+             {:optional
+              {:prompt "Move one advancement token between ICE?"
+               :effect (effect
+                         (resolve-ability
+                           {:choices {:req #(and (= (:type %) "ICE") (:advance-counter %))}
+                            :priority true
+                            :effect (req
+                                      (let [fr target]
+                                           (resolve-ability
+                                             state side
+                                             {:priority true
+                                              :prompt "Move to where?"
+                                              :choices {:req #(and (= (:type %) "ICE")
+                                                                   (not= (:cid fr) (:cid %))
+                                                                   (or (= (:advanceable %) "always")
+                                                                       (and (= (:advanceable %) "while-rezzed")
+                                                                            (:rezzed %))))}
+                                              :effect (effect (add-prop :corp target :advance-counter 1)
+                                                              (add-prop :corp fr :advance-counter -1))} card nil)
+                                           card nil))}
+                           card nil))}}}}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
