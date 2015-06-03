@@ -54,6 +54,12 @@
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+
+   "Akitaro Watanabe"
+   {:events {:pre-rez {:req (req (and (= (:type target) "ICE")
+                                        (= (card->server state card) (card->server state target))))
+                       :effect (effect (rez-cost-bonus -2))}}}
+
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -191,6 +197,21 @@
    "Brain Cage"
    {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
+
+   "Brain-Taping Warehouse"
+   {:events {:pre-rez
+             {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
+
+   "Braintrust"
+   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
+    :events {:pre-rez
+             {:req (req (= (:type target) "ICE"))
+              :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
+
+   "Breaker Bay Grid"
+   {:events {:pre-rez {:req (req (= (:zone card) (:zone target)))
+                       :effect (effect (rez-cost-bonus -5))}}}
 
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
@@ -595,6 +616,10 @@
                                                                        (:rezzed ice))) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Encryption Protocol"
+   {:events {:pre-trash {:req (req (= (first (:zone target)) :servers))
+                         :effect (effect (trash-cost-bonus 1))}}}
+
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :once :per-turn}}}
@@ -930,6 +955,10 @@
                               {:msg "rearrange the top 5 cards of R&D"
                                :effect (req (doseq [c (take 5 (:deck corp))]
                                               (move state side c :play-area)))}} card))}
+
+   "Industrial Genomics: Growing Solutions"
+   {:events {:pre-trash {:effect (effect (trash-cost-bonus
+                                           (count (filter #(not (:seen %)) (:discard corp)))))}}}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -1279,6 +1308,10 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
 
+   "Oaktown Grid"
+   {:events {:pre-trash {:req (req (= (:zone card) (:zone target)))
+                         :effect (effect (trash-cost-bonus 3))}}}
+
    "Oaktown Renovation"
    {:install-rezzed true
     :events {:advance {:req (req (= (:cid card) (:cid target)))
@@ -1592,6 +1625,12 @@
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
+   "Reina Roja: Freedom Fighter"
+   {:effect (effect (gain :link 1))
+    :events {:pre-rez
+             {:req (req (= (:type target) "ICE")) :once :per-turn
+              :effect (effect (rez-cost-bonus 1))}}}
+
    "Replicator"
    {:events {:runner-install
              {:optional {:req (req (= (:type target) "Hardware"))
@@ -1885,7 +1924,8 @@
                                        (trash state side c)))}} card))}
 
    "Skulljack"
-   {:effect (effect (damage :brain 1))}
+   {:effect (effect (damage :brain 1))
+    :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Snatch and Grab"
    {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
@@ -2280,6 +2320,9 @@
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
+   "Xanadu"
+   {:events {:pre-rez {:req (req (= (:type target) "ICE"))
+                       :effect (effect (rez-cost-bonus 1))}}}
    ;; Icebreakers
 
    "Alpha"
@@ -3097,9 +3140,6 @@
    "Bad Times"
    {:req (req tagged)}
 
-   "Braintrust"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))}
-
    "Chakana"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
@@ -3143,9 +3183,6 @@
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg))}
-
-   "Reina Roja: Freedom Fighter"
-   {:effect (effect (gain :link 1))}
 
    "Tallie Perrault"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))

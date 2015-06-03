@@ -393,6 +393,22 @@
       (register-events state side events c))
     (get-card state c)))
 
+(defn rez-cost-bonus [state side n]
+  (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
+
+(defn rez-cost [state side {:keys [cost] :as card}]
+  (-> cost
+      (+ (or (get-in @state [:bonus :cost]) 0))
+      (max 0)))
+
+(defn trash-cost-bonus [state side n]
+  (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
+
+(defn trash-cost [state side {:keys [trash] :as card}]
+  (-> trash
+      (+ (or (get-in @state [:bonus :trash]) 0))
+      (max 0)))
+
 (defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
       (+ (or (when (not unboostable) (get-in @state [:damage :damage-bonus dtype])) 0))
@@ -598,6 +614,7 @@
 
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
+  (swap! state update-in [:bonus] dissoc :trash)
   (doseq [c cards]
     (let [cdef (card-def c)
           c (assoc c :seen true)]
@@ -605,7 +622,8 @@
         (when-let [access-effect (:access cdef)]
           (resolve-ability state (to-keyword (:side c)) access-effect c nil))
         (when (not= (:zone c) [:discard])
-          (if-let [trash-cost (:trash c)]
+          (trigger-event state side :pre-trash c)
+          (if-let [trash-cost (trash-cost state side c)]
             (let [card (assoc c :seen true)]
               (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
                                 {:cost [:credit trash-cost]
@@ -820,9 +838,11 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
+     (swap! state update-in [:bonus] dissoc :cost)
+     (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
-       (let [cdef (card-def card)]
-         (when (or no-cost (pay state side card :credit (:cost card) (:additional-cost cdef)))
+       (let [cdef (card-def card) cost (rez-cost state side card)]
+         (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
            (trigger-event state side :rez card))))))
