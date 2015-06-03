@@ -1185,10 +1185,6 @@
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
 
-   "MaxX: Maximum Punk Rock"
-   {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
-                                  :effect (effect (mill 2) (draw))}}}
-
    "Magnum Opus"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
@@ -1198,6 +1194,24 @@
    "Manhunt"
    {:events {:successful-run {:once :per-turn :trace {:base 2 :msg "give the Runner 1 tag"
                                                       :effect (effect (gain :runner :tag 1))}}}}
+
+   "Mark Yale"
+   {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
+                                    :msg "gain 1 [Credits]"}}
+    :abilities [{:label "Trash to gain 2 [Credits]"
+                 :msg "gain 2 [Credits]"
+                 :effect (effect (gain :credit 2) (trash card))}
+                {:label "Spend an agenda counter to gain 2 [Credits]"
+                 :effect (req (resolve-ability
+                                state side
+                                {:prompt "Select an agenda with a counter"
+                                 :choices {:req #(and (= (:type %) "Agenda")
+                                                      (:counter %))}
+                                 :effect (req (add-prop state side target :counter -1)
+                                              (gain state :corp :credit 2)
+                                              (trigger-event state side :agenda-counter-spent card))
+                                 :msg (msg "spend an agenda token on " (:title target) " and gain 2 [Credits]")}
+                                card nil))}]}
 
    "Marked Accounts"
    {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
@@ -1212,6 +1226,10 @@
    {:choices {:max 3 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
     :msg (msg "install " (join ", " (map :title targets)))
     :effect (req (doseq [c targets] (runner-install state side c)))}
+
+   "MaxX: Maximum Punk Rock"
+   {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
+                                  :effect (effect (mill 2) (draw))}}}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
