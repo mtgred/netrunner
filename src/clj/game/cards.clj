@@ -259,7 +259,12 @@
    "Career Fair"
    {:prompt "Choose a Resource to install"
     :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
-    :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
+    :effect  (effect
+               (register-events {:pre-install
+                                 {:effect (effect (install-cost-bonus -3) (unregister-events card))}}
+                                (assoc card :zone '(:discard)))
+               (runner-install target))
+    :events {:pre-install nil}}
 
    "Celebrity Gift"
    {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
@@ -1075,6 +1080,12 @@
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain :corp :bad-publicity 1) (trash card))}]}
 
+   "Kate \"Mac\" McCaffrey: Digital Tinker"
+   {:effect (effect (gain :link 1))
+    :events {:pre-install {:once :per-turn
+                           :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                           :effect (effect (install-cost-bonus -1))}}}
+
    "Kati Jones"
    {:abilities
     [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
@@ -1260,7 +1271,12 @@
    "Modded"
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
-    :effect (effect (gain :credit (min 3 (:cost target))) (runner-install target))}
+    :effect (effect
+              (register-events {:pre-install
+                                {:effect (effect (install-cost-bonus -3) (unregister-events card))}}
+                               (assoc card :zone '(:discard)))
+              (runner-install target))
+    :events {:pre-install nil}}
 
    "Monolith"
    {:prevent [:net :brain]
@@ -1757,7 +1773,15 @@
                  :msg "do 3 net damage" :effect (effect (damage :net 3) (trash card))}]}
 
    "Running Interference"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target)
+                    (register-events {:pre-rez
+                                      {:req (req (= (:type target) "ICE"))
+                                       :effect (effect (rez-cost-bonus (:cost target)))}
+                                      :run-ends
+                                      {:effect (effect (unregister-events card))}}
+                                     (assoc card :zone '(:discard))))
+    :events {:pre-rez nil}}
 
    "Ryon Knight"
    {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
@@ -3229,9 +3253,6 @@
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
                 {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
                  :msg "shuffle up to 3 cards from Archives into R&D"}]}
-
-   "Kate \"Mac\" McCaffrey: Digital Tinker"
-   {:effect (effect (gain :link 1))}
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
