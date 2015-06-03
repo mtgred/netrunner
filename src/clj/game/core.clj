@@ -292,7 +292,8 @@
                       (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
                       (update-in [:counter] #(- (or % 0) (or counter-cost 0))))]
             (when (or counter-cost advance-counter-cost)
-              (update! state side c))
+              (update! state side c)
+              (when (= (:type card) "Agenda") (trigger-event state side :agenda-counter-spent card)))
             (when msg
               (let [desc (if (string? msg) msg (msg state side card targets))]
                 (system-msg state (to-keyword (:side card))
