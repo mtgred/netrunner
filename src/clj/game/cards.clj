@@ -1785,7 +1785,7 @@
                                       :run-ends
                                       {:effect (effect (unregister-events card))}}
                                      (assoc card :zone '(:discard))))
-    :events {:pre-rez nil}}
+    :events {:pre-rez nil :run-ends nil}}
 
    "Ryon Knight"
    {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
