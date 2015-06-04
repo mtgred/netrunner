@@ -2755,7 +2755,12 @@
                  :effect (effect (damage :meat 2 {:unpreventable true}) (end-run))}]}
 
    "Galahad"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") 
+                                             (= (:zone %) [:hand])
+                                             (has? % :subtype "Grail"))}
+                 :msg (msg "reveal " (join ", " (map :title targets)))}
+                {:msg "end the run" :effect (effect (end-run))}]}
 
    "Gemini"
    {:abilities [{:label "Trace 2"
@@ -2855,7 +2860,12 @@
                  :effect (effect (trash target) (trash card))}]}
 
    "Lancelot"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") 
+                                             (= (:zone %) [:hand])
+                                             (has? % :subtype "Grail"))}
+                 :msg (msg "reveal " (join ", " (map :title targets)))}
+                {:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
                  :effect (effect (trash target))}]}
 
@@ -2893,7 +2903,12 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Merlin"
-   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
+   {:abilities [{:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") 
+                                             (= (:zone %) [:hand])
+                                             (has? % :subtype "Grail"))}
+                 :msg (msg "reveal " (join ", " (map :title targets)))}
+                {:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
 
    "Meru Mati"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
