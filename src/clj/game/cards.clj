@@ -71,7 +71,7 @@
                  :msg "gain [Click][Click]"}]}
 
    "Amped Up"
-   {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true}))}
+   {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
 
    "Analog Dreamers"
    {:abilities [{:cost [:click 1] :msg "make a run on R&D"
@@ -128,7 +128,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
-                             (do (damage state :runner :meat 2 {:unboostable true})
+                             (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Astrolabe"
@@ -208,7 +208,7 @@
     :effect (effect (card-init target))}
 
    "Brain Cage"
-   {:effect (effect (damage :brain 1) (gain :max-hand-size 3))
+   {:effect (effect (damage :brain 1 {:card card}) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
 
    "Brain-Taping Warehouse"
@@ -276,7 +276,7 @@
                       :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
                       :effect (req (if (= target "1 tag")
                                      (gain state side :tag 1)
-                                     (damage state side :brain 1)))}}}
+                                     (damage state side :brain 1 {:card card})))}}}
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (add-watch state :cerebral-imaging
@@ -290,7 +290,7 @@
     :access {:optional {:req (req installed)
                         :prompt "Pay 3 [Credits] to use Cerebral Overwriter ability?"
                         :cost [:credit 3] :msg (msg "do " (:advance-counter card) " brain damage")
-                        :effect (effect (damage :brain (:advance-counter card)))}}}
+                        :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
@@ -315,6 +315,11 @@
                                    :effect (req (if (= target "Draw 1 card")
                                                   (draw state side)
                                                   (lose state side :tag 1)))} card nil))}]}
+
+   "Chrome Parlor"
+   {:events
+    {:pre-damage {:req (req (has? (second targets) :subtype "Cybernetic"))
+                  :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
    "Chronos Project"
    {:effect (effect (move-zone :runner :discard :rfg))}
@@ -506,7 +511,7 @@
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
-                                   :effect (effect (damage :meat 2))}}}
+                                   :effect (effect (damage :meat 2 {:card card}))}}}
 
    "Dedicated Server"
    {:recurring 2}
@@ -611,7 +616,7 @@
               :msg (msg "do " (count (get-in corp [:servers :remote (last (:server run)) :ices]))
                         " brain damage")
               :effect (req (damage state side :brain
-                                   (count (get-in corp [:servers :remote (last (:server run)) :ices]))))}}}
+                                   (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
@@ -727,7 +732,7 @@
 
    "Fetal AI"
    {:access {:req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
-             :effect (effect (damage :net 2))}
+             :effect (effect (damage :net 2 {:card card}))}
     :steal-cost [:credit 2]}
 
    "Fester"
@@ -933,7 +938,7 @@
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
-                              :effect (req (damage state side :net 1))}}}
+                              :effect (req (damage state side :net 1 {:card card}))}}}
 
    "Hostage"
    {:prompt "Choose a Connection to install"
@@ -943,8 +948,8 @@
 
    "Hostile Infrastructure"
    {:events {:trash {:req (req (and (= (:side target) "Corp") (= side :runner)))
-                     :msg "do 1 net damage" :effect (effect (damage :net 1))}}
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+                     :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
@@ -958,7 +963,7 @@
    "House of Knives"
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
-                 :effect (effect (damage :net 1))}]}
+                 :effect (effect (damage :net 1 {:card card}))}]}
 
    "Human First"
    {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
@@ -1060,8 +1065,8 @@
              :purge {:effect (effect (trash card))}}}
 
    "Jinteki: Personal Evolution"
-   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1))}
-             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
+             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}
 
    "John Masanori"
    {:events {:successful-run {:msg "draw 1 card" :once :per-turn :once-key :john-masanori-draw
@@ -1350,10 +1355,10 @@
                :msg "add it to his Grip" :effect (effect (move (first (:discard runner)) :hand))}}
 
    "Neural EMP"
-   {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1))}
+   {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
    "Net-Ready Eyes"
-   {:effect (effect (damage :meat 2 {:unboostable true})) :msg "suffer 2 meat damage"
+   {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
     :events {:run {:choices {:req #(and (= (:zone %) [:rig :program])
                                         (has? % :subtype "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
@@ -1499,7 +1504,7 @@
 
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
-    :effect (effect (damage :net (count (:scored runner))))}
+    :effect (effect (damage :net (count (:scored runner)) {:card card}))}
 
    "Plan B"
    {:advanceable :always
@@ -1538,7 +1543,7 @@
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
 
    "Private Security Force"
-   {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage :meat 1))
+   {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage :meat 1 {:card card}))
                  :msg "do 1 meat damage"}]}
 
    "Project Atlas"
@@ -1555,7 +1560,7 @@
    {:advanceable :always
     :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?" :cost [:credit 1]
                         :req (req installed) :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
-                        :effect (effect (damage :net (* 2 (:advance-counter card))))}}}
+                        :effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}
 
    "Project Vitruvius"
    {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
@@ -1571,7 +1576,7 @@
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner))))}}}]
+                               :effect (effect (damage :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
    "Public Sympathy"
@@ -1619,7 +1624,7 @@
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg (msg "do " (:stole-agenda runner-reg) " meat damage")
-            :effect (effect (damage :meat (get-in runner [:register :stole-agenda])))}}
+            :effect (effect (damage :meat (get-in runner [:register :stole-agenda]) {:card card}))}}
 
    "Push Your Luck"
    {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
@@ -1770,7 +1775,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (damage :net 3) (trash card))}]}
+                 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
 
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
@@ -1785,7 +1790,7 @@
 
    "Ryon Knight"
    {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
-                 :effect (effect (trash card) (damage :brain 1))}]}
+                 :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "Sacrificial Clone"
    {:prevent [:meat :net :brain]
@@ -1849,7 +1854,7 @@
     :events {:pre-install nil}}
 
    "Scorched Earth"
-   {:req (req tagged) :effect (effect (damage :meat 4))}
+   {:req (req tagged) :effect (effect (damage :meat 4 {:card card}))}
 
    "Scrubber"
    {:recurring 2}
@@ -1902,7 +1907,7 @@
                                    (resolve-ability
                                      state side
                                      {:trace {:base (req (dec (count cards)))
-                                              :effect (effect (damage :net 3))
+                                              :effect (effect (damage :net 3 {:card card}))
                                               :msg "do 3 net damage"}} card nil)))}]}
 
    "Self-Destruct Chips"
@@ -1917,7 +1922,7 @@
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
-                      :effect (effect (damage :net 1)) }}}
+                      :effect (effect (damage :net 1 {:card card})) }}}
 
    "Server Diagnostics"
    {:events {:corp-turn-begins {:effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}
@@ -1951,7 +1956,7 @@
                                          (req (if (= target "lose 1 agenda point")
                                                 (do (gain state :runner :agenda-point -1)
                                                     (move state :runner card :scored nil))
-                                                (damage state :corp :net dmg))))}
+                                                (damage state :corp :net dmg {:card card}))))}
                               card targets))}}
 
    "Shipment from Kaguya"
@@ -1973,7 +1978,7 @@
                      :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}
 
    "Shock!"
-   {:access {:msg "do 1 net damage" :effect (effect (damage :net 1))}}
+   {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
 
    "Shoot the Moon"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
@@ -2006,7 +2011,7 @@
                                        (trash state side c)))}} card))}
 
    "Skulljack"
-   {:effect (effect (damage :brain 1))
+   {:effect (effect (damage :brain 1 {:card card}))
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Snatch and Grab"
@@ -2037,7 +2042,7 @@
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
                         :prompt "Pay 4 [Credits] to use Snare! ability?" :cost [:credit 4]
                         :msg "do 3 net damage and give the Runner 1 tag"
-                        :effect (effect (damage :net 3) (gain :runner :tag 1))}}}
+                        :effect (effect (damage :net 3 {:card card}) (gain :runner :tag 1))}}}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
@@ -2062,7 +2067,7 @@
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1)) :recurring 2
-    :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1))}}}
+    :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -2074,7 +2079,7 @@
    {:events {:runner-turn-begins
              {:effect #(if (>= (:counter %3) 2)
                          (do (set-prop %1 %2 %3 :counter 0)
-                             (damage %1 %2 :brain 1 {:unpreventable true})
+                             (damage %1 %2 :brain 1 {:unpreventable true :card %3})
                              (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
                          (do (add-prop %1 %2 %3 :counter 1)
                              (gain %1 %2 :click 1)
@@ -2083,7 +2088,7 @@
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true}))}} card))}
+                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true :card card}))}} card))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -2237,7 +2242,7 @@
                              :effect (effect (add-prop target :counter 1))}}}
 
    "Titanium Ribs"
-   {:effect (effect (damage :meat 2))}
+   {:effect (effect (damage :meat 2 {:card card}))}
 
    "Toshiyuki Sakai"
    {:advanceable :always}
@@ -2252,12 +2257,12 @@
                                       :effect (effect (move target :hand))} card nil))}
 
    "Traffic Accident"
-   {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2))}
+   {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :leave-play (effect (damage :meat 3 {:unboostable true}))}
+    :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
 
    "Trick of Light"
    {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
@@ -2352,7 +2357,7 @@
                  :effect (effect (add-prop target :counter 1))}]}
 
    "Vulcan Coverup"
-   {:msg "do 2 meat damage" :effect (effect (damage :meat 2))
+   {:msg "do 2 meat damage" :effect (effect (damage :meat 2 {:card card}))
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain :corp :bad-publicity 1))}}
 
@@ -2691,7 +2696,7 @@
                  :trace {:base 5
                          :effect #(do (swap! %1 assoc-in [:run :run-effect :end-run]
                                              {:req (req (:successful run)) :msg "do 3 meat damage"
-                                              :effect (effect (damage :meat 3))})
+                                              :effect (effect (damage :meat 3 {:card card}))})
                                       (swap! %1 assoc-in [:run :run-effect :card] %3))}}]}
 
    "Chimera"
@@ -2709,12 +2714,12 @@
                                    :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
 
    "Chum"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
 
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
                  :msg (msg "do " (:memory runner) " net damage")
-                 :effect (effect (damage :net (:memory runner)))}]}
+                 :effect (effect (damage :net (:memory runner) {:card card}))}]}
 
    "Crick"
    {:abilities [{:msg "install a card from Archives" :choices (req (:discard corp))
@@ -2730,7 +2735,7 @@
                                         (move state side c :play-area false true)))}}]}
 
    "Data Mine"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1 {:card card}))}]}
 
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
@@ -2768,7 +2773,7 @@
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Fire Wall"
@@ -2779,15 +2784,15 @@
                  :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
                  :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))}
                 {:msg "do 2 meat damage and end the run"
-                 :effect (effect (damage :meat 2 {:unpreventable true}) (end-run))}]}
+                 :effect (effect (damage :meat 2 {:unpreventable true :card card}) (end-run))}]}
 
    "Galahad"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Gemini"
    {:abilities [{:label "Trace 2"
-                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1))
-                         :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1))}}}]}
+                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1) {:card card})
+                         :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}]}
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -2814,12 +2819,12 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Heimdall 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Heimdall 2.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
-                {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1) (end-run))}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+                {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1 {:card card}) (end-run))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Hourglass"
@@ -2843,7 +2848,7 @@
                  :effect (effect (trash target))}
                 {:label "Trace 1 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 1 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1) (gain :runner :tag 1))}}]}
+                         :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
 
    "Ichi 2.0"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
@@ -2851,7 +2856,7 @@
                  :effect (effect (trash target))}
                 {:label "Trace 3 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 3 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1) (gain :runner :tag 1))}}]}
+                         :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2864,7 +2869,7 @@
    {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
 
    "Janus 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ" :choices (req (:hand corp))
@@ -2873,7 +2878,7 @@
                  :effect (effect (handle-access targets) (trash card))}]}
 
    "Komainu"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Lab Dog"
    {:abilities [{:label "Force the Runner trash an installed piece of Hardware"
@@ -2900,9 +2905,9 @@
                  :effect (effect (trash target))}]}
 
    "Mamba"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
                 {:msg "do 1 net damage using 1 power counter"
-                 :counter-cost 1 :effect (effect (damage :net 1))}
+                 :counter-cost 1 :effect (effect (damage :net 1 {:card card}))}
                 {:msg "start a Psi game"
                  :psi {:not-equal {:msg "add 1 power counter"
                                    :effect (effect (add-prop :runner card :counter 1))}}}]}
@@ -2920,7 +2925,7 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Merlin"
-   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
+   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Meru Mati"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2967,7 +2972,7 @@
                  :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Neural Katana"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3))}]}
+   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
 
    "NEXT Bronze"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2984,7 +2989,7 @@
                                                         (+ c (count (filter (fn [ice]
                                                                               (and (:rezzed ice) (has? ice :subtype "NEXT")))
                                                                             (:ices server)))))
-                                                      0 (flatten (seq (:servers corp))))))}
+                                                      0 (flatten (seq (:servers corp)))) {:card card}))}
                 {:label "Trash a program" :prompt "Choose a program to trash"
                  :choices {:req #(= (:zone %) [:rig :program])}
                  :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
@@ -3007,7 +3012,7 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Pup"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Quandary"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -3061,11 +3066,11 @@
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :abilities [{:label "Trace 1 - Do 1 net damage"
-                 :trace {:base 1 :msg "do 1 net damage" :effect (effect (damage :net 1))}}
+                 :trace {:base 1 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
                 {:label "Trace 2 - Do 2 net damage"
-                 :trace {:base 2 :msg "do 2 net damage" :effect (effect (damage :net 2))}}
+                 :trace {:base 2 :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}}
                 {:label "Trace 3 - Do 3 net damage"
-                 :trace {:base 3 :msg "do 3 net damage" :effect (effect (damage :net 3))}}]}
+                 :trace {:base 3 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}]}
 
    "Snoop"
    {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
@@ -3092,7 +3097,7 @@
                  :effect (effect (trash target))}]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
                 {:prompt "Choose an AI program to trash" :msg (msg "trashes " (:title target))
                  :label "Trash an AI program" :effect (effect (trash target))
                  :choices (req (filter #(has? % :subtype "AI") (get-in runner [:rig :program])))}]}
@@ -3125,7 +3130,7 @@
 
    "Tsurugi"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
-                {:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+                {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Turing"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -3148,12 +3153,12 @@
                  :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
 
    "Viktor 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1))}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Viktor 2.0"
    {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
-                 :effect (effect (damage :brain 1))}
+                 :effect (effect (damage :brain 1 {:card card}))}
                 {:label "Trace 2 - Add 1 power counter"
                  :trace {:base 2 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}
                 {:msg "end the run" :effect (effect (end-run))}]}
@@ -3175,7 +3180,7 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Wall of Thorns"
-   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2))}
+   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Wendigo"
@@ -3188,7 +3193,7 @@
 
    "Woodcutter"
    {:advanceable :while-rezzed
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}]}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Wormhole"
    {:advanceable :always}
@@ -3200,7 +3205,7 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1))}
+   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
