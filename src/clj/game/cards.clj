@@ -1839,11 +1839,14 @@
                              {:prompt "Choose a program to install"
                               :choices (req (filter #(and (= (:type %) "Program")
                                                           (<= (:cost %) (+ (:credit runner) (:cost trashed))))
-                                                    ((if (= fr "Grip") :hand :discard ) runner)))
-                              :effect (effect (gain :credit (min (:cost target) (:cost trashed)))
-                                              (runner-install target))}
-                             card nil)))}
-            card nil)))}
+                                                    ((if (= fr "Grip") :hand :discard) runner)))
+                              :effect (effect (register-events {:pre-install
+                                                                {:effect
+                                                                 (effect (install-cost-bonus (- (:cost trashed)))
+                                                                         (unregister-events card))}}
+                                                               (assoc card :zone '(:discard)))
+                                              (runner-install target))} card nil)))} card nil)))
+    :events {:pre-install nil}}
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4))}
