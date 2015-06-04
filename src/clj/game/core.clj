@@ -236,13 +236,14 @@
 
 (defn resolve-select [state side]
   (let [selected (get-in @state [side :selected 0])
-        cards (map #(dissoc % :selected) (:cards selected))]
+        cards (map #(dissoc % :selected) (:cards selected))
+        curprompt (first (get-in @state [side :prompt]))]
     (when-not (empty? cards)
       (doseq [card cards]
         (update! state side card))
-      (resolve-ability state side (:ability selected) (get-in @state [side :prompt 0 :card]) cards)))
-  (swap! state update-in [side :selected] #(vec (rest %)))
-  (swap! state update-in [side :prompt] rest))
+      (resolve-ability state side (:ability selected) (:card curprompt) cards))
+    (swap! state update-in [side :selected] #(vec (rest %)))
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))))
 
 (defn show-select
   ([state side card ability] (show-select state side card ability nil))
@@ -252,9 +253,11 @@
             #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
                             :max (get-in ability [:choices :max])}))
      (show-prompt state side card
-                  (if-let [m (get-in ability [:choices :max])]
-                    (str "Select up to " m " targets for " (:title card))
-                    (str "Select a target for " (:title card)))
+                  (if-let [msg (:prompt ability)]
+                    msg
+                    (if-let [m (get-in ability [:choices :max])]
+                      (str "Select up to " m " targets for " (:title card))
+                      (str "Select a target for " (:title card))))
                   ["Done"] (fn [choice] (resolve-select state side)) priority))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
@@ -289,7 +292,8 @@
                       (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
                       (update-in [:counter] #(- (or % 0) (or counter-cost 0))))]
             (when (or counter-cost advance-counter-cost)
-              (update! state side c))
+              (update! state side c)
+              (when (= (:type card) "Agenda") (trigger-event state side :agenda-counter-spent card)))
             (when msg
               (let [desc (if (string? msg) msg (msg state side card targets))]
                 (system-msg state (to-keyword (:side card))
@@ -334,7 +338,7 @@
       (pay state side card :credit choice))
     (when (= (:choices prompt) :counter)
       (add-prop state side (:card prompt) :counter (- choice)))
-    (swap! state update-in [side :prompt] rest)
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     ((:effect prompt) (or choice card))
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
