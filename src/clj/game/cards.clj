@@ -338,8 +338,7 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
-                 :choices (req (filter #(and (has? % :type "Program")
-                                             (<= (:cost %) (:credit runner))) (:discard runner)))
+                 :choices (req (filter #(and (has? % :type "Program")) (:discard runner)))
                  :effect (effect (trash card) (runner-install target))}]}
 
    "Clone Retirement"
