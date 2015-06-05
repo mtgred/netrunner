@@ -1441,7 +1441,7 @@
 
    "Profiteering"
    {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
+    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
     :effect (effect (gain :credit (* 5 (Integer/parseInt target))
                           :bad-publicity (Integer/parseInt target)))}
 
