@@ -409,9 +409,11 @@
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
 
 (defn trash-cost [state side {:keys [trash] :as card}]
-  (-> trash
-      (+ (or (get-in @state [:bonus :trash]) 0))
-      (max 0)))
+  (if (nil? trash)
+    nil
+    (-> trash
+        (+ (or (get-in @state [:bonus :trash]) 0))
+        (max 0))))
 
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] (fnil #(+ % n) 0)))
