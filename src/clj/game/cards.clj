@@ -1094,6 +1094,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-install {:once :per-turn
                            :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                           :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
                            :effect (effect (install-cost-bonus -1))}}}
 
    "Kati Jones"
