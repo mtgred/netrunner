@@ -469,14 +469,20 @@
 
    "Daily Business Show"
    {:events {:corp-draw
-             {:msg "draw 1 additional card" :once :per-turn
-              :effect (req (let [c (move state side (first (:deck corp)) :hand)]
+             {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
+              :effect (req
+                        (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
+                                       (filter #(= (:title %) "Daily Business Show")) count)
+                              newcards (take dbs (:deck corp))
+                              drawn (conj newcards (last (:hand corp)))]
+                             (doseq [c newcards] (move state side c :hand))
                              (resolve-ability
                               state side
-                              {:prompt "Choose a card to add to the bottom of R&D"
-                               :choices [(last (:hand corp)) c]
-                               :msg (msg "add 1 card to bottom of R&D" )
-                               :effect (effect (move target :deck))} card targets)))}}}
+                              {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
+                               :choices {:max dbs
+                                         :req #(and (= (:zone %) [:hand]) (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                               :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
+                               :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
 
    "Daily Casts"
    {:data {:counter 8}
