@@ -2743,7 +2743,7 @@
                                              (= (:zone %) [:hand])
                                              (has? % :subtype "Grail"))}
                  :msg (msg "reveal " (join ", " (map :title targets)))}
-                {:msg "do 2 net damage" :effect (effect (damage :net 2))}]}
+                {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Meru Mati"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
