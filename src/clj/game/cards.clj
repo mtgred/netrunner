@@ -426,11 +426,10 @@
                                  state side
                                  {:choices {:req #(and (has? % :type "ICE") (:rezzed %))}
                                   :msg (msg "add " boost " strength to " (:title target))
-                                  :effect (req
-                                            (update! state side (assoc card :troubleshooter-target target
-                                                                       :troubleshooter-amount boost))
-                                            (trash state side (get-card state card))
-                                            (update-ice-strength state side target))} card nil)))}]
+                                  :effect (req (update! state side (assoc card :troubleshooter-target target
+                                                                          :troubleshooter-amount boost))
+                                               (trash state side (get-card state card))
+                                               (update-ice-strength state side target))} card nil)))}]
     :events {:pre-ice-strength nil :end-turn nil}
     :trash-effect
       {:effect (req (register-events
@@ -487,7 +486,7 @@
              {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
               :effect (req
                         (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
-                                       (filter #(= (:title %) "Daily Business Show")) count)
+                                       (filter #(and (:rezzed %) (= (:title %) "Daily Business Show")))  count)
                               newcards (take dbs (:deck corp))
                               drawn (conj newcards (last (:hand corp)))]
                              (doseq [c newcards] (move state side c :hand))
@@ -1099,8 +1098,21 @@
 
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
-                 :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
-                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
+                 :choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+                 :msg (msg "add strength to a rezzed ICE")
+                 :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
+                                                             (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side target))}
+                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]
+    :events
+      (let [it {:req (req (:it-targets card))
+                :effect (req (update! state side (dissoc card :it-targets))
+                             (update-all-ice state side))}]
+           {:pre-ice-strength {:req (req (get-in card [:it-targets (keyword (str (:cid target)))]))
+                                :effect (effect (ice-strength-bonus
+                                                  (* (get-in card [:it-targets (keyword (str (:cid target)))])
+                                                     (inc (:counter card)))))}
+            :runner-turn-ends it :corp-turn-ends it})}
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
