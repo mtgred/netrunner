@@ -432,9 +432,11 @@
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
 (defn rez-cost [state side {:keys [cost] :as card}]
-  (-> cost
-      (+ (or (get-in @state [:bonus :cost]) 0))
-      (max 0)))
+  (if (nil? cost)
+    nil
+    (-> cost
+        (+ (or (get-in @state [:bonus :cost]) 0))
+        (max 0))))
 
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
