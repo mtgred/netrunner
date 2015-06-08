@@ -426,7 +426,21 @@
                                  state side
                                  {:choices {:req #(and (has? % :type "ICE") (:rezzed %))}
                                   :msg (msg "add " boost " strength to " (:title target))
-                                  :effect (effect (trash card))} card nil)))}]}
+                                  :effect (req (update! state side (assoc card :troubleshooter-target target
+                                                                          :troubleshooter-amount boost))
+                                               (trash state side (get-card state card))
+                                               (update-ice-strength state side target))} card nil)))}]
+    :events {:pre-ice-strength nil :end-turn nil}
+    :trash-effect
+      {:effect (req (register-events
+                      state side
+                      (let [ct {:effect (req (unregister-events state side card)
+                                             (update! state side (dissoc card :troubleshooter-target))
+                                             (update-ice-strength state side (:troubleshooter-target card)))}]
+                        {:pre-ice-strength
+                          {:req (req (= (:cid target) (:cid (:troubleshooter-target card))))
+                           :effect (effect (ice-strength-bonus (:troubleshooter-amount card)))}
+                         :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
    "Corporate War"
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
@@ -472,7 +486,7 @@
              {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
               :effect (req
                         (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
-                                       (filter #(= (:title %) "Daily Business Show")) count)
+                                       (filter #(and (:rezzed %) (= (:title %) "Daily Business Show")))  count)
                               newcards (take dbs (:deck corp))
                               drawn (conj newcards (last (:hand corp)))]
                              (doseq [c newcards] (move state side c :hand))
@@ -504,9 +518,18 @@
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "Datasucker"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1))
-                              :req (req (#{:hq :rd :archives} target))}}
-    :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))}]}
+   {:events (let [ds {:effect (req (update! state side (dissoc card :datasucker-count)))}]
+                 {:successful-run {:effect (effect (add-prop card :counter 1))
+                                   :req (req (#{:hq :rd :archives} target))}
+                  :pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
+                                                    (:datasucker-count card)))
+                                     :effect (req (let [c (:datasucker-count (get-card state card))]
+                                                       (ice-strength-bonus state side (- c))))}
+                  :pass-ice ds :run-ends ds})
+    :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))
+                 :req (req current-ice)
+                 :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side current-ice))}]}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -666,7 +689,10 @@
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Code Gate")
                                                                        (:rezzed ice))) (:ices server)))))
-                                  0 (flatten (seq (:servers corp))))))}
+                                  0 (flatten (seq (:servers corp))))))
+
+    :events {:pre-ice-strength {:req (req (has? target :subtype "Code Gate"))
+                                :effect (effect (ice-strength-bonus 1))}}}
 
    "Encryption Protocol"
    {:events {:pre-trash {:req (req (= (first (:zone target)) :servers))
@@ -707,6 +733,13 @@
 
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}
+
+   "Experiential Data"
+   {:effect (req (update-ice-in-server state side (card->server state card)))
+    :events {:pre-ice-strength {:req (req (= (card->server state card) (card->server state target)))
+                                :effect (effect (ice-strength-bonus 1))}}
+    :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
+    :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Expert Schedule Analyzer"
    {:abilities
@@ -868,6 +901,10 @@
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
+   "Haas-Bioroid: Stronger Together"
+   {:events {:pre-ice-strength {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+                                :effect (effect (ice-strength-bonus 1))}}}
+
    "Hacktivist Meeting"
    {:events {:rez {:req (req (not= (:type target) "ICE"))
                    :msg "force the Corp to trash 1 card from HQ at random"
@@ -990,6 +1027,11 @@
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
 
+   "Ice Carver"
+   {:events {:pre-ice-strength
+             {:req (req (and (= (:cid target) (:cid current-ice)) (:rezzed target)))
+              :effect (effect (ice-strength-bonus -1))}}}
+
    "Imp"
    {:data {:counter 2}
     :abilities [{:counter-cost 1 :msg "trash at no cost" :once :per-turn
@@ -1056,8 +1098,21 @@
 
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
-                 :msg (msg "add " (:counter card) " strength to a rezzed ICE")}
-                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]}
+                 :choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+                 :msg (msg "add strength to a rezzed ICE")
+                 :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
+                                                             (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side target))}
+                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]
+    :events
+      (let [it {:req (req (:it-targets card))
+                :effect (req (update! state side (dissoc card :it-targets))
+                             (update-all-ice state side))}]
+           {:pre-ice-strength {:req (req (get-in card [:it-targets (keyword (str (:cid target)))]))
+                                :effect (effect (ice-strength-bonus
+                                                  (* (get-in card [:it-targets (keyword (str (:cid target)))])
+                                                     (inc (:counter card)))))}
+            :runner-turn-ends it :corp-turn-ends it})}
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
@@ -1130,6 +1185,9 @@
    {:data {:counter 2}
     :abilities [{:counter-cost 1 :effect (effect (prevent-jack-out))
                  :msg "prevent the Runner from jacking out"}]}
+
+   "Lag Time"
+   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
@@ -1431,6 +1489,12 @@
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Patch"
+   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (update-ice-strength (:host card)))
+    :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (ice-strength-bonus 2))}}}
+
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
                :msg "give the Runner 1 tag and take 1 bad publicity"
@@ -1471,14 +1535,15 @@
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (req (when-let [h (:host card)]
-                   (when (<= (:strength h) (:counter card))
-                     (trash state side h))))
+    :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
     :events {:runner-turn-begins
-             {:effect (req (add-prop state side card :counter 1)
-                           (when-let [h (get-card state (:host card))]
-                             (when (>= (inc (:counter card)) (:strength h))
-                               (trash state side h))))}}}
+             {:effect (req (add-prop state side card :counter 1) (update-ice-strength state side (:host card)))}
+             :pre-ice-strength
+             {:req (req (= (:cid target) (:cid (:host card))))
+              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
+             :ice-strength-changed
+             {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
+              :effect (effect (trash target))}}}
 
    "Paricia"
    {:recurring 2}
@@ -1862,6 +1927,14 @@
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4 {:card card}))}
 
+   "Scrubbed"
+   {:events (let [sc {:effect (req (update! state side (dissoc card :scrubbed-target)))}]
+                 {:encounter-ice {:once :per-turn
+                                  :effect (effect (update! (assoc card :scrubbed-target target)))}
+                  :pre-ice-strength {:req (req (= (:cid target) (:cid (:scrubbed-target card))))
+                                     :effect (effect (ice-strength-bonus -2))}
+                  :pass-ice sc :run-ends sc})}
+
    "Scrubber"
    {:recurring 2}
 
@@ -2114,11 +2187,14 @@
                                                                    (:rezzed ice))) (:ices server)))))
                               0 (flatten (seq (:servers corp))))
               " [Credits]")
-    :effect (effect (gain :credit
+    :effect (req (do (gain state :corp :credit
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Barrier")
                                                                        (:rezzed ice))) (:ices server)))))
-                                  0 (flatten (seq (:servers corp))))))}
+                                  0 (flatten (seq (:servers corp)))))
+                     (update-all-ice state side)))
+    :events {:pre-ice-strength {:req (req (has? target :subtype "Barrier"))
+                                :effect (effect (ice-strength-bonus 1))}}}
 
    "Sure Gamble"
    {:effect (effect (gain :credit 9))}
@@ -2729,10 +2805,15 @@
 
    "Crick"
    {:abilities [{:msg "install a card from Archives" :choices (req (:discard corp))
-                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
+                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]
+    :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (let [ices (:ices (card->server state card))]
+                              (if (= (:cid card) (:cid (last ices))) 4 0)))
+    :events {:rez {:req (req (= (card->server state card) (card->server state target)))
+                   :effect (effect (update-ice-strength card))}}}
 
    "Data Hound"
    {:abilities [{:label "Trace 2 - Look at the top of Stack"
@@ -2758,6 +2839,7 @@
    "Dracō"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target))
+    :strength-bonus (req (or (:counter card) 0))
     :abilities [{:label "Trace 2"
                  :trace {:base 2 :msg "give the Runner 1 tag and end the run"
                          :effect (effect (gain :runner :tag 1) (end-run))}}]}
@@ -2783,7 +2865,8 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Fire Wall"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Flare"
    {:abilities [{:prompt "Choose a piece of hardware to trash"
@@ -2811,11 +2894,13 @@
 
    "Gutenberg"
    {:abilities [{:label "Trace 7 - Give the Runner 1 tag"
-                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]
+    :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}
 
    "Hadrians Wall"
    {:advanceable :always
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Himitsu-Bako"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
@@ -2846,7 +2931,8 @@
                  :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Ice Wall"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Ichi 1.0"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
@@ -2865,7 +2951,8 @@
                          :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
 
    "IQ"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (count (:hand corp)))}
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
@@ -2934,7 +3021,8 @@
    {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Meru Mati"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (if (= (second (:zone card)) :hq) 3 0))}
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
@@ -2981,7 +3069,14 @@
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
 
    "NEXT Bronze"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (reduce (fn [c server]
+                                         (+ c (count (filter (fn [ice] (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                             (:ices server)))))
+                                     0 (flatten (seq (:servers corp)))))
+    :events (let [nb {:req (req (has? target :subtype "NEXT"))
+                   :effect (effect (update-ice-strength card))}]
+                 {:rez nb :derez nb :trash nb :card-moved nb})}
 
    "NEXT Gold"
    {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
@@ -3057,11 +3152,13 @@
     :abilities [{:label "Trace X - Give the runner 1 tag"
                  :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (gain :runner :tag 1))
                          :msg "give the Runner 1 tag"}}]}
+
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]
+    :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
@@ -3139,7 +3236,8 @@
                 {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Turing"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (if (= (second (:zone card)) :remote) 3 0))}
 
    "Tyrant"
    {:advanceable :while-rezzed
@@ -3208,7 +3306,12 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Wraparound"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
+                           0 7))
+    :events (let [wr {:req (req (has? target :subtype "Fracter"))
+                      :effect (effect (update-ice-strength card))}]
+                 {:runner-install wr :trash wr :card-moved wr})}
 
    "Yagura"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}

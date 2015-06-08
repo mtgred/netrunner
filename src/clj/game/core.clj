@@ -154,6 +154,7 @@
                  (when-let [events (:events (card-def c))]
                    (unregister-events state side c)
                    (register-events state side events c))))))
+         (trigger-event state side :card-moved moved-card)
          moved-card)))))
 
 (defn draw
@@ -321,10 +322,13 @@
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state assoc :run nil))))
 
+(declare update-ice-strength)
+
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ (or % 0) n)))
   (when (= key :advance-counter)
-    (trigger-event state side :advance card)))
+    (trigger-event state side :advance card)
+    (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -392,18 +396,46 @@
        (doseq [dtype prevent]
               (swap! state update-in [:damage :prevent dtype] #(conj % card))))
     (update! state side c)
-    (resolve-ability state side cdef c nil)
     (when-let [events (:events cdef)]
       (register-events state side events c))
+    (resolve-ability state side cdef c nil)
     (get-card state c)))
+
+(defn ice-strength-bonus [state side n]
+  (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0)))
+
+(defn ice-strength [state side {:keys [strength] :as card}]
+  (-> (if-let [strfun (:strength-bonus (card-def card))]
+              (+ strength (strfun state side card nil))
+              strength)
+      (+ (or (get-in @state [:bonus :ice-strength]) 0))))
+
+(defn update-ice-strength [state side ice]
+  (let [ice (get-card state ice) oldstren (or (:current-strength ice) (:strength ice))]
+    (when (:rezzed ice)
+      (swap! state update-in [:bonus] dissoc :ice-strength)
+      (trigger-event state side :pre-ice-strength ice)
+      (update! state side (assoc ice :current-strength (ice-strength state side ice)))
+      (trigger-event state side :ice-strength-changed (get-card state ice) oldstren))))
+
+(defn update-ice-in-server [state side server]
+  (doseq [ice (:ices server)] (update-ice-strength state side ice) ))
+
+(defn update-all-ice [state side]
+  (doseq [central `(:archives :rd :hq)]
+    (update-ice-in-server state side (get-in @state [:corp :servers central])))
+  (doseq [remote (get-in @state [:corp :servers :remote])]
+    (update-ice-in-server state side remote)))
 
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
 (defn rez-cost [state side {:keys [cost] :as card}]
-  (-> cost
-      (+ (or (get-in @state [:bonus :cost]) 0))
-      (max 0)))
+  (if (nil? cost)
+    nil
+    (-> cost
+        (+ (or (get-in @state [:bonus :cost]) 0))
+        (max 0))))
 
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
@@ -724,22 +756,40 @@
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
+    (update-all-ice state side)
     (trigger-event state side :unsuccessful-run)
     (handle-end-run state side)))
 
 (defn no-action [state side args]
   (swap! state assoc-in [:run :no-action] true)
-  (system-msg state side "has no further action"))
+  (system-msg state side "has no further action")
+  (when-let [pos (get-in @state [:run :position])]
+    (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+      (when (:rezzed ice)
+        (trigger-event state side :encounter-ice ice)
+        (update-ice-strength state side ice)
+        (let [stren (:current-strength (get-card state ice))]
+          (system-msg state :runner (str "encounters " (:title ice) " at strength " stren)))))))
 
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])
+    (when-let [pos (get-in @state [:run :position])]
+      (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+        (trigger-event state side :pass-ice ice)
+        (update-ice-in-server state side (card->server state ice))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
     (swap! state assoc-in [:runner :rig :program]
            (for [p (get-in @state [:runner :rig :program])]
              (if (or (not (:current-strength p)) (:all-run p))
                p (assoc p :current-strength nil))))
-    (system-msg state side "continues the run")))
+    (system-msg state side "continues the run")
+    (let [pos (get-in @state [:run :position])]
+      (when (> (count (get-in @state [:run :ices])) 0)
+        (update-ice-strength state side (nth (get-in @state [:run :ices]) pos)))
+      (when (> pos 0)
+        (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
+          (trigger-event state side :approach-ice ice))))))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
   (let [cdef (card-def card)
@@ -861,6 +911,8 @@
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
+           (resolve-ability state side cdef card nil)
+           (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))))
 
 (defn corp-install
@@ -904,6 +956,8 @@
 (defn derez [state side card]
   (system-msg state side (str "derez " (:title card)))
   (update! state :corp (desactivate state :corp card true))
+  (when-let [derez-effect (:derez-effect (card-def card))]
+    (resolve-ability state side derez-effect (get-card state card) nil))
   (trigger-event state side :derez card))
 
 (defn advance [state side {:keys [card]}]

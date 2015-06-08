@@ -176,7 +176,8 @@
         [:div.counters
          (when (> counter 0) [:div.darkbg.counter counter])
          (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
-        (when current-strength [:div.darkbg.strength current-strength])
+        (when (and current-strength (not= strength current-strength))
+              current-strength [:div.darkbg.strength current-strength])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
           (let [centrals ["HQ" "R&D" "Archives"]
                 remotes (conj (remote-list remotes) "New remote")
