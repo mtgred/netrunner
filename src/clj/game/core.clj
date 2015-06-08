@@ -416,7 +416,6 @@
       (swap! state update-in [:bonus] dissoc :ice-strength)
       (trigger-event state side :pre-ice-strength ice)
       (update! state side (assoc ice :current-strength (ice-strength state side ice)))
-      ;(when (not= (:current-strength (get-card state ice)) oldstren)
       (trigger-event state side :ice-strength-changed (get-card state ice) oldstren))))
 
 (defn update-ice-in-server [state side server]
