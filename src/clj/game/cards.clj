@@ -2676,9 +2676,10 @@
     :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))}
 
    "Snowball"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength for the remainder of the run"
-                 :effect (effect (pump card 1 true))}]}
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine and add 1 strength for the remainder of the run"
+                 :effect (effect (pump card 1 true))}
+                {:cost [:credit 1] :msg "add 1 strength"
+                 :effect (effect (pump card 1))}]}
 
    "Sharpshooter"
    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card))}
