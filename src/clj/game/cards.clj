@@ -1599,7 +1599,9 @@
    "Plascrete Carapace"
    {:data [:counter 4]
     :prevent [:meat]
-    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage" :effect (effect (damage-prevent :meat 1))}]}
+    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
+                 :effect (req (damage-prevent state side :meat 1)
+                              (when (= (:counter card) 0) (trash state side card)))}]}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
