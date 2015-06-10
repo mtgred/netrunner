@@ -1501,7 +1501,8 @@
                :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
 
    "Power Shutdown"
-   {:prompt "Trash how many cards from R&D?" :choices (req (count (:deck corp)))
+   {:req (req (:made-run runner-reg))
+    :prompt "Trash how many cards from R&D?" :choices (req (count (:deck corp)))
     :msg (msg "make the Runner trash 1 installed program or hardware with an install cost of " target " or less")
     :effect (req (doseq [c (take target (:deck corp))] 
                  (trash state side c)))}
@@ -3386,9 +3387,6 @@
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
-
-   "Power Shutdown"
-   {:req (req (:made-run runner-reg))}
 
    "Tallie Perrault"
    {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
