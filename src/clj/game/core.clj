@@ -660,8 +660,8 @@
 
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
-  (swap! state update-in [:bonus] dissoc :trash)
   (doseq [c cards]
+    (swap! state update-in [:bonus] dissoc :trash)
     (let [cdef (card-def c)
           c (assoc c :seen true)]
       (when-let [name (:title c)]
