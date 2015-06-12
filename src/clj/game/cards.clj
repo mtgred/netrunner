@@ -3076,7 +3076,7 @@
                                          (+ c (count (filter (fn [ice] (and (:rezzed ice) (has? ice :subtype "NEXT")))
                                                              (:ices server)))))
                                      0 (flatten (seq (:servers corp)))))
-    :events (let [nb {:req (req (has? target :subtype "NEXT"))
+    :events (let [nb {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "NEXT")))
                    :effect (effect (update-ice-strength card))}]
                  {:rez nb :derez nb :trash nb :card-moved nb})}
 
