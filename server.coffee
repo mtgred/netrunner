@@ -149,7 +149,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 # Express config
 app.configure ->
   app.use express.favicon(__dirname + "/resources/public/img/jinteki.ico")
-  app.set 'port', 1042
+  app.set 'port', 2095
   app.set 'ipaddr', "0.0.0.0"
   app.use express.methodOverride() # provide PUT DELETE
   app.use express.cookieParser()

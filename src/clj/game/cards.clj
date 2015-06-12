@@ -1536,7 +1536,10 @@
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
     :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
     :events {:runner-turn-begins
-             {:effect (req (add-prop state side card :counter 1) (update-ice-strength state side (:host card)))}
+             {:effect (req (add-prop state side card :counter 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-ice-strength (:host card)))}
              :pre-ice-strength
              {:req (req (= (:cid target) (:cid (:host card))))
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
