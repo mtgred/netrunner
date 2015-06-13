@@ -99,8 +99,9 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "leave-game"
         msg.action = "quit"
-        requester.send(JSON.stringify(msg)) if games[socket.gameid].players.length > 1
         removePlayer(socket)
+        game = games[socket.gameid]
+        requester.send(JSON.stringify(msg)) if game and game.players.length > 1
 
       when "join"
         joinGame(socket, msg.gameid)
