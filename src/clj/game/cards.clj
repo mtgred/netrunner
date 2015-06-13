@@ -1545,7 +1545,8 @@
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (effect (trash target))}}}
+              :effect (effect (trash target))
+              :msg (msg "trash " (:title target))}}}
 
    "Paricia"
    {:recurring 2}
@@ -2696,8 +2697,17 @@
 
    "Wyrm"
    {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
-                {:cost [:credit 1] :msg "reduce ICE strength by 1"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+                {:cost [:credit 1]
+                 :label "give -1 strength to current ice" :msg (msg "give -1 strength to " (:title current-ice))
+                 :req (req current-ice)
+                 :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side current-ice))}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]
+    :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
+                 {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
+                                     :effect (req (let [c (:wyrm-count (get-card state card))]
+                                                       (ice-strength-bonus state side (- c))))}
+                  :pass-ice wy :run-ends wy})}
 
    "Yog.0"
    {:abilities [{:msg "break 1 code gate subroutine"}]}
