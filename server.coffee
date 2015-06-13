@@ -29,16 +29,18 @@ swapSide = (side) ->
 removePlayer = (socket) ->
   game = games[socket.gameid]
   if game
+    if game.players.length is 1
+      delete games[socket.gameid]
+      requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
     for player, i in game.players
       if player.id is socket.id
         game.players.splice(i, 1)
         break
-    if game.players.length is 0
-      requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
-      delete games[socket.gameid]
     socket.leave(socket.gameid)
     socket.gameid = false
     lobby.emit('netrunner', {type: "games", games: games})
+  for k, v of games
+    delete games[k] if v.players.length is 1 and not v.started and (new Date() - v.date) > 3600000
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -138,6 +140,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           msg.action = "start"
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
+          for player in game.players
+            delete player["deck"]
           lobby.emit('netrunner', {type: "games", games: games})
 
       when "do"
