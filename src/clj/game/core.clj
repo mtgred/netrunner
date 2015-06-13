@@ -154,7 +154,7 @@
                  (when-let [events (:events (card-def c))]
                    (unregister-events state side c)
                    (register-events state side events c))))))
-         (trigger-event state side :card-moved moved-card)
+         (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
 (defn draw
@@ -501,7 +501,7 @@
                                              (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
                                                   " " (name type) " damage")
                                              "will not prevent damage"))
-                               (resolve-damage state side type (max 0 (- n (or prevent 0))) args))))
+                               (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))))
                 (resolve-damage state side type n args))))))
 
 (defn shuffle! [state side kw]
