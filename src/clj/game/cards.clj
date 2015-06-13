@@ -2816,8 +2816,9 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :strength-bonus (req (let [ices (:ices (card->server state card))]
                               (if (= (:cid card) (:cid (last ices))) 4 0)))
-    :events {:rez {:req (req (= (card->server state card) (card->server state target)))
-                   :effect (effect (update-ice-strength card))}}}
+    :events (let [cw {:req (req (= (card->server state card) (card->server state target)))
+                      :effect (effect (update-ice-strength card))}]
+                 {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
    {:abilities [{:label "Trace 2 - Look at the top of Stack"
