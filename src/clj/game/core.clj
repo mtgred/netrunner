@@ -865,7 +865,15 @@
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn host [state side card {:keys [zone cid] :as target}]
+(defn host [state side card {:keys [zone cid host] :as target}]
+  (doseq [s [:runner :corp]]
+    (if host
+      (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
+                                 (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
+        (update! state side (update-in host-card [:hosted]
+                                       (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+      (swap! state update-in (cons s (vec zone))
+             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
   (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)))]
     (update! state side (update-in card [:hosted] #(conj % c)))
