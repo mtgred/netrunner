@@ -1,4 +1,3 @@
-.DS_Store
 node_modules
 
 pom.xml
@@ -20,5 +19,3 @@ pom.xml
 /resources/public/img/cards
 /data/andb-*.json
 /data/img
-game.js
-deploy.sh

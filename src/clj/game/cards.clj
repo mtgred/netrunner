@@ -1149,6 +1149,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-install {:once :per-turn
                            :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                           :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
                            :effect (effect (install-cost-bonus -1))}}}
 
    "Kati Jones"
@@ -1504,7 +1505,7 @@
 
    "Profiteering"
    {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
+    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
     :effect (effect (gain :credit (* 5 (Integer/parseInt target))
                           :bad-publicity (Integer/parseInt target)))}
 
@@ -1534,15 +1535,7 @@
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
-    :events {:runner-turn-begins
-             {:effect (req (add-prop state side card :counter 1) (update-ice-strength state side (:host card)))}
-             :pre-ice-strength
-             {:req (req (= (:cid target) (:cid (:host card))))
-              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
-             :ice-strength-changed
-             {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (effect (trash target))}}}
+    :events {:runner-turn-begins {:effect (req (add-prop state side card :counter 1))}}}
 
    "Paricia"
    {:recurring 2}
@@ -2157,13 +2150,13 @@
 
    "Stim Dealer"
    {:events {:runner-turn-begins
-             {:effect #(if (>= (:counter %3) 2)
-                         (do (set-prop %1 %2 %3 :counter 0)
-                             (damage %1 %2 :brain 1 {:unpreventable true :card %3})
-                             (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
-                         (do (add-prop %1 %2 %3 :counter 1)
-                             (gain %1 %2 :click 1)
-                             (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
+             {:effect (req (if (>= (:counter card) 2)
+                             (do (set-prop state side card :counter 0)
+                                 (damage state side :brain 1 {:unpreventable true :card card})
+                                 (system-msg state side "takes 1 brain damage from Stim Dealer"))
+                             (do (add-prop state side card :counter 1)
+                                 (gain state side :click 1)
+                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
