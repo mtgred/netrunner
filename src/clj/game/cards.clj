@@ -1200,7 +1200,9 @@
    {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
                              :player :runner :effect (effect (move :corp target :hand))}
              :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
-                             :effect (effect (move :corp target :hand))}}}
+                             :effect (req (move state :corp target :hand)
+                                          (swap! state update-in [:runner :prompt] rest)
+                                          (handle-end-run state side))}}}
 
    "Legwork"
    {:effect (effect (run :hq) (access-bonus 2))}
