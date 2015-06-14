@@ -41,6 +41,6 @@
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'run '(:run @state)
-            'current-ice '(when (and run (> (:position run) 0)) ((:ices run) (dec (:position run))))
+            'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
             'target '(first targets)]
        (str ~@expr))))
