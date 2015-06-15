@@ -2858,7 +2858,8 @@
                 {:msg "draw 1 card" :effect (effect (draw))}]}
 
    "Excalibur"
-   {:abilities [{:msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
+   {:abilities [{:label "The Runner cannot make another run this turn"
+                 :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -2877,7 +2878,16 @@
                  :effect (effect (damage :meat 2 {:unpreventable true :card card}) (end-run))}]}
 
    "Galahad"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
+                {:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :msg (msg "reveal "
+                           (join ", " (map #(str (:title %) " ("
+                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
+                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :effect (req (doseq [ice targets]
+                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Gemini"
    {:abilities [{:label "Trace 2"
@@ -2983,7 +2993,16 @@
    "Lancelot"
    {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
                  :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}]}
+                 :effect (effect (trash target))}
+                {:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :msg (msg "reveal "
+                           (join ", " (map #(str (:title %) " ("
+                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
+                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :effect (req (doseq [ice targets]
+                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Little Engine"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
@@ -3019,7 +3038,16 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Merlin"
-   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
+   {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
+                {:label "Reveal up to 2 Grail ICE from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :msg (msg "reveal "
+                           (join ", " (map #(str (:title %) " ("
+                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
+                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
+                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :effect (req (doseq [ice targets]
+                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Meru Mati"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
