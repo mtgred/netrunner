@@ -94,8 +94,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
 
       when "leave-lobby"
-        socket.to(socket.gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
+        gameid = socket.gameid
         removePlayer(socket)
+        if socket.request.user
+          socket.broadcast.to(gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
 
       when "leave-game"
         msg.action = "quit"
