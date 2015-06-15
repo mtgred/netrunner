@@ -1201,7 +1201,9 @@
    {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
                              :player :runner :effect (effect (move :corp target :hand))}
              :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
-                             :effect (effect (move :corp target :hand))}}}
+                             :effect (req (move state :corp target :hand)
+                                          (swap! state update-in [:runner :prompt] rest)
+                                          (handle-end-run state side))}}}
 
    "Legwork"
    {:effect (effect (run :hq) (access-bonus 2))}
@@ -1535,7 +1537,19 @@
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :events {:runner-turn-begins {:effect (req (add-prop state side card :counter 1))}}}
+    :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
+    :events {:runner-turn-begins
+             {:effect (req (add-prop state side card :counter 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-ice-strength (:host card)))}
+             :pre-ice-strength
+             {:req (req (= (:cid target) (:cid (:host card))))
+              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
+             :ice-strength-changed
+             {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
+              :effect (effect (trash target))
+              :msg (msg "trash " (:title target))}}}
 
    "Paricia"
    {:recurring 2}
@@ -2686,8 +2700,17 @@
 
    "Wyrm"
    {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
-                {:cost [:credit 1] :msg "reduce ICE strength by 1"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+                {:cost [:credit 1]
+                 :label "give -1 strength to current ice" :msg (msg "give -1 strength to " (:title current-ice))
+                 :req (req current-ice)
+                 :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side current-ice))}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]
+    :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
+                 {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
+                                     :effect (req (let [c (:wyrm-count (get-card state card))]
+                                                       (ice-strength-bonus state side (- c))))}
+                  :pass-ice wy :run-ends wy})}
 
    "Yog.0"
    {:abilities [{:msg "break 1 code gate subroutine"}]}
@@ -2806,8 +2829,9 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :strength-bonus (req (let [ices (:ices (card->server state card))]
                               (if (= (:cid card) (:cid (last ices))) 4 0)))
-    :events {:rez {:req (req (= (card->server state card) (card->server state target)))
-                   :effect (effect (update-ice-strength card))}}}
+    :events (let [cw {:req (req (= (card->server state card) (card->server state target)))
+                      :effect (effect (update-ice-strength card))}]
+                 {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
    {:abilities [{:label "Trace 2 - Look at the top of Stack"

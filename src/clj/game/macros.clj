@@ -11,7 +11,7 @@
                 'corp-reg '(get-in @state [:corp :register])
                 'runner-reg '(get-in @state [:runner :register])
                 'current-ice '(when-let [run (:run @state)]
-                                (when (> (:position run) 0) ((:ices run) (dec (:position run)))))
+                                (when (> (or (:position run) 0) 0) ((:ices run) (dec (:position run)))))
                 'target '(first targets)]
            ~@actions))))
 
@@ -20,7 +20,7 @@
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
             'run '(:run @state)
-            'current-ice '(when (and run (> (:position run) 0)) ((:ices run) (dec (:position run))))
+            'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
@@ -41,6 +41,6 @@
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'run '(:run @state)
-            'current-ice '(when (and run (> (:position run) 0)) ((:ices run) (dec (:position run))))
+            'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
             'target '(first targets)]
        (str ~@expr))))

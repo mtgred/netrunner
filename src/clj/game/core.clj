@@ -154,7 +154,7 @@
                  (when-let [events (:events (card-def c))]
                    (unregister-events state side c)
                    (register-events state side events c))))))
-         (trigger-event state side :card-moved moved-card)
+         (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
 (defn draw
@@ -326,9 +326,10 @@
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ (or % 0) n)))
-  (when (= key :advance-counter)
-    (trigger-event state side :advance card)
-    (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))))
+  (if (= key :advance-counter)
+    (do (trigger-event state side :advance (get-card state card))
+        (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card)))
+    (trigger-event state side :counter-added (get-card state card))))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -470,7 +471,7 @@
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
-(defn resolve-damage [state side type n]
+(defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
   (let [hand (get-in @state [:runner :hand])]
        (when (< (count hand) n)
              (flatline state))
@@ -479,7 +480,7 @@
              (swap! state update-in [:runner :max-hand-size] #(- % n)))
        (doseq [c (take n (shuffle hand))]
               (trash state side c type))
-       (trigger-event state side :damage type)))
+       (trigger-event state side :damage type card)))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
@@ -500,8 +501,8 @@
                                              (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
                                                   " " (name type) " damage")
                                              "will not prevent damage"))
-                               (resolve-damage state side type (max 0 (- n (or prevent 0))))))))
-                (resolve-damage state side type n))))))
+                               (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))))
+                (resolve-damage state side type n args))))))
 
 (defn shuffle! [state side kw]
   (swap! state update-in [side kw] shuffle))
