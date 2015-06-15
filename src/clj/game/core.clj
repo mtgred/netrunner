@@ -775,9 +775,9 @@
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])
     (when-let [pos (get-in @state [:run :position])]
-      (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+      (let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
         (trigger-event state side :pass-ice ice)
-        (update-ice-in-server state side (card->server state ice))))
+        (when ice (update-ice-in-server state side (card->server state ice)))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
     (swap! state assoc-in [:runner :rig :program]
