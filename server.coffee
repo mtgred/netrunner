@@ -94,15 +94,16 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
 
       when "leave-lobby"
-        gameid = socket.gameid
+        gid = socket.gameid
         removePlayer(socket)
         if socket.request.user
-          socket.broadcast.to(gameid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
+          socket.broadcast.to(gid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
 
       when "leave-game"
-        msg.action = "quit"
+        gid = socket.gameid
         removePlayer(socket)
-        game = games[socket.gameid]
+        msg.action = "quit"
+        game = games[gid]
         requester.send(JSON.stringify(msg)) if game and game.players.length > 1
 
       when "join"
