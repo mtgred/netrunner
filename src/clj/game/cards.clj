@@ -1899,7 +1899,7 @@
                  :effect (effect (trash card) (play-instant target))}]}
 
    "Satellite Uplink"
-   {:req (req tagged) :msg (msg "expose " (join ", " (map :title targets)))
+   {:msg (msg "expose " (join ", " (map :title targets)))
     :choices {:max 2 :req #(= (first (:zone %)) :servers)}
     :effect (req (doseq [c targets] (expose state side c)))}
 
