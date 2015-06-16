@@ -2902,8 +2902,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -3017,8 +3017,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -3062,8 +3062,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
