@@ -647,7 +647,8 @@
                                    (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}
 
    "Edward Kim: Humanitys Hammer"
-   {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
+   {:effect (effect (gain :link 1))
+    :events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
                       :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Efficiency Committee"
