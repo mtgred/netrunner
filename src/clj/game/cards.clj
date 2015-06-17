@@ -167,7 +167,8 @@
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
 
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
@@ -1487,14 +1488,16 @@
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Patch"
-   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (update-ice-strength (:host card)))
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (update-ice-strength (:host card))
+                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
 
@@ -2178,6 +2181,10 @@
     :effect (effect (gain :credit 9)
                     (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true :card card}))}} card))}
 
+   "Sub Boost"
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
+
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
@@ -2289,6 +2296,11 @@
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
+
+   "The Personal Touch"
+   {:hosting {:req #(and (has? % :subtype "Icebreaker")
+                         (or (= (last (:zone %)) :program)
+                             (= (first (:zone (:host %))) :rig)))}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
