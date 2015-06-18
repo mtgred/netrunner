@@ -168,7 +168,7 @@
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true})
-                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
+                    (host (get-card state target) (assoc card :zone [:discard])))}
 
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
@@ -1489,15 +1489,15 @@
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true})
-                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
+                    (host (get-card state target) (assoc card :zone [:discard])))}
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Patch"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (update-ice-strength (:host card))
-                    (host (get-card state target) (get-card state (assoc card :zone [:discard]))))
+    :effect (effect (host target (assoc card :zone [:discard]))
+                    (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
 
@@ -2183,7 +2183,7 @@
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (host (get-card state target) (get-card state (assoc card :zone [:discard]))))}
+    :effect (effect (host target (assoc card :zone [:discard])))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
