@@ -3438,7 +3438,7 @@
    {:req (req (:made-run runner-reg))}
 
    "Tallie Perrault"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
+   {:abilities [{:label "Draw 1 card for each Corp bad publicity" :effect (effect (trash card) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
                               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
