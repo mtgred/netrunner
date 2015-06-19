@@ -998,7 +998,7 @@
   (when (pay state side card :click 1 :credit 1)
     (system-msg state side "advances a card")
     (update-advancement-cost state side card)
-    (add-prop state side card :advance-counter 1)))
+    (add-prop state side (get-card state card) :advance-counter 1)))
 
 (defn forfeit [state side card]
   (system-msg state side (str "forfeit " (:title card)))
