@@ -2203,9 +2203,12 @@
                                  (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
    "Stimhack"
-   {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
+   {:prompt "Choose a server" :choices (req servers)
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true :card card}))}} card))}
+                    (run target {:end-run
+                                 {:msg " take 1 brain damage"
+                                  :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
+                      card))}
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
