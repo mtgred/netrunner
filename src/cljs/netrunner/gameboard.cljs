@@ -56,9 +56,9 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost] :as card}]
+(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter advancementcost))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
           (cons "score" %) %))
       (#(if (or (and (= type "Agenda") (= (first zone) "servers"))
                 (= advanceable "always")
@@ -153,7 +153,7 @@
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 
-(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
+(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
@@ -205,7 +205,7 @@
               abilities)]))
         (when (= (first zone) "servers")
           (cond
-            (and (= type "Agenda") (>= advance-counter advancementcost))
+            (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
              [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
              [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
