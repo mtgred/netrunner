@@ -457,7 +457,7 @@
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
    "Crash Space"
-   {:prevent [:meat]
+   {:prevent {:damage [:meat]}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
@@ -770,7 +770,7 @@
                     (move target :hand) (shuffle! :deck))}
 
    "Feedback Filter"
-   {:prevent [:net :brain]
+   {:prevent {:damage [:net :brain]}
     :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
                 {:msg "prevent 2 brain damage" :effect (effect (trash card) (damage-prevent :brain 2)) }]}
 
@@ -1365,7 +1365,7 @@
     :events {:pre-install nil}}
 
    "Monolith"
-   {:prevent [:net :brain]
+   {:prevent {:damage [:net :brain]}
     :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
     :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                  :priority true
@@ -1427,7 +1427,7 @@
    {:recurring 1}
 
    "Net Shield"
-   {:prevent [:net]
+   {:prevent {:damage [:net]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
@@ -1621,7 +1621,7 @@
 
    "Plascrete Carapace"
    {:data [:counter 4]
-    :prevent [:meat]
+    :prevent {:damage [:meat]}
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card)))}]}
@@ -1888,7 +1888,7 @@
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "Sacrificial Clone"
-   {:prevent [:meat :net :brain]
+   {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
                                                         (get-in runner [:rig :resource]))
@@ -2614,7 +2614,7 @@
     :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
 
    "Deus X"
-   {:prevent [:net]
+   {:prevent {:damage [:net]}
     :abilities [{:msg "break any number of AP subroutines" :effect (effect (trash card))}
                 {:msg "prevent any amount of net damage"
                  :effect (effect (trash card) (damage-prevent :net Integer/MAX_VALUE))}]}

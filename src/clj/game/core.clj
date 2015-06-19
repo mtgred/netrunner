@@ -68,9 +68,9 @@
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
-               (doseq [dtype prevent]
-                      (swap! state update-in [:damage :prevent dtype]
-                             (fn [pv] (remove #(= (:cid %) (:cid card)) pv)))))
+       (doseq [[ptype pvec] prevent]
+         (doseq [psub pvec]
+           (swap! state update-in [:prevent ptype psub] (fn [pv] (remove #(= (:cid %) (:cid card)) pv))))))
      (unregister-events state side card)
      (when-let [mu (:memoryunits card)]
        (gain state :runner :memory mu))
@@ -394,8 +394,9 @@
                        {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
                         {:effect (effect (set-prop card :counter recurring))}} c))
     (when-let [prevent (:prevent cdef)]
-       (doseq [dtype prevent]
-              (swap! state update-in [:damage :prevent dtype] #(conj % card))))
+      (doseq [[ptype pvec] prevent]
+        (doseq [psub pvec]
+          (swap! state update-in [:prevent ptype psub] #(conj % card)))))
     (update! state side c)
     (when-let [events (:events cdef)]
       (register-events state side events c))
@@ -489,7 +490,7 @@
     (swap! state update-in [:damage :damage-prevent] dissoc type)
     (trigger-event state side :pre-damage type card)
     (let [n (damage-count state side type n args)]
-         (let [prevent (get-in @state [:damage :prevent type])]
+         (let [prevent (get-in @state [:prevent :damage type])]
               (if (and (not unpreventable) prevent (> (count prevent) 0))
                 (do (system-msg state :runner "has the option to prevent damage")
                     (show-prompt
