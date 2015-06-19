@@ -20,7 +20,7 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
-(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost)
+(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
