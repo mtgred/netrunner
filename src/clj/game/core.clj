@@ -989,7 +989,6 @@
     (update-advancement-cost state side ag)))
 
 (defn update-advancement-cost [state side agenda]
-  (system-msg state side (str "update agenda " (:title agenda)))
   (swap! state update-in [:bonus] dissoc :advancement-cost)
   (trigger-event state side :pre-advancement-cost agenda)
   (update! state side (assoc agenda :current-cost (advancement-cost state side agenda))))
