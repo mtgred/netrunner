@@ -20,7 +20,7 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
-(declare prompt! forfeit trigger-event handle-end-run trash)
+(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -601,7 +601,7 @@
 
 (defn score [state side args]
   (let [card (or (:card args) args)]
-    (when (>= (:advance-counter card) (:advancementcost card))
+    (when (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
       (let [moved-card (move state :corp card :scored)
             c (card-init state :corp moved-card)]
         (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
@@ -807,7 +807,7 @@
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp) (draw state :corp)))
+  (when (= side :corp) (do (draw state :corp) (update-all-advancement-costs state side))))
 
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
@@ -954,6 +954,8 @@
                    (system-msg state side (str "installs " card-name " in " server))))
                (let [moved-card (move state side c slot)]
                  (trigger-event state side :corp-install moved-card)
+                 (when (= (:type c) "Agenda")
+                   (update-advancement-cost state side moved-card))
                  (when rezzed (rez state side moved-card {:no-cost true})))))))))
 
 (defn play [state side {:keys [card server]}]
@@ -970,10 +972,33 @@
     (resolve-ability state side derez-effect (get-card state card) nil))
   (trigger-event state side :derez card))
 
+(defn advancement-cost-bonus [state side n]
+  (swap! state update-in [:bonus :advancement-cost] (fnil #(+ % n) 0)))
+
+(defn advancement-cost [state side {:keys [advancementcost] :as card}]
+  (if (nil? advancementcost)
+    nil
+    (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
+          (+ advancementcost (costfun state side card nil))
+          advancementcost)
+        (+ (or (get-in @state [:bonus :advancement-cost]) 0))
+        (max 0))))
+
+(defn update-all-advancement-costs [state side]
+  (doseq [ag (->> (mapcat :content (flatten (seq (get-in @state [:corp :servers]))))
+                  (filter #(= (:type %) "Agenda")))]
+    (update-advancement-cost state side ag)))
+
+(defn update-advancement-cost [state side agenda]
+  (swap! state update-in [:bonus] dissoc :advancement-cost)
+  (trigger-event state side :pre-advancement-cost agenda)
+  (update! state side (assoc agenda :current-cost (advancement-cost state side agenda))))
+
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
     (system-msg state side "advances a card")
-    (add-prop state side card :advance-counter 1)))
+    (update-advancement-cost state side card)
+    (add-prop state side (get-card state card) :advance-counter 1)))
 
 (defn forfeit [state side card]
   (system-msg state side (str "forfeit " (:title card)))

@@ -309,6 +309,15 @@
     :trash-effect {:req (req (:access @state))
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
+   "Chakana"
+   {:leave-play (effect (update-all-advancement-costs))
+    :events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
+             :pre-advancement-cost {:req (req (>= (get-virus-counters state side card) 3))
+                               :effect (effect (advancement-cost-bonus 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-all-advancement-costs))}}}
+
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
@@ -1325,6 +1334,12 @@
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
                                   :effect (effect (mill 2) (draw))}}}
 
+   "Medical Breakthrough"
+   {:effect (effect (update-all-advancement-costs))
+    :stolen (effect (update-all-advancement-costs))
+    :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
+                                                (concat (:scored corp) (:scored runner))))))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -1397,7 +1412,8 @@
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "NAPD Contract"
-   {:steal-cost [:credit 4]}
+   {:steal-cost [:credit 4]
+    :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "NBN: Making News"
    {:recurring 2}
@@ -1927,6 +1943,14 @@
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (play-instant target))}]}
 
+   "SanSan City Grid"
+   {:effect (req (when-let [agenda (some #(when (= (:type %) "Agenda") %) (:content (card->server state card)))]
+                   (update-advancement-cost state side agenda)))
+    :events {:corp-install {:req (req (and (= (:type target) "Agenda") (= (:zone card) (:zone target))))
+                            :effect (effect (update-advancement-cost target))}
+             :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
+                               :effect (effect (advancement-cost-bonus -1))}}}
+
    "Satellite Uplink"
    {:msg (msg "expose " (join ", " (map :title targets)))
     :choices {:max 2 :req #(= (first (:zone %)) :servers)}
@@ -2390,6 +2414,13 @@
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
+
+   "Traffic Jam"
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:pre-advancement-cost
+             {:effect (req (advancement-cost-bonus
+                             state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}}}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
@@ -3429,9 +3460,6 @@
    "Bad Times"
    {:req (req tagged)}
 
-   "Chakana"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
-
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
 
@@ -3479,4 +3507,7 @@
                                             (has? target :subtype "Gray Ops")))}}}
 
    "The Source"
-   {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}})
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
+             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
