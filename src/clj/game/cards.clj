@@ -314,6 +314,15 @@
     :trash-effect {:req (req (:access @state))
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
+   "Chakana"
+   {:leave-play (effect (update-all-advancement-costs))
+    :events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
+             :pre-advancement-cost {:req (req (>= (get-virus-counters state side card) 3))
+                                    :effect (effect (advancement-cost-bonus 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-all-advancement-costs))}}}
+
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
@@ -1171,6 +1180,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-install {:once :per-turn
                            :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                           :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
                            :effect (effect (install-cost-bonus -1))}}}
 
    "Kati Jones"
@@ -1222,7 +1232,9 @@
    {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
                              :player :runner :effect (effect (move :corp target :hand))}
              :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
-                             :effect (effect (move :corp target :hand))}}}
+                             :effect (req (move state :corp target :hand)
+                                          (swap! state update-in [:runner :prompt] rest)
+                                          (handle-end-run state side))}}}
 
    "Legwork"
    {:effect (effect (run :hq) (access-bonus 2))}
@@ -1337,6 +1349,12 @@
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
                                   :effect (effect (mill 2) (draw))}}}
 
+   "Medical Breakthrough"
+   {:effect (effect (update-all-advancement-costs))
+    :stolen (effect (update-all-advancement-costs))
+    :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
+                                                (concat (:scored corp) (:scored runner))))))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -1409,7 +1427,8 @@
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "NAPD Contract"
-   {:steal-cost [:credit 4]}
+   {:steal-cost [:credit 4]
+    :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "NBN: Making News"
    {:recurring 2}
@@ -1531,7 +1550,7 @@
 
    "Profiteering"
    {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 target) " [Credits]")
+    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
     :effect (effect (gain :credit (* 5 (Integer/parseInt target))
                           :bad-publicity (Integer/parseInt target)))}
 
@@ -1563,13 +1582,17 @@
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
     :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
     :events {:runner-turn-begins
-             {:effect (req (add-prop state side card :counter 1) (update-ice-strength state side (:host card)))}
+             {:effect (req (add-prop state side card :counter 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-ice-strength (:host card)))}
              :pre-ice-strength
              {:req (req (= (:cid target) (:cid (:host card))))
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (effect (trash target))}}}
+              :effect (effect (trash target))
+              :msg (msg "trash " (:title target))}}}
 
    "Paricia"
    {:recurring 2}
@@ -1917,6 +1940,14 @@
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
                  :effect (effect (trash card) (play-instant target))}]}
 
+   "SanSan City Grid"
+   {:effect (req (when-let [agenda (some #(when (= (:type %) "Agenda") %) (:content (card->server state card)))]
+                   (update-advancement-cost state side agenda)))
+    :events {:corp-install {:req (req (and (= (:type target) "Agenda") (= (:zone card) (:zone target))))
+                            :effect (effect (update-advancement-cost target))}
+             :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
+                               :effect (effect (advancement-cost-bonus -1))}}}
+
    "Satellite Uplink"
    {:req (req tagged) :msg (msg "expose " (join ", " (map :title targets)))
     :choices {:max 2 :req #(= (first (:zone %)) :servers)}
@@ -2189,13 +2220,13 @@
 
    "Stim Dealer"
    {:events {:runner-turn-begins
-             {:effect #(if (>= (:counter %3) 2)
-                         (do (set-prop %1 %2 %3 :counter 0)
-                             (damage %1 %2 :brain 1 {:unpreventable true :card %3})
-                             (system-msg %1 %2 "takes 1 brain damage from Stim Dealer"))
-                         (do (add-prop %1 %2 %3 :counter 1)
-                             (gain %1 %2 :click 1)
-                             (system-msg %1 %2 "uses Stim Dealer to gain [Click]")))}}}
+             {:effect (req (if (>= (:counter card) 2)
+                             (do (set-prop state side card :counter 0)
+                                 (damage state side :brain 1 {:unpreventable true :card card})
+                                 (system-msg state side "takes 1 brain damage from Stim Dealer"))
+                             (do (add-prop state side card :counter 1)
+                                 (gain state side :click 1)
+                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
@@ -2373,6 +2404,13 @@
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
+
+   "Traffic Jam"
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:pre-advancement-cost
+             {:effect (req (advancement-cost-bonus
+                             state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}}}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
@@ -2725,8 +2763,17 @@
 
    "Wyrm"
    {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
-                {:cost [:credit 1] :msg "reduce ICE strength by 1"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+                {:cost [:credit 1]
+                 :label "give -1 strength to current ice" :msg (msg "give -1 strength to " (:title current-ice))
+                 :req (req current-ice)
+                 :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
+                              (update-ice-strength state side current-ice))}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]
+    :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
+                 {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
+                                     :effect (req (let [c (:wyrm-count (get-card state card))]
+                                                       (ice-strength-bonus state side (- c))))}
+                  :pass-ice wy :run-ends wy})}
 
    "Yog.0"
    {:abilities [{:msg "break 1 code gate subroutine"}]}
@@ -2841,8 +2888,10 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :strength-bonus (req (let [ices (:ices (card->server state card))]
                               (if (= (:cid card) (:cid (last ices))) 4 0)))
-    :events {:rez {:req (req (= (card->server state card) (card->server state target)))
-                   :effect (effect (update-ice-strength card))}}}
+    :events (let [cw {:req (req (and (not= (:cid card) (:cid target))
+                                     (= (card->server state card) (card->server state target))))
+                      :effect (effect (update-ice-strength card))}]
+                 {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
    {:abilities [{:label "Trace 2 - Look at the top of Stack"
@@ -2912,8 +2961,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -3019,8 +3068,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -3062,8 +3111,8 @@
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve up to 2 Grail ICE subroutines from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                {:label "Resolve a Grail ICE subroutine from HQ"
+                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -3334,7 +3383,7 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
                            0 7))
-    :events (let [wr {:req (req (has? target :subtype "Fracter"))
+    :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
                       :effect (effect (update-ice-strength card))}]
                  {:runner-install wr :trash wr :card-moved wr})}
 
@@ -3360,9 +3409,6 @@
    ;; partial implementation
    "Bad Times"
    {:req (req tagged)}
-
-   "Chakana"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
@@ -3407,4 +3453,7 @@
                                             (has? target :subtype "Gray Ops")))}}}
 
    "The Source"
-   {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}})
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
+             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
