@@ -587,7 +587,7 @@
                                       label])
                                    servers)])]])
                        (when (= side :corp)
-                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
+                         (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)
                          (cond-button "Trash Resource" (and (>= (:click me) 1) (>= (:credit me) 2)
                                                             (>= (:tag opponent) 1)) #(send-command "trash-resource")))

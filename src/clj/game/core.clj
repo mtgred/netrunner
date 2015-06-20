@@ -20,7 +20,7 @@
   (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
-(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs)
+(declare prompt! forfeit trigger-event handle-end-run trash)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -154,7 +154,7 @@
                  (when-let [events (:events (card-def c))]
                    (unregister-events state side c)
                    (register-events state side events c))))))
-         (trigger-event state side :card-moved card moved-card)
+         (trigger-event state side :card-moved moved-card)
          moved-card)))))
 
 (defn draw
@@ -326,10 +326,9 @@
 
 (defn add-prop [state side card key n]
   (update! state side (update-in card [key] #(+ (or % 0) n)))
-  (if (= key :advance-counter)
-    (do (trigger-event state side :advance (get-card state card))
-        (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card)))
-    (trigger-event state side :counter-added (get-card state card))))
+  (when (= key :advance-counter)
+    (trigger-event state side :advance card)
+    (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -472,7 +471,7 @@
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
-(defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
+(defn resolve-damage [state side type n]
   (let [hand (get-in @state [:runner :hand])]
        (when (< (count hand) n)
              (flatline state))
@@ -480,8 +479,8 @@
              (swap! state update-in [:runner :brain-damage] #(+ % n))
              (swap! state update-in [:runner :max-hand-size] #(- % n)))
        (doseq [c (take n (shuffle hand))]
-              (trash state side c type))
-       (trigger-event state side :damage type card)))
+              (trash state side c nil type))
+       (trigger-event state side :damage type)))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
@@ -502,8 +501,8 @@
                                              (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
                                                   " " (name type) " damage")
                                              "will not prevent damage"))
-                               (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))))
-                (resolve-damage state side type n args))))))
+                               (resolve-damage state side type (max 0 (- n (or prevent 0))))))))
+                (resolve-damage state side type n))))))
 
 (defn shuffle! [state side kw]
   (swap! state update-in [side kw] shuffle))
@@ -580,13 +579,46 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash [state side {:keys [zone] :as card} & targets]
-  (when (not= (last zone) :current)
-    (trigger-event state side :trash card targets))
+(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card targets))))
+
+(defn trash-resource [state side args]
+  (when (pay state side nil :click 1 :credit 2)
+    (resolve-ability state side
+                     {:prompt "Choose a resource to trash"
+                      :choices {:req #(= (:type %) "Resource")}
+                      :effect (effect (trash target))} nil nil)))
+
+(defn trash-prevent [state side type n]
+  (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
+
+(defn trash
+  ([state side {:keys [zone type] :as card}] (trash state side card nil))
+  ([state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
+    (let [ktype (keyword (clojure.string/lower-case type))]
+      (when (not unpreventable)
+        (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+      (when (not= (last zone) :current)
+        (trigger-event state side :trash card targets))
+      (let [prevent (get-in @state [:prevent :trash ktype])]
+        ;(system-msg state side (str "prevent: " prevent))
+        (if (and (not unpreventable) (> (count prevent) 0))
+          (do
+            (system-msg state :runner "has the option to prevent trash effects")
+            (show-prompt
+              state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
+              (fn [choice]
+                (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                  (do
+                    (system-msg state :runner (str "prevents the trashing of " (:title card)))
+                    (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+                  (do
+                    (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
+                    (resolve-trash state side card args targets))))))
+          (resolve-trash state side card args targets))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
@@ -601,7 +633,7 @@
 
 (defn score [state side args]
   (let [card (or (:card args) args)]
-    (when (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
+    (when (>= (:advance-counter card) (:advancementcost card))
       (let [moved-card (move state :corp card :scored)
             c (card-init state :corp moved-card)]
         (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
@@ -807,7 +839,7 @@
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp) (do (draw state :corp) (update-all-advancement-costs state side))))
+  (when (= side :corp) (draw state :corp)))
 
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
@@ -866,15 +898,7 @@
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn host [state side card {:keys [zone cid host] :as target}]
-  (doseq [s [:runner :corp]]
-    (if host
-      (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                 (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
-        (update! state side (update-in host-card [:hosted]
-                                       (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-      (swap! state update-in (cons s (vec zone))
-             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+(defn host [state side card {:keys [zone cid] :as target}]
   (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)))]
     (update! state side (update-in card [:hosted] #(conj % c)))
@@ -954,8 +978,6 @@
                    (system-msg state side (str "installs " card-name " in " server))))
                (let [moved-card (move state side c slot)]
                  (trigger-event state side :corp-install moved-card)
-                 (when (= (:type c) "Agenda")
-                   (update-advancement-cost state side moved-card))
                  (when rezzed (rez state side moved-card {:no-cost true})))))))))
 
 (defn play [state side {:keys [card server]}]
@@ -972,33 +994,10 @@
     (resolve-ability state side derez-effect (get-card state card) nil))
   (trigger-event state side :derez card))
 
-(defn advancement-cost-bonus [state side n]
-  (swap! state update-in [:bonus :advancement-cost] (fnil #(+ % n) 0)))
-
-(defn advancement-cost [state side {:keys [advancementcost] :as card}]
-  (if (nil? advancementcost)
-    nil
-    (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
-          (+ advancementcost (costfun state side card nil))
-          advancementcost)
-        (+ (or (get-in @state [:bonus :advancement-cost]) 0))
-        (max 0))))
-
-(defn update-all-advancement-costs [state side]
-  (doseq [ag (->> (mapcat :content (flatten (seq (get-in @state [:corp :servers]))))
-                  (filter #(= (:type %) "Agenda")))]
-    (update-advancement-cost state side ag)))
-
-(defn update-advancement-cost [state side agenda]
-  (swap! state update-in [:bonus] dissoc :advancement-cost)
-  (trigger-event state side :pre-advancement-cost agenda)
-  (update! state side (assoc agenda :current-cost (advancement-cost state side agenda))))
-
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
     (system-msg state side "advances a card")
-    (update-advancement-cost state side card)
-    (add-prop state side (get-card state card) :advance-counter 1)))
+    (add-prop state side card :advance-counter 1)))
 
 (defn forfeit [state side card]
   (system-msg state side (str "forfeit " (:title card)))
