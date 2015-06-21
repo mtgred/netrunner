@@ -68,9 +68,9 @@
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
-               (doseq [dtype prevent]
-                      (swap! state update-in [:damage :prevent dtype]
-                             (fn [pv] (remove #(= (:cid %) (:cid card)) pv)))))
+       (doseq [[ptype pvec] prevent]
+         (doseq [psub pvec]
+           (swap! state update-in [:prevent ptype psub] (fn [pv] (remove #(= (:cid %) (:cid card)) pv))))))
      (unregister-events state side card)
      (when-let [mu (:memoryunits card)]
        (gain state :runner :memory mu))
@@ -395,8 +395,9 @@
                        {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
                         {:effect (effect (set-prop card :counter recurring))}} c))
     (when-let [prevent (:prevent cdef)]
-       (doseq [dtype prevent]
-              (swap! state update-in [:damage :prevent dtype] #(conj % card))))
+      (doseq [[ptype pvec] prevent]
+        (doseq [psub pvec]
+          (swap! state update-in [:prevent ptype psub] #(conj % card)))))
     (update! state side c)
     (when-let [events (:events cdef)]
       (register-events state side events c))
@@ -480,7 +481,7 @@
              (swap! state update-in [:runner :brain-damage] #(+ % n))
              (swap! state update-in [:runner :max-hand-size] #(- % n)))
        (doseq [c (take n (shuffle hand))]
-              (trash state side c type))
+              (trash state side c nil type))
        (trigger-event state side :damage type card)))
 
 (defn damage
@@ -490,7 +491,7 @@
     (swap! state update-in [:damage :damage-prevent] dissoc type)
     (trigger-event state side :pre-damage type card)
     (let [n (damage-count state side type n args)]
-         (let [prevent (get-in @state [:damage :prevent type])]
+         (let [prevent (get-in @state [:prevent :damage type])]
               (if (and (not unpreventable) prevent (> (count prevent) 0))
                 (do (system-msg state :runner "has the option to prevent damage")
                     (show-prompt
@@ -580,13 +581,45 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn trash [state side {:keys [zone] :as card} & targets]
-  (when (not= (last zone) :current)
-    (trigger-event state side :trash card targets))
+(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card targets))))
+
+(defn trash-resource [state side args]
+  (when (pay state side nil :click 1 :credit 2)
+    (resolve-ability state side
+                     {:prompt "Choose a resource to trash"
+                      :choices {:req #(= (:type %) "Resource")}
+                      :effect (effect (trash target))} nil nil)))
+
+(defn trash-prevent [state side type n]
+  (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
+
+(defn trash
+  ([state side {:keys [zone type] :as card}] (trash state side card nil))
+  ([state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
+    (let [ktype (keyword (clojure.string/lower-case type))]
+      (when (not unpreventable)
+        (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+      (when (not= (last zone) :current)
+        (trigger-event state side :trash card targets))
+      (let [prevent (get-in @state [:prevent :trash ktype])]
+        (if (and (not unpreventable) (> (count prevent) 0))
+          (do
+            (system-msg state :runner "has the option to prevent trash effects")
+            (show-prompt
+              state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
+              (fn [choice]
+                (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                  (do
+                    (system-msg state :runner (str "prevents the trashing of " (:title card)))
+                    (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+                  (do
+                    (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
+                    (resolve-trash state side card args targets))))))
+          (resolve-trash state side card args targets))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
