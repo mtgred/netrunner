@@ -1676,6 +1676,19 @@
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card)))}]}
 
+   "Power Shutdown"
+   {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
+    :choices {:number (req (count (:deck corp)))}
+    :msg (msg "trash " target " cards from the top of R&D")
+    :effect (req (mill state :corp target)
+                 (let [n target]
+                   (resolve-ability state :runner
+                                    {:prompt "Choose a Program or piece of Hardware to trash"
+                                     :choices {:req #(and (#{"Hardware" "Program"} (:type %))
+                                                          (<= (:cost %) n))}
+                                     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+                                    card nil)))}
+
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
@@ -1835,8 +1848,7 @@
                                 (remove-watch state :rachel-beckman)
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
-    :leave-play (req (remove-watch state :rachel-beckman)
-                     (lose state side :click 1 :click-per-turn 1))}
+    :leave-play (effect (lose :click 1 :click-per-turn 1))}
 
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
