@@ -82,7 +82,7 @@
   (let [side (:side @game-state)]
     (if-not (empty? (get-in @game-state [side :selected]))
       (send-command "select" {:card card})
-      (if (= (:type card) "Identity")
+      (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
         (handle-abilities card owner)
         (if (= side :runner)
           (case (first zone)

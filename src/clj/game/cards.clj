@@ -183,7 +183,8 @@
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
@@ -222,6 +223,17 @@
     :prompt "Choose an agenda to trigger"
     :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
     :effect (effect (card-init target))}
+
+   "Bishop"
+   {:abilities [{:label "Host Bishop on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
+    :events {:pre-ice-strength
+             {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
+              :effect (effect (ice-strength-bonus -2))}}}
 
    "Brain Cage"
    {:effect (effect (damage :brain 1 {:card card}) (gain :max-hand-size 3))
@@ -672,7 +684,8 @@
                                    (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}
 
    "Edward Kim: Humanitys Hammer"
-   {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
+   {:effect (effect (gain :link 1))
+    :events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
                       :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Efficiency Committee"
@@ -1529,14 +1542,16 @@
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Patch"
-   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (update-ice-strength (:host card)))
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host target (assoc card :zone [:discard] :seen true))
+                    (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
 
@@ -1596,6 +1611,14 @@
 
    "Paricia"
    {:recurring 2}
+
+   "Pawn"
+   {:abilities [{:label "Host Pawn on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]}
 
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
@@ -1899,6 +1922,16 @@
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
 
+   "Rook"
+   {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
+    :events {:pre-rez {:req (req (= (:zone (:host card)) (:zone target)))
+                       :effect (effect (rez-cost-bonus 2))}}}
+
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
     :effect (effect (run target)
@@ -1949,7 +1982,7 @@
                                :effect (effect (advancement-cost-bonus -1))}}}
 
    "Satellite Uplink"
-   {:req (req tagged) :msg (msg "expose " (join ", " (map :title targets)))
+   {:msg (msg "expose " (join ", " (map :title targets)))
     :choices {:max 2 :req #(= (first (:zone %)) :servers)}
     :effect (req (doseq [c targets] (expose state side c)))}
 
@@ -2229,9 +2262,16 @@
                                  (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
    "Stimhack"
-   {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
+   {:prompt "Choose a server" :choices (req servers)
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true :card card}))}} card))}
+                    (run target {:end-run
+                                 {:msg " take 1 brain damage"
+                                  :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
+                      card))}
+
+   "Sub Boost"
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host target (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -2344,6 +2384,11 @@
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
+
+   "The Personal Touch"
+   {:hosting {:req #(and (has? % :subtype "Icebreaker")
+                         (or (= (last (:zone %)) :program)
+                             (= (first (:zone (:host %))) :rig)))}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
@@ -2687,8 +2732,13 @@
                  :effect (effect (pump card 1 true))}]}
 
    "Knight"
-   {:abilities [{:cost [:click 1] :msg "host it on an ICE"}
-                {:cost [:credit 2] :msg "break 1 subroutine on the hosted ICE"}]}
+   {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}
+                {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
    "Leviathan"
    {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
@@ -3445,7 +3495,7 @@
    {:req (req (:made-run runner-reg))}
 
    "Tallie Perrault"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
+   {:abilities [{:label "Draw 1 card for each Corp bad publicity" :effect (effect (trash card) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
                               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
