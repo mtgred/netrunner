@@ -1832,6 +1832,7 @@
                  (add-watch state :rachel-beckman
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state :rachel-beckman)
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
     :leave-play (req (remove-watch state :rachel-beckman)

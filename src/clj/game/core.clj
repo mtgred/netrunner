@@ -481,7 +481,7 @@
              (swap! state update-in [:runner :brain-damage] #(+ % n))
              (swap! state update-in [:runner :max-hand-size] #(- % n)))
        (doseq [c (take n (shuffle hand))]
-              (trash state side c nil type))
+              (trash state side c {:unpreventable true} type))
        (trigger-event state side :damage type card)))
 
 (defn damage
