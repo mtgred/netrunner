@@ -87,7 +87,8 @@
 
 (defn update! [state side {:keys [type zone cid host] :as card}]
   (if (= type "Identity")
-    (swap! state assoc-in [side :identity] card)
+    (when (= side (to-keyword (:side card)))
+      (swap! state assoc-in [side :identity] card))
     (if-let [h (get-card state host)]
       (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
         (update! state side (assoc h :hosted (vec (concat head [card] (rest tail))))))
