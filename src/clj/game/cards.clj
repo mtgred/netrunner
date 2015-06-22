@@ -3258,9 +3258,10 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Quicksand"
-   {:abilities [{:msg "add 1 power counter"
-                 :effect (effect (add-prop card :counter 1) (add-prop card :strength 1))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
+                             :effect (effect (add-prop card :counter 1))}}
+    :strength-bonus (req (or (:counter card) 0))
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
