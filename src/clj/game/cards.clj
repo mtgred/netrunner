@@ -225,11 +225,12 @@
     :effect (effect (card-init target))}
 
    "Bishop"
-   {:abilities [{:label "Host Bishop on a piece ICE" :cost [:click 1]
+   {:abilities [{:label "Host Bishop on a piece of ICE" :cost [:click 1]
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (:title target)) :effect (effect (host target card))}]
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
               :effect (effect (ice-strength-bonus -2))}}}
@@ -1612,11 +1613,12 @@
    {:recurring 2}
 
    "Pawn"
-   {:abilities [{:label "Host Pawn on a piece ICE" :cost [:click 1]
+   {:abilities [{:label "Host Pawn on a piece of ICE" :cost [:click 1]
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (:title target)) :effect (effect (host target card))}]}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]}
 
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
@@ -1921,11 +1923,12 @@
                  :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
 
    "Rook"
-   {:abilities [{:label "Host Rook on a piece ICE" :cost [:click 1]
+   {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (:title target)) :effect (effect (host target card))}]
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
     :events {:pre-rez {:req (req (= (:zone (:host card)) (:zone target)))
                        :effect (effect (rez-cost-bonus 2))}}}
 
@@ -2729,12 +2732,13 @@
                  :effect (effect (pump card 1 true))}]}
 
    "Knight"
-   {:abilities [{:label "Host Knight on a piece ICE" :cost [:click 1]
+   {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (:title target)) :effect (effect (host target card))}
-                {:cost [:credit 2] :msg "break 1 subroutine on the hosted ICE"}]}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}
+                {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
    "Leviathan"
    {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
