@@ -1484,7 +1484,7 @@
     :events {:run {:choices {:req #(and (= (:zone %) [:rig :program])
                                         (has? % :subtype "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
-                   :effect (effect (pump target 1))}}}
+                   :effect (effect (pump target 1 true))}}}
 
    "New Angeles City Hall"
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
