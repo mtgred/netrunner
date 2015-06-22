@@ -1560,6 +1560,13 @@
                :msg "give the Runner 1 tag and take 1 bad publicity"
                :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
 
+   "Power Shutdown"
+   {:req (req (:made-run runner-reg))
+    :prompt "Trash how many cards from R&D?" :choices (req (count (:deck corp)))
+    :msg (msg "make the Runner trash 1 installed program or hardware with an install cost of " target " or less")
+    :effect (req (doseq [c (take target (:deck corp))] 
+                 (trash state side c)))}
+
    "Precognition"
    {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
 
@@ -2791,9 +2798,10 @@
     :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))}
 
    "Snowball"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength for the remainder of the run"
-                 :effect (effect (pump card 1 true))}]}
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine and add 1 strength for the remainder of the run"
+                 :effect (effect (pump card 1 true))}
+                {:cost [:credit 1] :msg "add 1 strength"
+                 :effect (effect (pump card 1))}]}
 
    "Sharpshooter"
    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card))}
@@ -3306,6 +3314,12 @@
                 {:label "Trace 3 - Do 3 net damage"
                  :trace {:base 3 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}]}
 
+   "Shiro"
+   {:abilities [{:msg "rearrange the top 3 cards of R&D"
+                 :effect (req (doseq [c (take 3 (:deck corp))] (move state side c :play-area)))}
+                {:msg "make the Runner access the top card of R&D" 
+			           :effect (effect (handle-access (first (:deck corp))))}]}
+
    "Snoop"
    {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
                 {:counter-cost 1 :label "Look at all cards in Grip and trash 1 card"
@@ -3490,9 +3504,6 @@
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
-
-   "Power Shutdown"
-   {:req (req (:made-run runner-reg))}
 
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity" :effect (effect (trash card) (draw (:bad-publicity corp)))
