@@ -618,8 +618,8 @@
                     (swap! state update-in [:trash :trash-prevent] dissoc ktype))
                   (do
                     (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                    (resolve-trash state side card args targets))))))
-          (resolve-trash state side card args targets))))))
+                    (apply resolve-trash state side card args targets))))))
+          (apply resolve-trash state side card args targets))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
