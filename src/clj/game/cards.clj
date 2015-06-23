@@ -594,7 +594,7 @@
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
-                          :effect (effect (damage-bonus :brain 1))}}}
+                          :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
