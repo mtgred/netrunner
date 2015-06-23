@@ -969,12 +969,12 @@
                 (server-list state card) {:effect (effect (corp-install card target args))})
        (do (when (= server "New remote")
              (trigger-event state side :server-created card))
-           (let [c (assoc card :advanceable (:advanceable (card-def card)))
+           (let [cdef (card-def card)
+                 c (assoc card :advanceable (:advanceable cdef))
                  slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
                  install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
-                                (count dest-zone) 0)
-                 rezzed (or rezzed (:install-rezzed (card-def card)))]
+                                (count dest-zone) 0)]
              (when (and (not (and (has? c :subtype "Region")
                                   (some #(has? % :subtype "Region") dest-zone)))
                         (pay state side card extra-cost :credit install-cost))
@@ -983,7 +983,7 @@
                    (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                             (:title prev-card) "a card") " in " server))
                    (trash state side prev-card)))
-               (let [card-name (if (or rezzed (:rezzed c)) (:title card) "a card")]
+               (let [card-name (if (or rezzed (:rezzed c) (= (:install-state cdef) :face-up)) (:title card) "a card")]
                  (if (> install-cost 0)
                    (system-msg state side (str "pays " install-cost " [Credits] to install "
                                                card-name " in " server))
@@ -992,7 +992,11 @@
                  (trigger-event state side :corp-install moved-card)
                  (when (= (:type c) "Agenda")
                    (update-advancement-cost state side moved-card))
-                 (when rezzed (rez state side moved-card {:no-cost true})))))))))
+                 (when (or rezzed (= (:install-state cdef) :rezzed))
+                   (rez state side moved-card {:no-cost true}))
+                 (when (= (:install-state cdef) :face-up)
+                   (do (card-init state side (assoc (get-card state moved-card) :rezzed true))
+                       (resolve-ability state side cdef (get-card state moved-card) nil))))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
