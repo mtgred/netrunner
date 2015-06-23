@@ -957,7 +957,6 @@
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
-           (resolve-ability state side cdef card nil)
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))))
 
