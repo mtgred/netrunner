@@ -3505,9 +3505,6 @@
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
 
-   "Power Shutdown"
-   {:req (req (:made-run runner-reg))}
-
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity" :effect (effect (trash card) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
