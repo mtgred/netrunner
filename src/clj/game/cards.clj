@@ -1511,7 +1511,7 @@
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Oaktown Renovation"
-   {:install-rezzed true
+   {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
