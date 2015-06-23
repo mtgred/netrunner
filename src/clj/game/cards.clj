@@ -446,6 +446,14 @@
                                            card nil))}
                            card nil))}}}}
 
+   "Contract Killer"
+   {:advanceable :always
+    :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :choices {:req #(has? % :subtype "Connection")}
+                 :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
+                {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
+
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
@@ -584,6 +592,10 @@
    "Dedicated Technician Team"
    {:recurring 2}
 
+   "Defective Brainchips"
+   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional meat damage"
+                          :effect (effect (damage-bonus :brain 1))}}}
+
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
     :msg (msg "add " (:title target) " to his Grip")
@@ -651,6 +663,15 @@
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
+
+   "Drive By"
+   {:choices {:req #(and (= (second (:zone %)) :remote)
+                         (= (last (:zone %)) :content)
+                         (not (:rezzed %)))}
+    :msg (msg "expose " (:title target) (when (#{"Asset" "Upgrade"} (:type target)) " and trash it"))
+    :effect (req (expose state side target)
+                 (when (#{"Asset" "Upgrade"} (:type target))
+                   (trash state side (assoc target :seen true))))}
 
    "Dyson Fractal Generator"
    {:recurring 1}
@@ -784,6 +805,12 @@
     [{:cost [:click 1] :msg "make a run on HQ"
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
+
+   "Exposé"
+   {:advanceable :always
+    :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
+                 :msg (msg "remove " (:advance-counter card) " bad publicities")
+                 :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
