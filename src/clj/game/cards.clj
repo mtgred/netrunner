@@ -1102,7 +1102,8 @@
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
                                        {:choices {:req #(= (first (:zone %)) :servers)}
-                                        :effect (effect (expose target)) :msg "expose 1 card"}
+                                        :effect (effect (expose target))
+                                        :msg (msg "expose " (:title target))}
                                        {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
                                      card nil))}
 
@@ -1167,6 +1168,11 @@
    {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
                          :effect (effect (gain :runner :credit 1))}
              :purge {:effect (effect (trash card))}}}
+
+   "Jackson Howard"
+   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
+                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
+                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -1810,7 +1816,9 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                     state side
-                    {:choices {:req #(= (last (:zone %)) :content)}
+                    {:choices {:req #(and (= (second (:zone %)) :remote)
+                                          (= (last (:zone %)) :content)
+                                          (not (:rezzed %)))}
                      :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c))}
                     card nil)))}
@@ -1933,7 +1941,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
+                 :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
 
    "Rook"
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
@@ -2372,11 +2380,8 @@
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
    "The Cleaners"
-   {:events
-    {:pre-damage
-     {:req (req (= target :meat))
-      :msg "to do 1 additional meat damage"
-      :effect (effect (damage-bonus :meat 1))}}}
+   {:events {:pre-damage {:req (req (= target :meat)) :msg "to do 1 additional meat damage"
+                          :effect (effect (damage-bonus :meat 1))}}}
 
    "The Foundry: Refining the Process"
    {:events
@@ -3496,11 +3501,6 @@
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect (req (gain state side :credit 1)
                               (when (zero? (:counter card)) (trash state :runner card)))}]}
-
-   "Jackson Howard"
-   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
-                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
-                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}

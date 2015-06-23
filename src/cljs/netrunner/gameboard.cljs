@@ -323,8 +323,7 @@
    (sab/html
     [:div.panel.blue-shade.discard
      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)
-})
+                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)})
      (om/build label discard {:opts {:name "Archives"}})
 
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
