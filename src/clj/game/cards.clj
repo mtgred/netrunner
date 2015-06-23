@@ -593,7 +593,7 @@
    {:recurring 2}
 
    "Defective Brainchips"
-   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional meat damage"
+   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
                           :effect (effect (damage-bonus :brain 1))}}}
 
    "Déjà Vu"
