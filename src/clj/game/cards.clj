@@ -1224,6 +1224,34 @@
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}
 
+   "Jinteki Biotech: Life Imagined"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :prompt "Choose a copy of Jinteki Biotech to use this game"
+                              :choices ["The Brewery" "The Tank" "The Greenhouse"]
+                              :effect (effect (update! (assoc card :biotech-target target))
+                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
+    :abilities [{:cost [:click 3]
+                 :req (req (not (:biotech-used card)))
+                 :effect (req (let [flip (:biotech-target card)]
+                                (update! state side (assoc card :biotech-used true))
+                                (case flip
+                                  "The Brewery"
+                                  (do (system-msg state side "uses The Brewery to do 2 net damage")
+                                      (damage state side :net 2))
+                                  "The Tank"
+                                  (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
+                                      (shuffle-into-deck state side :discard))
+                                  "The Greenhouse"
+                                  (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
+                                                                  "on a card that can be advanced"))
+                                      (resolve-ability
+                                        state side
+                                        {:prompt "Choose a card that can be advanced"
+                                         :choices {:req #(or (= (:advanceable %) "always")
+                                                             (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                                             (= (:type %) "Agenda"))}
+                                         :effect (effect (add-prop target :advance-counter 4))} card nil)))))}]}
+
    "John Masanori"
    {:events {:successful-run {:msg "draw 1 card" :once :per-turn :once-key :john-masanori-draw
                               :effect (effect (draw))}
@@ -2802,7 +2830,7 @@
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}
                 {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
