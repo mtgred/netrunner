@@ -323,8 +323,7 @@
    (sab/html
     [:div.panel.blue-shade.discard
      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)
-})
+                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)})
      (om/build label discard {:opts {:name "Archives"}})
 
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
@@ -525,26 +524,34 @@
                   (if-let [prompt (first (:prompt me))]
                     [:div.panel.blue-shade
                      [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
-                     (case (:choices prompt)
-                       "credit" [:div
-                                 [:div.credit-select
-                                  [:select#credit (for [i (range (inc (:credit me)))]
-                                                    [:option {:value i} i])] " credits"]
-                                 [:button {:on-click #(send-command "choice"
-                                                                    {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                  "OK"]]
-                       "counter" [:div
-                                 [:div.credit-select
-                                  [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
-                                                    [:option {:value i} i])] " credits"]
-                                 [:button {:on-click #(send-command "choice"
-                                                                    {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                  "OK"]]
-                       (for [c (:choices prompt)]
-                         (if (string? c)
-                           [:button {:on-click #(send-command "choice" {:choice c})
-                                     :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
-                           [:button {:on-click #(send-command "choice" {:card @c})} (:title c)])))]
+                     (if-let [n (get-in prompt [:choices :number])]
+                       [:div
+                        [:div.credit-select
+                         [:select#credit (for [i (range (inc n))]
+                                           [:option {:value i} i])]]
+                        [:button {:on-click #(send-command "choice"
+                                                           {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                         "OK"]]
+                       (case (:choices prompt)
+                         "credit" [:div
+                                   [:div.credit-select
+                                    [:select#credit (for [i (range (inc (:credit me)))]
+                                                      [:option {:value i} i])] " credits"]
+                                   [:button {:on-click #(send-command "choice"
+                                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                    "OK"]]
+                         "counter" [:div
+                                    [:div.credit-select
+                                     [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
+                                                       [:option {:value i} i])] " credits"]
+                                    [:button {:on-click #(send-command "choice"
+                                                                       {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                     "OK"]]
+                         (for [c (:choices prompt)]
+                           (if (string? c)
+                             [:button {:on-click #(send-command "choice" {:choice c})
+                                       :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
+                             [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))
