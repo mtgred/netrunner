@@ -446,6 +446,14 @@
                                            card nil))}
                            card nil))}}}}
 
+   "Contract Killer"
+   {:advanceable :always
+    :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :choices {:req #(has? % :subtype "Connection")}
+                 :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
+                {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
+
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
@@ -584,6 +592,10 @@
    "Dedicated Technician Team"
    {:recurring 2}
 
+   "Defective Brainchips"
+   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
+                          :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
+
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
     :msg (msg "add " (:title target) " to his Grip")
@@ -651,6 +663,15 @@
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
+
+   "Drive By"
+   {:choices {:req #(and (= (second (:zone %)) :remote)
+                         (= (last (:zone %)) :content)
+                         (not (:rezzed %)))}
+    :msg (msg "expose " (:title target) (when (#{"Asset" "Upgrade"} (:type target)) " and trash it"))
+    :effect (req (expose state side target)
+                 (when (#{"Asset" "Upgrade"} (:type target))
+                   (trash state side (assoc target :seen true))))}
 
    "Dyson Fractal Generator"
    {:recurring 1}
@@ -784,6 +805,12 @@
     [{:cost [:click 1] :msg "make a run on HQ"
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
+
+   "Exposé"
+   {:advanceable :always
+    :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
+                 :msg (msg "remove " (:advance-counter card) " bad publicities")
+                 :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
@@ -1102,7 +1129,8 @@
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
                                        {:choices {:req #(= (first (:zone %)) :servers)}
-                                        :effect (effect (expose target)) :msg "expose 1 card"}
+                                        :effect (effect (expose target))
+                                        :msg (msg "expose " (:title target))}
                                        {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
                                      card nil))}
 
@@ -1167,6 +1195,11 @@
    {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
                          :effect (effect (gain :runner :credit 1))}
              :purge {:effect (effect (trash card))}}}
+
+   "Jackson Howard"
+   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
+                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
+                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -1676,6 +1709,19 @@
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card)))}]}
 
+   "Power Shutdown"
+   {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
+    :choices {:number (req (count (:deck corp)))}
+    :msg (msg "trash " target " cards from the top of R&D")
+    :effect (req (mill state :corp target)
+                 (let [n target]
+                   (resolve-ability state :runner
+                                    {:prompt "Choose a Program or piece of Hardware to trash"
+                                     :choices {:req #(and (#{"Hardware" "Program"} (:type %))
+                                                          (<= (:cost %) n))}
+                                     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+                                    card nil)))}
+
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
@@ -1797,7 +1843,9 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                     state side
-                    {:choices {:req #(= (last (:zone %)) :content)}
+                    {:choices {:req #(and (= (second (:zone %)) :remote)
+                                          (= (last (:zone %)) :content)
+                                          (not (:rezzed %)))}
                      :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c))}
                     card nil)))}
@@ -1835,8 +1883,7 @@
                                 (remove-watch state :rachel-beckman)
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
-    :leave-play (req (remove-watch state :rachel-beckman)
-                     (lose state side :click 1 :click-per-turn 1))}
+    :leave-play (effect (lose :click 1 :click-per-turn 1))}
 
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -1921,7 +1968,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
+                 :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
 
    "Rook"
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
@@ -2326,7 +2373,7 @@
                  :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
+   {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
@@ -2360,11 +2407,8 @@
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
    "The Cleaners"
-   {:events
-    {:pre-damage
-     {:req (req (= target :meat))
-      :msg "to do 1 additional meat damage"
-      :effect (effect (damage-bonus :meat 1))}}}
+   {:events {:pre-damage {:req (req (= target :meat)) :msg "to do 1 additional meat damage"
+                          :effect (effect (damage-bonus :meat 1))}}}
 
    "The Foundry: Refining the Process"
    {:events
@@ -3454,9 +3498,9 @@
     :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
-                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))
-    :leave-play (req (remove-watch state (keyword (str "zona-sul-shipping" (:cid card)))))}
+                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}
 
    ;; partial implementation
    "Bad Times"
@@ -3485,16 +3529,8 @@
                  :effect (req (gain state side :credit 1)
                               (when (zero? (:counter card)) (trash state :runner card)))}]}
 
-   "Jackson Howard"
-   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
-                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
-                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
-
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
-
-   "Power Shutdown"
-   {:req (req (:made-run runner-reg))}
 
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity" :effect (effect (trash card) (draw (:bad-publicity corp)))

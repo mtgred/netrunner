@@ -179,7 +179,7 @@
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f priority]
    (let [prompt (if (string? msg) msg (msg state side card nil))]
-     (when (or (#{:credit :counter} choices) (> (count choices) 0))
+     (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card} (vec %))
@@ -280,7 +280,10 @@
                (or (not req) (req state side card targets)))
       (if choices
         (if (map? choices)
-          (show-select state (or player side) card ability priority)
+          (if (:req choices)
+            (show-select state (or player side) card ability priority)
+            (let [n ((:number choices) state side card targets)]
+              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices))))
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]
@@ -755,7 +758,7 @@
 
 (defn do-access [state side server]
   (let [cards (access state side server)]
-    (when-not (empty? cards)
+    (when-not (or (zero? (get-in @state [:run :max-access])) (empty? cards))
       (if (= (first server) :rd)
         (let [n (count cards)]
           (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
@@ -954,7 +957,6 @@
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
-           (resolve-ability state side cdef card nil)
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))))
 
