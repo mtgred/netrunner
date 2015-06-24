@@ -2373,7 +2373,7 @@
                  :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
+   {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
@@ -3498,9 +3498,9 @@
     :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
-                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))
-    :leave-play (req (remove-watch state (keyword (str "zona-sul-shipping" (:cid card)))))}
+                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}
 
    ;; partial implementation
    "Bad Times"

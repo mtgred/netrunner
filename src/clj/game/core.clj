@@ -758,7 +758,7 @@
 
 (defn do-access [state side server]
   (let [cards (access state side server)]
-    (when-not (empty? cards)
+    (when-not (or (zero? (get-in @state [:run :max-access])) (empty? cards))
       (if (= (first server) :rd)
         (let [n (count cards)]
           (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
