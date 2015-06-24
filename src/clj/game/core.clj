@@ -481,7 +481,7 @@
              (swap! state update-in [:runner :brain-damage] #(+ % n))
              (swap! state update-in [:runner :max-hand-size] #(- % n)))
        (doseq [c (take n (shuffle hand))]
-              (trash state side c {:unpreventable true} type))
+              (trash state side c {:unpreventable true :cause type} type))
        (trigger-event state side :damage type card)))
 
 (defn damage
@@ -581,11 +581,11 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
+(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard false)]
     (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card targets))))
+      (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
 (defn trash-resource [state side args]
   (when (pay state side nil :click 1 :credit 2)
@@ -599,14 +599,14 @@
 
 (defn trash
   ([state side {:keys [zone type] :as card}] (trash state side card nil))
-  ([state side {:keys [zone type] :as card} {:keys [unpreventable] :as args} & targets]
+  ([state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
     (let [ktype (keyword (clojure.string/lower-case type))]
-      (when (not unpreventable)
+      (when (and (not unpreventable) (not= cause :ability-cost))
         (swap! state update-in [:trash :trash-prevent] dissoc ktype))
       (when (not= (last zone) :current)
-        (trigger-event state side :trash card targets))
+        (apply trigger-event state side :trash card cause targets))
       (let [prevent (get-in @state [:prevent :trash ktype])]
-        (if (and (not unpreventable) (> (count prevent) 0))
+        (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
           (do
             (system-msg state :runner "has the option to prevent trash effects")
             (show-prompt
