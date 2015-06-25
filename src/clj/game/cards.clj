@@ -152,6 +152,16 @@
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
+   "Ash 2X3ZB9CY"
+   {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
+                 :trace {:base 4
+                         :effect (req (max-access state side 0)
+                                      (let [ash card]
+                                        (swap! state update-in [:run :run-effect]
+                                               #(assoc % :successful-run
+                                                       {:effect (effect (handle-access [ash])) :card ash}))))
+                         :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
+
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
@@ -380,7 +390,7 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
-                 :choices (req (filter #(and (has? % :type "Program")) (:discard runner)))
+                 :choices (req (filter #(has? % :type "Program") (:discard runner)))
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Clone Retirement"
@@ -638,15 +648,38 @@
    "Diesel"
    {:effect (effect (draw 3))}
 
+   "Dinosaurus"
+   {:abilities [{:req (req (empty? (:hosted card))) :cost [:click 1]
+                 :prompt "Choose a non-AI icebreaker to install on Dinosaurus"
+                 :choices (req (filter #(and (has? % :subtype "Icebreaker")
+                                             (not (has? % :subtype "AI"))
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]}
+
    "Dirty Laundry"
    {:prompt "Choose a server" :choices (req servers)
     :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 5 [Credits]"
                                            :effect (effect (gain :runner :credit 5))}} card))}
 
    "Djinn"
-   {:abilities [{:prompt "Choose a Virus" :msg (msg "adds " (:title target) " to his Grip")
-                 :choices (req (filter #(has? % :subtype "Virus") (:deck runner)))
-                 :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
+   {:abilities [{:label "Add a virus program to your Grip from your Stack"
+                 :prompt "Choose a Virus" :msg (msg "adds " (:title target) " to his Grip")
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (has? % :subtype "Virus"))
+                                       (:deck runner)))
+                 :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
+                {:label "Install a non Icebreaker program on Djin" :cost [:click 1]
+                 :prompt "Choose a non Icebreaker program to install on Djin"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (not (has? % :subtype "Icebreaker"))
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]}
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
@@ -1337,6 +1370,16 @@
                  :choices {:req #(= (first (:zone %)) :servers)} :effect (effect (expose target))
                  :msg "expose 1 card"}]}
 
+   "Leprechaun"
+   {:abilities [{:req (req (<= (count (:hosted card)) 2)) :cost [:click 1]
+                 :prompt "Choose a program to install on Leprechaun"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]}
+
    "Leverage"
    {:player :corp
     :prompt "Take 2 bad publicity?"
@@ -1405,6 +1448,21 @@
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
+
+   "London Library"
+   {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
+                 :prompt "Choose a non-virus program to install on London Library"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (not (has? % :subtype "Virus"))
+                                             (<= (:memoryunits %) (:memory runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (runner-install target {:host-card card :no-cost true}))}
+                {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
+                 :choices {:req #(:host %)} :msg (msg "add " (:title target) "to his or her Grip")
+                 :effect (effect (move target :hand))}]
+    :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
+                                               (trash state side c)))}}}
 
    "Lucky Find"
    {:effect (effect (gain :credit 9))}
@@ -1610,8 +1668,12 @@
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
    "Off-Campus Apartment"
-   {:abilities [{:effect (effect (draw))
-                 :msg "host a Connection and draw 1 card"}]}
+   {:abilities [{:prompt "Choose a connection to install on Off-Campus Apartment"
+                 :choices (req (filter #(and (has? % :subtype "Connection")
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target) " and draw 1 card")
+                 :effect (effect (runner-install target {:host-card card}) (draw))}]}
 
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
@@ -1662,8 +1724,31 @@
     :effect (effect (gain :credit (* 5 (Integer/parseInt target))
                           :bad-publicity (Integer/parseInt target)))}
 
+   "Progenitor"
+   {:abilities [{:cost [:click 1] :req (req (empty? (:hosted card)))
+                 :prompt "Choose a Virus program to install on Progenitor"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (has? % :subtype "Virus")
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]
+    :events {:purge {:effect (req (when-let [c (first (:hosted card))]
+                                    (add-prop state side c :counter 1)))}}}
+
    "Omni-Drive"
-   {:recurring 1}
+   {:recurring 1
+    :abilities [{:label "Install a program of 1[Memory Unit] or less on Omni-Drive"
+                 :req (req (empty? (:hosted card))) :cost [:click 1]
+                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (<= (:memoryunits %) 1)
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]}
 
    "Order of Sol"
    {:effect (req (add-watch state :order-of-sol
@@ -2124,6 +2209,15 @@
                                                                (assoc card :zone '(:discard)))
                                               (runner-install target))} card nil)))} card nil)))
     :events {:pre-install nil}}
+
+   "Scheherazade"
+   {:abilities [{:cost [:click 1] :prompt "Choose a program to install on Scherazade"
+                 :choices (req (filter #(and (has? % :type "Program")
+                                             (<= (:cost %) (:credit runner))
+                                             (<= (:memoryunits %) (:memory runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target) " and gain 1 [Credits]")
+                 :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}]}
 
    "Scorched Earth"
    {:req (req tagged) :effect (effect (damage :meat 4 {:card card}))}
