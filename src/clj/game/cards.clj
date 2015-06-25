@@ -234,7 +234,7 @@
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
@@ -1354,6 +1354,19 @@
    {:prevent {:trash [:hardware]}
     :abilities [{:cost [:credit 3] :msg "prevent a hardware from being trashed"}
                 {:effect (effect (trash card {:cause :ability-cost})) :msg "prevent a hardware from being trashed"}]}
+
+   "LLDS Processor"
+   {:events
+             (let [llds {:effect (req (let [cards (:llds-target card)]
+                                           (update! state side (dissoc card :llds-target))
+                                           (doseq [c cards]
+                                             (update-breaker-strength state side c))))}]
+               {:runner-turn-ends llds :corp-turn-ends llds
+                :runner-install {:req (req (has? target :subtype "Icebreaker"))
+                                 :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
+                                                 (update-breaker-strength target))}
+                :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
+                                       :effect (effect (breaker-strength-bonus 1))}})}
 
    "Lockpick"
    {:recurring 1}
@@ -2692,7 +2705,7 @@
 
    "Atman"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
-    :effect (effect (set-prop card :counter target))
+    :effect (effect (add-prop card :counter target))
     :abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]
     :strength-bonus (req (or (:counter card) 0))
     :events {:counter-added {:req (req (= :cid target) (:cid card))
