@@ -2786,7 +2786,7 @@
    "Gordian Blade"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 {:pump-duration :per-run}))}]}
+                 :effect (effect (pump card 1 true))}]}
 
    "Gingerbread"
    {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
