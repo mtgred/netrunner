@@ -147,6 +147,15 @@
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
+   "Ash 2X3ZB9CY"
+   {:abilities [{:trace {:base 4
+                         :effect (req (max-access state side 0)
+                                      (let [ash card]
+                                        (swap! state update-in [:run :run-effect]
+                                               #(assoc % :successful-run
+                                                       {:effect (effect (handle-access [ash])) :card ash}))))
+                         :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
+
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
