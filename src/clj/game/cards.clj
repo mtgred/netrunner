@@ -657,7 +657,10 @@
                                        (:hand runner)))
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}]}
+                                 (runner-install target {:host-card card})
+                                 (update-breaker-strength target))}]
+    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
+                                    :effect (effect (breaker-strength-bonus 2))}}}
 
    "Dirty Laundry"
    {:prompt "Choose a server" :choices (req servers)
