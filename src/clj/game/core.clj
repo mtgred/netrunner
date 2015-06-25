@@ -63,7 +63,9 @@
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
    (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
+         c (if (= (:side c) "Runner") (dissoc c :installed) c)
          c (if keep-counter c (dissoc c :advance-counter))]
+     (when (= (:side card) "Runner"))
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
@@ -760,7 +762,7 @@
 
 (defn do-access [state side server]
   (let [cards (access state side server)]
-    (when-not (or (zero? (get-in @state [:run :max-access])) (empty? cards))
+    (when-not (or (= (get-in @state [:run :max-access]) 0) (empty? cards))
       (if (= (first server) :rd)
         (let [n (count cards)]
           (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
@@ -861,12 +863,12 @@
       (swap! state assoc :end-turn true))))
 
 (defn purge [state side]
-  (doseq [card (concat (get-in @state [:runner :rig :program])
-                       (get-in @state [:runner :rig :resource])
-                       (get-in @state [:runner :rig :hardware])
-                       (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted)))]
-    (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
-      (set-prop state :runner card :counter 0)))
+  (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
+        hosted-cards (filter :installed (mapcat :hosted rig-cards))
+        hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
+    (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+      (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
+        (set-prop state :runner card :counter 0))))
   (trigger-event state side :purge))
 
 (defn get-virus-counters [state side card]
@@ -936,7 +938,7 @@
           (let [c (if host-card
                     (host state side host-card card)
                     (move state side card [:rig (to-keyword type)]))
-                installed-card (card-init state side c)]
+                installed-card (card-init state side (assoc c :installed true))]
             (system-msg state side (str "installs " title
                                         (when host-card (str " on " (:title host-card)))
                                         (when no-cost " at no cost")))
