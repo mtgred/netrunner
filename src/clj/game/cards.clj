@@ -1237,7 +1237,7 @@
                                 (case flip
                                   "The Brewery"
                                   (do (system-msg state side "uses The Brewery to do 2 net damage")
-                                      (damage state side :net 2))
+                                      (damage state side :net 2 {:card card}))
                                   "The Tank"
                                   (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
                                       (shuffle-into-deck state side :discard))
