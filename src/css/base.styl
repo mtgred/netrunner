@@ -1006,6 +1006,7 @@ nav ul
 
   .strength
     position: absolute
+    z-index: 10
     padding: 0
     text-align: center
     background-color: orange
@@ -1227,6 +1228,9 @@ nav ul
             width: 86px
             margin-top: 22px
 
+            .strength
+              transform(rotate(90deg))
+
             .run-arrow
               position: absolute
               z-index: 10
@@ -1305,6 +1309,9 @@ nav ul
 
           .content.center
             left: 13px
+
+          .strength
+            transform(rotate(-90deg))
 
           .ices
             .hosted

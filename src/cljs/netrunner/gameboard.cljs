@@ -56,9 +56,9 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost] :as card}]
+(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter advancementcost))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
           (cons "score" %) %))
       (#(if (or (and (= type "Agenda") (= (first zone) "servers"))
                 (= advanceable "always")
@@ -82,7 +82,7 @@
   (let [side (:side @game-state)]
     (if-not (empty? (get-in @game-state [side :selected]))
       (send-command "select" {:card card})
-      (if (= (:type card) "Identity")
+      (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
         (handle-abilities card owner)
         (if (= side :runner)
           (case (first zone)
@@ -153,7 +153,7 @@
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 
-(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost subtype
+(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
@@ -205,7 +205,7 @@
               abilities)]))
         (when (= (first zone) "servers")
           (cond
-            (and (= type "Agenda") (>= advance-counter advancementcost))
+            (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
              [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
              [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
@@ -323,8 +323,7 @@
    (sab/html
     [:div.panel.blue-shade.discard
      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)
-})
+                                  :on-click #(-> (om/get-node owner "popup") js/$ .toggle)})
      (om/build label discard {:opts {:name "Archives"}})
 
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
@@ -525,26 +524,34 @@
                   (if-let [prompt (first (:prompt me))]
                     [:div.panel.blue-shade
                      [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
-                     (case (:choices prompt)
-                       "credit" [:div
-                                 [:div.credit-select
-                                  [:select#credit (for [i (range (inc (:credit me)))]
-                                                    [:option {:value i} i])] " credits"]
-                                 [:button {:on-click #(send-command "choice"
-                                                                    {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                  "OK"]]
-                       "counter" [:div
-                                 [:div.credit-select
-                                  [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
-                                                    [:option {:value i} i])] " credits"]
-                                 [:button {:on-click #(send-command "choice"
-                                                                    {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                  "OK"]]
-                       (for [c (:choices prompt)]
-                         (if (string? c)
-                           [:button {:on-click #(send-command "choice" {:choice c})
-                                     :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
-                           [:button {:on-click #(send-command "choice" {:card @c})} (:title c)])))]
+                     (if-let [n (get-in prompt [:choices :number])]
+                       [:div
+                        [:div.credit-select
+                         [:select#credit (for [i (range (inc n))]
+                                           [:option {:value i} i])]]
+                        [:button {:on-click #(send-command "choice"
+                                                           {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                         "OK"]]
+                       (case (:choices prompt)
+                         "credit" [:div
+                                   [:div.credit-select
+                                    [:select#credit (for [i (range (inc (:credit me)))]
+                                                      [:option {:value i} i])] " credits"]
+                                   [:button {:on-click #(send-command "choice"
+                                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                    "OK"]]
+                         "counter" [:div
+                                    [:div.credit-select
+                                     [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
+                                                       [:option {:value i} i])] " credits"]
+                                    [:button {:on-click #(send-command "choice"
+                                                                       {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                     "OK"]]
+                         (for [c (:choices prompt)]
+                           (if (string? c)
+                             [:button {:on-click #(send-command "choice" {:choice c})
+                                       :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
+                             [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))
@@ -588,6 +595,9 @@
                                    servers)])]])
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
+                       (when (= side :corp)
+                         (cond-button "Trash Resource" (and (>= (:click me) 1) (>= (:credit me) 2)
+                                                            (>= (:tag opponent) 1)) #(send-command "trash-resource")))
                        (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
                        (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))])))]]
 

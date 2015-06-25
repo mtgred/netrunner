@@ -1,5 +1,15 @@
 (in-ns 'game.core)
 
+(def trash-program {:prompt "Choose a program to trash" :label "Trash a program"
+                    :msg (msg "trash " (:title target))
+                    :choices {:req #(= (:type %) "Program")}
+                    :effect (effect (trash target {:cause :subroutine}))})
+
+(def trash-hardware {:prompt "Choose a piece of hardware to trash" :label "Trash a piece of hardware"
+                     :msg (msg "trash " (:title target))
+                     :choices {:req #(= (:type %) "Hardware")}
+                     :effect (effect (trash target {:cause :subroutine}))})
+
 (def cards
   {"Accelerated Beta Test"
    {:optional {:prompt "Look at the top 3 cards of R&D?"
@@ -48,8 +58,14 @@
 
    "Aggressive Secretary"
    {:advanceable :always
-    :access {:optional {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
-                        :cost [:credit 2] :msg (msg "trash " (:advance-counter card) " programs")}}}
+    :access
+    {:optional
+     {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
+      :cost [:credit 2]
+      :effect (req (let [agg card]
+                     (resolve-ability
+                       state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
+                                    :effect (effect (trash-cards targets))) agg nil)))}}}
 
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
@@ -67,7 +83,7 @@
                  :effect (effect (gain :credit (* 2 (:counter card))) (trash card))}]}
 
    "All-nighter"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card) (gain :click 2))
+   {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
    "Amped Up"
@@ -105,6 +121,11 @@
    {:prompt "Choose a card from Archives" :choices (req (:discard corp))
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
+
+   "Armand \"Geist\" Walker"
+   {:effect (effect (gain :link 1))
+    :events {:trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                                :prompt "Draw a card?" :msg (msg "draw a card" targets) :effect (effect (draw 1))}}}}
 
    "Armitage Codebusting"
    {:data {:counter 12}
@@ -167,7 +188,8 @@
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Blue Level Clearance"
    {:effect (effect (gain :credit 5) (draw 2))}
@@ -206,6 +228,17 @@
     :prompt "Choose an agenda to trigger"
     :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
     :effect (effect (card-init target))}
+
+   "Bishop"
+   {:abilities [{:label "Host Bishop on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
+    :events {:pre-ice-strength
+             {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
+              :effect (effect (ice-strength-bonus -2))}}}
 
    "Brain Cage"
    {:effect (effect (damage :brain 1 {:card card}) (gain :max-hand-size 3))
@@ -298,6 +331,15 @@
     :trash-effect {:req (req (:access @state))
                    :effect (effect (move :runner card :scored) (gain :runner :agenda-point 2))}}
 
+   "Chakana"
+   {:leave-play (effect (update-all-advancement-costs))
+    :events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
+             :pre-advancement-cost {:req (req (>= (get-virus-counters state side card) 3))
+                                    :effect (effect (advancement-cost-bonus 1))}
+             :counter-added
+             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+              :effect (effect (update-all-advancement-costs))}}}
+
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
@@ -339,7 +381,7 @@
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
                  :choices (req (filter #(and (has? % :type "Program")) (:discard runner)))
-                 :effect (effect (trash card) (runner-install target))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -409,6 +451,14 @@
                                            card nil))}
                            card nil))}}}}
 
+   "Contract Killer"
+   {:advanceable :always
+    :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :choices {:req #(has? % :subtype "Connection")}
+                 :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
+                {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
+                 :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
+
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
 
@@ -447,16 +497,28 @@
     :effect (req (if (> (:credit corp) 6)
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
+   "Cortez Chip"
+   {:abilities [{:label "increase cost to rez a piece of ice by 2 [Credits]"
+                 :prompt "Choose a piece of ice" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
+                 :effect (effect (update! (assoc card :cortez-target target))
+                                 (trash (get-card state card) {:cause :ability-cost}))}]
+    :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
+                                                               :effect (effect (rez-cost-bonus 2))}
+                                                     :runner-turn-ends {:effect (effect (unregister-events card))}
+                                                     :corp-turn-ends {:effect (effect (unregister-events card))}}
+                                                    (get-card state card)))}
+    :events {:pre-rez nil :runner-turn-ends nil :corp-turn-ends nil}}
+
    "Crash Space"
-   {:prevent [:meat]
+   {:prevent {:damage [:meat]}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
-                 :effect (effect (trash card) (damage-prevent :meat 3))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
-                 :effect (effect (trash card) (derez current-ice))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
    "Cybsoft MacroDrive"
    {:recurring 1}
@@ -535,7 +597,7 @@
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
    "Decoy"
-   {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card))}]}
+   {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
@@ -546,6 +608,10 @@
 
    "Dedicated Technician Team"
    {:recurring 2}
+
+   "Defective Brainchips"
+   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
+                          :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
@@ -615,6 +681,15 @@
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
 
+   "Drive By"
+   {:choices {:req #(and (= (second (:zone %)) :remote)
+                         (= (last (:zone %)) :content)
+                         (not (:rezzed %)))}
+    :msg (msg "expose " (:title target) (when (#{"Asset" "Upgrade"} (:type target)) " and trash it"))
+    :effect (req (expose state side target)
+                 (when (#{"Asset" "Upgrade"} (:type target))
+                   (trash state side (assoc target :seen true))))}
+
    "Dyson Fractal Generator"
    {:recurring 1}
 
@@ -647,7 +722,8 @@
                                    (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}
 
    "Edward Kim: Humanitys Hammer"
-   {:events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
+   {:effect (effect (gain :link 1))
+    :events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
                       :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Efficiency Committee"
@@ -747,9 +823,21 @@
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
+   "Exposé"
+   {:advanceable :always
+    :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
+                 :msg (msg "remove " (:advance-counter card) " bad publicities")
+                 :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
+
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
     :effect (effect (move target :hand) (shuffle! :deck))}
+
+   "Fall Guy"
+   {:prevent {:trash [:resource]}
+    :abilities [{:label "Prevent a resource from being trashed"
+                 :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
+                {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
@@ -761,9 +849,10 @@
                     (move target :hand) (shuffle! :deck))}
 
    "Feedback Filter"
-   {:prevent [:net :brain]
+   {:prevent {:damage [:net :brain]}
     :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
-                {:msg "prevent 2 brain damage" :effect (effect (trash card) (damage-prevent :brain 2)) }]}
+                {:msg "prevent 2 brain damage" :effect (effect (trash card {:cause :ability-cost})
+                                                               (damage-prevent :brain 2)) }]}
 
    "Feint"
    {:effect (effect (run :hq) (max-access 0))}
@@ -848,7 +937,8 @@
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card)) (trash card))
+   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
+                                                  (trash card {:cause :ability-cost}))
                  :msg (msg "gain " (get-virus-counters state side card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-prop :runner card :counter 1))}
              :corp-click-draw {:effect (effect (add-prop :runner card :counter 1))}}}
@@ -860,7 +950,7 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Grappling Hook"
-   {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card))}]}
+   {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Gravedigger"
    {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
@@ -922,7 +1012,7 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card) (handle-access (access state side [:archives])))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -1042,7 +1132,7 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "move " (:counter card) " virus counter to " (:title target))
                  :choices {:req #(and (= (first (:zone %)) :rig) (has? % :subtype "Virus"))}
-                 :effect (effect (trash card) (add-prop target :counter (:counter card)))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (add-prop target :counter (:counter card)))}]}
 
    "Indexing"
    {:effect (effect (run :rd {:replace-access
@@ -1058,7 +1148,8 @@
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
                                        {:choices {:req #(= (first (:zone %)) :servers)}
-                                        :effect (effect (expose target)) :msg "expose 1 card"}
+                                        :effect (effect (expose target))
+                                        :msg (msg "expose " (:title target))}
                                        {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
                                      card nil))}
 
@@ -1124,6 +1215,11 @@
                          :effect (effect (gain :runner :credit 1))}
              :purge {:effect (effect (trash card))}}}
 
+   "Jackson Howard"
+   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
+                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
+                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}
@@ -1143,7 +1239,7 @@
    "Investigative Journalism"
    {:req (req (> (:bad-publicity corp) 0))
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
-                 :effect (effect (gain :corp :bad-publicity 1) (trash card))}]}
+                 :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))
@@ -1254,6 +1350,11 @@
                                             ((if (= target "HQ") :hand :discard) corp)))
                       :effect (effect (corp-install target nil {:rezzed true}))} card targets))}
 
+   "LLDS Energy Regulator"
+   {:prevent {:trash [:hardware]}
+    :abilities [{:cost [:credit 3] :msg "prevent a hardware from being trashed"}
+                {:effect (effect (trash card {:cause :ability-cost})) :msg "prevent a hardware from being trashed"}]}
+
    "Lockpick"
    {:recurring 1}
 
@@ -1313,6 +1414,12 @@
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
                                   :effect (effect (mill 2) (draw))}}}
 
+   "Medical Breakthrough"
+   {:effect (effect (update-all-advancement-costs))
+    :stolen (effect (update-all-advancement-costs))
+    :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
+                                                (concat (:scored corp) (:scored runner))))))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -1350,7 +1457,7 @@
     :events {:pre-install nil}}
 
    "Monolith"
-   {:prevent [:net :brain]
+   {:prevent {:damage [:net :brain]}
     :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
     :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                  :priority true
@@ -1385,7 +1492,8 @@
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "NAPD Contract"
-   {:steal-cost [:credit 4]}
+   {:steal-cost [:credit 4]
+    :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "NBN: Making News"
    {:recurring 2}
@@ -1411,7 +1519,7 @@
    {:recurring 1}
 
    "Net Shield"
-   {:prevent [:net]
+   {:prevent {:damage [:net]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
@@ -1455,7 +1563,7 @@
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Oaktown Renovation"
-   {:install-rezzed true
+   {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
@@ -1486,14 +1594,16 @@
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true}))}
+    :effect (effect (rez target {:no-cost true})
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Patch"
-   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (update-ice-strength (:host card)))
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host target (assoc card :zone [:discard] :seen true))
+                    (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
 
@@ -1554,6 +1664,14 @@
    "Paricia"
    {:recurring 2}
 
+   "Pawn"
+   {:abilities [{:label "Host Pawn on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]}
+
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
@@ -1605,10 +1723,23 @@
 
    "Plascrete Carapace"
    {:data [:counter 4]
-    :prevent [:meat]
+    :prevent {:damage [:meat]}
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card)))}]}
+
+   "Power Shutdown"
+   {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
+    :choices {:number (req (count (:deck corp)))}
+    :msg (msg "trash " target " cards from the top of R&D")
+    :effect (req (mill state :corp target)
+                 (let [n target]
+                   (resolve-ability state :runner
+                                    {:prompt "Choose a Program or piece of Hardware to trash"
+                                     :choices {:req #(and (#{"Hardware" "Program"} (:type %))
+                                                          (<= (:cost %) n))}
+                                     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+                                    card nil)))}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -1731,7 +1862,9 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                     state side
-                    {:choices {:req #(= (last (:zone %)) :content)}
+                    {:choices {:req #(and (= (second (:zone %)) :remote)
+                                          (= (last (:zone %)) :content)
+                                          (not (:rezzed %)))}
                      :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c))}
                     card nil)))}
@@ -1766,10 +1899,10 @@
                  (add-watch state :rachel-beckman
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state :rachel-beckman)
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
-    :leave-play (req (remove-watch state :rachel-beckman)
-                     (lose state side :click 1 :click-per-turn 1))}
+    :leave-play (effect (lose :click 1 :click-per-turn 1))}
 
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -1854,7 +1987,17 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}) (trash card))}]}
+                 :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
+
+   "Rook"
+   {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}]
+    :events {:pre-rez {:req (req (= (:zone (:host card)) (:zone target)))
+                       :effect (effect (rez-cost-bonus 2))}}}
 
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
@@ -1872,20 +2015,21 @@
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "Sacrificial Clone"
-   {:prevent [:meat :net :brain]
+   {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
-                                (trash state side c))
+                                (trash state side c {:cause :ability-cost}))
                               (lose state side :credit :all :tag :all)
                               (damage-prevent state side :net Integer/MAX_VALUE)
                               (damage-prevent state side :meat Integer/MAX_VALUE)
                               (damage-prevent state side :brain Integer/MAX_VALUE))}]}
 
    "Sacrificial Construct"
-   {:abilities [{:msg "prevent an installed program or hardware from being trashed"
-                 :effect (effect (trash card))}]}
+   {:prevent {:trash [:program :hardware]}
+    :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Sahasrara"
    {:recurring 2}
@@ -1895,10 +2039,18 @@
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
-                 :effect (effect (trash card) (play-instant target))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
+
+   "SanSan City Grid"
+   {:effect (req (when-let [agenda (some #(when (= (:type %) "Agenda") %) (:content (card->server state card)))]
+                   (update-advancement-cost state side agenda)))
+    :events {:corp-install {:req (req (and (= (:type target) "Agenda") (= (:zone card) (:zone target))))
+                            :effect (effect (update-advancement-cost target))}
+             :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
+                               :effect (effect (advancement-cost-bonus -1))}}}
 
    "Satellite Uplink"
-   {:req (req tagged) :msg (msg "expose " (join ", " (map :title targets)))
+   {:msg (msg "expose " (join ", " (map :title targets)))
     :choices {:max 2 :req #(= (first (:zone %)) :servers)}
     :effect (req (doseq [c targets] (expose state side c)))}
 
@@ -2005,7 +2157,7 @@
                  :priority true
                  :choices (req (filter #(has? % :type "Program") (:deck runner)))
                  :cost [:credit 2]
-                 :effect (effect (trash card) (runner-install target) (shuffle! :deck))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (runner-install target) (shuffle! :deck))}]}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
@@ -2019,9 +2171,14 @@
 
    "Shattered Remains"
    {:advanceable :always
-    :access {:optional {:req (req installed)
-                        :prompt "Pay 1 [Credits] to use Shattered Remains ability?" :cost [:credit 1]
-                        :msg (msg "trash " (:advance-counter card) " pieces of hardware")}}}
+    :access
+    {:optional
+     {:req (req installed) :prompt "Pay 1 [Credits] to use Shattered Remains ability?"
+      :cost [:credit 1]
+      :effect (req (let [shat card]
+                     (resolve-ability
+                       state side (assoc (assoc-in trash-hardware [:choices :max] (req (:advance-counter shat)))
+                                    :effect (effect (trash-cards targets))) shat nil)))}}}
 
    "Shell Corporation"
    {:abilities
@@ -2177,9 +2334,16 @@
                                  (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
    "Stimhack"
-   {:prompt "Choose a server" :choices (req servers) :msg " take 1 brain damage"
+   {:prompt "Choose a server" :choices (req servers)
     :effect (effect (gain :credit 9)
-                    (run target {:end-run {:effect (effect (damage :brain 1 {:unpreventable true :card card}))}} card))}
+                    (run target {:end-run
+                                 {:msg " take 1 brain damage"
+                                  :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
+                      card))}
+
+   "Sub Boost"
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host target (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -2233,7 +2397,7 @@
                  :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg "add 1 advancement counter on a card" :choices {}
+   {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
@@ -2267,11 +2431,8 @@
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
    "The Cleaners"
-   {:events
-    {:pre-damage
-     {:req (req (= target :meat))
-      :msg "to do 1 additional meat damage"
-      :effect (effect (damage-bonus :meat 1))}}}
+   {:events {:pre-damage {:req (req (= target :meat)) :msg "to do 1 additional meat damage"
+                          :effect (effect (damage-bonus :meat 1))}}}
 
    "The Foundry: Refining the Process"
    {:events
@@ -2288,10 +2449,15 @@
 
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
-    :abilities [{:msg "give an icebreaker +2 strength" :effect (effect (trash card))}]}
+    :abilities [{:msg "give an icebreaker +2 strength" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "The Makers Eye"
    {:effect (effect (run :rd) (access-bonus 2))}
+
+   "The Personal Touch"
+   {:hosting {:req #(and (has? % :subtype "Icebreaker")
+                         (or (= (last (:zone %)) :program)
+                             (= (first (:zone (:host %))) :rig)))}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
@@ -2352,6 +2518,13 @@
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
+
+   "Traffic Jam"
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:pre-advancement-cost
+             {:effect (req (advancement-cost-bonus
+                             state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}}}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
@@ -2423,7 +2596,8 @@
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Utopia Shard"
-   {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp)))) (trash card))
+   {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
+                                 (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]}
 
    "Valencia Estevez: The Angel of Cayambe"
@@ -2594,10 +2768,10 @@
     :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
 
    "Deus X"
-   {:prevent [:net]
-    :abilities [{:msg "break any number of AP subroutines" :effect (effect (trash card))}
+   {:prevent {:damage [:net]}
+    :abilities [{:msg "break any number of AP subroutines" :effect (effect (trash card {:cause :ability-cost}))}
                 {:msg "prevent any amount of net damage"
-                 :effect (effect (trash card) (damage-prevent :net Integer/MAX_VALUE))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :net Integer/MAX_VALUE))}]}
 
    "Eater"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine and access 0 cards this run"
@@ -2635,8 +2809,13 @@
                  :effect (effect (pump card 1 true))}]}
 
    "Knight"
-   {:abilities [{:cost [:click 1] :msg "host it on an ICE"}
-                {:cost [:credit 2] :msg "break 1 subroutine on the hosted ICE"}]}
+   {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (= (last (:zone %)) :ices)
+                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :effect (effect (host target card))}
+                {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
    "Leviathan"
    {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
@@ -2696,7 +2875,7 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Sharpshooter"
-   {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card))}
+   {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
                 {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
 
    "Study Guide"
@@ -2738,9 +2917,7 @@
    "Archer"
    {:additional-cost [:forfeit]
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                {:prompt "Choose a program to trash" :label "Trash a program"
-                 :msg (msg "trash " (:title target))
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+                trash-program
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Architect"
@@ -2787,9 +2964,7 @@
                                      (move state side card (conj (server->zone state target) :ices)))}}}]}
 
    "Burke Bugs"
-   {:abilities [{:prompt "Choose a program to trash" :label "Trash a program"
-                 :msg (msg "trash " (:title target))
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
+   {:abilities [trash-program]}
 
    "Caduceus"
    {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
@@ -2929,9 +3104,7 @@
 
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}]}
+    :abilities [trash-program]}
 
    "Guard"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
@@ -2979,17 +3152,13 @@
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Ichi 1.0"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}
+   {:abilities [trash-program
                 {:label "Trace 1 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 1 :msg "give the Runner 1 tag and do 1 brain damage"
                          :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
 
    "Ichi 2.0"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}
+   {:abilities [trash-program
                 {:label "Trace 3 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 3 :msg "give the Runner 1 tag and do 1 brain damage"
                          :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
@@ -3018,15 +3187,13 @@
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Lab Dog"
-   {:abilities [{:label "Force the Runner trash an installed piece of Hardware"
-                 :choices {:req #(= (:zone %) [:rig :hardware])} :player :runner
-                 :msg (msg "force the runner to trash " (:title target))
-                 :effect (effect (trash target) (trash card))}]}
+   {:abilities [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
+                                      :player :runner
+                                      :msg (msg "force the runner to trash " (:title target))
+                                      :effect (effect (trash target) (trash card)))]}
 
    "Lancelot"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}
+   {:abilities [trash-program
                 {:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
                  :msg (msg "reveal "
@@ -3046,9 +3213,7 @@
 
    "Lycan"
    {:advanceable :always
-    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}]}
+    :abilities [trash-program]}
 
    "Mamba"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -3117,15 +3282,11 @@
 
    "Nebula"
    {:advanceable :always
-    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program"
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}]}
+    :abilities [trash-program]}
 
    "Negotiator"
    {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                {:prompt "Choose a program to trash" :label "Trash a program"
-                 :choices {:req {:req #(= (:zone %) [:rig :program])}}
-                 :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
+                trash-program]}
 
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
@@ -3153,18 +3314,14 @@
                                                                               (and (:rezzed ice) (has? ice :subtype "NEXT")))
                                                                             (:ices server)))))
                                                       0 (flatten (seq (:servers corp)))) {:card card}))}
-                {:label "Trash a program" :prompt "Choose a program to trash"
-                 :choices {:req #(= (:zone %) [:rig :program])}
-                 :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
+                trash-program]}
 
    "NEXT Silver"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Orion"
    {:advanceable :always
-    :abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program"
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+    :abilities [trash-program
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Paper Wall"
@@ -3181,28 +3338,22 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Quicksand"
-   {:abilities [{:msg "add 1 power counter"
-                 :effect (effect (add-prop card :counter 1) (add-prop card :strength 1))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
+                             :effect (effect (add-prop card :counter 1))}}
+    :strength-bonus (req (or (:counter card) 0))
+    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rainbow"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Rototurret"
-   {:abilities [{:prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                 :label "Trash a program"
-                 :choices (req (get-in runner [:rig :program])) :effect (effect (trash target))}
+   {:abilities [trash-program
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Sagittarius"
-   {:abilities [{:label "Trace 2"
-                 :trace {:base 2 :prompt "Choose a program to trash" :msg (msg "trash " (:title target))
-                         :choices (req (get-in runner [:rig :program])) :not-distinct true
-                         :effect (effect (trash target))
-                         :kicker {:min 5 :prompt "Choose a program to trash"
-                                  :msg (msg "trash " (:title target)) :not-distinct true
-                                  :choices (req (get-in runner [:rig :program]))
-                                  :effect (effect (trash target))}}}]}
+   {:abilities [{:label "Trace 2 - Trash a program"
+                 :trace (assoc trash-program :base 2 :not-distinct true
+                         :kicker (assoc trash-program :min 5))}]}
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -3257,9 +3408,7 @@
 
    "Swarm"
    {:advanceable :always
-    :abilities [{:prompt "Choose a program to trash" :msg (msg "trashes " (:title target))
-                 :label "Trash a program" :choices (req (get-in runner [:rig :program]))
-                 :effect (effect (trash target))}]}
+    :abilities [trash-program]}
 
    "Swordsman"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -3268,14 +3417,9 @@
                  :choices (req (filter #(has? % :subtype "AI") (get-in runner [:rig :program])))}]}
 
    "Taurus"
-   {:abilities [{:label "Trace 2"
-                 :trace {:base 2 :prompt "Choose a Hardware to trash" :msg (msg "trash " (:title target))
-                         :choices (req (get-in runner [:rig :hardware])) :not-distinct true
-                         :effect (effect (trash target))
-                         :kicker {:min 5 :prompt "Choose a Hardware to trash"
-                                  :msg (msg "trash " (:title target)) :not-distinct true
-                                  :choices (req (get-in runner [:rig :hardware]))
-                                  :effect (effect (trash target))}}}]}
+   {:abilities [{:label "Trace 2 - Trash a piece of hardware"
+                 :trace (assoc trash-hardware :base 2 :not-distinct true
+                                              :kicker (assoc trash-hardware :min 5))}]}
 
    "TMI"
    {:trace {:base 2 :unsuccessful {:effect (effect (derez card))}}
@@ -3390,16 +3534,13 @@
     :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
                             (fn [k ref old new]
                               (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
-                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))
-    :leave-play (req (remove-watch state (keyword (str "zona-sul-shipping" (:cid card)))))}
+                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}
 
    ;; partial implementation
    "Bad Times"
    {:req (req tagged)}
-
-   "Chakana"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))}
@@ -3415,12 +3556,8 @@
                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Eden Shard"
-   {:abilities [{:effect (effect (trash card) (draw :corp 2))
+   {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]}
-
-   "Fall Guy"
-   {:abilities [{:effect (effect (trash card)) :msg "prevent another resource from being trashed"}
-                {:effect (effect (trash card) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -3428,19 +3565,12 @@
                  :effect (req (gain state side :credit 1)
                               (when (zero? (:counter card)) (trash state :runner card)))}]}
 
-   "Jackson Howard"
-   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
-                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
-                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
-
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))}
 
-   "Power Shutdown"
-   {:req (req (:made-run runner-reg))}
-
    "Tallie Perrault"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card) (draw (:bad-publicity corp)))
+   {:abilities [{:label "Draw 1 card for each Corp bad publicity"
+                 :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
                               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
@@ -3448,4 +3578,7 @@
                                             (has? target :subtype "Gray Ops")))}}}
 
    "The Source"
-   {:events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))}}})
+   {:effect (effect (update-all-advancement-costs))
+    :leave-play (effect (update-all-advancement-costs))
+    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
+             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
