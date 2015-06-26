@@ -1591,8 +1591,7 @@
 
    "Net-Ready Eyes"
    {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
-    :events {:run {:choices {:req #(and (= (:zone %) [:rig :program])
-                                        (has? % :subtype "Icebreaker"))}
+    :events {:run {:choices {:req #(and (:installed %) (has? % :subtype "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1))}}}
 
@@ -2545,9 +2544,7 @@
    {:effect (effect (run :rd) (access-bonus 2))}
 
    "The Personal Touch"
-   {:hosting {:req #(and (has? % :subtype "Icebreaker")
-                         (or (= (last (:zone %)) :program)
-                             (= (first (:zone (:host %))) :rig)))}}
+   {:hosting {:req #(and (has? % :subtype "Icebreaker") (:installed %))}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
