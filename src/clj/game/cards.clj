@@ -86,6 +86,12 @@
    {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
+   "Allele Repression"
+   {:advanceable :always
+    :abilities [{:label "Swap 1 cards in HQ and Archives for each advancement token"
+                 :effect (effect (trash card))
+                 :msg (msg "Swap " (:advance-counter card) " cards in HQ and Archives")}]}
+
    "Amped Up"
    {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
 
@@ -922,6 +928,11 @@
    "Forked"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Forger"
+   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
+    :abilities [{:msg "remove 1 tag"
+                 :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
+
    "Foxfire"
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
             :choices (req (filter #(or (has? % :subtype "Virtual") (has? % :subtype "Link"))
@@ -953,6 +964,12 @@
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)} :msg (msg "add 1 agenda counter on " (:title target))
     :effect (effect (add-prop target :counter 1))}
+
+   "Gang Sign"
+   {:events {:agenda-scored {:msg "access 1 card from HQ"
+                             :effect (req (let [c (first (shuffle (:hand corp)))]
+                                            (system-msg state side (str "accesses " (:title c)))
+                                            (handle-access state side [c])))}}}
 
    "Geothermal Fracking"
    {:data {:counter 2}
@@ -1138,6 +1155,11 @@
 
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
+
+   "Hyperconductor"
+   {:abilities [{:label "Remove Hyperconductor from the game to gain [Click] [Click] [Click]"
+                 :effect (effect (move card :rfg) (gain :memory 3 :click 3))
+                 :msg "gain [Click] [Click] [Click]"}]}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))
@@ -1537,6 +1559,10 @@
                               (if (= target (first (:deck runner)))
                                 (move state side (second (:deck runner)) :deck)
                                 (move state side (first (:deck runner)) :deck)))}]}
+
+   "Muertos Gang Member"
+   {:abilities [{:msg "draw 1 card"
+                 :effect (effect (trash card {:cause :ability-cost}) (draw))}] }
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
@@ -2326,6 +2352,9 @@
     :req (req tagged)
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
+   "Shiv"
+   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card))}]}
+
    "Silencer"
    {:recurring 1}
 
@@ -2489,6 +2518,11 @@
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
+
+   "Test Ground"
+   {:advanceable :always
+    :abilities [{:label "Derez 1 card for each advancement token"
+                 :msg (msg "derez " (:advance-counter card)) :effect (effect (trash card))}]}
 
    "Test Run"
    {:prompt "Install a card from Stack or Heap?" :choices ["Stack" "Heap"]
@@ -2659,6 +2693,12 @@
                  :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
+   "Underway Renovation"
+   {:install-state :face-up
+    :events {:advance {:req (req (= (:cid card) (:cid target)))
+                       :effect (effect (mill :runner
+                                          (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
+
    "Underworld Contact"
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
                                   :effect (effect (gain :credit 1))}}}
@@ -2815,6 +2855,12 @@
     :abilities [{:counter-cost 1 :msg "break up to 2 barrier subroutines"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
+   "Chameleon"
+   {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
+    :msg (msg "choose " target) :effect (effect (set-prop card :ice-type target))
+    :end-turn {:msg "add itself to Grip" :effect (effect (move card :hand))}
+    :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:ice-type card) " subroutine")}]}
+
    "Corroder"
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
@@ -2861,6 +2907,16 @@
    "Faerie"
    {:abilities [{:msg "break any number of sentry subroutines" :effect (effect (trash card))}
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+
+   "Faust"
+   {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
+                 :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
+                 :msg (msg "trash " (:title target) " and break 1 subroutine")
+                 :effect (effect (trash target))}
+                {:label "Trasg 1 card from Grip to add 2 strength"
+                 :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
+                 :msg (msg "trash " (:title target) " and add 2 strength")
+                 :effect (effect (trash target) (pump card 2))}]}
 
    "Femme Fatale"
    {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
@@ -3400,6 +3456,10 @@
     :abilities [trash-program
                 {:msg "end the run" :effect (effect (end-run))}]}
 
+   "Pachinko"
+   {:abilities [{:label "End the run if the Runner is tagged"
+                 :req (req tagged) :msg "end the run" :effect (effect (end-run))}]}
+
    "Paper Wall"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
@@ -3474,6 +3534,9 @@
    "Snowflake"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
+
+   "Spiderweb"
+   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Susanoo-No-Mikoto"
    {:abilities [{:req (req (not= (:server run) [:discard]))
