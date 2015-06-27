@@ -8,7 +8,7 @@
 (def trash-hardware {:prompt "Choose a piece of hardware to trash" :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(= (:type %) "Hardware")}
-                     :effect (effect (trash target {:cause :subrprojectoutine}))})
+                     :effect (effect (trash target {:cause :subroutine}))})
 
 (def cards
   {"Accelerated Beta Test"
