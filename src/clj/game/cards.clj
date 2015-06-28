@@ -2871,7 +2871,7 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Crowbar"
-   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card))}]}
+   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
@@ -3014,7 +3014,7 @@
                 {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
 
    "Shiv"
-   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card))}]}
+   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Spike"
    {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
