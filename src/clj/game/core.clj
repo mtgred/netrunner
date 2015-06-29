@@ -21,7 +21,7 @@
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update-ice-strength update-breaker-strength)
+         update-ice-strength update-breaker-strength all-installed)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -321,10 +321,10 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
-          (doseq [p (get-in @state [:runner :rig :program])]
-            (when (:current-strength p)
-              (do (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
-                  (update-breaker-strength state side p))))
+          (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+            (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
+            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
+            (update-breaker-strength state side p))
           (let [run-effect (get-in @state [:run :run-effect])]
             (when-let [end-run-effect (:end-run run-effect)]
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
@@ -631,13 +631,17 @@
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
 
+(defn all-installed [state side]
+  (if (= side :runner)
+    (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))]
+      (concat installed (filter #(:installed %) (mapcat :hosted installed))))
+    (let [servers (->> (:corp @state) :servers seq flatten)]
+      (concat (mapcat :content servers) (mapcat :ices servers)))))
+
 (defn breaker-strength-bonus [state side n]
   (swap! state update-in [:bonus :breaker-strength] (fnil #(+ % n) 0)))
 
 (defn breaker-strength [state side {:keys [strength] :as card}]
-  ;(.println System/out (str (:title card) " strength " strength "; encounter " (get-in card [:pump :encounter])
-  ;                          "all-run " (get-in card [:pump :all-run])
-  ;                          "bonus " (get-in @state [:bonus :breaker-strength])))
   (if (nil? strength)
     nil
     (-> (if-let [strfun (:strength-bonus (card-def card))]
@@ -648,13 +652,10 @@
            (or (get-in @state [:bonus :breaker-strength]) 0)))))
 
 (defn update-breaker-strength [state side breaker]
-  ;(.println System/out (pr-str breaker))
   (let [breaker (get-card state breaker) oldstren (or (:current-strength breaker) (:strength breaker))]
-    ;(.println System/out (pr-str "AFTER " breaker))
     (swap! state update-in [:bonus] dissoc :breaker-strength)
     (trigger-event state side :pre-breaker-strength breaker)
     (update! state side (assoc breaker :current-strength (breaker-strength state side breaker)))
-    ;(.println System/out (pr-str "AFTER222 " (get-card state breaker)))
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
@@ -845,10 +846,9 @@
         (update-ice-in-server state side (card->server state ice))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
-    (doseq [p (get-in @state [:runner :rig :program])]
-      (when (:current-strength p)
-        (do (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-            (update-breaker-strength state side p))))
+    (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+      (update-breaker-strength state side p))
     (system-msg state side "continues the run")
     (let [pos (get-in @state [:run :position])]
       (when (> (count (get-in @state [:run :ices])) 0)
