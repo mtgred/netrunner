@@ -131,7 +131,7 @@
    "Armand \"Geist\" Walker"
    {:effect (effect (gain :link 1))
     :events {:trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                :prompt "Draw a card?" :msg (msg "draw a card" targets) :effect (effect (draw 1))}}}}
+                                :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
 
    "Armitage Codebusting"
    {:data {:counter 12}
@@ -1895,7 +1895,7 @@
                  :msg "do 1 meat damage"}]}
 
    "Project Atlas"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
+   {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
