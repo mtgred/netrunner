@@ -575,11 +575,13 @@
       (when-let [mul (:mulligan cdef)]
         (mul state side card nil))))
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side "takes a mulligan"))
+  (system-msg state side "takes a mulligan")
+  (trigger-event state side :pre-first-turn))
 
 (defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side "keeps his or her hand"))
+  (system-msg state side "keeps his or her hand")
+  (trigger-event state side :pre-first-turn))
 
 (defn gain-agenda-point [state side n]
   (gain state side :agenda-point n)
