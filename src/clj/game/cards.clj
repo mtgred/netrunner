@@ -1156,8 +1156,8 @@
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
 
-   "Hyperconductor"
-   {:abilities [{:label "Remove Hyperconductor from the game to gain [Click] [Click] [Click]"
+   "Hyperdriver"
+   {:abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                  :effect (effect (move card :rfg) (gain :memory 3 :click 3))
                  :msg "gain [Click] [Click] [Click]"}]}
 
@@ -1485,6 +1485,13 @@
    "Manhunt"
    {:events {:successful-run {:once :per-turn :trace {:base 2 :msg "give the Runner 1 tag"
                                                       :effect (effect (gain :runner :tag 1))}}}}
+
+   "Marcus Batty"
+   {:abilities [{:msg "start a Psi game"
+                 :psi {:not-equal {:req (req this-server)
+                                   :choices {:req #(and (has? % :type "ICE") (:rezzed %))}
+                                   :msg (msg "resolve a subroutine on " (:title target))
+                                   :effect (effect (trash card {:cause :ability-cost}))}}}]}
 
    "Mark Yale"
    {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
@@ -2380,9 +2387,6 @@
     :req (req tagged)
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
-   "Shiv"
-   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card))}]}
-
    "Silencer"
    {:recurring 1}
 
@@ -2455,9 +2459,6 @@
     :effect (effect (system-msg (str "adds " (:title target) " to his Grip and shuffles his Stack"))
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
-
-   "Spike"
-   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Spinal Modem"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1)) :recurring 2
@@ -2898,7 +2899,7 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Crowbar"
-   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card))}]}
+   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
@@ -2941,7 +2942,7 @@
                  :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
                  :msg (msg "trash " (:title target) " and break 1 subroutine")
                  :effect (effect (trash target))}
-                {:label "Trasg 1 card from Grip to add 2 strength"
+                {:label "Trash 1 card from Grip to add 2 strength"
                  :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
                  :msg (msg "trash " (:title target) " and add 2 strength")
                  :effect (effect (trash target) (pump card 2))}]}
@@ -3039,6 +3040,12 @@
    "Sharpshooter"
    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
                 {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
+
+   "Shiv"
+   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
+
+   "Spike"
+   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Study Guide"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
