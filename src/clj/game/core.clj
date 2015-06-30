@@ -383,9 +383,7 @@
     (when-let [card (get-card state (:card e))]
       (when (or (not (:req ability)) ((:req ability) state side card targets))
         (resolve-ability state side ability card targets))))
-  (swap! state update-in [:turn-events] #(cons [event targets] %))
-  ;(system-msg state side (pr-str "EVENTS " (:turn-events @state)))
-  )
+  (swap! state update-in [:turn-events] #(cons [event targets] %)))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
