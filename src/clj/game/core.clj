@@ -65,7 +65,6 @@
    (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
          c (if (= (:side c) "Runner") (dissoc c :installed) c)
          c (if keep-counter c (dissoc c :advance-counter))]
-     (when (= (:side card) "Runner"))
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
@@ -108,7 +107,7 @@
 
 (defn move
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone cid host] :as card} to front]
+  ([state side {:keys [zone cid host installed] :as card} to front]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
@@ -118,7 +117,7 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (and (#{:servers :rig :scored :current} (first zone))
+             c (if (and (or installed (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard} (first dest)))
                  (desactivate state side c) c)
              moved-card (assoc c :zone dest :host nil :hosted nil)]
