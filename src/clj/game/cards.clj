@@ -2348,10 +2348,10 @@
              :msg (msg "attempt to do " target " net damage")
              :effect (effect (resolve-ability
                               {:player :runner :msg (msg target)
-                               :prompt (str "Take " target " net damage or lose 1 agenda point?")
-                               :choices [(str "take " target " net damage") "lose 1 agenda point"]
+                               :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda points?")
+                               :choices [(str "take " target " net damage") "add Shi.Kyū to score area"]
                                :effect (let [dmg target]
-                                         (req (if (= target "lose 1 agenda point")
+                                         (req (if (= target "add Shi.Kyū to score area")
                                                 (do (gain state :runner :agenda-point -1)
                                                     (move state :runner card :scored nil))
                                                 (damage state :corp :net dmg {:card card}))))}
