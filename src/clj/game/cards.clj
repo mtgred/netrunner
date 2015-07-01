@@ -42,7 +42,7 @@
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Adonis Campaign"
-   {:data {:counter 12}
+   {:effect (effect (add-prop card :counter 12))
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
                                 :effect (req (gain state :corp :credit 3)
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
@@ -833,7 +833,7 @@
                         (when caninst (lose state side :credit cost))))))}
 
    "Eve Campaign"
-   {:data {:counter 16}
+   {:effect (effect (add-prop card :counter 16))
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                 :effect (req (gain state :corp :credit 2)
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
@@ -1907,7 +1907,7 @@
     :effect (effect (rez target {:no-cost true}))}
 
    "Private Contracts"
-   {:data {:counter 14}
+   {:effect (effect (add-prop card :counter 14))
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
@@ -2130,7 +2130,7 @@
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Rex Campaign"
-   {:data [:counter 3]
+   {:effect (effect (add-prop card :counter 3))
     :events {:corp-turn-begins
              {:effect (req (add-prop state side card :counter -1)
                            (when (= (:counter card) 1)
