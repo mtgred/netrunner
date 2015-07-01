@@ -250,7 +250,7 @@
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
@@ -658,12 +658,14 @@
    {:abilities [{:req (req (empty? (:hosted card))) :cost [:click 1]
                  :prompt "Choose a non-AI icebreaker to install on Dinosaurus"
                  :choices (req (filter #(and (has? % :subtype "Icebreaker")
-                                             (not (has? % :subtype "AI"))
-                                             (<= (:cost %) (:credit runner)))
+                                             (not (has? % :subtype "AI")))
                                        (:hand runner)))
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}]}
+                                 (runner-install target {:host-card card})
+                                 (update-breaker-strength target))}]
+    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
+                                    :effect (effect (breaker-strength-bonus 2))}}}
 
    "Dirty Laundry"
    {:prompt "Choose a server" :choices (req servers)
@@ -1448,6 +1450,19 @@
     :abilities [{:cost [:credit 3] :msg "prevent a hardware from being trashed"}
                 {:effect (effect (trash card {:cause :ability-cost})) :msg "prevent a hardware from being trashed"}]}
 
+   "LLDS Processor"
+   {:events
+             (let [llds {:effect (req (let [cards (:llds-target card)]
+                                           (update! state side (dissoc card :llds-target))
+                                           (doseq [c cards]
+                                             (update-breaker-strength state side c))))}]
+               {:runner-turn-ends llds :corp-turn-ends llds
+                :runner-install {:req (req (has? target :subtype "Icebreaker"))
+                                 :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
+                                                 (update-breaker-strength target))}
+                :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
+                                       :effect (effect (breaker-strength-bonus 1))}})}
+
    "Lockpick"
    {:recurring 1}
 
@@ -1654,7 +1669,7 @@
    {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
     :events {:run {:choices {:req #(and (:installed %) (has? % :subtype "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
-                   :effect (effect (pump target 1))}}}
+                   :effect (effect (pump target 1 :all-run))}}}
 
    "New Angeles City Hall"
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
@@ -2607,7 +2622,10 @@
    {:effect (effect (run :rd) (access-bonus 2))}
 
    "The Personal Touch"
-   {:hosting {:req #(and (has? % :subtype "Icebreaker") (:installed %))}}
+   {:hosting {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+    :effect (effect (update-breaker-strength (:host card)))
+    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                    :effect (effect (breaker-strength-bonus 1))}}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
@@ -2848,8 +2866,11 @@
 
    "Atman"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
-    :effect (effect (set-prop card :counter target))
-    :abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]}
+    :effect (effect (add-prop card :counter target))
+    :abilities [{:cost [:credit 1] :msg "break 1 subroutine"}]
+    :strength-bonus (req (or (:counter card) 0))
+    :events {:counter-added {:req (req (= :cid target) (:cid card))
+                             :effect (effect (update-breaker-strength card))}}}
 
    "Aurora"
    {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
@@ -2858,7 +2879,7 @@
    "Battering Ram"
    {:abilities [{:cost [:credit 2] :msg "break up to 2 barrier subroutines"}
                 {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 true))}]}
+                 :effect (effect (pump card 1 :all-run))}]}
 
    "BlacKat"
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
@@ -2899,7 +2920,11 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Crowbar"
-   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                         :effect (effect (update-breaker-strength card))}]
+              {:runner-install cloud :trash cloud :card-moved cloud})
+    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
 
    "Crypsis"
    {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
@@ -2962,7 +2987,7 @@
    "Gordian Blade"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
                 {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 true))}]}
+                 :effect (effect (pump card 1 :all-run))}]}
 
    "Gingerbread"
    {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
@@ -3018,7 +3043,7 @@
    "Pipeline"
    {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
                 {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 true))}]}
+                 :effect (effect (pump card 1 :all-run))}]}
 
    "Refractor"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
@@ -3029,27 +3054,39 @@
     :effect (req (add-watch state (keyword (str "sage" (:cid card)))
                             (fn [k ref old new]
                               (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (set-prop ref side card :counter 0)))))
-    :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))}
+                                (update-breaker-strength ref side card))))
+                 (update-breaker-strength state side card))
+    :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))
+    :strength-bonus (req (:memory runner))}
 
    "Snowball"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength for the remainder of the run"
-                 :effect (effect (pump card 1 true))}]}
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"
+                 :effect (effect (pump card 1 :all-run))}
+                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Sharpshooter"
    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
                 {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
 
    "Shiv"
-   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                         :effect (effect (update-breaker-strength card))}]
+              {:runner-install cloud :trash cloud :card-moved cloud})
+    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
 
    "Spike"
-   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                         :effect (effect (update-breaker-strength card))}]
+              {:runner-install cloud :trash cloud :card-moved cloud})
+    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
 
    "Study Guide"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 2] :msg "place 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+                {:cost [:credit 2] :msg "place 1 power counter" :effect (effect (add-prop card :counter 1)
+                                                                                (update-breaker-strength card))}]
+    :strength-bonus (req (or (:counter card) 0))}
 
    "Switchblade"
    {:abilities [{:cost [:credit 1] :msg "break any number of sentry subroutines"}
