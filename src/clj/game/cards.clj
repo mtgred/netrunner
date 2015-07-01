@@ -1857,6 +1857,10 @@
                          :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
       :events {:runner-turn-begins remove-counter}})
 
+   "Pheromones"
+   {:events
+    {:successful-run {:req (req (= target :hq)) :effect (effect (add-prop card :counter 1))}}}
+
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
     :effect (effect (damage :net (count (:scored runner)) {:card card}))}
