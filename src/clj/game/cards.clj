@@ -3369,7 +3369,8 @@
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :strength-bonus (req (count (:hand corp)))}
+    :strength-bonus (req (count (:hand corp)))
+    :rez-cost-bonus (req (count (:hand corp)))}
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
