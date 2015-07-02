@@ -156,7 +156,7 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
-                         advanceable rezzed strength current-strength title remotes selected hosted]
+                         advanceable rezzed strength current-strength title remotes selected hosted rec-counter]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -178,6 +178,7 @@
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
          (when (> counter 0) [:div.darkbg.counter counter])
+         (when (> rec-counter 0) [:div.darkbg.recurring.counter rec-counter])
          (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
               current-strength [:div.darkbg.strength current-strength])

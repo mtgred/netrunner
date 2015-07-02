@@ -60,15 +60,14 @@
           "notification" (swap! state update-in [:log]
                                 #(conj % {:user "__system__" :text text}))
           "quit" (system-msg state (keyword side) "left the game"))
-        (if (#{"start" "do"} action)
+        (if (not= action "remove")
           (.send socket (generate-string (assoc (dissoc @(@game-states gameid) :events) :action action)))
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
-          (if (and state (#{"do" "start"} action))
-            (.send socket (generate-string state))
-            (.send socket (generate-string "error"))))))))
+          (when state
+            (.send socket (generate-string state))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")

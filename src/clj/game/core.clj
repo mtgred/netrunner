@@ -21,7 +21,7 @@
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update-ice-strength update-breaker-strength all-installed)
+         update-all-ice update-ice-strength update-breaker-strength all-installed)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -63,10 +63,9 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :counter :current-strength :abilities :rezzed :special)
-         c (if (= (:side c) "Runner") (dissoc c :installed) c)
-         c (if keep-counter c (dissoc c :advance-counter))]
-     (when (= (:side card) "Runner"))
+   (let [c (dissoc card :current-strength :abilities :rezzed :special)
+         c (if (= (:side c) "Runner") (dissoc c :installed :counter) c)
+         c (if keep-counter c (dissoc c :counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
@@ -109,7 +108,7 @@
 
 (defn move
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone cid host] :as card} to front]
+  ([state side {:keys [zone cid host installed] :as card} to front]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
@@ -119,7 +118,7 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (and (#{:servers :rig :scored :current} (first zone))
+             c (if (and (or installed (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard} (first dest)))
                  (desactivate state side c) c)
              moved-card (assoc c :zone dest :host nil :hosted nil)]
@@ -321,6 +320,7 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
+          (update-all-ice state side)
           (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
             (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
@@ -391,14 +391,16 @@
                     (:abilities cdef))
         abilities (for [ab abilities]
                     (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
-        data (if-let [recurring (:recurring cdef)]
-               (assoc (:data cdef) :counter recurring)
-               (:data cdef))
-        c (merge card data {:abilities abilities})]
+        c (merge card (:data cdef) {:abilities abilities})
+        c (if-let [r (:recurring cdef)]
+            (if (number? r) (assoc c :rec-counter r) c) c)]
     (when-let [recurring (:recurring cdef)]
-      (register-events state side
-                       {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
-                        {:effect (effect (set-prop card :counter recurring))}} c))
+      (let [r (if (number? recurring)
+                (effect (set-prop card :rec-counter recurring))
+                recurring)]
+        (register-events state side
+                         {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
+                          {:effect r}} c)))
     (when-let [prevent (:prevent cdef)]
       (doseq [[ptype pvec] prevent]
         (doseq [psub pvec]
@@ -441,7 +443,9 @@
 (defn rez-cost [state side {:keys [cost] :as card}]
   (if (nil? cost)
     nil
-    (-> cost
+    (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
+          (+ cost (rezfun state side card nil))
+          cost)
         (+ (or (get-in @state [:bonus :cost]) 0))
         (max 0))))
 
@@ -823,7 +827,6 @@
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
-    (update-all-ice state side)
     (trigger-event state side :unsuccessful-run)
     (handle-end-run state side)))
 
@@ -841,9 +844,10 @@
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])
     (when-let [pos (get-in @state [:run :position])]
-      (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
-        (trigger-event state side :pass-ice ice)
-        (update-ice-in-server state side (card->server state ice))))
+      (do (if-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+            (trigger-event state side :pass-ice ice)
+            (trigger-event state side :pass-ice nil))
+          (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
     (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
@@ -861,7 +865,8 @@
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
-             {:msg "take 1 [Recurring Credits]" :counter-cost 1 :effect (effect (gain :credit 1))}
+             {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
+              :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))]
     (resolve-ability state side ab card targets)))
 
