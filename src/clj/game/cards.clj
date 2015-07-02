@@ -1713,6 +1713,19 @@
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}]}
 
+   "Omni-Drive"
+   {:recurring 1
+    :abilities [{:label "Install a program of 1[Memory Unit] or less on Omni-Drive"
+                 :req (req (empty? (:hosted card))) :cost [:click 1]
+                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (<= (:memoryunits %) 1)
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]}
+
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
@@ -1723,6 +1736,15 @@
                               (do (system-msg %1 %2 (str "gains 2 [Credits] and draws " (:title c)))
                                   (gain %1 %2 :credit 2) (draw %1 %2))
                               (do (system-msg %1 %2 (str "trashes " (:title c))) (mill %1 %2))))}]}
+
+   "Order of Sol"
+   {:effect (req (add-watch state :order-of-sol
+                            (fn [k ref old new]
+                              (when (and (not (zero? (get-in old [:runner :credit])))
+                                         (zero? (get-in new [:runner :credit])))
+                                (resolve-ability ref side {:msg "gain 1 [Credits]" :once :per-turn
+                                                           :effect (effect (gain :credit 1))} card nil)))))
+    :leave-play (req (remove-watch state :order-of-sol))}
 
    "Origami"
    {:effect (effect (gain :max-hand-size
@@ -1738,8 +1760,14 @@
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
+
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Paintbrush"
+   {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
+                                            " sentry, code gate or barrier until the end of next run this turn")
+                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
 
    "Patch"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
@@ -1747,65 +1775,6 @@
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
-
-   "Pheromones"
-   {:recurring (effect (set-prop card :rec-counter (:counter card)))
-    :events {:successful-run {:req (req (= target :hq))
-                              :effect (effect (add-prop card :counter 1))}}}
-
-   "Posted Bounty"
-   {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
-               :msg "give the Runner 1 tag and take 1 bad publicity"
-               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
-
-   "Precognition"
-   {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
-
-   "Profiteering"
-   {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
-    :effect (effect (gain :credit (* 5 (Integer/parseInt target))
-                          :bad-publicity (Integer/parseInt target)))}
-
-   "Progenitor"
-   {:abilities [{:cost [:click 1] :req (req (empty? (:hosted card)))
-                 :prompt "Choose a Virus program to install on Progenitor"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (has? % :subtype "Virus")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
-                 :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}]
-    :events {:purge {:effect (req (when-let [c (first (:hosted card))]
-                                    (add-prop state side c :counter 1)))}}}
-
-   "Omni-Drive"
-   {:recurring 1
-    :abilities [{:label "Install a program of 1[Memory Unit] or less on Omni-Drive"
-                 :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (<= (:memoryunits %) 1)
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
-                 :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}]}
-
-   "Order of Sol"
-   {:effect (req (add-watch state :order-of-sol
-                            (fn [k ref old new]
-                              (when (and (not (zero? (get-in old [:runner :credit])))
-                                         (zero? (get-in new [:runner :credit])))
-                                (resolve-ability ref side {:msg "gain 1 [Credits]" :once :per-turn
-                                                           :effect (effect (gain :credit 1))} card nil)))))
-    :leave-play (req (remove-watch state :order-of-sol))}
-
-   "Paintbrush"
-   {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
-                                            " sentry, code gate or barrier until the end of next run this turn")
-                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
@@ -1867,8 +1836,9 @@
       :events {:runner-turn-begins remove-counter}})
 
    "Pheromones"
-   {:events
-    {:successful-run {:req (req (= target :hq)) :effect (effect (add-prop card :counter 1))}}}
+   {:recurring (effect (set-prop card :rec-counter (:counter card)))
+    :events {:successful-run {:req (req (= target :hq))
+                              :effect (effect (add-prop card :counter 1))}}}
 
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
@@ -1900,6 +1870,32 @@
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card)))}]}
+   "Posted Bounty"
+   {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
+               :msg "give the Runner 1 tag and take 1 bad publicity"
+               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
+
+   "Precognition"
+   {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
+
+   "Profiteering"
+   {:choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
+    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
+    :effect (effect (gain :credit (* 5 (Integer/parseInt target))
+                          :bad-publicity (Integer/parseInt target)))}
+
+   "Progenitor"
+   {:abilities [{:cost [:click 1] :req (req (empty? (:hosted card)))
+                 :prompt "Choose a Virus program to install on Progenitor"
+                 :choices (req (filter #(and (= (:type %) "Program")
+                                             (has? % :subtype "Virus")
+                                             (<= (:cost %) (:credit runner)))
+                                       (:hand runner)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (runner-install target {:host-card card}))}]
+    :events {:purge {:effect (req (when-let [c (first (:hosted card))]
+                                    (add-prop state side c :counter 1)))}}}
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
