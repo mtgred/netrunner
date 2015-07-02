@@ -21,7 +21,7 @@
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update-ice-strength update-breaker-strength all-installed)
+         update-all-ice update-ice-strength update-breaker-strength all-installed)
 
 (defn pay [state side card & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -320,6 +320,7 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
+          (update-all-ice state side)
           (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
             (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
@@ -824,7 +825,6 @@
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
-    (update-all-ice state side)
     (trigger-event state side :unsuccessful-run)
     (handle-end-run state side)))
 
@@ -842,9 +842,10 @@
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])
     (when-let [pos (get-in @state [:run :position])]
-      (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
-        (trigger-event state side :pass-ice ice)
-        (update-ice-in-server state side (card->server state ice))))
+      (do (if-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+            (trigger-event state side :pass-ice ice)
+            (trigger-event state side :pass-ice nil))
+          (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
     (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
