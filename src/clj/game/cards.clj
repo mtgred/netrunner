@@ -3138,7 +3138,8 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
    "Asteroid Belt"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
@@ -3369,7 +3370,8 @@
 
    "IQ"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :strength-bonus (req (count (:hand corp)))}
+    :strength-bonus (req (count (:hand corp)))
+    :rez-cost-bonus (req (count (:hand corp)))}
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
@@ -3486,7 +3488,8 @@
 
    "Nebula"
    {:advanceable :always
-    :abilities [trash-program]}
+    :abilities [trash-program]
+    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Negotiator"
    {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
@@ -3526,7 +3529,8 @@
    "Orion"
    {:advanceable :always
     :abilities [trash-program
-                {:msg "end the run" :effect (effect (end-run))}]}
+                {:msg "end the run" :effect (effect (end-run))}]
+    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Pachinko"
    {:abilities [{:label "End the run if the Runner is tagged"
@@ -3717,7 +3721,8 @@
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Wormhole"
-   {:advanceable :always}
+   {:advanceable :always
+    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Wotan"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}

@@ -440,7 +440,9 @@
 (defn rez-cost [state side {:keys [cost] :as card}]
   (if (nil? cost)
     nil
-    (-> cost
+    (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
+          (+ cost (rezfun state side card nil))
+          cost)
         (+ (or (get-in @state [:bonus :cost]) 0))
         (max 0))))
 
