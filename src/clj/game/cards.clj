@@ -679,8 +679,8 @@
                                              (has? % :subtype "Virus"))
                                        (:deck runner)))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
-                {:label "Install a non Icebreaker program on Djin" :cost [:click 1]
-                 :prompt "Choose a non Icebreaker program to install on Djin"
+                {:label "Install a non-Icebreaker program on Djinn" :cost [:click 1]
+                 :prompt "Choose a non-Icebreaker program to install on Djinn"
                  :choices (req (filter #(and (= (:type %) "Program")
                                              (not (has? % :subtype "Icebreaker"))
                                              (<= (:cost %) (:credit runner)))
@@ -1964,7 +1964,7 @@
                                                       (:discard runner))))))}
 
    "Power Grid Overload"
-   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost lower or equal to "
+   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost less than or equal to "
                               (- target (second targets)))
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
@@ -2249,7 +2249,7 @@
     :events {:pre-install nil}}
 
    "Scheherazade"
-   {:abilities [{:cost [:click 1] :prompt "Choose a program to install on Scherazade"
+   {:abilities [{:cost [:click 1] :prompt "Choose a program to install on Scheherazade"
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))
                                              (<= (:memoryunits %) (:memory runner)))
