@@ -391,14 +391,16 @@
                     (:abilities cdef))
         abilities (for [ab abilities]
                     (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
-        data (if-let [recurring (:recurring cdef)]
-               (assoc (:data cdef) :counter recurring)
-               (:data cdef))
-        c (merge card data {:abilities abilities})]
+        c (merge card (:data cdef) {:abilities abilities})
+        c (if-let [r (:recurring cdef)]
+            (if (number? r) (assoc c :rec-counter r) c) c)]
     (when-let [recurring (:recurring cdef)]
-      (register-events state side
-                       {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
-                        {:effect (effect (set-prop card :counter recurring))}} c))
+      (let [r (if (number? recurring)
+                (effect (set-prop card :rec-counter recurring))
+                recurring)]
+        (register-events state side
+                         {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
+                          {:effect r}} c)))
     (when-let [prevent (:prevent cdef)]
       (doseq [[ptype pvec] prevent]
         (doseq [psub pvec]
@@ -863,7 +865,8 @@
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
-             {:msg "take 1 [Recurring Credits]" :counter-cost 1 :effect (effect (gain :credit 1))}
+             {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
+              :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))]
     (resolve-ability state side ab card targets)))
 

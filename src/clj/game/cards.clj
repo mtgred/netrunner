@@ -1652,6 +1652,10 @@
    "Net Celebrity"
    {:recurring 1}
 
+   "Net Police"
+   {:recurring (effect (set-prop card :rec-counter (:link runner)))
+    :effect (effect (set-prop card :rec-counter (:link runner)))}
+
    "Net Shield"
    {:prevent {:damage [:net]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
@@ -1743,6 +1747,11 @@
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
+
+   "Pheromones"
+   {:recurring (effect (set-prop card :rec-counter (:counter card)))
+    :events {:successful-run {:req (req (= target :hq))
+                              :effect (effect (add-prop card :counter 1))}}}
 
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
