@@ -42,7 +42,7 @@
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Adonis Campaign"
-   {:data {:counter 12}
+   {:effect (effect (add-prop card :counter 12))
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
                                 :effect (req (gain state :corp :credit 3)
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
@@ -679,8 +679,8 @@
                                              (has? % :subtype "Virus"))
                                        (:deck runner)))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
-                {:label "Install a non Icebreaker program on Djin" :cost [:click 1]
-                 :prompt "Choose a non Icebreaker program to install on Djin"
+                {:label "Install a non-Icebreaker program on Djinn" :cost [:click 1]
+                 :prompt "Choose a non-Icebreaker program to install on Djinn"
                  :choices (req (filter #(and (= (:type %) "Program")
                                              (not (has? % :subtype "Icebreaker"))
                                              (<= (:cost %) (:credit runner)))
@@ -833,7 +833,7 @@
                         (when caninst (lose state side :credit cost))))))}
 
    "Eve Campaign"
-   {:data {:counter 16}
+   {:effect (effect (add-prop card :counter 16))
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                 :effect (req (gain state :corp :credit 2)
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
@@ -1857,6 +1857,10 @@
                          :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
       :events {:runner-turn-begins remove-counter}})
 
+   "Pheromones"
+   {:events
+    {:successful-run {:req (req (= target :hq)) :effect (effect (add-prop card :counter 1))}}}
+
    "Philotic Entanglement"
    {:msg (msg "do " (count (:scored runner)) " net damage")
     :effect (effect (damage :net (count (:scored runner)) {:card card}))}
@@ -1907,7 +1911,7 @@
     :effect (effect (rez target {:no-cost true}))}
 
    "Private Contracts"
-   {:data {:counter 14}
+   {:effect (effect (add-prop card :counter 14))
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
@@ -1960,7 +1964,7 @@
                                                       (:discard runner))))))}
 
    "Power Grid Overload"
-   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost lower or equal to "
+   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost less than or equal to "
                               (- target (second targets)))
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
@@ -2130,7 +2134,7 @@
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Rex Campaign"
-   {:data [:counter 3]
+   {:effect (effect (add-prop card :counter 3))
     :events {:corp-turn-begins
              {:effect (req (add-prop state side card :counter -1)
                            (when (= (:counter card) 1)
@@ -2245,7 +2249,7 @@
     :events {:pre-install nil}}
 
    "Scheherazade"
-   {:abilities [{:cost [:click 1] :prompt "Choose a program to install on Scherazade"
+   {:abilities [{:cost [:click 1] :prompt "Choose a program to install on Scheherazade"
                  :choices (req (filter #(and (has? % :type "Program")
                                              (<= (:cost %) (:credit runner))
                                              (<= (:memoryunits %) (:memory runner)))
