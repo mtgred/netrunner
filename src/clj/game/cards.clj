@@ -38,7 +38,9 @@
                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Adjusted Chronotype"
-   {:events {:runner-loss {:req (req (some #{:click} target)) :once :per-turn
+   {:events {:runner-loss {:req (req (and (some #{:click} target)
+                                          (empty? (filter #(= :click %)
+                                                          (mapcat first (turn-events state side :runner-loss))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Adonis Campaign"
@@ -177,8 +179,9 @@
 
    "Autoscripter"
    {:events {:runner-install {:req (req (and (= (:active-player @state) :runner)
-                                             (has? target :type "Program")))
-                              :once :per-turn :msg "gain [Click]" :effect (effect (gain :click 1))}
+                                             (empty? (filter #(has? % :type "Program")
+                                                             (mapcat first (turn-events state side :runner-install))))))
+                              :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "Autoscripter is trashed"))}}}
 
@@ -562,6 +565,7 @@
    "Daily Business Show"
    {:events {:corp-draw
              {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
+              :req (req (first-event state side :corp-draw))
               :effect (req
                         (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
                                        (filter #(and (:rezzed %) (= (:title %) "Daily Business Show")))  count)
@@ -817,7 +821,7 @@
 
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
-                              :once :per-turn}}}
+                              :req (req (first-event state side :successful-run))}}}
 
    "Eureka!"
    {:effect
@@ -1310,9 +1314,11 @@
                                          :effect (effect (add-prop target :advance-counter 4))} card nil)))))}]}
 
    "John Masanori"
-   {:events {:successful-run {:msg "draw 1 card" :once :per-turn :once-key :john-masanori-draw
+   {:events {:successful-run {:req (req (first-event state side :successful-run))
+                              :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
-             :unsuccessful-run {:msg "take 1 tag" :once :per-turn :once-key :john-masanori-tag
+             :unsuccessful-run {:req (req (first-event state side :unsuccessful-run))
+                                :msg "take 1 tag" :once-key :john-masanori-tag
                                 :effect (effect (gain :runner :tag 1))}}}
 
    "Joshua B."
@@ -1498,8 +1504,9 @@
    {:effect (effect (gain :click 1 :click-per-turn 1))}
 
    "Manhunt"
-   {:events {:successful-run {:once :per-turn :trace {:base 2 :msg "give the Runner 1 tag"
-                                                      :effect (effect (gain :runner :tag 1))}}}}
+   {:events {:successful-run {:req (req (first-event state side :successful-run))
+                              :trace {:base 2 :msg "give the Runner 1 tag"
+                                      :effect (effect (gain :runner :tag 1))}}}}
 
    "Marcus Batty"
    {:abilities [{:msg "start a Psi game"
@@ -2555,11 +2562,13 @@
    {:effect (effect (gain :credit (count (:hand runner))))}
 
    "Symmetrical Visage"
-   {:events {:runner-click-draw {:once :per-turn :msg "gain 1 [Credits]"
+   {:events {:runner-click-draw {:req (req (first-event state side :runner-click-draw))
+                                 :msg "gain 1 [Credits]"
                                  :effect (effect (gain :credit 1))}}}
 
    "Synthetic Blood"
-   {:events {:damage {:once :per-turn :msg "draw 1 card" :effect (effect (draw :runner))}}}
+   {:events {:damage {:req (req (first-event state side :damage)) :msg "draw 1 card"
+                      :effect (effect (draw :runner))}}}
 
    "Tech Startup"
    {:abilities [{:label "Install an asset from R&D"
