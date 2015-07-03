@@ -1405,3 +1405,20 @@ nav ul
   padding: 10px 20px
   width: 650px
   margin: 40px auto 10px
+
+  .bitcoin
+    color: orange
+    position: relative
+
+    .qr
+      display: none
+      position: absolute
+      top: 25px
+      left: 0
+      border: 10px solid white
+      background-color: white
+      transition(all 0.2s ease-in-out)
+
+    &:hover
+      .qr
+        display: block

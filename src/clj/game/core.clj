@@ -382,7 +382,8 @@
   (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
     (when-let [card (get-card state (:card e))]
       (when (or (not (:req ability)) ((:req ability) state side card targets))
-        (resolve-ability state side ability card targets)))))
+        (resolve-ability state side ability card targets))))
+  (swap! state update-in [:turn-events] #(cons [event targets] %)))
 
 (defn card-init [state side card]
   (let [cdef (card-def card)
@@ -889,7 +890,8 @@
         (trigger-event state side :corp-turn-ends))
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))
-      (swap! state assoc :end-turn true))))
+      (swap! state assoc :end-turn true)
+      (swap! state dissoc :turn-events))))
 
 (defn purge [state side]
   (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
@@ -1144,5 +1146,11 @@
   (if close
     (system-msg state side "stops looking at his deck and shuffles it")
     (system-msg state side "shuffles his deck")))
+
+(defn turn-events [state side ev]
+  (mapcat #(rest %) (filter #(= ev (first %)) (:turn-events @state))))
+
+(defn first-event [state side ev]
+  (empty? (turn-events state side ev)))
 
 (load "cards")
