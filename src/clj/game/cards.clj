@@ -10,6 +10,28 @@
                      :choices {:req #(= (:type %) "Hardware")}
                      :effect (effect (trash target {:cause :subroutine}))})
 
+(def breaker-auto-boost
+  {:effect (req (let [abs (:abilities card) auto-abi (first (filter #(:auto-boost %) abs))
+                      pumpabi (some #(when (:pump %) %) abs)
+                      pumpcst (nth (:cost pumpabi) (inc (.indexOf (:cost pumpabi) :credit)))
+                      current-ice (get-card state current-ice)]
+                  (if (and (:rezzed current-ice) (some #(has? current-ice :subtype %) (:breaks card)))
+                    (let [strdif (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                           (or (:current-strength card) (:strength card))))
+                          pumpnum (int (Math/ceil (/ strdif (:pump pumpabi))))]
+                      (.println System/out (str abs "&&&&&&" pumpabi "\n" "****" pumpcst "*****" pumpnum "\n")) 
+
+                      (if auto-abi
+                        (update! state side (-> card
+                                                (assoc-in [:abilities 0 :cost] [:credit (* pumpcst pumpnum)])
+                                                (assoc-in [:abilities 0 :label] (str "Match strength of "
+                                                                                 (:title current-ice)))))
+                        (update! state side
+                          (assoc-in card [:abilities]
+                                    (vec (conj abs {:auto-boost true :cost [:credit (* pumpcst pumpnum)]
+                                                    :label (str "Match strength of " (:title current-ice))}))))))
+                    (when auto-abi (update! state side (assoc-in card [:abilities] (vec (rest abs))))))))})
+
 (def cards
   {"Accelerated Beta Test"
    {:optional {:prompt "Look at the top 3 cards of R&D?"
@@ -2994,9 +3016,12 @@
                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
 
    "Gordian Blade"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 :all-run))}]}
+   {:data {:breaks ["Code Gate"]}
+    :abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                {:cost [:credit 1] :msg "add 1 strength for the remainder of this run" :pump 1
+                 :effect (effect (pump card 1 :all-run))}]
+    :events {:encounter-ice breaker-auto-boost :pass-ice breaker-auto-boost :run-ends breaker-auto-boost
+             :ice-strength-changed breaker-auto-boost}}
 
    "Gingerbread"
    {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
