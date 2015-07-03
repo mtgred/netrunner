@@ -178,12 +178,14 @@
    {:events {:jack-out {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}}}
 
    "Autoscripter"
-   {:events {:runner-install {:req (req (and (= (:active-player @state) :runner)
+   {:events {:runner-install {:req (req (and (has? target :type "Program")
+                                             (= (:active-player @state) :runner)
                                              (empty? (filter #(has? % :type "Program")
-                                                             (mapcat first (turn-events state side :runner-install))))))
+                                                             (map first (turn-events state side :runner-install))))))
                               :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
-                                                (system-msg "Autoscripter is trashed"))}}}
+                                                (system-msg "trashes Autoscripter"))}}}
+   
 
    "Bank Job"
    {:data {:counter 8}
