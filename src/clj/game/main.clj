@@ -39,9 +39,10 @@
    "ability" core/play-ability
    "trash-resource" core/trash-resource})
 
-(defn convert [args]
+(defn convert [socket]
   (try
-    (let [params (parse-string (String. args) true)]
+    (let [args (.recv socket)
+          params (parse-string (String. args) true)]
       (if (or (get-in params [:args :card]))
         (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
         params))
@@ -50,7 +51,7 @@
 
 (defn run [socket]
   (while true
-    (let [{:keys [gameid action command side args text] :as msg} (convert (.recv socket))
+    (let [{:keys [gameid action command side args text] :as msg} (convert socket)
           state (@game-states gameid)]
       (try
         (case action
@@ -66,7 +67,7 @@
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
-          (when state
+          (when-let [state (@game-states gameid)]
             (.send socket (generate-string state))))))))
 
 (defn dev []
