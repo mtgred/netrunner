@@ -604,7 +604,9 @@
     (resolve-ability state side
                      {:prompt "Choose a resource to trash"
                       :choices {:req #(= (:type %) "Resource")}
-                      :effect (effect (trash target))} nil nil)))
+                      :effect (effect (trash target)
+                                      (system-msg (str "spends [Click] and 2 [Credits] to trash "
+                                                       (:title target))))} nil nil)))
 
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
