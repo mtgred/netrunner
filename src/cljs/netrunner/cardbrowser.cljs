@@ -23,6 +23,7 @@
 (defn add-symbols [card-text]
   (-> card-text
       (make-span "\\[Credits\\]" "credit")
+      (make-span "\\[Credit\\]" "credit")
       (make-span "\\[Click\\]" "click")
       (make-span "\\[Subroutine\\]" "subroutine")
       (make-span "\\[Recurring Credits\\]" "recurring-credit")
