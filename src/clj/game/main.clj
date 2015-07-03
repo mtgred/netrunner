@@ -68,7 +68,9 @@
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
           (when-let [state (@game-states gameid)]
-            (.send socket (generate-string state))))))))
+            (if (#{"do" "start"} action)
+              (.send socket (generate-string state))
+              (.send socket "error"))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
