@@ -1152,9 +1152,13 @@
   (let [run (:run @state) card (get-card state (:card args))
         current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        strdif (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                         (or (:current-strength card) (:strength card))))
-        pumpnum (int (Math/ceil (/ strdif (:pump pumpabi))))]
-    (repeat pumpnum (resolve-ability state side pumpabi card nil))))
+        pumpcst (when pumpabi ((inc (.indexOf (:cost pumpabi) :credit)) (:cost pumpabi)))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                         (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
+      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
+      (system-msg state side (str "increases the strength of " (:title card) " to "
+                                  (:current-strength (get-card state card)))))))
 
 (load "cards")
