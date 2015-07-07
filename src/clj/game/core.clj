@@ -955,7 +955,6 @@
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness] :as card}
     {:keys [extra-cost no-cost host-card] :as params}]
-    (swap! state update-in [:bonus] dissoc :install-cost)
     (trigger-event state side :pre-install card)
     (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
       (resolve-ability state side
@@ -974,7 +973,8 @@
                                         (when host-card (str " on " (:title host-card)))
                                         (when no-cost " at no cost")))
             (trigger-event state side :runner-install installed-card)
-            (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))))
+            (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
+    (swap! state update-in [:bonus] dissoc :install-cost)))
 
 (defn server-list [state card]
   (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
@@ -986,7 +986,6 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
-     (swap! state update-in [:bonus] dissoc :cost)
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (let [cdef (card-def card) cost (rez-cost state side card)]
@@ -994,7 +993,8 @@
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
-           (trigger-event state side :rez card))))))
+           (trigger-event state side :rez card))))
+     (swap! state update-in [:bonus] dissoc :cost)))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))

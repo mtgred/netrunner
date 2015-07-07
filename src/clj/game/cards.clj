@@ -312,12 +312,7 @@
    "Career Fair"
    {:prompt "Choose a Resource to install"
     :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
-    :effect  (effect
-               (register-events {:pre-install
-                                 {:effect (effect (install-cost-bonus -3) (unregister-events card))}}
-                                (assoc card :zone '(:discard)))
-               (runner-install target))
-    :events {:pre-install nil}}
+    :effect  (effect (install-cost-bonus -3) (runner-install target))}
 
    "Celebrity Gift"
    {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
@@ -1614,12 +1609,7 @@
    "Modded"
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
-    :effect (effect
-              (register-events {:pre-install
-                                {:effect (effect (install-cost-bonus -3) (unregister-events card))}}
-                               (assoc card :zone '(:discard)))
-              (runner-install target))
-    :events {:pre-install nil}}
+    :effect (effect (install-cost-bonus -3) (runner-install target))}
 
    "Monolith"
    {:prevent {:damage [:net :brain]}
@@ -2297,13 +2287,8 @@
                               :choices (req (filter #(and (= (:type %) "Program")
                                                           (<= (:cost %) (+ (:credit runner) (:cost trashed))))
                                                     ((if (= fr "Grip") :hand :discard) runner)))
-                              :effect (effect (register-events {:pre-install
-                                                                {:effect
-                                                                 (effect (install-cost-bonus (- (:cost trashed)))
-                                                                         (unregister-events card))}}
-                                                               (assoc card :zone '(:discard)))
-                                              (runner-install target))} card nil)))} card nil)))
-    :events {:pre-install nil}}
+                              :effect (effect (install-cost-bonus (- (:cost trashed)))
+                                              (runner-install target))} card nil)))} card nil)))}
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
