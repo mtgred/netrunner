@@ -840,9 +840,7 @@
     (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
       (when (:rezzed ice)
         (trigger-event state side :encounter-ice ice)
-        (update-ice-strength state side ice)
-        (let [stren (:current-strength (get-card state ice))]
-          (system-msg state :runner (str "encounters " (:title ice) " at strength " stren)))))))
+        (update-ice-strength state side ice)))))
 
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])

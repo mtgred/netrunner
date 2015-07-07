@@ -185,7 +185,6 @@
                               :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "trashes Autoscripter"))}}}
-   
 
    "Bank Job"
    {:data {:counter 8}
@@ -630,6 +629,13 @@
 
    "Dedicated Technician Team"
    {:recurring 2}
+
+   "Deep Thought"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
+             :runner-turn-begins
+             {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
+              :effect (effect (prompt! card (str "The top card of your R&D is "
+                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
@@ -1846,7 +1852,7 @@
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]}
 
    "Paywall Implementation"
@@ -2209,7 +2215,7 @@
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE")) 
+                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:pre-rez {:req (req (= (:zone (:host card)) (:zone target)))
                        :effect (effect (rez-cost-bonus 2))}}}
@@ -3826,13 +3832,6 @@
 
    "Deep Red"
    {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
-
-   "Deep Thought"
-   {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
-             :runner-turn-begins
-             {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
-              :effect (effect (prompt! card (str "The top card of your R&D is "
-                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
