@@ -3059,7 +3059,7 @@
    "Inti"
    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
                 {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 true))}]}
+                 :effect (effect (pump card 1 :all-run))}]}
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
