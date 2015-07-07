@@ -39,10 +39,9 @@
    "ability" core/play-ability
    "trash-resource" core/trash-resource})
 
-(defn convert [socket]
+(defn convert [args]
   (try
-    (let [args (.recv socket)
-          params (parse-string (String. args) true)]
+    (let [params (parse-string (String. args) true)]
       (if (or (get-in params [:args :card]))
         (update-in params [:args :card :zone] #(map (fn [k] (if (string? k) (keyword k) k)) %))
         params))
@@ -51,7 +50,7 @@
 
 (defn run [socket]
   (while true
-    (let [{:keys [gameid action command side args text] :as msg} (convert socket)
+    (let [{:keys [gameid action command side args text] :as msg} (convert (.recv socket))
           state (@game-states gameid)]
       (try
         (case action
@@ -68,9 +67,8 @@
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
           (when-let [state (@game-states gameid)]
-            (if (#{"do" "start"} action)
-              (.send socket (generate-string state))
-              (.send socket "error"))))))))
+            (.send socket (generate-string state))
+            (.send socket "error")))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
