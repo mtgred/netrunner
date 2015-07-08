@@ -20,7 +20,7 @@
                   (update! state side (assoc card :abilities
                            (if (and (:rezzed current-ice) 
                                     (or (some #(has? current-ice :subtype %) (:breaks card))
-                                        (= (:breaks card) "All"))
+                                        (= (first (:breaks card)) "All"))
                                     (> strdif 0))
                              (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
                                          :label (str "Match strength of " (:title current-ice))} abs))
