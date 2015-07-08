@@ -12,7 +12,7 @@
 
 (def breaker-auto-pump
   {:effect (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
-                      pumpcst (when pumpabi ((inc (.indexOf (:cost pumpabi) :credit)) (:cost pumpabi)))
+                      pumpcst (when pumpabi (nth (:cost pumpabi) (inc (.indexOf (:cost pumpabi) :credit))))
                       current-ice (get-card state current-ice)
                       strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                                          (or (:current-strength card) (:strength card)))))
