@@ -18,7 +18,9 @@
                                                          (or (:current-strength card) (:strength card)))))
                       pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
                   (update! state side (assoc card :abilities
-                           (if (and (:rezzed current-ice) (some #(has? current-ice :subtype %) (:breaks card))
+                           (if (and (:rezzed current-ice) 
+                                    (or (some #(has? current-ice :subtype %) (:breaks card))
+                                        (= (first (:breaks card)) "All"))
                                     (> strdif 0))
                              (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
                                          :label (str "Match strength of " (:title current-ice))} abs))
@@ -2894,14 +2896,16 @@
    ;; Icebreakers
 
    "Alpha"
-   {:abilities [{:cost [:credit 1] :req (req (and run (zero? (:position run))))
-                 :msg "break 1 subroutine on the outermost ICE protecting this server"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["All"]
+     {:abilities [{:cost [:credit 1] :req (req (and run (zero? (:position run))))
+                   :msg "break 1 subroutine on the outermost ICE protecting this server"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Alias"
-   {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
-                 :msg "break 1 sentry subroutine"}
-                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
+                   :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3) :pump 3)}]})
 
    "Atman"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
@@ -2912,37 +2916,44 @@
                              :effect (effect (update-breaker-strength card))}}}
 
    "Aurora"
-   {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 2] :msg "break 1 barrier subroutine"}
+                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3) :pump 3)}]})
 
    "Battering Ram"
-   {:abilities [{:cost [:credit 2] :msg "break up to 2 barrier subroutines"}
-                {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 :all-run))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 2] :msg "break up to 2 barrier subroutines"}
+                  {:cost [:credit 1] :msg "add 1 strength for the remainder of this run"
+                   :effect (effect (pump card 1 :all-run) :pump 1)}]})
 
    "BlacKat"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Breach"
-   {:abilities [{:cost [:credit 2] :req (req (#{:hq :rd :archives} (first (:server run))))
-                 :msg "break 3 barrier subroutines"}
-                {:cost [:credit 2] :msg "add 4 strength" :effect (effect (pump card 4))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 2] :req (req (#{:hq :rd :archives} (first (:server run))))
+                   :msg "break 3 barrier subroutines"}
+                  {:cost [:credit 2] :msg "add 4 strength" :effect (effect (pump card 4) :pump 4)}]})
 
    "Cerberus \"Cuj.0\" H3"
-   {:data {:counter 4}
-    :abilities [{:counter-cost 1 :msg "break up to 2 sentry subroutines"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Sentry"]
+     {:data {:counter 4}
+      :abilities [{:counter-cost 1 :msg "break up to 2 sentry subroutines"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Cerberus \"Rex\" H2"
-   {:data {:counter 4}
-    :abilities [{:counter-cost 1 :msg "break up to 2 code gate subroutines"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:data {:counter 4}
+      :abilities [{:counter-cost 1 :msg "break up to 2 code gate subroutines"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Cerberus \"Lady\" H1"
-   {:data {:counter 4}
-    :abilities [{:counter-cost 1 :msg "break up to 2 barrier subroutines"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Barrier"]
+     {:data {:counter 4}
+      :abilities [{:counter-cost 1 :msg "break up to 2 barrier subroutines"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Chameleon"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
@@ -2956,8 +2967,9 @@
                   {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
    "Creeper"
-   {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Crowbar"
    {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
@@ -2967,19 +2979,22 @@
     :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
 
    "Crypsis"
-   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}
-                {:cost [:click 1] :msg "place 1 virus counter"
-                 :effect (effect (add-prop card :counter 1))}
-                {:counter-cost 1 :label "Remove 1 hosted virus counter" :msg "remove 1 virus counter"}]}
+   (auto-icebreaker ["All"]
+     {:abilities [{:cost [:credit 1] :msg "break ICE subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}
+                  {:cost [:click 1] :msg "place 1 virus counter"
+                   :effect (effect (add-prop card :counter 1))}
+                  {:counter-cost 1 :label "Remove 1 hosted virus counter" :msg "remove 1 virus counter"}]})
 
    "Cyber-Cypher"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Dagger"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 1] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 1] :msg "add 5 strength" :effect (effect (pump card 5) :pump 5)}]})
 
    "Darwin"
    {:events {:runner-turn-begins
@@ -2994,13 +3009,15 @@
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :net Integer/MAX_VALUE))}]}
 
    "Eater"
-   {:abilities [{:cost [:credit 1] :msg "break ICE subroutine and access 0 cards this run"
-                 :effect (effect (max-access 0))}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["All"]
+     {:abilities [{:cost [:credit 1] :msg "break ICE subroutine and access 0 cards this run"
+                   :effect (effect (max-access 0))}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Faerie"
-   {:abilities [{:msg "break any number of sentry subroutines" :effect (effect (trash card))}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:msg "break any number of sentry subroutines" :effect (effect (trash card))}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
@@ -3013,16 +3030,19 @@
                  :effect (effect (trash target) (pump card 2))}]}
 
    "Femme Fatale"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Force of Nature"
-   {:abilities [{:cost [:credit 2] :msg "break up to 2 code gate subroutines"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 2] :msg "break up to 2 code gate subroutines"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Garrote"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Gordian Blade"
    (auto-icebreaker ["Code Gate"]
@@ -3031,13 +3051,15 @@
                    :effect (effect (pump card 1 :all-run))}]})
 
    "Gingerbread"
-   {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
-                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+   (auto-icebreaker ["Tracer"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
+                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3) :pump 3)}]})
 
    "Inti"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 true))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                  {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
+                   :effect (effect (pump card 1 :all-run) :pump 1)}]})
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
@@ -3049,8 +3071,9 @@
                 {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
    "Leviathan"
-   {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
-                {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 3] :msg "break up to 3 code gate subroutines"}
+                  {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5) :pump 5)}]})
 
    "Morning Star"
    {:abilities [{:cost [:credit 1] :msg "break any number of barrier subroutines"}]}
@@ -3059,36 +3082,43 @@
    {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}]}
 
    "Ninja"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 3] :msg "add 5 strength" :effect (effect (pump card 5) :pump 5)}]})
 
    "Passport"
-   {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
-                 :msg "break 1 code gate subroutine"}
-                {:cost [:credit 2] :msg "add 2 strength" :effect (effect (pump card 2))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 1] :req (req (#{:hq :rd :archives} (first (:server run))))
+                   :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 2] :msg "add 2 strength" :effect (effect (pump card 2) :pump 2)}]})
 
    "Omega"
-   {:abilities [{:cost [:credit 1] :req (req (= (:position run) (dec (count (:ices run)))))
-                 :msg "break 1 subroutine on the innermost ICE protecting this server"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["All"]
+     {:abilities [{:cost [:credit 1] :req (req (= (:position run) (dec (count (:ices run)))))
+                   :msg "break 1 subroutine on the innermost ICE protecting this server"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Overmind"
-   {:effect (effect (set-prop card :counter (:memory runner)))
-    :abilities [{:counter-cost 1 :msg "break 1 subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["All"]
+     {:effect (effect (set-prop card :counter (:memory runner)))
+      :abilities [{:counter-cost 1 :msg "break 1 subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Peacock"
-   {:abilities [{:cost [:credit 2] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 2] :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3) :pump 3)}]})
 
    "Pipeline"
-   {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
-                {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
-                 :effect (effect (pump card 1 :all-run))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                  {:cost [:credit 2] :msg "add 1 strength for the remainder of this run"
+                   :effect (effect (pump card 1 :all-run) :pump 1)}]})
 
    "Refractor"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3) :pump 3)}]})
 
    "Sage"
    {:abilities [{:cost [:credit 2] :msg "break 1 code gate or barrier subroutine"}]
@@ -3101,13 +3131,15 @@
     :strength-bonus (req (:memory runner))}
 
    "Snowball"
-   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"
-                 :effect (effect (pump card 1 :all-run))}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Barrier"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"
+                   :effect (effect (pump card 1 :all-run))}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Sharpshooter"
-   {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
-                {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2))}]}
+   (auto-icebreaker ["Destroyer"]
+     {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
+                  {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2) :pump 2)}]})
 
    "Shiv"
    {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
@@ -3130,33 +3162,37 @@
     :strength-bonus (req (or (:counter card) 0))}
 
    "Switchblade"
-   {:abilities [{:cost [:credit 1] :msg "break any number of sentry subroutines"}
-                {:cost [:credit 1] :msg "add 7 strength" :effect (effect (pump card 7))}]}
+   (auto-icebreaker ["Sentry"]
+     {:abilities [{:cost [:credit 1] :msg "break any number of sentry subroutines"}
+                  {:cost [:credit 1] :msg "add 7 strength" :effect (effect (pump card 7) :pump 7)}]})
 
    "Torch"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    "Wyrm"
-   {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
-                {:cost [:credit 1]
-                 :label "give -1 strength to current ice" :msg (msg "give -1 strength to " (:title current-ice))
-                 :req (req current-ice)
-                 :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
-                              (update-ice-strength state side current-ice))}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]
-    :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
-                 {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
-                                     :effect (req (let [c (:wyrm-count (get-card state card))]
-                                                       (ice-strength-bonus state side (- c))))}
-                  :pass-ice wy :run-ends wy})}
+   (auto-icebreaker ["All"]
+     {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
+                  {:cost [:credit 1]
+                   :label "give -1 strength to current ice" :msg (msg "give -1 strength to " (:title current-ice))
+                   :req (req current-ice)
+                   :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
+                                (update-ice-strength state side current-ice))}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]
+      :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
+                   {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
+                                       :effect (req (let [c (:wyrm-count (get-card state card))]
+                                                         (ice-strength-bonus state side (- c))))}
+                    :pass-ice wy :run-ends wy})})
 
    "Yog.0"
    {:abilities [{:msg "break 1 code gate subroutine"}]}
 
    "ZU.13 Key Master"
-   {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1))}]}
+   (auto-icebreaker ["Code Gate"]
+     {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1) :pump 1)}]})
 
    ;; ICE
    "Archer"
