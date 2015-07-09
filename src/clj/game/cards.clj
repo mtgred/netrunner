@@ -72,7 +72,6 @@
    "Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
-
    "Akitaro Watanabe"
    {:events {:pre-rez {:req (req (and (= (:type target) "ICE")
                                         (= (card->server state card) (card->server state target))))
@@ -1008,6 +1007,14 @@
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
+
+   "Glenn Station"
+   {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
+                 :prompt "Choose a card to host on Glenn Station" :choices (req (:hand corp))
+                 :msg "host a card from HQ" :effect (effect (host card target {:facedown true}))}
+                {:label "Add a card on Glenn Station to HQ" :cost [:click 1]
+                 :prompt "Choose a card on Glenn Station" :choices (req (:hosted card))
+                 :msg "add a hosted card to HQ" :effect (effect (move target :hand))}]}
 
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
@@ -2554,6 +2561,21 @@
                                  {:msg " take 1 brain damage"
                                   :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
                       card))}
+
+   "Street Peddler"
+   {:effect (effect (host card (first (:deck runner)) {:facedown true})
+                    (host (get-card state card) (second (:deck runner)) {:facedown true})
+                    (host (get-card state card) (get (:deck runner) 2) {:facedown true}))
+    :abilities [{:prompt "Choose a card on Street Peddler to install"
+                 :choices (req (filter #(and (not= (:type %) "Event")
+                                             (<= (:cost %) (inc (:credit runner))))
+                                       (:hosted card)))
+                 :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
+                 :effect (effect
+                          (install-cost-bonus -1) (runner-install (dissoc target :facedown))
+                          (trash (update-in card [:hosted]
+                                                   (fn [coll]
+                                                     (remove-once #(not= (:cid %) (:cid target)) coll)))))}]}
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}

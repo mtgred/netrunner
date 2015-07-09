@@ -63,7 +63,7 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
          c (if (= (:side c) "Runner") (dissoc c :installed :counter) c)
          c (if keep-counter c (dissoc c :counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
@@ -114,7 +114,7 @@
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone))))))
        (doseq [h (:hosted card)]
-         (trash state side (update-in h [:zone] #(map to-keyword %))))
+         (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown)))
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
@@ -937,19 +937,21 @@
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn host [state side card {:keys [zone cid host] :as target}]
-  (doseq [s [:runner :corp]]
-    (if host
-      (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                 (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
-        (update! state side (update-in host-card [:hosted]
-                                       (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-      (swap! state update-in (cons s (vec zone))
-             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-  (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-  (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)))]
-    (update! state side (update-in card [:hosted] #(conj % c)))
-    c))
+(defn host
+  ([state side card target] (host state side card target nil))
+  ([state side card {:keys [zone cid host] :as target} {:keys [facedown] :as options}]
+   (doseq [s [:runner :corp]]
+     (if host
+       (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
+                                  (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
+         (update! state side (update-in host-card [:hosted]
+                                        (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+       (swap! state update-in (cons s (vec zone))
+              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+   (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)) :facedown facedown)]
+     (update! state side (update-in card [:hosted] #(conj % c)))
+     c)))
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))

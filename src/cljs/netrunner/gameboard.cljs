@@ -156,7 +156,8 @@
     (send-command "move" {:card card :server server})))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
-                         advanceable rezzed strength current-strength title remotes selected hosted rec-counter]
+                         advanceable rezzed strength current-strength title remotes selected hosted
+                         side rec-counter facedown]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -166,13 +167,14 @@
        [:div.blue-shade.card {:class (when selected "selected") :draggable true
                               :on-drag-start #(handle-dragstart % cursor)
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                              :on-mouse-enter #(when (or (not flipped) (= (:side @game-state) :corp))
+                              :on-mouse-enter #(when (or (not (or flipped facedown))
+                                                         (= (:side @game-state) (keyword (.toLowerCase side))))
                                                  (put! zoom-channel cursor))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click @cursor owner)}
         (when-let [url (image-url cursor)]
-          (if flipped
-            [:img.card.bg {:src "/img/corp.png"}]
+          (if (or flipped facedown)
+            [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
             [:div
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
@@ -361,7 +363,7 @@
   (om/component
    (sab/html
     (let [size (count scored)]
-      [:div.panel.blue-shade.scored {:class (when (> size 3) "squeeze")}
+      [:div.panel.blue-shade.scored.squeeze
        (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
                       [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
