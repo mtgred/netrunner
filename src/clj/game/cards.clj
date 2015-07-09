@@ -293,6 +293,9 @@
                  :trace {:base 3 :msg "avoid taking a bad publicity"
                          :effect (effect (lose :bad-publicity 1))}}]}
 
+   "Bug"
+   {:req (req (some #{:hq} (:successful-run runner-reg)))}
+
    "Cache"
    {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
     :data {:counter 3}}
@@ -673,7 +676,7 @@
                                  (update-breaker-strength target))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
-                 :prompt "Choose a program to host on Leprechaun"
+                 :prompt "Choose a program to host on Dinosaurus"
                  :choices {:req #(and (has? % :subtype "Icebreaker")
                                       (not (has? % :subtype "AI"))
                                       (:installed %))}
@@ -1441,7 +1444,8 @@
                  :msg (msg "host " (:title target)) :effect (effect (host card target))}]}
 
    "Leverage"
-   {:player :corp
+   {:req (req (some #{:hq} (:successful-run runner-reg)))
+    :player :corp
     :prompt "Take 2 bad publicity?"
     :choices ["Yes" "No"]
     :effect (req (if (= target "Yes")
@@ -1739,7 +1743,7 @@
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :prompt "Choose a connection to install on Off-Campus Apartment"
+                 :cost [:click 1] :prompt "Choose a connection to install on Off-Campus Apartment"
                  :choices (req (filter #(and (has? % :subtype "Connection")
                                              (<= (:cost %) (:credit runner)))
                                        (:hand runner)))
@@ -2928,6 +2932,19 @@
    "Xanadu"
    {:events {:pre-rez {:req (req (= (:type target) "ICE"))
                        :effect (effect (rez-cost-bonus 1))}}}
+
+   "Zona Sul Shipping"
+   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
+                 :label "Take all credits"
+                 :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]
+    :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
+                            (fn [k ref old new]
+                              (when (> (get-in new [:runner :tag]) 0)
+                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
+                                (trash ref :runner card)
+                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}
+
    ;; Icebreakers
 
    "Alpha"
@@ -3818,17 +3835,6 @@
                             :msg "add the top card of R&D to the bottom"
                             :effect (effect (move (first (:deck corp)) :deck))}}]}
 
-   "Zona Sul Shipping"
-   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
-    :abilities [{:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
-                 :label "Take all credits"
-                 :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]
-    :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
-                            (fn [k ref old new]
-                              (when (> (get-in new [:runner :tag]) 0)
-                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
-                                (trash ref :runner card)
-                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}
 
    ;; partial implementation
    "Bad Times"
