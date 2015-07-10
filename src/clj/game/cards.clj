@@ -2567,9 +2567,8 @@
                       card))}
 
    "Street Peddler"
-   {:effect (effect (host card (first (:deck runner)) {:facedown true})
-                    (host (get-card state card) (second (:deck runner)) {:facedown true})
-                    (host (get-card state card) (get (:deck runner) 2) {:facedown true}))
+   {:effect (req (doseq [c (take 3 (:deck runner))]
+                   (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
                  :choices (req (filter #(and (not= (:type %) "Event")
                                              (<= (:cost %) (inc (:credit runner))))
