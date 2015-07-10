@@ -887,6 +887,21 @@
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
+   "Exploratory Romp"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target
+	                   {:replace-access
+		                  {:prompt "Remove how many advancements from a card in or protecting this server?"
+		                   :choices ["0", "1", "2", "3"]
+		                   :effect (req (let [c (Integer/parseInt target)]
+				                          (resolve-ability state side
+                                           {:choices {:req #(and (contains? % :advance-counter)
+							                                    (or (= (last (:zone %)) :ices)
+                                                      (= (last (:zone %)) :content)))}
+				                            :msg (msg "remove " c " advancements from " (if (:seen target) (:title target) "a card"))
+				                            :effect (effect (add-prop :corp target :advance-counter (- c)))}
+				                           card nil)))}}) card)}
+
    "Exposé"
    {:advanceable :always
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
