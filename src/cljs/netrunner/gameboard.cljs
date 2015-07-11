@@ -157,8 +157,12 @@
 
 (defn ability-costs [ab]
   (when-let [cost (:cost ab)]
-    (str (clojure.string/join "" (for [c (partition 2 cost)]
-                                   (str (second c) " [" (capitalize (name (first c))) "]"))) ": ")))
+    (str (clojure.string/join
+           ", " (for [c (partition 2 cost)]
+                  (str (case (first c)
+                         "credit" (str (second c) " [" (capitalize (name (first c))) "]")
+                         (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]")))
+                         )))) ": ")))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted rec-counter]
