@@ -967,7 +967,11 @@
             :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
 
    "Frame Job"
-   {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
+   {:prompt "Choose an agenda to forfeit"
+    :choices (req (get-in runner [:scored]))
+    :effect (effect (forfeit target)
+                    (system-msg (str " forfeits " (:title target) " to give the Corp 1 bad publicity"))
+                    (gain :corp :bad-publicity 1))}
 
    "Freelance Coding Contract"
    {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
