@@ -1122,6 +1122,15 @@
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
 
+   "Helium-3 Deposit"
+   {:choices ["0", "1", "2"] :prompt "How many power counters?"
+    :effect (req (let [c (Integer/parseInt target)]
+                   (resolve-ability
+                     state side
+                     {:choices {:req #(contains? % :counter)}
+                      :msg (msg "add " c " power counters on " (:title target))
+                      :effect (effect (add-prop target :counter c))} card nil)))}
+
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:counter-cost 2 :cost [:click 1] :msg "force the Corp to trash 1 card from HQ"}]}
