@@ -1637,7 +1637,12 @@
 
    "Monolith"
    {:prevent {:damage [:net :brain]}
-    :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+    :prompt "Choose up to 3 programs to install"
+    :choices {:max 3 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
+    :effect (req (gain state :runner :memory 3)
+                 (doseq [c targets] (install-cost-bonus state side -4) (runner-install state side c))
+                 (system-msg state side (str " uses Monolith to install " (join ", " (map :title targets)))))
+    :leave-play (effect (lose :memory 3))
     :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                  :priority true
                  :choices (req (filter #(= (:type %) "Program") (:hand runner)))
