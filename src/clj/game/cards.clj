@@ -2578,7 +2578,8 @@
                           (install-cost-bonus -1) (runner-install (dissoc target :facedown))
                           (trash (update-in card [:hosted]
                                                    (fn [coll]
-                                                     (remove-once #(not= (:cid %) (:cid target)) coll)))))}]}
+                                                     (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                 {:cause :ability-cost}))}]}
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
