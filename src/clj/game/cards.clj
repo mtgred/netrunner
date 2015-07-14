@@ -51,7 +51,7 @@
 
    "Aesops Pawnshop"
    {:abilities [{:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                 :choices {:req #(= (first (:zone %)) :rig)}
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :effect (effect (gain :credit 3) (trash target))}]}
 
    "Aggressive Negotiation"
@@ -366,7 +366,7 @@
 
    "Chop Bot 3000"
    {:abilities [{:msg (msg "trash " (:title target))
-                 :choices {:req #(= (first (:zone %)) :rig)}
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :effect (effect (trash target)
                                  (resolve-ability
                                   {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
@@ -960,10 +960,8 @@
 
    "Foxfire"
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
-            :choices (req (filter #(or (has? % :subtype "Virtual") (has? % :subtype "Link"))
-                                  (concat (get-in runner [:rig :hardware])
-                                          (get-in runner [:rig :resource])
-                                          (get-in runner [:rig :program]))))
+            :choices {:req #(and (:installed %)
+                                 (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
             :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
 
    "Frame Job"
@@ -976,7 +974,8 @@
 
    "Freelancer"
    {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
-    :choices {:max 2 :req #(= (:zone %) [:rig :resource])} :effect (effect (trash-cards :runner targets))}
+    :choices {:max 2 :req #(and (:installed %) (= (:type %) "Resource"))}
+    :effect (effect (trash-cards :runner targets))}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
@@ -1219,7 +1218,7 @@
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1]
                  :msg (msg "move " (:counter card) " virus counter to " (:title target))
-                 :choices {:req #(and (= (first (:zone %)) :rig) (has? % :subtype "Virus"))}
+                 :choices {:req #(and (:installed %) (has? % :subtype "Virus"))}
                  :effect (effect (trash card {:cause :ability-cost}) (add-prop target :counter (:counter card)))}]}
 
    "Indexing"
@@ -1792,6 +1791,7 @@
                                                            :effect (effect (gain :credit 1))} card nil)))))
     :leave-play (req (remove-watch state :order-of-sol))}
 
+   ;; TODO: take hosted card into account
    "Origami"
    {:effect (effect (gain :max-hand-size
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
@@ -2756,7 +2756,7 @@
    {:advanceable :always}
 
    "Trade-In"
-   {:prompt "Choose a hardware to trash" :choices (req (get-in runner [:rig :hardware]))
+   {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
     :effect (effect (trash target) (gain [:credit (quot (:cost target) 2)])
                     (resolve-ability {:prompt "Choose a Hardware to add to Grip from Stack"
@@ -2831,7 +2831,7 @@
                                   :effect (effect (gain :credit 1))}}}
 
    "Uninstall"
-   {:choices {:req #(and (= (first (:zone %)) :rig) (#{"Program" "Hardware"} (:type %)))}
+   {:choices {:req #(and (:installed %) (#{"Program" "Hardware"} (:type %)))}
     :msg (msg "move " (:title target) " to his or her grip")
     :effect (effect (move target :hand))}
 
@@ -3379,7 +3379,8 @@
    "Flare"
    {:abilities [{:prompt "Choose a piece of hardware to trash"
                  :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
-                 :choices (req (get-in runner [:rig :hardware])) :effect (effect (trash target))}
+                 :choices {:req #(and (:installed %) (:type % "Hardware"))}
+                 :effect (effect (trash target))}
                 {:msg "do 2 meat damage and end the run"
                  :effect (effect (damage :meat 2 {:unpreventable true :card card}) (end-run))}]}
 
@@ -3680,7 +3681,7 @@
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
-                 :trace {:base 4 :choices {:req #(= (:zone %) [:rig :program])}
+                 :trace {:base 4 :choices {:req #(and (:installed %) (= (:type %) "Program"))}
                          :msg (msg "add " (:title target) " to the top of Stack")
                          :effect (effect (move :runner target :deck true))}}]}
 
@@ -3722,7 +3723,7 @@
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
                 {:prompt "Choose an AI program to trash" :msg (msg "trashes " (:title target))
                  :label "Trash an AI program" :effect (effect (trash target))
-                 :choices (req (filter #(has? % :subtype "AI") (get-in runner [:rig :program])))}]}
+                 :choices {:req #(and (:installed %) (= (:type %) "Program") (has? % :subtype "AI"))}}]}
 
    "Taurus"
    {:abilities [{:label "Trace 2 - Trash a piece of hardware"
@@ -3820,6 +3821,7 @@
    "Wotan"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   ;; TODO: take hosted installed Fracter into account
    "Wraparound"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
     :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
