@@ -1831,7 +1831,11 @@
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
+    :effect (req (when-let [h (:host card)]
+                   (update! state side (assoc-in card [:special :installing] true))
+                   (update-ice-strength state side h)
+                   (when-let [card (get-card state card)]
+                     (update! state side (update-in card [:special] dissoc :installing)))))
     :events {:runner-turn-begins
              {:effect (req (add-prop state side card :counter 1))}
              :counter-added
@@ -1842,7 +1846,10 @@
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (effect (trash target))
+              :effect (req (when (get-in card [:special :installing])
+                             (trigger-event state side :runner-install card)
+                             (update! state side (update-in card [:special] dissoc :installing)))
+                           (trash state side target))
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
