@@ -23,10 +23,17 @@
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update-all-ice update-ice-strength update-breaker-strength all-installed)
 
-(defn pay [state side card & args]
+(defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
+    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+             (or (not forfeit-cost) (not (empty? scored))))
+      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
+    )))
+
+(defn pay [state side card & args]
+  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
     (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
                (or (not forfeit-cost) (not (empty? scored))))
       (when forfeit-cost
