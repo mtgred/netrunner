@@ -869,6 +869,7 @@
              {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))]
+    (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
     (resolve-ability state side ab card targets)))
 
 (defn start-turn [state side args]
