@@ -302,7 +302,7 @@
 
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
-                                                 (get-in runner [:rig :resource])))))}
+                                                 (all-installed state :runner)))))}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
@@ -1813,10 +1813,10 @@
    "Origami"
    {:effect (effect (gain :max-hand-size
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                   (get-in runner [:rig :program])))))))
+                                                   (all-installed state :runner)))))))
     :leave-play (effect (lose :max-hand-size
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                       (get-in runner [:rig :program])))))))}
+                                                       (all-installed state :runner)))))))}
 
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -2258,7 +2258,7 @@
    {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
-                                                        (get-in runner [:rig :resource]))
+                                                        (all-installed state :runner))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
                               (lose state side :credit :all :tag :all)
@@ -3839,7 +3839,7 @@
 
    "Wraparound"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
+    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (all-installed state :runner))
                            0 7))
     :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
                       :effect (effect (update-ice-strength card))}]
