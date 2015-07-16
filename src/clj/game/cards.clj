@@ -2148,9 +2148,9 @@
                             (fn [k ref old new]
                               (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
                                 (resolve-ability
-                                  ref side
+                                 ref side
                                   {:msg "access 1 card from HQ"
-                                   :effect (req (let [c (first (shuffle (:hand corp)))]
+                                   :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
                                                   (system-msg state side (str "accesses " (:title c)))
                                                   (handle-access state side [c])))} card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
