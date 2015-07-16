@@ -58,17 +58,18 @@
           "start" (core/init-game msg)
           "remove" (swap! game-states dissoc gameid)
           "do" ((commands command) state (keyword side) args)
-          "notification" (swap! state update-in [:log]
-                                #(conj % {:user "__system__" :text text}))
+          "notification" (when state
+                           (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
           "quit" (system-msg state (keyword side) "left the game"))
-        (if (not= action "remove")
-          (.send socket (generate-string (assoc (dissoc @(@game-states gameid) :events) :action action)))
+        (if-let [state (@game-states gameid)]
+          (.send socket (generate-string (assoc (dissoc @state :events) :action action)))
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
-          (when state
-            (.send socket (generate-string state))))))))
+          (if (and state (#{"do" "start"} action))
+            (.send socket (generate-string state))
+            (.send socket (generate-string "error"))))))))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")

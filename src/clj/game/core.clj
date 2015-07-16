@@ -63,9 +63,9 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special)
-         c (if (= (:side c) "Runner") (dissoc c :installed :counter) c)
-         c (if keep-counter c (dissoc c :counter :advance-counter))]
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
+         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter) c)
+         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (= (:side card) "Runner") (:rezzed card))
          (leave-effect state side card nil)))
@@ -114,7 +114,7 @@
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone))))))
        (doseq [h (:hosted card)]
-         (trash state side (update-in h [:zone] #(map to-keyword %))))
+         (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown)))
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
@@ -605,7 +605,9 @@
     (resolve-ability state side
                      {:prompt "Choose a resource to trash"
                       :choices {:req #(= (:type %) "Resource")}
-                      :effect (effect (trash target))} nil nil)))
+                      :effect (effect (trash target)
+                                      (system-msg (str "spends [Click] and 2 [Credits] to trash "
+                                                       (:title target))))} nil nil)))
 
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
@@ -839,9 +841,7 @@
     (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
       (when (:rezzed ice)
         (trigger-event state side :encounter-ice ice)
-        (update-ice-strength state side ice)
-        (let [stren (:current-strength (get-card state ice))]
-          (system-msg state :runner (str "encounters " (:title ice) " at strength " stren)))))))
+        (update-ice-strength state side ice)))))
 
 (defn continue [state side args]
   (when (get-in @state [:run :no-action])
@@ -940,25 +940,26 @@
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn host [state side card {:keys [zone cid host] :as target}]
-  (doseq [s [:runner :corp]]
-    (if host
-      (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                 (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
-        (update! state side (update-in host-card [:hosted]
-                                       (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-      (swap! state update-in (cons s (vec zone))
-             (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-  (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-  (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)))]
-    (update! state side (update-in card [:hosted] #(conj % c)))
-    c))
+(defn host
+  ([state side card target] (host state side card target nil))
+  ([state side card {:keys [zone cid host] :as target} {:keys [facedown] :as options}]
+   (doseq [s [:runner :corp]]
+     (if host
+       (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
+                                  (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
+         (update! state side (update-in host-card [:hosted]
+                                        (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+       (swap! state update-in (cons s (vec zone))
+              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+   (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)) :facedown facedown)]
+     (update! state side (update-in card [:hosted] #(conj % c)))
+     c)))
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness] :as card}
     {:keys [extra-cost no-cost host-card] :as params}]
-    (swap! state update-in [:bonus] dissoc :install-cost)
     (trigger-event state side :pre-install card)
     (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
       (resolve-ability state side
@@ -977,7 +978,8 @@
                                         (when host-card (str " on " (:title host-card)))
                                         (when no-cost " at no cost")))
             (trigger-event state side :runner-install installed-card)
-            (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))))
+            (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
+    (swap! state update-in [:bonus] dissoc :install-cost)))
 
 (defn server-list [state card]
   (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
@@ -989,7 +991,6 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
-     (swap! state update-in [:bonus] dissoc :cost)
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (let [cdef (card-def card) cost (rez-cost state side card)]
@@ -997,7 +998,8 @@
            (card-init state side (assoc card :rezzed true))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
-           (trigger-event state side :rez card))))))
+           (trigger-event state side :rez card))))
+     (swap! state update-in [:bonus] dissoc :cost)))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))

@@ -77,12 +77,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   lobby.emit('netrunner', {type: "games", games: games})
 
   socket.on 'disconnect', () ->
-    if socket.gameid
-      try
-        if games[socket.gameid].started
-          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} disconnected."}))
-      catch err
-        console.log(err)
+    gid = socket.gameid
+    game = games[gid]
+    if game
+      if game.started and game.players.length > 1
+        requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{socket.request.user.username} disconnected."}))
       removePlayer(socket)
 
   socket.on 'netrunner', (msg) ->
@@ -104,13 +103,12 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "leave-game"
         gid = socket.gameid
-        msg.action = "quit"
         game = games[gid]
-        try
-          requester.send(JSON.stringify(msg)) if game and game.players.length > 1
-        catch err
-          console.log(err)
-        removePlayer(socket)
+        if game
+          if game.players.length > 1
+            msg.action = "quit"
+            requester.send(JSON.stringify(msg))
+          removePlayer(socket)
 
       when "join"
         joinGame(socket, msg.gameid)
