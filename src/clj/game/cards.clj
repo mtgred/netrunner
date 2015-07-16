@@ -3870,5 +3870,6 @@
    "The Source"
    {:effect (effect (update-all-advancement-costs))
     :leave-play (effect (update-all-advancement-costs))
-    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
+    :events {:agenda-scored {:effect (effect (trash card))}
+             :agenda-stolen {:effect (effect (trash card))}
              :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
