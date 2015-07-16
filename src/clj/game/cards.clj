@@ -2152,6 +2152,24 @@
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
     :leave-play (effect (lose :click 1 :click-per-turn 1))}
 
+   "Raymond Flint"
+   {:effect (req (add-watch state :raymond-flint
+                            (fn [k ref old new]
+                              (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
+                                (resolve-ability
+                                 ref side
+                                  {:msg "access 1 card from HQ"
+                                   :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                                  (system-msg state side (str "accesses " (:title c)))
+                                                  (handle-access state side [c])))} card nil)))))
+    :leave-play (req (remove-watch state :raymond-flint))
+    :abilities [{:label "Expose 1 card"
+                 :effect (effect (resolve-ability
+                                   {:choices {:req #(= (first (:zone %)) :servers)}
+                                    :effect (effect (expose target) (trash card {:cause :ability-cost}))
+                                    :msg (msg "expose " (:title target))}
+                                   card nil))}]}
+
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
