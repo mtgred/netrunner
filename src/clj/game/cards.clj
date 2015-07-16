@@ -888,6 +888,23 @@
       :effect (effect (run :hq {:replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
+   "Exploratory Romp"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target
+	              {:replace-access
+		       {:prompt "Remove how many advancements from a card in or protecting this server?"
+		        :choices ["0", "1", "2", "3"]
+		        :effect (req (let [c (Integer/parseInt target)]
+				       (resolve-ability state side
+                                        {:choices {:req #(and (contains? % :advance-counter)
+							      (or (= (last (:zone %)) :ices)
+                                                                  (= (last (:zone %)) :content)))}
+				                   :msg (msg "remove " c " advancements from " (if (:seen target) (:title target) "a card"))
+				                   :effect (req (add-prop state :corp target :advance-counter (- c))
+				                                (swap! state update-in [:runner :prompt] rest)
+				                                (handle-run-end state side))}
+				        card nil)))}}) card)}
+
    "Exposé"
    {:advanceable :always
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
@@ -2151,6 +2168,24 @@
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
     :leave-play (effect (lose :click 1 :click-per-turn 1))}
+
+   "Raymond Flint"
+   {:effect (req (add-watch state :raymond-flint
+                            (fn [k ref old new]
+                              (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
+                                (resolve-ability
+                                 ref side
+                                  {:msg "access 1 card from HQ"
+                                   :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                                  (system-msg state side (str "accesses " (:title c)))
+                                                  (handle-access state side [c])))} card nil)))))
+    :leave-play (req (remove-watch state :raymond-flint))
+    :abilities [{:label "Expose 1 card"
+                 :effect (effect (resolve-ability
+                                   {:choices {:req #(= (first (:zone %)) :servers)}
+                                    :effect (effect (expose target) (trash card {:cause :ability-cost}))
+                                    :msg (msg "expose " (:title target))}
+                                   card nil))}]}
 
    "Recon"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
