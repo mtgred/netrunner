@@ -997,8 +997,8 @@
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
                              :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (system-msg state side (str "accesses " (:title c)))
-                                            (handle-access state side [c])))}}}
+                                            (system-msg state :runner (str "accesses " (:title c)))
+                                            (handle-access state :runner [c])))}}}
 
    "Geothermal Fracking"
    {:data {:counter 2}
