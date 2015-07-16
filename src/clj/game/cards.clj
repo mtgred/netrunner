@@ -1046,9 +1046,9 @@
    "Grifter"
    {:events {:runner-turn-ends
              {:effect #(let [ab (if (get-in @%1 [:runner :register :successful-run])
-                                  {:effect (effect (gain [:credit 1])) :msg "gain 1 [Credits]"}
+                                  {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
                                   {:effect (effect (trash %3)) :msg "trash Grifter"})]
-                         (resolve-ability %1 %2 ab %3 nil))}}}
+                         (resolve-ability %1 %2 ab %3 %4))}}}
 
    "Grimoire"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
