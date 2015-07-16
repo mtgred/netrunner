@@ -302,7 +302,7 @@
 
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
-                                                 (get-in runner [:rig :resource])))))}
+                                                 (all-installed state :runner)))))}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
@@ -966,7 +966,11 @@
             :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
 
    "Frame Job"
-   {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
+   {:prompt "Choose an agenda to forfeit"
+    :choices (req (get-in runner [:scored]))
+    :effect (effect (forfeit target)
+                    (system-msg (str " forfeits " (:title target) " to give the Corp 1 bad publicity"))
+                    (gain :corp :bad-publicity 1))}
 
    "Freelance Coding Contract"
    {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
@@ -1117,6 +1121,15 @@
 
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
+
+   "Helium-3 Deposit"
+   {:choices ["0", "1", "2"] :prompt "How many power counters?"
+    :effect (req (let [c (Integer/parseInt target)]
+                   (resolve-ability
+                     state side
+                     {:choices {:req #(contains? % :counter)}
+                      :msg (msg "add " c " power counters on " (:title target))
+                      :effect (effect (add-prop target :counter c))} card nil)))}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
@@ -1624,7 +1637,12 @@
 
    "Monolith"
    {:prevent {:damage [:net :brain]}
-    :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+    :prompt "Choose up to 3 programs to install"
+    :choices {:max 3 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
+    :effect (req (gain state :runner :memory 3)
+                 (doseq [c targets] (install-cost-bonus state side -4) (runner-install state side c))
+                 (system-msg state side (str " uses Monolith to install " (join ", " (map :title targets)))))
+    :leave-play (effect (lose :memory 3))
     :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                  :priority true
                  :choices (req (filter #(= (:type %) "Program") (:hand runner)))
@@ -1796,10 +1814,10 @@
    "Origami"
    {:effect (effect (gain :max-hand-size
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                   (get-in runner [:rig :program])))))))
+                                                   (all-installed state :runner)))))))
     :leave-play (effect (lose :max-hand-size
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                       (get-in runner [:rig :program])))))))}
+                                                       (all-installed state :runner)))))))}
 
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -2248,7 +2266,7 @@
    {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has? % :subtype "Virtual"))
-                                                        (get-in runner [:rig :resource]))
+                                                        (all-installed state :runner))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
                               (lose state side :credit :all :tag :all)
@@ -3834,7 +3852,7 @@
    ;; TODO: take hosted installed Fracter into account
    "Wraparound"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
+    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (all-installed state :runner))
                            0 7))
     :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
                       :effect (effect (update-ice-strength card))}]
