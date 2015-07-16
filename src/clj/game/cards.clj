@@ -1699,7 +1699,7 @@
    "Networking"
    {:effect (effect (lose :tag 1))
     :optional {:cost [:credit 1] :prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :msg "add it to his Grip" :effect (effect (move (first (:discard runner)) :hand))}}
+               :msg "add it to his Grip" :effect (effect (move (last (:discard runner)) :hand))}}
 
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
