@@ -992,7 +992,7 @@
 
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
-                             :effect (req (let [c (first (shuffle (:hand corp)))]
+                             :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
                                             (system-msg state side (str "accesses " (:title c)))
                                             (handle-access state side [c])))}}}
 
