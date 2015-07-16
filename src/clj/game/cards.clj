@@ -863,6 +863,7 @@
 
    "Executive Boot Camp"
    {:abilities [{:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
+                 :activatemsg "searches HQ for an asset"
                  :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :cost [:credit 1] :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
@@ -3225,7 +3226,9 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Architect"
-   {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
+   {:abilities [{:msg "look at the top 5 cards of R&D"
+                 :prompt "Choose a card to install"
+                 :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (not (string? target))) :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install target nil {:no-install-cost true}))}
