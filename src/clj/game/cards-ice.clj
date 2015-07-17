@@ -10,7 +10,9 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Architect"
-   {:abilities [{:msg "look at the top 5 cards of R&D" :prompt "Choose a card to install"
+   {:abilities [{:msg "look at the top 5 cards of R&D"
+                 :prompt "Choose a card to install"
+                 :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (not (string? target))) :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install target nil {:no-install-cost true}))}
@@ -613,10 +615,9 @@
    "Wotan"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
-   ;; TODO: take hosted installed Fracter into account
    "Wraparound"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]
-    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (get-in runner [:rig :program]))
+    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (all-installed state :runner))
                            0 7))
     :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
                       :effect (effect (update-ice-strength card))}]

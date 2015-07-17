@@ -23,10 +23,17 @@
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update-all-ice update-ice-strength update-breaker-strength all-installed)
 
-(defn pay [state side card & args]
+(defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
+    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+             (or (not forfeit-cost) (not (empty? scored))))
+      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
+    )))
+
+(defn pay [state side card & args]
+  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
     (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
                (or (not forfeit-cost) (not (empty? scored))))
       (when forfeit-cost
@@ -871,8 +878,12 @@
         ab (if (= ability (count abilities))
              {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
-             (get-in cdef [:abilities ability]))]
-    (resolve-ability state side ab card targets)))
+             (get-in cdef [:abilities ability]))
+        cost (:cost ab)]
+    (when (or (nil? cost)
+              (apply can-pay? state side cost))
+        (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
+        (resolve-ability state side ab card targets))))
 
 (defn start-turn [state side args]
   (system-msg state side (str "started his or her turn"))
@@ -906,7 +917,7 @@
   (trigger-event state side :purge))
 
 (defn get-virus-counters [state side card]
-   (let [hiveminds (filter #(= (:title %) "Hivemind") (get-in @state [:runner :rig :program]))]
+   (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
         (reduce + (map :counter (cons card hiveminds)))))
 
 (defn play-instant

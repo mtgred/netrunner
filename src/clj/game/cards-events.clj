@@ -25,7 +25,7 @@
 
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
-                                                 (get-in runner [:rig :resource])))))}
+                                                 (all-installed state :runner)))))}
 
    "Career Fair"
    {:prompt "Choose a Resource to install"
@@ -233,7 +233,7 @@
    "Networking"
    {:effect (effect (lose :tag 1))
     :optional {:cost [:credit 1] :prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :msg "add it to his Grip" :effect (effect (move (first (:discard runner)) :hand))}}
+               :msg "add it to his Grip" :effect (effect (move (last (:discard runner)) :hand))}}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))

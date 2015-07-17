@@ -124,9 +124,9 @@
 
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
-                             :effect (req (let [c (first (shuffle (:hand corp)))]
-                                            (system-msg state side (str "accesses " (:title c)))
-                                            (handle-access state side [c])))}}}
+                             :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                            (system-msg state :runner (str "accesses " (:title c)))
+                                            (handle-access state :runner [c])))}}}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -137,9 +137,9 @@
    "Grifter"
    {:events {:runner-turn-ends
              {:effect #(let [ab (if (get-in @%1 [:runner :register :successful-run])
-                                  {:effect (effect (gain [:credit 1])) :msg "gain 1 [Credits]"}
+                                  {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
                                   {:effect (effect (trash %3)) :msg "trash Grifter"})]
-                        (resolve-ability %1 %2 ab %3 nil))}}}
+                        (resolve-ability %1 %2 ab %3 %4))}}}
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
@@ -416,8 +416,9 @@
    "The Source"
    {:effect (effect (update-all-advancement-costs))
     :leave-play (effect (update-all-advancement-costs))
-    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
-             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}
+    :events {:agenda-scored {:effect (effect (trash card))}
+             :agenda-stolen {:effect (effect (trash card))}
+             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)

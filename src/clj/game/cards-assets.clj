@@ -167,6 +167,7 @@
 
    "Executive Boot Camp"
    {:abilities [{:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
+                 :activatemsg "searches HQ for an asset"
                  :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :cost [:credit 1] :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
