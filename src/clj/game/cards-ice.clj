@@ -171,12 +171,16 @@
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Flare"
-   {:abilities [{:prompt "Choose a piece of hardware to trash"
-                 :msg (msg "trash " (:title target)) :label "Trash a piece of hardware"
-                 :choices {:req #(and (:installed %) (:type % "Hardware"))}
-                 :effect (effect (trash target))}
-                {:msg "do 2 meat damage and end the run"
-                 :effect (effect (damage :meat 2 {:unpreventable true :card card}) (end-run))}]}
+   {:abilities [{:label "Trace 6 - Trash 1 hardware, do 2 meat damage, and end the run"
+                 :trace {:base 6 :msg "trash 1 hardware, do 2 meat damage, and end the run"
+                         :effect (effect (resolve-ability
+                                           {:prompt "Choose a piece of hardware to trash"
+                                            :label "Trash a piece of hardware"
+                                            :msg (msg "trash " (:title target))
+                                            :choices {:req #(= (:type %) "Hardware")}
+                                            :effect (effect (trash target {:cause :subroutine}))} card nil)
+                                         (damage :meat 2 {:unpreventable true :card card})
+                                         (end-run))}}]}
 
    "Galahad"
    {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
