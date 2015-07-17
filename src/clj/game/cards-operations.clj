@@ -141,6 +141,13 @@
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
+   "Patch"
+   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+    :effect (effect (host target (assoc card :zone [:discard] :seen true))
+                    (update-ice-strength (get-card state target)))
+    :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (ice-strength-bonus 2))}}}
+
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 

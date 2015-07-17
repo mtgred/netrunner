@@ -150,6 +150,10 @@
     :abilities [{:msg "remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
+   "Grimoire"
+   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
+    :events {:runner-install {:req (req (has? target :subtype "Virus"))
+                              :effect (effect (add-prop target :counter 1))}}}
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
 

@@ -435,7 +435,7 @@
     :leave-play (effect (update-all-advancement-costs))
     :events {:agenda-scored {:effect (effect (trash card))}
              :agenda-stolen {:effect (effect (trash card))}
-             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})
+             :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
@@ -499,4 +499,3 @@
                                 (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
                                 (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}})
-

@@ -2,12 +2,12 @@
 
 (def trash-program {:prompt "Choose a program to trash" :label "Trash a program"
                     :msg (msg "trash " (:title target))
-                    :choices {:req #(= (:type %) "Program")}
+                    :choices {:req #(and (:installed %) (= (:type %) "Program"))}
                     :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-hardware {:prompt "Choose a piece of hardware to trash" :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
-                     :choices {:req #(= (:type %) "Hardware")}
+                     :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (load "cards-agendas")

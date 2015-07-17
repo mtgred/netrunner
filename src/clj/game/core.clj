@@ -322,6 +322,7 @@
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
     (do (let [server (get-in @state [:run :server])]
+          (swap! state assoc-in [:run :ending] true)
           (trigger-event state side :run-ends (first server))
           (when (get-in @state [:run :successful])
             (trigger-event state side :successful-run-ends (first server)))

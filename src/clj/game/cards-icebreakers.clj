@@ -1,27 +1,28 @@
 (in-ns 'game.core)
 
 (def breaker-auto-pump
-  {:effect (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
-                      pumpcst (when pumpabi (nth (:cost pumpabi) (inc (.indexOf (:cost pumpabi) :credit))))
-                      current-ice (get-card state current-ice)
-                      strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                                                         (or (:current-strength card) (:strength card)))))
-                      pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
-                  (update! state side (assoc card :abilities
-                                                  (if (and (:rezzed current-ice)
-                                                           (or (some #(has? current-ice :subtype %) (:breaks card))
-                                                               (= (first (:breaks card)) "All"))
-                                                           (> strdif 0))
-                                                    (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
-                                                                :label (str "Match strength of " (:title current-ice))} abs))
-                                                    abs)))))})
+  {:effect
+   (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
+              pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+              current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
+              strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                                 (or (:current-strength card) (:strength card)))))
+              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+          (update! state side (assoc card :abilities
+                                          (if (and pumpcst pumpnum (:rezzed current-ice)
+                                                   (or (some #(has? current-ice :subtype %) (:breaks card))
+                                                       (= (first (:breaks card)) "All"))
+                                                   (> strdif 0))
+                                            (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
+                                                        :label (str "Match strength of " (:title current-ice))} abs))
+                                            abs)))))})
 
 (defn auto-icebreaker [breaks cdef]
   (assoc cdef :data (merge (:data cdef) {:breaks breaks})
               :events (merge (:events cdef)
-                             {:encounter-ice breaker-auto-pump :pass-ice breaker-auto-pump
+                             {:run breaker-auto-pump :pass-ice breaker-auto-pump
                               :run-ends breaker-auto-pump :ice-strength-changed breaker-auto-pump
-                              :breaker-strength-changed breaker-auto-pump})))
+                              :breaker-strength-changed breaker-auto-pump :approach-ice breaker-auto-pump })))
 
 (def cards-icebreakers
   {"Alpha"

@@ -134,6 +134,15 @@
                                   :msg (msg "add " (if (:seen target) (:title target) "a card")
                                             " to the bottom of R&D")} card target))}}}}
 
+   "Helium-3 Deposit"
+   {:choices ["0", "1", "2"] :prompt "How many power counters?"
+    :effect (req (let [c (Integer/parseInt target)]
+                   (resolve-ability
+                     state side
+                     {:choices {:req #(contains? % :counter)}
+                      :msg (msg "add " c " power counters on " (:title target))
+                      :effect (effect (add-prop target :counter c))} card nil)))}
+
    "High-Risk Investment"
    {:data {:counter 1}
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
