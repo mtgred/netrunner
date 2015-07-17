@@ -1865,9 +1865,10 @@
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (req (when (get-in card [:special :installing])
-                             (trigger-event state side :runner-install card)
-                             (update! state side (update-in card [:special] dissoc :installing)))
+              :effect (req (unregister-events state side card)
+                           (when (get-in card [:special :installing])
+                             (update! state side (update-in card [:special] dissoc :installing))
+                             (trigger-event state side :runner-install card))
                            (trash state side target))
               :msg (msg "trash " (:title target))}}}
 
