@@ -992,7 +992,7 @@
 
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
-                             :effect (req (let [c (first (shuffle (:hand corp)))]
+                             :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
                                             (system-msg state side (str "accesses " (:title c)))
                                             (handle-access state side [c])))}}}
 
@@ -1832,7 +1832,11 @@
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (req (when-let [h (:host card)] (update-ice-strength state side h)))
+    :effect (req (when-let [h (:host card)]
+                   (update! state side (assoc-in card [:special :installing] true))
+                   (update-ice-strength state side h)
+                   (when-let [card (get-card state card)]
+                     (update! state side (update-in card [:special] dissoc :installing)))))
     :events {:runner-turn-begins
              {:effect (req (add-prop state side card :counter 1))}
              :counter-added
@@ -1843,7 +1847,10 @@
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
-              :effect (effect (trash target))
+              :effect (req (when (get-in card [:special :installing])
+                             (trigger-event state side :runner-install card)
+                             (update! state side (update-in card [:special] dissoc :installing)))
+                           (trash state side target))
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
@@ -3876,5 +3883,6 @@
    "The Source"
    {:effect (effect (update-all-advancement-costs))
     :leave-play (effect (update-all-advancement-costs))
-    :events {:agenda-scored (effect (trash card)) :agenda-stolen (effect (trash card))
+    :events {:agenda-scored {:effect (effect (trash card))}
+             :agenda-stolen {:effect (effect (trash card))}
              :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}}}})

@@ -914,7 +914,7 @@
   (trigger-event state side :purge))
 
 (defn get-virus-counters [state side card]
-   (let [hiveminds (filter #(= (:title %) "Hivemind") (get-in @state [:runner :rig :program]))]
+   (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
         (reduce + (map :counter (cons card hiveminds)))))
 
 (defn play-instant
