@@ -3875,7 +3875,12 @@
    {:req (req tagged)}
 
    "Exile: Streethawk"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :events {:runner-install {:req (req (and (has? target :type "Program")
+                                              (= (:active-player @state) :runner)
+                                              ;; only trigger when played a programm from heap
+                                              (some #{:discard} (:previous-zone target))))
+                               :msg (msg "draw a card") :effect (effect (draw 1))}}}
 
    "Deep Red"
    {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
