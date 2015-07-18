@@ -961,7 +961,7 @@
 
    "Foxfire"
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
-            :choices {:req #(and (:installed %)
+            :choices {:req #(and (not (some #{:discard} (:zone %)))
                                  (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
             :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
 
