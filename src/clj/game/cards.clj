@@ -787,8 +787,10 @@
 
    "Edward Kim: Humanitys Hammer"
    {:effect (effect (gain :link 1))
-    :events {:access {:req (req (= (:type target) "Operation")) :once :per-turn
-                      :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
+    :events {:access {:once :per-turn
+                      :req (req (= (:type target) "Operation"))
+                      :effect (effect (trash target))
+                      :msg (msg "trash " (:title target) (if (some #{:discard} (:zone target)) ", but it is alreay trashed."))}}}
 
    "Efficiency Committee"
    {:effect (effect (add-prop card :counter 3))
