@@ -179,8 +179,12 @@
    "Autoscripter"
    {:events {:runner-install {:req (req (and (has? target :type "Program")
                                              (= (:active-player @state) :runner)
-                                             (empty? (filter #(has? % :type "Program")
-                                                             (map first (turn-events state side :runner-install))))))
+                                             ;; only trigger when played a programm from grip
+                                             (some #{:hand} (:previous-zone target))
+                                             ;; check if didn't played a program from the grip this turn
+                                             (empty? (let [cards (map first (turn-events state side :runner-install))
+                                                           progs (filter #(has? % :type "Program") cards)]
+                                                          (filter #(some #{:hand} (:previous-zone %)) progs)))))
                               :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "trashes Autoscripter"))}}}

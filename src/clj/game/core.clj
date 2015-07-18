@@ -128,7 +128,7 @@
              c (if (and (or installed (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard} (first dest)))
                  (desactivate state side c) c)
-             moved-card (assoc c :zone dest :host nil :hosted nil)]
+             moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
@@ -960,7 +960,9 @@
        (swap! state update-in (cons s (vec zone))
               (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)) :facedown facedown)]
+   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %))
+                         :facedown facedown
+                         :zone '(:onhost))] ;; hosted cards should not be in :discard or :hand etc
      (update! state side (update-in card [:hosted] #(conj % c)))
      c)))
 
