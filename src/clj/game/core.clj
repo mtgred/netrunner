@@ -115,7 +115,7 @@
 
 (defn move
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone cid host installed] :as card} to front]
+  ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive] :as options}]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
@@ -142,7 +142,8 @@
                     (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))
                n (last z)]
-           (when (and (number? n)
+           (when (and (not keep-server-alive)
+                      (number? n)
                       (empty? (get-in @state (conj z :content)))
                       (empty? (get-in @state (conj z :ices))))
              (when-let [run (:run @state)]
@@ -602,7 +603,7 @@
 
 (defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard false)]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive true})]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
@@ -1116,10 +1117,10 @@
       (do (trash state s c)
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
-      (do (move state s (dissoc c :seen :rezzed) :hand false)
+      (do (move state s (dissoc c :seen :rezzed) :hand)
           (system-msg state side (str "moves " label " to " server)))
       ("Stack" "R&D")
-      (do (move state s (dissoc c :seen :rezzed) :deck true)
+      (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
           (system-msg state side (str "moves " label " to the top of " server)))
       nil)))
 
