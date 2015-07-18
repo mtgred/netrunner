@@ -621,7 +621,8 @@
 (defn trash
   ([state side {:keys [zone type] :as card}] (trash state side card nil))
   ([state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
-    (let [ktype (keyword (clojure.string/lower-case type))]
+   (if (not (some #{:discard} zone))
+   (let [ktype (keyword (clojure.string/lower-case type))]
       (when (and (not unpreventable) (not= cause :ability-cost))
         (swap! state update-in [:trash :trash-prevent] dissoc ktype))
       (when (not= (last zone) :current)
@@ -640,7 +641,7 @@
                   (do
                     (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
                     (apply resolve-trash state side card args targets))))))
-          (apply resolve-trash state side card args targets))))))
+          (apply resolve-trash state side card args targets)))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
