@@ -24,3 +24,4 @@
 
 (def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
                   cards-operations cards-programs cards-resources cards-upgrades))
+                  
