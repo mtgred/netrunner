@@ -90,3 +90,8 @@
             (run socket))))))
 
     (.start (Thread. #(.run (ZMQQueue. ctx router dealer))))))
+
+(comment
+  "Start development server"
+  (future-call dev)
+  )
