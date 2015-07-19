@@ -2606,6 +2606,7 @@
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers)
     :effect (effect (gain :credit 9)
+                    (gain :run-credit 9)
                     (run target {:end-run
                                  {:msg " take 1 brain damage"
                                   :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
