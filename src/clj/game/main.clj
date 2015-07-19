@@ -73,13 +73,13 @@
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
   (let [socket (.socket ctx ZMQ/REP)]
-    (.bind socket "tcp://127.0.0.1:1043")
+    (.bind socket "tcp://*:1043")
     (run socket)))
 
 (defn -main []
   (println "[Prod] Listening on port 1043 for incoming commands...")
   (let [worker-url "inproc://responders"
-        router (doto (.socket ctx ZMQ/ROUTER) (.bind "tcp://127.0.0.1:1043"))
+        router (doto (.socket ctx ZMQ/ROUTER) (.bind "tcp://*:1043"))
         dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
     (dotimes [n 2]
       (.start
