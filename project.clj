@@ -8,7 +8,8 @@
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
                  [org.omcljs/om "0.8.8"]
-                 [sablono "0.3.4"]]
+                 [sablono "0.3.4"]
+                 [environ "1.0.0"]]
 
   :profiles {:dev {:dependencies [[figwheel "0.2.5"]]}}
 

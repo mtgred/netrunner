@@ -47,7 +47,8 @@ clojureProd:
     command: |
         sh -c "cd /workdir
                lein uberjar
-               java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar"
+               ZMQ_HOST='*' \
+                 java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar"
 clojureDev:
     extends:
         service: clojureBase
@@ -58,4 +59,5 @@ clojureDev:
         - 7001:7001
     command: |
         sh -c "cd /workdir
-               lein repl :headless :host '*' :port 7001"
+               ZMQ_HOST='*' \
+                 lein repl :headless :host '*' :port 7001"
