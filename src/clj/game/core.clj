@@ -738,6 +738,10 @@
       "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
       [:servers :remote (-> (split server #" ") last Integer/parseInt)])))
 
+(defn add-bad-publicity-credit [state]
+  (swap! state update-in [:runner :run-credit] + (get-in @state [:corp :bad-publicity]))
+  (swap! state update-in [:runner :credit] + (get-in @state [:corp :bad-publicity])))
+
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -752,6 +756,7 @@
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
                       :run-effect (assoc run-effect :card card)})
+         (add-bad-publicity-credit state)
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
          (trigger-event state :runner :run s)))))
 
