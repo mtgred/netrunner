@@ -1,0 +1,63 @@
+mongo:
+    image: mongo:3.1.5
+    volumes:
+        - /tmp/netrunner/mongo-data:/data/db
+nodeBase:
+    image: node:0.12.7
+    volumes:
+        - .:/workdir
+    ports:
+        - 1042:1042
+    command: |
+        sh -c "apt-get update && apt-get install -y libzmq-dev
+               cd /workdir
+               npm install
+               ./node_modules/.bin/bower --allow-root install
+               cd data && OPENSHIFT_MONGODB_DB_HOST=mongo \
+                            ../node_modules/.bin/coffee fetch.coffee \
+                       && cd ..
+               MONGO_URL=mongodb://mongo/netrunner \
+               CLOJURE_HOST=clojure \
+                 ./node_modules/.bin/coffee server.coffee"
+clojureBase:
+    image: clojure:lein-2.5.1
+    volumes:
+        - .:/workdir
+        - /tmp/netrunner/maven_repo:/root/.m2/repository
+prod:
+    extends:
+        service: nodeBase
+        file: docker-compose.yml
+    links:
+        - mongo:mongo
+        - clojureProd:clojure
+dev:
+    extends:
+        service: nodeBase
+        file: docker-compose.yml
+    links:
+        - mongo:mongo
+        - clojureDev:clojure
+clojureProd:
+    extends:
+        service: clojureBase
+        file: docker-compose.yml
+    links:
+        - mongo:mongo
+    command: |
+        sh -c "cd /workdir
+               lein uberjar
+               ZMQ_HOST='*' \
+                 java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar"
+clojureDev:
+    extends:
+        service: clojureBase
+        file: docker-compose.yml
+    links:
+        - mongo:mongo
+    ports:
+        - 7001:7001
+    command: |
+        sh -c "cd /workdir
+               ZMQ_HOST='*' \
+                 lein repl :headless :host '*' :port 7001"
