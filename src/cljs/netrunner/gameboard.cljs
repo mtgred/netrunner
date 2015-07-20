@@ -155,6 +155,15 @@
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 
+(defn ability-costs [ab]
+  (when-let [cost (:cost ab)]
+    (str (clojure.string/join
+           ", " (for [c (partition 2 cost)]
+                  (str (case (first c)
+                         "credit" (str (second c) " [" (capitalize (name (first c))) "]")
+                         (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]")))
+                         )))) ": ")))
+
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
                          side rec-counter facedown]
@@ -203,10 +212,15 @@
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
                   actions)
              (map-indexed
-              (fn [i label]
-                [:div {:on-click #(do (send-command "ability" {:card @cursor :ability i})
-                                      (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                       :dangerouslySetInnerHTML #js {:__html (add-symbols label)}}])
+              (fn [i ab]
+                (if (:auto-pump ab)
+                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                  [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                            (dec i) i)})
+                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
               abilities)]))
         (when (= (first zone) "servers")
           (cond

@@ -38,7 +38,8 @@
    "select" core/select
    "shuffle" core/shuffle-deck
    "ability" core/play-ability
-   "trash-resource" core/trash-resource})
+   "trash-resource" core/trash-resource
+   "auto-pump" core/auto-pump})
 
 (defn convert [args]
   (try

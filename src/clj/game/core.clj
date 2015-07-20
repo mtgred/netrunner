@@ -338,6 +338,7 @@
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
     (do (let [server (get-in @state [:run :server])]
+          (swap! state assoc-in [:run :ending] true)
           (trigger-event state side :run-ends (first server))
           (when (get-in @state [:run :successful])
             (trigger-event state side :successful-run-ends (first server)))
@@ -415,7 +416,8 @@
                     (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
                     (:abilities cdef))
         abilities (for [ab abilities]
-                    (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) ""))
+                    (assoc (select-keys ab [:cost :pump :breaks])
+                      :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")))
         c (merge card (:data cdef) {:abilities abilities})
         c (if-let [r (:recurring cdef)]
             (if (number? r) (assoc c :rec-counter r) c) c)]
@@ -880,16 +882,18 @@
           (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))))
     (swap! state update-in [:run :position] dec)
     (swap! state assoc-in [:run :no-action] false)
-    (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
-      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-      (update-breaker-strength state side p))
     (system-msg state side "continues the run")
     (let [pos (get-in @state [:run :position])]
       (when (> (count (get-in @state [:run :ices])) 0)
         (update-ice-strength state side (nth (get-in @state [:run :ices]) pos)))
       (when (> pos 0)
         (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
-          (trigger-event state side :approach-ice ice))))))
+          (trigger-event state side :approach-ice ice))))
+          ; update icebreaker with abilities
+
+    (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+      (update-breaker-strength state side p))))
 
 (defn play-ability [state side {:keys [card ability targets] :as args}]
   (let [cdef (card-def card)
@@ -1184,6 +1188,18 @@
     (system-msg state side "stops looking at his deck and shuffles it")
     (system-msg state side "shuffles his deck")))
 
+(defn auto-pump [state side args]
+  (let [run (:run @state) card (get-card state (:card args))
+        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                         (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
+      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
+      (system-msg state side (str "increases the strength of " (:title card) " to "
+                                  (:current-strength (get-card state card)))))))
 (defn turn-events [state side ev]
   (mapcat #(rest %) (filter #(= ev (first %)) (:turn-events @state))))
 
