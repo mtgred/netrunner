@@ -179,8 +179,12 @@
    "Autoscripter"
    {:events {:runner-install {:req (req (and (has? target :type "Program")
                                              (= (:active-player @state) :runner)
-                                             (empty? (filter #(has? % :type "Program")
-                                                             (map first (turn-events state side :runner-install))))))
+                                             ;; only trigger when played a programm from grip
+                                             (some #{:hand} (:previous-zone target))
+                                             ;; check if didn't played a program from the grip this turn
+                                             (empty? (let [cards (map first (turn-events state side :runner-install))
+                                                           progs (filter #(has? % :type "Program") cards)]
+                                                          (filter #(some #{:hand} (:previous-zone %)) progs)))))
                               :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
                                                 (system-msg "trashes Autoscripter"))}}}
@@ -3893,7 +3897,12 @@
    {:req (req tagged)}
 
    "Exile: Streethawk"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :events {:runner-install {:req (req (and (has? target :type "Program")
+                                              (= (:active-player @state) :runner)
+                                              ;; only trigger when played a programm from heap
+                                              (some #{:discard} (:previous-zone target))))
+                               :msg (msg "draw a card") :effect (effect (draw 1))}}}
 
    "Deep Red"
    {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
