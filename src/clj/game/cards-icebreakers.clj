@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+; Updates an icebreaker's abilities with a pseudo-ability to trigger the auto-pump routine in core, IF we are
+; encountering a rezzed ice with a subtype we can break.
 (def breaker-auto-pump
   {:effect
    (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
@@ -17,6 +19,10 @@
                                                         :label (str "Match strength of " (:title current-ice))} abs))
                                             abs)))))})
 
+; IMPORTANT: Icebreakers can only use this shortcut method if they do NOT handle any of the events shown below in the
+; merge below. Wyrm, for example, handles :run-ends and therefore can't use this shortcut.
+; Takes a vector of ice subtypes that can be broken (or ["All"] for AI breakers) and a card definition, and returns
+; a new card definition that hooks up breaker-auto-pump to the necessary events.
 (defn auto-icebreaker [breaks cdef]
   (assoc cdef :data (merge (:data cdef) {:breaks breaks})
               :events (merge (:events cdef)

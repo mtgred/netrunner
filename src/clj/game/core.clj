@@ -1192,7 +1192,7 @@
   (let [run (:run @state) card (get-card state (:card args))
         current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (nth (:cost pumpabi) (inc (.indexOf (:cost pumpabi) :credit))))
+        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                          (or (:current-strength card) (:strength card)))))
         pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
