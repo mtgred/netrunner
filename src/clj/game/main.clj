@@ -3,7 +3,8 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [game-states system-msg pay gain draw end-run] :as core])
+            [game.core :refer [game-states system-msg pay gain draw end-run] :as core]
+            [environ.core :refer [env]])
   (:gen-class :main true))
 
 (add-encoder java.lang.Object encode-str)
@@ -71,16 +72,20 @@
             (.send socket (generate-string state))
             (.send socket (generate-string "error"))))))))
 
+(defn zmq-url
+  []
+  (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
+
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
   (let [socket (.socket ctx ZMQ/REP)]
-    (.bind socket "tcp://127.0.0.1:1043")
+    (.bind socket (zmq-url))
     (run socket)))
 
 (defn -main []
   (println "[Prod] Listening on port 1043 for incoming commands...")
   (let [worker-url "inproc://responders"
-        router (doto (.socket ctx ZMQ/ROUTER) (.bind "tcp://127.0.0.1:1043"))
+        router (doto (.socket ctx ZMQ/ROUTER) (.bind (zmq-url)))
         dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
     (dotimes [n 2]
       (.start
@@ -91,3 +96,8 @@
             (run socket))))))
 
     (.start (Thread. #(.run (ZMQQueue. ctx router dealer))))))
+
+(comment
+  "Start development server"
+  (future-call dev)
+  )

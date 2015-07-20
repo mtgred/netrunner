@@ -16,7 +16,7 @@ cors = require('cors')
 
 # MongoDB connection
 appName = 'netrunner'
-mongoUrl = "mongodb://127.0.0.1:27017/netrunner"
+mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
 
 # Game lobby
@@ -52,8 +52,9 @@ joinGame = (socket, gameid) ->
     lobby.emit('netrunner', {type: "games", games: games})
 
 # ZeroMQ
+clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
-requester.connect('tcp://127.0.0.1:1043')
+requester.connect("tcp://#{clojure_hostname}:1043")
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   unless response is "ok"

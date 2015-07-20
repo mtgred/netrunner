@@ -43,7 +43,13 @@
                       :msg (msg "trash " (:title target)) :effect (effect (trash target))}}}
 
    "Exile: Streethawk"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :events {:runner-install {:req (req (and (has? target :type "Program")
+                                             (= (:active-player @state) :runner)
+                                             ;; only trigger when played a programm from heap
+                                             (some #{:discard} (:previous-zone target))))
+                              :msg (msg "draw a card") :effect (effect (draw 1))}}}
+
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn

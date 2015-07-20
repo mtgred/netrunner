@@ -32,6 +32,15 @@
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
     )))
 
+(defn pay-credit [state side cost]
+  (if (= side :runner)
+    (swap! state
+      (fn [old-state]
+        (-> old-state
+          (update-in [:runner :run-credit] #(max 0 (- % cost)))
+          (update-in [:runner :credit] - cost))))
+    (swap! state update-in [:corp :credit] #(- % cost))))
+
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
     (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
@@ -45,7 +54,9 @@
              (when (= (first c) :click)
                (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
                (swap! state assoc-in [side :register :spent-click] true))
-             (swap! state update-in [side (first c)] #(- (or % 0) (last c))))))))
+             (if (= (first c) :credit)
+               (pay-credit state side (second c))
+               (swap! state update-in [side (first c)] #(- (or % 0) (last c)))))))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -115,7 +126,7 @@
 
 (defn move
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone cid host installed] :as card} to front]
+  ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive] :as options}]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
@@ -128,7 +139,7 @@
              c (if (and (or installed (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard} (first dest)))
                  (desactivate state side c) c)
-             moved-card (assoc c :zone dest :host nil :hosted nil)]
+             moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
@@ -142,7 +153,8 @@
                     (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))
                n (last z)]
-           (when (and (number? n)
+           (when (and (not keep-server-alive)
+                      (number? n)
                       (empty? (get-in @state (conj z :content)))
                       (empty? (get-in @state (conj z :ices))))
              (when-let [run (:run @state)]
@@ -318,6 +330,10 @@
                      #(conj % {:ability end-turn :card card :targets targets}))))
           (when once (swap! state assoc-in [once (or once-key cid)] true)))))))
 
+(defn return-run-credit [state]
+  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+  (swap! state assoc-in [:runner :run-credit] 0))
+
 (defn handle-end-run [state side]
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
@@ -336,6 +352,7 @@
           (let [run-effect (get-in @state [:run :run-effect])]
             (when-let [end-run-effect (:end-run run-effect)]
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
+        (return-run-credit state)
         (swap! state assoc :run nil))))
 
 (defn add-prop [state side card key n]
@@ -563,7 +580,7 @@
                          :hand (zone :hand (take 5 runner-deck))
                          :discard [] :scored [] :rfg [] :play-area []
                          :rig {:program [] :resource [] :hardware []}
-                         :click 0 :credit 5 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
+                         :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
                          :hq-access 1 :rd-access 1
                          :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (card-init state :corp corp-identity)
@@ -572,7 +589,7 @@
 
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
-   :runner {:credit 5 :link 0 :memory 4 :max-hand-size 5}})
+   :runner {:credit 5 :run-credit 0 :link 0 :memory 4 :max-hand-size 5}})
 
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
@@ -604,7 +621,7 @@
 
 (defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard false)]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive true})]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
@@ -724,6 +741,10 @@
       "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
       [:servers :remote (-> (split server #" ") last Integer/parseInt)])))
 
+(defn add-bad-publicity-credit [state]
+  (swap! state update-in [:runner :run-credit] + (get-in @state [:corp :bad-publicity]))
+  (swap! state update-in [:runner :credit] + (get-in @state [:corp :bad-publicity])))
+
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -738,6 +759,7 @@
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
                       :run-effect (assoc run-effect :card card)})
+         (add-bad-publicity-credit state)
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
          (trigger-event state :runner :run s)))))
 
@@ -964,7 +986,9 @@
        (swap! state update-in (cons s (vec zone))
               (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %)) :facedown facedown)]
+   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %))
+                         :facedown facedown
+                         :zone '(:onhost))] ;; hosted cards should not be in :discard or :hand etc
      (update! state side (update-in card [:hosted] #(conj % c)))
      c)))
 
@@ -1120,10 +1144,10 @@
       (do (trash state s c)
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
-      (do (move state s (dissoc c :seen :rezzed) :hand false)
+      (do (move state s (dissoc c :seen :rezzed) :hand)
           (system-msg state side (str "moves " label " to " server)))
       ("Stack" "R&D")
-      (do (move state s (dissoc c :seen :rezzed) :deck true)
+      (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
           (system-msg state side (str "moves " label " to the top of " server)))
       nil)))
 
