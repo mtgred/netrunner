@@ -997,26 +997,28 @@
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness] :as card}
     {:keys [extra-cost no-cost host-card] :as params}]
-    (trigger-event state side :pre-install card)
-    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
-      (resolve-ability state side
-                       {:choices hosting
-                        :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
-      (let [cost (if no-cost 0 (install-cost state side card))]
-        (when (and (or (not uniqueness) (not (in-play? state card)))
-                   (if-let [req (:req (card-def card))]
-                     (req state side card nil) true)
-                   (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
-          (let [c (if host-card
-                    (host state side host-card card)
-                    (move state side card [:rig (to-keyword type)]))
-                installed-card (card-init state side (assoc c :installed true))]
-            (system-msg state side (str "installs " title
-                                        (when host-card (str " on " (:title host-card)))
-                                        (when no-cost " at no cost")))
-            (trigger-event state side :runner-install installed-card)
-            (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
-    (swap! state update-in [:bonus] dissoc :install-cost)))
+
+   (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
+     (resolve-ability state side
+                      {:choices hosting
+                       :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
+     (do
+       (trigger-event state side :pre-install card)
+       (let [cost (if no-cost 0 (install-cost state side card))]
+         (when (and (or (not uniqueness) (not (in-play? state card)))
+                    (if-let [req (:req (card-def card))]
+                      (req state side card nil) true)
+                    (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
+           (let [c (if host-card
+                     (host state side host-card card)
+                     (move state side card [:rig (to-keyword type)]))
+                 installed-card (card-init state side (assoc c :installed true))]
+             (system-msg state side (str "installs " title
+                                         (when host-card (str " on " (:title host-card)))
+                                         (when no-cost " at no cost")))
+             (trigger-event state side :runner-install installed-card)
+             (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
+   (swap! state update-in [:bonus] dissoc :install-cost)))
 
 (defn server-list [state card]
   (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
