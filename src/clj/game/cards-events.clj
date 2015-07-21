@@ -389,7 +389,8 @@
                                (get-in runner [:rig :program])))
                :msg (msg "move " (:title target) " on top of Stack")
                :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
-                                                   (get-in runner [:rig :program])) :deck true))}}
+                                                   (get-in runner [:rig :program]))
+                                  :deck {:front true}))}}
              card targets))}
 
    "The Makers Eye"
