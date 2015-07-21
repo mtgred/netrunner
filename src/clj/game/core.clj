@@ -619,9 +619,9 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
-(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
+(defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive] :as args} & targets]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive true})]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
@@ -1058,7 +1058,7 @@
                  (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
                    (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                             (:title prev-card) "a card") " in " server))
-                   (trash state side prev-card)))
+                   (trash state side prev-card {:keep-server-alive true})))
                (let [card-name (if (or rezzed (:rezzed c) (= (:install-state cdef) :face-up)) (:title card) "a card")]
                  (if (> install-cost 0)
                    (system-msg state side (str "pays " install-cost " [Credits] to install "
