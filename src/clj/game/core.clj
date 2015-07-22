@@ -1201,8 +1201,9 @@
         pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
     (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
       (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "increases the strength of " (:title card) " to "
-                                  (:current-strength (get-card state card)))))))
+      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
+                                  (:title card) " to " (:current-strength (get-card state card)))))))
+
 (defn turn-events [state side ev]
   (mapcat #(rest %) (filter #(= ev (first %)) (:turn-events @state))))
 
