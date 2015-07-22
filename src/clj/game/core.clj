@@ -27,7 +27,12 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+    (if (and (every?
+               (fn [[attr cost]]
+                 (if (and (= side :runner) (= attr :cost))
+                   (>= (- (+ (get-in @state [:runner :credit]) (get-in @state [:runner :run-credit])) cost) 0)
+                   (>= (- (get-in @state [side attr]) cost) 0)))
+               costs)
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
     )))
@@ -36,9 +41,11 @@
   (if (= side :runner)
     (swap! state
       (fn [old-state]
-        (-> old-state
-          (update-in [:runner :run-credit] #(max 0 (- % cost)))
-          (update-in [:runner :credit] - cost))))
+        (let [run-credit-to-use (min (get-in old-state [:runner :run-credit]) cost)
+              cost-remaining (- cost run-credit-to-use)]
+          (-> old-state
+            (update-in [:runner :run-credit] - run-credit-to-use)
+            (update-in [:runner :credit] - cost-remaining)))))
     (swap! state update-in [:corp :credit] #(- % cost))))
 
 (defn pay [state side card & args]
@@ -331,7 +338,6 @@
           (when once (swap! state assoc-in [once (or once-key cid)] true)))))))
 
 (defn return-run-credit [state]
-  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
   (swap! state assoc-in [:runner :run-credit] 0))
 
 (defn handle-end-run [state side]
