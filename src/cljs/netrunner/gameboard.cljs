@@ -28,6 +28,27 @@
                            (notify "Reconnected to the server.")
                            (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
+
+(def anr-icons {"[Credits]" "credit"
+                "[$]" "credit"
+                "[c]" "credit"
+                "[Credit]" "credit"
+                "[Click]" "click"
+                "[Subroutine]" "subroutine"
+                "[Recurring Credits]" "recurring-credit"
+                "1[Memory Unit]" "mu1"
+                "1[mu]" "mu1"
+                "2[Memory Unit]" "mu2"
+                "2[mu]" "mu2"
+                "3[Memory Unit]" "mu3"
+                "3[mu]" "mu3"
+                "[Link]" "link"
+                "[l]" "link"
+                "[Memory Unit]" "mu"
+                "[mu]" "mu"
+                "[Trash]" "trash"
+                "[t]" "trash"})
+
 (go (while true
       (let [msg (<! socket-channel)]
         (reset! lock false)
@@ -119,6 +140,30 @@
               (or (not memoryunits) (<= memoryunits (:memory me)))
               (> (:click me) 0)))))
 
+(defn is-card-item [item]
+  (and (> (.indexOf item "~") -1)
+          (= 0 (.indexOf item "["))))
+
+(defn extract-card-info [item]
+  (if (is-card-item item)
+    [(.substring item 1 (.indexOf item "~"))
+     (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
+            
+(defn create-span [item]
+  (if-let [class (anr-icons item)]
+    [:span {:class (str "anr-icon " class)}]
+  (if-let [[title code] (extract-card-info item)]
+    [:span {:on-mouse-enter #(put! zoom-channel {:code code})
+            :on-mouse-leave #(put! zoom-channel false)} title]
+  [:span item])))
+  
+(defn add-image-codes [text]
+  (reduce #(.replace %1 (:title %2) (str "[" (:title %2) "~"(:code %2) "]")) text (:cards @app-state)))
+        
+(defn get-message-parts [text]
+  (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
+      (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -133,12 +178,12 @@
         [:div.messages.panel.blue-shade {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
-             [:div.system {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text msg))}}]
+             [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
              [:div.message
               (om/build avatar (:user msg) {:opts {:size 38}})
               [:div.content
                [:div.username (get-in msg [:user :username])]
-               [:div (:text msg)]]]))]
+               [:div (for [item (get-message-parts (:text msg))] (create-span item))]]]))]
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
 
@@ -542,7 +587,7 @@
                 (when (:keep me)
                   (if-let [prompt (first (:prompt me))]
                     [:div.panel.blue-shade
-                     [:h4 {:dangerouslySetInnerHTML #js {:__html (add-symbols (:msg prompt))}}]
+                     [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
                      (if-let [n (get-in prompt [:choices :number])]
                        [:div
                         [:div.credit-select
@@ -568,8 +613,8 @@
                                      "OK"]]
                          (for [c (:choices prompt)]
                            (if (string? c)
-                             [:button {:on-click #(send-command "choice" {:choice c})
-                                       :dangerouslySetInnerHTML #js {:__html (add-symbols c)}}]
+                             [:button {:on-click #(send-command "choice" {:choice c})} 
+                                       (for [item (get-message-parts c)] (create-span item))]
                              [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))))]
                     (if run
                       (let [s (:server run)

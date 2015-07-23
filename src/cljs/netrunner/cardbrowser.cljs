@@ -21,7 +21,7 @@
   (str "/img/cards/" (:code card) ".png"))
 
 (defn add-symbols [card-text]
-  (-> card-text
+  (-> (if (nil? card-text) "" card-text)
       (make-span "\\[Credits\\]" "credit")
       (make-span "\\[Credit\\]" "credit")
       (make-span "\\[Click\\]" "click")
