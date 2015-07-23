@@ -158,7 +158,7 @@
   [:span item])))
 
 (defn add-image-codes [text]
-  (reduce #(.replace %1 (:title %2) (str "[" (:title %2) "~"(:code %2) "]")) text (:cards @app-state)))
+  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (:cards @app-state)))
 
 (defn get-message-parts [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
