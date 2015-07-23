@@ -28,7 +28,6 @@
                            (notify "Reconnected to the server.")
                            (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
-
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
                 "[c]" "credit"
@@ -148,18 +147,19 @@
   (if (is-card-item item)
     [(.substring item 1 (.indexOf item "~"))
      (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
-            
+
 (defn create-span [item]
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
-    [:span {:on-mouse-enter #(put! zoom-channel {:code code})
+    [:span {:class "fake-link"
+            :on-mouse-enter #(put! zoom-channel {:code code})
             :on-mouse-leave #(put! zoom-channel false)} title]
   [:span item])))
-  
+
 (defn add-image-codes [text]
   (reduce #(.replace %1 (:title %2) (str "[" (:title %2) "~"(:code %2) "]")) text (:cards @app-state)))
-        
+
 (defn get-message-parts [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
       (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
@@ -613,7 +613,7 @@
                                      "OK"]]
                          (for [c (:choices prompt)]
                            (if (string? c)
-                             [:button {:on-click #(send-command "choice" {:choice c})} 
+                             [:button {:on-click #(send-command "choice" {:choice c})}
                                        (for [item (get-message-parts c)] (create-span item))]
                              [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))))]
                     (if run
