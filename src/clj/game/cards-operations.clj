@@ -89,6 +89,13 @@
    "Hedge Fund"
    {:effect (effect (gain :credit 9))}
 
+   "Hellion Alpha Test"
+   {:req (req (:installed-resource runner-reg))
+    :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
+            :msg (msg "add " (:title target) " to the top of the Stack")
+            :effect (effect (move :runner target :deck true))
+            :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
+
    "Housekeeping"
    {:events {:runner-install {:req (req (= side :runner)) :choices (req (:hand runner))
                               :prompt "Choose a card to trash for Housekeeping" :once :per-turn
