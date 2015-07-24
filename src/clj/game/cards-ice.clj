@@ -492,6 +492,16 @@
                 {:label "Trace 3 - Do 3 net damage"
                  :trace {:base 3 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}]}
 
+   "Shiro"
+   {:abilities [{:label "Rearrange the top 3 cards of R&D"
+                 :msg "rearrange the top 3 cards of R&D"
+                 :effect (req (doseq [c (take 3 (:deck corp))]
+                                (move state side c :play-area)))}
+                {:label "Force the Runner to access the top card of R&D"
+                 :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
+                                (system-msg state :runner (str "accesses " (:title c)))
+                                (handle-access state side [c])))}]}
+
    "Snoop"
    {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
                 {:counter-cost 1 :label "Look at all cards in Grip and trash 1 card"
