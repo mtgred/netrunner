@@ -217,7 +217,7 @@
 
    "Reuse"
    {:choices {:max 100 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
-    :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+    :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s") " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Rework"
