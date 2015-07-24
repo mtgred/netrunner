@@ -151,14 +151,25 @@
 (defn create-span [item]
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
-  (if-let [[title code] (extract-card-info item)]
+  (if-let [[title code] (extract-card-info item)] 
     [:span {:class "fake-link"
             :on-mouse-enter #(put! zoom-channel {:code code})
             :on-mouse-leave #(put! zoom-channel false)} title]
   [:span item])))
 
+(defn get-alt-art [[title cards]]
+  (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
+    {:title title :code (:code (first s))}))
+  
+(defn prepare-cards []
+ (->> (:cards @app-state)
+      (group-by :title)
+      (map get-alt-art)))
+
+;;(def prepared-cards (memoize prepare-cards))
+          
 (defn add-image-codes [text]
-  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (:cards @app-state)))
+  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepare-cards)))
 
 (defn get-message-parts [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
