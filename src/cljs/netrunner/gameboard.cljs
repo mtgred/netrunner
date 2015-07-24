@@ -166,10 +166,10 @@
       (group-by :title)
       (map get-alt-art)))
 
-;;(def prepared-cards (memoize prepare-cards))
+(def prepared-cards (memoize prepare-cards))
           
 (defn add-image-codes [text]
-  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepare-cards)))
+  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepared-cards)))
 
 (defn get-message-parts [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
