@@ -152,9 +152,7 @@
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
-    [:span {:class "fake-link"
-            :on-mouse-enter #(put! zoom-channel {:code code})
-            :on-mouse-leave #(put! zoom-channel false)} title]
+    [:span {:class "fake-link" :title code} title]
   [:span item])))
 
 (defn add-image-codes [text]
@@ -163,6 +161,11 @@
 (defn get-message-parts [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
       (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
+
+(defn get-card-code [e]
+  (let [code (str (.. e -target -title))]
+    (if (> (count code) 0)
+      code)))
 
 (defn log-pane [messages owner]
   (reify
@@ -174,7 +177,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.log
+       [:div.log { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
+                   :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
         [:div.messages.panel.blue-shade {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
@@ -586,7 +590,8 @@
 
                 (when (:keep me)
                   (if-let [prompt (first (:prompt me))]
-                    [:div.panel.blue-shade
+                    [:div.panel.blue-shade { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
+                                             :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
                      [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
                      (if-let [n (get-in prompt [:choices :number])]
                        [:div
