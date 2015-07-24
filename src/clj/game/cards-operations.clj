@@ -106,7 +106,7 @@
                       card targets))}
 
    "Invasion of Privacy"
-   {:trace {:base 2 :msg (msg "reveal the Runner's Grip")
+   {:trace {:base 2 :msg (msg "reveal the Runner's Grip and trash up to " (- target (second targets)) " resources or events")
             :effect (req (doseq [c (:hand runner)]
                            (move state side c :play-area)))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
