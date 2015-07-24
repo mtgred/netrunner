@@ -1019,6 +1019,7 @@
                                          (when no-cost " at no cost")))
              (trigger-event state side :runner-install installed-card)
              (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
+   (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
    (swap! state update-in [:bonus] dissoc :install-cost)))
 
 (defn server-list [state card]
