@@ -184,6 +184,9 @@
                                      :msg (msg "trash " (:title target)) :effect (effect (trash target))}
                                     card nil)))}
 
+   "Predictive Algorithm"
+   {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
+
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"
     :effect (req (let [c (min target (:tag runner))]
