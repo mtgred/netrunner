@@ -31,11 +31,11 @@
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
 (defn costs-to-symbol [costs]
-  (reduce #(let [key (first %2) value (last %2)]
-             (case key
-               :credit (str %1 value " [Credits]")
-               :click (reduce str %1 (for [i (range value)] "[Click]"))
-               (str %1 value " " (str key)))) "" (partition 2 (flatten costs))))
+  (clojure.string/join ", " (map #(let [key (first %) value (last %)]
+                                   (case key
+                                     :credit (str value "[Credits]")
+                                     :click (reduce str (for [i (range value)] "[Click]"))
+                                     (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))

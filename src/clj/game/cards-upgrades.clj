@@ -92,6 +92,10 @@
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
 
+   "Red Herrings"
+   {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
+                              :effect (effect (steal-cost-bonus [:credit 5]))}}}
+
    "Research Station"
    {:init {:root "HQ"}
     :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
@@ -131,6 +135,10 @@
 
    "Simone Diego"
    {:recurring 2}
+
+   "Strongbox"
+   {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
+                              :effect (effect (steal-cost-bonus [:click 1]))}}}
 
    "Tyrs Hand"
    {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"

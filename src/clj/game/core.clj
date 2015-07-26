@@ -764,10 +764,21 @@
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
          (trigger-event state :runner :run s)))))
 
+(defn steal-cost-bonus [state side costs]
+  (swap! state update-in [:bonus :steal-cost] #(merge-costs (concat % costs))))
+
+(defn steal-cost [state side card]
+  (-> (if-let [costfun (:steal-cost-bonus (card-def card))]
+        (costfun state side card nil)
+        nil)
+      (concat (get-in @state [:bonus :steal-cost]))
+      merge-costs flatten vec))
+
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
   (doseq [c cards]
     (swap! state update-in [:bonus] dissoc :trash)
+    (swap! state update-in [:bonus] dissoc :steal-cost)
     (let [cdef (card-def c)
           c (assoc c :seen true)]
       (when-let [name (:title c)]
@@ -785,14 +796,17 @@
             (when-not (= (:type c) "Agenda")
               (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
         (when (= (:type c) "Agenda")
-          (if-let [cost (:steal-cost (card-def c))]
-            (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                              {:cost cost
-                               :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                " to steal " (:title c)))
-                                               (steal c))} nil)
-            (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-              (steal state :runner c))))
+          (trigger-event state side :pre-steal-cost c)
+          (let [cost (steal-cost state side c)]
+            (prn (pr-str cost))
+            (if (pos? (count cost))
+              (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                                {:cost cost
+                                 :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                  " to steal " (:title c)))
+                                                 (steal c))} nil)
+              (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
+                (steal state :runner c)))))
         (trigger-event state side :access c)))))
 
 (defn max-access [state side n]

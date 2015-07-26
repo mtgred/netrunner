@@ -90,7 +90,7 @@
    "Fetal AI"
    {:access {:req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
              :effect (effect (damage :net 2 {:card card}))}
-    :steal-cost [:credit 2]}
+    :steal-cost-bonus (req [:credit 2])}
 
    "Firmware Updates"
    {:data [:counter 3]
@@ -185,7 +185,7 @@
 
 
    "NAPD Contract"
-   {:steal-cost [:credit 4]
+   {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "Nisei MK II"
@@ -288,6 +288,11 @@
    "Unorthodox Predictions"
    {:prompt "Choose an ICE type for Unorthodox Predictions" :choices ["Sentry", "Code Gate", "Barrier"]
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
+
+   "Utopia Fragment"
+   {:events {:pre-steal-cost {:req (req (pos? (or (:advance-counter target) 0)))
+                              :effect (req (let [counter (:advance-counter target)]
+                                             (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
    "Veterans Program"
    {:effect (effect (lose :bad-publicity 2))}
