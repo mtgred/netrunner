@@ -32,7 +32,7 @@
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
     )))
 
-(defn pay-credit [state side cost]
+(defn lose-credit [state side cost]
   (if (= side :runner)
     (swap! state
       (fn [old-state]
@@ -40,6 +40,11 @@
           (update-in [:runner :run-credit] #(max 0 (- % cost)))
           (update-in [:runner :credit] - cost))))
     (swap! state update-in [:corp :credit] #(- % cost))))
+
+(defn apply-loss [state side [attr value]]
+  (if (= attr :credit)
+    (lose-credit state side value)
+    (swap! state update-in [side attr] #(- (or % 0) value))))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
@@ -54,9 +59,7 @@
              (when (= (first c) :click)
                (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
                (swap! state assoc-in [side :register :spent-click] true))
-             (if (= (first c) :credit)
-               (pay-credit state side (second c))
-               (swap! state update-in [side (first c)] #(- (or % 0) (last c)))))))))
+             (apply-loss state side c))))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -67,7 +70,7 @@
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
-      (swap! state update-in [side (first r)] #(max (- (or % 0) (last r)) 0)))))
+      (apply-loss state side r))))
 
 (defn register-events [state side events card]
   (doseq [e events]
