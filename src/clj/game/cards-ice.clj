@@ -539,11 +539,12 @@
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Troll"
-   {:abilities [{:player :runner :prompt "Choose one" :choices ["Lose [Click]" "End the run"]
-                 :label "Force the Runner to lose [Click] or end the run"
-                 :effect (req (if-not (and (= target "Lose [Click]") (pay state side card :click 1))
-                                (do (end-run state side) (system-msg state side "ends the run"))
-                                (system-msg state side "loses [Click]")))}]}
+   {:abilities [{:label "Trace 2 - Force the runner to lose [Click] or end the run"
+                 :trace {:base 2 :player :runner
+                         :prompt "Choose one" :choices ["Lose [Click]" "End the run"]
+                         :effect (req (if-not (and (= target "Lose [Click]") (pay state side card :click 1))
+                                        (do (end-run state side) (system-msg state side "ends the run"))
+                                        (system-msg state side "loses [Click]")))}}]}
 
    "Tsurugi"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
