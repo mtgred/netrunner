@@ -148,13 +148,13 @@
     [(.substring item 1 (.indexOf item "~"))
      (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
 
-(defn create-span [item]
+(defn create-span-impl [item]
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
     [:span {:class "fake-link" :title code} title]
     [:span item])))
-
+   
 (defn get-alt-art [[title cards]]
   (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
     {:title title :code (:code (first s))}))
@@ -166,13 +166,17 @@
 
 (def prepared-cards (memoize prepare-cards))
 
+(def create-span (memoize create-span-impl))
+
 (defn add-image-codes [text]
   (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepared-cards)))
 
-(defn get-message-parts [text]
+(defn get-message-parts-impl [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
       (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
 
+(def get-message-parts (memoize get-message-parts-impl))
+      
 (defn get-card-code [e]
   (let [code (str (.. e -target -title))]
     (if (> (count code) 0)
