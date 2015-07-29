@@ -29,29 +29,14 @@
         scored (get-in @state [side :scored])]
     (if (and (every?
                (fn [[attr cost]]
-                 (if (and (= side :runner) (= attr :cost))
-                   (>= (- (+ (get-in @state [:runner :credit]) (get-in @state [:runner :run-credit])) cost) 0)
-                   (>= (- (get-in @state [side attr]) cost) 0)))
+                 (>= (- (get-in @state [side attr]) cost) 0))
                costs)
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
     )))
 
-(defn lose-credit [state side cost]
-  (if (= side :runner)
-    (swap! state
-      (fn [old-state]
-        (let [run-credit-to-use (min (get-in old-state [:runner :run-credit]) cost)
-              cost-remaining (- cost run-credit-to-use)]
-          (-> old-state
-            (update-in [:runner :run-credit] - run-credit-to-use)
-            (update-in [:runner :credit] - cost-remaining)))))
-    (swap! state update-in [:corp :credit] #(- % cost))))
-
 (defn apply-loss [state side [attr value]]
-  (if (= attr :credit)
-    (lose-credit state side value)
-    (swap! state update-in [side attr] #(- (or % 0) value))))
+  (swap! state update-in [side attr] #(- (or % 0) value)))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
