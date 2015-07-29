@@ -136,7 +136,7 @@
                [:div (:text msg)]]]))]
         [:div
          [:form.msg-box {:on-submit #(send-msg % owner)}
-          [:input {:ref "msg-input" :placeholder "Say something"}]
+          [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
 (defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]

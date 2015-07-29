@@ -39,7 +39,7 @@
   (om/component
    (sab/html
     [:form.msg-box {:on-submit #(send-msg % channel owner)}
-     [:input {:type "text" :ref "msg-input" :placeholder "Say something..."}]
+     [:input {:type "text" :ref "msg-input" :placeholder "Say something..." :accessKey "l"}]
      [:button "Send"]])))
 
 (defn channel-view [{:keys [channel active-channel]} owner]

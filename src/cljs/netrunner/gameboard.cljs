@@ -204,7 +204,7 @@
                [:div.username (get-in msg [:user :username])]
                [:div (for [item (get-message-parts (:text msg))] (create-span item))]]]))]
         [:form {:on-submit #(send-msg % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something"}]]]))))
+         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
 
 (defn remote-list [remotes]
   (map #(str "Server " %) (-> remotes count range reverse)))
