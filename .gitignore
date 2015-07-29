@@ -19,3 +19,6 @@ pom.xml
 /resources/public/img/cards
 /data/andb-*.json
 /data/img
+.idea/.name
+*.xml
+netrunner.iml
