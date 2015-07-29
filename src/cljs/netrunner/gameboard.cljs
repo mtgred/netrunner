@@ -168,9 +168,11 @@
 
 (def create-span (memoize create-span-impl))
 
-(defn add-image-codes [text]
+(defn add-image-codes-impl [text]
   (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepared-cards)))
 
+(def add-image-codes (memoize add-image-codes-impl))  
+  
 (defn get-message-parts-impl [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
       (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
@@ -598,7 +600,8 @@
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
 
-               [:div.button-pane
+               [:div.button-pane { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
+                                   :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
                 (when-not (:keep me)
                   [:div.panel.blue-shade
                    [:h4 "Keep hand?"]
@@ -637,7 +640,8 @@
                            (if (string? c)
                              [:button {:on-click #(send-command "choice" {:choice c})}
                                        (for [item (get-message-parts c)] (create-span item))]
-                             [:button {:on-click #(send-command "choice" {:card @c})} (:title c)]))))]
+                              (let [[title code] (extract-card-info (add-image-codes (:title c)))]
+                                [:button {:on-click #(send-command "choice" {:card @c}) :title code} title])))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))
