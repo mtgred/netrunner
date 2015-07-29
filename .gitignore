@@ -19,7 +19,3 @@ pom.xml
 /resources/public/img/cards
 /data/andb-*.json
 /data/img
-*.iml
-.idea/libraries/Leiningen__tigris_0_1_1.xml
-*.xml
-.idea/.name
