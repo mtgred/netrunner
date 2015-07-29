@@ -465,8 +465,8 @@
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
-       (when (> run-credit 0)
-        [:div (str run-credit " Run Credit" (if (> credit 1) "s" "")) (when me? (controls :run-credit))])
+       (when (:run @game-state)
+        [:div.fake-link (str run-credit " Run Credit" (if (> credit 1) "s" "")) (when me? (controls :run-credit))])
        [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
