@@ -152,7 +152,7 @@
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
-    [:span {:class "fake-link" :title code} title]
+    [:span {:class "fake-link" :id code} title]
     [:span item])))
    
 (defn get-alt-art [[title cards]]
@@ -180,10 +180,16 @@
 (def get-message-parts (memoize get-message-parts-impl))
       
 (defn get-card-code [e]
-  (let [code (str (.. e -target -title))]
+  (let [code (str (.. e -target -id))]
     (if (> (count code) 0)
       code)))
 
+(defn card-preview-mouse-over [e]
+    (if-let [code (get-card-code e)] (put! zoom-channel {:code code})))
+
+(defn card-preview-mouse-out [e]
+    (if-let [code (get-card-code e)] (put! zoom-channel false)))
+    
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -194,8 +200,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.log { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
-                   :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
+       [:div.log { :on-mouse-over card-preview-mouse-over
+                   :on-mouse-out  card-preview-mouse-out  }
         [:div.messages.panel.blue-shade {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
@@ -600,8 +606,8 @@
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
 
-               [:div.button-pane { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
-                                   :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
+               [:div.button-pane { :on-mouse-over card-preview-mouse-over
+                                   :on-mouse-out  card-preview-mouse-out  }
                 (when-not (:keep me)
                   [:div.panel.blue-shade
                    [:h4 "Keep hand?"]
@@ -610,8 +616,7 @@
 
                 (when (:keep me)
                   (if-let [prompt (first (:prompt me))]
-                    [:div.panel.blue-shade { :on-mouse-over #(if-let [code (get-card-code %1)] (put! zoom-channel {:code code}))
-                                             :on-mouse-out #(if-let [code (get-card-code %1)] (put! zoom-channel false))}
+                    [:div.panel.blue-shade 
                      [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
                      (if-let [n (get-in prompt [:choices :number])]
                        [:div
@@ -641,7 +646,7 @@
                              [:button {:on-click #(send-command "choice" {:choice c})}
                                        (for [item (get-message-parts c)] (create-span item))]
                               (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                                [:button {:on-click #(send-command "choice" {:card @c}) :title code} title])))))]
+                                [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))
