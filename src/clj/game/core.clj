@@ -192,10 +192,12 @@
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
-     (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
-       (swap! state update-in [side :hand] #(concat % drawn)))
-     (swap! state update-in [side :deck] (partial drop n))
-     (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)))
+   (let [active-player (get-in @state [:active-player])]
+     (when-not (get-in @state [active-player :register :cannot-draw])
+       (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
+         (swap! state update-in [side :hand] #(concat % drawn)))
+       (swap! state update-in [side :deck] (partial drop n))
+       (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)))))
 
 (defn mill
   ([state side] (mill state side 1))
@@ -1158,6 +1160,9 @@
 (defn prevent-run [state side]
   (swap! state assoc-in [:runner :register :cannot-run] true))
 
+(defn prevent-draw [state side]
+  (swap! state assoc-in [:runner :register :cannot-draw] true))
+
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
@@ -1185,7 +1190,7 @@
     (run state side server)))
 
 (defn click-draw [state side args]
-  (when (pay state side nil :click 1)
+  (when (and (not (get-in @state [side :register :cannot-draw])) (pay state side nil :click 1))
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))

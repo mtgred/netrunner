@@ -306,6 +306,10 @@
    {:abilities [{:msg "end the run" :effect (effect (end-run))}
                 {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}
 
+   "Lockdown"
+   {:abilities [{:label "The Runner cannot draw cards for the remainder of this turn"
+                 :msg "prevent the Runner from drawing cards" :effect (effect (prevent-draw))}]}
+
    "Lotus Field"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
