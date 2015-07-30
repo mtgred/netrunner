@@ -988,7 +988,9 @@
 
 (defn host
   ([state side card target] (host state side card target nil))
-  ([state side card {:keys [zone cid host] :as target} {:keys [facedown] :as options}]
+  ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
+   (when installed
+     (unregister-events state side target))
    (doseq [s [:runner :corp]]
      (if host
        (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
@@ -1002,6 +1004,8 @@
                          :facedown facedown
                          :zone '(:onhost))] ;; hosted cards should not be in :discard or :hand etc
      (update! state side (update-in card [:hosted] #(conj % c)))
+     (when-let [events (:events (card-def target))]
+       (register-events state side events c))
      c)))
 
 (defn runner-install
