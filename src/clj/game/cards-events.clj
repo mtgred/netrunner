@@ -36,11 +36,10 @@
    {:effect (effect (run :rd
                          {:replace-access
                           {:prompt "Choose a program to install"
-                           :msg (msg "Code Siphon to install " (:title target) " and take 1 tag")
-                           :choices (req (filter #(and (has? % :type "Program")
-                                                       (<= (:cost %) (:credit runner))) (:deck runner)))
-                           :effect (effect (gain :tag 1)
-                                           (runner-install target) (shuffle! :deck))}} card))}
+                           :msg (msg "install " (:title target) " and take 1 tag")
+                           :choices (req (filter #(has? % :type "Program") (:deck runner)))
+                           :effect (effect (install-cost-bonus (* -3 (count (get-in corp [:servers :rd :ices]))))
+                                           (runner-install target) (gain :tag 1) (shuffle! :deck))}} card))}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
