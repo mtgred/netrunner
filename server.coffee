@@ -88,7 +88,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
-        game = {date: new Date(), gameid: ++gameid, title: msg.title,\
+        game = {date: new Date(), gameid: ++gameid, title: msg.title, skill: msg.skill, type:msg.type,\
                 players: [{user: socket.request.user, id: socket.id, side: "Corp"}]}
         games[gameid] = game
         socket.join(gameid)
