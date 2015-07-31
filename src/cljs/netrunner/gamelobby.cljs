@@ -44,6 +44,8 @@
   (authenticated
    (fn [user]
      (om/set-state! owner :title (str (:username user) "'s game"))
+     (om/set-state! owner :skill "Intermediate")
+     (om/set-state! owner :game-type "Serious")
      (om/set-state! owner :editing true)
      (-> ".game-title" js/$ .select))))
 
@@ -54,7 +56,8 @@
        (om/set-state! owner :flash-message "Please fill a game title.")
        (do (om/set-state! owner :editing false)
            (swap! app-state assoc :messages [])
-           (send {:action "create" :title (om/get-state owner :title)}))))))
+           (send {:action "create" :title (om/get-state owner :title) :skill (om/get-state owner :skill)
+                  :type (om/get-state owner :game-type)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -158,6 +161,13 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
+               [:div.game-icons
+                 [(keyword (str "div.game-icon-skill." (clojure.string/lower-case (:type game))))
+                  {:title (str "This is a " (:type game) " game.")}
+                  (get (:type game) 0)]
+                 [(keyword (str "div.game-icon-type." (clojure.string/lower-case (:skill game))))
+                  {:title (str "Looking for " (:skill game) " opponent.")}
+                  (get (:skill game) 0)]]
                [:h4 (:title game)]
                [:div
                 (om/build-all player-view (:players game))]]))]]
@@ -171,6 +181,14 @@
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title"}]
+            [:h4 "Skill Level"]
+            [:select.game-skill {:value (:skill state) :on-change #(om/set-state! owner :skill (.. % -target -value))}
+             (for [option ["Beginner" "Intermediate" "Expert"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
+            [:h4 "Game Type"]
+            [:select.game-type {:value (:game-type state) :on-change #(om/set-state! owner :game-type (.. % -target -value))}
+             (for [option ["Private" "Friendly" "Serious" "Tournament"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
             [:p.flash-message (:flash-message state)]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
