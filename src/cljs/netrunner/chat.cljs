@@ -7,6 +7,8 @@
             [netrunner.ajax :refer [GET]]
             [netrunner.main :as main]))
 
+(defonce last_msg (atom ""))
+            
 (def app-state
   (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :francais [] :italia [] :sverige []}}))
 
@@ -33,12 +35,20 @@
                                              :username (:username user)
                                              :emailhash (:emailhash user)})
          (aset input "value" "")
+         (reset! last_msg text)
          (.focus input))))))
-
+         
+(defn handle-key-down [event owner]
+  (if (= 38 (.. event -keyCode))
+    (let [input (om/get-node owner "msg-input")]
+      (do (.focus input)
+          (aset input "value" "")
+          (aset input "value" @last_msg)))))
+         
 (defn msg-input-view [{:keys [channel]} owner]
   (om/component
    (sab/html
-    [:form.msg-box {:on-submit #(send-msg % channel owner)}
+    [:form.msg-box {:on-submit #(send-msg % channel owner) :on-key-down  #(handle-key-down %1 owner)}
      [:input {:type "text" :ref "msg-input" :placeholder "Say something..." :accessKey "l"}]
      [:button "Send"]])))
 
