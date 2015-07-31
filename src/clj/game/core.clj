@@ -1005,7 +1005,8 @@
                          :zone '(:onhost))] ;; hosted cards should not be in :discard or :hand etc
      (update! state side (update-in card [:hosted] #(conj % c)))
      (when-let [events (:events (card-def target))]
-       (register-events state side events c))
+       (when installed
+         (register-events state side events c)))
      c)))
 
 (defn runner-install
