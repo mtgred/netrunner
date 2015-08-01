@@ -80,7 +80,7 @@
          c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (= (:side card) "Runner") (:rezzed card))
+       (when (or (= (:side card) "Runner") (:rezzed card) (= (first (:zone card)) :current))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
@@ -971,7 +971,6 @@
          (let [c (move state side (assoc card :seen true) :play-area)]
            (system-msg state side (str "plays " title))
            (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
-           (resolve-ability state side cdef card nil)
            (if (has? c :subtype "Current")
              (do (doseq [s [:corp :runner]]
                    (when-let [current (first (get-in @state [s :current]))]
@@ -979,7 +978,9 @@
                      (trash state side current)))
                  (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                    (card-init state side moved-card)))
-             (move state side (first (get-in @state [side :play-area])) :discard)))))))
+             (do
+               (resolve-ability state side cdef card nil)
+               (move state side (first (get-in @state [side :play-area])) :discard))))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
