@@ -55,8 +55,7 @@
                                   :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
    "Crisium Grid"
-   {:suppress {:successful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}
-               :unsuccessful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}}
+   {:suppress {:successful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}}
     :events {:successful-run {:req (req this-server)
                               :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                            (swap! state update-in [:run] dissoc :successful)
