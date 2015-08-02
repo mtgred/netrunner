@@ -32,11 +32,10 @@
                  (>= (- (get-in @state [side attr]) cost) 0))
                costs)
              (or (not forfeit-cost) (not (empty? scored))))
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
-    )))
+      {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
 (defn apply-loss [state side [attr value]]
-  (swap! state update-in [side attr] #(- (or % 0) value)))
+  (swap! state update-in [side attr] #(max 0 (- (or % 0) value))))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
