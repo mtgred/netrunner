@@ -228,17 +228,17 @@
 
    "Medium"
    {:events
-    {:successful-run
-     {:req (req (= target :rd))
-      :effect (effect (add-prop card :counter 1)
-                      (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
+    {:successful-run {:req (req (= target :rd))
+                      :effect (effect (add-prop card :counter 1))}
+     :pre-access {:req (req (= target :rd))
+                  :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
 
    "Nerve Agent"
    {:events
-    {:successful-run
-     {:req (req (= target :hq))
-      :effect (effect (add-prop card :counter 1)
-                      (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
+    {:successful-run {:req (req (= target :hq))
+                      :effect (effect (add-prop card :counter 1))}
+     :pre-access {:req (req (= target :hq))
+                  :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
 
    "Net Shield"
    {:prevent {:damage [:net]}

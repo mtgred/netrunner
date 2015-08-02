@@ -64,14 +64,25 @@
       (swap! state assoc-in [side (first r)] 0)
       (apply-loss state side r))))
 
+(defn register-suppress [state side events card]
+  (doseq [e events]
+    (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
+
 (defn register-events [state side events card]
   (doseq [e events]
-    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card}))))
+    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card})))
+  (register-suppress state side (:suppress (card-def card)) card))
+
+(defn unregister-suppress [state side card]
+  (doseq [e (:suppress (card-def card))]
+    (swap! state update-in [:suppress (first e)]
+           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
 
 (defn unregister-events [state side card]
   (doseq [e (:events (card-def card))]
     (swap! state update-in [:events (first e)]
-           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %)))
+  (unregister-suppress state side card))
 
 (defn desactivate
   ([state side card] (desactivate state side card nil))
@@ -399,10 +410,14 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side)))))))
 
+(defn trigger-suppress [state side event & targets]
+  (reduce #(or %1 ((:req (:ability %2)) state side (:card %2) targets)) false (get-in @state [:suppress event])))
+
 (defn trigger-event [state side event & targets]
   (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
     (when-let [card (get-card state (:card e))]
-      (when (or (not (:req ability)) ((:req ability) state side card targets))
+      (when (and (not (apply trigger-suppress state side event (cons card targets)))
+                 (or (not (:req ability)) ((:req ability) state side card targets)))
         (resolve-ability state side ability card targets))))
   (swap! state update-in [:turn-events] #(cons [event targets] %)))
 
@@ -835,6 +850,7 @@
   (swap! state update-in [:run :access-bonus] #(+ % n)))
 
 (defn do-access [state side server]
+  (trigger-event state side :pre-access (first server))
   (let [cards (access state side server)]
     (when-not (or (= (get-in @state [:run :max-access]) 0) (empty? cards))
       (if (= (first server) :rd)

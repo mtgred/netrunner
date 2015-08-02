@@ -190,7 +190,10 @@
    {:effect (effect (draw 3) (lose :tag 2))}
 
    "Legwork"
-   {:effect (effect (run :hq) (access-bonus 2))}
+   {:effect (effect (run :hq) (register-events (:events (card-def card))
+                                               (assoc card :zone '(:discard))))
+    :events {:successful-run {:effect (effect (access-bonus 2))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Leverage"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -392,7 +395,10 @@
              card targets))}
 
    "The Makers Eye"
-   {:effect (effect (run :rd) (access-bonus 2))}
+   {:effect (effect (run :rd) (register-events (:events (card-def card))
+                                               (assoc card :zone '(:discard))))
+    :events {:successful-run {:effect (effect (access-bonus 2))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
