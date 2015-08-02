@@ -54,6 +54,14 @@
                                                      :effect (effect (ice-strength-bonus (:troubleshooter-amount card)))}
                                   :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
+   "Crisium Grid"
+   {:suppress {:successful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}
+               :unsuccessful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}}
+    :events {:successful-run {:req (req this-server)
+                              :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                                           (swap! state update-in [:run] dissoc :successful)
+                                           (swap! state update-in [:runner :register :successful-run] #(butlast %)))}}}
+
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
                         :msg (msg "purge viruses") :effect (effect (purge))}}
