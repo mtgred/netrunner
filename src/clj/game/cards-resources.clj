@@ -124,9 +124,8 @@
 
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
-                             :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (system-msg state :runner (str "accesses " (:title c)))
-                                            (handle-access state :runner [c])))}}}
+                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                            (choose-access c '(:hq))))}}}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -316,9 +315,8 @@
                                 (resolve-ability
                                  ref side
                                  {:msg "access 1 card from HQ"
-                                  :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                                 (system-msg state side (str "accesses " (:title c)))
-                                                 (handle-access state side [c])))} card nil)))))
+                                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                                 (choose-access c '(:hq))))} card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:label "Expose 1 card"
                  :effect (effect (resolve-ability

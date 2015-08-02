@@ -993,11 +993,6 @@
         (let [n (count cards)]
           (system-msg state side (str "accesses " n " card" (when (> n 1) "s")))))
       (resolve-ability state side (choose-access cards server) nil nil)))
-      ;(case (first server)
-      ;  :remote (resolve-ability state side (choose-access-remote cards) nil nil)
-      ;  :hq (resolve-ability state side (choose-access-hq) nil nil)
-      ;  :archives (resolve-ability state side (choose-access-archives) nil nil)
-      ;  :rd (resolve-ability state side (choose-access-rd) nil nil))))
   (handle-end-run state side))
 
 (defn replace-access [state side ability card]
