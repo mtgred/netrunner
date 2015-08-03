@@ -138,9 +138,9 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Leela Patel: Trained Pragmatist"
-   {:events {:agenda-scored {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
+   {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
                              :player :runner :effect (effect (move :corp target :hand))}
-             :agenda-stolen {:choices {:req #(not (:rezzed %))} :msg "add 1 unrezzed card to HQ"
+             :agenda-stolen {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
                              :effect (req (move state :corp target :hand)
                                           (swap! state update-in [:runner :prompt] rest)
                                           (handle-end-run state side))}}}
@@ -173,9 +173,10 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))
-    :events {:pre-rez
-             {:req (req (= (:type target) "ICE")) :once :per-turn
-              :effect (effect (rez-cost-bonus 1))}}}
+    :events {:pre-rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+                       :effect (effect (rez-cost-bonus 1))}
+             :rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+                              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run

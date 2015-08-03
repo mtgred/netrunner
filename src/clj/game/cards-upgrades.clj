@@ -42,7 +42,7 @@
                                                                                 :troubleshooter-amount boost))
                                                 (trash state side (get-card state card))
                                                 (update-ice-strength state side target))} card nil)))}]
-    :events {:pre-ice-strength nil :end-turn nil}
+    :events {:pre-ice-strength nil :runner-turn-ends nil :corp-turn-ends nil}
     :trash-effect
                {:effect (req (register-events
                                state side

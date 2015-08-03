@@ -413,7 +413,20 @@
                                             (has? target :subtype "Gray Ops")))}}}
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
-    :abilities [{:msg "give an icebreaker +2 strength" :effect (effect (trash card {:cause :ability-cost}))}]}
+    :abilities [{:msg (msg "give +2 strength to " (:title target))
+                 :choices {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+                 :effect (effect (update! (assoc card :hai-target target))
+                                 (trash (get-card state card) {:cause :ability-cost})
+                                 (update-breaker-strength target))}]
+    :events {:runner-turn-ends nil :corp-turn-ends nil :pre-breaker-strength nil}
+    :trash-effect {:effect
+                   (effect (register-events
+                             (let [hai {:effect (effect (unregister-events card)
+                                                        (update! (dissoc card :hai-target))
+                                                        (update-breaker-strength (:hai-target card)))}]
+                               {:runner-turn-ends hai :corp-turn-ends hai
+                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
+                                                       :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]

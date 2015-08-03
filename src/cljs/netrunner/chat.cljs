@@ -8,7 +8,7 @@
             [netrunner.main :as main]))
 
 (def app-state
-  (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :francais []}}))
+  (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :francais [] :italia [] :sverige []}}))
 
 (def chat-channel (chan))
 (def chat-socket (.connect js/io (str js/iourl "/chat")))
@@ -39,7 +39,7 @@
   (om/component
    (sab/html
     [:form.msg-box {:on-submit #(send-msg % channel owner)}
-     [:input {:type "text" :ref "msg-input" :placeholder "Say something..."}]
+     [:input {:type "text" :ref "msg-input" :placeholder "Say something..." :accessKey "l"}]
      [:button "Send"]])))
 
 (defn channel-view [{:keys [channel active-channel]} owner]
