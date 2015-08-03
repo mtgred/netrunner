@@ -914,8 +914,6 @@
       (when (> pos 0)
         (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
           (trigger-event state side :approach-ice ice))))
-          ; update icebreaker with abilities
-
     (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
       (update-breaker-strength state side p))))
