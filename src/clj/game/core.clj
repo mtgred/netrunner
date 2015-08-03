@@ -899,8 +899,7 @@
                   (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) cards)]
                     (if (= 1 (count unrezzed))
                       ; only one unrezzed upgrade; access it and continue
-                      (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                          (handle-access state side unrezzed)
+                      (do (handle-access state side unrezzed)
                           (when (< 1 (count cards))
                             (resolve-ability
                               state side (access-helper-rd (filter #(not= (:cid %) (:cid (first unrezzed))) cards))
@@ -909,20 +908,17 @@
                       (resolve-ability state side
                                        {:prompt "Choose an upgrade in R&D to access."
                                         :choices {:req #(= (second (:zone %)) :rd)}
-                                        :effect (effect (system-msg (str "accesses " (:title target)))
-                                                        (handle-access [target])
+                                        :effect (effect (handle-access [target])
                                                         (resolve-ability (access-helper-rd
                                                                            (remove-once #(not= (:cid %) (:cid target))
                                                                                         cards)) card nil))} card nil)))
                   ; accessing a card in deck or a rezzed upgade
                   "Card from deck"
-                  (do (system-msg state side (str "accesses " (:title (first cards))))
-                      (handle-access state side [(first cards)])
+                  (do (handle-access state side [(first cards)])
                       (when (< 1 (count cards))
                         (resolve-ability state side (access-helper-rd (rest cards)) card nil)))
                   ; accessing a rezzed upgrade
-                  (do (system-msg state side (str "accesses " target))
-                      (handle-access state side [(some #(when (= (:title %) target) %) cards)])
+                  (do (handle-access state side [(some #(when (= (:title %) target) %) cards)])
                       (when (< 1 (count cards))
                         (resolve-ability state side (access-helper-rd
                                                       (remove-once #(not= (:title %) target) cards)) card nil)))))})
@@ -930,8 +926,7 @@
 (defmethod choose-access :rd [cards server]
   {:effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
-                        (handle-access state side cards))
+                    (handle-access state side cards)
                     (resolve-ability state side (access-helper-rd cards) card nil))))})
 
 (defn access-helper-archives [cards]
