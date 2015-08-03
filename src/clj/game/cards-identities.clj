@@ -60,6 +60,10 @@
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
+   "Haarpsichord Studios"
+   {:events {:pre-steal-cost {:req (req (pos? (or (:stole-agenda runner-reg) 0)))
+                              :effect (effect (prevent-steal))}}}
+
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}

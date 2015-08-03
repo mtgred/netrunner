@@ -806,15 +806,17 @@
               (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
         (when (= (:type c) "Agenda")
           (trigger-event state side :pre-steal-cost c)
-          (let [cost (steal-cost state side c)]
-            (if (pos? (count cost))
-              (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                {:cost cost
-                                 :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                  " to steal " (:title c)))
-                                                 (steal c))} nil)
-              (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-                (steal state :runner c)))))
+          (if (not (get-in @state [:runner :register :cannot-steal]))
+            (let [cost (steal-cost state side c)]
+              (if (pos? (count cost))
+                (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                                  {:cost cost
+                                   :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                    " to steal " (:title c)))
+                                                   (steal c))} nil)
+                (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
+                  (steal state :runner c))))
+            (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})))
         (trigger-event state side :access c)))))
 
 (defn max-access [state side n]
@@ -1322,6 +1324,9 @@
 
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
+
+(defn prevent-steal [state side]
+  (swap! state assoc-in [:runner :register :cannot-steal] true))
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
