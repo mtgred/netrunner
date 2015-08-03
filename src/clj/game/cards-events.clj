@@ -108,6 +108,9 @@
    "Feint"
    {:effect (effect (run :hq) (max-access 0))}
 
+   "Fisk Investment Seminar"
+   {:effect (effect (draw 3) (draw :corp 3))}
+
    "Forged Activation Orders"
    {:choices {:req #(and (has? % :type "ICE") (not (:rezzed %)))}
     :effect (req (let [ice target]

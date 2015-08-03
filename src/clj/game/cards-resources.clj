@@ -368,6 +368,9 @@
                                                       {:msg "gain 2 [Credits] instead of accessing"
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
 
+   "Spoilers"
+   {:events {:agenda-scored {:msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
+
    "Starlight Crusade Funding"
    {:events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 

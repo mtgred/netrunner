@@ -127,7 +127,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                           (not (get-in @state [:per-turn (:cid card)]))))
-                           :effect (effect (install-cost-bonus -1))}  
+                           :effect (effect (install-cost-bonus -1))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                              (not (get-in @state [:per-turn (:cid card)]))))
                               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
@@ -136,6 +136,12 @@
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (has? target :subtype "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Laramy Fisk: Savvy Investor"
+   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)))
+                              :optional {:prompt "Force the Corp to draw 1 card?"
+                                         :msg "force the Corp to draw 1 card" :once :per-turn
+                                         :effect (effect (draw :corp))}}}}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
