@@ -27,15 +27,14 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every?
-               (fn [[attr cost]]
-                 (>= (- (get-in @state [side attr]) cost) 0))
-               costs)
+    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
-(defn apply-loss [state side [attr value]]
-  (swap! state update-in [side attr] #(max 0 (- (or % 0) value))))
+(defn deduce [state side [attr value]]
+  (swap! state update-in [side attr] #(max 0 (- % value)))
+  (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))
+    (swap! state update-in [:runner :run-credit] #(max 0 (- % value)))))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
@@ -50,7 +49,7 @@
              (when (= (first c) :click)
                (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
                (swap! state assoc-in [side :register :spent-click] true))
-             (apply-loss state side c))))))
+             (deduce state side c))))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -61,7 +60,7 @@
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
-      (apply-loss state side r))))
+      (deduce state side r))))
 
 (defn register-suppress [state side events card]
   (doseq [e events]
@@ -337,9 +336,6 @@
                      #(conj % {:ability end-turn :card card :targets targets}))))
           (when once (swap! state assoc-in [once (or once-key cid)] true)))))))
 
-(defn return-run-credit [state]
-  (swap! state assoc-in [:runner :run-credit] 0))
-
 (defn handle-end-run [state side]
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
@@ -358,7 +354,8 @@
           (let [run-effect (get-in @state [:run :run-effect])]
             (when-let [end-run-effect (:end-run run-effect)]
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
-        (return-run-credit state)
+        (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+        (swap! state assoc-in [:runner :run-credit] 0)
         (swap! state assoc :run nil))))
 
 (defn add-prop [state side card key n]
@@ -557,7 +554,9 @@
 
 (defn change [state side {:keys [key delta]}]
   (let [kw (to-keyword key)]
-    (swap! state update-in [side kw] (partial + delta))
+    (if (< delta 0)
+      (deduce state side [kw (- delta)])
+      (swap! state update-in [side kw] (partial + delta)))
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
                      " (" (if (> delta 0) (str "+" delta) delta) ")"))))
@@ -752,9 +751,9 @@
       "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
       [:servers :remote (-> (split server #" ") last Integer/parseInt)])))
 
-(defn add-bad-publicity-credit [state]
-  (swap! state update-in [:runner :run-credit] + (get-in @state [:corp :bad-publicity]))
-  (swap! state update-in [:runner :credit] + (get-in @state [:corp :bad-publicity])))
+(defn gain-run-credits [state side n]
+  (swap! state update-in [:runner :run-credit] + n)
+  (gain state :runner :credit n))
 
 (defn run
   ([state side server] (run state side server nil nil))
@@ -770,7 +769,7 @@
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
                       :run-effect (assoc run-effect :card card)})
-         (add-bad-publicity-credit state)
+         (gain-run-credits state side (get-in @state [:corp :bad-publicity]))
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
          (trigger-event state :runner :run s)))))
 
