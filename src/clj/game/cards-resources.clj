@@ -123,9 +123,9 @@
                      :effect (effect (pay :corp card :credit 2))}}}
 
    "Gang Sign"
-   {:events {:agenda-scored {:msg "access 1 card from HQ"
+   {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
                              :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (choose-access c '(:hq))))}}}
+                                            (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}}}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -314,9 +314,10 @@
                               (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
                                 (resolve-ability
                                  ref side
-                                 {:msg "access 1 card from HQ"
+                                 {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
                                   :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                                 (choose-access c '(:hq))))} card nil)))))
+                                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}
+                                 card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:label "Expose 1 card"
                  :effect (effect (resolve-ability
