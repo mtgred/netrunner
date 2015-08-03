@@ -46,6 +46,12 @@
                                      (gain state side :tag 1)
                                      (damage state side :brain 1 {:card card})))}}}
 
+   "Cerebral Static"
+   {:msg "disable the Runner's identity"
+    :effect (req (unregister-events state side (:identity runner)))
+    :leave-play (req (when-let [events (:events (card-def (:identity runner)))]
+                       (register-events state side events (:identity runner))))}
+
    "Closed Accounts"
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
