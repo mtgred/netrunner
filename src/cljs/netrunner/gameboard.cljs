@@ -171,7 +171,7 @@
 (def create-span (memoize create-span-impl))
 
 (defn add-image-codes-impl [text]
-  (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b" "(?!~)") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepared-cards)))
+  (reduce #(.replace %1 (js/RegExp. (str "(^|[^\\[\\S])" (:title %2) "(?![~\\w])") "g") (str "$1" "[" (:title %2) "~" (:code %2) "]")) text (prepared-cards)))
 
 (def add-image-codes (memoize add-image-codes-impl))
 
