@@ -108,6 +108,9 @@
    "Feint"
    {:effect (effect (run :hq) (max-access 0))}
 
+   "Fisk Investment Seminar"
+   {:effect (effect (draw 3) (draw :corp 3))}
+
    "Forged Activation Orders"
    {:choices {:req #(and (has? % :type "ICE") (not (:rezzed %)))}
     :effect (req (let [ice target]
@@ -190,7 +193,10 @@
    {:effect (effect (draw 3) (lose :tag 2))}
 
    "Legwork"
-   {:effect (effect (run :hq) (access-bonus 2))}
+   {:effect (effect (run :hq) (register-events (:events (card-def card))
+                                               (assoc card :zone '(:discard))))
+    :events {:successful-run {:effect (effect (access-bonus 2))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Leverage"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -360,7 +366,7 @@
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers)
-    :effect (effect (gain :run-credit 9)
+    :effect (effect (gain-run-credits 9)
                     (run target {:end-run
                                  {:msg " take 1 brain damage"
                                   :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
@@ -392,7 +398,10 @@
              card targets))}
 
    "The Makers Eye"
-   {:effect (effect (run :rd) (access-bonus 2))}
+   {:effect (effect (run :rd) (register-events (:events (card-def card))
+                                               (assoc card :zone '(:discard))))
+    :events {:successful-run {:effect (effect (access-bonus 2))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))

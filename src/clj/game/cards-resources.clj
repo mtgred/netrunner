@@ -124,9 +124,8 @@
 
    "Gang Sign"
    {:events {:agenda-scored {:msg "access 1 card from HQ"
-                             :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (system-msg state :runner (str "accesses " (:title c)))
-                                            (handle-access state :runner [c])))}}}
+                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                            (choose-access c '(:hq))))}}}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -316,9 +315,8 @@
                                 (resolve-ability
                                  ref side
                                  {:msg "access 1 card from HQ"
-                                  :effect (req (doseq [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                                 (system-msg state side (str "accesses " (:title c)))
-                                                 (handle-access state side [c])))} card nil)))))
+                                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                                 (choose-access c '(:hq))))} card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:label "Expose 1 card"
                  :effect (effect (resolve-ability
@@ -367,6 +365,9 @@
                                      :effect (effect (resolve-ability
                                                       {:msg "gain 2 [Credits] instead of accessing"
                                                        :effect (effect (gain :credit 2))} st nil))})))}}}
+
+   "Spoilers"
+   {:events {:agenda-scored {:msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
 
    "Starlight Crusade Funding"
    {:events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}

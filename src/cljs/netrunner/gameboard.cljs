@@ -154,7 +154,7 @@
   (if-let [[title code] (extract-card-info item)]
     [:span {:class "fake-link" :id code} title]
     [:span item])))
-   
+
 (defn get-alt-art [[title cards]]
   (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
     {:title title :code (:code (first s))}))
@@ -165,7 +165,7 @@
       (map get-alt-art)
       (sort-by #(count (:title %1)))
       (reverse)))
-  
+
 (def prepared-cards (memoize prepare-cards))
 
 (def create-span (memoize create-span-impl))
@@ -173,25 +173,25 @@
 (defn add-image-codes-impl [text]
   (reduce #(.replace %1 (js/RegExp. (str "\\b" (:title %2) "\\b" "(?!~)") "g") (str "[" (:title %2) "~"(:code %2) "]")) text (prepared-cards)))
 
-(def add-image-codes (memoize add-image-codes-impl))  
-  
+(def add-image-codes (memoize add-image-codes-impl))
+
 (defn get-message-parts-impl [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
       (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
 
 (def get-message-parts (memoize get-message-parts-impl))
-      
+
 (defn get-card-code [e]
   (let [code (str (.. e -target -id))]
     (if (> (count code) 0)
       code)))
 
 (defn card-preview-mouse-over [e]
-    (if-let [code (get-card-code e)] (put! zoom-channel {:code code})))
+  (if-let [code (get-card-code e)] (put! zoom-channel {:code code})))
 
 (defn card-preview-mouse-out [e]
-    (if-let [code (get-card-code e)] (put! zoom-channel false)))
-    
+  (if-let [code (get-card-code e)] (put! zoom-channel false)))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -474,9 +474,10 @@
       [:div.stats.panel.blue-shade {}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
-       [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
-       (when (:run @game-state)
-        [:div.fake-link (str run-credit " Run Credit" (if (> credit 1) "s" "")) (when me? (controls :run-credit))])
+       [:div (str credit " Credit" (if (> credit 1) "s" "")
+                  (when (> run-credit 0)
+                    (str " (" run-credit " for run)")))
+        (when me? (controls :credit))]
        [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))

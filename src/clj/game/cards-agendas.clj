@@ -10,6 +10,9 @@
                                 (corp-install state side c nil {:no-install-cost true :rezzed true})
                                 (trash state side c))))}}
 
+   "Ancestral Imager"
+   {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+
    "AstroScript Pilot Program"
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
@@ -18,6 +21,17 @@
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                      (= (:type %) "Agenda"))}
                  :effect (effect (add-prop target :advance-counter 1))}]}
+
+   "Award Bait"
+   {:access {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
+             :effect (req (let [c (Integer/parseInt target)]
+                            (resolve-ability
+                             state side
+                             {:choices {:req #(or (= (:advanceable %) "always")
+                                                  (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                                  (= (:type %) "Agenda"))}
+                              :msg (msg "add " c " advancement tokens on a card")
+                              :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
@@ -82,6 +96,10 @@
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
+
+   "Explode-a-palooza"
+   {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-Palooza ability?"
+                        :msg "gain 5 [Credits]" :effect (effect (gain :corp :credit 5))}}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"

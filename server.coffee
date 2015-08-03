@@ -94,7 +94,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.join(gameid)
         socket.gameid = gameid
         socket.emit("netrunner", {type: "game", gameid: gameid})
-        lobby.emit('netrunner', {type: "games", games: games, notification: "ting"})
+        lobby.emit('netrunner', {type: "games", games: games})
 
       when "leave-lobby"
         gid = socket.gameid
