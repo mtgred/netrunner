@@ -229,6 +229,44 @@
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 
+(defn abs [n] (max n (- n)))
+
+(defonce touchmove (atom {}))  
+
+;; touch support  
+(defn handle-touchstart [e cursor]
+  (let [touch (aget (.. e -targetTouches) 0)
+        card (-> e .-target js/$ (.closest ".card-wrapper.playable"))]
+    ;;(-> card (.css "position" "absolute"))
+    ;;(-> card (.css "left" (str (aget touch "pageX") 'px')))
+    ;;(-> card (.css "top" (str (aget touch "pageY") 'px')))
+    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
+                       :element card
+                       :x (.. touch -clientX)
+                       :y (.. touch -clientY)})))
+  
+(defn handle-touchmove [e]
+  (let [target (.. e -target)
+        touch (aget (.. e -targetTouches) 0)]
+      ;;  (.css (:element @touchmove) "left" (str (aget touch "pageX") 'px'))
+      ;;  (.css (:element @touchmove) "top" (str (aget touch "pageY") 'px'))
+    ))
+    
+(defn handle-touchend [e]
+  (let [touch (aget (.. e -changedTouches) 0)
+        cX (.. touch -clientX)
+        cY (.. touch -clientY)
+        server (-> (js/document.elementFromPoint cX cY) 
+                   js/$ 
+                   (.closest "[data-server]") 
+                   (.attr "data-server"))]
+    (if (and server (> (+ (abs (- (:x @touchmove) cX)) 
+                          (abs (- (:y @touchmove) cY))) 
+                       30))
+      (let [card (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))
+            side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
+        (send-command "move" {:card card :server server})))))
+    
 (defn ability-costs [ab]
   (when-let [cost (:cost ab)]
     (str (clojure.string/join
@@ -248,8 +286,11 @@
      (sab/html
       [:div.card-frame
        [:div.blue-shade.card {:class (when selected "selected") :draggable true
-                              :on-drag-start #(handle-dragstart % cursor)
-                              :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
+                              :on-touch-start #(handle-touchstart % cursor)
+                              :on-touch-end   #(handle-touchend %)
+                              :on-touch-move  #(handle-touchmove %1)
+                              :on-drag-start  #(handle-dragstart % cursor)
+                              :on-drag-end    #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
                                                          (= (:side @game-state) (keyword (.toLowerCase side))))
                                                  (put! zoom-channel cursor))
@@ -314,7 +355,8 @@
   (merge hmap {:on-drop #(handle-drop % server)
                :on-drag-enter #(-> % .-target js/$ (.addClass "dragover"))
                :on-drag-leave #(-> % .-target js/$ (.removeClass "dragover"))
-               :on-drag-over #(.preventDefault %)}))
+               :on-drag-over #(.preventDefault %)
+               :data-server server}))
 
 (defn label [cursor owner opts]
   (om/component
