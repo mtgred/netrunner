@@ -85,6 +85,27 @@
    {:req (req (some #{:hq} (:successful-run runner-reg))) :msg (msg "derez " (:title target))
     :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
 
+   "Escher"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))
+         eshelp (fn es [] {:prompt "Select two pieces of ice to swap positions"
+                           :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
+                           :effect (req (if (= (count targets) 2)
+                                          (let [fndx (ice-index state (first targets))
+                                                sndx (ice-index state (second targets))
+                                                fnew (assoc (first targets) :zone (:zone (second targets)))
+                                                snew (assoc (second targets) :zone (:zone (first targets)))]
+                                            (swap! state update-in (cons :corp (:zone (first targets)))
+                                                   #(assoc % fndx snew))
+                                            (swap! state update-in (cons :corp (:zone (second targets)))
+                                                   #(assoc % sndx fnew))
+                                            (update-ice-strength state side fnew)
+                                            (update-ice-strength state side snew)
+                                            (resolve-ability state side (es) card nil))
+                                          (system-msg state side "has finished rearranging ice")))})]
+     {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ice"
+                                                 :effect (effect (resolve-ability (eshelp) card nil))}} card))})
+
    "Eureka!"
    {:effect
     (req (let [topcard (first (:deck runner))
