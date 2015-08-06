@@ -188,7 +188,7 @@
 
 (defn card-preview-mouse-over [e]
   (if-let [code (get-card-code e)] (put! zoom-channel {:code code})))
-
+  
 (defn card-preview-mouse-out [e]
   (if-let [code (get-card-code e)] (put! zoom-channel false)))
 
@@ -231,41 +231,57 @@
 
 (defn abs [n] (max n (- n)))
 
+;; touch support
 (defonce touchmove (atom {}))  
 
-;; touch support  
-(defn handle-touchstart [e cursor]
-  (let [touch (aget (.. e -targetTouches) 0)
-        card (-> e .-target js/$ (.closest ".card-wrapper.playable"))]
-    ;;(-> card (.css "position" "absolute"))
-    ;;(-> card (.css "left" (str (aget touch "pageX") 'px')))
-    ;;(-> card (.css "top" (str (aget touch "pageY") 'px')))
-    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
-                       :element card
-                       :x (.. touch -clientX)
-                       :y (.. touch -clientY)})))
-  
-(defn handle-touchmove [e]
-  (let [target (.. e -target)
-        touch (aget (.. e -targetTouches) 0)]
-      ;;  (.css (:element @touchmove) "left" (str (aget touch "pageX") 'px'))
-      ;;  (.css (:element @touchmove) "top" (str (aget touch "pageY") 'px'))
-    ))
-    
-(defn handle-touchend [e]
-  (let [touch (aget (.. e -changedTouches) 0)
-        cX (.. touch -clientX)
+(defn release-touch [card]
+  (-> card (.removeClass "disable-transition"))
+  (-> card (.css "position" ""))
+  (-> card (.css "top" "")))
+      
+(defn update-card-position [card touch]
+  (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
+  (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
+
+(defn get-card [e server]
+  (-> e .-target js/$ (.closest ".card-wrapper")))
+                       
+(defn get-server-from-touch [touch]
+  (let [cX (.. touch -clientX)
         cY (.. touch -clientY)
         server (-> (js/document.elementFromPoint cX cY) 
                    js/$ 
                    (.closest "[data-server]") 
                    (.attr "data-server"))]
-    (if (and server (> (+ (abs (- (:x @touchmove) cX)) 
-                          (abs (- (:y @touchmove) cY))) 
-                       30))
-      (let [card (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))
-            side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
-        (send-command "move" {:card card :server server})))))
+    [server (> (+ (abs (- (:x @touchmove) cX)) 
+                  (abs (- (:y @touchmove) cY))) 
+                  30)]))
+
+(defn handle-touchstart [e cursor]
+  (let [touch (aget (.. e -targetTouches) 0)
+        [server _] (get-server-from-touch touch)
+        card (get-card e server)]
+    (-> card (.addClass "disable-transition"))
+    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
+                       :x (.. touch -clientX)
+                       :y (.. touch -clientY)
+                       :start-server server})))
+  
+(defn handle-touchmove [e]
+  (let [touch (aget (.. e -targetTouches) 0)
+         card (get-card e (:start-server @touchmove))]
+     (-> card (.css "position" "fixed"))
+     (update-card-position card touch)))
+    
+(defn handle-touchend [e]
+  (let [touch (aget (.. e -changedTouches) 0)
+         card (get-card e (:start-server @touchmove))
+        [server moved-enough] (get-server-from-touch touch)]
+    (release-touch card)
+    (when (and server moved-enough (not= server (:start-server @touchmove)))
+      (let [cardinfo (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
+        ;;(.hide card)
+        (send-command "move" {:card cardinfo :server server})))))
     
 (defn ability-costs [ab]
   (when-let [cost (:cost ab)]
