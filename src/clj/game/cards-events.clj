@@ -428,6 +428,16 @@
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
+   "Tinkering"
+   {:choices {:req #(and (has? % :type "ICE"))} 
+    :effect (req (let [ice target]
+                   (resolve-ability
+                     state :runner
+                     {:prompt (msg "Choose a type") 
+                      :choices ["sentry" "code gate" "barrier"]
+                      :msg (msg "give " (:title ice) " " target " until the end of turn")}
+                      card nil)))}
+    
    "Trade-In"
    {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
