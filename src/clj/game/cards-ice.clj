@@ -56,7 +56,10 @@
                                      (move state side card (conj (server->zone state target) :ices)))}}}]}
 
    "Burke Bugs"
-   {:abilities [trash-program]}
+   {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
+                 :trace (assoc trash-program :base 0 :not-distinct true
+                                             :player :runner
+                                             :msg (msg "force the Runner to trash " (:title target)))}]}
 
    "Caduceus"
    {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
@@ -267,7 +270,11 @@
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
-                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                (assoc trash-installed :label "Force the Runner to trash an installed card"
+                                       :player :runner
+                                       :msg (msg "force the Runner to trash " (:title target))
+                                       :effect (effect (trash target)))]}
 
    "Ireress"
    {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
@@ -326,7 +333,10 @@
                                    :effect (effect (add-prop :runner card :counter 1))}}}]}
 
    "Markus 1.0"
-   {:abilities [{:msg "force the Runner to trash a card"}
+   {:abilities [(assoc trash-installed :label "Force the Runner to trash an installed card"
+                                       :player :runner
+                                       :msg (msg "force the Runner to trash " (:title target))
+                                       :effect (effect (trash target)))
                 {:msg "end the run" :effect (effect (end-run))}]}
 
    "Matrix Analyzer"
