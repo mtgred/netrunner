@@ -7,6 +7,15 @@
                                       (= (card->server state card) (card->server state target))))
                        :effect (effect (rez-cost-bonus -2))}}}
 
+   "Amazon Industrial Zone"
+   {:events 
+     {:corp-install  {:optional {:req (req (and (= (:type target) "ICE")
+                                                (= (card->server state card) (card->server state target))))
+                                 :prompt "Rez ICE with rez cost lowered by 3?" 
+                                 :effect (effect
+                                           (rez-cost-bonus -3) 
+                                           (rez target))}}}}
+                                                          
    "Ash 2X3ZB9CY"
    {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
                  :trace {:base 4
