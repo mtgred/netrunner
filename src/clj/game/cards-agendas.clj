@@ -239,6 +239,19 @@
     :effect (effect (gain :credit (* 5 (Integer/parseInt target))
                           :bad-publicity (Integer/parseInt target)))}
 
+   "Project Ares"
+   {:req (req #(and (> (:advance-counter card) 4) (> (count (all-installed state :runner)) 0)))
+    :msg (msg "force the Runner to trash " (- (:advance-counter card) 4) " installed cards and take 1 bad publicity")
+	  :effect (req (let [ares card]
+	                 (resolve-ability
+	                   state :runner
+	                   {:prompt (msg "Choose " (- (:advance-counter ares) 4) " installed cards to trash")
+                      :choices {:max (- (:advance-counter ares) 4) :req #(and (:installed %) (= (:side %) "Runner"))}
+                      :effect (effect (trash-cards targets)
+                                      (system-msg (str "trashes " (join ", " (map :title targets)))))}
+                    card nil))
+	               (gain state :corp :bad-publicity 1))}
+
    "Project Atlas"
    {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"

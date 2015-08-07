@@ -177,6 +177,9 @@
     :trash-effect {:req (req (#{:meat :net} target))
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
+   "Immolation Script"
+   {:effect (effect (run :archives))}
+
    "Indexing"
    {:effect (effect (run :rd {:replace-access
                               {:msg "rearrange the top 5 cards of R&D"
