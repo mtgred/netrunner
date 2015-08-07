@@ -10,6 +10,8 @@
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.deckbuilder :refer [valid?]]))
 
+(defonce last_msg (atom ""))
+            
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
@@ -84,8 +86,16 @@
     (when-not (empty? text)
       (send {:action "say" :gameid (:gameid @app-state) :text text})
       (aset input "value" "")
+      (reset! last_msg text)
       (.focus input))))
-
+      
+(defn handle-key-down [event owner]
+  (if (= 38 (.. event -keyCode))
+    (let [input (om/get-node owner "msg-input")]
+      (do (.focus input)
+          (aset input "value" "")
+          (aset input "value" @last_msg)))))
+          
 (defn deckselect-modal [{:keys [gameid games decks user]} owner opts]
   (om/component
    (sab/html
@@ -135,7 +145,7 @@
                [:div.username (get-in msg [:user :username])]
                [:div (:text msg)]]]))]
         [:div
-         [:form.msg-box {:on-submit #(send-msg % owner)}
+         [:form.msg-box {:on-submit #(send-msg % owner) :on-key-down  #(handle-key-down %1 owner)}
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 

@@ -10,6 +10,7 @@
 
 (defonce game-state (atom {}))
 (defonce lock (atom false))
+(defonce last_msg (atom ""))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -74,8 +75,16 @@
     (when-not (empty? text)
       (send-command "say" {:text text})
       (aset input "value" "")
+      (reset! last_msg text)
       (.focus input))))
 
+(defn handle-key-down [event owner]
+  (if (= 38 (.. event -keyCode))
+    (let [input (om/get-node owner "msg-input")]
+      (do (.focus input)
+          (aset input "value" "")
+          (aset input "value" @last_msg)))))
+          
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
       (#(if (and (= type "Agenda") (>= advance-counter current-cost))
@@ -214,7 +223,7 @@
                [:div.username (get-in msg [:user :username])]
                [:div (for [item (get-message-parts (:text msg))] (create-span item))]]]))]
         [:form {:on-submit #(send-msg % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
+         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l" :on-key-down  #(handle-key-down %1 owner)}]]]))))
 
 (defn remote-list [remotes]
   (map #(str "Server " %) (-> remotes count range reverse)))
