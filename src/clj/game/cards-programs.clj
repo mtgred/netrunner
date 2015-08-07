@@ -253,11 +253,16 @@
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
                                                        (all-installed state :runner)))))))}
 
-
    "Paintbrush"
-   {:abilities [{:cost [:click 1] :msg (msg "give " (:title target)
-                                            " sentry, code gate or barrier until the end of next run this turn")
-                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}}]}
+   {:abilities [{:cost [:click 1]
+                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}
+                 :effect (req (let [ice target]
+                           (resolve-ability
+                              state :runner
+                              {:prompt (msg "Choose a type") 
+                               :choices ["sentry" "code gate" "barrier"]
+                               :msg (msg "give " (:title ice) " " target " until the end of next run this turn")}
+                              card nil)))}]}
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
