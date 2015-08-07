@@ -80,9 +80,11 @@
 (defn send-msg [event owner]
   (.preventDefault event)
   (let [input (om/get-node owner "msg-input")
-        text (.-value input)]
+        text (.-value input)
+        $div (js/$ ".lobby .message-list")]
     (when-not (empty? text)
       (send {:action "say" :gameid (:gameid @app-state) :text text})
+      (.scrollTop $div (+ (.prop $div "scrollHeight") 100))
       (aset input "value" "")
       (.focus input))))
 
@@ -117,8 +119,10 @@
   (reify
     om/IDidUpdate
     (did-update [this prev-props prev-state]
-      (let [div (om/get-node owner "msg-list")]
-        (aset div "scrollTop" (.-scrollHeight div))))
+      (let [div (om/get-node owner "msg-list")
+            height (.-scrollHeight div)]
+        (when (< (- height (.-scrollTop div) (.height (js/$ ".lobby .chat-box"))) 100)
+          (aset div "scrollTop" (.-scrollHeight div)))))
 
     om/IRenderState
     (render-state [this state]

@@ -70,9 +70,11 @@
 (defn send-msg [event owner]
   (.preventDefault event)
   (let [input (om/get-node owner "msg-input")
-        text (.-value input)]
+        text (.-value input)
+        $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
       (send-command "say" {:text text})
+      (.scrollTop $div (+ (.prop $div "scrollHeight") 100))
       (aset input "value" "")
       (.focus input))))
 
@@ -196,8 +198,12 @@
   (reify
     om/IDidUpdate
     (did-update [this prev-props prev-state]
-      (let [div (om/get-node owner "msg-list")]
-        (aset div "scrollTop" (.-scrollHeight div))))
+      (let [div (om/get-node owner "msg-list")
+            scrolltop (.-scrollTop div)
+            height (.-scrollHeight div)]
+        (when (or (zero? scrolltop)
+                  (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 100))
+          (aset div "scrollTop" height))))
 
     om/IRenderState
     (render-state [this state]
