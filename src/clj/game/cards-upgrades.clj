@@ -30,6 +30,11 @@
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
 
+   "ChiLo City Grid"
+   {:events {:successful-trace {:req (req this-server)
+                                :effect (effect (gain :runner :tag 1))
+                                :msg "give the Runner 1 tag"}}}
+
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"
