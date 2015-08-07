@@ -120,7 +120,7 @@
    {:abilities [{:label "Trace 2 - Look at the top of Stack"
                  :trace {:base 2 :msg (msg "look at the top " (- target (second targets)) " cards of Stack")
                          :effect (req (doseq [c (take (- target (second targets)) (:deck runner))]
-                                        (move state side c :play-area false true)))}}]}
+                                        (move state side c :play-area)))}}]}
 
    "Data Mine"
    {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1 {:card card}))}]}
