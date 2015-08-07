@@ -10,6 +10,11 @@
                      :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
+(def trash-installed {:prompt "Choose an installed card to trash" :label "Trash an installed card"
+                      :msg (msg "trash " (:title target))
+                      :choices {:req #(and (:installed %) (= (:side %) "Runner"))}
+                      :effect (effect (trash target {:cause :subroutine}))})
+
 (load "cards-agendas")
 (load "cards-assets")
 (load "cards-events")
