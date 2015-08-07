@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare trash-program trash-hardware)
+(declare trash-program trash-hardware trash-installed)
 
 (def cards-ice
   {"Archer"
