@@ -219,6 +219,22 @@
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
+   "Recruiting Trip"
+   (let [rthelp (fn rt [total left selected] 
+                  (if (> left 0) 
+                    {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
+                     :choices (req (filter #(and (has? % :subtype "Sysop")
+                                                 (not (some #{(:title %)} selected))) (:deck corp)))
+                     :msg (msg "put " (:title target) " into HQ") 
+                     :effect (req (move state side target :hand)
+                                  (resolve-ability 
+                                    state side 
+                                    (rt total (dec left) (cons (:title target) selected)) 
+                                    card nil))}
+                    {}))]
+   {:prompt "How many sysops?" :choices :credit :msg (msg "search for " target " sysops")
+    :effect (effect (resolve-ability (rthelp target target []) card nil))})
+   
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
