@@ -157,7 +157,11 @@
                                   :effect (effect (mill 2) (draw))}}}
 
    "Nasir Meidan: Cyber Explorer"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :abilities [{:req (req (:run @state))
+                 :effect (req (lose state side :credit (:credit runner))
+                              (gain state side :credit (rez-cost state side current-ice)))
+                 :msg (msg "lose all credits and gain " (rez-cost state side current-ice) " [Credits] from the rez of " (:title current-ice))}]}
 
    "NBN: Making News"
    {:recurring 2}
