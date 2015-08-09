@@ -104,7 +104,7 @@
                                              (not (has? % :subtype "Icebreaker"))
                                              (<= (:cost %) (:credit runner)))
                                        (:hand runner)))
-                 :msg (msg "install and host" (:title target))
+                 :msg (msg "install and host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
                 {:label "Host an installed non-Icebreaker program on Djinn"

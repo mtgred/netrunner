@@ -163,7 +163,7 @@
 
    "High-Risk Investment"
    {:data {:counter 1}
-    :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain" (:credit runner) " [Credits]")
+    :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
    "Hostile Takeover"
