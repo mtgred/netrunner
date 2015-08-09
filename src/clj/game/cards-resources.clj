@@ -243,7 +243,7 @@
                         :choices {:req #(not (:rezzed %))}
                         :effect (req (gain state :corp :credit (rez-cost state side target))
                                      (rez state side target) 
-                                     (system-msg state side (str "rezzes " (:title target) " at no cast")))}
+                                     (system-msg state side (str "rezzes " (:title target) " at no cost")))}
                       card nil))
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
