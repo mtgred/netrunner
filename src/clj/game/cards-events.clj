@@ -167,10 +167,21 @@
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
 
    "Hostage"
-   {:prompt "Choose a Connection to install"
-    :choices (req (filter #(and (has? % :subtype "Connection")
-                                (<= (:cost %) (:credit runner))) (:deck runner)))
-    :effect (effect (runner-install target) (shuffle! :deck))}
+   {:prompt "Choose a Connection"
+    :choices (req (filter #(has? % :subtype "Connection") (:deck runner)))
+    :msg (msg "adds " (:title target) " to his Grip and shuffles his Stack") 
+    :effect (req (let [connection target]
+                   (resolve-ability 
+                     state side 
+                     {:prompt (str "Install " (:title connection) "?")
+                      :choices ["Yes" "No"]
+                      :effect (req (let [d target] 
+                                     (resolve-ability state side 
+                                       {:effect (req (when (= "Yes" d)
+                                                       (runner-install state side connection)) 
+                                                     (shuffle! state side :deck)
+                                                     (move state side connection :hand))} card nil)))} 
+                     card nil)))}
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
