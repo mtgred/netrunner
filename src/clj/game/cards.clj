@@ -10,8 +10,9 @@
                      :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-installed {:prompt "Choose an installed card to trash" :label "Trash an installed card"
-                      :msg (msg "trash " (:title target))
+(def trash-installed {:prompt "Choose an installed card to trash" :player :runner
+                      :label "Force the Runner to trash an installed card"
+                      :msg (msg "force the Runner to trash " (:title target))
                       :choices {:req #(and (:installed %) (= (:side %) "Runner"))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
@@ -29,4 +30,3 @@
 
 (def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
                   cards-operations cards-programs cards-resources cards-upgrades))
-                  

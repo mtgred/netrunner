@@ -271,10 +271,7 @@
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
                  :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
-                (assoc trash-installed :label "Force the Runner to trash an installed card"
-                                       :player :runner
-                                       :msg (msg "force the Runner to trash " (:title target))
-                                       :effect (effect (trash target)))]}
+                trash-installed]}
 
    "Ireress"
    {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
@@ -333,11 +330,7 @@
                                    :effect (effect (add-prop :runner card :counter 1))}}}]}
 
    "Markus 1.0"
-   {:abilities [(assoc trash-installed :label "Force the Runner to trash an installed card"
-                                       :player :runner
-                                       :msg (msg "force the Runner to trash " (:title target))
-                                       :effect (effect (trash target)))
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [trash-installed {:msg "end the run" :effect (effect (end-run))}]}
 
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
