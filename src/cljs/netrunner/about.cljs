@@ -58,7 +58,7 @@
         [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"] " on the Github wiki." ]]]
 
      [:h3 "Contributors"]
-     [:p "A big props to Neal Terrell (nealpro) and Joel Koepp (JoelCFC25) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
+     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25) and Dominic Kexel (queuseven) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
      [:p "Many thanks to all the donators. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
      [:ul.list.compact
       (for [d (:donators cursor)]
