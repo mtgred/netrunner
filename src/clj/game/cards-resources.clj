@@ -231,8 +231,22 @@
                                 (move state side (first (:deck runner)) :deck)))}]}
 
    "Muertos Gang Member"
-   {:abilities [{:msg "draw 1 card"
-                 :effect (effect (trash card {:cause :ability-cost}) (draw))}] }
+   {:effect (req (resolve-ability
+                   state :corp
+                   {:prompt "Choose a card to derez"
+                    :choices {:req #(and (= (:side %) "Corp") (:rezzed %))}
+                    :effect (req (derez state side target))}
+                  card nil))
+    :leave-play (req (resolve-ability
+                       state :corp
+                       {:prompt "Choose a card to rez, ignoring the rez cost"
+                        :choices {:req #(not (:rezzed %))}
+                        :effect (req (gain state :corp :credit (rez-cost state side target))
+                                     (rez state side target) 
+                                     (system-msg state side (str "rezzes " (:title target) " at no cost")))}
+                      card nil))
+    :abilities [{:msg "draw 1 card"
+                 :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
 
    "New Angeles City Hall"
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}

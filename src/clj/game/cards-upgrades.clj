@@ -109,6 +109,11 @@
    {:events {:pre-trash {:req (req (= (:zone card) (:zone target)))
                          :effect (effect (trash-cost-bonus 3))}}}
 
+   "Off the Grid"
+   {:events {:successful-run {:req (req (= target :hq))
+                              :effect (req (trash state :corp card)
+                                           (system-msg state :corp (str "trashes Off the Grid")))}}}
+
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
