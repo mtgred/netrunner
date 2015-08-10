@@ -94,6 +94,10 @@
    "Decoy"
    {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card {:cause :ability-cost}))}]}
 
+   "Drug Dealer"
+   {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
+             :runner-turn-begins {:msg "lose 1 credit" :effect (effect (lose :credit 1))}}}
+
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
 
@@ -117,6 +121,10 @@
     :abilities [{:label "Prevent a resource from being trashed"
                  :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
                 {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+
+   "Fan Site"
+   {:events {:agenda-scored {:msg "add it to the Runner's score area"
+                             :effect (effect (move :runner card :scored))}}}
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
@@ -286,6 +294,12 @@
                                                            :effect (effect (gain :credit 1))} card nil)))))
     :leave-play (req (remove-watch state :order-of-sol))}
 
+   "Paparazzi"
+   {:effect (req (swap! state update-in [:runner :tagged] inc))
+    :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
+                          :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}}
+    :leave-play (req (swap! state update-in [:runner :tagged] dec))}
+
    "Personal Workshop"
    (let [remove-counter
          {:req (req (not (empty? (:hosted card))))
@@ -338,6 +352,10 @@
                                    {:choices {:req #(= (first (:zone %)) :servers)}
                                     :effect (effect (expose target) (trash card {:cause :ability-cost}))
                                     :msg (msg "expose " (:title target))} card nil))}]}
+
+   "Rolodex"
+   {:effect (req (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
+    :leave-play (effect (mill :runner 3))}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}

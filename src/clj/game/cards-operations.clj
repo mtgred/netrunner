@@ -13,6 +13,12 @@
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
 
+   "Back Channels"
+   {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
+    :effect (effect (gain :credit (* 3 (:advance-counter target))) (trash target))
+    :msg (msg "trash " (if (:rezzed target) (:title target) " a card") " and gain "
+              (* 3 (:advance-counter target)) " [Credits]")}
+
    "Bad Times"
    {:req (req tagged)}
 

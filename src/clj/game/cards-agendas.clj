@@ -169,6 +169,21 @@
    "Hostile Takeover"
    {:effect (effect (gain :credit 7 :bad-publicity 1))}
 
+   "Hollywood Renovation"
+   {:install-state :face-up
+    :events {:advance
+             {:req (req (= (:cid card) (:cid target)))
+              :effect (req (let [n (if (>= (:advance-counter (get-card state card)) 6) 2 1)]
+                             (resolve-ability
+                              state side
+                              {:choices {:req #(and (not= (:cid %) (:cid card))
+                                                    (or (= (:advanceable %) "always")
+                                                        (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                                        (= (:type %) "Agenda")))}
+                               :msg (msg "add " n " advancement tokens on "
+                                         (if (:rezzed target) (:title target) "a card"))
+                               :effect (effect (add-prop :corp target :advance-counter n))} card nil)))}}}
+
    "House of Knives"
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
@@ -303,7 +318,7 @@
    {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
 
    "The Cleaners"
-   {:events {:pre-damage {:req (req (= target :meat)) :msg "to do 1 additional meat damage"
+   {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"
                           :effect (effect (damage-bonus :meat 1))}}}
 
    "The Future Perfect"

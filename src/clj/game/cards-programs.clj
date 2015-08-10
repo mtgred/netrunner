@@ -381,4 +381,11 @@
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
                                                               :effect (effect (jack-out nil))}}
-                                                  card nil))}]}})
+                                                  card nil))}]}
+   "Trope"
+   {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
+                 :cost [:click 1] :msg (msg "reshuffle " (:counter card) " card" (when (> (:counter card) 1) "s")
+                                            " in the Heap back into his Stack")
+                 :effect (effect (move card :rfg))}]}
+})

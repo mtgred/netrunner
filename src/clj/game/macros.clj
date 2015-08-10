@@ -27,7 +27,7 @@
             'installed '(#{:rig :servers} (first (:zone card)))
             'remotes '(map #(str "Server " %) (range (count (get-in corp [:servers :remote]))))
             'servers '(concat ["HQ" "R&D" "Archives"] remotes)
-            'tagged '(> (get-in @state [:runner :tag]) 0)
+            'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
                             (and (= (first r) (first s))

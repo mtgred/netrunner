@@ -700,8 +700,10 @@
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)
-                         (cond-button "Trash Resource" (and (>= (:click me) 1) (>= (:credit me) 2)
-                                                            (>= (:tag opponent) 1)) #(send-command "trash-resource")))
+                         (cond-button "Trash Resource" (and (> (:click me) 0) (> (:credit me) 1)
+                                                            (or (> (:tagged opponent) 0)
+                                                                (> (:tag opponent) 0)))
+                                      #(send-command "trash-resource")))
                        (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
                        (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))])))]]
 

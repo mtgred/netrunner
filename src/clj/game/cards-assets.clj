@@ -134,6 +134,14 @@
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
 
+   "Early Premiere"
+   {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced"
+                 :choices {:req #(or (= (:advanceable %) "always")
+                                     (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                                     (= (:type %) "Agenda"))}
+                 :effect (effect (add-prop target :advance-counter 1)) :once :per-turn
+                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))}]}
+
    "Edge of World"
    {:access {:optional
              {:req (req installed) :cost [:credit 3]
@@ -325,6 +333,9 @@
                                                               (lose state side :bad-publicity 1)
                                                               (gain state side :credit 5)))}
                                               card targets)))}}}
+   "Ronald Five"
+   {:events {:trash {:req (req (and (= (:side target) "Corp") (= side :runner) (> (:click runner) 0)))
+                     :msg "force the runner to lose 1 [Click]" :effect (effect (lose :runner :click 1))}}}
 
    "Ronin"
    {:advanceable :always

@@ -151,6 +151,17 @@
    "Eli 1.0"
    {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
 
+   "Enforcer 1.0"
+   {:additional-cost [:forfeit]
+    :abilities [trash-program
+                {:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+                {:label "Trash a console" :effect (effect (trash target))
+                 :prompt "Choose a console to trash" :msg (msg "trash " (:title target))
+                 :choices {:req #(has? % :subtype "Console")}}
+                {:msg "trash all virtual resources"
+                 :effect (req (doseq [c (filter #(has? % :subtype "Virtual") (all-installed state :runner))]
+                                (trash state side c)))}]}
+
    "Enigma"
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}
@@ -275,6 +286,10 @@
 
    "Ireress"
    {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
+
+   "Its a Trap!"
+   {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
+    :abilities [(assoc trash-installed :effect (effect (trash card) (trash target {:cause :subroutine})))]}
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
