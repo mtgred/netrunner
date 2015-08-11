@@ -1376,8 +1376,8 @@
 (defn shuffle-deck [state side {:keys [close] :as args}]
   (swap! state update-in [side :deck] shuffle)
   (if close
-    (system-msg state side "stops looking at his deck and shuffles it")
-    (system-msg state side "shuffles his deck")))
+    (system-msg state side "stops looking at his or her deck and shuffles it")
+    (system-msg state side "shuffles his or her deck")))
 
 (defn auto-pump [state side args]
   (let [run (:run @state) card (get-card state (:card args))
