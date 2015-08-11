@@ -93,7 +93,7 @@
 
    "Djinn"
    {:abilities [{:label "Add a virus program to your Grip from your Stack"
-                 :prompt "Choose a Virus" :msg (msg "adds " (:title target) " to his Grip")
+                 :prompt "Choose a Virus" :msg (msg "adds " (:title target) " to their Grip")
                  :choices (req (filter #(and (= (:type %) "Program")
                                              (has? % :subtype "Virus"))
                                        (:deck runner)))
@@ -386,6 +386,6 @@
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
                  :cost [:click 1] :msg (msg "reshuffle " (:counter card) " card" (when (> (:counter card) 1) "s")
-                                            " in the Heap back into his Stack")
+                                            " in the Heap back into their Stack")
                  :effect (effect (move card :rfg))}]}
 })

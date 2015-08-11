@@ -620,7 +620,7 @@
 
 (defn keep-hand [state side args]
   (swap! state assoc-in [side :keep] true)
-  (system-msg state side "keeps his or her hand")
+  (system-msg state side "keeps their hand")
   (trigger-event state side :pre-first-turn))
 
 (defn gain-agenda-point [state side n]
@@ -1084,7 +1084,7 @@
         (resolve-ability state side ab card targets))))
 
 (defn start-turn [state side args]
-  (system-msg state side (str "started his or her turn"))
+  (system-msg state side (str "started their turn"))
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
@@ -1094,7 +1094,7 @@
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
-      (system-msg state side (str "is ending his or her turn"))
+      (system-msg state side (str "is ending their turn"))
       (if (= side :runner)
         (do (when (< (get-in @state [:runner :max-hand-size]) 0)
               (flatline state))
@@ -1376,8 +1376,8 @@
 (defn shuffle-deck [state side {:keys [close] :as args}]
   (swap! state update-in [side :deck] shuffle)
   (if close
-    (system-msg state side "stops looking at his deck and shuffles it")
-    (system-msg state side "shuffles his deck")))
+    (system-msg state side "stops looking at their deck and shuffles it")
+    (system-msg state side "shuffles their deck")))
 
 (defn auto-pump [state side args]
   (let [run (:run @state) card (get-card state (:card args))

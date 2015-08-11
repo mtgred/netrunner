@@ -219,7 +219,7 @@
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
-                 :choices {:req #(:host %)} :msg (msg "add " (:title target) "to his or her Grip")
+                 :choices {:req #(:host %)} :msg (msg "add " (:title target) "to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
                                                (trash state side c)))}}}
@@ -227,7 +227,7 @@
    "Motivation"
    {:events
     {:runner-turn-begins
-     {:msg "look at the top card of his Stack"
+     {:msg "look at the top card of their Stack"
       :effect (effect (prompt! card (str "The top card of your Stack is "
                                          (:title (first (:deck runner)))) ["OK"] {}))}}}
    "Mr. Li"
@@ -501,7 +501,7 @@
     :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
 
    "Tyson Observatory"
-   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to his Grip")
+   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
                  :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
