@@ -163,7 +163,7 @@
 
    "Patch"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (host target (assoc card :zone [:discard] :seen true))
+    :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
