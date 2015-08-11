@@ -131,7 +131,8 @@
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Lag Time"
-   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}}
+   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}
+    :leave-play {:effect (effect (update-all-ice))}}
 
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
