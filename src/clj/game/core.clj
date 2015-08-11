@@ -1167,7 +1167,8 @@
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
    (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %))
                          :facedown facedown
-                         :zone '(:onhost))] ;; hosted cards should not be in :discard or :hand etc
+                         :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
+                         :previous-zone (:zone target))]
      (update! state side (update-in card [:hosted] #(conj % c)))
      (when-let [events (:events (card-def target))]
        (when installed
