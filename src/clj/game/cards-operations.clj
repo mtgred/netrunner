@@ -237,7 +237,8 @@
                                     state side 
                                     (rt total (dec left) (cons (:title target) selected)) 
                                     card nil))}
-                    {}))]
+                    {:effect (req (shuffle! state :corp :deck))
+                     :msg (msg "shuffle R&D")}))]
    {:prompt "How many sysops?" :choices :credit :msg (msg "search for " target " sysops")
     :effect (effect (resolve-ability (rthelp target target []) card nil))})
    
