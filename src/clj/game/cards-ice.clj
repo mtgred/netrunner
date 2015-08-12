@@ -2,12 +2,13 @@
 
 (declare trash-program trash-hardware trash-installed)
 
+(def end-the-run {:msg "end the run" :effect (effect (end-run))})
+
 (def cards-ice
   {"Archer"
    {:additional-cost [:forfeit]
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                trash-program
-                {:msg "end the run" :effect (effect (end-run))}]}
+                trash-program end-the-run]}
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D"
@@ -22,17 +23,17 @@
                  :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
 
    "Ashigaru"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Asteroid Belt"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:advanceable :always :abilities [end-the-run]
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
 
    "Bastion"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
@@ -72,7 +73,7 @@
                  :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
 
    "Changeling"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :always :abilities [end-the-run]}
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -86,7 +87,7 @@
    "Chimera"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
     :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+    :abilities [end-the-run]}
 
    "Clairvoyant Monitor"
    {:abilities [{:msg "start a Psi game"
@@ -111,7 +112,7 @@
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (let [ices (:ices (card->server state card))]
                            (if (= (:cid card) (:cid (last ices))) 4 0)))
     :events (let [cw {:req (req (and (not= (:cid card) (:cid target))
@@ -131,7 +132,7 @@
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
                  :effect (effect (pay :runner card :credit 2))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+                end-the-run]}
 
    "Data Raven"
    {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
@@ -149,7 +150,7 @@
                          :effect (effect (gain :runner :tag 1) (end-run))}}]}
 
    "Eli 1.0"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -165,7 +166,7 @@
    "Enigma"
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+                end-the-run]}
 
    "Errand Boy"
    {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
@@ -177,11 +178,10 @@
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
 
    "Fire Wall"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:advanceable :always :abilities [end-the-run]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Flare"
@@ -218,7 +218,7 @@
     :abilities [trash-program]}
 
    "Guard"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Gutenberg"
    {:abilities [{:label "Trace 7 - Give the Runner 1 tag"
@@ -227,24 +227,22 @@
 
    "Hadrians Wall"
    {:advanceable :always
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]
+    :abilities [end-the-run]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Himitsu-Bako"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}
-                {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
+   {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
 
    "Hive"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Heimdall 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
 
    "Heimdall 2.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
                 {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1 {:card card}) (end-run))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+                end-the-run]}
 
    "Hourglass"
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
@@ -259,7 +257,7 @@
                  :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
 
    "Ice Wall"
-   {:advanceable :always :abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:advanceable :always :abilities [end-the-run]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Ichi 1.0"
@@ -275,7 +273,7 @@
                          :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
 
    "IQ"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (count (:hand corp)))
     :rez-cost-bonus (req (count (:hand corp)))}
 
@@ -322,7 +320,7 @@
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Little Engine"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}
+   {:abilities [end-the-run
                 {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}
 
    "Lockdown"
@@ -330,7 +328,7 @@
                  :msg "prevent the Runner from drawing cards" :effect (effect (prevent-draw))}]}
 
    "Lotus Field"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Lycan"
    {:advanceable :always
@@ -345,7 +343,7 @@
                                    :effect (effect (add-prop :runner card :counter 1))}}}]}
 
    "Markus 1.0"
-   {:abilities [trash-installed {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [trash-installed end-the-run]}
 
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
@@ -368,7 +366,7 @@
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Meru Mati"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (if (= (second (:zone card)) :hq) 3 0))}
 
    "Minelayer"
@@ -386,7 +384,7 @@
                                                        (cons "Mythic")
                                                        distinct
                                                        (join " - ")))))}]
-     {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+     {:abilities [end-the-run]
       :events {:rez ab :trash ab :derez ab}})
 
    "Muckraker"
@@ -406,14 +404,13 @@
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Negotiator"
-   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                trash-program]}
+   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))} trash-program]}
 
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
 
    "NEXT Bronze"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (reduce (fn [c server]
                                    (+ c (count (filter (fn [ice] (and (:rezzed ice) (has? ice :subtype "NEXT")))
                                                        (:ices server)))))
@@ -438,12 +435,10 @@
                 trash-program]}
 
    "NEXT Silver"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Orion"
-   {:advanceable :always
-    :abilities [trash-program
-                {:msg "end the run" :effect (effect (end-run))}]
+   {:advanceable :always :abilities [trash-program end-the-run]
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Pachinko"
@@ -451,30 +446,27 @@
                  :req (req tagged) :msg "end the run" :effect (effect (end-run))}]}
 
    "Paper Wall"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Pop-up Window"
-   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))} end-the-run]}
 
    "Pup"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Quandary"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Quicksand"
    {:events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
                              :effect (effect (add-prop card :counter 1))}}
-    :strength-bonus (req (or (:counter card) 0))
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+    :strength-bonus (req (or (:counter card) 0)) :abilities [end-the-run]}
 
    "Rainbow"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Rototurret"
-   {:abilities [trash-program
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [trash-program end-the-run]}
 
    "Sagittarius"
    {:abilities [{:label "Trace 2 - Trash a program"
@@ -534,10 +526,10 @@
 
    "Snowflake"
    {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}]}
+                 :psi {:not-equal end-the-run}}]}
 
    "Spiderweb"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Susanoo-No-Mikoto"
    {:abilities [{:req (req (not= (:server run) [:discard]))
@@ -562,13 +554,12 @@
                                               :kicker (assoc trash-hardware :min 5))}]}
 
    "TMI"
-   {:trace {:base 2 :unsuccessful {:effect (effect (derez card))}}
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:trace {:base 2 :unsuccessful {:effect (effect (derez card))}} :abilities [end-the-run]}
 
    "Tollbooth"
    {:abilities [{:msg "force the Runner to lose 3 [Credits]"
                  :effect (effect (lose :runner :credit 3))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+                end-the-run]}
 
    "Troll"
    {:abilities [{:label "Trace 2 - Force the runner to lose [Click] or end the run"
@@ -579,16 +570,14 @@
                                         (system-msg state side "loses [Click]")))}}]}
 
    "Tsurugi"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}
-                {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [end-the-run {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Turing"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (if (= (second (:zone card)) :remote) 3 0))}
 
    "Tyrant"
-   {:advanceable :while-rezzed
-    :abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:advanceable :while-rezzed :abilities [end-the-run]}
 
    "Universal Connectivity Fee"
    {:abilities [{:msg (msg "force the Runner to lose " (if (> (:tag runner) 0) "all credits" "1 [Credits]"))
@@ -604,15 +593,14 @@
                  :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
 
    "Viktor 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
 
    "Viktor 2.0"
    {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
                  :effect (effect (damage :brain 1 {:card card}))}
                 {:label "Trace 2 - Add 1 power counter"
                  :trace {:base 2 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}
-                {:msg "end the run" :effect (effect (end-run))}]}
+                end-the-run]}
 
    "Viper"
    {:abilities [{:label "Trace 3 - The Runner loses 1 [Click] if able"
@@ -628,11 +616,10 @@
                                   :effect (effect (gain :runner :tag 1))}}}]}
 
    "Wall of Static"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Wall of Thorns"
-   {:abilities [{:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
-                {:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Wendigo"
    {:advanceable :always
@@ -651,10 +638,10 @@
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Wotan"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]}
+   {:abilities [end-the-run]}
 
    "Wraparound"
-   {:abilities [{:msg "end the run" :effect (effect (end-run))}]
+   {:abilities [end-the-run]
     :strength-bonus (req (if (some #(has? % :subtype "Fracter") (all-installed state :runner))
                            0 7))
     :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
