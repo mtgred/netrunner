@@ -131,7 +131,8 @@
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Lag Time"
-   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}}
+   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}
+    :leave-play {:effect (effect (update-all-ice))}}
 
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
@@ -162,7 +163,7 @@
 
    "Patch"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (host target (assoc card :zone [:discard] :seen true))
+    :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2))}}}
