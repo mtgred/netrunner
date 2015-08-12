@@ -297,16 +297,17 @@
    "Paige Piper"
    (let [pphelper (fn [card cards] 
                     (let [num (count cards)] 
-                      {:req (req (> num 0))
-                       :prompt (str "Trash how many copies of " (:title card) "?")
+                      {:optional {:req (req (> num 0))
+                       :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
                        :choices {:number (req num)}
+                       :msg "to shuffle their Stack"
                        :effect (req (doseq [c (take (int target) cards)]
                                       (trash state side c))
+                                    (shuffle! state :runner :deck)
                                     (when (> (int target) 0)
-                                      (shuffle! state :runner :deck)
                                       (system-msg state side (str "trashes " (int target) 
                                                                   " cop" (if (> (int target) 1) "ies" "y") 
-                                                                  " of " (:title card)))))}))]
+                                                                  " of " (:title card)))))}}))]
     {:events {:runner-install {:req (req (first-event state side :runner-install))
                                :effect (effect (resolve-ability 
                                                 (pphelper target (->> (:deck runner) 
