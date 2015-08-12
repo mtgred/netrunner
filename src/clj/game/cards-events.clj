@@ -46,12 +46,12 @@
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
-    :msg (msg "add " (:title target) " to his Grip")
+    :msg (msg "add " (:title target) " to their Grip")
     :effect (req (move state side target :hand)
                  (when (has? target :subtype "Virus")
                    (resolve-ability state side
                                     {:prompt "Choose a virus to add to Grip"
-                                     :msg (msg "add " (:title target) " to his Grip")
+                                     :msg (msg "add " (:title target) " to their Grip")
                                      :choices (req (filter #(has? % :subtype "Virus") (:discard runner)))
                                      :effect (effect (move target :hand))} card nil)))}
 
@@ -169,7 +169,7 @@
    "Hostage"
    {:prompt "Choose a Connection"
     :choices (req (filter #(has? % :subtype "Connection") (:deck runner)))
-    :msg (msg "adds " (:title target) " to his Grip and shuffles his Stack") 
+    :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack") 
     :effect (req (let [connection target]
                    (resolve-ability 
                      state side 
@@ -273,7 +273,7 @@
    "Networking"
    {:effect (effect (lose :tag 1))
     :optional {:cost [:credit 1] :prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :msg "add it to his Grip" :effect (effect (move (last (:discard runner)) :hand))}}
+               :msg "add it to their Grip" :effect (effect (move (last (:discard runner)) :hand))}}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -392,7 +392,7 @@
 
    "Special Order"
    {:prompt "Choose an Icebreaker"
-    :effect (effect (system-msg (str "adds " (:title target) " to his Grip and shuffles his Stack"))
+    :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
                     (move target :hand) (shuffle! :deck))
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
 
@@ -458,7 +458,7 @@
     :effect (effect (trash target) (gain [:credit (quot (:cost target) 2)])
                     (resolve-ability {:prompt "Choose a Hardware to add to Grip from Stack"
                                       :choices (req (filter #(= (:type %) "Hardware") (:deck runner)))
-                                      :msg (msg "adds " (:title target) " to his Grip")
+                                      :msg (msg "adds " (:title target) " to their Grip")
                                       :effect (effect (move target :hand))} card nil))}
 
    "Traffic Jam"
@@ -470,7 +470,7 @@
 
    "Uninstall"
    {:choices {:req #(and (:installed %) (#{"Program" "Hardware"} (:type %)))}
-    :msg (msg "move " (:title target) " to his or her grip")
+    :msg (msg "move " (:title target) " to their Grip")
     :effect (effect (move target :hand))}
 
    "Vamp"

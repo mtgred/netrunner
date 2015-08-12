@@ -350,13 +350,13 @@
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  (send-command "system-msg" {:msg "looks at his deck"}))
+  (send-command "system-msg" {:msg "looks at their deck"}))
 
 (defn close-popup [event owner ref shuffle?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
   (if shuffle?
     (send-command "shuffle" {:close "true"})
-    (send-command "system-msg" {:msg "stops looking at his deck"}))
+    (send-command "system-msg" {:msg "stops looking at their deck"}))
   (.stopPropagation event))
 
 (defmulti deck-view #(get-in % [:identity :side]))

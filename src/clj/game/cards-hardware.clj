@@ -268,7 +268,7 @@
    {:events {:runner-install
              {:optional {:req (req (= (:type target) "Hardware"))
                          :prompt "Use Replicator to add a copy?"
-                         :msg (msg "add a copy of " (:title target) " to his Grip")
+                         :msg (msg "add a copy of " (:title target) " to their Grip")
                          :effect (effect (move (some #(when (= (:title %) (:title target)) %)
                                                      (:deck runner)) :hand)
                                          (shuffle! :deck))}}}}
@@ -316,5 +316,5 @@
                                   :msg "draw 1 card" :effect (effect (draw 1))}}}
 
    "Window"
-   {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of his Stack"
+   {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
                  :effect (effect (move (last (:deck runner)) :hand))}]}})
