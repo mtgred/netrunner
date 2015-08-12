@@ -14,7 +14,7 @@
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
-   "Armand \"Geist\" Walker"
+   "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
     :events {:trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                                 :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
