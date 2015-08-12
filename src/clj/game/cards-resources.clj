@@ -294,6 +294,27 @@
                                                            :effect (effect (gain :credit 1))} card nil)))))
     :leave-play (req (remove-watch state :order-of-sol))}
 
+   "Paige Piper"
+   (let [pphelper (fn [card cards] 
+                    (let [num (count cards)] 
+                      {:optional {:req (req (> num 0))
+                       :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                       :choices {:number (req num)}
+                       :msg "to shuffle their Stack"
+                       :effect (req (doseq [c (take (int target) cards)]
+                                      (trash state side c))
+                                    (shuffle! state :runner :deck)
+                                    (when (> (int target) 0)
+                                      (system-msg state side (str "trashes " (int target) 
+                                                                  " cop" (if (> (int target) 1) "ies" "y") 
+                                                                  " of " (:title card)))))}}))]
+    {:events {:runner-install {:req (req (first-event state side :runner-install))
+                               :effect (effect (resolve-ability 
+                                                (pphelper target (->> (:deck runner) 
+                                                                      (filter #(has? % :title (:title target)))
+                                                                      (vec))) 
+                                                card nil))}}})
+    
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
     :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
@@ -548,3 +569,4 @@
                                 (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
                                 (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}})
+
