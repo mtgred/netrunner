@@ -90,6 +90,11 @@
     :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
     :trash-effect {:effect (req (update-all-ice state side))}}
 
+   "Expo Grid"
+   {:events {:corp-turn-begins {:req (req (not (empty? (filter #(and (= (:type %) "Asset") (:rezzed %))
+                                                               (get-in corp (:zone card))))))
+                                :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
                               :effect (req (damage state side :net 1 {:card card}))}}}
@@ -117,6 +122,10 @@
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
+
+   "Product Placement"
+   {:access {:req (req (not= (first (:zone card)) :discard))
+             :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
    {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))

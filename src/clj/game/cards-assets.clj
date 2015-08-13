@@ -101,6 +101,9 @@
              {:choices {:req #(and (= (:type %) "Resource"))} :msg (msg "trash " (:title target))
               :effect (effect (trash target))}}}
 
+   "Cybernetics Court"
+   {:effect (effect (gain :max-hand-size 4)) :leave-play (effect (lose :max-hand-size 4))}
+
    "Daily Business Show"
    {:events {:corp-draw
              {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
@@ -185,6 +188,11 @@
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
                  :msg (msg "remove " (:advance-counter card) " bad publicities")
                  :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
+
+   "Franchise City"
+   {:events {:access {:req (req (= (:type target) "Agenda"))
+                      :msg "add it to his score area and gain 1 agenda point"
+                      :effect (effect (move :corp card :scored) (gain :agenda-point 1))}}}
 
    "Ghost Branch"
    {:advanceable :always
@@ -324,6 +332,15 @@
                                :effect (effect (damage :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
+   "Public Support"
+   {:effect (effect (add-prop card :counter 3))
+    :events {:corp-turn-begins
+             {:effect (req (add-prop state side card :counter -1)
+                           (when (= (:counter card) 1)
+                             (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
+                             (move state :corp (dissoc card :counter) :scored)
+                             (gain state :corp :agenda-point 1)))} }}
+
    "Reversed Accounts"
    {:advanceable :always
     :abilities [{:cost [:click 1]
@@ -419,6 +436,17 @@
    "Sundew"
    {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
+
+   "Team Sponsorship"
+   {:events {:agenda-scored
+             {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
+              :msg (msg "install a card from " target)
+              :effect (effect (resolve-ability
+                               {:prompt "Choose a card to install"
+                                :choices (req (filter #(not= (:type %) "Operation")
+                                                      ((if (= target "HQ") :hand :discard) corp)))
+                                :effect (effect (corp-install target nil {:no-install-cost true}))}
+                               card targets))}}}
 
    "Tech Startup"
    {:abilities [{:label "Install an asset from R&D"

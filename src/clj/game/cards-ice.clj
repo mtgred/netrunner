@@ -561,6 +561,9 @@
                  :effect (effect (lose :runner :credit 3))}
                 end-the-run]}
 
+   "Tour Guide"
+   {:abilities [end-the-run]}
+
    "Troll"
    {:abilities [{:label "Trace 2 - Force the runner to lose [Click] or end the run"
                  :trace {:base 2 :player :runner

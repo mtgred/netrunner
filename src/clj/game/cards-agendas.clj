@@ -320,6 +320,11 @@
    {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"
                           :effect (effect (damage-bonus :meat 1))}}}
 
+   "The Future is Now"
+   {:prompt "Choose a card to add to HQ" :choices (req (:deck corp))
+    :msg (msg "add a card from R&D to HQ and shuffle R&D")
+    :effect (effect (move target :hand) (shuffle! :deck))}
+
    "The Future Perfect"
    {:steal-req (req installed)
     :access {:psi {:req (req (not installed)) :equal {:effect (effect (steal card))}}}}

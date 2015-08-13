@@ -70,6 +70,15 @@
    "D4v1d"
    {:data {:counter 3} :abilities [{:counter-cost 1 :msg "break 1 subroutine"}]}
 
+   "DaVinci"
+   {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
+    :abilities [{:prompt "Choose a card to install"
+                 :choices (req (filter #(and (<= (:cost %) (:counter card))
+                                             (#{"Hardware" "Program" "Resource"} (:type %)))
+                                       (:hand runner)))
+                 :msg (msg "install " (:title target) " at no cost")
+                 :effect (effect (trash card) (runner-install target {:no-cost true}))}]}
+
    "Datasucker"
    {:events (let [ds {:effect (req (update! state side (dissoc card :datasucker-count)))}]
               {:successful-run {:effect (effect (add-prop card :counter 1))
