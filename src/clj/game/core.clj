@@ -142,7 +142,7 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (and (or host (#{:servers :scored :current} (first zone)))
+             c (if (and (or installed host (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard :scored} (first dest)))
                  (desactivate state side c) c)
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))]
