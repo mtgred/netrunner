@@ -330,7 +330,9 @@
                          (add-prop state side target :counter -1)))}]
      {:abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
                    :prompt "Choose a card to host on Personal Workshop"
-                   :choices (req (filter #(#{"Program" "Hardware"} (:type %)) (:hand runner)))
+                   :choices {:req #(and (#{"Program" "Hardware"} (:type %))
+                                        (= (:zone %) [:hand])
+                                        (= (:side %) "Runner"))}
                    :effect (effect (host card (assoc target :counter (:cost target))))
                    :msg (msg "host " (:title target) "")}
                   (assoc remove-counter
