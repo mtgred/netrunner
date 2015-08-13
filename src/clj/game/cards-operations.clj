@@ -1,7 +1,15 @@
 (in-ns 'game.core)
 
 (def cards-operations
-  {"Aggressive Negotiation"
+  {
+   "24/7 News Cycle"
+   {:req (req (> (count (filter #(not= (:title %) "Bifrost Array") (:scored corp))) 2))
+    :additional-cost [:forfeit]
+    :prompt "Choose an agenda to trigger"
+    :msg (msg "trigger the score ability on " (:title target))
+    :effect (effect (card-init target))}
+      
+   "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
     :effect (effect (move target :hand) (shuffle! :deck))}
 
