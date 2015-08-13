@@ -335,8 +335,8 @@
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
-    :events {:pre-rez {:req (req (= (:zone (:host card)) (:zone target)))
-                       :effect (effect (rez-cost-bonus 2))}}}
+    :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
+                            :effect (effect (rez-cost-bonus 2))}}}
 
    "Sahasrara"
    {:recurring 2}

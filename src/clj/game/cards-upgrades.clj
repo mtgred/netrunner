@@ -3,9 +3,9 @@
 (def cards-upgrades
   {
    "Akitaro Watanabe"
-   {:events {:pre-rez {:req (req (and (= (:type target) "ICE")
-                                      (= (card->server state card) (card->server state target))))
-                       :effect (effect (rez-cost-bonus -2))}}}
+   {:events {:pre-rez-cost {:req (req (and (= (:type target) "ICE")
+                                           (= (card->server state card) (card->server state target))))
+                            :effect (effect (rez-cost-bonus -2))}}}
 
    "Amazon Industrial Zone"
    {:events 
@@ -32,8 +32,8 @@
                                       :effect (effect (gain :runner :tag 1))}}}}
 
    "Breaker Bay Grid"
-   {:events {:pre-rez {:req (req (= (:zone card) (:zone target)))
-                       :effect (effect (rez-cost-bonus -5))}}}
+   {:events {:pre-rez-cost {:req (req (= (:zone card) (:zone target)))
+                            :effect (effect (rez-cost-bonus -5))}}}
 
    "Caprice Nisei"
    {:abilities [{:msg "start a Psi game"

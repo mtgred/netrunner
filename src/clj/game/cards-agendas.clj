@@ -42,9 +42,8 @@
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
-    :events {:pre-rez
-             {:req (req (= (:type target) "ICE"))
-              :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
+    :events {:pre-rez-cost {:req (req (= (:type target) "ICE"))
+                            :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaking News"
    {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"

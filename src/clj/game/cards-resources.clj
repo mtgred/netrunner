@@ -557,8 +557,8 @@
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
    "Xanadu"
-   {:events {:pre-rez {:req (req (= (:type target) "ICE"))
-                       :effect (effect (rez-cost-bonus 1))}}}
+   {:events {:pre-rez-cost {:req (req (= (:type target) "ICE"))
+                            :effect (effect (rez-cost-bonus 1))}}}
 
    "Zona Sul Shipping"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
