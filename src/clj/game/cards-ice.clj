@@ -578,7 +578,13 @@
    "Turing"
    {:abilities [end-the-run]
     :strength-bonus (req (if (= (second (:zone card)) :remote) 3 0))}
-
+   
+   "Turnpike"
+   {:abilities [{:msg "force the Runner to lose 1 [Credits]"
+                 :effect (effect (lose :runner :credit 1))}
+                {:label "Trace 5 - Give the Runner 1 tag"
+                 :trace {:base 5 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+   
    "Tyrant"
    {:advanceable :while-rezzed :abilities [end-the-run]}
 
