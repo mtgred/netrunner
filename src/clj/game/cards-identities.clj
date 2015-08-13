@@ -20,9 +20,13 @@
                                 :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
 
    "Blue Sun: Powering the Future"
-   {:abilities [{:msg (msg "add " (:title target) " to HQ and gain " (:cost target) " [Credits]")
-                 :choices {:req #(:rezzed %)}
-                 :effect (effect (gain :credit (:cost target)) (move target :hand))}]}
+   {:abilities [{:choices {:req #(:rezzed %)}
+                 :effect (req (trigger-event state side :pre-rez-cost target)
+                              (let [cost (rez-cost state side target)]
+                                (gain state side :credit cost)
+                                (move state side target :hand)
+                                (system-msg state side (str "add " (:title target) " to HQ and gain " cost " [Credits]"))
+                                (swap! state update-in [:bonus] dissoc :cost)))}]}
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (add-watch state :cerebral-imaging
