@@ -654,7 +654,7 @@
         (when (and (not unpreventable) (not= cause :ability-cost))
           (swap! state update-in [:trash :trash-prevent] dissoc ktype))
         (when (not= (last zone) :current)
-          (apply trigger-event state side :trash card cause targets))
+          (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
         (let [prevent (get-in @state [:prevent :trash ktype])]
           (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
             (do
