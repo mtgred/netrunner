@@ -232,8 +232,18 @@
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
-                {:effect (effect (move card :rfg)) :label "Remove Jackson Howard from the game"
-                 :msg "shuffle up to 3 cards from Archives into R&D"}]}
+                {:label "Shuffle up to 3 cards from Archives into R&D"
+                 :choices {:max 3 :req #(and (:side % "Corp") (= (:zone %) [:discard]))}
+                 :msg (msg "shuffle "
+                           (let [seen (filter :seen targets)]
+                             (str (join ", " (map :title seen))
+                                  (let [n (count (filter #(not (:seen %)) targets))]
+                                    (when (pos? n)
+                                      (str (when-not (empty? seen) " and ") n " card" (when (> n 1) "s"))))))
+                           " into R&D")
+                 :effect (req (doseq [c targets] (move state side c :deck))
+                              (shuffle! state side :deck)
+                              (move state side card :rfg))}]}
 
    "Levy University"
    {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
