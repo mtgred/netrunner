@@ -293,7 +293,20 @@
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}
-
+   
+   "News Team"
+   {:access {:req (req (not= (first (:zone card)) :deck))
+             :msg (msg "giver the runner 2 tags or -1 agenda points")
+             :effect (effect (resolve-ability
+                               {:player :runner
+                                :prompt "Take 2 tags or take News Team as -1 agenda points?"
+                                :choices ["take 2 tags" "add News Team to score area"]
+                                :effect (req (if (= target "add News Team to score area")
+                                                 (do (gain state :runner :agenda-point -1)
+                                                     (move state :runner card :scored nil))
+                                                 (gain :runner :tag 2)))}
+                               card targets))}}
+   
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
