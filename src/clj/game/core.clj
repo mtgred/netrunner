@@ -100,14 +100,16 @@
        (gain state :runner :memory mu))
      c)))
 
-(defn get-card [state {:keys [cid zone side host] :as card}]
-  (if zone
-    (if host
-      (let [h (get-card state host)]
-        (some #(when (= cid (:cid %)) %) (:hosted h)))
-      (some #(when (= cid (:cid %)) %)
-            (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
-    card))
+(defn get-card [state {:keys [cid zone side host type] :as card}]
+  (if (= type "Identity")
+    (get-in @state [(to-keyword side) :identity])
+    (if zone
+      (if host
+        (let [h (get-card state host)]
+          (some #(when (= cid (:cid %)) %) (:hosted h)))
+        (some #(when (= cid (:cid %)) %)
+              (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
+      card)))
 
 (defn update! [state side {:keys [type zone cid host] :as card}]
   (if (= type "Identity")
@@ -1214,6 +1216,7 @@
   ([state side card {:keys [no-cost] :as args}]
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
+       (trigger-event state side :pre-rez-cost card)
        (let [cdef (card-def card) cost (rez-cost state side card)]
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
