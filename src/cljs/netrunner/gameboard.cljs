@@ -102,7 +102,7 @@
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
   (let [side (:side @game-state)]
-    (if-not (empty? (get-in @game-state [side :selected]))
+    (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
       (send-command "select" {:card card})
       (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
         (handle-abilities card owner)
