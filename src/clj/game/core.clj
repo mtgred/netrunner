@@ -172,7 +172,10 @@
                           (fn [i s]
                             (if (< i n) s
                                 {:content (vec (for [c (:content s)]
-                                                 (update-in c [:zone] #(assoc (vec %) 2 i))))
+                                                 (let [c (update-in c [:zone] #(assoc (vec %) 2 i))]
+                                                   (assoc c :hosted
+                                                            (for [h (:hosted c)]
+                                                               (assoc-in h [:host :zone] (:zone c)))))))
                                  :ices (vec (for [c (:ices s)]
                                               (update-in c [:zone] #(assoc (vec %) 2 i))))}))
                           (get-in @state [:corp :servers :remote]))))
@@ -181,7 +184,11 @@
                (when (:rezzed c)
                  (when-let [events (:events (card-def c))]
                    (unregister-events state side c)
-                   (register-events state side events c))))))
+                   (register-events state side events c)))
+               (doseq [h (:hosted c)]
+                 (when-let [events (:events (card-def h))]
+                   (unregister-events state side h)
+                   (register-events state side events h))))))
          (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
@@ -420,7 +427,9 @@
         (resolve-ability state side ability card targets))))
   (swap! state update-in [:turn-events] #(cons [event targets] %)))
 
-(defn card-init [state side card]
+(defn card-init
+  ([state side card] (card-init state side card true))
+  ([state side card resolve]
   (let [cdef (card-def card)
         abilities (if (:recurring cdef)
                     (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
@@ -445,8 +454,9 @@
     (update! state side c)
     (when-let [events (:events cdef)]
       (register-events state side events c))
-    (resolve-ability state side cdef c nil)
-    (get-card state c)))
+    (when resolve
+      (resolve-ability state side cdef c nil))
+    (get-card state c))))
 
 (defn ice-strength-bonus [state side n]
   (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0)))
@@ -796,6 +806,7 @@
       (when-let [name (:title c)]
         (when-let [access-effect (:access cdef)]
           (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+        (trigger-event state side :access c)
         (when (not= (:zone c) [:discard])
           (trigger-event state side :pre-trash c)
           (if-let [trash-cost (trash-cost state side c)]
@@ -819,8 +830,7 @@
                                                    (steal c))} nil)
                 (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
                   (steal state :runner c))))
-            (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})))
-        (trigger-event state side :access c)))))
+            (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})))))))
 
 (defn max-access [state side n]
   (swap! state assoc-in [:run :max-access] n))
@@ -1229,7 +1239,7 @@
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
-  ([state side card server {:keys [extra-cost no-install-cost rezzed] :as args}]
+  ([state side card server {:keys [extra-cost no-install-cost install-state] :as args}]
      (if-not server
        (prompt! state side card (str "Choose a server to install " (:title card))
                 (server-list state card) {:effect (effect (corp-install card target args))})
@@ -1240,7 +1250,8 @@
                  slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
                  install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
-                                (count dest-zone) 0)]
+                                (count dest-zone) 0)
+                 install-state (or install-state (:install-state cdef))]
              (when (and (not (and (has? c :subtype "Region")
                                   (some #(has? % :subtype "Region") dest-zone)))
                         (pay state side card extra-cost :credit install-cost))
@@ -1249,7 +1260,8 @@
                    (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                             (:title prev-card) "a card") " in " server))
                    (trash state side prev-card {:keep-server-alive true})))
-               (let [card-name (if (or rezzed (:rezzed c) (= (:install-state cdef) :face-up)) (:title card) "a card")]
+               (let [card-name (if (or (= :rezzed install-state) (= :face-up install-state) (:rezzed c))
+                                 (:title card) "a card")]
                  (if (> install-cost 0)
                    (system-msg state side (str "pays " install-cost " [Credits] to install "
                                                card-name " in " server))
@@ -1258,11 +1270,10 @@
                  (trigger-event state side :corp-install moved-card)
                  (when (= (:type c) "Agenda")
                    (update-advancement-cost state side moved-card))
-                 (when (or rezzed (= (:install-state cdef) :rezzed))
+                 (when (= install-state :rezzed)
                    (rez state side moved-card {:no-cost true}))
-                 (when (= (:install-state cdef) :face-up)
-                   (do (card-init state side (assoc (get-card state moved-card) :rezzed true))
-                       (resolve-ability state side cdef (get-card state moved-card) nil))))))))))
+                 (when (= install-state :face-up)
+                   (card-init state side (assoc (get-card state moved-card) :rezzed true) false)))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
