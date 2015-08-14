@@ -289,7 +289,7 @@
                     (if-let [m (get-in ability [:choices :max])]
                       (str "Select up to " m " targets for " (:title card))
                       (str "Select a target for " (:title card))))
-                  ["Done"] (fn [choice] (resolve-select state side))
+                  ["Done"] (req (resolve-select state side))
                   (assoc args :prompt-type :select)))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
