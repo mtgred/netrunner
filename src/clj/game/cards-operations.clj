@@ -2,7 +2,7 @@
 
 (def cards-operations
   {"24/7 News Cycle"
-   {:req (req (> (count (:scored corp)) 2))
+   {:req (req (> (count (:scored corp)) 1))
     :additional-cost [:forfeit]
     :prompt "Choose an agenda to trigger"
     :msg (msg "trigger the score ability on " (:title target))
