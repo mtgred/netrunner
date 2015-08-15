@@ -296,7 +296,7 @@
                     (if-let [m (get-in ability [:choices :max])]
                       (str "Select up to " m " targets for " (:title card))
                       (str "Select a target for " (:title card))))
-                  ["Done"] (req (resolve-select state side))
+                  ["Done"] (fn [choice] (resolve-select state side))
                   (assoc args :prompt-type :select)))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
@@ -387,8 +387,8 @@
       (pay state side card :credit choice))
     (when (= (:choices prompt) :counter)
       (add-prop state side (:card prompt) :counter (- choice)))
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     ((:effect prompt) (or choice card))
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
         (when (:ended run)
