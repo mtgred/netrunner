@@ -7,7 +7,7 @@
                            (str "install " c " ICE and trash " (- 3 c) " cards")))
                :effect (req (doseq [c (take 3 (:deck corp))]
                               (if (= (:type c) "ICE")
-                                (corp-install state side c nil {:no-install-cost true :rezzed true})
+                                (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
                                 (trash state side c))))}}
 
    "Ancestral Imager"
@@ -200,7 +200,7 @@
                       {:prompt "Choose a card to install" :msg (msg "install and rez " (:title target))
                        :choices (req (filter #(#{"Asset" "Upgrade"} (:type %))
                                              ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:rezzed true}))} card targets))}
+                       :effect (effect (corp-install target nil {:install-state :rezzed}))} card targets))}
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))}
@@ -208,13 +208,11 @@
    "Market Research"
    {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
 
-
    "Medical Breakthrough"
    {:effect (effect (update-all-advancement-costs))
     :stolen (effect (update-all-advancement-costs))
     :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
                                                    (concat (:scored corp) (:scored runner))))))}
-
 
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
