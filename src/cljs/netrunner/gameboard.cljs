@@ -74,7 +74,7 @@
         $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
       (send-command "say" {:text text})
-      (.scrollTop $div (+ (.prop $div "scrollHeight") 100))
+      (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
 
@@ -202,7 +202,7 @@
             scrolltop (.-scrollTop div)
             height (.-scrollHeight div)]
         (when (or (zero? scrolltop)
-                  (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 100))
+                  (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
           (aset div "scrollTop" height))))
 
     om/IRenderState

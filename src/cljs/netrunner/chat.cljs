@@ -33,7 +33,7 @@
                                              :msg text
                                              :username (:username user)
                                              :emailhash (:emailhash user)})
-         (.scrollTop $div (+ (.prop $div "scrollHeight") 100))
+         (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
          (aset input "value" "")
          (.focus input))))))
 
@@ -90,7 +90,7 @@
             scrolltop (.-scrollTop div)
             height (.-scrollHeight div)]
         (when (or (zero? scrolltop)
-                  (< (- height scrolltop (.height (js/$ ".chat-app .chat-box"))) 100))
+                  (< (- height scrolltop (.height (js/$ ".chat-app .chat-box"))) 500))
           (aset div "scrollTop" height))))
 
     om/IRenderState

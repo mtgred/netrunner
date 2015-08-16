@@ -84,7 +84,7 @@
         $div (js/$ ".lobby .message-list")]
     (when-not (empty? text)
       (send {:action "say" :gameid (:gameid @app-state) :text text})
-      (.scrollTop $div (+ (.prop $div "scrollHeight") 100))
+      (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
 
@@ -121,7 +121,7 @@
     (did-update [this prev-props prev-state]
       (let [div (om/get-node owner "msg-list")
             height (.-scrollHeight div)]
-        (when (< (- height (.-scrollTop div) (.height (js/$ ".lobby .chat-box"))) 100)
+        (when (< (- height (.-scrollTop div) (.height (js/$ ".lobby .chat-box"))) 500)
           (aset div "scrollTop" (.-scrollHeight div)))))
 
     om/IRenderState
