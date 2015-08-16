@@ -352,11 +352,12 @@
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
   (send-command "system-msg" {:msg "looks at their deck"}))
 
-(defn close-popup [event owner ref shuffle?]
+(defn close-popup [event owner ref msg shuffle?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
-  (if shuffle?
-    (send-command "shuffle" {:close "true"})
-    (send-command "system-msg" {:msg "stops looking at their deck"}))
+  (when shuffle?
+    (send-command "shuffle" {:close "true"}))
+  (when msg
+    (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
 
 (defmulti deck-view #(get-in % [:identity :side]))
@@ -376,8 +377,10 @@
      (when (= (:side @game-state) :runner)
        [:div.panel.blue-shade.popup {:ref "stack-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "stack-content" false)} "Close"]
-         [:a {:on-click #(close-popup % owner "stack-content" true)} "Close & Shuffle"]]
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false)}
+          "Close"]
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true)}
+          "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/runner.png"}])])))
@@ -398,8 +401,8 @@
      (when (= (:side @game-state) :corp)
        [:div.panel.blue-shade.popup {:ref "rd-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "rd-content" false)} "Close"]
-         [:a {:on-click #(close-popup % owner "rd-content" true)} "Close & Shuffle"]]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false)} "Close"]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true)} "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (> (count deck) 0)
        [:img.card.bg {:src "/img/corp.png"}])])))
@@ -414,7 +417,7 @@
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
       [:div
-       [:a {:on-click #(close-popup % owner "popup" false)} "Close"]]
+       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -429,7 +432,7 @@
 
      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
       [:div
-       [:a {:on-click #(close-popup % owner "popup" false)} "Close"]]
+       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
       (for [c discard]
         (if (or (:seen c) (:rezzed c))
           (om/build card-view c)
