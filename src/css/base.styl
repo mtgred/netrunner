@@ -1076,9 +1076,7 @@ nav ul
   .discard .popup, .deck .popup
     display: none
     position: absolute
-    left: 0
     bottom: 85px
-    left: -271px
     width: 590px
     min-height: 92px
     z-index: 10
@@ -1090,6 +1088,12 @@ nav ul
     a
       display: inline-block
       margin: 0 10px 8px 4px
+
+  .deck .popup
+    left: -271px
+
+  .discard .popup
+    left: -6px
 
   .discard .popup.opponent
     top: 85px

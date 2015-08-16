@@ -596,6 +596,11 @@
             (let [card (<! zoom-channel)]
               (om/set-state! owner :zoom card)))))
 
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (when (get-in cursor [side :prompt 0 :show-discard])
+        (-> ".me .discard .popup" js/$ .fadeIn)))
+
     om/IRenderState
     (render-state [this state]
       (sab/html
@@ -632,7 +637,7 @@
 
                 (when (:keep me)
                   (if-let [prompt (first (:prompt me))]
-                    [:div.panel.blue-shade 
+                    [:div.panel.blue-shade
                      [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
                      (if-let [n (get-in prompt [:choices :number])]
                        [:div
@@ -717,7 +722,8 @@
               [:div.board
                (om/build board-view {:player opponent :run run})
                (om/build board-view {:player me :run run})]]
-             (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})]
+             [:div.me
+              (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})]]
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

@@ -213,13 +213,15 @@
 
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f {:keys [priority prompt-type] :as args}]
+  ([state side card msg choices f {:keys [priority prompt-type show-discard] :as args}]
    (let [prompt (if (string? msg) msg (msg state side card nil))]
      (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
-                #(cons {:msg prompt :choices choices :effect f :card card :prompt-type prompt-type} (vec %))
-                #(conj (vec %) {:msg prompt :choices choices :effect f :card card :prompt-type prompt-type})))))))
+                #(cons {:msg prompt :choices choices :effect f :card card
+                        :prompt-type prompt-type :show-discard show-discard} (vec %))
+                #(conj (vec %) {:msg prompt :choices choices :effect f :card card
+                                :prompt-type prompt-type :show-discard show-discard})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -297,7 +299,7 @@
                       (str "Select up to " m " targets for " (:title card))
                       (str "Select a target for " (:title card))))
                   ["Done"] (fn [choice] (resolve-select state side))
-                  (assoc args :prompt-type :select)))))
+                  (assoc args :prompt-type :select :show-discard (:show-discard ability))))))
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
