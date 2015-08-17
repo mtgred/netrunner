@@ -11,13 +11,13 @@
                  [sablono "0.3.4"]
                  [environ "1.0.0"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.2.5"]]}}
+  :profiles {:dev {:dependencies [[figwheel "0.3.7"]]}}
 
   :main game.main
   :aot :all
 
-  :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.2.5"]]
+  :plugins [[lein-cljsbuild "1.0.6"]
+            [lein-figwheel "0.3.7"]]
 
   :source-paths ["src/clj" "src/cljs"]
 
