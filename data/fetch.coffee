@@ -61,7 +61,7 @@ fetchSets = (callback) ->
 fetchImg = (code, imgPath, t) ->
   setTimeout ->
     console.log code
-    url = "http://netrunnerdb.com/web/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
+    url = "http://netrunnerdb.com/bundles/netrunnerdbcards/images/cards/en/#{code}.png"
     request(url).pipe(fs.createWriteStream(imgPath))
   , t
 
