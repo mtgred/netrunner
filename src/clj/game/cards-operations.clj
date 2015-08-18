@@ -237,8 +237,8 @@
                                      :effect (effect (add-prop target :advance-counter c))} card nil)))}
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg (msg "do " (:stole-agenda runner-reg) " meat damage")
-            :effect (effect (damage :meat (get-in runner [:register :stole-agenda]) {:card card}))}}
+   {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
+            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
@@ -247,22 +247,22 @@
                    (move state side c :hand)))}
 
    "Recruiting Trip"
-   (let [rthelp (fn rt [total left selected] 
-                  (if (> left 0) 
+   (let [rthelp (fn rt [total left selected]
+                  (if (> left 0)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
                      :choices (req (filter #(and (has? % :subtype "Sysop")
                                                  (not (some #{(:title %)} selected))) (:deck corp)))
-                     :msg (msg "put " (:title target) " into HQ") 
+                     :msg (msg "put " (:title target) " into HQ")
                      :effect (req (move state side target :hand)
-                                  (resolve-ability 
-                                    state side 
-                                    (rt total (dec left) (cons (:title target) selected)) 
+                                  (resolve-ability
+                                    state side
+                                    (rt total (dec left) (cons (:title target) selected))
                                     card nil))}
                     {:effect (req (shuffle! state :corp :deck))
                      :msg (msg "shuffle R&D")}))]
    {:prompt "How many sysops?" :choices :credit :msg (msg "search for " target " sysops")
     :effect (effect (resolve-ability (rthelp target target []) card nil))})
-   
+
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
