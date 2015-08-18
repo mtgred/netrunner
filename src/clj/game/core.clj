@@ -1234,6 +1234,10 @@
        (let [cdef (card-def card) cost (rez-cost state side card)]
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
+           (doseq [h (:hosted card)]
+             (update! state side (-> h
+                                     (update-in [:zone] #(map to-keyword %))
+                                     (update-in [:host :zone] #(map to-keyword %)))))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))
