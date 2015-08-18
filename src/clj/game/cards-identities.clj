@@ -161,7 +161,17 @@
                                   :effect (effect (mill 2) (draw))}}}
 
    "Nasir Meidan: Cyber Explorer"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :abilities [{:req (req (and (:run @state)
+                                (:rezzed (get-card state current-ice))))
+                 :effect (req (let [current-ice (get-card state current-ice)]
+                           (trigger-event state side :pre-rez-cost current-ice)
+                           (let [cost (rez-cost state side current-ice)]
+                             (lose state side :credit (:credit runner))
+                             (gain state side :credit cost)
+                             (system-msg state side (str "loses all credits and gains " cost
+                                                         " [Credits] from the rez of " (:title current-ice)))
+                             (swap! state update-in [:bonus] dissoc :cost))))}]}
 
    "NBN: Making News"
    {:recurring 2}
