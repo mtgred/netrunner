@@ -578,7 +578,9 @@
 
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [card]
-                           (let [c (assoc card :cid (make-cid))]
+                           (let [c (assoc card :cid (make-cid))
+                                 c (dissoc c :setname :text :_id :influence :number :uniqueness :influencelimit
+                                           :faction :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))
@@ -1180,7 +1182,9 @@
        (swap! state update-in (cons s (vec zone))
               (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %))
+   (let [c (assoc target :host (-> card
+                                   (update-in [:zone] #(map to-keyword %))
+                                   (dissoc :hosted))
                          :facedown facedown
                          :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                          :previous-zone (:zone target))]
