@@ -130,6 +130,25 @@
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp card :credit 2))}}}
 
+   "Film Critic"
+   {:abilities [{:req (req (and (empty? (:hosted card))
+                                (= "Agenda" (:type (:card (first (get-in @state [side :prompt])))))))
+                 :label "Host an agenda being accessed"
+                 :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
+                                (host state side card (move state side agenda :play-area))
+                                (swap! state update-in [side :prompt] rest)
+                                (when-let [run (:run @state)]
+                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+                                    (handle-end-run state :runner)))))
+                 :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
+                {:cost [:click 2] :label "Add hosted agenda to your score area"
+                 :req (req (not (empty? (:hosted card))))
+                 :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
+                                (gain-agenda-point state :runner (:agendapoints c))))
+                 :msg (msg (let [c (first (:hosted card))]
+                             (str "add " (:title c) " to his/her score area and gain "
+                             (:agendapoints c) " agenda point" (when (> (:agendapoints c) 1) "s"))))}]}
+
    "Gang Sign"
    {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
                              :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
