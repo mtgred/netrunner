@@ -162,10 +162,10 @@
 
    "Grifter"
    {:events {:runner-turn-ends
-             {:effect #(let [ab (if (get-in @%1 [:runner :register :successful-run])
-                                  {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
-                                  {:effect (effect (trash %3)) :msg "trash Grifter"})]
-                        (resolve-ability %1 %2 ab %3 %4))}}}
+             {:effect (req (let [ab (if (get-in @state [:runner :register :successful-run])
+                                      {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
+                                      {:effect (effect (trash card)) :msg "trash Grifter"})]
+                             (resolve-ability state side ab card targets)))}}}
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
@@ -296,13 +296,13 @@
    "Oracle May"
    {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
-                 :effect #(let [c (first (get-in @%1 [:runner :deck]))]
-                           (system-msg %1 %2 (str "uses Oracle May, names " (first %4)
-                                                  " and reveals " (:title c)))
-                           (if (= (:type c) (first %4))
-                             (do (system-msg %1 %2 (str "gains 2 [Credits] and draws " (:title c)))
-                                 (gain %1 %2 :credit 2) (draw %1 %2))
-                             (do (system-msg %1 %2 (str "trashes " (:title c))) (mill %1 %2))))}]}
+                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                                (system-msg state side (str "uses Oracle May, names " target
+                                                            " and reveals " (:title c)))
+                                (if (= (:type c) target)
+                                  (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
+                                      (gain state side :credit 2) (draw state side))
+                                  (do (system-msg state side (str "trashes " (:title c))) (mill state side)))))}]}
 
    "Order of Sol"
    {:effect (req (add-watch state :order-of-sol
