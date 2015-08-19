@@ -26,6 +26,20 @@
     :events {:expose {:msg (msg "attempt to force the rez of " (:title target))
                       :effect (effect (rez :corp target))}}}
 
+   "Bookmark"
+   {:abilities [{:label "Host 3 cards from your Grip facedown" 
+                 :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
+                 :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+                 :effect (req (doseq [c targets]
+                                 (host state side (get-card state card) c {:facedown true})))}
+                {:label "Add all hosted cards to Grip" :cost [:click 1] :msg "add all hosted cards to their Grip"
+                 :effect (req (doseq [c (:hosted card)]
+                                (move state side c :hand)))}
+                {:label "[Trash]: Add all hosted cards to Grip" :msg "add all hosted cards to their Grip"
+                 :effect (req (doseq [c (:hosted card)]
+                                (move state side c :hand))
+                              (trash state side card {:cause :ability-cost}))}]}
+
    "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}

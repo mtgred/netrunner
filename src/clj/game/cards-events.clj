@@ -294,6 +294,15 @@
    {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double"))
                                                       (:discard runner))))))}
 
+   "Power to the People"
+   {:effect (effect (register-events {:pre-steal-cost 
+                                      {:once :per-turn :effect (effect (gain :credit 7))
+                                                       :msg "gain 7 [Credits] "}
+                                      :runner-turn-ends 
+                                      {:effect (effect (unregister-events card))}}
+                    (assoc card :zone '(:discard))))
+    :events {:pre-steal-cost nil :runner-turn-ends nil}}
+
    "Push Your Luck"
    {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
     :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
