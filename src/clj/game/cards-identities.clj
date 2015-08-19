@@ -62,7 +62,7 @@
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
    "Haarpsichord Studios"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:stole-agenda runner-reg) 0)))
+   {:events {:pre-steal-cost {:req (req (:stole-agenda runner-reg))
                               :effect (effect (prevent-steal))}}}
 
    "Haas-Bioroid: Engineering the Future"
