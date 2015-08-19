@@ -352,7 +352,9 @@
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
                                         (= (:zone %) [:hand])
                                         (= (:side %) "Runner"))}
-                   :effect (effect (host card (assoc target :counter (:cost target))))
+                   :effect (req (if (zero? (:cost target))
+                                  (runner-install state side target)
+                                  (host state side card (assoc target :counter (:cost target)))))
                    :msg (msg "host " (:title target) "")}
                   (assoc remove-counter
                          :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
