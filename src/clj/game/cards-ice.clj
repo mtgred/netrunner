@@ -656,7 +656,7 @@
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
-                            :effect (effect (move (first (:deck corp)) :deck))}}]}}
+                            :effect (effect (move (first (:deck corp)) :deck))}}]}
                           
    "Zed 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]})
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}})
