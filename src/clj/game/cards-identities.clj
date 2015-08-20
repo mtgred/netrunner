@@ -4,6 +4,13 @@
   {"Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
+   "Apex: Invasive Predator"
+   {:events {:runner-turn-begins 
+              {:prompt "Select a card to install facedown"
+               :choices {:max 1 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+               :req (req (> (count (:hand runner)) 0))
+               :effect (req (runner-install state side target {:facedown true}))}}}
+   
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
              {:prompt "Take 1 tag or suffer 2 meat damage?"
@@ -16,8 +23,8 @@
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
-    :events {:trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
+    :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                                       :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
@@ -62,7 +69,7 @@
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
    "Haarpsichord Studios"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:stole-agenda runner-reg) 0)))
+   {:events {:pre-steal-cost {:req (req (:stole-agenda runner-reg))
                               :effect (effect (prevent-steal))}}}
 
    "Haas-Bioroid: Engineering the Future"
@@ -161,7 +168,17 @@
                                   :effect (effect (mill 2) (draw))}}}
 
    "Nasir Meidan: Cyber Explorer"
-   {:effect (effect (gain :link 1))}
+   {:effect (effect (gain :link 1))
+    :abilities [{:req (req (and (:run @state)
+                                (:rezzed (get-card state current-ice))))
+                 :effect (req (let [current-ice (get-card state current-ice)]
+                           (trigger-event state side :pre-rez-cost current-ice)
+                           (let [cost (rez-cost state side current-ice)]
+                             (lose state side :credit (:credit runner))
+                             (gain state side :credit cost)
+                             (system-msg state side (str "loses all credits and gains " cost
+                                                         " [Credits] from the rez of " (:title current-ice)))
+                             (swap! state update-in [:bonus] dissoc :cost))))}]}
 
    "NBN: Making News"
    {:recurring 2}

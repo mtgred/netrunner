@@ -143,8 +143,10 @@
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
-                        (#{:hand :deck :discard} (first dest)))
+                        (#{:hand :deck :discard} (first dest))
+                        (= dest [:rig :facedown]))
                  (desactivate state side c) c)
+             c (if (= dest [:rig :facedown])(assoc c :facedown true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
@@ -399,6 +401,10 @@
 
 (defn trash-no-cost [state side]
   (when-let [card (:card (first (get-in @state [side :prompt])))]
+    (when (= (:type card) "Agenda") ; trashing before the :access events actually fire; fire them manually
+      (when-let [access-effect (:access (card-def card))]
+        (resolve-ability state (to-keyword (:side card)) access-effect card nil))
+      (trigger-event state side :access card))
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
     (when-let [run (:run @state)]
@@ -578,7 +584,9 @@
 
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [card]
-                           (let [c (assoc card :cid (make-cid))]
+                           (let [c (assoc card :cid (make-cid))
+                                 c (dissoc c :setname :text :_id :influence :number :uniqueness :influencelimit
+                                           :faction :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))
@@ -669,7 +677,7 @@
         (when (and (not unpreventable) (not= cause :ability-cost))
           (swap! state update-in [:trash :trash-prevent] dissoc ktype))
         (when (not= (last zone) :current)
-          (apply trigger-event state side :trash card cause targets))
+          (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
         (let [prevent (get-in @state [:prevent :trash ktype])]
           (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
             (do
@@ -798,6 +806,14 @@
       (concat (get-in @state [:bonus :steal-cost]))
       merge-costs flatten vec))
 
+(defn resolve-steal [state side c]
+  (let [cdef (card-def c)]
+    (when-let [access-effect (:access cdef)]
+      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+    (trigger-event state side :access c)
+    (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
+      (steal state :runner c))))
+
 (defn handle-access [state side cards]
   (swap! state assoc :access true)
   (doseq [c cards]
@@ -806,33 +822,36 @@
     (let [cdef (card-def c)
           c (assoc c :seen true)]
       (when-let [name (:title c)]
-        (when-let [access-effect (:access cdef)]
-          (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-        (trigger-event state side :access c)
-        (when (not= (:zone c) [:discard])
-          (trigger-event state side :pre-trash c)
-          (if-let [trash-cost (trash-cost state side c)]
-            (let [card (assoc c :seen true)]
-              (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                {:cost [:credit trash-cost]
-                                 :effect (effect (trash card)
-                                                 (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                  (:title card))))} nil))
-            (when-not (= (:type c) "Agenda")
-              (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
-        (when (= (:type c) "Agenda")
-          (trigger-event state side :pre-steal-cost c)
-          (if (not (get-in @state [:runner :register :cannot-steal]))
-            (let [cost (steal-cost state side c)]
-              (if (pos? (count cost))
-                (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                  {:cost cost
-                                   :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                    " to steal " (:title c)))
-                                                   (steal c))} nil)
-                (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-                  (steal state :runner c))))
-            (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})))))))
+        (if (= (:type c) "Agenda")
+          (do (trigger-event state side :pre-steal-cost c)
+              (if (not (get-in @state [:runner :register :cannot-steal]))
+                (let [cost (steal-cost state side c)]
+                  (if (pos? (count cost))
+                    (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                                      {:cost cost
+                                       :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                        " to steal " (:title c)))
+                                                       (resolve-steal c))} nil)
+                    (resolve-ability state :runner
+                                     {:prompt (str "You access " (:title c)) :choices ["Steal"]
+                                      :effect (req (resolve-steal state :runner c))} c nil)))
+                (do (when-let [access-effect (:access cdef)]
+                      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+                    (trigger-event state side :access c)
+                    (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))))
+        (do (when-let [access-effect (:access cdef)]
+              (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+            (trigger-event state side :access c)
+            (trigger-event state side :pre-trash c)
+            (when (not= (:zone c) [:discard])
+              (if-let [trash-cost (trash-cost state side c)]
+                (let [card (assoc c :seen true)]
+                  (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                    {:cost [:credit trash-cost]
+                                     :effect (effect (trash card)
+                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                      (:title card))))} nil))
+                (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
   (swap! state assoc-in [:run :max-access] n))
@@ -1200,7 +1219,9 @@
        (swap! state update-in (cons s (vec zone))
               (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [c (assoc target :host (update-in card [:zone] #(map to-keyword %))
+   (let [c (assoc target :host (-> card
+                                   (update-in [:zone] #(map to-keyword %))
+                                   (dissoc :hosted))
                          :facedown facedown
                          :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                          :previous-zone (:zone target))]
@@ -1213,7 +1234,7 @@
 (defn runner-install
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness] :as card}
-    {:keys [extra-cost no-cost host-card] :as params}]
+    {:keys [extra-cost no-cost host-card facedown] :as params}]
 
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
@@ -1221,18 +1242,20 @@
                        :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
      (do
        (trigger-event state side :pre-install card)
-       (let [cost (if no-cost 0 (install-cost state side card))]
-         (when (and (or (not uniqueness) (not (in-play? state card)))
+       (let [cost (if (or no-cost facedown) 0 (install-cost state side card))]
+         (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
                       (req state side card nil) true)
-                    (pay state side card :credit cost (when memoryunits [:memory memoryunits]) extra-cost))
+                    (pay state side card :credit cost (when (and (not facedown) memoryunits) [:memory memoryunits]) extra-cost))
            (let [c (if host-card
                      (host state side host-card card)
-                     (move state side card [:rig (to-keyword type)]))
-                 installed-card (card-init state side (assoc c :installed true))]
-             (system-msg state side (str "installs " title
-                                         (when host-card (str " on " (:title host-card)))
-                                         (when no-cost " at no cost")))
+                     (move state side card [:rig (if facedown :facedown (to-keyword type))]))
+                 installed-card (card-init state side (assoc c :installed true) (not facedown))]
+             (if facedown
+               (system-msg state side "installs a card facedown" )
+               (system-msg state side (str "installs " title
+                                           (when host-card (str " on " (:title host-card)))
+                                           (when no-cost " at no cost"))))
              (trigger-event state side :runner-install installed-card)
              (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
    (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
@@ -1254,6 +1277,10 @@
        (let [cdef (card-def card) cost (rez-cost state side card)]
          (when (or no-cost (pay state side card :credit cost (:additional-cost cdef)))
            (card-init state side (assoc card :rezzed true))
+           (doseq [h (:hosted card)]
+             (update! state side (-> h
+                                     (update-in [:zone] #(map to-keyword %))
+                                     (update-in [:host :zone] #(map to-keyword %)))))
            (system-msg state side (str "rez " (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))
@@ -1364,7 +1391,9 @@
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
-        label (if (or (= (:side c) "Runner") (:rezzed c) (:seen c)
+        label (if (or (and (= (:side c) "Runner") (not (:facedown c)))
+                      (:rezzed c) 
+                      (:seen c)
                       (= (last (:zone c)) :deck))
                 (:title c) "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]

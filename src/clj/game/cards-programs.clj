@@ -141,10 +141,16 @@
    {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Gravedigger"
-   {:events {:trash {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
-                     :effect (effect (add-prop :runner card :counter 1))}}
+   {:events (let [e {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
+                               :effect (effect (add-prop :runner card :counter 1))}]
+              {:runner-trash e :corp-trash e})
     :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}
+
+    "Harbinger"
+    {:trash-effect 
+      {:req (req (not (some #{:facedown} (:previous-zone card))))
+       :effect (effect (runner-install card {:facedown true}))}}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
@@ -268,7 +274,7 @@
                  :effect (req (let [ice target]
                            (resolve-ability
                               state :runner
-                              {:prompt (msg "Choose a type") 
+                              {:prompt (msg "Choose a type")
                                :choices ["sentry" "code gate" "barrier"]
                                :msg (msg "give " (:title ice) " " target " until the end of next run this turn")}
                               card nil)))}]}

@@ -26,6 +26,20 @@
     :events {:expose {:msg (msg "attempt to force the rez of " (:title target))
                       :effect (effect (rez :corp target))}}}
 
+   "Bookmark"
+   {:abilities [{:label "Host 3 cards from your Grip facedown" 
+                 :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
+                 :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+                 :effect (req (doseq [c targets]
+                                 (host state side (get-card state card) c {:facedown true})))}
+                {:label "Add all hosted cards to Grip" :cost [:click 1] :msg "add all hosted cards to their Grip"
+                 :effect (req (doseq [c (:hosted card)]
+                                (move state side c :hand)))}
+                {:label "[Trash]: Add all hosted cards to Grip" :msg "add all hosted cards to their Grip"
+                 :effect (req (doseq [c (:hosted card)]
+                                (move state side c :hand))
+                              (trash state side card {:cause :ability-cost}))}]}
+
    "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
     :leave-play (effect (lose :memory 2 :max-hand-size 2))}
@@ -158,6 +172,18 @@
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
     :events {:runner-install {:req (req (has? target :subtype "Virus"))
                               :effect (effect (add-prop target :counter 1))}}}
+
+   "Heartbeat"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :prevent {:damage [:meat :net :brain]}
+    :abilities [{:msg "prevent 1 damage"
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :priority true
+                 :effect (effect (trash target {:cause :ability-cost})
+                                 (damage-prevent :brain 1)
+                                 (damage-prevent :meat 1)
+                                 (damage-prevent :net 1))}]}
+
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
 
@@ -246,8 +272,9 @@
 
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:trash {:msg "trash itself" :req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card))}}}
+    :events (let [e {:msg "trash itself" :req (req (= (last (:zone target)) :program))
+                     :effect (effect (trash card))}] 
+              {:runner-trash e :corp-trash e})}
 
    "R&D Interface"
    {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}

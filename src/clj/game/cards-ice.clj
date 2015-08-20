@@ -70,7 +70,7 @@
 
    "Cell Portal"
    {:abilities [{:msg "make the Runner approach the outermost ICE"
-                 :effect #(do (swap! %1 assoc-in [:run :position] 0) (derez %1 %2 %3))}]}
+                 :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
 
    "Changeling"
    {:advanceable :always :abilities [end-the-run]}
@@ -79,10 +79,10 @@
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :abilities [{:label "Trace 5 - Do 3 meat damage when this run is successful"
                  :trace {:base 5
-                         :effect #(do (swap! %1 assoc-in [:run :run-effect :end-run]
+                         :effect (req (swap! state assoc-in [:run :run-effect :end-run]
                                              {:req (req (:successful run)) :msg "do 3 meat damage"
                                               :effect (effect (damage :meat 3 {:card card}))})
-                                      (swap! %1 assoc-in [:run :run-effect :card] %3))}}]}
+                                      (swap! state assoc-in [:run :run-effect :card] card))}}]}
 
    "Chimera"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
@@ -539,7 +539,8 @@
                                                :server [:archives])))}]}
 
    "Swarm"
-   {:advanceable :always
+   {:effect (effect (gain :bad-publicity 1))
+    :advanceable :always
     :abilities [trash-program]}
 
    "Swordsman"
@@ -656,4 +657,7 @@
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
-                            :effect (effect (move (first (:deck corp)) :deck))}}]}})
+                            :effect (effect (move (first (:deck corp)) :deck))}}]}
+
+   "Zed 1.0"
+   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}})

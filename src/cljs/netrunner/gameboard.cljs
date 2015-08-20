@@ -91,13 +91,14 @@
           (if (not rezzed) (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities] :as card} owner]
+(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
-    (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
-          (= c 1) (if (= (count abilities) 1)
-                        (send-command "ability" {:card card :ability 0})
-                        (send-command (first actions) {:card card})))))
+    (when (not (and (= side "Runner") facedown))
+      (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
+            (= c 1) (if (= (count abilities) 1)
+                          (send-command "ability" {:card card :ability 0})
+                          (send-command (first actions) {:card card}))))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
@@ -557,7 +558,7 @@
   (om/component
    (sab/html
     [:div.runner-board
-     (for [zone [:program :resource :hardware]]
+     (for [zone [:program :hardware :resource :facedown]]
        [:div (for [c (zone (:rig player))]
                [:div.card-wrapper {:class (when (playable? c) "playable")}
                 (om/build card-view c)])])])))

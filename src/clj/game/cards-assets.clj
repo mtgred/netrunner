@@ -213,8 +213,8 @@
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Hostile Infrastructure"
-   {:events {:trash {:req (req (and (= (:side target) "Corp") (= side :runner)))
-                     :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
+   {:events {:runner-trash {:req (req (= (:side target) "Corp"))
+                            :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Isabel McGuire"
@@ -366,8 +366,8 @@
                                                               (gain state side :credit 5)))}
                                               card targets)))}}}
    "Ronald Five"
-   {:events {:trash {:req (req (and (= (:side target) "Corp") (= side :runner) (> (:click runner) 0)))
-                     :msg "force the runner to lose 1 [Click]" :effect (effect (lose :runner :click 1))}}}
+   {:events {:runner-trash {:req (req (and (= (:side target) "Corp") (> (:click runner) 0)))
+                            :msg "force the runner to lose 1 [Click]" :effect (effect (lose :runner :click 1))}}}
 
    "Ronin"
    {:advanceable :always
