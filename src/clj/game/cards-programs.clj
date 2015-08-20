@@ -380,7 +380,9 @@
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
-                 :choices (req (filter #(has? % :type "Program") (:deck runner)))
+                 :choices (req (filter #(and (has? % :type "Program") 
+                                             (<= (:cost %) (- (:credit runner) 2)))
+                                       (:deck runner)))
                  :cost [:credit 2]
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target) (shuffle! :deck))}]}
 
