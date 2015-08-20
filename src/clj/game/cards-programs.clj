@@ -146,6 +146,11 @@
     :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}
 
+    "Harbinger"
+    {:trash-effect 
+      {:req (req (not (some #{:facedown} (:previous-zone card))))
+       :effect (effect (runner-install card {:facedown true}))}}
+
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:counter-cost 2 :cost [:click 1] :msg "force the Corp to trash 1 card from HQ"}]}
@@ -268,7 +273,7 @@
                  :effect (req (let [ice target]
                            (resolve-ability
                               state :runner
-                              {:prompt (msg "Choose a type") 
+                              {:prompt (msg "Choose a type")
                                :choices ["sentry" "code gate" "barrier"]
                                :msg (msg "give " (:title ice) " " target " until the end of next run this turn")}
                               card nil)))}]}
