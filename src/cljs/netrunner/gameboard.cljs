@@ -293,12 +293,11 @@
                   actions)
              (map-indexed
               (fn [i ab]
-                (if (:auto-pump ab)
-                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                (if (:dynamic ab)
+                  [:div {:on-click #(do (send-command "dynamicability" {:type (:dynamic ab) :card @cursor}))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                            (dec i) i)})
+                                                                 :ability  (- i (count (filter (fn [a] (= (first a) :dynamic)) abilities)))})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
               abilities)]))
