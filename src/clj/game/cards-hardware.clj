@@ -272,8 +272,9 @@
 
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:trash {:msg "trash itself" :req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card))}}}
+    :events (let [e {:msg "trash itself" :req (req (= (last (:zone target)) :program))
+                     :effect (effect (trash card))}] 
+              {:runner-trash e :corp-trash e})}
 
    "R&D Interface"
    {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}

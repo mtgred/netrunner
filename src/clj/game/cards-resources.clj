@@ -571,6 +571,11 @@
                  :choices {:req #(and (has? % :subtype "Virus") (>= (:counter %) 1))}
                  :effect (effect (add-prop target :counter 1))}]}
 
+   "Wasteland"
+   {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (:installed target)))
+                     :effect (effect (gain :credit 1))
+                     :msg "to gain 1[Credit]"}}}
+                 
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
