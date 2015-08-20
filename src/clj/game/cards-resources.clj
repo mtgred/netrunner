@@ -269,7 +269,7 @@
                        {:prompt "Choose a card to rez, ignoring the rez cost"
                         :choices {:req #(not (:rezzed %))}
                         :effect (req (gain state :corp :credit (rez-cost state side target))
-                                     (rez state side target) 
+                                     (rez state side target)
                                      (system-msg state side (str "rezzes " (:title target) " at no cost")))}
                       card nil))
     :abilities [{:msg "draw 1 card"
@@ -314,8 +314,8 @@
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "Paige Piper"
-   (let [pphelper (fn [card cards] 
-                    (let [num (count cards)] 
+   (let [pphelper (fn [card cards]
+                    (let [num (count cards)]
                       {:optional {:req (req (> num 0))
                        :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
                        :choices {:number (req num)}
@@ -324,16 +324,16 @@
                                       (trash state side c))
                                     (shuffle! state :runner :deck)
                                     (when (> (int target) 0)
-                                      (system-msg state side (str "trashes " (int target) 
-                                                                  " cop" (if (> (int target) 1) "ies" "y") 
+                                      (system-msg state side (str "trashes " (int target)
+                                                                  " cop" (if (> (int target) 1) "ies" "y")
                                                                   " of " (:title card)))))}}))]
     {:events {:runner-install {:req (req (first-event state side :runner-install))
-                               :effect (effect (resolve-ability 
-                                                (pphelper target (->> (:deck runner) 
+                               :effect (effect (resolve-ability
+                                                (pphelper target (->> (:deck runner)
                                                                       (filter #(has? % :title (:title target)))
-                                                                      (vec))) 
+                                                                      (vec)))
                                                 card nil))}}})
-    
+
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
     :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
@@ -540,7 +540,7 @@
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
+    :trash-effect {:effect (effect (damage :meat 3 {:unboostable true :card card}))}}
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
