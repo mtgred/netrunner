@@ -180,7 +180,15 @@
                              :effect (effect (gain :runner :credit (:agendapoints target)))}
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
-
+   "Hunting Grounds"
+   {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ice"
+                 :msg "prevent a \"when encountered\" ability on a piece of ice"
+                 :once :per-turn}
+                 {:label "Install the top 3 cards of your stack facedown" 
+                  :effect (req (trash state side card {:cause :ability-cost}) 
+                               (doseq [c (take 3 (:deck runner))]
+                                  (runner-install state side c {:facedown true})))}]}
+   
    "Ice Analyzer"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-prop :runner card :counter 1))}}
