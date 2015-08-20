@@ -158,6 +158,18 @@
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
     :events {:runner-install {:req (req (has? target :subtype "Virus"))
                               :effect (effect (add-prop target :counter 1))}}}
+
+   "Heartbeat"
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :prevent {:damage [:meat :net :brain]}
+    :abilities [{:msg "prevent 1 damage"
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :priority true
+                 :effect (effect (trash target {:cause :ability-cost})
+                                 (damage-prevent :brain 1)
+                                 (damage-prevent :meat 1)
+                                 (damage-prevent :net 1))}]}
+
    "HQ Interface"
    {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
 
