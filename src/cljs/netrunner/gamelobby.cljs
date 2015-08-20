@@ -43,9 +43,9 @@
 (defn new-game [cursor owner]
   (authenticated
    (fn [user]
-     (om/set-state! owner :title (str (:username user) "'s game"))
+     (om/set-state! owner :title "Friendly game")
      (om/set-state! owner :skill "Intermediate")
-     (om/set-state! owner :game-type "Serious")
+     (om/set-state! owner :game-type "Friendly")
      (om/set-state! owner :editing true)
      (-> ".game-title" js/$ .select))))
 
@@ -142,6 +142,12 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
+(defn auto-game-title [skill game-type]
+  (cond
+    (= game-type "Private") "Private game"
+    (= skill "Intermediate") (str game-type " game")
+    :else (str game-type " game for " (clojure.string/lower-case skill) "s")))
+
 (defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]
   (reify
     om/IRenderState
@@ -161,13 +167,6 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
-               [:div.game-icons
-                 [(keyword (str "div.game-icon-skill." (clojure.string/lower-case (:type game))))
-                  {:title (str "This is a " (:type game) " game.")}
-                  (get (:type game) 0)]
-                 [(keyword (str "div.game-icon-type." (clojure.string/lower-case (:skill game))))
-                  {:title (str "Looking for " (:skill game) " opponent.")}
-                  (get (:skill game) 0)]]
                [:h4 (:title game)]
                [:div
                 (om/build-all player-view (:players game))]]))]]
@@ -178,17 +177,23 @@
             [:div.button-bar
              [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
+            [:h4 "Game Type"]
+            [:select.game-type {:value (:game-type state)
+                                :on-change #(do (om/set-state! owner :game-type (.. % -target -value))
+                                                (om/set-state! owner :title (auto-game-title (:skill state)
+                                                                                             (.. % -target -value))))}
+             (for [option ["Private" "Friendly" "Serious" "Tournament"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
+            [:h4 "Skill Level"]
+            [:select.game-skill {:value (:skill state)
+                                 :on-change #(do (om/set-state! owner :skill (.. % -target -value))
+                                                 (om/set-state! owner :title (auto-game-title (.. % -target -value)
+                                                                                              (:game-type state))))}
+             (for [option ["Beginner" "Intermediate" "Expert"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title"}]
-            [:h4 "Skill Level"]
-            [:select.game-skill {:value (:skill state) :on-change #(om/set-state! owner :skill (.. % -target -value))}
-             (for [option ["Beginner" "Intermediate" "Expert"]]
-               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
-            [:h4 "Game Type"]
-            [:select.game-type {:value (:game-type state) :on-change #(om/set-state! owner :game-type (.. % -target -value))}
-             (for [option ["Private" "Friendly" "Serious" "Tournament"]]
-               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
             [:p.flash-message (:flash-message state)]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
