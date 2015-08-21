@@ -150,6 +150,12 @@
                                   :effect (effect (max-access 0))}
                                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
+   "Endless Hunger"
+   {:abilities [{:label "Trash 1 installed card to break 1 \"End the run.\" subroutine"
+                 :prompt "Choose a card to trash for Endless Hunger" :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :msg (msg "trash " (:title target) " and break 1 \"End the run.\" subroutine")
+                 :effect (effect (trash target))}]}
+
    "Faerie"
    (auto-icebreaker ["Sentry"]
                     {:abilities [{:msg "break any number of sentry subroutines" :effect (effect (trash card))}

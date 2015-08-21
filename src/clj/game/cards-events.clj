@@ -12,6 +12,20 @@
    "Amped Up"
    {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
 
+   "Apocalypse"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+                           ;; trash cards from right to left
+                           ;; otherwise, auto-killing servers would move the cards to the next server
+                           ;; so they could no longer be trashed in the same loop
+    :effect (req (doseq [c (->> (all-installed state :corp) 
+                                (sort-by #(vec (:zone %))) 
+                                (reverse))]
+                   (trash state side c))
+                 (doseq [c (all-installed state :runner)]
+                   (move state side c [:rig :facedown])))}
+
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
     :effect (effect (run target))}
@@ -21,7 +35,6 @@
     :msg (msg "increase the rez cost of the 1st unrezzed ice approached by " target " [Credits]")
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                       :effect (effect (run target nil card))} card nil))}
-
 
    "Calling in Favors"
    {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
@@ -169,18 +182,18 @@
    "Hostage"
    {:prompt "Choose a Connection"
     :choices (req (filter #(has? % :subtype "Connection") (:deck runner)))
-    :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack") 
+    :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack")
     :effect (req (let [connection target]
-                   (resolve-ability 
-                     state side 
+                   (resolve-ability
+                     state side
                      {:prompt (str "Install " (:title connection) "?")
                       :choices ["Yes" "No"]
-                      :effect (req (let [d target] 
-                                     (resolve-ability state side 
+                      :effect (req (let [d target]
+                                     (resolve-ability state side
                                        {:effect (req (when (= "Yes" d)
-                                                       (runner-install state side connection)) 
+                                                       (runner-install state side connection))
                                                      (shuffle! state side :deck)
-                                                     (move state side connection :hand))} card nil)))} 
+                                                     (move state side connection :hand))} card nil)))}
                      card nil)))}
 
    "Ive Had Worse"
@@ -295,10 +308,10 @@
                                                       (:discard runner))))))}
 
    "Power to the People"
-   {:effect (effect (register-events {:pre-steal-cost 
+   {:effect (effect (register-events {:pre-steal-cost
                                       {:once :per-turn :effect (effect (gain :credit 7))
                                                        :msg "gain 7 [Credits] "}
-                                      :runner-turn-ends 
+                                      :runner-turn-ends
                                       {:effect (effect (unregister-events card))}}
                     (assoc card :zone '(:discard))))
     :events {:pre-steal-cost nil :runner-turn-ends nil}}
@@ -315,6 +328,9 @@
                                              (and (= guess "Odd") (even? target)))
                                      (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
                                      (gain state :runner :credit (* 2 target))))} card nil)))}
+
+   "Prey"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Quality Time"
    {:effect (effect (draw 5))}
@@ -452,15 +468,15 @@
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
-   {:choices {:req #(and (has? % :type "ICE") (= (first (:zone %)) :servers))} 
+   {:choices {:req #(and (has? % :type "ICE") (= (first (:zone %)) :servers))}
     :effect (req (let [ice target]
                    (resolve-ability
                      state :runner
-                     {:prompt (msg "Choose a type") 
+                     {:prompt (msg "Choose a type")
                       :choices ["sentry" "code gate" "barrier"]
                       :msg (msg "give " (:title ice) " " target " until the end of turn")}
                       card nil)))}
-    
+
    "Trade-In"
    {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
