@@ -90,6 +90,10 @@ input, select, textarea
     box-shadow(0 0 6px blue)
     border-color: blue !important
 
+input[type="checkbox"]
+  height: auto
+  margin-right: 6px
+
 button, a.button
   display: inline-block
   border-radius: 4px
@@ -852,6 +856,7 @@ nav ul
 
   .gameline
     position: relative
+    min-height: 53px
     border: 1px solid white
     border-radius: 4px
     padding: 5px 10px
@@ -868,10 +873,8 @@ nav ul
         display: none
 
     button
-      position: absolute
-      top: 50%
-      right: 10px
-      transform(translateY(-50%))
+      float: right
+      margin-top: 7px
 
   .game-panel
     position: relative
@@ -909,6 +912,12 @@ nav ul
 
       .fake-link
         margin-left: 10px
+
+    .spectators
+      height: 65px
+
+      .player
+        margin-right: 12px
 
     .chat-box
       .message-list

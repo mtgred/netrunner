@@ -45,6 +45,7 @@
    (fn [user]
      (om/set-state! owner :title (str (:username user) "'s game"))
      (om/set-state! owner :editing true)
+     (om/set-state! owner :allowspectator false)
      (-> ".game-title" js/$ .select))))
 
 (defn create-game [cursor owner]
@@ -54,7 +55,8 @@
        (om/set-state! owner :flash-message "Please fill a game title.")
        (do (om/set-state! owner :editing false)
            (swap! app-state assoc :messages [])
-           (send {:action "create" :title (om/get-state owner :title)}))))))
+           (send {:action "create" :title (om/get-state owner :title)
+                  :allowspectator (om/get-state owner :allowspectator)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -62,6 +64,13 @@
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
      (send {:action "join" :gameid gameid}))))
+
+(defn watch-game [gameid owner]
+  (authenticated
+   (fn [user]
+     (om/set-state! owner :editing false)
+     (swap! app-state assoc :messages [])
+     (send {:action "watch" :gameid gameid}))))
 
 (defn leave-lobby [cursor owner]
   (send {:action "leave-lobby" :gameid (:gameid @app-state)})
@@ -113,7 +122,8 @@
     [:span.player
      (om/build avatar (:user cursor) {:opts {:size 22}})
      (get-in cursor [:user :username])
-     [:span.side (str "(" (:side cursor) ")")]])))
+     (when-let [side (:side cursor)]
+       [:span.side (str "(" side ")")])])))
 
 (defn chat-view [messages owner]
   (reify
@@ -162,7 +172,13 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
-               [:h4 (:title game)]
+               (when (and (:allowspectator game) (not gameid))
+                 (let [id (:gameid game)]
+                  [:button {:on-click #(watch-game id owner)} "Watch"]))
+               (let [c (count (:spectators game))]
+                 [:h4 (str (:title game)
+                           (when (pos? c)
+                             (str  " (" c " spectator" (when (> c 1) "s") ")")))])
                [:div
                 (om/build-all player-view (:players game))]]))]]
 
@@ -175,7 +191,11 @@
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title"}]
-            [:p.flash-message (:flash-message state)]]
+            [:p.flash-message (:flash-message state)]
+            [:label
+             [:input {:type "checkbox"
+                      :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
+             "Allow spectators"]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
@@ -189,9 +209,10 @@
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
                 [:div.content
                  [:h2 (:title game)]
-                 [:h3.float-left "Players"]
-                 (when-not (every? :deck players)
-                   [:div.flash-message "Waiting players deck selection"])
+                 [:div
+                  [:h3.float-left "Players"]
+                  (when-not (every? :deck players)
+                    [:div.flash-message "Waiting players deck selection"])]
                  [:div.players
                   (for [player (:players game)]
                     [:div
@@ -203,7 +224,12 @@
                           "Deck selected")])
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
-                        {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]]
+                        {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                 (let [c (count (:spectators game))]
+                   [:h3 (str c " Spectator" (when (> c 1) "s"))])
+                 [:div.spectators
+                  (for [spectator (:spectators game)]
+                    (om/build player-view spectator))]]
                 (om/build chat-view messages {:state state})])))]
         (om/build deckselect-modal cursor)]))))
 

@@ -29,13 +29,17 @@ swapSide = (side) ->
 removePlayer = (socket) ->
   game = games[socket.gameid]
   if game
-    if game.players.length is 1
-      delete games[socket.gameid]
-      requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
     for player, i in game.players
       if player.id is socket.id
         game.players.splice(i, 1)
         break
+    for spectator, i in game.spectators
+      if spectator.id is socket.id
+        game.spectators.splice(i, 1)
+        break
+    if game.players.length is 0 and game.spectators.length is 0
+      delete games[socket.gameid]
+      requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
     socket.leave(socket.gameid)
     socket.gameid = false
     lobby.emit('netrunner', {type: "games", games: games})
@@ -44,8 +48,18 @@ removePlayer = (socket) ->
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
-  if game and game.players.length is 1 and game.players[0].user.username isnt socket.request.user.username
-    game.players.push({user: socket.request.user, id: socket.id, side: swapSide(game.players[0].side)})
+  if game and game.players.length < 2 and not game.players.some((player) -> player.user.username is socket.request.user.username)
+    side = if game.players.length is 1 then swapSide(game.players[0].side) else "Corp"
+    game.players.push({user: socket.request.user, id: socket.id, side: side})
+    socket.join(gameid)
+    socket.gameid = gameid
+    socket.emit("netrunner", {type: "game", gameid: gameid})
+    lobby.emit('netrunner', {type: "games", games: games})
+
+watchGame = (socket, gameid) ->
+  game = games[gameid]
+  if game
+    game.spectators.push({user: socket.request.user, id: socket.id})
     socket.join(gameid)
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
@@ -88,8 +102,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
-        game = {date: new Date(), gameid: ++gameid, title: msg.title,\
-                players: [{user: socket.request.user, id: socket.id, side: "Corp"}]}
+        game = {date: new Date(), gameid: ++gameid, title: msg.title, allowspectator: msg.allowspectator,\
+                players: [{user: socket.request.user, id: socket.id, side: "Corp"}], spectators: []}
         games[gameid] = game
         socket.join(gameid)
         socket.gameid = gameid
@@ -118,6 +132,13 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           user: "__system__"
           notification: "ting"
           text: "#{socket.request.user.username} joined the game."
+
+      when "watch"
+        watchGame(socket, msg.gameid)
+        socket.broadcast.to(msg.gameid).emit 'netrunner',
+          type: "say"
+          user: "__system__"
+          text: "#{socket.request.user.username} joined the game as a spectator."
 
       when "reconnect"
         game = games[msg.gameid]
