@@ -583,7 +583,7 @@
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
               :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
                          :msg (msg "draw " (:title (first (:deck corp))))
-                         :no-msg "doesn't draw with Woman in the Red Dress"
+                         :no-effect {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}
                          :player :corp :effect (effect (draw))}}}}
 
    "Wyldside"

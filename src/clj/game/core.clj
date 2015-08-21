@@ -21,7 +21,7 @@
     (say state side {:user "__system__" :text (str username " " text ".")})))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update-all-ice update-ice-strength update-breaker-strength all-installed)
+         update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
 
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -252,8 +252,8 @@
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
                                                    (resolve-ability state side ability card targets)
-                                                   (when-let [no-msg (:no-msg ability)]
-                                                     (system-msg state side (:no-msg ability))))))
+                                                   (when-let [no-ability (:no-effect ability)]
+                                                     (resolve-ability state side no-ability card targets)))))
 
 (defn resolve-trace [state side boost]
   (let [runner (:runner @state)
@@ -402,9 +402,7 @@
 (defn trash-no-cost [state side]
   (when-let [card (:card (first (get-in @state [side :prompt])))]
     (when (= (:type card) "Agenda") ; trashing before the :access events actually fire; fire them manually
-      (when-let [access-effect (:access (card-def card))]
-        (resolve-ability state (to-keyword (:side card)) access-effect card nil))
-      (trigger-event state side :access card))
+      (resolve-steal-events state side card))
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
     (when-let [run (:run @state)]
@@ -806,11 +804,15 @@
       (concat (get-in @state [:bonus :steal-cost]))
       merge-costs flatten vec))
 
-(defn resolve-steal [state side c]
+(defn resolve-steal-events [state side c]
   (let [cdef (card-def c)]
     (when-let [access-effect (:access cdef)]
       (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-    (trigger-event state side :access c)
+    (trigger-event state side :access c)))
+
+(defn resolve-steal [state side c]
+  (let [cdef (card-def c)]
+    (resolve-steal-events state side c)
     (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
       (steal state :runner c))))
 
@@ -831,13 +833,12 @@
                                       {:cost cost
                                        :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
                                                                         " to steal " (:title c)))
-                                                       (resolve-steal c))} nil)
+                                                       (resolve-steal c))
+                                       :no-effect {:effect (effect (resolve-steal-events c))}} nil)
                     (resolve-ability state :runner
                                      {:prompt (str "You access " (:title c)) :choices ["Steal"]
                                       :effect (req (resolve-steal state :runner c))} c nil)))
-                (do (when-let [access-effect (:access cdef)]
-                      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-                    (trigger-event state side :access c)
+                (do (resolve-steal-events state side c)
                     (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))))
         (do (when-let [access-effect (:access cdef)]
               (resolve-ability state (to-keyword (:side c)) access-effect c nil))
