@@ -469,13 +469,7 @@
 
    "Tinkering"
    {:choices {:req #(and (has? % :type "ICE") (= (first (:zone %)) :servers))}
-    :effect (req (let [ice target]
-                   (resolve-ability
-                     state :runner
-                     {:prompt (msg "Choose a type")
-                      :choices ["sentry" "code gate" "barrier"]
-                      :msg (msg "give " (:title ice) " " target " until the end of turn")}
-                      card nil)))}
+    :msg (msg "give " (if (:rezzed target) (:title target) "an ice") " sentry, code gate, and barrier until the end of turn")}
 
    "Trade-In"
    {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
