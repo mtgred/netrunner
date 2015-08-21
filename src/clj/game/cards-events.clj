@@ -456,9 +456,7 @@
     :effect (req (let [ice target]
                    (resolve-ability
                      state :runner
-                     {:prompt (msg "Choose a type") 
-                      :choices ["sentry" "code gate" "barrier"]
-                      :msg (msg "give " (:title ice) " " target " until the end of turn")}
+                     {:msg (msg "give " (if (:rezzed ice) (:title ice) "an ice") " sentry, code gate, and barrier until the end of turn")}
                       card nil)))}
     
    "Trade-In"
