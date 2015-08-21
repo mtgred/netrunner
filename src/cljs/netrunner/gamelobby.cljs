@@ -172,7 +172,7 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
-               (when (and (:allowspectator game) (not gameid))
+               (when (and (:allowspectator game) (not gameid) (not (:started game)))
                  (let [id (:gameid game)]
                   [:button {:on-click #(watch-game id owner)} "Watch"]))
                (let [c (count (:spectators game))]
@@ -225,11 +225,12 @@
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
-                 (let [c (count (:spectators game))]
-                   [:h3 (str c " Spectator" (when (> c 1) "s"))])
-                 [:div.spectators
-                  (for [spectator (:spectators game)]
-                    (om/build player-view spectator))]]
+                 (when (:allowspectator game)
+                   [:div.spectators
+                    (let [c (count (:spectators game))]
+                     [:h3 (str c " Spectator" (when (> c 1) "s"))])
+                    (for [spectator (:spectators game)]
+                      (om/build player-view spectator))])]
                 (om/build chat-view messages {:state state})])))]
         (om/build deckselect-modal cursor)]))))
 
