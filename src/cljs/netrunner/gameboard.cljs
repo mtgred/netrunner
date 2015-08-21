@@ -73,7 +73,7 @@
         text (.-value input)
         $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
-      (send-command "say" {:text text})
+      (send-command "say" {:user (:user @app-state) :text text})
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
