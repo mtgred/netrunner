@@ -258,6 +258,12 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
 
+   "Launch Campaign"
+   {:effect (effect (add-prop card :counter 6))
+    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
+                                :effect (req (gain state :corp :credit 2)
+                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
+
    "Levy University"
    {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
                  :choices (req (filter #(has? % :type "ICE") (:deck corp)))
@@ -398,6 +404,19 @@
              :corp-install {:req (req (has? target :type "ICE"))
                             :effect (effect (trash card)
                                             (system-msg "trashes Server Diagnostics"))}}}
+
+   "Shannon Claire"
+   {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of R&D"
+                 :effect (effect (move (last (:deck corp)) :hand))}
+                {:label "[Trash]: Search R&D for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
+                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
+                 :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+                 :effect (effect (shuffle! :deck) (move target :deck)
+                                 (trash card {:cause :ability-cost}))}
+                {:label "[Trash]: Search Archives for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
+                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
+                 :choices (req (filter #(has? % :type "Agenda") (:discard corp)))
+                 :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
    {:advanceable :always
