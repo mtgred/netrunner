@@ -216,9 +216,9 @@
    "Spark Agency: Worldswide Reach"
    {:events
     {:rez {:req (req (has? target :subtype "Advertisement"))
-           {:once :per-turn
-            :effect (effect (lose :runner :credit 1))
-            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}}
+           :once :per-turn
+           :effect (effect (lose :runner :credit 1))
+           :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
