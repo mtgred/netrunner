@@ -188,6 +188,10 @@
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
                  :effect (effect (damage :net 1 {:card card}))}]}
 
+   "Improved Tracers"
+   {:events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
+                                :effect (effect (ice-strength-bonus 1))}}}
+
    "Labyrinthine Servers"
    {:data {:counter 2}
     :abilities [{:counter-cost 1 :effect (effect (prevent-jack-out))

@@ -5,7 +5,16 @@
 (def end-the-run {:msg "end the run" :effect (effect (end-run))})
 
 (def cards-ice
-  {"Archer"
+  {"Archangel"
+   {:access {:optional 
+             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?" :cost [:credit 3]
+              :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}
+    :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
+                 :trace {:base 6 :choices {:req #(:installed %)}
+                         :msg (msg "add " (:title target) " to the Runner's Grip")
+                         :effect (effect (move :runner target :hand true))}}]}
+   
+   "Archer"
    {:additional-cost [:forfeit]
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 trash-program end-the-run]}
@@ -24,6 +33,12 @@
 
    "Ashigaru"
    {:abilities [end-the-run]}
+
+   "Assassin"
+   {:abilities [{:label "Trace 5 - Do 3 net damage"
+                 :trace {:base 5 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}
+                {:label "Trace 4 - Trash a program"
+                 :trace (assoc trash-program :base 4)}]}
 
    "Asteroid Belt"
    {:advanceable :always :abilities [end-the-run]
@@ -527,6 +542,11 @@
    "Snowflake"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal end-the-run}}]}
+
+   "Special Offer"
+   {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
+                 :effect (effect (gain :corp :credit 5) (trash card)
+                                 (system-msg (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
    "Spiderweb"
    {:abilities [end-the-run]}

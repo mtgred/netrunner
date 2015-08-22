@@ -499,6 +499,14 @@
                               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
                               :req (req (or (has? target :subtype "Black Ops")
                                             (has? target :subtype "Gray Ops")))}}}
+                                          
+   "Technical Writer"
+   {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                              :effect (effect (add-prop :runner card :counter 1)
+                                              (system-msg (str "places 1 [Credits] on Technical Writer")))}}
+    :abilities [{:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")
+                 :effect (effect (gain :credit (:counter card)) (trash card {:cause :ability-cost}))}]}                                          
+                                          
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
     :abilities [{:msg (msg "give +2 strength to " (:title target))

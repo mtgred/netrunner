@@ -507,4 +507,17 @@
                         :choices (req (map str (range 1 (inc (:click runner)))))
                         :effect (req (let [n (Integer/parseInt target)]
                                        (when (pay state :runner card :click n)
-                                         (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}})
+                                         (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
+                                       
+   "Windfall"
+   {:effect (req (shuffle! state :runner :deck)
+                 (let [topcard (first (:deck runner))
+                       cost (:cost topcard)]
+                   (if (= (:type topcard) "Event")
+                     (do (trash state side topcard) 
+                         (system-msg state side (str "shuffles their Stack and trashes " 
+                          (:title topcard) " to gain 0 [Credits]")))
+                     (do (gain state side :credit cost)
+                         (trash state side topcard) 
+                         (system-msg state side (str "shuffles their Stack and trashes " 
+                          (:title topcard) " to gain " cost " [Credits]"))))))}})
