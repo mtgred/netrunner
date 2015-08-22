@@ -44,7 +44,7 @@ removePlayer = (socket) ->
     socket.gameid = false
     lobby.emit('netrunner', {type: "games", games: games})
   for k, v of games
-    delete games[k] if v.players.length is 1 and not v.started and (new Date() - v.date) > 3600000
+    delete games[k] if (v.players.length + v.spectators.length) is 1 and not v.started and (new Date() - v.date) > 1800000
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
