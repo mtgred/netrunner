@@ -480,6 +480,11 @@
    "Rainbow"
    {:abilities [end-the-run]}
 
+   "Resistor"
+   {:strength-bonus (req (get-in @state [:runner :tag]))
+    :abilities [{:label "Trace 4 - End the run"
+                 :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
+
    "Rototurret"
    {:abilities [trash-program end-the-run]}
 
