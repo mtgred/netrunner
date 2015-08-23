@@ -307,7 +307,7 @@
    
    "News Team"
    {:access {:req (req (not= (first (:zone card)) :deck))
-             :msg (msg "giver the runner 2 tags or -1 agenda points")
+             :msg (msg "give the Runner 2 tags or -1 agenda points")
              :effect (effect (resolve-ability
                                {:player :runner
                                 :prompt "Take 2 tags or take News Team as -1 agenda points?"
