@@ -514,12 +514,13 @@
         (max 0))))
 
 (defn install-cost-bonus [state side n]
-  (swap! state update-in [:bonus :install-cost] (fnil #(+ % n) 0)))
+  (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
 
-(defn install-cost [state side {:keys [cost] :as card}]
-  (-> cost
-      (+ (or (get-in @state [:bonus :install-cost]) 0))
-      (max 0)))
+(defn install-cost [state side {:keys [cost] :as card} extra-cost]
+  (vec (map #(if (keyword? %) % (max % 0))
+            (-> (concat [:credit cost] (get-in @state [:bonus :install-cost]) extra-cost
+                        (when-let [instfun (:install-cost-bonus (card-def card))] (instfun state side card nil)))
+            merge-costs flatten))))
 
 (defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
@@ -1228,11 +1229,14 @@
                        :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
      (do
        (trigger-event state side :pre-install card)
-       (let [cost (if (or no-cost facedown) 0 (install-cost state side card))]
+       (let [cost (if (or no-cost facedown)
+                    [:credit 0]
+                    (install-cost state side card
+                                  (concat extra-cost (when memoryunits [:memory memoryunits]))))]
          (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
                       (req state side card nil) true)
-                    (pay state side card :credit cost (when (and (not facedown) memoryunits) [:memory memoryunits]) extra-cost))
+                    (pay state side card cost))
            (let [c (if host-card
                      (host state side host-card card)
                      (move state side card [:rig (if facedown :facedown (to-keyword type))]))
