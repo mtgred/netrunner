@@ -1231,7 +1231,7 @@
        (let [cost (if (or no-cost facedown) 0 (install-cost state side card))]
          (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
-                      (req state side card nil) true)
+                      (or facedown (req state side card nil)) true)
                     (pay state side card :credit cost (when (and (not facedown) memoryunits) [:memory memoryunits]) extra-cost))
            (let [c (if host-card
                      (host state side host-card card)
