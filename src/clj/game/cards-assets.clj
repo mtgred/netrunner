@@ -184,7 +184,10 @@
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
 
    "Executive Boot Camp"
-   {:abilities [{:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
+   {:abilities [{:choices {:req #(not (:rezzed %))}
+                 :label "Rez a card, lowering the cost by 1 [Credits]" :msg (msg "rez " (:title target))
+                 :effect (effect (rez-cost-bonus -1) (rez target))}
+                {:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches HQ for an asset"
                  :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :cost [:credit 1] :label "Search R&D for an asset"
