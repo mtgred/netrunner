@@ -139,7 +139,7 @@
    {:effect (effect (gain :link 1))
     :events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                           (not (get-in @state [:per-turn (:cid card)]))))
-                           :effect (effect (install-cost-bonus -1))}
+                           :effect (effect (install-cost-bonus [:credit -1]))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                              (not (get-in @state [:per-turn (:cid card)]))))
                               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")

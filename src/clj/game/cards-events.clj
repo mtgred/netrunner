@@ -44,7 +44,7 @@
    "Career Fair"
    {:prompt "Choose a Resource to install"
     :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
-    :effect  (effect (install-cost-bonus -3) (runner-install target))}
+    :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
    {:effect (effect (run :rd
@@ -52,7 +52,7 @@
                           {:prompt "Choose a program to install"
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(has? % :type "Program") (:deck runner)))
-                           :effect (effect (install-cost-bonus (* -3 (count (get-in corp [:servers :rd :ices]))))
+                           :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (gain :tag 1) (shuffle! :deck))}} card))}
 
    "Day Job"
@@ -279,7 +279,7 @@
    "Modded"
    {:prompt "Choose a card to install"
     :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
-    :effect (effect (install-cost-bonus -3) (runner-install target))}
+    :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"
    {:recurring 1}
@@ -397,7 +397,7 @@
                                         :choices (req (filter #(and (= (:type %) "Program")
                                                                     (<= (:cost %) (+ (:credit runner) (:cost trashed))))
                                                               ((if (= fr "Grip") :hand :discard) runner)))
-                                        :effect (effect (install-cost-bonus (- (:cost trashed)))
+                                        :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
                                                         (runner-install target))} card nil)))} card nil)))}
 
 
