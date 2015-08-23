@@ -300,6 +300,16 @@
                                                      (:deck runner)) :hand)
                                          (shuffle! :deck))}}}}
 
+   "Security Nexus"
+   {:effect (effect (gain :link 1) (gain :memory 1))
+    :leave-play (effect (lose :link 1) (lose :memory 1))
+    :abilities [{:req (req (:run @state))
+                 :msg "force the Corp to initiate a trace"
+                 :label "Trace 5 - Give the Runner 1 tag and end the run"
+                 :trace {:once :per-turn :base 5 :msg "give the Runner 1 tag and end the run"
+                         :effect (effect (gain :runner :tag 1) (end-run))
+                         :unsuccessful {:msg "bypass the current ICE"}}}]}
+
    "Silencer"
    {:recurring 1}
 
