@@ -158,14 +158,14 @@
     [:span {:class "fake-link" :id code} title]
     [:span item])))
 
-(defn get-alt-art [[title cards]]
-  (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
+(defn get-non-alt-art [[title cards]]
+  (let [s (sort-by #(= (:setname %) "Alternates") cards)]
     {:title title :code (:code (first s))}))
 
 (defn prepare-cards []
  (->> (:cards @app-state)
       (group-by :title)
-      (map get-alt-art)
+      (map get-non-alt-art)
       (sort-by #(count (:title %1)))
       (reverse)))
 
