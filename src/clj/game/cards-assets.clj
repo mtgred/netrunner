@@ -551,6 +551,11 @@
    {:advanceable :always}
 
    "Turtlebacks"
-   {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}})
+   {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   
+   "Victoria Jenkins"
+   {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
+    :trash-effect {:req (req (:access @state))
+                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}})
 
 
