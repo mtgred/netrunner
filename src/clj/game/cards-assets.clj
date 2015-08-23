@@ -135,7 +135,14 @@
                    :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}
 
    "Docklands Crackdown"
-   {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
+   {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]
+    :events {:pre-install {:req (req (and (not (zero? (:counter card)))
+                                          (not (get-in @state [:per-turn (:cid card)]))))
+                           :effect (effect (install-cost-bonus (:counter card)))}
+             :runner-install {:req (req (and (not (zero? (:counter card)))
+                                             (not (get-in @state [:per-turn (:cid card)]))))
+                              :msg (msg "increase the install cost of " (:title target) " by " (:counter card) " [Credits]")
+                              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Early Premiere"
    {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced"
@@ -177,7 +184,10 @@
                                              (when (zero? (:counter card)) (trash state :corp card)))}}}
 
    "Executive Boot Camp"
-   {:abilities [{:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
+   {:abilities [{:choices {:req #(not (:rezzed %))}
+                 :label "Rez a card, lowering the cost by 1 [Credits]" :msg (msg "rez " (:title target))
+                 :effect (effect (rez-cost-bonus -1) (rez target))}
+                {:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches HQ for an asset"
                  :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :cost [:credit 1] :label "Search R&D for an asset"
