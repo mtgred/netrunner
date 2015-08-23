@@ -1235,7 +1235,7 @@
                                   (concat extra-cost (when memoryunits [:memory memoryunits]))))]
          (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
-                      (req state side card nil) true)
+                      (or facedown (req state side card nil)) true)
                     (pay state side card cost))
            (let [c (if host-card
                      (host state side host-card card)
