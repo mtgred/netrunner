@@ -189,7 +189,8 @@
                  :effect (effect (damage :net 1 {:card card}))}]}
 
    "Improved Tracers"
-   {:events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
+   {:effect (req (update-all-ice state side))
+    :events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
                                 :effect (effect (ice-strength-bonus 1))}}}
 
    "Labyrinthine Servers"

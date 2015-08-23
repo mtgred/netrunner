@@ -53,7 +53,7 @@
    {:effect (effect (lose :runner :max-hand-size 2))
     :leave-play (effect (gain :runner :max-hand-size 2))
     :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner :agenda-point 2))}}
+                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}
 
    "City Surveillance"
    {:events {:runner-turn-begins
@@ -132,7 +132,7 @@
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
     :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner :agenda-point 2))}}
+                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]}
@@ -307,7 +307,7 @@
    
    "News Team"
    {:access {:req (req (not= (first (:zone card)) :deck))
-             :msg (msg "giver the runner 2 tags or -1 agenda points")
+             :msg (msg "give the Runner 2 tags or -1 agenda points")
              :effect (effect (resolve-ability
                                {:player :runner
                                 :prompt "Take 2 tags or take News Team as -1 agenda points?"
@@ -535,7 +535,7 @@
     :leave-play (effect (gain :runner :agenda-point
                               (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
     :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner :agenda-point 2))}
+                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}
     :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
@@ -551,6 +551,11 @@
    {:advanceable :always}
 
    "Turtlebacks"
-   {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}})
+   {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   
+   "Victoria Jenkins"
+   {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
+    :trash-effect {:req (req (:access @state))
+                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}})
 
 
