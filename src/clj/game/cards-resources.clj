@@ -110,7 +110,12 @@
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
-                 :msg "force the Corp to draw 2 cards"}]}
+                 :msg "force the Corp to draw 2 cards"}]
+    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (= 0 (:position run)))
+                               [:credit -7 :click -1] nil))
+    :effect (req (when (and run (= (:server run) [:rd]) (= 0 (:position run)))
+                   (swap! state update-in [:runner :prompt] rest)
+                   (handle-end-run state side)))}
 
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
@@ -169,7 +174,12 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]
+    :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
+                               [:credit -7 :click -1] nil))
+    :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
+                   (swap! state update-in [:runner :prompt] rest)
+                   (handle-end-run state side)))}
 
    "Hard at Work"
    {:events {:runner-turn-begins {:msg "gain 2 [Credits] and lose [Click]"
@@ -476,7 +486,7 @@
                                        (:hosted card)))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (effect
-                           (install-cost-bonus -1) (runner-install (dissoc target :facedown))
+                           (install-cost-bonus [:credit -1]) (runner-install (dissoc target :facedown))
                            (trash (update-in card [:hosted]
                                              (fn [coll]
                                                (remove-once #(not= (:cid %) (:cid target)) coll)))
@@ -572,7 +582,12 @@
    "Utopia Shard"
    {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))
-                 :msg "force the Corp to discard 2 cards from HQ at random"}]}
+                 :msg "force the Corp to discard 2 cards from HQ at random"}]
+    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (= 0 (:position run)))
+                               [:credit -7 :click -1] nil))
+    :effect (req (when (and run (= (:server run) [:hq]) (= 0 (:position run)))
+                   (swap! state update-in [:runner :prompt] rest)
+                   (handle-end-run state side)))}
 
    "Virus Breeding Ground"
    {:data {:counter-type "Virus"}
