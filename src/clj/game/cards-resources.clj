@@ -165,6 +165,14 @@
                  :effect (req (gain state side :credit 1)
                               (when (zero? (:counter card)) (trash state :runner card)))}]}
 
+   "Globalsec Security Clearance"
+   {:req (req (> (:link runner) 1))
+    :events {:runner-turn-begins
+             {:optional {:prompt "Use Globalsec Security Clearance to lose [Click]?" :msg "lose [Click]"
+                         :effect (effect (lose :click 1)
+                                         (prompt! card (str "The top card of R&D is "
+                                         (:title (first (:deck corp)))) ["OK"] {}))}}}}
+
    "Grifter"
    {:events {:runner-turn-ends
              {:effect (req (let [ab (if (get-in @state [:runner :register :successful-run])

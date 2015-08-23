@@ -197,6 +197,21 @@
                     {:abilities [{:cost [:credit 1] :msg "break 1 tracer subroutine"}
                                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
 
+   "GS Sherman M3"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [{:cost [:credit 2] :msg "break any number of barrier subroutines"}
+                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+
+   "GS Shrike M2"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [{:cost [:credit 2] :msg "break any number of sentry subroutines"}
+                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+
+   "GS Striker M1"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [{:cost [:credit 2] :msg "break any number of code gate subroutines"}
+                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+
    "Inti"
    (auto-icebreaker ["Barrier"]
                     {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
