@@ -319,6 +319,9 @@
                                          (zero? (get-in new [:runner :credit])))
                                 (resolve-ability ref side {:msg "gain 1 [Credits]" :once :per-turn
                                                            :effect (effect (gain :credit 1))} card nil)))))
+    :events {:runner-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
+                                  :effect (req (gain state :runner :credit 1)
+                                               (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "Paige Piper"
