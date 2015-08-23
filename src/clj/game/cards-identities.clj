@@ -220,6 +220,9 @@
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
+   "Sunny Labeau: Security Specialist"
+   {:effect (effect (gain :link 2))}
+
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
