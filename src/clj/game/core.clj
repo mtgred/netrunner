@@ -1057,8 +1057,12 @@
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (swap! state assoc-in [:run :successful] true)
     (trigger-event state side :successful-run (first server))
-    (let [card (get-in @state [:run :run-effect :card])]
-      (if-let [replace-effect (get-in @state [:run :run-effect :replace-access])]
+    (let [run-effect (get-in @state [:run :run-effect])
+          r (:req run-effect)
+          card (:card run-effect)
+          replace-effect (:replace-access run-effect)]
+      (if (and replace-effect
+               (or (not r) (r state side card [(first server)])))
         (if (:mandatory replace-effect)
           (replace-access state side replace-effect card)
           (swap! state update-in [side :prompt]

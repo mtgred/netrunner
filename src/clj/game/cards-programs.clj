@@ -3,7 +3,8 @@
 (def cards-programs
   {"Analog Dreamers"
    {:abilities [{:cost [:click 1] :msg "make a run on R&D"
-                 :effect (effect (run :rd {:replace-access
+                 :effect (effect (run :rd {:req (req (= target :rd))
+                                           :replace-access
                                            {:prompt "Choose a card to shuffle into R&D"
                                             :choices {:req #(and (not (= (:type %) "ICE"))
                                                                  (not (:rezzed %))
@@ -126,7 +127,8 @@
    "Expert Schedule Analyzer"
    {:abilities
     [{:cost [:click 1] :msg "make a run on HQ"
-      :effect (effect (run :hq {:replace-access
+      :effect (effect (run :hq {:req (req (= target :hq))
+                                :replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
 
@@ -205,12 +207,13 @@
    "Keyhole"
    {:abilities [{:cost [:click 1] :msg "make a run on R&D"
                  :effect (effect (run :rd
-                                      {:replace-access
-                                       {:prompt "Choose a card to trash" :not-distinct true
-                                        :msg (msg "trash " (:title target))
-                                        :choices (req (take 3 (:deck corp))) :mandatory true
-                                        :effect (effect (trash (assoc target :seen true))
-                                                        (shuffle! :corp :deck))}} card))}]}
+                                   {:req (req (= target :rd))
+                                    :replace-access
+                                    {:prompt "Choose a card to trash" :not-distinct true
+                                     :msg (msg "trash " (:title target))
+                                     :choices (req (take 3 (:deck corp))) :mandatory true
+                                     :effect (effect (trash (assoc target :seen true))
+                                                     (shuffle! :corp :deck))}} card))}]}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
@@ -387,9 +390,10 @@
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make a run on Archives"
                  :effect (effect (run :archives
-                                      {:successful-run
-                                       {:msg "make a successful run on HQ"
-                                        :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
+                                   {:req (req (= target :archives))
+                                    :successful-run
+                                    {:msg "make a successful run on HQ"
+                                     :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))

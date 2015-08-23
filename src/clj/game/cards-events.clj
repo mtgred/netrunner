@@ -2,7 +2,8 @@
 
 (def cards-events
   {"Account Siphon"
-   {:effect (effect (run :hq {:replace-access
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
@@ -359,10 +360,11 @@
 
    "Retrieval Run"
    {:effect (effect (run :archives
-                         {:replace-access
-                          {:prompt "Choose a program to install" :msg (msg "install " (:title target))
-                           :choices (req (filter #(= (:type %) "Program") (:discard runner)))
-                           :effect (effect (runner-install target {:no-cost true}))}} card))}
+                      {:req (req (= target :hq))
+                       :replace-access
+                       {:prompt "Choose a program to install" :msg (msg "install " (:title target))
+                        :choices (req (filter #(= (:type %) "Program") (:discard runner)))
+                        :effect (effect (runner-install target {:no-cost true}))}} card))}
 
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
@@ -410,7 +412,8 @@
    "Singularity"
    {:prompt "Choose a server" :choices (req remotes)
     :effect (effect (run target
-                      {:replace-access
+                      {:req (req (= target :remote))
+                       :replace-access
                        {:msg "trash all cards in the server at no cost"
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
@@ -493,14 +496,16 @@
     :effect (effect (move target :hand))}
 
    "Vamp"
-   {:effect (effect (run :hq {:replace-access
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
                               {:prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                                :effect (effect (lose :corp :credit target) (gain :tag 1))}} card))}
 
    "Wanton Destruction"
    {:effect (effect
-             (run :hq {:replace-access
+             (run :hq {:req (req (= target :hq))
+                       :replace-access
                        {:msg (msg "Wanton Destruction to force the Corp to discard " target
                                   " cards from HQ at random")
                         :prompt "How many [Click] do you want to spend?"
@@ -508,16 +513,16 @@
                         :effect (req (let [n (Integer/parseInt target)]
                                        (when (pay state :runner card :click n)
                                          (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
-                                       
+
    "Windfall"
    {:effect (req (shuffle! state :runner :deck)
                  (let [topcard (first (:deck runner))
                        cost (:cost topcard)]
                    (if (= (:type topcard) "Event")
-                     (do (trash state side topcard) 
-                         (system-msg state side (str "shuffles their Stack and trashes " 
+                     (do (trash state side topcard)
+                         (system-msg state side (str "shuffles their Stack and trashes "
                           (:title topcard) " to gain 0 [Credits]")))
                      (do (gain state side :credit cost)
-                         (trash state side topcard) 
-                         (system-msg state side (str "shuffles their Stack and trashes " 
+                         (trash state side topcard)
+                         (system-msg state side (str "shuffles their Stack and trashes "
                           (:title topcard) " to gain " cost " [Credits]"))))))}})
