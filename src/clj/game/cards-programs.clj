@@ -251,6 +251,9 @@
      :pre-access {:req (req (= target :rd))
                   :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
 
+   "Multithreader"
+   {:recurring 2}
+
    "Nerve Agent"
    {:events
     {:successful-run {:req (req (= target :hq))
