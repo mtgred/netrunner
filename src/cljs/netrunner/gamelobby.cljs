@@ -50,7 +50,7 @@
    (fn [user]
      (om/set-state! owner :title (str (:username user) "'s game"))
      (om/set-state! owner :editing true)
-     (om/set-state! owner :allowspectator false)
+     (om/set-state! owner :allowspectator true)
      (-> ".game-title" js/$ .select))))
 
 (defn create-game [cursor owner]
@@ -199,7 +199,7 @@
                                 :value (:title state) :placeholder "Title"}]
             [:p.flash-message (:flash-message state)]
             [:label
-             [:input {:type "checkbox"
+             [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
              "Allow spectators"]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
