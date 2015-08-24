@@ -56,15 +56,6 @@ joinGame = (socket, gameid) ->
     socket.emit("netrunner", {type: "game", gameid: gameid})
     lobby.emit('netrunner', {type: "games", games: games})
 
-watchGame = (socket, gameid) ->
-  game = games[gameid]
-  if game
-    game.spectators.push({user: socket.request.user, id: socket.id})
-    socket.join(gameid)
-    socket.gameid = gameid
-    socket.emit("netrunner", {type: "game", gameid: gameid})
-    lobby.emit('netrunner', {type: "games", games: games})
-
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
@@ -133,11 +124,20 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           text: "#{socket.request.user.username} joined the game."
 
       when "watch"
-        watchGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          text: "#{socket.request.user.username} joined the game as a spectator."
+        game = games[msg.gameid]
+        if game
+          game.spectators.push({user: socket.request.user, id: socket.id})
+          socket.join(msg.gameid)
+          socket.gameid = gameid
+          socket.emit("netrunner", {type: "game", gameid: gameid, started: game.started})
+          lobby.emit('netrunner', {type: "games", games: games})
+          if game.started
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} joined the game as a spectator."}))
+          else
+            socket.broadcast.to(msg.gameid).emit 'netrunner',
+              type: "say"
+              user: "__system__"
+              text: "#{socket.request.user.username} joined the game as a spectator."
 
       when "reconnect"
         game = games[msg.gameid]

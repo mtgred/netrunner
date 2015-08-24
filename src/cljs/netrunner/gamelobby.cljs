@@ -29,7 +29,8 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "game" (swap! app-state assoc :gameid (:gameid msg))
+          "game" (do (swap! app-state assoc :gameid (:gameid msg))
+                     (when (:started msg) (launch-game nil)))
           "games" (do (swap! app-state assoc :games (sort-by :date > (vals (:games msg))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
@@ -178,7 +179,7 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
-               (when (and (:allowspectator game) (not gameid) (not (:started game)))
+               (when (and (:allowspectator game) (not gameid))
                  (let [id (:gameid game)]
                   [:button {:on-click #(watch-game id owner)} "Watch"]))
                (let [c (count (:spectators game))]
