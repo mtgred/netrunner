@@ -27,29 +27,31 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0) 
+                          (= (first %) :memory)) ;; memoryunits may be negative
+                     costs)
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
 (defn deduce [state side [attr value]]
-  (swap! state update-in [side attr] #(max 0 (- % value)))
+  (swap! state update-in [side attr] (if (= attr :memory)
+                                       #(- % value) ;; memoryunits may be negative
+                                       #(max 0 (- % value))))
   (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))
     (swap! state update-in [:runner :run-credit] #(max 0 (- % value)))))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
-    (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
-               (or (not forfeit-cost) (not (empty? scored))))
-      (when forfeit-cost
-           (if (= (count scored) 1)
-             (forfeit state side (first scored))
-             (prompt! state side card "Choose an Agenda to forfeit" scored
-                      {:effect (effect (forfeit target))})))
-      (not (doseq [c costs]
-             (when (= (first c) :click)
-               (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
-               (swap! state assoc-in [side :register :spent-click] true))
-             (deduce state side c))))))
+    (when forfeit-cost
+         (if (= (count scored) 1)
+           (forfeit state side (first scored))
+           (prompt! state side card "Choose an Agenda to forfeit" scored
+                    {:effect (effect (forfeit target))})))
+    (not (doseq [c costs]
+           (when (= (first c) :click)
+             (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
+             (swap! state assoc-in [side :register :spent-click] true))
+           (deduce state side c)))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
