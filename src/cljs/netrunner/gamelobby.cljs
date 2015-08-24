@@ -15,7 +15,12 @@
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
 (defn launch-game [game]
-  (let [side (if (= (get-in game [:runner :user]) (:user @app-state)) :runner :corp)]
+  (let [user (:user @app-state)
+        side (if (= (get-in game [:runner :user]) user)
+               :runner
+               (if (= (get-in game [:corp :user]) user)
+                 :corp
+                 :spectator))]
     (init-game game side))
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)

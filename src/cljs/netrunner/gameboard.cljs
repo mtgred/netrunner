@@ -103,29 +103,30 @@
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
   (let [side (:side @game-state)]
-    (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
-      (send-command "select" {:card card})
-      (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
-        (handle-abilities card owner)
-        (if (= side :runner)
-          (case (first zone)
-            "hand" (if (:host card)
-                     (when (:installed card)
-                       (handle-abilities card owner))
-                     (send-command "play" {:card card}))
-            ("rig" "current" "onhost") (handle-abilities card owner)
-            nil)
-          (case (first zone)
-            "hand" (case type
-                     ("Upgrade" "ICE") (if root
-                                         (send-command "play" {:card card :server root})
-                                         (-> (om/get-node owner "servers") js/$ .toggle))
-                     ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                                          (send-command "play" {:card card :server "New remote"})
-                                          (-> (om/get-node owner "servers") js/$ .toggle))
-                     (send-command "play" {:card card}))
-            ("servers" "scored" "current") (handle-abilities card owner)
-            nil))))))
+    (when (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state))
+      (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
+        (send-command "select" {:card card})
+        (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
+          (handle-abilities card owner)
+          (if (= side :runner)
+            (case (first zone)
+              "hand" (if (:host card)
+                       (when (:installed card)
+                         (handle-abilities card owner))
+                       (send-command "play" {:card card}))
+              ("rig" "current" "onhost") (handle-abilities card owner)
+              nil)
+            (case (first zone)
+              "hand" (case type
+                       ("Upgrade" "ICE") (if root
+                                           (send-command "play" {:card card :server root})
+                                           (-> (om/get-node owner "servers") js/$ .toggle))
+                       ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                                            (send-command "play" {:card card :server "New remote"})
+                                            (-> (om/get-node owner "servers") js/$ .toggle))
+                       (send-command "play" {:card card}))
+              ("servers" "scored" "current") (handle-abilities card owner)
+              nil)))))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -606,8 +607,8 @@
     (render-state [this state]
       (sab/html
        (when side
-         (let [me (side cursor)
-               opponent ((if (= side :corp) :runner :corp) cursor)]
+         (let [me ((if (= side :runner) :runner :corp) cursor)
+               opponent ((if (= side :runner) :corp :runner) cursor)]
            [:div.gameboard
             [:div.mainpane
              (om/build zones {:player opponent :remotes (get-in cursor [:corp :servers :remote])})
@@ -627,7 +628,7 @@
                 (om/build rfg-view {:cards (:play-area me)})
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
-               (if (= (:user me) (:user @app-state))
+               (when-not (= side :spectator)
                  [:div.button-pane { :on-mouse-over card-preview-mouse-over
                                     :on-mouse-out  card-preview-mouse-out  }
                   (when-not (:keep me)
