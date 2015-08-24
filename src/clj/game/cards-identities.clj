@@ -89,7 +89,7 @@
                          :effect (req (let [type (:type target)]
                                         (resolve-ability
                                           state side
-                                          {:prompt (msg "Choose a " type "to install")
+                                          {:prompt (msg "Choose a " type " to install")
                                            :choices (req (filter #(has? % :type type) (:hand runner)))
                                            :msg (msg "install " (:title target))
                                            :effect (effect (runner-install target))} card nil)))}}}}
