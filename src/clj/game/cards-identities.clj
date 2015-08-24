@@ -229,9 +229,12 @@
 
    "The Foundry: Refining the Process"
    {:events
-    {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
+    {:rez {:req (req (and (= (:type target) "ICE") ;; Did you rez and ice just now
+                          (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
+                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
+                                    (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-                {:prompt "Add another copy to HQ?" :once :per-turn
+                {:prompt "Add another copy to HQ?"
                  :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                                  (shuffle! :deck))
                  :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
