@@ -5,12 +5,12 @@
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
-   {:events {:runner-turn-begins 
+   {:events {:runner-turn-begins
               {:prompt "Select a card to install facedown"
                :choices {:max 1 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
                :req (req (> (count (:hand runner)) 0))
                :effect (req (runner-install state side target {:facedown true}))}}}
-   
+
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
              {:prompt "Take 1 tag or suffer 2 meat damage?"
@@ -220,7 +220,7 @@
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
-   "Sunny Labeau: Security Specialist"
+   "Sunny Lebeau: Security Specialist"
    {:effect (effect (gain :link 2))}
 
    "Tennin Institute: The Secrets Within"
