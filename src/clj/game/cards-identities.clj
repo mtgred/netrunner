@@ -152,9 +152,13 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)))
+   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)
+                                             (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                                       (do
+                                                         (prn successes)
+                                                         (filter #(not (= % :remote)) successes))))))
                               :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :msg "force the Corp to draw 1 card" :once :per-turn
+                                         :msg "force the Corp to draw 1 card"
                                          :effect (effect (draw :corp))}}}}
 
    "Leela Patel: Trained Pragmatist"
