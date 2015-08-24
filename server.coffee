@@ -121,8 +121,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         game = games[gid]
         if game
           if game.players.length > 1
-            msg.action = "quit"
-            requester.send(JSON.stringify(msg))
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{msg.user.username} left the game."}))
           removePlayer(socket)
 
       when "join"

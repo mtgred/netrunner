@@ -83,7 +83,8 @@
   (om/update! cursor :message []))
 
 (defn leave-game []
-  (send {:action "leave-game" :gameid (:gameid @app-state) :side (:side @game-state)})
+  (send {:action "leave-game" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
   (swap! app-state dissoc :gameid)
   (.removeItem js/localStorage "gameid")
