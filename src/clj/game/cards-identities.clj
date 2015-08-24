@@ -85,7 +85,7 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from Grip?") :once :per-turn
+             {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
                          :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
                                         (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
                          :effect (req (let [type (:type target)]
