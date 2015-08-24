@@ -68,7 +68,9 @@
    "Comet"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:play-event
-             {:optional {:prompt "Play another event?" :once :per-turn
+             {:optional {:prompt "Play another event?"
+                         :req (req (and (first-event state side :play-event)
+                                        (not (empty? (filter #(has? % :type "Event") (:hand runner))))))
                          :effect (effect (resolve-ability
                                            {:prompt "Choose an Event to play"
                                             :choices (req (filter #(has? % :type "Event") (:hand runner)))
