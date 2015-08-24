@@ -314,7 +314,7 @@
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}
-   
+
    "News Team"
    {:access {:req (req (not= (first (:zone card)) :deck))
              :msg (msg "give the Runner 2 tags or -1 agenda points")
@@ -327,7 +327,7 @@
                                                      (move state :runner card :scored nil))
                                                  (gain :runner :tag 2)))}
                                card targets))}}
-   
+
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
@@ -562,7 +562,7 @@
 
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
-   
+
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
     :trash-effect {:req (req (:access @state))

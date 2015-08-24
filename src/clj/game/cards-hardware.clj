@@ -27,7 +27,7 @@
                       :effect (effect (rez :corp target))}}}
 
    "Bookmark"
-   {:abilities [{:label "Host 3 cards from your Grip facedown" 
+   {:abilities [{:label "Host 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
                  :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
                  :effect (req (doseq [c targets]
@@ -273,7 +273,7 @@
    "Q-Coherence Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events (let [e {:msg "trash itself" :req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card))}] 
+                     :effect (effect (trash card))}]
               {:runner-trash e :corp-trash e})}
 
    "R&D Interface"

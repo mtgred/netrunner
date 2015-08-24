@@ -20,8 +20,8 @@
                            ;; trash cards from right to left
                            ;; otherwise, auto-killing servers would move the cards to the next server
                            ;; so they could no longer be trashed in the same loop
-    :effect (req (doseq [c (->> (all-installed state :corp) 
-                                (sort-by #(vec (:zone %))) 
+    :effect (req (doseq [c (->> (all-installed state :corp)
+                                (sort-by #(vec (:zone %)))
                                 (reverse))]
                    (trash state side c))
                  (doseq [c (all-installed state :runner)]

@@ -1382,9 +1382,9 @@
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
-        label (if (and (not (= last-zone :play-area)) 
+        label (if (and (not (= last-zone :play-area))
                        (or (and (= (:side c)  "Runner") (not (:facedown c)))
-                           (:rezzed c) 
+                           (:rezzed c)
                            (:seen c)
                            (= last-zone :deck)))
                 (:title c) "a card")

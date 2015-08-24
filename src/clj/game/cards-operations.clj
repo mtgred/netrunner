@@ -7,7 +7,7 @@
     :prompt "Choose an agenda to trigger"
     :msg (msg "trigger the score ability on " (:title target))
     :effect (effect (card-init target))}
-      
+
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
     :effect (effect (move target :hand) (shuffle! :deck))}
