@@ -132,6 +132,10 @@
    {:init {:root "HQ"}
     :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
+   "Rutherford Grid"
+   {:events {:pre-init-trace {:req (req (> (java.util.Collections/indexOfSubList (vec (:zone card)) (vec (get-in @state [:run :server]))) 0))
+                              :effect (effect (init-trace-bonus 2))}}}
+    
    "Ryon Knight"
    {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}

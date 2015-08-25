@@ -270,11 +270,18 @@
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
-  (let [base (if (fn? base) (base state side card nil) base) s (+ base boost)]
-    (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
-                                 s " (" base " + " boost " [Credits])"))
+  (trigger-event state side :pre-init-trace card)
+  (let [bonus (or (get-in @state [:bonus :trace]) 0)
+        base (if (fn? base) (base state side card nil) base) 
+        total (+ base boost bonus)]
+    (system-msg state :corp (str "uses " (:title card) 
+                                 " to initiate a trace with strength " total 
+                                 " (" base
+                                 (when (> bonus 0) (str " + " bonus " bonus")) 
+                                 " + " boost " [Credits])"))
+    (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
-    (swap! state assoc :trace {:strength s :ability ability :card card})
+    (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
 (defn resolve-select [state side]
@@ -494,6 +501,9 @@
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
+(defn init-trace-bonus [state side n]
+  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))  
+  
 (defn rez-cost [state side {:keys [cost] :as card}]
   (if (nil? cost)
     nil
