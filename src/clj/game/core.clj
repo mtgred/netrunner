@@ -1169,6 +1169,8 @@
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
                     (req state side card targets) true)
+                  (not (and (has? card :subtype "Current")
+                            (get-in @state [side :register :cannot-play-current])))
                   (not (and (has? card :subtype "Priority")
                             (get-in @state [side :register :spent-click])))
                   (pay state side card :credit (:cost card) extra-cost
@@ -1378,6 +1380,9 @@
 
 (defn prevent-steal [state side]
   (swap! state assoc-in [:runner :register :cannot-steal] true))
+
+(defn prevent-current [state side]
+  (swap! state assoc-in [:runner :register :cannot-play-current] true))
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))

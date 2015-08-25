@@ -549,6 +549,11 @@
     :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
+   "The News Now Hour"
+   {:events {:runner-turn-begins {:effect (req (prevent-current state side))}}
+    :effect (req (prevent-current state side))
+    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))}
+                             
    "The Root"
    {:recurring 3}
 
