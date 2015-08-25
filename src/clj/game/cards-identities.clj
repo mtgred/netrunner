@@ -85,11 +85,13 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from Grip?") :once :per-turn
+             {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
+                         :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
+                                        (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
                          :effect (req (let [type (:type target)]
                                         (resolve-ability
                                           state side
-                                          {:prompt (msg "Choose a " type "to install")
+                                          {:prompt (msg "Choose a " type " to install")
                                            :choices (req (filter #(has? % :type type) (:hand runner)))
                                            :msg (msg "install " (:title target))
                                            :effect (effect (runner-install target))} card nil)))}}}}
@@ -150,9 +152,13 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)))
+   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)
+                                             (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                                       (do
+                                                         (prn successes)
+                                                         (filter #(not (= % :remote)) successes))))))
                               :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :msg "force the Corp to draw 1 card" :once :per-turn
+                                         :msg "force the Corp to draw 1 card"
                                          :effect (effect (draw :corp))}}}}
 
    "Leela Patel: Trained Pragmatist"
@@ -230,9 +236,12 @@
 
    "The Foundry: Refining the Process"
    {:events
-    {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
+    {:rez {:req (req (and (= (:type target) "ICE") ;; Did you rez and ice just now
+                          (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
+                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
+                                    (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-                {:prompt "Add another copy to HQ?" :once :per-turn
+                {:prompt "Add another copy to HQ?"
                  :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                                  (shuffle! :deck))
                  :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
