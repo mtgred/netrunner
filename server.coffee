@@ -13,6 +13,7 @@ localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
+async = require('async');
 
 # MongoDB connection
 appName = 'netrunner'
@@ -250,6 +251,26 @@ app.post '/register', (req, res) ->
             db.collection('decks').insert demoDecks, (err, newDecks) ->
               throw err if err
               res.json(200, {user: req.user, decks: newDecks})
+
+app.post '/forgot', (req, res) ->
+  async.waterfall [
+    (done) ->
+      crypto.randomBytes 20, (err, buf) ->
+        token = buf.toString('hex')
+        done(err, token)
+    (token, done) ->
+      db.collection('users').findOne { email: req.body.email }, (err, user) ->
+        if (!user)
+          res.send {message: 'No account with that email address exists.'}, 421
+        else
+          # 1 hour expiration
+          user.resetPasswordToken = token
+          user.resetPasswordExpires = Date.now() + 3600000
+
+          user.save (err) ->
+            done(err, token, user)
+            res.send {message: 'OK'}, 200
+  ]
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
