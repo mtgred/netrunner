@@ -133,14 +133,13 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn playable? [{:keys [title side zone cost type uniqueness abilities memoryunits] :as card}]
+(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-              (or (not memoryunits) (<= memoryunits (:memory me)))
               (> (:click me) 0)))))
 
 (defn is-card-item [item]
@@ -493,11 +492,11 @@
                   (when (> run-credit 0)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
+       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (< memory 0) [:div.warning "!"]) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when me? (controls :tag))]
+       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (> tag 0) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
