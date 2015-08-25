@@ -263,6 +263,32 @@
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
                  :effect (effect (lose :runner :click 1))}]}
 
+   "Howler"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))]
+   {:abilities
+    [{:label "Install a piece of Bioroid ICE from HQ or Archives"
+      :prompt "Install ICE from HQ or Archives?"
+      :choices ["HQ" "Archives"]
+      :effect (req (let [fr target]
+                     (resolve-ability state side
+                       {:prompt "Choose a Bioroid ICE to install"
+                        :choices (req (filter #(and (= (:type %) "ICE") (has? % :subtype "Bioroid"))
+                                              ((if (= fr "HQ") :hand :discard) corp)))
+                        :effect (req (let [newice (assoc target :zone (:zone card))
+                                           hndx (ice-index state card)
+                                           ices (get-in @state (cons :corp (:zone card)))
+                                           newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
+                                       (swap! state assoc-in (cons :corp (:zone card)) newices)
+                                       (swap! state update-in (cons :corp (:zone target))
+                                              (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                       (update! state side (assoc card :howler-target newice))
+                                       (swap! state update-in [:run :position] inc)
+                                       (trigger-event state side :corp-install newice)))} card nil)))}]
+    :events {:run-ends {:req (req (:howler-target card))
+                        :effect (effect (trash card {:cause :self-trash})
+                                        (derez (get-card state (:howler-target card))))}}})
+
    "Hudson 1.0"
    {:abilities [{:msg "prevent the Runner from accessing more than 1 card during this run"
                  :effect (effect (max-access 1))}]}
