@@ -27,7 +27,8 @@
               (* 3 (:advance-counter target)) " [Credits]")}
 
    "Bad Times"
-   {:effect (req (lose state :runner :memory 2)
+   {:req (req tagged)
+    :effect (req (lose state :runner :memory 2)
                  (system-msg state :runner "loses 2[mu] until the end of the turn")
                  (when (< (:memory runner) 0)
                   (system-msg state :runner "must trash programs to free up [mu]"))
