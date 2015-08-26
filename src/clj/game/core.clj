@@ -759,6 +759,10 @@
           (trash state side current))
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
 
+(defn as-agenda [state side card n]
+  (move state side (assoc card :agendapoints n) :scored)
+  (gain-agenda-point state side n))
+
 (defn steal [state side card]
   (let [c (move state :runner card :scored)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
