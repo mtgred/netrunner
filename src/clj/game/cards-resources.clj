@@ -470,6 +470,7 @@
    {:effect (effect (lose :runner :max-hand-size 2))
     :leave-play (effect (gain :runner :max-hand-size 2))
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (:max-hand-size runner)))
+                                :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
 
    "Same Old Thing"
