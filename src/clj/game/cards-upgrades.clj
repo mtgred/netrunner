@@ -133,7 +133,7 @@
     :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
    "Rutherford Grid"
-   {:events {:pre-init-trace {:req (req (> (java.util.Collections/indexOfSubList (vec (:zone card)) (vec (get-in @state [:run :server]))) 0))
+   {:events {:pre-init-trace {:req (req this-server)
                               :effect (effect (init-trace-bonus 2))}}}
     
    "Ryon Knight"
