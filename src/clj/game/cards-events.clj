@@ -136,6 +136,24 @@
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}
 
+   "Exploratory Romp"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target
+                       {:replace-access
+                        {:prompt "Advancements to remove from a card in or protecting this server?"
+                         :choices ["0", "1", "2", "3"]
+                         :effect (req (let [c (Integer/parseInt target)]
+                                        (resolve-ability
+                                          state side
+                                          {:choices {:req #(and (contains? % :advance-counter)
+                                                                (= (:server run) (vec (rest (butlast (:zone %))))))}
+                                          :msg (msg "remove " c " advancements from "
+                                                (if (:rezzed target) (:title target) "a card"))
+                                          :effect (req (add-prop state :corp target :advance-counter (- c))
+                                                       (swap! state update-in [:runner :prompt] rest)
+                                                       (handle-end-run state side))}
+                                         card nil)))}} card))}
+
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
     :effect (effect (move target :hand) (shuffle! :deck))}
