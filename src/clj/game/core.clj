@@ -1220,8 +1220,8 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card}
-    {:keys [extra-cost no-cost host-card facedown] :as params}]
+  ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
+    {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
 
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
@@ -1243,9 +1243,11 @@
                  installed-card (card-init state side (assoc c :installed true) (not facedown))]
              (if facedown
                (system-msg state side "installs a card facedown" )
+             (if custom-message
+               (system-msg state side custom-message)
                (system-msg state side (str "installs " title
                                            (when host-card (str " on " (:title host-card)))
-                                           (when no-cost " at no cost"))))
+                                           (when no-cost " at no cost")))))
              (trigger-event state side :runner-install installed-card)
              (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
    (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))

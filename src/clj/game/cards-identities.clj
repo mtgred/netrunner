@@ -1,7 +1,16 @@
 (in-ns 'game.core)
 
 (def cards-identities
-  {"Andromeda: Dispossessed Ristie"
+  {"Adam: Compulsive Hacker"
+   {:effect (req (let [titles ["Safety First" "Always Be Running" "Neutralize All Threats"]
+                       indeck (filter #(some #{(:title %)} titles) (:deck runner))
+                       inhand (filter #(some #{(:title %)} titles) (:hand runner))]
+                   (doseq [c (concat indeck inhand)]
+                     (runner-install state side c {:no-cost true 
+                                                   :custom-message (str "starts with " (:title c) " in play")}))
+                   (draw state :runner (count inhand))))}
+  
+   "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
