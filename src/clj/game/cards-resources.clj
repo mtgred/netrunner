@@ -458,6 +458,12 @@
     :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Safety First"
+   {:effect (effect (lose :runner :max-hand-size 2))
+    :leave-play (effect (gain :runner :max-hand-size 2))
+    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (:max-hand-size runner)))
+                                :effect (effect (draw 1))}}}
+
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
