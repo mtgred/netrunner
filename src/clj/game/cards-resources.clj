@@ -301,6 +301,14 @@
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
 
+   "Neutralize All Threats"
+   {:effect (effect (gain :hq-access 1))
+    :leave-play (effect (lose :hq-access 1))
+    :events {:access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
+             :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
+                                     (empty? (filter #(not (nil? (:trash %))) cards))))
+                         :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
+
    "New Angeles City Hall"
    {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
     :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (lose :tag 1))}]}

@@ -849,11 +849,17 @@
             (when (not= (:zone c) [:discard])
               (if-let [trash-cost (trash-cost state side c)]
                 (let [card (assoc c :seen true)]
-                  (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                    {:cost [:credit trash-cost]
-                                     :effect (effect (trash card)
-                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                      (:title card))))} nil))
+                  (if (and (get-in @state [:runner :register :force-trash])
+                           (can-pay? state :runner :credit trash-cost))
+                    (resolve-ability state :runner {:cost [:credit trash-cost]
+                                                    :effect (effect (trash card)
+                                                            (system-msg (str "is forced to pay " trash-cost
+                                                                             " [Credits] to trash " (:title card))))} card nil)
+                    (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                      {:cost [:credit trash-cost]
+                                       :effect (effect (trash card)
+                                                       (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                        (:title card))))} nil)))
                 (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
