@@ -91,7 +91,9 @@
          c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (= (:side card) "Runner") (:rezzed card) (= (first (:zone card)) :current))
+       (when (or (and (= (:side card) "Runner") (:installed card))
+                 (:rezzed card)
+                 (= (first (:zone card)) :current))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
