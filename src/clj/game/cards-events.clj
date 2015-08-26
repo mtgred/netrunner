@@ -378,7 +378,7 @@
 
    "Retrieval Run"
    {:effect (effect (run :archives
-                      {:req (req (= target :hq))
+                      {:req (req (= target :archives))
                        :replace-access
                        {:prompt "Choose a program to install" :msg (msg "install " (:title target))
                         :choices (req (filter #(= (:type %) "Program") (:discard runner)))
