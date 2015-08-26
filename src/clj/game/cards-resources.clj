@@ -6,20 +6,28 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (not tagged)) :msg "take 1 tag" :effect (effect (gain :runner :tag 1))}
-     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) :msg "give the Corp 1 bad publicity"
-                           :effect (effect (gain :corp :bad-publicity 1))}}}
+    {:corp-turn-begins {:req (req (not tagged)) 
+                        :msg "take 1 tag" 
+                        :effect (effect (gain :runner :tag 1))}
+     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) 
+                          :msg "give the Corp 1 bad publicity"
+                          :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
                                            (empty? (filter #(= :click %)
                                                            (mapcat first (turn-events state side :runner-loss))))))
-                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
+                           :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aesops Pawnshop"
    {:abilities [{:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                  :effect (effect (gain :credit 3) (trash target))}]}
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :effect (effect (gain :credit 3) (trash target))}]}
+
+   "Always Be Running"
+   {:abilities [{:once :per-turn
+                 :cost [:click 2]
+                 :msg (msg "break 1 subroutine")}]}
 
    "All-nighter"
    {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
