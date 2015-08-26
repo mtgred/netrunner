@@ -27,7 +27,16 @@
               (* 3 (:advance-counter target)) " [Credits]")}
 
    "Bad Times"
-   {:req (req tagged)}
+   {:effect (req (lose state :runner :memory 2)
+                 (system-msg state :runner "loses 2[mu] until the end of the turn")
+                 (when (< (:memory runner) 0)
+                  (system-msg state :runner "must trash programs to free up [mu]"))
+                 (register-events state side (:events (card-def card))
+                                             (assoc card :zone '(:discard))))
+    :events {:corp-turn-ends
+             {:effect (req (gain state :runner :memory 2)
+                           (system-msg state :runner "regains 2[mu]")
+                           (unregister-events state side card))}}}
 
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
