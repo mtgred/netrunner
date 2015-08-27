@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare trash-program)
+
 (def cards-assets
   {"Adonis Campaign"
    {:effect (effect (add-prop card :counter 12))
@@ -262,6 +264,16 @@
                             :effect (req (doseq [c targets] (move state side c :deck))
                                          (shuffle! state side :deck))}
                            card nil))}]}
+
+   "Keegan Lane"
+   {:abilities [{:label "Remove a tag and trash to trash a program"
+                 :req (req (and this-server
+                                (> (get-in @state [:runner :tag]) 0)
+                                (not (empty? (filter #(has? % :type "Program") (all-installed state :runner))))))
+                 :msg (msg "remove 1 tag")
+                 :effect (req (resolve-ability state side trash-program card nil)
+                              (trash state side card {:cause :ability-cost})
+                              (lose state :runner :tag 1))}]}
 
    "Launch Campaign"
    {:effect (effect (add-prop card :counter 6))
