@@ -153,11 +153,13 @@
      (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
 
 (defn create-span-impl [item]
+  (if (= "[hr]" item)
+    [:hr ]
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
     [:span {:class "fake-link" :id code} title]
-    [:span item])))
+    [:span item]))))
 
 (defn get-alt-art [[title cards]]
   (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
