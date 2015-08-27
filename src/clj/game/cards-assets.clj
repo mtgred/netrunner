@@ -388,8 +388,8 @@
    "Reality Threedee"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :events {:corp-turn-begins
-             {:effect (req (gain state side :credit (if '(tagged) 2 1)))
-              :msg (msg (if '(tagged) "gain 2 [Credits]" "gain 1 [Credits]"))}}}
+             {:effect (req (gain state side :credit (if tagged 2 1)))
+              :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}}}
 
    "Reversed Accounts"
    {:advanceable :always
