@@ -275,6 +275,24 @@
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
+   "Lily Lockwell"
+   {:effect (effect (draw 3))
+    :msg (msg "draw 3 cards")
+    :abilities [{:label "Remove a tag to search R&D for an operation"
+                 :prompt "Choose an operation to put on top of R&D"
+                 :cost [:click 1]
+                 :choices (req (let [ops (filter #(has? % :type "Operation") (:deck corp))]
+                                 (if (empty? ops) ["No Operation in R&D"] ops)))
+                 :req (req (> (get-in @state [:runner :tag]) 0))
+                 :effect (req (if (not= target "No Operation found")
+                                (let [c (move state :corp target :play-area)]
+                                  (shuffle! state :corp :deck) 
+                                  (move state :corp c :deck {:front true}) 
+                                  (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
+                                (do (shuffle! state :corp :deck)
+                                    (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
+                                (lose state :runner :tag 1))}]}
+
    "Mark Yale"
    {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
                                     :msg "gain 1 [Credits]"}}
