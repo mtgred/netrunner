@@ -12,7 +12,7 @@
     :access {:optional
              {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
               :cost [:credit 2]
-              :yes-effect {:effect (req (let [agg card]
+              :yes-ability {:effect (req (let [agg card]
                                           (resolve-ability
                                            state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
                                                         :effect (effect (trash-cards targets))) agg nil)))}}}}
