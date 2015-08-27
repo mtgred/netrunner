@@ -37,7 +37,7 @@
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target))
     :abilities [{:counter-cost 1 :msg "look at the top card of Stack"
-                 :effect (req (when (zero? (:counter card)) (trash state :runner card)))
+                 :effect (req (when (zero? (:counter card)) (trash state :runner card {:unpreventable true}))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
                             :msg "add the top card of Stack to the bottom"
                             :yes-ability {:effect (req (move state side (first (:deck runner)) :deck))}}}]}
@@ -46,14 +46,14 @@
    {:data {:counter 12}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :runner :credit 2)
-                              (when (zero? (:counter card)) (trash state :runner card)))}]}
+                              (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Bank Job"
    {:data {:counter 8}
     :abilities [{:label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
-                              (when (= target (:counter card)) (trash state :runner card)))}]}
+                              (when (= target (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
    {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
@@ -84,7 +84,8 @@
    {:data {:counter 8}
     :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                   :effect (req (gain state :runner :credit 2)
-                                               (when (zero? (:counter card)) (trash state :runner card)))}}}
+                                               (when (zero? (:counter card)) (trash state :runner card
+                                                                                    {:unpreventable true})))}}}
 
    "Data Dealer"
    {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain :credit 9))
@@ -114,7 +115,7 @@
     :events {:runner-turn-begins {:msg "draw 2 cards" :counter-cost 1
                                   :effect (req (draw state :runner 2)
                                                (when (zero? (:counter card))
-                                                 (trash state :runner card)))}}}
+                                                 (trash state :runner card {:unpreventable true})))}}}
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
@@ -171,7 +172,7 @@
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect (req (gain state side :credit 1)
-                              (when (zero? (:counter card)) (trash state :runner card)))}]}
+                              (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
@@ -260,7 +261,7 @@
    {:data {:counter 16}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
                  :effect (req (gain state :runner :credit 4)
-                              (when (= (:counter card) 0) (trash state :runner card)))}]}
+                              (when (= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]

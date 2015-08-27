@@ -264,7 +264,7 @@
     :prevent {:damage [:meat]}
     :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
-                              (when (= (:counter card) 0) (trash state side card)))}]}
+                              (when (= (:counter card) 0) (trash state side card {:unpreventable true})))}]}
 
    "Prepaid VoicePAD"
    {:recurring 1}
