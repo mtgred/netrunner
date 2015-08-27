@@ -16,9 +16,11 @@
   (let [author (or user (get-in @state [side :user]))]
     (swap! state update-in [:log] #(conj % {:user author :text text}))))
 
-(defn system-msg [state side text]
-  (let [username (get-in @state [side :user :username])]
-    (say state side {:user "__system__" :text (str username " " text ".")})))
+(defn system-msg
+  ([state side text] (system-msg state side text nil))
+  ([state side text {:keys [hr]}]
+   (let [username (get-in @state [side :user :username])]
+    (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
@@ -1142,8 +1144,16 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
+(defn turn-message [state side start-of-turn]
+  (let [pre (if start-of-turn "started" "is ending")
+        hand (if (= side :runner) "their Grip" "HQ")
+        cards (count (get-in @state [side :hand]))
+        credits (get-in @state [side :credit])
+        text (str pre " their turn with " credits " [Credit] and " cards " cards in " hand)]
+    (system-msg state side text {:hr (not start-of-turn)})))
+
 (defn start-turn [state side args]
-  (system-msg state side (str "started their turn"))
+  (turn-message state side true)
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
@@ -1153,7 +1163,7 @@
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
-      (system-msg state side (str "is ending their turn"))
+      (turn-message state side false)
       (if (= side :runner)
         (do (when (< (get-in @state [:runner :max-hand-size]) 0)
               (flatline state))
