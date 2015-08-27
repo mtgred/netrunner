@@ -258,7 +258,7 @@
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
                                                    (when-let [yes-ability (:yes-ability ability)]
                                                      (resolve-ability state side yes-ability card targets))
-                                                   (when-let [no-ability (:no-effect ability)]
+                                                   (when-let [no-ability (:no-ability ability)]
                                                      (resolve-ability state side no-ability card targets)))))
 
 (defn resolve-trace [state side boost]
@@ -852,10 +852,10 @@
                   (if (pos? (count cost))
                     (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                                       {:cost cost
-                                       :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                        " to steal " (:title c)))
-                                                       (resolve-steal c))
-                                       :no-effect {:effect (effect (resolve-steal-events c))}} nil)
+                                       :yes-ability {:effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                                      " to steal " (:title c)))
+                                                                     (resolve-steal c))}
+                                       :no-ability {:effect (effect (resolve-steal-events c))}} nil)
                     (resolve-ability state :runner
                                      {:prompt (str "You access " (:title c)) :choices ["Steal"]
                                       :effect (req (resolve-steal state :runner c))} c nil)))

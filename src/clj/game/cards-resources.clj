@@ -621,7 +621,7 @@
               :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
                          :msg (msg "draw " (:title (first (:deck corp))))
                          :yes-ability {:effect :player :corp (effect (draw))}
-                         :no-effect {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
+                         :no-ability {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
 
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"
