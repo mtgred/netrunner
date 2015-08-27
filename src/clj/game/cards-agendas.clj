@@ -66,6 +66,15 @@
     :effect (req (if (> (:credit corp) 6)
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
+   "Corporate Sales Team"
+   (let [e {:msg "gain 1 [Credit]"  :counter-cost 1
+            :effect (req (gain state :corp :credit 1)
+                         (when (zero? (:counter card))
+                           (unregister-events state :corp card)))}]
+    {:effect (effect (add-prop card :counter 10))
+     :events {:runner-turn-begins e
+              :corp-turn-begins   e}})
+
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect (req (when (zero? (:counter card))
