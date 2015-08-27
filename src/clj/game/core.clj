@@ -870,11 +870,17 @@
             (when (not= (:zone c) [:discard])
               (if-let [trash-cost (trash-cost state side c)]
                 (let [card (assoc c :seen true)]
-                  (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                    {:cost [:credit trash-cost]
-                                     :effect (effect (trash card)
-                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                      (:title card))))} nil))
+                  (if (and (get-in @state [:runner :register :force-trash])
+                           (can-pay? state :runner :credit trash-cost))
+                    (resolve-ability state :runner {:cost [:credit trash-cost]
+                                                    :effect (effect (trash card)
+                                                            (system-msg (str "is forced to pay " trash-cost
+                                                                             " [Credits] to trash " (:title card))))} card nil)
+                    (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                      {:cost [:credit trash-cost]
+                                       :effect (effect (trash card)
+                                                       (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                        (:title card))))} nil)))
                 (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
@@ -1251,8 +1257,8 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card}
-    {:keys [extra-cost no-cost host-card facedown] :as params}]
+  ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
+    {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
 
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
@@ -1273,9 +1279,11 @@
                  installed-card (card-init state side (assoc c :installed true) (not facedown))]
              (if facedown
                (system-msg state side "installs a card facedown" )
+             (if custom-message
+               (system-msg state side custom-message)
                (system-msg state side (str "installs " title
                                            (when host-card (str " on " (:title host-card)))
-                                           (when no-cost " at no cost"))))
+                                           (when no-cost " at no cost")))))
              (trigger-event state side :runner-install installed-card)
              (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
    (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
