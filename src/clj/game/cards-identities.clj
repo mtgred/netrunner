@@ -24,7 +24,9 @@
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
     :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                       :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
+                                       :prompt "Draw a card?" 
+                                       :msg (msg "drew a card") 
+                                       :yes-ability {:effect (effect (draw 1))}}}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
@@ -88,13 +90,13 @@
              {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
                          :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
                                         (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
-                         :effect (req (let [type (:type target)]
-                                        (resolve-ability
-                                          state side
-                                          {:prompt (msg "Choose a " type " to install")
-                                           :choices (req (filter #(has? % :type type) (:hand runner)))
-                                           :msg (msg "install " (:title target))
-                                           :effect (effect (runner-install target))} card nil)))}}}}
+                         :yes-ability {:effect (req (let [type (:type target)]
+                                              (resolve-ability
+                                               state side
+                                               {:prompt (msg "Choose a " type " to install")
+                                                :choices (req (filter #(has? % :type type) (:hand runner)))
+                                                :msg (msg "install " (:title target))
+                                                :effect (effect (runner-install target))} card nil)))}}}}}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))
@@ -159,7 +161,7 @@
                                                          (filter #(not (= % :remote)) successes))))))
                               :optional {:prompt "Force the Corp to draw 1 card?"
                                          :msg "force the Corp to draw 1 card"
-                                         :effect (effect (draw :corp))}}}}
+                                         :yes-ability {:effect (effect (draw :corp))}}}}}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
@@ -242,8 +244,9 @@
                                     (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
                 {:prompt "Add another copy to HQ?"
-                 :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                 (shuffle! :deck))
+                 :yes-ability {:effect
+                              (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
+                                      (shuffle! :deck))}
                  :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
 
    "Titan Transnational: Investing In Your Future"

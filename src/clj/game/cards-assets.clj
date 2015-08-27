@@ -12,10 +12,10 @@
     :access {:optional
              {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
               :cost [:credit 2]
-              :effect (req (let [agg card]
-                             (resolve-ability
-                               state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
-                                            :effect (effect (trash-cards targets))) agg nil)))}}}
+              :yes-effect {:effect (req (let [agg card]
+                                          (resolve-ability
+                                           state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
+                                                        :effect (effect (trash-cards targets))) agg nil)))}}}}
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
@@ -47,7 +47,7 @@
     :access {:optional {:req (req installed)
                         :prompt "Pay 3 [Credits] to use Cerebral Overwriter ability?"
                         :cost [:credit 3] :msg (msg "do " (:advance-counter card) " brain damage")
-                        :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}
+                        :yes-ability {:effect (effect (damage :brain (:advance-counter card) {:card card}))}}}}
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
@@ -67,25 +67,22 @@
    {:events {:corp-turn-begins
              {:optional
               {:prompt "Move one advancement token between ICE?"
-               :effect (effect
-                         (resolve-ability
-                           {:choices {:req #(and (= (:type %) "ICE") (:advance-counter %))}
+               :yes-ability {:choices {:req #(and (= (:type %) "ICE") (:advance-counter %))}
                             :priority true
                             :effect (req
-                                      (let [fr target]
-                                        (resolve-ability
-                                          state side
-                                          {:priority true
-                                           :prompt "Move to where?"
-                                           :choices {:req #(and (= (:type %) "ICE")
-                                                                (not= (:cid fr) (:cid %))
-                                                                (or (= (:advanceable %) "always")
-                                                                    (and (= (:advanceable %) "while-rezzed")
-                                                                         (:rezzed %))))}
-                                           :effect (effect (add-prop :corp target :advance-counter 1)
-                                                           (add-prop :corp fr :advance-counter -1))} card nil)
-                                        card nil))}
-                           card nil))}}}}
+                                     (let [fr target]
+                                       (resolve-ability
+                                        state side
+                                        {:priority true
+                                         :prompt "Move to where?"
+                                         :choices {:req #(and (= (:type %) "ICE")
+                                                              (not= (:cid fr) (:cid %))
+                                                              (or (= (:advanceable %) "always")
+                                                                  (and (= (:advanceable %) "while-rezzed")
+                                                                       (:rezzed %))))}
+                                         :effect (effect (add-prop :corp target :advance-counter 1)
+                                                         (add-prop :corp fr :advance-counter -1))} card nil)
+                                       card nil))}}}}}
 
    "Contract Killer"
    {:advanceable :always
@@ -158,8 +155,8 @@
               :prompt "Pay 3 [Credits] to use Edge of World ability?"
               :msg (msg "do " (count (get-in corp [:servers :remote (last (:server run)) :ices]))
                         " brain damage")
-              :effect (req (damage state side :brain
-                                   (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}
+              :yes-ability {:effect (req (damage state side :brain
+                                        (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}}
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -209,7 +206,7 @@
     :access {:optional {:req (req installed) :prompt "Use Ghost Branch ability?"
                         :msg (msg "give the Runner " (:advance-counter card) " tag"
                                   (when (> (:advance-counter card) 1) "s"))
-                        :effect (effect (gain :runner :tag (:advance-counter card)))}}}
+                        :yes-ability {:effect (effect (gain :runner :tag (:advance-counter card)))}}}}
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -334,16 +331,14 @@
    "Plan B"
    {:advanceable :always
     :access {:optional
-             {:prompt "Score an Agenda from HQ?" :req (req installed)
-              :effect (effect
-                        (resolve-ability
-                          {:prompt "Choose an Agenda to score"
+             {:prompt "Score an Agenda from HQ?" 
+              :req (req installed)
+              :yes-ability {:prompt "Choose an Agenda to score"
                            :choices (req (filter #(and (has? % :type "Agenda")
                                                        (<= (:advancementcost %) (:advance-counter card)))
                                                  (:hand corp)))
                            :msg (msg "score " (:title target))
-                           :effect (effect (score (assoc target :advance-counter (:advancementcost target))))}
-                          card targets))}}}
+                           :effect (effect (score (assoc target :advance-counter (:advancementcost target))))}}}}
 
    "Primary Transmission Dish"
    {:recurring 3}
@@ -358,7 +353,7 @@
    {:advanceable :always
     :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?" :cost [:credit 1]
                         :req (req installed) :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
-                        :effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}
+                        :yes-ability {:effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}}
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
@@ -452,10 +447,10 @@
     :access {:optional
              {:req (req installed) :prompt "Pay 1 [Credits] to use Shattered Remains ability?"
               :cost [:credit 1]
-              :effect (req (let [shat card]
-                             (resolve-ability
-                               state side (assoc (assoc-in trash-hardware [:choices :max] (req (:advance-counter shat)))
-                                            :effect (effect (trash-cards targets))) shat nil)))}}}
+              :yes-ability {:effect (req (let [shat card]
+                                          (resolve-ability
+                                           state side (assoc (assoc-in trash-hardware [:choices :max] (req (:advance-counter shat)))
+                                                        :effect (effect (trash-cards targets))) shat nil)))}}}}
 
    "Shi.Kyū"
    {:access {:req (req (not= (first (:zone card)) :deck))
@@ -479,7 +474,7 @@
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
                         :prompt "Pay 4 [Credits] to use Snare! ability?" :cost [:credit 4]
                         :msg "do 3 net damage and give the Runner 1 tag"
-                        :effect (effect (damage :net 3 {:card card}) (gain :runner :tag 1))}}}
+                        :yes-ability {:effect (effect (damage :net 3 {:card card}) (gain :runner :tag 1))}}}}
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))

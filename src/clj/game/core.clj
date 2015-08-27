@@ -252,7 +252,8 @@
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
-                                                   (resolve-ability state side ability card targets)
+                                                   (when-let [yes-ability (:yes-ability ability)]
+                                                     (resolve-ability state side yes-ability card targets))
                                                    (when-let [no-ability (:no-effect ability)]
                                                      (resolve-ability state side no-ability card targets)))))
 

@@ -11,7 +11,7 @@
      {:corp-install  {:optional {:req (req (and (= (:type target) "ICE")
                                                 (= (card->server state card) (card->server state target))))
                                  :prompt "Rez ICE with rez cost lowered by 3?"
-                                 :effect (effect (rez-cost-bonus -3) (rez target))}}}}
+                                 :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
    {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
@@ -74,7 +74,8 @@
 
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                        :msg (msg "purge viruses") :effect (effect (purge))}}
+                        :msg (msg "purge viruses") 
+                        :yes-ability {:effect (effect (purge))}}}
     :abilities [{:msg "purge viruses" :effect (effect (purge) (trash card))}]}
 
    "Dedicated Technician Team"

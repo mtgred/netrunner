@@ -7,8 +7,9 @@
 (def cards-ice
   {"Archangel"
    {:access {:optional
-             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?" :cost [:credit 3]
-              :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}
+             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?" 
+              :yes-ability {:cost [:credit 3]
+                           :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
     :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
                  :trace {:base 6 :choices {:req #(:installed %)}
                          :msg (msg "add " (:title target) " to the Runner's Grip")
@@ -688,7 +689,7 @@
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
-                            :effect (effect (move (first (:deck corp)) :deck))}}]}
+                            :yes-ability {:effect (effect (move (first (:deck corp)) :deck))}}}]}
 
    "Zed 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}})

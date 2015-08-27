@@ -286,8 +286,10 @@
 
    "Networking"
    {:effect (effect (lose :tag 1))
-    :optional {:cost [:credit 1] :prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :msg "add it to their Grip" :effect (effect (move (last (:discard runner)) :hand))}}
+    :optional {:cost [:credit 1] 
+               :prompt "Pay 1 [Credits] to add Networking to Grip?"
+               :msg "add it to their Grip" 
+               :yes-ability {:effect  (effect (move (last (:discard runner)) :hand))}}}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))

@@ -135,7 +135,8 @@
    "Darwin"
    {:events {:runner-turn-begins
              {:optional {:cost [:credit 1] :prompt "Place 1 virus counter on Darwin?"
-                         :msg "place 1 virus counter" :effect (effect (add-prop card :counter 1))}}}
+                         :msg "place 1 virus counter" 
+                         :yes-ability {:effect (effect (add-prop card :counter 1))}}}}
     :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
 
    "Deus X"
