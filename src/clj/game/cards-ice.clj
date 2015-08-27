@@ -451,6 +451,14 @@
    "Neural Katana"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
 
+   "News Hound"
+   {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                {:label "End the run if a Current is active"
+                 :req (req (or (not (empty? (runner :current)))
+                               (not (empty? (corp :current))))) 
+                 :effect (effect (end-run)) :msg "end the run"}]}
+
    "NEXT Bronze"
    {:abilities [end-the-run]
     :strength-bonus (req (reduce (fn [c server]
