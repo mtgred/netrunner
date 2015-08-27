@@ -869,10 +869,10 @@
               (if-let [trash-cost (trash-cost state side c)]
                 (let [card (assoc c :seen true)]
                   (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                    {:cost [:credit trash-cost]
-                                     :effect (effect (trash card)
-                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                      (:title card))))} nil))
+                                    {:yes-ability {:cost [:credit trash-cost]
+                                                   :effect (effect (trash card)
+                                                                   (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                                    (:title card))))}} nil))
                 (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
