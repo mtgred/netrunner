@@ -157,6 +157,37 @@ button.small
   color: orangered
   margin-left: 5px
 
+.warning
+    position: relative
+    background: #34849F
+    border: 1px solid #9AC2CF
+    margin-left: 12px
+    width: 12px
+    display: inline-block
+    text-align: center
+
+.warning:after, .warning:before
+    right: 100%
+    top: 50%
+    border: solid transparent
+    content: " "
+    height: 0
+    width: 0
+    position: absolute
+    pointer-events: none
+
+.warning:after
+    border-color: rgba(52, 132, 159, 0)
+    border-right-color: #34849F
+    border-width: 8px
+    margin-top: -8px
+
+.warning:before
+    border-color: rgba(154, 194, 207, 0)
+    border-right-color: #9AC2CF
+    border-width: 10px
+    margin-top: -10px
+
 .fake-link
   color: orange
   cursor: pointer

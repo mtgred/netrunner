@@ -52,8 +52,7 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :max-hand-size 2))
     :leave-play (effect (gain :runner :max-hand-size 2))
-    :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "City Surveillance"
    {:events {:runner-turn-begins
@@ -128,8 +127,7 @@
 
    "Director Haas"
    {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
-    :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]
@@ -367,8 +365,7 @@
              {:effect (req (add-prop state side card :counter -1)
                            (when (= (:counter card) 1)
                              (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
-                             (move state :corp (dissoc card :counter) :scored)
-                             (gain state :corp :agenda-point 1)))} }}
+                             (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Reality Threedee"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -539,10 +536,14 @@
                           (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
     :leave-play (effect (gain :runner :agenda-point
                               (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
-    :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
     :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
+
+   "The News Now Hour"
+   {:events {:runner-turn-begins {:effect (req (prevent-current state side))}}
+    :effect (req (prevent-current state side))
+    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))}
 
    "The Root"
    {:recurring 3}
@@ -560,7 +561,4 @@
 
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
-    :trash-effect {:req (req (:access @state))
-                   :effect (effect (move :runner card :scored) (gain-agenda-point :runner 2))}}})
-
-
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}})

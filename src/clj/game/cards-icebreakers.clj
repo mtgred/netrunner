@@ -30,6 +30,20 @@
                               :run-ends breaker-auto-pump :ice-strength-changed breaker-auto-pump
                               :breaker-strength-changed breaker-auto-pump :approach-ice breaker-auto-pump })))
 
+(defn cloud-icebreaker [cdef]
+  (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
+                        (fn [k ref old new]
+                          (when (and (< (get-in old [:runner :link]) 2)
+                                     (> (get-in new [:runner :link]) 1))
+                            (gain state :runner :memory (:memoryunits card)))
+                          (when (and (> (get-in old [:runner :link]) 1)
+                                     (< (get-in new [:runner :link]) 2))
+                            (gain state :runner :memory (* -1 (:memoryunits card)))))))
+              :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
+                               (when (> (get-in @state [:runner :link]) 1)
+                                 (lose state :runner :memory (:memoryunits card))))
+              :install-cost-bonus (req (if (> (get-in @state [:runner :link]) 1) [:memory (* -1 (:memoryunits card))]))))
+
 (def cards-icebreakers
   {"Alpha"
    (auto-icebreaker ["All"]
@@ -103,16 +117,17 @@
                                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
    "Creeper"
-   (auto-icebreaker ["Sentry"]
-                    {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
-                                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
+   (cloud-icebreaker
+     (auto-icebreaker ["Sentry"]
+                      {:abilities [{:cost [:credit 2] :msg "break 1 sentry subroutine"}
+                                   {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]}))
 
    "Crowbar"
-   {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
-                         :effect (effect (update-breaker-strength card))}]
-              {:runner-install cloud :trash cloud :card-moved cloud})
-    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
+   (cloud-icebreaker {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                                           :effect (effect (update-breaker-strength card))}]
+                                {:runner-install cloud :trash cloud :card-moved cloud})
+                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
 
    "Crypsis"
    (auto-icebreaker ["All"]
@@ -199,19 +214,22 @@
                                  {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
 
    "GS Sherman M3"
-   (auto-icebreaker ["Barrier"]
-                    {:abilities [{:cost [:credit 2] :msg "break any number of barrier subroutines"}
-                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+   (cloud-icebreaker
+     (auto-icebreaker ["Barrier"]
+                      {:abilities [{:cost [:credit 2] :msg "break any number of barrier subroutines"}
+                                   {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]}))
 
    "GS Shrike M2"
-   (auto-icebreaker ["Sentry"]
-                    {:abilities [{:cost [:credit 2] :msg "break any number of sentry subroutines"}
-                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+   (cloud-icebreaker
+     (auto-icebreaker ["Sentry"]
+                      {:abilities [{:cost [:credit 2] :msg "break any number of sentry subroutines"}
+                                   {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]}))
 
    "GS Striker M1"
-   (auto-icebreaker ["Code Gate"]
-                    {:abilities [{:cost [:credit 2] :msg "break any number of code gate subroutines"}
-                                 {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
+   (cloud-icebreaker
+     (auto-icebreaker ["Code Gate"]
+                      {:abilities [{:cost [:credit 2] :msg "break any number of code gate subroutines"}
+                                   {:cost [:credit 2] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]}))
 
    "Inti"
    (auto-icebreaker ["Barrier"]
@@ -300,18 +318,18 @@
                                  {:cost [:credit 1] :msg "add 2 strength" :effect (effect (pump card 2)) :pump 2}]})
 
    "Shiv"
-   {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
-                         :effect (effect (update-breaker-strength card))}]
-              {:runner-install cloud :trash cloud :card-moved cloud})
-    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
+   (cloud-icebreaker {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                                           :effect (effect (update-breaker-strength card))}]
+                                {:runner-install cloud :trash cloud :card-moved cloud})
+                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
 
    "Spike"
-   {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-    :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
-                         :effect (effect (update-breaker-strength card))}]
-              {:runner-install cloud :trash cloud :card-moved cloud})
-    :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))}
+   (cloud-icebreaker {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
+                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                                           :effect (effect (update-breaker-strength card))}]
+                                {:runner-install cloud :trash cloud :card-moved cloud})
+                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
 
    "Study Guide"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
@@ -347,6 +365,7 @@
    {:abilities [{:msg "break 1 code gate subroutine"}]}
 
    "ZU.13 Key Master"
-   (auto-icebreaker ["Code Gate"]
-                    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
-                                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})})
+   (cloud-icebreaker
+     (auto-icebreaker ["Code Gate"]
+                      {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                                   {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]}))})
