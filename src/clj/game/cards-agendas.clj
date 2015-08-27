@@ -191,7 +191,9 @@
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
-                                :effect (effect (ice-strength-bonus 1))}}}
+                                :effect (effect (ice-strength-bonus 1))}
+             :pre-init-trace {:req (req (has? target :type "ICE"))
+                              :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
    {:data {:counter 2}
