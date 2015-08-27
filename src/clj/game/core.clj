@@ -851,7 +851,11 @@
                 (let [cost (steal-cost state side c)]
                   (if (pos? (count cost))
                     (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+<<<<<<< HEAD
                                       {:yes-ability {:cost cost
+=======
+                                      {:yes-ability {:cost
+>>>>>>> 8db3e973dc5876dbdad2587afb20b1bdc239a6e5
                                                      :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
                                                                                       " to steal " (:title c)))
                                                                      (resolve-steal c))}
