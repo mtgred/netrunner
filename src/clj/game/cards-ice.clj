@@ -542,7 +542,7 @@
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
                  :trace {:base 4 :choices {:req #(and (:installed %) (= (:type %) "Program"))}
                          :msg (msg "add " (:title target) " to the top of Stack")
-                         :effect (effect (move :runner target :deck true))}}]}
+                         :effect (effect (move :runner target :deck {:front true}))}}]}
 
    "Shinobi"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))

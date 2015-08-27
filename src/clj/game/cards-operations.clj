@@ -138,7 +138,7 @@
    {:req (req (:installed-resource runner-reg))
     :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
             :msg (msg "add " (:title target) " to the top of the Stack")
-            :effect (effect (move :runner target :deck true))
+            :effect (effect (move :runner target :deck {:front true}))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
