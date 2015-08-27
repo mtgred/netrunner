@@ -15,6 +15,8 @@ zmq = require('zmq')
 cors = require('cors')
 async = require('async');
 
+nodemailer = require('nodemailer');
+
 # MongoDB connection
 appName = 'netrunner'
 mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
@@ -264,12 +266,33 @@ app.post '/forgot', (req, res) ->
           res.send {message: 'No account with that email address exists.'}, 421
         else
           # 1 hour expiration
-          user.resetPasswordToken = token
-          user.resetPasswordExpires = Date.now() + 3600000
+          resetPasswordToken = token
+          resetPasswordExpires = Date.now() + 3600000
 
-          user.save (err) ->
+          db.collection('users').update { email: req.body.email }, {$set: {resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+            throw err if err
             done(err, token, user)
-            res.send {message: 'OK'}, 200
+#            res.send {message: 'Password reset sent.'}, 200
+    (token, user, done) ->
+      smtpTransport = nodemailer.createTransport({
+        service: 'SendGrid',
+        auth: {
+          user: 'jinteki-user',
+          pass: 'jinteki-user1'
+        }
+      })
+      mailOptions = {
+        from: 'support@jinteki.net',
+        to: user.email,
+        subject: 'Jinteki Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+      }
+      smtpTransport.sendMail mailOptions, (err, response) ->
+        throw err if err
+        res.send {message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'}, 200 
   ]
 
 app.get '/check/:username', (req, res) ->
