@@ -853,8 +853,8 @@
                 (let [cost (steal-cost state side c)]
                   (if (pos? (count cost))
                     (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                      {:cost cost
-                                       :yes-ability {:effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                      {:yes-ability {:cost cost
+                                                     :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
                                                                                       " to steal " (:title c)))
                                                                      (resolve-steal c))}
                                        :no-ability {:effect (effect (resolve-steal-events c))}} nil)
@@ -877,10 +877,10 @@
                                                             (system-msg (str "is forced to pay " trash-cost
                                                                              " [Credits] to trash " (:title card))))} card nil)
                     (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                      {:cost [:credit trash-cost]
-                                       :effect (effect (trash card)
-                                                       (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                        (:title card))))} nil)))
+                                      {:yes-ability {:cost [:credit trash-cost]
+                                                     :effect (effect (trash card)
+                                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                                      (:title card))))}} nil)))
                 (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
