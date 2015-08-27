@@ -1127,8 +1127,8 @@
         (resolve-ability state side ab card targets))))
 
 (defn turn-message [state side start-of-turn]
-  (let [pre (if start-of-turn "startet" "is ending")
-        hand (if (= side :runner) "Grip" "HQ")
+  (let [pre (if start-of-turn "started" "is ending")
+        hand (if (= side :runner) "their Grip" "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
         text (str pre " their turn with " credits " [Credit] and " cards " cards in " hand)]
