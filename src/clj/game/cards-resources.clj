@@ -32,7 +32,7 @@
                  :effect (req (when (zero? (:counter card)) (trash state :runner card)))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
                             :msg "add the top card of Stack to the bottom"
-                            :effect (req (move state side (first (:deck runner)) :deck))}}]}
+                            :yes-ability {:effect (req (move state side (first (:deck runner)) :deck))}}}]}
 
    "Armitage Codebusting"
    {:data {:counter 12}
@@ -169,9 +169,9 @@
    {:req (req (> (:link runner) 1))
     :events {:runner-turn-begins
              {:optional {:prompt "Use Globalsec Security Clearance to lose [Click]?" :msg "lose [Click]"
-                         :effect (effect (lose :click 1)
-                                         (prompt! card (str "The top card of R&D is "
-                                         (:title (first (:deck corp)))) ["OK"] {}))}}}}
+                         :yes-ability {:effect (effect (lose :click 1)
+                                                      (prompt! card (str "The top card of R&D is "
+                                                                         (:title (first (:deck corp)))) ["OK"] {}))}}}}}
 
    "Grifter"
    {:events {:runner-turn-ends
@@ -237,7 +237,7 @@
    "Joshua B."
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?" :msg "gain [Click]"
-                         :effect (effect (gain :click 1))
+                         :yes-ability {:effect (effect (gain :click 1))}
                          :end-turn {:effect (effect (gain :tag 1)) :msg "gain 1 tag"}}}}}
 
    "Kati Jones"
@@ -349,22 +349,22 @@
    (let [pphelper (fn [card cards]
                     (let [num (count cards)]
                       {:optional {:req (req (> num 0))
-                       :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
-                       :choices {:number (req num)}
-                       :msg "to shuffle their Stack"
-                       :effect (req (doseq [c (take (int target) cards)]
-                                      (trash state side c))
-                                    (shuffle! state :runner :deck)
-                                    (when (> (int target) 0)
-                                      (system-msg state side (str "trashes " (int target)
-                                                                  " cop" (if (> (int target) 1) "ies" "y")
-                                                                  " of " (:title card)))))}}))]
-    {:events {:runner-install {:req (req (first-event state side :runner-install))
-                               :effect (effect (resolve-ability
-                                                (pphelper target (->> (:deck runner)
-                                                                      (filter #(has? % :title (:title target)))
-                                                                      (vec)))
-                                                card nil))}}})
+                                  :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                                  :choices {:number (req num)}
+                                  :msg "to shuffle their Stack"
+                                  :yes-ability {:effect (req (doseq [c (take (int target) cards)]
+                                                              (trash state side c))
+                                                            (shuffle! state :runner :deck)
+                                                            (when (> (int target) 0)
+                                                              (system-msg state side (str "trashes " (int target)
+                                                                                          " cop" (if (> (int target) 1) "ies" "y")
+                                                                                          " of " (:title card)))))}}}))]
+     {:events {:runner-install {:req (req (first-event state side :runner-install))
+                                :effect (effect (resolve-ability
+                                                 (pphelper target (->> (:deck runner)
+                                                                       (filter #(has? % :title (:title target)))
+                                                                       (vec)))
+                                                 card nil))}}})
 
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
@@ -620,8 +620,8 @@
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
               :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
                          :msg (msg "draw " (:title (first (:deck corp))))
-                         :no-effect {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}
-                         :player :corp :effect (effect (draw))}}}}
+                         :yes-ability {:effect :player :corp (effect (draw))}
+                         :no-ability {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
 
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"

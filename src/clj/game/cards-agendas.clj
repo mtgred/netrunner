@@ -5,10 +5,10 @@
    {:optional {:prompt "Look at the top 3 cards of R&D?"
                :msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
                            (str "install " c " ICE and trash " (- 3 c) " cards")))
-               :effect (req (doseq [c (take 3 (:deck corp))]
-                              (if (= (:type c) "ICE")
-                                (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
-                                (trash state side c))))}}
+               :yes-ability {:effect (req (doseq [c (take 3 (:deck corp))]
+                                           (if (= (:type c) "ICE")
+                                             (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
+                                             (trash state side c))))}}}
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -107,7 +107,8 @@
 
    "Explode-a-palooza"
    {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-Palooza ability?"
-                        :msg "gain 5 [Credits]" :effect (effect (gain :corp :credit 5))}}}
+                        :msg "gain 5 [Credits]" 
+                        :yes-ability {:effect (effect (gain :corp :credit 5))}}}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
@@ -154,11 +155,12 @@
    {:events {:corp-turn-begins
              {:optional
               {:prompt "Add 1 card from Archives to bottom of R&D?"
-               :effect (effect (resolve-ability
-                                 {:prompt "Choose a card" :choices (:discard corp)
-                                  :effect (effect (move target :deck))
-                                  :msg (msg "add " (if (:seen target) (:title target) "a card")
-                                            " to the bottom of R&D")} card target))}}}}
+               :yes-ability {:effect (effect (resolve-ability
+                                              {:prompt "Choose a card"
+                                               :choices (:discard corp)
+                                               :effect (effect (move target :deck))
+                                               :msg (msg "add " (if (:seen target) (:title target) "a card")
+                                                         " to the bottom of R&D")} card target))}}}}}
 
    "Helium-3 Deposit"
    {:choices ["0", "1", "2"] :prompt "How many power counters?"
@@ -250,7 +252,7 @@
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
                :msg "give the Runner 1 tag and take 1 bad publicity"
-               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
+               :yes-ability {:effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}

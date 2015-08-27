@@ -71,11 +71,10 @@
              {:optional {:prompt "Play another event?"
                          :req (req (and (first-event state side :play-event)
                                         (not (empty? (filter #(has? % :type "Event") (:hand runner))))))
-                         :effect (effect (resolve-ability
-                                           {:prompt "Choose an Event to play"
-                                            :choices (req (filter #(has? % :type "Event") (:hand runner)))
-                                            :msg (msg "play " (:title target))
-                                            :effect (effect (play-instant target))} card nil))}}}}
+                         :yes-ability {:prompt "Choose an Event to play"
+                                      :choices (req (filter #(has? % :type "Event") (:hand runner)))
+                                      :msg (msg "play " (:title target))
+                                      :effect (effect (play-instant target))}}}}}
 
    "Cortez Chip"
    {:abilities [{:label "increase cost to rez a piece of ice by 2 [Credits]"
@@ -131,9 +130,10 @@
     :events {:successful-run-ends
              {:optional
               {:once :per-turn :prompt "Use Doppelgänger to run again?" :player :runner
-               :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
-                                                 :msg (msg "to make a run on " target)
-                                                 :effect (effect (run target))} card targets))}}}}
+               :yes-ability {:prompt "Choose a server" 
+                            :choices (req servers)
+                            :msg (msg "to make a run on " target)
+                            :effect (effect (run target))}}}}}
 
    "Dorm Computer"
    {:data {:counter 4}
@@ -283,14 +283,14 @@
 
    "Rabbit Hole"
    {:effect
-                (effect (gain :link 1)
-                        (resolve-ability
-                          {:optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
-                                      :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
-                                      :effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+    (effect (gain :link 1)
+            (resolve-ability
+             {:optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
+                         :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
+                         :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                                       (:deck runner))]
                                                      (runner-install state side c)
-                                                     (shuffle! state :runner :deck)))}} card nil))
+                                                     (shuffle! state :runner :deck)))}}} card nil))
     :leave-play (effect (lose :link 1))}
 
    "Replicator"
@@ -298,9 +298,9 @@
              {:optional {:req (req (= (:type target) "Hardware"))
                          :prompt "Use Replicator to add a copy?"
                          :msg (msg "add a copy of " (:title target) " to their Grip")
-                         :effect (effect (move (some #(when (= (:title %) (:title target)) %)
-                                                     (:deck runner)) :hand)
-                                         (shuffle! :deck))}}}}
+                         :yes-ability {:effect (effect (move (some #(when (= (:title %) (:title target)) %)
+                                                                  (:deck runner)) :hand)
+                                                      (shuffle! :deck))}}}}}
 
    "Security Nexus"
    {:effect (effect (gain :link 1) (gain :memory 1))

@@ -402,7 +402,7 @@
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?" :msg "jack out"
-                                                              :effect (effect (jack-out nil))}}
+                                                              :yes-ability {:effect (effect (jack-out nil))}}}
                                                   card nil))}]}
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
