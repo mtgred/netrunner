@@ -1432,7 +1432,7 @@
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state s c)
+      (do (trash state s c {:unpreventable true})
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
       (do (move state s (dissoc c :seen :rezzed) :hand)

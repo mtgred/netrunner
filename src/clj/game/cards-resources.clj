@@ -37,7 +37,7 @@
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target))
     :abilities [{:counter-cost 1 :msg "look at the top card of Stack"
-                 :effect (req (when (zero? (:counter card)) (trash state :runner card {:unpreventable true}))
+                 :effect (req (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
                             :msg "add the top card of Stack to the bottom"
                             :yes-ability {:effect (req (move state side (first (:deck runner)) :deck))}}}]}
