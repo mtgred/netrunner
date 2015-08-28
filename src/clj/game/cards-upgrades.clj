@@ -26,7 +26,7 @@
    "Bernice Mai"
    {:events {:successful-run {:req (req this-server)
                               :trace {:base 5 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+                                      :effect (effect (tag-runner :runner 1))}}}}
 
    "Breaker Bay Grid"
    {:events {:pre-rez-cost {:req (req (= (:zone card) (:zone target)))
@@ -38,7 +38,7 @@
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
-                                :effect (effect (gain :runner :tag 1))
+                                :effect (effect (tag-runner :runner 1))
                                 :msg "give the Runner 1 tag"}}}
 
    "Corporate Troubleshooter"

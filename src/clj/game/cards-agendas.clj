@@ -46,7 +46,7 @@
                             :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaking News"
-   {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
+   {:effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
@@ -252,7 +252,7 @@
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
                :msg "give the Runner 1 tag and take 1 bad publicity"
-               :yes-ability {:effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}}
+               :yes-ability {:effect (effect (gain :bad-publicity 1) (tag-runner :runner 1) (forfeit card))}}}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -305,7 +305,7 @@
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
    {:effect (effect (lose :runner :max-hand-size 1))}
@@ -330,7 +330,7 @@
                                 :effect (effect (ice-strength-bonus 1))}}}
 
    "TGTBT"
-   {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+   {:access {:msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "The Cleaners"
    {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"

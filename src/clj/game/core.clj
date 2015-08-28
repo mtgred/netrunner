@@ -668,6 +668,43 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
+
+(defn tag-prevent [state side n]
+  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0)))
+
+(defn tag-count [state side n {:keys [unpreventable unboostable] :as args}]
+  (-> n
+      (+ (or (when (not unboostable) (get-in @state [:tag :tag-bonus])) 0))
+      (- (or (when (not unpreventable) (get-in @state [:tag :tag-prevent])) 0))
+      (max 0)))
+
+(defn resolve-tag [state side n args]
+  (when (pos? n)
+    (gain state :runner :tag n)
+    (trigger-event state side :runner-gain-tag n)))
+
+(defn tag-runner
+  ([state side n] (tag-runner state side n nil))
+  ([state side n {:keys [unpreventable unboostable card] :as args}]
+    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
+    (trigger-event state side :pre-tag card)
+    (let [n (tag-count state side n args)]
+      (let [prevent (get-in @state [:prevent :tag :all])]
+        (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+          (do (system-msg state :runner "has the option to avoid tags")
+              (show-prompt
+                state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
+                (fn [choice]
+                  (let [prevent (get-in @state [:tag :tag-prevent])]
+                    (system-msg state :runner
+                                (if prevent
+                                  (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                       (if (< 1 prevent) " tags" " tag"))
+                                  "will not avoid tags"))
+                    (resolve-tag state side (max 0 (- n (or prevent 0))) args)))))
+          (resolve-tag state side n args))))))
+
+
 (defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
@@ -1432,7 +1469,7 @@
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state s c)
+      (do (trash state s c {:unpreventable true})
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
       (do (move state s (dissoc c :seen :rezzed) :hand)

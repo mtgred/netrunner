@@ -26,7 +26,7 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state :runner 1) (system-msg state side "takes 1 tag"))
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
