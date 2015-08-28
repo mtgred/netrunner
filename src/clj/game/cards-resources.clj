@@ -8,7 +8,7 @@
    {:events
     {:corp-turn-begins {:req (req (not tagged)) 
                         :msg "take 1 tag" 
-                        :effect (effect (gain :runner :tag 1))}
+                        :effect (effect (tag-runner :runner 1))}
      :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) 
                           :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
@@ -101,7 +101,8 @@
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "Decoy"
-   {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:prevent {:tag [:all]}
+    :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
@@ -241,13 +242,13 @@
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (first-event state side :unsuccessful-run))
                                 :msg "take 1 tag" :once-key :john-masanori-tag
-                                :effect (effect (gain :runner :tag 1))}}}
+                                :effect (effect (tag-runner :runner 1))}}}
 
    "Joshua B."
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?" :msg "gain [Click]"
                          :yes-ability {:effect (effect (gain :click 1))}
-                         :end-turn {:effect (effect (gain :tag 1)) :msg "gain 1 tag"}}}}}
+                         :end-turn {:effect (effect (tag-runner 1)) :msg "gain 1 tag"}}}}}
 
    "Kati Jones"
    {:abilities
@@ -319,8 +320,9 @@
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
    "New Angeles City Hall"
-   {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
-    :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (lose :tag 1))}]}
+   {:prevent {:tag [:all]}
+    :events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
+    :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (tag-prevent 1))}]}
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
@@ -544,7 +546,7 @@
                  :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
-                              :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
+                              :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1))
                               :req (req (or (has? target :subtype "Black Ops")
                                             (has? target :subtype "Gray Ops")))}}}
 

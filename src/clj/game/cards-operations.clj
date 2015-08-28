@@ -39,7 +39,7 @@
    {:effect (effect (gain :credit 3))}
 
    "Big Brother"
-   {:req (req tagged) :effect (effect (gain :runner :tag 2))}
+   {:req (req tagged) :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
@@ -71,7 +71,7 @@
                                                             (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
-                      :effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"}}}
+                      :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
    {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
@@ -82,7 +82,7 @@
    {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
                       :effect (req (if (= target "1 tag")
-                                     (gain state side :tag 1)
+                                     (tag-runner state side 1)
                                      (damage state side :brain 1 {:card card})))}}}
 
    "Cerebral Static"
@@ -170,7 +170,7 @@
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+                                      :effect (effect (tag-runner :runner 1))}}}}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
@@ -178,7 +178,7 @@
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
     :trace {:base 6 :msg (msg "give the Runner " (- target (second targets)) " tags")
-            :effect (effect (gain :runner :tag (- target (second targets))))}}
+            :effect (effect (tag-runner :runner (- target (second targets))))}}
 
    "Mushin No Shin"
    {:prompt "Choose a card to install"
@@ -302,7 +302,7 @@
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
-    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req #(or (= (:advanceable %) "always")
@@ -343,7 +343,7 @@
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
-                                                   :effect (effect (gain :runner :tag 1))}
+                                                   :effect (effect (tag-runner :runner 1))}
                                                   {:effect (trash state side c) :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}

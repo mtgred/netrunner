@@ -61,7 +61,7 @@
              {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
               :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
               :effect (req (if-not (and (= target "Pay 1 [Credits]") (pay state side card :credit 1))
-                             (do (gain state side :tag 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state side 1) (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
 
    "Constellation Protocol"
@@ -206,7 +206,7 @@
     :access {:optional {:req (req installed) :prompt "Use Ghost Branch ability?"
                         :msg (msg "give the Runner " (:advance-counter card) " tag"
                                   (when (> (:advance-counter card) 1) "s"))
-                        :yes-ability {:effect (effect (gain :runner :tag (:advance-counter card)))}}}}
+                        :yes-ability {:effect (effect (tag-runner :runner (:advance-counter card)))}}}}
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -350,7 +350,7 @@
                                 :effect (req (if (= target "add News Team to score area")
                                                  (do (gain state :runner :agenda-point -1)
                                                      (move state :runner card :scored nil))
-                                                 (gain :runner :tag 2)))}
+                                                 (tag-runner :runner 2)))}
                                card targets))}}
 
    "PAD Campaign"
@@ -501,7 +501,7 @@
    {:access {:optional {:req (req (not= (first (:zone card)) :discard))
                         :prompt "Pay 4 [Credits] to use Snare! ability?" :cost [:credit 4]
                         :msg "do 3 net damage and give the Runner 1 tag"
-                        :yes-ability {:effect (effect (damage :net 3 {:card card}) (gain :runner :tag 1))}}}}
+                        :yes-ability {:effect (effect (damage :net 3 {:card card}) (tag-runner :runner 1))}}}}
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))

@@ -46,7 +46,7 @@
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Bandwidth"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}]}
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}]}
 
    "Bastion"
    {:abilities [end-the-run]}
@@ -151,9 +151,9 @@
                 end-the-run]}
 
    "Data Raven"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}
+   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (tag-runner 1))}
                 {:msg "give the Runner 1 tag using 1 power counter"
-                 :counter-cost 1 :effect (effect (gain :runner :tag 1))}
+                 :counter-cost 1 :effect (effect (tag-runner 1))}
                 {:label "Trace 3 - Add 1 power counter"
                  :trace {:base 3 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}]}
 
@@ -163,7 +163,7 @@
     :strength-bonus (req (or (:counter card) 0))
     :abilities [{:label "Trace 2"
                  :trace {:base 2 :msg "give the Runner 1 tag and end the run"
-                         :effect (effect (gain :runner :tag 1) (end-run))}}]}
+                         :effect (effect (tag-runner :runner 1) (end-run))}}]}
 
    "Eli 1.0"
    {:abilities [end-the-run]}
@@ -238,7 +238,7 @@
 
    "Gutenberg"
    {:abilities [{:label "Trace 7 - Give the Runner 1 tag"
-                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]
+                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]
     :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}
 
    "Hadrians Wall"
@@ -296,7 +296,7 @@
 
    "Hunter"
    {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Ice Wall"
    {:advanceable :always :abilities [end-the-run]
@@ -306,13 +306,13 @@
    {:abilities [trash-program
                 {:label "Trace 1 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 1 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
+                         :effect (effect (damage :brain 1 {:card card}) (tag-runner :runner 1))}}]}
 
    "Ichi 2.0"
    {:abilities [trash-program
                 {:label "Trace 3 - Give the Runner 1 tag and do 1 brain damage"
                  :trace {:base 3 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1 {:card card}) (gain :runner :tag 1))}}]}
+                         :effect (effect (damage :brain 1 {:card card}) (tag-runner :runner 1))}}]}
 
    "IQ"
    {:abilities [end-the-run]
@@ -321,7 +321,7 @@
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
-                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 trash-installed]}
 
    "Ireress"
@@ -393,7 +393,7 @@
                  :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
                 {:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Merlin"
    {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
@@ -432,11 +432,11 @@
    "Muckraker"
    {:effect (effect (gain :bad-publicity 1))
     :abilities [{:label "Trace 1 - Give the Runner 1 tag"
-                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 {:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 {:msg "end the run if the Runner is tagged" :req (req tagged)
                  :effect (effect (end-run))}]}
 
@@ -453,7 +453,7 @@
 
    "News Hound"
    {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 {:label "End the run if a Current is active"
                  :req (req (or (not (empty? (runner :current)))
                                (not (empty? (corp :current))))) 
@@ -531,19 +531,19 @@
    "Salvage"
    {:advanceable :while-rezzed
     :abilities [{:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Searchlight"
    {:advanceable :always
     :abilities [{:label "Trace X - Give the runner 1 tag"
-                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (gain :runner :tag 1))
+                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (tag-runner :runner 1))
                          :msg "give the Runner 1 tag"}}]}
 
    "Shadow"
    {:advanceable :always
     :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
                 {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]
+                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Sherlock 1.0"
@@ -644,7 +644,7 @@
    {:abilities [{:msg "force the Runner to lose 1 [Credits]"
                  :effect (effect (lose :runner :credit 1))}
                 {:label "Trace 5 - Give the Runner 1 tag"
-                 :trace {:base 5 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 5 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Tyrant"
    {:advanceable :while-rezzed :abilities [end-the-run]}
@@ -681,9 +681,9 @@
 
    "Virgo"
    {:abilities [{:label "Trace 2"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))
                          :kicker {:min 5 :msg "give the Runner 1 tag"
-                                  :effect (effect (gain :runner :tag 1))}}}]}
+                                  :effect (effect (tag-runner :runner 1))}}}]}
 
    "Wall of Static"
    {:abilities [end-the-run]}

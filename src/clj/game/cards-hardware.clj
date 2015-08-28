@@ -138,9 +138,15 @@
    "Dorm Computer"
    {:data {:counter 4}
     :abilities [{:counter-cost 1 :cost [:click 1]
+                 :req (req (not run))
                  :prompt "Choose a server" :choices (req servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
-                 :effect (effect (run target))}]}
+                 :effect (effect (update! (assoc card :dorm-active true))
+                                 (run target))}]
+    :events {:pre-tag {:req (req (:dorm-active card))
+                       :effect (effect (tag-prevent Integer/MAX_VALUE))
+                       :msg "avoid all tags during the run"}
+             :run-ends {:effect (effect (update! (dissoc card :dorm-active)))}}}
 
    "Dyson Fractal Generator"
    {:recurring 1}
@@ -166,8 +172,11 @@
                                                                (damage-prevent :brain 2)) }]}
 
    "Forger"
-   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
-    :abilities [{:msg "remove 1 tag"
+   {:prevent {:tag [:all]}
+    :effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
+    :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
+                 :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
+                {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
    "Grimoire"
@@ -278,6 +287,17 @@
                      :effect (effect (trash card))}]
               {:runner-trash e :corp-trash e})}
 
+   "Qianju PT"
+   {:events {:runner-turn-begins
+             {:optional {:prompt "Lose [Click] to avoid the first tag until next turn?"
+                         :yes-ability {:effect (effect (lose :click 1)
+                                                       (update! (assoc card :qianju-active true)))
+                                       :msg "avoid the first tag received until his/her next turn"}
+                         :no-ability {:effect (effect (update! (dissoc card :qianju-active)))}}}
+             :pre-tag {:req (req (:qianju-active card))
+                       :msg "to avoid the first tag received"
+                       :effect (effect (tag-prevent 1) (update! (dissoc card :qianju-active)))}}}
+
    "R&D Interface"
    {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}
 
@@ -309,7 +329,7 @@
                  :msg "force the Corp to initiate a trace"
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
                  :trace {:once :per-turn :base 5 :msg "give the Runner 1 tag and end the run"
-                         :effect (effect (gain :runner :tag 1) (end-run))
+                         :effect (effect (tag-runner :runner 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
    "Silencer"
