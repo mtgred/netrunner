@@ -1,7 +1,16 @@
 (in-ns 'game.core)
 
 (def cards-identities
-  {"Andromeda: Dispossessed Ristie"
+  {"Adam: Compulsive Hacker"
+   {:effect (req (let [titles ["Safety First" "Always Be Running" "Neutralize All Threats"]
+                       indeck (filter #(some #{(:title %)} titles) (:deck runner))
+                       inhand (filter #(some #{(:title %)} titles) (:hand runner))]
+                   (doseq [c (concat indeck inhand)]
+                     (runner-install state side c {:no-cost true 
+                                                   :custom-message (str "starts with " (:title c) " in play")}))
+                   (draw state :runner (count inhand))))}
+  
+   "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
@@ -17,7 +26,7 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state :runner 1) (system-msg state side "takes 1 tag"))
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 

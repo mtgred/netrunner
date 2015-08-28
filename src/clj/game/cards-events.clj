@@ -7,7 +7,8 @@
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
-                               :effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
+                               :effect (effect (tag-runner 2)
+                                               (gain :ru:credit (* 2 (min 5 (:credit corp))))
                                                (lose :corp :credit (min 5 (:credit corp))))}} card))}
 
    "Amped Up"
@@ -53,7 +54,7 @@
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(has? % :type "Program") (:deck runner)))
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
-                                           (runner-install target) (gain :tag 1) (shuffle! :deck))}} card))}
+                                           (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -98,6 +99,12 @@
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg))) :msg (msg "derez " (:title target))
     :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
+
+   "Employee Strike"
+   {:msg "disable the Corp's identity"
+    :effect (req (unregister-events state side (:identity corp)))
+    :leave-play (req (when-let [events (:events (card-def (:identity corp)))]
+                       (register-events state side events (:identity corp))))}
 
    "Escher"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)

@@ -6,20 +6,28 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (not tagged)) :msg "take 1 tag" :effect (effect (gain :runner :tag 1))}
-     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) :msg "give the Corp 1 bad publicity"
-                           :effect (effect (gain :corp :bad-publicity 1))}}}
+    {:corp-turn-begins {:req (req (not tagged)) 
+                        :msg "take 1 tag" 
+                        :effect (effect (tag-runner :runner 1))}
+     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) 
+                          :msg "give the Corp 1 bad publicity"
+                          :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
                                            (empty? (filter #(= :click %)
                                                            (mapcat first (turn-events state side :runner-loss))))))
-                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
+                           :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aesops Pawnshop"
    {:abilities [{:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                  :effect (effect (gain :credit 3) (trash target))}]}
+                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :effect (effect (gain :credit 3) (trash target))}]}
+
+   "Always Be Running"
+   {:abilities [{:once :per-turn
+                 :cost [:click 2]
+                 :msg (msg "break 1 subroutine")}]}
 
    "All-nighter"
    {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
@@ -29,7 +37,7 @@
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target))
     :abilities [{:counter-cost 1 :msg "look at the top card of Stack"
-                 :effect (req (when (zero? (:counter card)) (trash state :runner card)))
+                 :effect (req (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
                             :msg "add the top card of Stack to the bottom"
                             :yes-ability {:effect (req (move state side (first (:deck runner)) :deck))}}}]}
@@ -38,14 +46,14 @@
    {:data {:counter 12}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :runner :credit 2)
-                              (when (zero? (:counter card)) (trash state :runner card)))}]}
+                              (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Bank Job"
    {:data {:counter 8}
     :abilities [{:label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
-                              (when (= target (:counter card)) (trash state :runner card)))}]}
+                              (when (= target (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
    {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
@@ -76,7 +84,8 @@
    {:data {:counter 8}
     :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                   :effect (req (gain state :runner :credit 2)
-                                               (when (zero? (:counter card)) (trash state :runner card)))}}}
+                                               (when (zero? (:counter card)) (trash state :runner card
+                                                                                    {:unpreventable true})))}}}
 
    "Data Dealer"
    {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain :credit 9))
@@ -92,7 +101,8 @@
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "Decoy"
-   {:abilities [{:msg "avoid 1 tag" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:prevent {:tag [:all]}
+    :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
@@ -106,7 +116,7 @@
     :events {:runner-turn-begins {:msg "draw 2 cards" :counter-cost 1
                                   :effect (req (draw state :runner 2)
                                                (when (zero? (:counter card))
-                                                 (trash state :runner card)))}}}
+                                                 (trash state :runner card {:unpreventable true})))}}}
 
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
@@ -163,7 +173,7 @@
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
                  :effect (req (gain state side :credit 1)
-                              (when (zero? (:counter card)) (trash state :runner card)))}]}
+                              (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
@@ -232,13 +242,13 @@
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (first-event state side :unsuccessful-run))
                                 :msg "take 1 tag" :once-key :john-masanori-tag
-                                :effect (effect (gain :runner :tag 1))}}}
+                                :effect (effect (tag-runner :runner 1))}}}
 
    "Joshua B."
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?" :msg "gain [Click]"
                          :yes-ability {:effect (effect (gain :click 1))}
-                         :end-turn {:effect (effect (gain :tag 1)) :msg "gain 1 tag"}}}}}
+                         :end-turn {:effect (effect (tag-runner 1)) :msg "gain 1 tag"}}}}}
 
    "Kati Jones"
    {:abilities
@@ -252,7 +262,7 @@
    {:data {:counter 16}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
                  :effect (req (gain state :runner :credit 4)
-                              (when (= (:counter card) 0) (trash state :runner card)))}]}
+                              (when (= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
@@ -301,9 +311,18 @@
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
 
+   "Neutralize All Threats"
+   {:effect (effect (gain :hq-access 1))
+    :leave-play (effect (lose :hq-access 1))
+    :events {:access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
+             :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
+                                     (empty? (filter #(not (nil? (:trash %))) cards))))
+                         :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
+
    "New Angeles City Hall"
-   {:events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
-    :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (lose :tag 1))}]}
+   {:prevent {:tag [:all]}
+    :events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
+    :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (tag-prevent 1))}]}
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
@@ -450,6 +469,13 @@
     :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Safety First"
+   {:effect (effect (lose :runner :max-hand-size 2))
+    :leave-play (effect (gain :runner :max-hand-size 2))
+    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (:max-hand-size runner)))
+                                :msg (msg "draw a card")
+                                :effect (effect (draw 1))}}}
+
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
@@ -520,7 +546,7 @@
                  :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
-                              :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1))
+                              :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1))
                               :req (req (or (has? target :subtype "Black Ops")
                                             (has? target :subtype "Gray Ops")))}}}
 
