@@ -8,7 +8,7 @@
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
                                :effect (effect (tag-runner 2)
-                                               (gain :ru:credit (* 2 (min 5 (:credit corp))))
+                                               (gain :runner :credit (* 2 (min 5 (:credit corp))))
                                                (lose :corp :credit (min 5 (:credit corp))))}} card))}
 
    "Amped Up"
