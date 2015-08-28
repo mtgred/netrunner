@@ -100,6 +100,12 @@
    {:req (req (some #{:hq} (:successful-run runner-reg))) :msg (msg "derez " (:title target))
     :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
 
+   "Employee Strike"
+   {:msg "disable the Corp's identity"
+    :effect (req (unregister-events state side (:identity corp)))
+    :leave-play (req (when-let [events (:events (card-def (:identity corp)))]
+                       (register-events state side events (:identity corp))))}
+
    "Escher"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
                                                       (get-in @state (cons :corp (:zone i))))))
