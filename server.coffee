@@ -44,7 +44,7 @@ removePlayer = (socket) ->
     socket.gameid = false
     lobby.emit('netrunner', {type: "games", games: games})
   for k, v of games
-    delete games[k] if (v.players.length + v.spectators.length) < 2 and (new Date() - v.date) > 3600000
+    delete games[k] if v.players.length < 2 and (new Date() - v.date) > 3600000
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -55,6 +55,9 @@ joinGame = (socket, gameid) ->
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
     lobby.emit('netrunner', {type: "games", games: games})
+
+getUsername = (socket) ->
+  ((socket.request || {}).user || {}).username
 
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
@@ -87,7 +90,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     game = games[gid]
     if game
       if game.started and game.players.length > 1
-        requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{socket.request.user.username} disconnected."}))
+        requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
   socket.on 'netrunner', (msg) ->
@@ -105,14 +108,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         gid = socket.gameid
         removePlayer(socket)
         if socket.request.user
-          socket.broadcast.to(gid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
+          socket.broadcast.to(gid).emit('netrunner', {type: "say", user: "__system__", text: "#{getUsername(socket)} left the game."})
 
       when "leave-game"
         gid = socket.gameid
         game = games[gid]
         if game
           if game.players.length > 1
-            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{msg.user.username} left the game."}))
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} left the game."}))
           removePlayer(socket)
 
       when "join"
@@ -121,7 +124,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           type: "say"
           user: "__system__"
           notification: "ting"
-          text: "#{socket.request.user.username} joined the game."
+          text: "#{getUsername(socket)} joined the game."
 
       when "watch"
         game = games[msg.gameid]
@@ -132,18 +135,18 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           socket.emit("netrunner", {type: "game", gameid: gameid, started: game.started})
           lobby.emit('netrunner', {type: "games", games: games})
           if game.started
-            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} joined the game as a spectator."}))
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
           else
             socket.broadcast.to(msg.gameid).emit 'netrunner',
               type: "say"
               user: "__system__"
-              text: "#{socket.request.user.username} joined the game as a spectator."
+              text: "#{getUsername(socket)} joined the game as a spectator."
 
       when "reconnect"
         game = games[msg.gameid]
         if game and game.started
           joinGame(socket, msg.gameid)
-          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."}))
+          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} reconnected."}))
 
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
@@ -156,7 +159,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "deck"
         for player in games[socket.gameid].players
-          if player.user.username is socket.request.user.username
+          if player.user.username is getUsername(socket)
             player.deck = msg.deck
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
