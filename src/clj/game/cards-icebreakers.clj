@@ -47,7 +47,7 @@
 (def cards-icebreakers
   {"Alpha"
    (auto-icebreaker ["All"]
-                    {:abilities [{:cost [:credit 1] :req (req (and run (zero? (:position run))))
+                    {:abilities [{:cost [:credit 1] :req (req (= (:position run) (count (:ices run))))
                                   :msg "break 1 subroutine on the outermost ICE protecting this server"}
                                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
@@ -270,7 +270,7 @@
 
    "Omega"
    (auto-icebreaker ["All"]
-                    {:abilities [{:cost [:credit 1] :req (req (= (:position run) (dec (count (:ices run)))))
+                    {:abilities [{:cost [:credit 1] :req (req (= 1 (:position run)))
                                   :msg "break 1 subroutine on the innermost ICE protecting this server"}
                                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
