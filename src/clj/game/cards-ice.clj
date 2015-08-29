@@ -9,7 +9,7 @@
    {:access {:optional
              {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?" 
               :yes-ability {:cost [:credit 3]
-                           :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
+                            :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
     :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
                  :trace {:base 6 :choices {:req #(:installed %)}
                          :msg (msg "add " (:title target) " to the Runner's Grip")

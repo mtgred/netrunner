@@ -3,9 +3,9 @@
 (def cards-agendas
   {"Accelerated Beta Test"
    {:optional {:prompt "Look at the top 3 cards of R&D?"
-               :msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
-                           (str "install " c " ICE and trash " (- 3 c) " cards")))
-               :yes-ability {:effect (req (doseq [c (take 3 (:deck corp))]
+               :yes-ability {:msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                         (str "install " c " ICE and trash " (- 3 c) " cards")))
+                             :effect (req (doseq [c (take 3 (:deck corp))]
                                            (if (= (:type c) "ICE")
                                              (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
                                              (trash state side c))))}}}
@@ -107,8 +107,8 @@
 
    "Explode-a-palooza"
    {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-Palooza ability?"
-                        :msg "gain 5 [Credits]" 
-                        :yes-ability {:effect (effect (gain :corp :credit 5))}}}}
+                       :yes-ability {:msg "gain 5 [Credits]"
+                                     :effect (effect (gain :corp :credit 5))}}}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
@@ -251,8 +251,8 @@
 
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
-               :msg "give the Runner 1 tag and take 1 bad publicity"
-               :yes-ability {:effect (effect (gain :bad-publicity 1) (tag-runner :runner 1) (forfeit card))}}}
+               :yes-ability {:msg "give the Runner 1 tag and take 1 bad publicity"
+                             :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1) (forfeit card))}}}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
