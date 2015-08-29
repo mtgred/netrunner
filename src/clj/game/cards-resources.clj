@@ -644,9 +644,10 @@
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
-              :optional {:prompt (msg "Draw " (:title (first (:deck corp))) "?")
+              :optional {:player :corp
+                         :prompt (msg "Draw " (:title (first (:deck corp))) "?")
                          :msg (msg "draw " (:title (first (:deck corp))))
-                         :yes-ability {:effect :player :corp (effect (draw))}
+                         :yes-ability {:effect (effect (draw))}
                          :no-ability {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
 
    "Wyldside"
