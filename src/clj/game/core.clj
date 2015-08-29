@@ -23,7 +23,7 @@
     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
+         update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
 
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -106,13 +106,35 @@
        (gain state :runner :memory mu))
      c)))
 
+(defn get-nested-host [state card]
+  (if (:host card) (recur state (:host card)) card))
+
+(defn update-hosted! [state side {:keys [cid] :as card}]
+  (if-let [h (get-card state (:host card))]
+    (recur state side (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
+                        (assoc h :hosted (vec (concat head [card] (rest tail))))))
+    (update! state side card)))
+
+(defn remove-from-host [state side {:keys [cid] :as card}]
+  (let [host-card (get-card state (:host card))]
+    (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(not= (:cid %) cid) coll))))))
+
+(defn get-card-hosted [state {:keys [cid zone side host] :as card}]
+  (let [root-host (get-card state (get-nested-host state card))
+        helper (fn search [card target]
+                 (if (nil? card)
+                   nil
+                   (if-let [c (some #(when (= (:cid %) (:cid target)) %) (:hosted card))]
+                     c
+                     (some #(when-let [s (search % target)] s) (:hosted card)))))]
+    (helper root-host card)))
+
 (defn get-card [state {:keys [cid zone side host type] :as card}]
   (if (= type "Identity")
     (get-in @state [(to-keyword side) :identity])
     (if zone
       (if host
-        (let [h (get-card state host)]
-          (some #(when (= cid (:cid %)) %) (:hosted h)))
+        (get-card-hosted state card)
         (some #(when (= cid (:cid %)) %)
               (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
       card)))
@@ -121,9 +143,8 @@
   (if (= type "Identity")
     (when (= side (to-keyword (:side card)))
       (swap! state assoc-in [side :identity] card))
-    (if-let [h (get-card state host)]
-      (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
-        (update! state side (assoc h :hosted (vec (concat head [card] (rest tail))))))
+    (if host
+      (update-hosted! state side card)
       (let [z (cons (to-keyword (:side card)) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
         (when-not (empty? tail)
@@ -144,7 +165,7 @@
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone))))))
        (doseq [h (:hosted card)]
-         (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown)))
+         (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
@@ -160,12 +181,8 @@
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
          (doseq [s [:runner :corp]]
            (if host
-             (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                        (get-in @state (cons s (vec zone))))]
-               (update! state side (update-in host-card [:hosted]
-                                              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-             (swap! state update-in (cons s (vec zone))
-                    (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+             (remove-from-host state side card)
+             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))
                n (last z)]
            (when (and (not keep-server-alive)
