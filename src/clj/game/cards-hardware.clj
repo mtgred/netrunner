@@ -72,9 +72,9 @@
                          :req (req (and (first-event state side :play-event)
                                         (not (empty? (filter #(has? % :type "Event") (:hand runner))))))
                          :yes-ability {:prompt "Choose an Event to play"
-                                      :choices (req (filter #(has? % :type "Event") (:hand runner)))
-                                      :msg (msg "play " (:title target))
-                                      :effect (effect (play-instant target))}}}}}
+                                       :choices (req (filter #(has? % :type "Event") (:hand runner)))
+                                       :msg (msg "play " (:title target))
+                                       :effect (effect (play-instant target))}}}}}
 
    "Cortez Chip"
    {:abilities [{:label "increase cost to rez a piece of ice by 2 [Credits]"
@@ -129,11 +129,12 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:successful-run-ends
              {:optional
-              {:once :per-turn :prompt "Use Doppelgänger to run again?" :player :runner
+              {:req (req (first-event state side :run))
+               :prompt "Use Doppelgänger to run again?" :player :runner
                :yes-ability {:prompt "Choose a server" 
-                            :choices (req servers)
-                            :msg (msg "to make a run on " target)
-                            :effect (effect (run target))}}}}}
+                             :choices (req servers)
+                             :msg (msg "to make a run on " target)
+                             :effect (effect (run target))}}}}}
 
    "Dorm Computer"
    {:data {:counter 4}
@@ -317,8 +318,8 @@
    {:events {:runner-install
              {:optional {:req (req (= (:type target) "Hardware"))
                          :prompt "Use Replicator to add a copy?"
-                         :msg (msg "add a copy of " (:title target) " to their Grip")
-                         :yes-ability {:effect (effect (move (some #(when (= (:title %) (:title target)) %)
+                         :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
+                                       :effect (effect (move (some #(when (= (:title %) (:title target)) %)
                                                                   (:deck runner)) :hand)
                                                       (shuffle! :deck))}}}}}
 

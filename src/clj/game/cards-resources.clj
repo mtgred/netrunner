@@ -39,8 +39,8 @@
     :abilities [{:counter-cost 1 :msg "look at the top card of Stack"
                  :effect (req (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
-                            :msg "add the top card of Stack to the bottom"
-                            :yes-ability {:effect (req (move state side (first (:deck runner)) :deck))}}}]}
+                            :yes-ability {:msg "add the top card of Stack to the bottom"
+                                          :effect (req (move state side (first (:deck runner)) :deck))}}}]}
 
    "Armitage Codebusting"
    {:data {:counter 12}
@@ -180,8 +180,8 @@
     :events {:runner-turn-begins
              {:optional {:prompt "Use Globalsec Security Clearance to lose [Click]?" :msg "lose [Click]"
                          :yes-ability {:effect (effect (lose :click 1)
-                                                      (prompt! card (str "The top card of R&D is "
-                                                                         (:title (first (:deck corp)))) ["OK"] {}))}}}}}
+                                                       (prompt! card (str "The top card of R&D is "
+                                                                          (:title (first (:deck corp)))) ["OK"] {}))}}}}}
 
    "Grifter"
    {:events {:runner-turn-ends
@@ -246,8 +246,8 @@
 
    "Joshua B."
    {:events {:runner-turn-begins
-             {:optional {:prompt "Use Joshua B. to gain [Click]?" :msg "gain [Click]"
-                         :yes-ability {:effect (effect (gain :click 1))}
+             {:optional {:prompt "Use Joshua B. to gain [Click]?"
+                         :yes-ability { :msg "gain [Click]" :effect (effect (gain :click 1))}
                          :end-turn {:effect (effect (tag-runner 1)) :msg "gain 1 tag"}}}}}
 
    "Kati Jones"
@@ -367,17 +367,18 @@
    "Paige Piper"
    (let [pphelper (fn [card cards]
                     (let [num (count cards)]
-                      {:optional {:req (req (> num 0))
-                                  :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
-                                  :choices {:number (req num)}
-                                  :msg "to shuffle their Stack"
-                                  :yes-ability {:effect (req (doseq [c (take (int target) cards)]
-                                                              (trash state side c))
-                                                            (shuffle! state :runner :deck)
-                                                            (when (> (int target) 0)
-                                                              (system-msg state side (str "trashes " (int target)
-                                                                                          " cop" (if (> (int target) 1) "ies" "y")
-                                                                                          " of " (:title card)))))}}}))]
+                      {:optional
+                       {:req (req (> num 0))
+                        :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                        :choices {:number (req num)}
+                        :msg "to shuffle their Stack"
+                        :yes-ability {:effect (req (doseq [c (take (int target) cards)]
+                                                               (trash state side c))
+                                                   (shuffle! state :runner :deck)
+                                                   (when (> (int target) 0)
+                                                     (system-msg state side (str "trashes " (int target)
+                                                                                 " cop" (if (> (int target) 1) "ies" "y")
+                                                                                 " of " (:title card)))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
                                 :effect (effect (resolve-ability
                                                  (pphelper target (->> (:deck runner)

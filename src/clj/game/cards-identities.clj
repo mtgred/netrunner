@@ -34,8 +34,8 @@
    {:effect (effect (gain :link 1))
     :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                                        :prompt "Draw a card?" 
-                                       :msg (msg "drew a card") 
-                                       :yes-ability {:effect (effect (draw 1))}}}}}
+                                       :yes-ability {:msg "draw a card"
+                                                     :effect (effect (draw 1))}}}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
@@ -169,8 +169,8 @@
                                                          (prn successes)
                                                          (filter #(not (= % :remote)) successes))))))
                               :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :msg "force the Corp to draw 1 card"
-                                         :yes-ability {:effect (effect (draw :corp))}}}}}
+                                         :yes-ability {:msg "force the Corp to draw 1 card"
+                                                       :effect (effect (draw :corp))}}}}}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
@@ -252,11 +252,10 @@
                           (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
                                     (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-                {:prompt "Add another copy to HQ?"
-                 :yes-ability {:effect
-                              (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                      (shuffle! :deck))}
-                 :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
+           {:prompt "Add another copy to HQ?"
+            :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
+                          :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
+                                          (shuffle! :deck))}}}}}
 
    "Titan Transnational: Investing In Your Future"
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))

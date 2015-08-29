@@ -74,8 +74,8 @@
 
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                        :msg (msg "purge viruses") 
-                        :yes-ability {:effect (effect (purge))}}}
+                        :yes-ability {:msg (msg "purge viruses")
+                                      :effect (effect (purge))}}}
     :abilities [{:msg "purge viruses" :effect (effect (purge) (trash card))}]}
 
    "Dedicated Technician Team"
