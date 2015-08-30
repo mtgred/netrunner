@@ -189,7 +189,10 @@
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Frame Job"
-   {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
+   {:prompt "Choose an agenda to forfeit"
+    :choices (req (:scored runner))
+    :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
+    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
    "Freelance Coding Contract"
    {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
