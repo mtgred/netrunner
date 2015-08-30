@@ -7,7 +7,8 @@
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
-                               :effect (effect (gain :tag 2 :credit (* 2 (min 5 (:credit corp))))
+                               :effect (effect (tag-runner 2)
+                                               (gain :runner :credit (* 2 (min 5 (:credit corp))))
                                                (lose :corp :credit (min 5 (:credit corp))))}} card))}
 
    "Amped Up"
@@ -20,8 +21,8 @@
                            ;; trash cards from right to left
                            ;; otherwise, auto-killing servers would move the cards to the next server
                            ;; so they could no longer be trashed in the same loop
-    :effect (req (doseq [c (->> (all-installed state :corp) 
-                                (sort-by #(vec (:zone %))) 
+    :effect (req (doseq [c (->> (all-installed state :corp)
+                                (sort-by #(vec (:zone %)))
                                 (reverse))]
                    (trash state side c))
                  (doseq [c (all-installed state :runner)]
@@ -53,7 +54,7 @@
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(has? % :type "Program") (:deck runner)))
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
-                                           (runner-install target) (gain :tag 1) (shuffle! :deck))}} card))}
+                                           (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
@@ -99,6 +100,12 @@
    {:req (req (some #{:hq} (:successful-run runner-reg))) :msg (msg "derez " (:title target))
     :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
 
+   "Employee Strike"
+   {:msg "disable the Corp's identity"
+    :effect (req (unregister-events state side (:identity corp)))
+    :leave-play (req (when-let [events (:events (card-def (:identity corp)))]
+                       (register-events state side events (:identity corp))))}
+
    "Escher"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
                                                       (get-in @state (cons :corp (:zone i))))))
@@ -135,6 +142,24 @@
 
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}
+
+   "Exploratory Romp"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target
+                       {:replace-access
+                        {:prompt "Advancements to remove from a card in or protecting this server?"
+                         :choices ["0", "1", "2", "3"]
+                         :effect (req (let [c (Integer/parseInt target)]
+                                        (resolve-ability
+                                          state side
+                                          {:choices {:req #(and (contains? % :advance-counter)
+                                                                (= (:server run) (vec (rest (butlast (:zone %))))))}
+                                          :msg (msg "remove " c " advancements from "
+                                                (if (:rezzed target) (:title target) "a card"))
+                                          :effect (req (add-prop state :corp target :advance-counter (- c))
+                                                       (swap! state update-in [:runner :prompt] rest)
+                                                       (handle-end-run state side))}
+                                         card nil)))}} card))}
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
@@ -286,8 +311,10 @@
 
    "Networking"
    {:effect (effect (lose :tag 1))
-    :optional {:cost [:credit 1] :prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :msg "add it to their Grip" :effect (effect (move (last (:discard runner)) :hand))}}
+    :optional {:prompt "Pay 1 [Credits] to add Networking to Grip?"
+               :yes-ability {:cost [:credit 1]
+                             :msg "add it to their Grip"
+                             :effect (effect (move (last (:discard runner)) :hand))}}}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -360,7 +387,7 @@
 
    "Retrieval Run"
    {:effect (effect (run :archives
-                      {:req (req (= target :hq))
+                      {:req (req (= target :archives))
                        :replace-access
                        {:prompt "Choose a program to install" :msg (msg "install " (:title target))
                         :choices (req (filter #(= (:type %) "Program") (:discard runner)))

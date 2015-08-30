@@ -16,9 +16,11 @@
   (let [author (or user (get-in @state [side :user]))]
     (swap! state update-in [:log] #(conj % {:user author :text text}))))
 
-(defn system-msg [state side text]
-  (let [username (get-in @state [side :user :username])]
-    (say state side {:user "__system__" :text (str username " " text ".")})))
+(defn system-msg
+  ([state side text] (system-msg state side text nil))
+  ([state side text {:keys [hr]}]
+   (let [username (get-in @state [side :user :username])]
+    (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
@@ -27,29 +29,31 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
+    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0) 
+                          (= (first %) :memory)) ;; memoryunits may be negative
+                     costs)
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
 (defn deduce [state side [attr value]]
-  (swap! state update-in [side attr] #(max 0 (- % value)))
+  (swap! state update-in [side attr] (if (= attr :memory)
+                                       #(- % value) ;; memoryunits may be negative
+                                       #(max 0 (- % value))))
   (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))
     (swap! state update-in [:runner :run-credit] #(max 0 (- % value)))))
 
 (defn pay [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
-    (when (and (every? #(>= (- (get-in @state [side (first %)]) (last %)) 0) costs)
-               (or (not forfeit-cost) (not (empty? scored))))
-      (when forfeit-cost
-           (if (= (count scored) 1)
-             (forfeit state side (first scored))
-             (prompt! state side card "Choose an Agenda to forfeit" scored
-                      {:effect (effect (forfeit target))})))
-      (not (doseq [c costs]
-             (when (= (first c) :click)
-               (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
-               (swap! state assoc-in [side :register :spent-click] true))
-             (deduce state side c))))))
+    (when forfeit-cost
+         (if (= (count scored) 1)
+           (forfeit state side (first scored))
+           (prompt! state side card "Choose an Agenda to forfeit" scored
+                    {:effect (effect (forfeit target))})))
+    (not (doseq [c costs]
+           (when (= (first c) :click)
+             (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
+             (swap! state assoc-in [side :register :spent-click] true))
+           (deduce state side c)))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -89,7 +93,9 @@
          c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (= (:side card) "Runner") (:rezzed card) (= (first (:zone card)) :current))
+       (when (or (and (= (:side card) "Runner") (:installed card))
+                 (:rezzed card)
+                 (= (first (:zone card)) :current))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
@@ -252,8 +258,9 @@
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
-                                                   (resolve-ability state side ability card targets)
-                                                   (when-let [no-ability (:no-effect ability)]
+                                                   (when-let [yes-ability (:yes-ability ability)]
+                                                     (resolve-ability state side yes-ability card targets))
+                                                   (when-let [no-ability (:no-ability ability)]
                                                      (resolve-ability state side no-ability card targets)))))
 
 (defn resolve-trace [state side boost]
@@ -270,11 +277,18 @@
         (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
 
 (defn init-trace [state side card {:keys [base] :as ability} boost]
-  (let [base (if (fn? base) (base state side card nil) base) s (+ base boost)]
-    (system-msg state :corp (str "uses " (:title card) " to initiate a trace with strength "
-                                 s " (" base " + " boost " [Credits])"))
+  (trigger-event state side :pre-init-trace card)
+  (let [bonus (or (get-in @state [:bonus :trace]) 0)
+        base (if (fn? base) (base state side card nil) base) 
+        total (+ base boost bonus)]
+    (system-msg state :corp (str "uses " (:title card) 
+                                 " to initiate a trace with strength " total 
+                                 " (" base
+                                 (when (> bonus 0) (str " + " bonus " bonus")) 
+                                 " + " boost " [Credits])"))
+    (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
-    (swap! state assoc :trace {:strength s :ability ability :card card})
+    (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
 (defn resolve-select [state side]
@@ -494,6 +508,9 @@
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
+(defn init-trace-bonus [state side n]
+  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))  
+  
 (defn rez-cost [state side {:keys [cost] :as card}]
   (if (nil? cost)
     nil
@@ -516,9 +533,9 @@
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
 
-(defn install-cost [state side {:keys [cost] :as card} extra-cost]
+(defn install-cost [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
-            (-> (concat [:credit cost] (get-in @state [:bonus :install-cost]) extra-cost
+            (-> (concat (get-in @state [:bonus :install-cost]) all-cost
                         (when-let [instfun (:install-cost-bonus (card-def card))] (instfun state side card nil)))
             merge-costs flatten))))
 
@@ -651,6 +668,43 @@
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
     (system-msg state side "wins the game")))
 
+
+(defn tag-prevent [state side n]
+  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0)))
+
+(defn tag-count [state side n {:keys [unpreventable unboostable] :as args}]
+  (-> n
+      (+ (or (when (not unboostable) (get-in @state [:tag :tag-bonus])) 0))
+      (- (or (when (not unpreventable) (get-in @state [:tag :tag-prevent])) 0))
+      (max 0)))
+
+(defn resolve-tag [state side n args]
+  (when (pos? n)
+    (gain state :runner :tag n)
+    (trigger-event state side :runner-gain-tag n)))
+
+(defn tag-runner
+  ([state side n] (tag-runner state side n nil))
+  ([state side n {:keys [unpreventable unboostable card] :as args}]
+    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
+    (trigger-event state side :pre-tag card)
+    (let [n (tag-count state side n args)]
+      (let [prevent (get-in @state [:prevent :tag :all])]
+        (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+          (do (system-msg state :runner "has the option to avoid tags")
+              (show-prompt
+                state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
+                (fn [choice]
+                  (let [prevent (get-in @state [:tag :tag-prevent])]
+                    (system-msg state :runner
+                                (if prevent
+                                  (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                       (if (< 1 prevent) " tags" " tag"))
+                                  "will not avoid tags"))
+                    (resolve-tag state side (max 0 (- n (or prevent 0))) args)))))
+          (resolve-tag state side n args))))))
+
+
 (defn resolve-trash [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
@@ -745,6 +799,10 @@
           (trash state side current))
         (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
 
+(defn as-agenda [state side card n]
+  (move state side (assoc card :agendapoints n) :scored)
+  (gain-agenda-point state side n))
+
 (defn steal [state side card]
   (let [c (move state :runner card :scored)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
@@ -832,11 +890,11 @@
                 (let [cost (steal-cost state side c)]
                   (if (pos? (count cost))
                     (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                      {:cost cost
-                                       :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                        " to steal " (:title c)))
-                                                       (resolve-steal c))
-                                       :no-effect {:effect (effect (resolve-steal-events c))}} nil)
+                                      {:yes-ability {:cost cost
+                                                     :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                                      " to steal " (:title c)))
+                                                                     (resolve-steal c))}
+                                       :no-ability {:effect (effect (resolve-steal-events c))}} nil)
                     (resolve-ability state :runner
                                      {:prompt (str "You access " (:title c)) :choices ["Steal"]
                                       :effect (req (resolve-steal state :runner c))} c nil)))
@@ -849,11 +907,17 @@
             (when (not= (:zone c) [:discard])
               (if-let [trash-cost (trash-cost state side c)]
                 (let [card (assoc c :seen true)]
-                  (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                    {:cost [:credit trash-cost]
-                                     :effect (effect (trash card)
-                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                      (:title card))))} nil))
+                  (if (and (get-in @state [:runner :register :force-trash])
+                           (can-pay? state :runner :credit trash-cost))
+                    (resolve-ability state :runner {:cost [:credit trash-cost]
+                                                    :effect (effect (trash card)
+                                                            (system-msg (str "is forced to pay " trash-cost
+                                                                             " [Credits] to trash " (:title card))))} card nil)
+                    (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                      {:yes-ability {:cost [:credit trash-cost]
+                                                     :effect (effect (trash card)
+                                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                                      (:title card))))}} nil)))
                 (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
 
 (defn max-access [state side n]
@@ -1124,8 +1188,16 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
+(defn turn-message [state side start-of-turn]
+  (let [pre (if start-of-turn "started" "is ending")
+        hand (if (= side :runner) "their Grip" "HQ")
+        cards (count (get-in @state [side :hand]))
+        credits (get-in @state [side :credit])
+        text (str pre " their turn with " credits " [Credit] and " cards " cards in " hand)]
+    (system-msg state side text {:hr (not start-of-turn)})))
+
 (defn start-turn [state side args]
-  (system-msg state side (str "started their turn"))
+  (turn-message state side true)
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
@@ -1135,7 +1207,7 @@
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
-      (system-msg state side (str "is ending their turn"))
+      (turn-message state side false)
       (if (= side :runner)
         (do (when (< (get-in @state [:runner :max-hand-size]) 0)
               (flatline state))
@@ -1169,6 +1241,8 @@
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
                     (req state side card targets) true)
+                  (not (and (has? card :subtype "Current")
+                            (get-in @state [side :register :cannot-play-current])))
                   (not (and (has? card :subtype "Priority")
                             (get-in @state [side :register :spent-click])))
                   (pay state side card :credit (:cost card) extra-cost
@@ -1220,8 +1294,8 @@
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
-  ([state side {:keys [title type cost memoryunits uniqueness] :as card}
-    {:keys [extra-cost no-cost host-card facedown] :as params}]
+  ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
+    {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
 
    (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
      (resolve-ability state side
@@ -1229,10 +1303,9 @@
                        :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
      (do
        (trigger-event state side :pre-install card)
-       (let [cost (if (or no-cost facedown)
-                    [:credit 0]
-                    (install-cost state side card
-                                  (concat extra-cost (when memoryunits [:memory memoryunits]))))]
+       (let [cost (install-cost state side card
+                                (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost])
+                                        (when memoryunits [:memory memoryunits])))]
          (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
                       (or facedown (req state side card nil)) true)
@@ -1243,9 +1316,11 @@
                  installed-card (card-init state side (assoc c :installed true) (not facedown))]
              (if facedown
                (system-msg state side "installs a card facedown" )
+             (if custom-message
+               (system-msg state side custom-message)
                (system-msg state side (str "installs " title
                                            (when host-card (str " on " (:title host-card)))
-                                           (when no-cost " at no cost"))))
+                                           (when no-cost " at no cost")))))
              (trigger-event state side :runner-install installed-card)
              (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c)))))))
    (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
@@ -1379,19 +1454,22 @@
 (defn prevent-steal [state side]
   (swap! state assoc-in [:runner :register :cannot-steal] true))
 
+(defn prevent-current [state side]
+  (swap! state assoc-in [:runner :register :cannot-play-current] true))
+
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
-        label (if (and (not (= last-zone :play-area)) 
+        label (if (and (not (= last-zone :play-area))
                        (or (and (= (:side c)  "Runner") (not (:facedown c)))
-                           (:rezzed c) 
+                           (:rezzed c)
                            (:seen c)
                            (= last-zone :deck)))
                 (:title c) "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     (case server
       ("Heap" "Archives")
-      (do (trash state s c)
+      (do (trash state s c {:unpreventable true})
           (system-msg state side (str "trashes " label)))
       ("HQ" "Grip")
       (do (move state s (dissoc c :seen :rezzed) :hand)

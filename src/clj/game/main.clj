@@ -60,8 +60,7 @@
           "remove" (swap! game-states dissoc gameid)
           "do" ((commands command) state (keyword side) args)
           "notification" (when state
-                           (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
-          "quit" (system-msg state (keyword side) "left the game"))
+                           (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
         (if-let [state (@game-states gameid)]
           (.send socket (generate-string (assoc (dissoc @state :events :turn-events) :action action)))
           (.send socket (generate-string "ok")))
@@ -96,8 +95,3 @@
             (run socket))))))
 
     (.start (Thread. #(.run (ZMQQueue. ctx router dealer))))))
-
-(comment
-  "Start development server"
-  (future-call dev)
-  )

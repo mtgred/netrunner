@@ -1,21 +1,18 @@
 (in-ns 'game.core)
 
 (def cards-upgrades
-  {
-   "Akitaro Watanabe"
+  {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (= (:type target) "ICE")
                                            (= (card->server state card) (card->server state target))))
                             :effect (effect (rez-cost-bonus -2))}}}
 
    "Amazon Industrial Zone"
-   {:events 
+   {:events
      {:corp-install  {:optional {:req (req (and (= (:type target) "ICE")
                                                 (= (card->server state card) (card->server state target))))
-                                 :prompt "Rez ICE with rez cost lowered by 3?" 
-                                 :effect (effect
-                                           (rez-cost-bonus -3) 
-                                           (rez target))}}}}
-                                                          
+                                 :prompt "Rez ICE with rez cost lowered by 3?"
+                                 :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
+
    "Ash 2X3ZB9CY"
    {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
                  :trace {:base 4
@@ -29,7 +26,7 @@
    "Bernice Mai"
    {:events {:successful-run {:req (req this-server)
                               :trace {:base 5 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+                                      :effect (effect (tag-runner :runner 1))}}}}
 
    "Breaker Bay Grid"
    {:events {:pre-rez-cost {:req (req (= (:zone card) (:zone target)))
@@ -41,7 +38,7 @@
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
-                                :effect (effect (gain :runner :tag 1))
+                                :effect (effect (tag-runner :runner 1))
                                 :msg "give the Runner 1 tag"}}}
 
    "Corporate Troubleshooter"
@@ -77,7 +74,8 @@
 
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                        :msg (msg "purge viruses") :effect (effect (purge))}}
+                        :yes-ability {:msg (msg "purge viruses")
+                                      :effect (effect (purge))}}}
     :abilities [{:msg "purge viruses" :effect (effect (purge) (trash card))}]}
 
    "Dedicated Technician Team"
@@ -135,6 +133,10 @@
    {:init {:root "HQ"}
     :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
 
+   "Rutherford Grid"
+   {:events {:pre-init-trace {:req (req this-server)
+                              :effect (effect (init-trace-bonus 2))}}}
+    
    "Ryon Knight"
    {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
