@@ -274,13 +274,13 @@ app.post '/forgot', (req, res) ->
             done(err, token, user)
 #            res.send {message: 'Password reset sent.'}, 200
     (token, user, done) ->
-      smtpTransport = nodemailer.createTransport({
+      smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
           user: 'jinteki-user',
           pass: 'jinteki-user1'
         }
-      })
+      }
       mailOptions = {
         from: 'support@jinteki.net',
         to: user.email,
@@ -301,6 +301,57 @@ app.get '/check/:username', (req, res) ->
       res.send {message: 'Username taken'}, 422
     else
       res.send {message: 'OK'}, 200
+
+app.get '/reset/:token', (req, res) ->
+  db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } , (err, user) ->
+    if (!user)
+      #req.flash 'error', 'Password reset token is invalid or has expired.'
+      return res.redirect '/forgot'
+    if user
+      db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
+      token = jwt.sign(user, config.salt, {expiresInMinutes: 360})
+    res.render 'reset.jade', { user: req.user }
+
+app.post '/reset/:token', (req, res) ->
+  async.waterfall [
+    (done) ->
+      db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() }, (err, user) ->
+        if (!user)
+          # req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+
+        if (req.body.password != req.body.confirm)
+          res.send {message: 'Password does not match Confirm'}, 412
+
+        password = req.body.password;
+        resetPasswordToken = undefined;
+        resetPasswordExpires = undefined;
+
+        db.collection('users').update { password: req.body.password }, {$set: {resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+          req.logIn user, (err) ->
+            done(err, user)
+    (user, done) ->
+      smtpTransport = nodemailer.createTransport {
+        service: 'SendGrid',
+        auth: {
+          user: 'jinteki-user',
+          pass: 'jinteki-user1'
+        }
+      }
+      mailOptions = {
+        to: user.email,
+        from: 'passwordreset@jinteki.net',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+      }
+      smtpTransport.sendMail mailOptions, (err) ->
+        #req.flash 'success', 'Success! Your password has been changed.'
+        throw err if err
+        done(err)
+  ], (err) ->
+    throw err if err
+    res.redirect('/')
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
