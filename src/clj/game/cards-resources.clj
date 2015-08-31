@@ -368,8 +368,7 @@
    (let [pphelper (fn [card cards]
                     (let [num (count cards)]
                       {:optional
-                       {:req (req (> num 0))
-                        :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                       {:prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
                         :yes-ability {:prompt "How many would you like to trash?"
                                       :choices {:number (req num)}
                                       :msg "shuffle their Stack"
