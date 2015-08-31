@@ -150,9 +150,12 @@
    "Darwin"
    {:events {:runner-turn-begins
              {:optional {:cost [:credit 1] :prompt "Place 1 virus counter on Darwin?"
-                         :msg "place 1 virus counter" 
-                         :yes-ability {:effect (effect (add-prop card :counter 1))}}}}
-    :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]}
+                         :msg "place 1 virus counter"
+                         :yes-ability {:effect (effect (add-prop card :counter 1)
+                                                       (update-breaker-strength card))}}}
+             :purge {:effect (effect (update-breaker-strength card))}}
+    :abilities [{:cost [:credit 2] :msg "break ICE subroutine"}]
+    :strength-bonus (req (or (get-virus-counters state side card) 0))}
 
    "Deus X"
    {:prevent {:damage [:net]}
