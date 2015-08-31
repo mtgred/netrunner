@@ -370,9 +370,10 @@
                       {:optional
                        {:req (req (> num 0))
                         :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
-                        :choices {:number (req num)}
-                        :msg "to shuffle their Stack"
-                        :yes-ability {:effect (req (doseq [c (take (int target) cards)]
+                        :yes-ability {:prompt "How many would you like to trash?"
+                                      :choices {:number (req num)}
+                                      :msg "shuffle their Stack"
+                                      :effect (req (doseq [c (take (int target) cards)]
                                                                (trash state side c))
                                                    (shuffle! state :runner :deck)
                                                    (when (> (int target) 0)
