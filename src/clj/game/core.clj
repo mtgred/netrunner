@@ -630,8 +630,8 @@
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
         runner-deck (create-deck (:deck runner))
-        corp-identity (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"})
-        runner-identity (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"})
+        corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
+        runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
                 :corp {:user (:user corp) :identity corp-identity
