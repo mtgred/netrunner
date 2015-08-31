@@ -252,9 +252,12 @@ app.post '/register', (req, res) ->
             for deck in demoDecks
               delete deck._id
               deck.username = req.body.username
-            db.collection('decks').insert demoDecks, (err, newDecks) ->
-              throw err if err
-              res.json(200, {user: req.user, decks: newDecks})
+            if demoDecks.length > 0
+              db.collection('decks').insert demoDecks, (err, newDecks) ->
+                throw err if err
+                res.json(200, {user: req.user, decks: newDecks})
+            else
+              res.json(200, {user: req.user, decks: []})
 
 app.post '/forgot', (req, res) ->
   async.waterfall [
