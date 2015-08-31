@@ -1283,6 +1283,13 @@
                (get-in @state [:runner :rig (to-keyword (:type card))]))]
     (some #(= (:title %) (:title card)) dest)))
 
+(defn assoc-host-zones [card]
+  (let [card (update-in card [:zone] #(map to-keyword %))]
+    (if (:host card)
+      (assoc card :host (assoc-host-zones (:host card)))
+      card)))
+
+
 (defn host
   ([state side card target] (host state side card target nil))
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
@@ -1297,9 +1304,8 @@
        (swap! state update-in (cons s (vec zone))
               (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
    (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [c (assoc target :host (-> card
-                                   (update-in [:zone] #(map to-keyword %))
-                                   (dissoc :hosted))
+   (let [card (assoc-host-zones card)
+         c (assoc target :host (dissoc card :hosted)
                          :facedown facedown
                          :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                          :previous-zone (:zone target))]
