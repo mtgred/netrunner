@@ -325,16 +325,18 @@ app.post '/reset/:token', (req, res) ->
           # req.flash('error', 'Password reset token is invalid or has expired.');
           return res.redirect('back');
 
-        if (req.body.password != req.body.confirm)
-          res.send {message: 'Password does not match Confirm'}, 412
+        # To be implemented: checking password == confirm 
+        #if (req.body.password != req.body.confirm)
+        #  res.send {message: 'Password does not match Confirm'}, 412
 
-        password = req.body.password;
-        resetPasswordToken = undefined;
-        resetPasswordExpires = undefined;
+        bcrypt.hash req.body.password, 3, (err, hash) ->
+          password = hash
+          resetPasswordToken = undefined;
+          resetPasswordExpires = undefined
 
-        db.collection('users').update { password: req.body.password }, {$set: {resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
-          req.logIn user, (err) ->
-            done(err, user)
+          db.collection('users').update { username: user.username }, {$set: {password: password, resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+            req.logIn user, (err) ->
+              done(err, user)
     (user, done) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
