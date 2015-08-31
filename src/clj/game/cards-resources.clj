@@ -247,8 +247,10 @@
    "Joshua B."
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?"
-                         :yes-ability { :msg "gain [Click]" :effect (effect (gain :click 1))}
-                         :end-turn {:effect (effect (tag-runner 1)) :msg "gain 1 tag"}}}}}
+                         :yes-ability {:msg "gain [Click]"
+                                       :effect (effect (gain :click 1))}}}
+             :end-turn {:effect (effect (tag-runner 1))
+                        :msg "gain 1 tag"}}}
 
    "Kati Jones"
    {:abilities
