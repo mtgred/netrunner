@@ -389,7 +389,7 @@
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
                               :effect (req (doseq [resource (get-in runner [:rig :resource])]
-                                             (trash state side resource {:cause :ability-cost})))
+                                             (trash state side resource)))
                               :msg (msg "trash all resources")}]
        {:req (req tagged)
         :effect (req (prn (not (zero? (:bad-publicity corp))))
