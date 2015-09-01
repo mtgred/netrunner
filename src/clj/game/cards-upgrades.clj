@@ -177,6 +177,14 @@
    {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
                               :effect (effect (steal-cost-bonus [:click 1]))}}}
 
+   "Tori Hanzō"
+   {:events {:pre-damage {:optional {:req (req (first-event state side :damage)) 
+                                     :prompt "Pay 2 [Credits] to deal 1 brain damage instead of net damage?"
+                                     :yes-ability {:cost [:credit 2]
+                                                   :msg (msg "deal 1 brain damage instead of net damage")
+                                                   :effect (req (damage-prevent state :runner :net Integer/MAX_VALUE)
+                                                                (damage state :runner :brain 1))}}}}}
+
    "Tyrs Hand"
    {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
