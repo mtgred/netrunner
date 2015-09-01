@@ -13,6 +13,9 @@ localStrategy = require('passport-local').Strategy
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
+async = require('async');
+
+nodemailer = require('nodemailer');
 
 # MongoDB connection
 appName = 'netrunner'
@@ -249,9 +252,53 @@ app.post '/register', (req, res) ->
             for deck in demoDecks
               delete deck._id
               deck.username = req.body.username
-            db.collection('decks').insert demoDecks, (err, newDecks) ->
-              throw err if err
-              res.json(200, {user: req.user, decks: newDecks})
+            if demoDecks.length > 0
+              db.collection('decks').insert demoDecks, (err, newDecks) ->
+                throw err if err
+                res.json(200, {user: req.user, decks: newDecks})
+            else
+              res.json(200, {user: req.user, decks: []})
+
+app.post '/forgot', (req, res) ->
+  async.waterfall [
+    (done) ->
+      crypto.randomBytes 20, (err, buf) ->
+        token = buf.toString('hex')
+        done(err, token)
+    (token, done) ->
+      db.collection('users').findOne { email: req.body.email }, (err, user) ->
+        if (!user)
+          res.send {message: 'No account with that email address exists.'}, 421
+        else
+          # 1 hour expiration
+          resetPasswordToken = token
+          resetPasswordExpires = Date.now() + 3600000
+
+          db.collection('users').update { email: req.body.email }, {$set: {resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+            throw err if err
+            done(err, token, user)
+#            res.send {message: 'Password reset sent.'}, 200
+    (token, user, done) ->
+      smtpTransport = nodemailer.createTransport {
+        service: 'SendGrid',
+        auth: {
+          user: 'jinteki-user',
+          pass: 'jinteki-user1'
+        }
+      }
+      mailOptions = {
+        from: 'support@jinteki.net',
+        to: user.email,
+        subject: 'Jinteki Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+      }
+      smtpTransport.sendMail mailOptions, (err, response) ->
+        throw err if err
+        res.send {message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'}, 200 
+  ]
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
@@ -259,6 +306,59 @@ app.get '/check/:username', (req, res) ->
       res.send {message: 'Username taken'}, 422
     else
       res.send {message: 'OK'}, 200
+
+app.get '/reset/:token', (req, res) ->
+  db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } , (err, user) ->
+    if (!user)
+      #req.flash 'error', 'Password reset token is invalid or has expired.'
+      return res.redirect '/forgot'
+    if user
+      db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
+      token = jwt.sign(user, config.salt, {expiresInMinutes: 360})
+    res.render 'reset.jade', { user: req.user }
+
+app.post '/reset/:token', (req, res) ->
+  async.waterfall [
+    (done) ->
+      db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() }, (err, user) ->
+        if (!user)
+          # req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+
+        # To be implemented: checking password == confirm 
+        #if (req.body.password != req.body.confirm)
+        #  res.send {message: 'Password does not match Confirm'}, 412
+
+        bcrypt.hash req.body.password, 3, (err, hash) ->
+          password = hash
+          resetPasswordToken = undefined;
+          resetPasswordExpires = undefined
+
+          db.collection('users').update { username: user.username }, {$set: {password: password, resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+            req.logIn user, (err) ->
+              done(err, user)
+    (user, done) ->
+      smtpTransport = nodemailer.createTransport {
+        service: 'SendGrid',
+        auth: {
+          user: 'jinteki-user',
+          pass: 'jinteki-user1'
+        }
+      }
+      mailOptions = {
+        to: user.email,
+        from: 'passwordreset@jinteki.net',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+      }
+      smtpTransport.sendMail mailOptions, (err) ->
+        #req.flash 'success', 'Success! Your password has been changed.'
+        throw err if err
+        done(err)
+  ], (err) ->
+    throw err if err
+    res.redirect('/')
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
