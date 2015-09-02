@@ -392,19 +392,18 @@
                                              (trash state side resource)))
                               :msg (msg "trash all resources")}]
        {:req (req tagged)
-        :effect (req (prn (not (zero? (:bad-publicity corp))))
-                 (resolve-ability
-                      state side 
-                      (if (not (zero? (:bad-publicity corp))) ;; If corp's bad-pub is 0
-                        {:optional {:player :runner
-                                    :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
-                                    :yes-ability {:effect (effect (lose :corp :bad-publicity 1))
-                                                  :player :corp
-                                                  :msg (msg "lose 1 bad publicity, preventing all resources from being trashed")}
-                                    :no-ability trash-all-resources}}
-                        trash-all-resources)
-                      card targets))})
-
+        :effect (effect    
+                 (resolve-ability 
+                  (if (not (zero? (:bad-publicity corp))) ;; If corp's bad-pub is 0
+                    {:optional {:player :runner
+                                :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
+                                :yes-ability {:effect (effect (lose :corp :bad-publicity 1))
+                                              :player :corp
+                                              :msg (msg "lose 1 bad publicity, preventing all resources from being trashed")}
+                                :no-ability trash-all-resources}}
+                    trash-all-resources)
+                  card targets))})
+   
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
 
