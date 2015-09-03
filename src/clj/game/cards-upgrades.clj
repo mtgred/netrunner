@@ -177,6 +177,21 @@
    {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
                               :effect (effect (steal-cost-bonus [:click 1]))}}}
 
+   "Tori Hanzō"
+   (let [brain-or-net (fn [net-damage] {:optional {:prompt "Pay 2 [Credits] to deal 1 brain damage instead of net damage?"
+                                                   :yes-ability {:cost [:credit 2]
+                                                                 :msg (msg "deal 1 brain damage instead of net damage")
+                                                                 :effect (req (damage state :runner :brain 1))}
+                                                   :no-ability  {:effect (req (resolve-damage state :runner :net net-damage {:card card}))
+                                                                 :msg (msg "decide to do " net-damage " net damage")}}})]
+     {:events {:pre-damage {:req (req  (empty? (filter #(= :net (first %)) (turn-events state side :damage)))) 
+                            :effect (req (let [ndam (last targets)] 
+                                           (damage-prevent state :runner :net ndam)
+                                           (resolve-ability
+                                            state side
+                                            (brain-or-net ndam)
+                                            card nil)))}}})
+
    "Tyrs Hand"
    {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))

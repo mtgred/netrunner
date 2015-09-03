@@ -587,7 +587,7 @@
   ([state side type n {:keys [unpreventable unboostable card] :as args}]
     (swap! state update-in [:damage :damage-bonus] dissoc type)
     (swap! state update-in [:damage :damage-prevent] dissoc type)
-    (trigger-event state side :pre-damage type card)
+    (trigger-event state side :pre-damage type card n)
     (let [n (damage-count state side type n args)]
          (let [prevent (get-in @state [:prevent :damage type])]
               (if (and (not unpreventable) prevent (> (count prevent) 0))
