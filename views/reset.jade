@@ -1,50 +1,16 @@
-extends layout
-
-block content
-  nav.topnav.blue-shade
-    div#left-menu
-    div#right-menu
-    div#status
-
-  div#auth-forms
-
-  div#main.carousel.slide(data-interval="false")
-    div.carousel-inner
-      div.item.active
-        div.home-bg
-        div.container
-          h1 Reset your password
-          div#reset
-            form(method='POST')
-              .form-group
-                label(for='password') New Password
-                input.form-control(type='password', name='password', value='', placeholder='New password', autofocus=true required)
-              .form-group
-                label(for='confirm') Confirm Password
-                input.form-control(type='password', name='confirm', value='', placeholder='Confirm password' required)
-              .form-group
-                button.btn.btn-primary(type='submit') Update Password
-          div#chat
-
-      div.item
-        div.cardbrowser-bg
-        div#cardbrowser
-
-      div.item
-        div.deckbuilder-bg
-        div.container
-          div#deckbuilder
-
-      div.item
-        div.lobby-bg
-        div.container
-          div#gamelobby
-        div#gameboard
-
-      div.item
-        div.about-bg
-        div#about
-
-  audio#ting
-    source(src="/sound/ting.mp3", type="audio/mp3")
-    source(src="/sound/ting.ogg", type="audio/ogg")
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Jinteki
+    link(rel='stylesheet', href='/css/netrunner.css')
+  body
+    div.reset-bg
+    form.panel.blue-shade.reset-form(method='POST')
+      h3 Password Reset
+      p
+        input.form-control(type='password', name='password', value='', placeholder='New password', autofocus=true required)
+      p
+        input.form-control(type='password', name='confirm', value='', placeholder='Confirm password' required)
+      p
+        button.btn.btn-primary(type='submit') Update Password
