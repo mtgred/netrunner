@@ -340,15 +340,15 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:req (req (not= (first (:zone card)) :deck))
-             :msg (msg "give the Runner 2 tags or -1 agenda points")
+   {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
              :effect (effect (resolve-ability
                                {:player :runner
-                                :prompt "Take 2 tags or take News Team as -1 agenda points?"
-                                :choices ["take 2 tags" "add News Team to score area"]
-                                :effect (req (if (= target "add News Team to score area")
-                                                 (do (gain state :runner :agenda-point -1)
-                                                     (move state :runner card :scored nil))
+                                :prompt "Take 2 tags or take News Team as -1 agenda point?"
+                                :choices ["Take 2 tags" "Add News Team to score area"]
+                                :effect (req (if (= target "Add News Team to score area")
+                                                 (do (as-agenda state :runner card -1)
+                                                     (system-msg state :runner
+                                                       (str "adds News Team to their score area as -1 agenda point")))
                                                  (tag-runner :runner 2)))}
                                card targets))}}
 
