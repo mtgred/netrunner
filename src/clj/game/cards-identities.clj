@@ -33,10 +33,9 @@
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
-    :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                       :prompt "Draw a card?"
-                                       :yes-ability {:msg "draw a card"
-                                                     :effect (effect (draw 1))}}}}}
+    :events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                            :msg "draw a card"
+                            :effect (effect (draw 1))}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
