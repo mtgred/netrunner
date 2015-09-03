@@ -334,7 +334,8 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
+    :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
+    :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "Paper Tripping"
    {:effect (effect (lose :tag :all))}

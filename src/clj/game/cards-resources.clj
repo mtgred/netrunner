@@ -138,8 +138,8 @@
                 {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Fan Site"
-   {:events {:agenda-scored {:msg "add it to the Runner's score area"
-                             :effect (effect (move :runner card :scored))}}}
+   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+                             :effect (effect (as-agenda :runner card 0))}}}
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"

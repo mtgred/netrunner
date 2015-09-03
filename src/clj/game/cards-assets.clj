@@ -197,9 +197,8 @@
                  :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
 
    "Franchise City"
-   {:events {:access {:req (req (= (:type target) "Agenda"))
-                      :msg "add it to his score area and gain 1 agenda point"
-                      :effect (effect (move :corp card :scored) (gain :agenda-point 1))}}}
+   {:events {:pre-steal-cost {:msg "add it to their score area and gain 1 agenda point"
+                              :effect (effect (as-agenda :corp card 1))}}}
 
    "Ghost Branch"
    {:advanceable :always
@@ -341,15 +340,15 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:req (req (not= (first (:zone card)) :deck))
-             :msg (msg "give the Runner 2 tags or -1 agenda points")
+   {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
              :effect (effect (resolve-ability
                                {:player :runner
-                                :prompt "Take 2 tags or take News Team as -1 agenda points?"
-                                :choices ["take 2 tags" "add News Team to score area"]
-                                :effect (req (if (= target "add News Team to score area")
-                                                 (do (gain state :runner :agenda-point -1)
-                                                     (move state :runner card :scored nil))
+                                :prompt "Take 2 tags or take News Team as -1 agenda point?"
+                                :choices ["Take 2 tags" "Add News Team to score area"]
+                                :effect (req (if (= target "Add News Team to score area")
+                                                 (do (as-agenda state :runner card -1)
+                                                     (system-msg state :runner
+                                                       (str "adds News Team to their score area as -1 agenda point")))
                                                  (tag-runner :runner 2)))}
                                card targets))}}
 
@@ -485,13 +484,13 @@
              :prompt "How many [Credits] for Shi.Kyū?" :choices :credit
              :msg (msg "attempt to do " target " net damage")
              :effect (effect (resolve-ability
-                               {:player :runner :msg (msg target)
-                                :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda points?")
-                                :choices [(str "take " target " net damage") "add Shi.Kyū to score area"]
+                               {:player :runner
+                                :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
+                                :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
                                 :effect (let [dmg target]
-                                          (req (if (= target "add Shi.Kyū to score area")
-                                                 (do (gain state :runner :agenda-point -1)
-                                                     (move state :runner card :scored nil))
+                                          (req (if (= target "Add Shi.Kyū to score area")
+                                                 (do (as-agenda state :runner card -1)
+                                                     (system-msg state :runner (str "adds Shi.Kyū to their score area as -1 agenda point")))
                                                  (damage state :corp :net dmg {:card card}))))}
                                card targets))}}
 
