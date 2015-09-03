@@ -484,13 +484,13 @@
              :prompt "How many [Credits] for Shi.Kyū?" :choices :credit
              :msg (msg "attempt to do " target " net damage")
              :effect (effect (resolve-ability
-                               {:player :runner :msg (msg target)
-                                :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda points?")
-                                :choices [(str "take " target " net damage") "add Shi.Kyū to score area"]
+                               {:player :runner
+                                :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
+                                :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
                                 :effect (let [dmg target]
-                                          (req (if (= target "add Shi.Kyū to score area")
-                                                 (do (gain state :runner :agenda-point -1)
-                                                     (move state :runner card :scored nil))
+                                          (req (if (= target "Add Shi.Kyū to score area")
+                                                 (do (as-agenda state :runner card -1)
+                                                     (system-msg state :runner (str "adds Shi.Kyū to their score area as -1 agenda point")))
                                                  (damage state :corp :net dmg {:card card}))))}
                                card targets))}}
 
