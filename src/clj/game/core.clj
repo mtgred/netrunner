@@ -29,7 +29,7 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0) 
+    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0)
                           (= (first %) :memory)) ;; memoryunits may be negative
                      costs)
              (or (not forfeit-cost) (not (empty? scored))))
