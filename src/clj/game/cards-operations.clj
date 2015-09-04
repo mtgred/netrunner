@@ -7,7 +7,7 @@
     :prompt "Choose an agenda to trigger"
     :msg (msg "trigger the score ability on " (:title target))
     :effect (effect (card-init target))}
-      
+
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
     :effect (effect (move target :hand) (shuffle! :deck))}
@@ -27,13 +27,19 @@
               (* 3 (:advance-counter target)) " [Credits]")}
 
    "Bad Times"
-   {:req (req tagged)}
+   {:req (req tagged)
+    :msg "force the Runner to lose 2[mu] until the end of the turn"
+    :effect (req (lose state :runner :memory 2)
+                 (when (< (:memory runner) 0)
+                  (system-msg state :runner "must trash programs to free up [mu]")))
+    :end-turn {:effect (req (gain state :runner :memory 2)
+                            (system-msg state :runner "regains 2[mu]"))}}
 
    "Beanstalk Royalties"
    {:effect (effect (gain :credit 3))}
 
    "Big Brother"
-   {:req (req tagged) :effect (effect (gain :runner :tag 2))}
+   {:req (req tagged) :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
@@ -65,7 +71,7 @@
                                                             (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
-                      :effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"}}}
+                      :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
    {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
@@ -76,7 +82,7 @@
    {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
                       :effect (req (if (= target "1 tag")
-                                     (gain state side :tag 1)
+                                     (tag-runner state side 1)
                                      (damage state side :brain 1 {:card card})))}}}
 
    "Cerebral Static"
@@ -132,7 +138,7 @@
    {:req (req (:installed-resource runner-reg))
     :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
             :msg (msg "add " (:title target) " to the top of the Stack")
-            :effect (effect (move :runner target :deck true))
+            :effect (effect (move :runner target :deck {:front true}))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
@@ -164,7 +170,7 @@
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
-                                      :effect (effect (gain :runner :tag 1))}}}}
+                                      :effect (effect (tag-runner :runner 1))}}}}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
@@ -172,7 +178,7 @@
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
     :trace {:base 6 :msg (msg "give the Runner " (- target (second targets)) " tags")
-            :effect (effect (gain :runner :tag (- target (second targets))))}}
+            :effect (effect (tag-runner :runner (- target (second targets))))}}
 
    "Mushin No Shin"
    {:prompt "Choose a card to install"
@@ -296,7 +302,7 @@
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
-    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req #(or (= (:advanceable %) "always")
@@ -337,7 +343,7 @@
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
-                                                   :effect (effect (gain :runner :tag 1))}
+                                                   :effect (effect (tag-runner :runner 1))}
                                                   {:effect (trash state side c) :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
@@ -353,6 +359,29 @@
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
+
+   "Sunset"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))
+         sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
+                                 :choices {:req #(and (= serv (rest (butlast (:zone %))))
+                                                      (= (:type %) "ICE")) :max 2}
+                                 :effect (req (if (= (count targets) 2)
+                                                (let [fndx (ice-index state (first targets))
+                                                      sndx (ice-index state (second targets))
+                                                      fnew (assoc (first targets) :zone (:zone (second targets)))
+                                                      snew (assoc (second targets) :zone (:zone (first targets)))]
+                                                  (swap! state update-in (cons :corp (:zone (first targets)))
+                                                         #(assoc % fndx snew))
+                                                  (swap! state update-in (cons :corp (:zone (second targets)))
+                                                         #(assoc % sndx fnew))
+                                                  (update-ice-strength state side fnew)
+                                                  (update-ice-strength state side snew)
+                                                  (resolve-ability state side (sun serv) card nil))
+                                                (system-msg state side "has finished rearranging ICE")))})]
+     {:prompt "Choose a server" :choices (req servers) :msg (msg "rearrange ICE protecting " target)
+      :effect (req (let [serv (next (server->zone state target))]
+                     (resolve-ability state side (sunhelp serv) card nil)))})
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}

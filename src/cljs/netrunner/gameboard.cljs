@@ -103,43 +103,43 @@
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
   (let [side (:side @game-state)]
-    (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
-      (send-command "select" {:card card})
-      (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
-        (handle-abilities card owner)
-        (if (= side :runner)
-          (case (first zone)
-            "hand" (if (:host card)
-                     (when (:installed card)
-                       (handle-abilities card owner))
-                     (send-command "play" {:card card}))
-            ("rig" "current" "onhost") (handle-abilities card owner)
-            nil)
-          (case (first zone)
-            "hand" (case type
-                     ("Upgrade" "ICE") (if root
-                                         (send-command "play" {:card card :server root})
-                                         (-> (om/get-node owner "servers") js/$ .toggle))
-                     ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
-                                          (send-command "play" {:card card :server "New remote"})
-                                          (-> (om/get-node owner "servers") js/$ .toggle))
-                     (send-command "play" {:card card}))
-            ("servers" "scored" "current") (handle-abilities card owner)
-            nil))))))
+    (when (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state))
+      (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
+        (send-command "select" {:card card})
+        (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
+          (handle-abilities card owner)
+          (if (= side :runner)
+            (case (first zone)
+              "hand" (if (:host card)
+                       (when (:installed card)
+                         (handle-abilities card owner))
+                       (send-command "play" {:card card}))
+              ("rig" "current" "onhost") (handle-abilities card owner)
+              nil)
+            (case (first zone)
+              "hand" (case type
+                       ("Upgrade" "ICE") (if root
+                                           (send-command "play" {:card card :server root})
+                                           (-> (om/get-node owner "servers") js/$ .toggle))
+                       ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                                            (send-command "play" {:card card :server "New remote"})
+                                            (-> (om/get-node owner "servers") js/$ .toggle))
+                       (send-command "play" {:card card}))
+              ("servers" "scored" "current") (handle-abilities card owner)
+              nil)))))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
-(defn playable? [{:keys [title side zone cost type uniqueness abilities memoryunits] :as card}]
+(defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-              (or (not memoryunits) (<= memoryunits (:memory me)))
               (> (:click me) 0)))))
 
 (defn is-card-item [item]
@@ -152,11 +152,13 @@
      (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
 
 (defn create-span-impl [item]
+  (if (= "[hr]" item)
+    [:hr ]
   (if-let [class (anr-icons item)]
     [:span {:class (str "anr-icon " class)}]
   (if-let [[title code] (extract-card-info item)]
     [:span {:class "fake-link" :id code} title]
-    [:span item])))
+    [:span item]))))
 
 (defn get-alt-art [[title cards]]
   (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
@@ -492,11 +494,11 @@
                   (when (> run-credit 0)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (> memory 1) "s" "")) (when me? (controls :memory))]
+       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (< memory 0) [:div.warning "!"]) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when me? (controls :tag))]
+       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (> tag 0) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
@@ -606,8 +608,8 @@
     (render-state [this state]
       (sab/html
        (when side
-         (let [me (side cursor)
-               opponent ((if (= side :corp) :runner :corp) cursor)]
+         (let [me ((if (= side :runner) :runner :corp) cursor)
+               opponent ((if (= side :runner) :corp :runner) cursor)]
            [:div.gameboard
             [:div.mainpane
              (om/build zones {:player opponent :remotes (get-in cursor [:corp :servers :remote])})
@@ -627,7 +629,7 @@
                 (om/build rfg-view {:cards (:play-area me)})
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
-               (if (= (:user me) (:user @app-state))
+               (when-not (= side :spectator)
                  [:div.button-pane { :on-mouse-over card-preview-mouse-over
                                     :on-mouse-out  card-preview-mouse-out  }
                   (when-not (:keep me)

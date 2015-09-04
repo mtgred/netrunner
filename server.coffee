@@ -47,7 +47,7 @@ removePlayer = (socket) ->
     socket.gameid = false
     lobby.emit('netrunner', {type: "games", games: games})
   for k, v of games
-    delete games[k] if (v.players.length + v.spectators.length) < 2 and (new Date() - v.date) > 3600000
+    delete games[k] if v.players.length < 2 and (new Date() - v.date) > 3600000
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -59,14 +59,8 @@ joinGame = (socket, gameid) ->
     socket.emit("netrunner", {type: "game", gameid: gameid})
     lobby.emit('netrunner', {type: "games", games: games})
 
-watchGame = (socket, gameid) ->
-  game = games[gameid]
-  if game
-    game.spectators.push({user: socket.request.user, id: socket.id})
-    socket.join(gameid)
-    socket.gameid = gameid
-    socket.emit("netrunner", {type: "game", gameid: gameid})
-    lobby.emit('netrunner', {type: "games", games: games})
+getUsername = (socket) ->
+  ((socket.request || {}).user || {}).username
 
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
@@ -99,7 +93,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     game = games[gid]
     if game
       if game.started and game.players.length > 1
-        requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{socket.request.user.username} disconnected."}))
+        requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
   socket.on 'netrunner', (msg) ->
@@ -117,15 +111,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         gid = socket.gameid
         removePlayer(socket)
         if socket.request.user
-          socket.broadcast.to(gid).emit('netrunner', {type: "say", user: "__system__", text: "#{socket.request.user.username} left the game."})
+          socket.broadcast.to(gid).emit('netrunner', {type: "say", user: "__system__", text: "#{getUsername(socket)} left the game."})
 
       when "leave-game"
         gid = socket.gameid
         game = games[gid]
         if game
           if game.players.length > 1
-            msg.action = "quit"
-            requester.send(JSON.stringify(msg))
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} left the game."}))
           removePlayer(socket)
 
       when "join"
@@ -134,20 +127,29 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           type: "say"
           user: "__system__"
           notification: "ting"
-          text: "#{socket.request.user.username} joined the game."
+          text: "#{getUsername(socket)} joined the game."
 
       when "watch"
-        watchGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          text: "#{socket.request.user.username} joined the game as a spectator."
+        game = games[msg.gameid]
+        if game
+          game.spectators.push({user: socket.request.user, id: socket.id})
+          socket.join(msg.gameid)
+          socket.gameid = gameid
+          socket.emit("netrunner", {type: "game", gameid: gameid, started: game.started})
+          lobby.emit('netrunner', {type: "games", games: games})
+          if game.started
+            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
+          else
+            socket.broadcast.to(msg.gameid).emit 'netrunner',
+              type: "say"
+              user: "__system__"
+              text: "#{getUsername(socket)} joined the game as a spectator."
 
       when "reconnect"
         game = games[msg.gameid]
         if game and game.started
           joinGame(socket, msg.gameid)
-          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{socket.request.user.username} reconnected."}))
+          requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} reconnected."}))
 
       when "say"
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
@@ -160,7 +162,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "deck"
         for player in games[socket.gameid].players
-          if player.user.username is socket.request.user.username
+          if player.user.username is getUsername(socket)
             player.deck = msg.deck
             break
         lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
@@ -250,9 +252,12 @@ app.post '/register', (req, res) ->
             for deck in demoDecks
               delete deck._id
               deck.username = req.body.username
-            db.collection('decks').insert demoDecks, (err, newDecks) ->
-              throw err if err
-              res.json(200, {user: req.user, decks: newDecks})
+            if demoDecks.length > 0
+              db.collection('decks').insert demoDecks, (err, newDecks) ->
+                throw err if err
+                res.json(200, {user: req.user, decks: newDecks})
+            else
+              res.json(200, {user: req.user, decks: []})
 
 app.post '/forgot', (req, res) ->
   async.waterfall [
@@ -274,13 +279,13 @@ app.post '/forgot', (req, res) ->
             done(err, token, user)
 #            res.send {message: 'Password reset sent.'}, 200
     (token, user, done) ->
-      smtpTransport = nodemailer.createTransport({
+      smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
           user: 'jinteki-user',
           pass: 'jinteki-user1'
         }
-      })
+      }
       mailOptions = {
         from: 'support@jinteki.net',
         to: user.email,
@@ -301,6 +306,59 @@ app.get '/check/:username', (req, res) ->
       res.send {message: 'Username taken'}, 422
     else
       res.send {message: 'OK'}, 200
+
+app.get '/reset/:token', (req, res) ->
+  db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } , (err, user) ->
+    if (!user)
+      #req.flash 'error', 'Password reset token is invalid or has expired.'
+      return res.redirect '/forgot'
+    if user
+      db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
+      token = jwt.sign(user, config.salt, {expiresInMinutes: 360})
+    res.render 'reset.jade', { user: req.user }
+
+app.post '/reset/:token', (req, res) ->
+  async.waterfall [
+    (done) ->
+      db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() }, (err, user) ->
+        if (!user)
+          # req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+
+        # To be implemented: checking password == confirm 
+        #if (req.body.password != req.body.confirm)
+        #  res.send {message: 'Password does not match Confirm'}, 412
+
+        bcrypt.hash req.body.password, 3, (err, hash) ->
+          password = hash
+          resetPasswordToken = undefined;
+          resetPasswordExpires = undefined
+
+          db.collection('users').update { username: user.username }, {$set: {password: password, resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
+            req.logIn user, (err) ->
+              done(err, user)
+    (user, done) ->
+      smtpTransport = nodemailer.createTransport {
+        service: 'SendGrid',
+        auth: {
+          user: 'jinteki-user',
+          pass: 'jinteki-user1'
+        }
+      }
+      mailOptions = {
+        to: user.email,
+        from: 'passwordreset@jinteki.net',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+      }
+      smtpTransport.sendMail mailOptions, (err) ->
+        #req.flash 'success', 'Success! Your password has been changed.'
+        throw err if err
+        done(err)
+  ], (err) ->
+    throw err if err
+    res.redirect('/')
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->

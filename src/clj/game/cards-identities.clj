@@ -1,7 +1,16 @@
 (in-ns 'game.core)
 
 (def cards-identities
-  {"Andromeda: Dispossessed Ristie"
+  {"Adam: Compulsive Hacker"
+   {:effect (req (let [titles ["Safety First" "Always Be Running" "Neutralize All Threats"]
+                       indeck (filter #(some #{(:title %)} titles) (:deck runner))
+                       inhand (filter #(some #{(:title %)} titles) (:hand runner))]
+                   (doseq [c (concat indeck inhand)]
+                     (runner-install state side c {:no-cost true 
+                                                   :custom-message (str "starts with " (:title c) " in play")}))
+                   (draw state :runner (count inhand))))}
+  
+   "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
@@ -17,14 +26,16 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (gain state :runner :tag 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state :runner 1) (system-msg state side "takes 1 tag"))
                              (do (damage state :runner :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
     :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                       :prompt "Draw a card?" :msg (msg "draw a card") :effect (effect (draw 1))}}}}
+                                       :prompt "Draw a card?" 
+                                       :yes-ability {:msg "draw a card"
+                                                     :effect (effect (draw 1))}}}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
@@ -85,14 +96,16 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from Grip?") :once :per-turn
-                         :effect (req (let [type (:type target)]
-                                        (resolve-ability
-                                          state side
-                                          {:prompt (msg "Choose a " type "to install")
-                                           :choices (req (filter #(has? % :type type) (:hand runner)))
-                                           :msg (msg "install " (:title target))
-                                           :effect (effect (runner-install target))} card nil)))}}}}
+             {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
+                         :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
+                                        (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
+                         :yes-ability {:effect (req (let [type (:type target)]
+                                              (resolve-ability
+                                               state side
+                                               {:prompt (msg "Choose a " type " to install")
+                                                :choices (req (filter #(has? % :type type) (:hand runner)))
+                                                :msg (msg "install " (:title target))
+                                                :effect (effect (runner-install target))} card nil)))}}}}}
 
    "Iain Stirling: Retired Spook"
    {:effect (effect (gain :link 1))
@@ -150,10 +163,14 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)))
+   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)
+                                             (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                                       (do
+                                                         (prn successes)
+                                                         (filter #(not (= % :remote)) successes))))))
                               :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :msg "force the Corp to draw 1 card" :once :per-turn
-                                         :effect (effect (draw :corp))}}}}
+                                         :yes-ability {:msg "force the Corp to draw 1 card"
+                                                       :effect (effect (draw :corp))}}}}}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
@@ -230,12 +247,15 @@
 
    "The Foundry: Refining the Process"
    {:events
-    {:rez {:req (req (and (= (:type target) "ICE") (some #(= (:title %) (:title target)) (:deck corp))))
+    {:rez {:req (req (and (= (:type target) "ICE") ;; Did you rez and ice just now
+                          (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
+                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
+                                    (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-                {:prompt "Add another copy to HQ?" :once :per-turn
-                 :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                 (shuffle! :deck))
-                 :msg (msg "add a copy of " (:title target) " from R&D to HQ")}}}}
+           {:prompt "Add another copy to HQ?"
+            :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
+                          :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
+                                          (shuffle! :deck))}}}}}
 
    "Titan Transnational: Investing In Your Future"
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))

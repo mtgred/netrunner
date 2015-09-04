@@ -50,9 +50,16 @@
      [:div.float-right
       (let [c (count (:games cursor))]
         (str c " Game" (when (> c 1) "s")))]
-     (when (.-onbeforeunload js/window)
-       [:div.float-right
-        [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]])])))
+     (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
+       (when (:started game)
+         [:div.float-right
+          [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
+     (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
+       (when (:started game)
+         (let [c (count (:spectators game))]
+            (when (pos? c)
+              [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
+               [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view (:spectators game))]]))))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})

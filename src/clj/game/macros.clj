@@ -42,5 +42,6 @@
             'runner-reg '(get-in @state [:runner :register])
             'run '(:run @state)
             'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
-            'target '(first targets)]
+            'target '(first targets)
+            'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))]
        (str ~@expr))))

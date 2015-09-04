@@ -51,13 +51,13 @@
   (let [params (-> event .-target js/$ .serialize)
         _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
     (go (let [response (<! (POST url params))]
-          (and (= (:status response) 200) (= (:owner "/forgot") "/forgot") )
-            200 (om/set-state! owner :flash-message "Reset password sent")
-          (case (:status response)
-              401 (om/set-state! owner :flash-message "Invalid login or password")
-              421 (om/set-state! owner :flash-message "No account with that email address exists")
-              422 (om/set-state! owner :flash-message "Username taken")
-              (-> js/document .-location (.reload true)))))))
+          (if (and (= (:status response) 200) (= (:owner "/forgot") "/forgot") )
+            (om/set-state! owner :flash-message "Reset password sent")
+            (case (:status response)
+                401 (om/set-state! owner :flash-message "Invalid login or password")
+                421 (om/set-state! owner :flash-message "No account with that email address exists")
+                422 (om/set-state! owner :flash-message "Username taken")
+                (-> js/document .-location (.reload true))))))))
 
 (defn check-username [event owner]
   (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]

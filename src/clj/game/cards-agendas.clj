@@ -3,12 +3,12 @@
 (def cards-agendas
   {"Accelerated Beta Test"
    {:optional {:prompt "Look at the top 3 cards of R&D?"
-               :msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
-                           (str "install " c " ICE and trash " (- 3 c) " cards")))
-               :effect (req (doseq [c (take 3 (:deck corp))]
-                              (if (= (:type c) "ICE")
-                                (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
-                                (trash state side c))))}}
+               :yes-ability {:msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                         (str "install " c " ICE and trash " (- 3 c) " cards")))
+                             :effect (req (doseq [c (take 3 (:deck corp))]
+                                           (if (= (:type c) "ICE")
+                                             (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
+                                             (trash state side c))))}}}
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -46,7 +46,7 @@
                             :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaking News"
-   {:effect (effect (gain :runner :tag 2)) :msg "give the Runner 2 tags"
+   {:effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
@@ -65,6 +65,15 @@
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
     :effect (req (if (> (:credit corp) 6)
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
+
+   "Corporate Sales Team"
+   (let [e {:msg "gain 1 [Credit]"  :counter-cost 1
+            :effect (req (gain state :corp :credit 1)
+                         (when (zero? (:counter card))
+                           (unregister-events state :corp card)))}]
+    {:effect (effect (add-prop card :counter 10))
+     :events {:runner-turn-begins e
+              :corp-turn-begins   e}})
 
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
@@ -98,7 +107,8 @@
 
    "Explode-a-palooza"
    {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-Palooza ability?"
-                        :msg "gain 5 [Credits]" :effect (effect (gain :corp :credit 5))}}}
+                       :yes-ability {:msg "gain 5 [Credits]"
+                                     :effect (effect (gain :corp :credit 5))}}}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
@@ -145,11 +155,12 @@
    {:events {:corp-turn-begins
              {:optional
               {:prompt "Add 1 card from Archives to bottom of R&D?"
-               :effect (effect (resolve-ability
-                                 {:prompt "Choose a card" :choices (:discard corp)
-                                  :effect (effect (move target :deck))
-                                  :msg (msg "add " (if (:seen target) (:title target) "a card")
-                                            " to the bottom of R&D")} card target))}}}}
+               :yes-ability {:effect (effect (resolve-ability
+                                              {:prompt "Choose a card"
+                                               :choices (:discard corp)
+                                               :effect (effect (move target :deck))
+                                               :msg (msg "add " (if (:seen target) (:title target) "a card")
+                                                         " to the bottom of R&D")} card target))}}}}}
 
    "Helium-3 Deposit"
    {:choices ["0", "1", "2"] :prompt "How many power counters?"
@@ -191,7 +202,9 @@
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
-                                :effect (effect (ice-strength-bonus 1))}}}
+                                :effect (effect (ice-strength-bonus 1))}
+             :pre-init-trace {:req (req (has? target :type "ICE"))
+                              :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
    {:data {:counter 2}
@@ -238,8 +251,8 @@
 
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
-               :msg "give the Runner 1 tag and take 1 bad publicity"
-               :effect (effect (gain :bad-publicity 1) (gain :runner :tag 1) (forfeit card))}}
+               :yes-ability {:msg "give the Runner 1 tag and take 1 bad publicity"
+                             :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1) (forfeit card))}}}
 
    "Priority Requisition"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
@@ -292,7 +305,7 @@
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}]}
+                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
    {:effect (effect (lose :runner :max-hand-size 1))}
@@ -317,7 +330,7 @@
                                 :effect (effect (ice-strength-bonus 1))}}}
 
    "TGTBT"
-   {:access {:msg "give the Runner 1 tag" :effect (effect (gain :runner :tag 1))}}
+   {:access {:msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "The Cleaners"
    {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"

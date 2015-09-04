@@ -15,7 +15,12 @@
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
 (defn launch-game [game]
-  (let [side (if (= (get-in game [:runner :user]) (:user @app-state)) :runner :corp)]
+  (let [user (:user @app-state)
+        side (if (= (get-in game [:runner :user]) user)
+               :runner
+               (if (= (get-in game [:corp :user]) user)
+                 :corp
+                 :spectator))]
     (init-game game side))
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
@@ -24,7 +29,8 @@
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
-          "game" (swap! app-state assoc :gameid (:gameid msg))
+          "game" (do (swap! app-state assoc :gameid (:gameid msg))
+                     (when (:started msg) (launch-game nil)))
           "games" (do (swap! app-state assoc :games (sort-by :date > (vals (:games msg))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
@@ -45,7 +51,7 @@
    (fn [user]
      (om/set-state! owner :title (str (:username user) "'s game"))
      (om/set-state! owner :editing true)
-     (om/set-state! owner :allowspectator false)
+     (om/set-state! owner :allowspectator true)
      (-> ".game-title" js/$ .select))))
 
 (defn create-game [cursor owner]
@@ -78,7 +84,8 @@
   (om/update! cursor :message []))
 
 (defn leave-game []
-  (send {:action "leave-game" :gameid (:gameid @app-state) :side (:side @game-state)})
+  (send {:action "leave-game" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
   (swap! app-state dissoc :gameid)
   (.removeItem js/localStorage "gameid")
@@ -172,7 +179,7 @@
                (when-not (or gameid (= (count (:players game)) 2) (:started game))
                  (let [id (:gameid game)]
                    [:button {:on-click #(join-game id owner)} "Join"]))
-               (when (and (:allowspectator game) (not gameid) (not (:started game)))
+               (when (and (:allowspectator game) (not gameid))
                  (let [id (:gameid game)]
                   [:button {:on-click #(watch-game id owner)} "Watch"]))
                (let [c (count (:spectators game))]
@@ -193,7 +200,7 @@
                                 :value (:title state) :placeholder "Title"}]
             [:p.flash-message (:flash-message state)]
             [:label
-             [:input {:type "checkbox"
+             [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
              "Allow spectators"]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
