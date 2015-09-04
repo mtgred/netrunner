@@ -113,7 +113,8 @@
   (if-let [h (get-card state (:host card))]
     (recur state side (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
                         (assoc h :hosted (vec (concat head [card] (rest tail))))))
-    (update! state side card)))
+    (when-not (:host card)
+      (update! state side card))))
 
 (defn remove-from-host [state side {:keys [cid] :as card}]
   (let [host-card (get-card state (:host card))]
