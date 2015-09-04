@@ -103,10 +103,7 @@
               [:button {:data-dismiss "modal"} "Cancel"]]]
          [:p "Already have an account? "
           [:span.fake-link {:on-click #(.modal (js/$ "#login-form") "show")
-                            :data-dismiss "modal"} "Log in"]]
-         [:p "Need to reset your password? "
-          [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
-                            :data-dismiss "modal"} "Reset"]]]]))))
+                            :data-dismiss "modal"} "Log in"]]]]))))
 
 (defn login-form [cursor owner]
   (reify
@@ -124,10 +121,13 @@
           [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
           [:p [:button "Log in"]
-              [:button {:data-dismiss "modal"} "Cancel"]]
+           [:button {:data-dismiss "modal"} "Cancel"]]
           [:p "No account? "
-            [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
-                              :data-dismiss "modal"} "Sign up!"]]]]]))))
+           [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
+                             :data-dismiss "modal"} "Sign up!"]]
+          [:p "Forgot your password? "
+           [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
+                             :data-dismiss "modal"} "Reset"]]]]]))))
 
 (defn forgot-form [cursor owner]
   (reify

@@ -138,8 +138,8 @@
                 {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Fan Site"
-   {:events {:agenda-scored {:msg "add it to the Runner's score area"
-                             :effect (effect (move :runner card :scored))}}}
+   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+                             :effect (effect (as-agenda :runner card 0))}}}
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
@@ -247,8 +247,10 @@
    "Joshua B."
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?"
-                         :yes-ability { :msg "gain [Click]" :effect (effect (gain :click 1))}
-                         :end-turn {:effect (effect (tag-runner 1)) :msg "gain 1 tag"}}}}}
+                         :yes-ability {:msg "gain [Click]"
+                                       :effect (effect (gain :click 1))}}}
+             :end-turn {:effect (effect (tag-runner 1))
+                        :msg "gain 1 tag"}}}
 
    "Kati Jones"
    {:abilities
@@ -368,11 +370,11 @@
    (let [pphelper (fn [card cards]
                     (let [num (count cards)]
                       {:optional
-                       {:req (req (> num 0))
-                        :prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
-                        :choices {:number (req num)}
-                        :msg "to shuffle their Stack"
-                        :yes-ability {:effect (req (doseq [c (take (int target) cards)]
+                       {:prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                        :yes-ability {:prompt "How many would you like to trash?"
+                                      :choices {:number (req num)}
+                                      :msg "shuffle their Stack"
+                                      :effect (req (doseq [c (take (int target) cards)]
                                                                (trash state side c))
                                                    (shuffle! state :runner :deck)
                                                    (when (> (int target) 0)

@@ -189,7 +189,10 @@
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Frame Job"
-   {:additional-cost [:forfeit] :effect (effect (gain :corp :bad-publicity 1))}
+   {:prompt "Choose an agenda to forfeit"
+    :choices (req (:scored runner))
+    :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
+    :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
    "Freelance Coding Contract"
    {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
@@ -261,7 +264,18 @@
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
-    :msg (msg "force the Corp to trash an ICE protecting " target)}
+    :msg (msg "force the Corp to trash an ICE protecting " target)
+    :effect (req (let [serv (next (server->zone state target))
+                       servname target]
+                   (resolve-ability
+                     state :corp
+                     {:prompt (msg "Choose a piece of ICE in " target " to trash")
+                      :choices {:req #(and (= (last (:zone %)) :ices)
+                                           (= serv (rest (butlast (:zone %)))))}
+                      :effect (req (trash state :corp target)
+                                   (system-msg state side (str "trashes "
+                                    (if (:rezzed target) (:title target) "an ICE") " protecting " servname)))}
+                    card nil)))}
 
    "Lawyer Up"
    {:effect (effect (draw 3) (lose :tag 2))}
@@ -320,7 +334,8 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (gain-agenda-point 1) (move (first (:play-area runner)) :scored))}
+    :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
+    :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "Paper Tripping"
    {:effect (effect (lose :tag :all))}

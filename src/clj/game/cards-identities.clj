@@ -2,14 +2,15 @@
 
 (def cards-identities
   {"Adam: Compulsive Hacker"
-   {:effect (req (let [titles ["Safety First" "Always Be Running" "Neutralize All Threats"]
-                       indeck (filter #(some #{(:title %)} titles) (:deck runner))
-                       inhand (filter #(some #{(:title %)} titles) (:hand runner))]
-                   (doseq [c (concat indeck inhand)]
-                     (runner-install state side c {:no-cost true 
+   (let [titles #{"Safety First" "Always Be Running" "Neutralize All Threats"}
+         one-of-each   (fn [cards] (->> cards (group-by :title) (map second) (map first)))
+         get-directives (fn [source] (filter #(some #{(:title %)} titles) source))]
+   {:effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
+                   (doseq [c directives]
+                     (runner-install state side c {:no-cost true
                                                    :custom-message (str "starts with " (:title c) " in play")}))
-                   (draw state :runner (count inhand))))}
-  
+                   (draw state :runner (count (filter #(= (:zone %) [:hand]) directives)))))})
+
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
@@ -33,7 +34,7 @@
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
     :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                       :prompt "Draw a card?" 
+                                       :prompt "Draw a card?"
                                        :yes-ability {:msg "draw a card"
                                                      :effect (effect (draw 1))}}}}}
 
