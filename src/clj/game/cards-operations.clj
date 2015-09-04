@@ -109,7 +109,9 @@
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Diversified Portfolio"
-   {:effect (effect (gain :credit (count (filter #(not (empty? (:content %)))
+   {:msg (msg "gain " (count (filter #(not (empty? (:content %))) (get-in corp [:servers :remote])))
+              " [Credits]")
+    :effect (effect (gain :credit (count (filter #(not (empty? (:content %)))
                                                  (get-in corp [:servers :remote])))))}
 
    "Fast Track"
@@ -205,7 +207,11 @@
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
    "Peak Efficiency"
-   {:effect (effect (gain :credit
+   {:msg (msg "gain " (reduce (fn [c server]
+                                (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
+                              0 (flatten (seq (:servers corp))))
+              " [Credits]")
+    :effect (effect (gain :credit
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
@@ -392,8 +398,8 @@
                                              (trash state side resource)))
                               :msg (msg "trash all resources")}]
        {:req (req tagged)
-        :effect (effect    
-                 (resolve-ability 
+        :effect (effect
+                 (resolve-ability
                   (if (not (zero? (:bad-publicity corp))) ;; If corp's bad-pub is 0
                     {:optional {:player :runner
                                 :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
@@ -403,7 +409,7 @@
                                 :no-ability trash-all-resources}}
                     trash-all-resources)
                   card targets))})
-   
+
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
 
