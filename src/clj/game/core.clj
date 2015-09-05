@@ -297,12 +297,12 @@
 (defn init-trace [state side card {:keys [base] :as ability} boost]
   (trigger-event state side :pre-init-trace card)
   (let [bonus (or (get-in @state [:bonus :trace]) 0)
-        base (if (fn? base) (base state side card nil) base) 
+        base (if (fn? base) (base state side card nil) base)
         total (+ base boost bonus)]
-    (system-msg state :corp (str "uses " (:title card) 
-                                 " to initiate a trace with strength " total 
+    (system-msg state :corp (str "uses " (:title card)
+                                 " to initiate a trace with strength " total
                                  " (" base
-                                 (when (> bonus 0) (str " + " bonus " bonus")) 
+                                 (when (> bonus 0) (str " + " bonus " bonus"))
                                  " + " boost " [Credits])"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
@@ -527,8 +527,8 @@
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
 (defn init-trace-bonus [state side n]
-  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))  
-  
+  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))
+
 (defn rez-cost [state side {:keys [cost] :as card}]
   (if (nil? cost)
     nil
@@ -1139,7 +1139,6 @@
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (swap! state assoc-in [:run :successful] true)
-    (trigger-event state side :successful-run (first server))
     (let [run-effect (get-in @state [:run :run-effect])
           r (:req run-effect)
           card (:card run-effect)
@@ -1155,7 +1154,8 @@
                                   :effect #(if (= % "Run ability")
                                              (replace-access state side replace-effect card)
                                              (do-access state side server))}))))
-        (do-access state side server)))))
+        (do-access state side server)))
+    (trigger-event state side :successful-run (first server))))
 
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]
