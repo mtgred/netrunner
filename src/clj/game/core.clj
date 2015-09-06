@@ -35,11 +35,18 @@
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
+(defn build-spend-msg [cost-str verb]
+  (if (or (nil? cost-str)
+          (= "" cost-str))
+    (str verb "s ")
+    (str "spends " cost-str " to " verb " ")))
+
 (defn cost-names [value attr]
   (when (> value 0)
     (case attr
       :credit (str value " [$]")
-      :click  (->> "[Click]" repeat (take value) (apply str)))))
+      :click  (->> "[Click]" repeat (take value) (apply str))
+      nil)))
 
 (defn deduce [state side [attr value]]
   (swap! state update-in [side attr] (if (= attr :memory)
@@ -387,9 +394,7 @@
               (when msg
                 (let [desc (if (string? msg) msg (msg state side card targets))]
                   (system-msg state (to-keyword (:side card))
-                              (str (if (= "" cost-str)
-                                       "uses "
-                                       (str "spends " cost-str " to use ")) 
+                              (str (build-spend-msg cost-str "use")
                                    title (when desc (str " to " desc))))))
               (when effect (effect state side c targets))
               (when end-turn
@@ -1280,9 +1285,7 @@
          (when-let [cost-str (pay state side card :credit (:cost card) extra-cost
                               (when-not no-additional-cost additional-cost))]
            (let [c (move state side (assoc card :seen true) :play-area)]
-             (system-msg state side (if (= "" cost-str)
-                                     (str "plays " title)
-                                     (str "spends " cost-str " to play " title)))
+             (system-msg state side (str (build-spend-msg cost-str "play") title))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
              (if (has? c :subtype "Current")
                (do (doseq [s [:corp :runner]]
@@ -1357,7 +1360,7 @@
                  (system-msg state side "installs a card facedown" )
                (if custom-message
                  (system-msg state side custom-message)
-                 (system-msg state side (str (if (= "" cost-str) "installs " (str "spends " cost-str " to install ")) title
+                 (system-msg state side (str (build-spend-msg cost-str "install") title
                                           (when host-card (str " on " (:title host-card)))
                                           (when no-cost " at no cost")))))
                (trigger-event state side :runner-install installed-card)
@@ -1385,10 +1388,7 @@
              (update! state side (-> h
                                      (update-in [:zone] #(map to-keyword %))
                                      (update-in [:host :zone] #(map to-keyword %)))))
-           (system-msg state side (str (if (or (nil? cost-str) 
-                                               (= "" cost-str)) 
-                                         "rez "
-                                         (str "spends " cost-str " to rez "))
+           (system-msg state side (str (build-spend-msg cost-str "rez")
                                        (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))
@@ -1419,10 +1419,8 @@
                      (trash state side prev-card {:keep-server-alive true})))
                  (let [card-name (if (or (= :rezzed install-state) (= :face-up install-state) (:rezzed c))
                                    (:title card) "a card")]
-                   (system-msg state side (str (if (= "" cost-str) 
-                                                  "installs "
-                                                  (str "spends " cost-str " to install "))
-                                               card-name " in " server))
+                   (system-msg state side (str (build-spend-msg cost-str "install")
+                                                card-name " in " server)))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
@@ -1430,7 +1428,7 @@
                    (when (= install-state :rezzed)
                      (rez state side moved-card {:no-cost true}))
                    (when (= install-state :face-up)
-                     (card-init state side (assoc (get-card state moved-card) :rezzed true) false)))))))))))
+                     (card-init state side (assoc (get-card state moved-card) :rezzed true) false))))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
