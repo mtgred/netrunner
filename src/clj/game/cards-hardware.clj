@@ -323,6 +323,28 @@
                                                                   (:deck runner)) :hand)
                                                       (shuffle! :deck))}}}}}
 
+   "Security Chip"
+   {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
+                 :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
+                 :req (req (:run @state))
+                 :prompt "Choose one non-Cloud icebreaker"
+                 :choices {:req #(and (has? % :subtype "Icebreaker")
+                                      (not (has? % :subtype "Cloud"))
+                                      (:installed %))}
+                 :effect (effect (pump target (:link runner) :all-run)
+                                 (trash (get-card state card) {:cause :ability-cost}))}
+                {:label "[Trash]: Add [Link] strength to any Cloud icebreakers until the end of the run"
+                 :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
+                 :req (req (:run @state))
+                 :prompt "Choose any number of Cloud icebreakers"
+                 :choices {:max 50 :req #(and (has? % :subtype "Icebreaker")
+                                              (has? % :subtype "Cloud")
+                                              (:installed %))}
+                 :effect (req (doseq [t targets]
+                                (pump state side t (:link runner) :all-run)
+                                (update-breaker-strength state side t))
+                              (trash state side (get-card state card) {:cause :ability-cost}))}]}
+
    "Security Nexus"
    {:effect (effect (gain :link 1) (gain :memory 1))
     :leave-play (effect (lose :link 1) (lose :memory 1))
