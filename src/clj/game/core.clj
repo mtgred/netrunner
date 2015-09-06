@@ -35,11 +35,13 @@
              (or (not forfeit-cost) (not (empty? scored))))
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
-(defn build-spend-msg [cost-str verb]
-  (if (or (nil? cost-str)
-          (= "" cost-str))
-    (str verb "s ")
-    (str "spends " cost-str " to " verb " ")))
+(defn build-spend-msg
+  ([cost-str verb] (build-spend-msg cost-str verb nil))
+  ([cost-str verb verb2]
+    (if (or (not (instance? String cost-str))
+            (= "" cost-str))
+      (str (or verb2 (str verb "s")) " ")
+      (str "spends " cost-str " to " verb " "))))
 
 (defn cost-names [value attr]
   (when (> value 0)
@@ -1388,7 +1390,7 @@
              (update! state side (-> h
                                      (update-in [:zone] #(map to-keyword %))
                                      (update-in [:host :zone] #(map to-keyword %)))))
-           (system-msg state side (str (build-spend-msg cost-str "rez")
+           (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                        (:title card) (when no-cost " at no cost")))
            (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
            (trigger-event state side :rez card))))
