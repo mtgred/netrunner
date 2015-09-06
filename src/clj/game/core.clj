@@ -872,6 +872,16 @@
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
          (trigger-event state :runner :run s)))))
 
+(defn access-cost-bonus [state side costs]
+  (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
+
+(defn access-cost [state side card]
+  (-> (if-let [costfun (:access-cost-bonus (card-def card))]
+        (costfun state side card nil)
+        nil)
+      (concat (get-in @state [:bonus :access-cost]))
+      merge-costs flatten vec))
+
 (defn steal-cost-bonus [state side costs]
   (swap! state update-in [:bonus :steal-cost] #(merge-costs (concat % costs))))
 
@@ -899,44 +909,49 @@
   (doseq [c cards]
     (swap! state update-in [:bonus] dissoc :trash)
     (swap! state update-in [:bonus] dissoc :steal-cost)
-    (let [cdef (card-def c)
-          c (assoc c :seen true)]
-      (when-let [name (:title c)]
-        (if (= (:type c) "Agenda")
-          (do (trigger-event state side :pre-steal-cost c)
-              (if (not (get-in @state [:runner :register :cannot-steal]))
-                (let [cost (steal-cost state side c)]
-                  (if (pos? (count cost))
-                    (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                      {:yes-ability {:cost cost
-                                                     :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                                      " to steal " (:title c)))
-                                                                     (resolve-steal c))}
-                                       :no-ability {:effect (effect (resolve-steal-events c))}} nil)
-                    (resolve-ability state :runner
-                                     {:prompt (str "You access " (:title c)) :choices ["Steal"]
-                                      :effect (req (resolve-steal state :runner c))} c nil)))
-                (do (resolve-steal-events state side c)
-                    (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))))
-        (do (when-let [access-effect (:access cdef)]
-              (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-            (trigger-event state side :access c)
-            (trigger-event state side :pre-trash c)
-            (when (not= (:zone c) [:discard])
-              (if-let [trash-cost (trash-cost state side c)]
-                (let [card (assoc c :seen true)]
-                  (if (and (get-in @state [:runner :register :force-trash])
-                           (can-pay? state :runner :credit trash-cost))
-                    (resolve-ability state :runner {:cost [:credit trash-cost]
-                                                    :effect (effect (trash card)
-                                                            (system-msg (str "is forced to pay " trash-cost
-                                                                             " [Credits] to trash " (:title card))))} card nil)
-                    (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                      {:yes-ability {:cost [:credit trash-cost]
-                                                     :effect (effect (trash card)
-                                                                     (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                                      (:title card))))}} nil)))
-                (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))))
+    (swap! state update-in [:bonus] dissoc :access-cost)
+    (trigger-event state side :pre-access-card c)
+    (let [acost (access-cost state side c)]
+      (if (or (empty? acost) (pay state side c acost))
+        (let [cdef (card-def c)
+              c (assoc c :seen true)]
+          (when-let [name (:title c)]
+            (if (= (:type c) "Agenda")
+              (do (trigger-event state side :pre-steal-cost c)
+                  (if (not (get-in @state [:runner :register :cannot-steal]))
+                    (let [cost (steal-cost state side c)]
+                      (if (pos? (count cost))
+                        (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+                                          {:yes-ability {:cost cost
+                                                         :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
+                                                                                          " to steal " (:title c)))
+                                                                         (resolve-steal c))}
+                                           :no-ability {:effect (effect (resolve-steal-events c))}} nil)
+                        (resolve-ability state :runner
+                                         {:prompt (str "You access " (:title c)) :choices ["Steal"]
+                                          :effect (req (resolve-steal state :runner c))} c nil)))
+                    (do (resolve-steal-events state side c)
+                        (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))))
+              (do (when-let [access-effect (:access cdef)]
+                    (resolve-ability state (to-keyword (:side c)) access-effect c nil))
+                  (trigger-event state side :access c)
+                  (trigger-event state side :pre-trash c)
+                  (when (not= (:zone c) [:discard])
+                    (if-let [trash-cost (trash-cost state side c)]
+                      (let [card (assoc c :seen true)]
+                        (if (and (get-in @state [:runner :register :force-trash])
+                                 (can-pay? state :runner :credit trash-cost))
+                          (resolve-ability state :runner {:cost [:credit trash-cost]
+                                                          :effect (effect (trash card)
+                                                                          (system-msg (str "is forced to pay " trash-cost
+                                                                                           " [Credits] to trash " (:title card))))} card nil)
+                          (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                                            {:yes-ability {:cost [:credit trash-cost]
+                                                           :effect (effect (trash card)
+                                                                           (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                                            (:title card))))}} nil)))
+                      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))
+        (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))))
 
 (defn max-access [state side n]
   (swap! state assoc-in [:run :max-access] n))
