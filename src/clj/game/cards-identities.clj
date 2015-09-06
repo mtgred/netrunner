@@ -77,6 +77,10 @@
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
+   "Gagarin Deep Space: Expanding the Horizon"
+   {:events {:pre-access-card {:req (req (= (second (:zone target)) :remote))
+                               :effect (effect (access-cost-bonus [:credit 1]))}}}
+
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
