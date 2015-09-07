@@ -156,7 +156,13 @@
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
-    :abilities [{:counter-cost 2 :cost [:click 1] :msg "force the Corp to trash 1 card from HQ"}]}
+    :abilities [{:counter-cost 2 :cost [:click 1] :msg "force the Corp to trash 1 card from HQ"
+                 :effect (req (resolve-ability
+                                state :corp
+                                {:prompt "Choose a card to trash"
+                                 :choices (req (filter #(:hand corp)))
+                                 :effect (effect (trash target))}
+                               card nil))}]}
 
    "Hivemind"
    {:data {:counter 1 :counter-type "Virus"}

@@ -38,9 +38,6 @@
        [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
         " and create an account with the same email used to register on Jinteki.net."]]
       [:li
-       [:h4 "I forgot my password. How can I reset it?"]
-       [:p "An automated password reset is in the todo list. Meanwhile, send an email to mtgred@gmail.com with your username."]]
-      [:li
        [:h4 "How can I make a donation?"]
        [:p "My PayPal account is mtgred@gmail.com."]
        [:p "If you use Bitcoin, my address is "

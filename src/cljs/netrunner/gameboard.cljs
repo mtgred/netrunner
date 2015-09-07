@@ -418,7 +418,7 @@
     [:div.panel.blue-shade.discard
      (drop-area :runner "Heap" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
      (om/build label discard {:opts {:name "Heap"}})
-     [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :corp) "opponent")}
+     [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
       [:div
        [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]

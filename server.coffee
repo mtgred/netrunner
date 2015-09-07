@@ -118,7 +118,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         game = games[gid]
         if game
           if game.players.length > 1
-            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} left the game."}))
+            requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} left the game."}))
           removePlayer(socket)
 
       when "join"
@@ -134,11 +134,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         if game
           game.spectators.push({user: socket.request.user, id: socket.id})
           socket.join(msg.gameid)
-          socket.gameid = gameid
-          socket.emit("netrunner", {type: "game", gameid: gameid, started: game.started})
+          socket.gameid = msg.gameid
+          socket.emit("netrunner", {type: "game", gameid: msg.gameid, started: game.started})
           lobby.emit('netrunner', {type: "games", games: games})
           if game.started
-            requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
+            requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
           else
             socket.broadcast.to(msg.gameid).emit 'netrunner',
               type: "say"
