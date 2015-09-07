@@ -305,7 +305,7 @@
 
    "Research Grant"
    {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
-    :prompt "Choose to score another installed copy of Research Grant (optional)"
+    :prompt "You may choose another installed copy of Research Grant to score."
     :choices {:req #(= (:title %) "Research Grant")}
     :effect (effect (score (assoc target :advance-counter (:advancementcost target))))
     :msg (msg "score another copy of Research Grant")
