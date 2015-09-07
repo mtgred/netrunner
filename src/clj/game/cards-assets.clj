@@ -347,10 +347,11 @@
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
                                                  (do (as-agenda state :runner card -1)
-                                                     (system-msg state :runner
-                                                       (str "adds News Team to their score area as -1 agenda point")))
-                                                 (tag-runner :runner 2)))}
-                               card targets))}}
+                                                   (system-msg state side
+                                                    (str "adds News Team to their score area as -1 agenda point")))
+                                                 (do (tag-runner state :runner 2)
+                                                   (system-msg state side (str "takes 2 tags from News Team")))))}
+                              card targets))}}
 
    "PAD Campaign"
    {:events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -490,9 +491,12 @@
                                 :effect (let [dmg target]
                                           (req (if (= target "Add Shi.Kyū to score area")
                                                  (do (as-agenda state :runner card -1)
-                                                     (system-msg state :runner (str "adds Shi.Kyū to their score area as -1 agenda point")))
-                                                 (damage state :corp :net dmg {:card card}))))}
-                               card targets))}}
+                                                   (system-msg state side
+                                                    (str "adds Shi.Kyū to their score area as -1 agenda point")))
+                                                 (do (damage state :corp :net dmg {:card card})
+                                                   (system-msg state :corp
+                                                    (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                              card targets))}}
 
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}

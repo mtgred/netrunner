@@ -103,7 +103,10 @@
               [:button {:data-dismiss "modal"} "Cancel"]]]
          [:p "Already have an account? "
           [:span.fake-link {:on-click #(.modal (js/$ "#login-form") "show")
-                            :data-dismiss "modal"} "Log in"]]]]))))
+                            :data-dismiss "modal"} "Log in"]]
+         [:p "Need to reset your password? "
+          [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
+                            :data-dismiss "modal"} "Reset"]]]]))))
 
 (defn login-form [cursor owner]
   (reify
@@ -128,6 +131,27 @@
           [:p "Forgot your password? "
            [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
                              :data-dismiss "modal"} "Reset"]]]]]))))
+
+(defn forgot-form [cursor owner]
+  (reify
+    om/IInitState
+    (init-state [this] {:flash-message ""})
+
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+       [:div.modal.fade#forgot-form {:ref "forgot-form"}
+        [:div.modal-dialog
+         [:h3 "Reset your Password"]
+         [:p.flash-message (:flash-message state)]
+         [:form {:on-submit #(handle-post % owner "/forgot" "forgot-form")}
+          [:p [:input {:type "text" :placeholder "Email" :name "email"
+                       :on-blur #(check-email % owner)}]]
+          [:p [:button "Submit"]
+              [:button {:data-dismiss "modal"} "Cancel"]]
+          [:p "No account? "
+            [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
+                              :data-dismiss "modal"} "Sign up!"]]]]]))))
 
 (defn forgot-form [cursor owner]
   (reify

@@ -263,7 +263,8 @@
                              :effect (effect (add-prop target :counter 1))}}}
 
    "Valencia Estevez: The Angel of Cayambe"
-   {:effect (effect (gain :corp :bad-publicity 1))}
+   {:req (req (zero? (get-in @state [:corp :bad-publicity])))
+    :effect (effect (gain :corp :bad-publicity 1))}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}

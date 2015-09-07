@@ -29,7 +29,7 @@
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])]
-    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0) 
+    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0)
                           (= (first %) :memory)) ;; memoryunits may be negative
                      costs)
              (or (not forfeit-cost) (not (empty? scored))))
@@ -113,7 +113,8 @@
   (if-let [h (get-card state (:host card))]
     (recur state side (let [[head tail] (split-with #(not= (:cid %) cid) (:hosted h))]
                         (assoc h :hosted (vec (concat head [card] (rest tail))))))
-    (update! state side card)))
+    (when-not (:host card)
+      (update! state side card))))
 
 (defn remove-from-host [state side {:keys [cid] :as card}]
   (let [host-card (get-card state (:host card))]
@@ -1246,8 +1247,8 @@
   (trigger-event state side :purge))
 
 (defn get-virus-counters [state side card]
-   (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
-        (reduce + (map :counter (cons card hiveminds)))))
+  (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
+    (reduce + (map #(get % :counter 0) (cons card hiveminds)))))
 
 (defn play-instant
   ([state side card] (play-instant state side card nil))
