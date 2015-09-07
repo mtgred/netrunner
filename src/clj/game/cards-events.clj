@@ -39,7 +39,9 @@
                                       :effect (effect (run target nil card))} card nil))}
 
    "Calling in Favors"
-   {:effect (effect (gain :credit (count (filter (fn [c] (has? c :subtype "Connection"))
+   {:msg (msg "gain " (count (filter #(has? % :subtype "Connection") (all-installed state :runner)))
+              " [Credits]")
+    :effect (effect (gain :credit (count (filter #(has? % :subtype "Connection")
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
