@@ -303,6 +303,14 @@
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
+   "Research Grant"
+   {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
+    :prompt "You may choose another installed copy of Research Grant to score."
+    :choices {:req #(= (:title %) "Research Grant")}
+    :effect (effect (score (assoc target :advance-counter (:advancementcost target))))
+    :msg (msg "score another copy of Research Grant")
+   }
+
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
