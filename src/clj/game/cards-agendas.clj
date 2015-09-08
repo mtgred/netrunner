@@ -50,7 +50,8 @@
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
-   {:prompt "Choose a resource to trash" :choices (req (get-in runner [:rig :resource]))
+   {:prompt "Choose a resource to trash"
+    :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
 
    "Chronos Project"
