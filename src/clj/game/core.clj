@@ -755,12 +755,12 @@
 
 (defn trash-resource [state side args]
   (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
-    (when (pay state side nil :click 1 :credit trash-cost)
+    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost)]
       (resolve-ability state side
                        {:prompt "Choose a resource to trash"
                         :choices {:req #(= (:type %) "Resource")}
                         :effect (effect (trash target)
-                                        (system-msg (str "spends [Click] and " trash-cost " [Credits] to trash "
+                                        (system-msg (str (build-spend-msg cost-str "trash")
                                                          (:title target))))} nil nil))))
 
 (defn trash-prevent [state side type n]
