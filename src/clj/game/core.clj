@@ -1175,7 +1175,6 @@
   (let [server (get-in @state [:run :server])]
     (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
     (swap! state assoc-in [:run :successful] true)
-    (trigger-event state side :successful-run (first server))
     (let [run-effect (get-in @state [:run :run-effect])
           r (:req run-effect)
           card (:card run-effect)
@@ -1191,7 +1190,8 @@
                                   :effect #(if (= % "Run ability")
                                              (replace-access state side replace-effect card)
                                              (do-access state side server))}))))
-        (do-access state side server)))))
+        (do-access state side server)))
+    (trigger-event state side :successful-run (first server))))
 
 (defn end-run [state side]
   (let [server (first (get-in @state [:run :server]))]
