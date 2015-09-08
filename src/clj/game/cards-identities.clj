@@ -260,6 +260,19 @@
    "Sunny Lebeau: Security Specialist"
    {:effect (effect (gain :link 2))}
 
+   "SYNC: Everything, Everywhere"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :effect (effect (update! (assoc card :sync-front true)) (tag-remove-bonus -1))}}
+    :abilities [{:cost [:click 1]
+                 :effect (req (if (:sync-front card)
+                           (do (tag-remove-bonus state side 1)
+                               (trash-resource-bonus state side 2)
+                               (update! state side (-> card (assoc :sync-front false) (assoc :code "sync"))))
+                           (do (tag-remove-bonus state side -1)
+                               (trash-resource-bonus state side -2)
+                               (update! state side (-> card (assoc :sync-front true)(assoc :code "09001"))))))
+                 :msg (msg "flip their ID")}]}
+
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn

@@ -750,6 +750,9 @@
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
+(defn tag-remove-bonus [state side n]
+  (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
+
 (defn trash-resource-bonus [state side n]
   (swap! state update-in [:corp :trash-cost-bonus] (fnil #(+ % n) 0)))
 
@@ -1564,8 +1567,9 @@
     (purge state side)))
 
 (defn remove-tag [state side args]
-  (when (pay state side nil :click 1 :credit 2 :tag 1)
-    (system-msg state side "spend [Click] and 2 [Credits] to remove 1 tag")))
+  (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
+    (when-let [cost-str (pay state side nil :click 1 :credit remove-cost :tag 1)]
+      (system-msg state side (build-spend-msg cost-str "remove 1 Tag")))))
 
 (defn jack-out [state side args]
   (end-run state side)

@@ -698,7 +698,7 @@
                          (when (= side :runner)
                            [:div
                             (cond-button "Remove Tag"
-                                         (and (>= (:click me) 1) (>= (:credit me) 2) (>= (:tag me) 1))
+                                         (and (>= (:click me) 1) (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0))) (>= (:tag me) 1))
                                          #(send-command "remove-tag"))
                             [:div.run-button
                              (cond-button "Run" (and (>= (:click me) 1)
@@ -715,7 +715,7 @@
                          (when (= side :corp)
                            (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                          (when (= side :corp)
-                           (cond-button "Trash Resource" (and (> (:click me) 0) (> (:credit me) 1)
+                           (cond-button "Trash Resource" (and (> (:click me) 0) (>= (:credit me) (- 2 (or (:trash-cost-bonus me) 0)))
                                                               (or (> (:tagged opponent) 0)
                                                                   (> (:tag opponent) 0)))
                                         #(send-command "trash-resource")))
