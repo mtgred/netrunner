@@ -729,14 +729,18 @@
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
+(defn trash-resource-bonus [state side n]
+  (swap! state update-in [:corp :trash-cost-bonus] (fnil #(+ % n) 0)))
+
 (defn trash-resource [state side args]
-  (when (pay state side nil :click 1 :credit 2)
-    (resolve-ability state side
-                     {:prompt "Choose a resource to trash"
-                      :choices {:req #(= (:type %) "Resource")}
-                      :effect (effect (trash target)
-                                      (system-msg (str "spends [Click] and 2 [Credits] to trash "
-                                                       (:title target))))} nil nil)))
+  (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
+    (when (pay state side nil :click 1 :credit trash-cost)
+      (resolve-ability state side
+                       {:prompt "Choose a resource to trash"
+                        :choices {:req #(= (:type %) "Resource")}
+                        :effect (effect (trash target)
+                                        (system-msg (str "spends [Click] and " trash-cost " [Credits] to trash "
+                                                         (:title target))))} nil nil))))
 
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
