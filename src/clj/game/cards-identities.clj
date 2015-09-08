@@ -206,6 +206,22 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
+   "New Angeles Sol: Your News"
+   (let [nasol {:optional
+                {:prompt "Play a Current?" :player :corp
+                 :req (req (not (empty? (filter #(has? % :subtype "Current") (concat (:hand corp) (:discard corp))))))
+                 :yes-ability {:prompt "Play a Current from HQ or Archives?" :player :corp
+                               :choices ["Archives" "HQ"]
+                               :msg (msg "play a Current from " target)
+                               :effect (effect (resolve-ability
+                                                 {:prompt "Choose a Current to play"
+                                                  :choices (req (filter #(and (has? % :subtype "Current")
+                                                                              (<= (:cost %) (:credit corp)))
+                                                                                ((if (= target "HQ") :hand :discard) corp)))
+                                                  :effect (effect (play-instant target))}
+                                                card targets))}}}]
+     {:events {:agenda-scored nasol :agenda-stolen nasol}})
+
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
