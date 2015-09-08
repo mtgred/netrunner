@@ -1364,7 +1364,7 @@
        (trigger-event state side :pre-install card)
        (let [cost (install-cost state side card
                                 (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost])
-                                        (when memoryunits [:memory memoryunits])))]
+                                        (when (and memoryunits (not facedown)) [:memory memoryunits])))]
          (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
                     (if-let [req (:req (card-def card))]
                       (or facedown (req state side card nil)) true))
