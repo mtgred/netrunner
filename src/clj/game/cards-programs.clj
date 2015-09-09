@@ -50,11 +50,8 @@
              {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
               :effect (effect (update-all-advancement-costs))}}}
 
-
-
    "Cloak"
    {:recurring 1}
-
 
    "Clot"
    {:events {:purge {:effect (effect (trash card))}}}
@@ -63,6 +60,23 @@
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
                    :effect (effect (draw :runner))}}}
 
+   "Copycat"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))]
+   {:abilities [{:req (req (and (:run @state)
+                                (:rezzed current-ice)))
+                 :effect (req (let [icename (:title current-ice)]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (msg "Choose a rezzed copy of " icename)
+                                   :choices {:req #(and (:rezzed %) (= (:type %) "ICE") (= (:title %) icename))}
+                                   :msg "redirect the run"
+                                   :effect (req (let [dest (second (:zone target))
+                                                      tgtndx (ice-index state target)]
+                                                  (swap! state update-in [:run]
+                                                         #(assoc % :position tgtndx :server [dest]))
+                                                  (trash state side card {:cause :ability-cost})))}
+                                 card nil)))}]})
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
