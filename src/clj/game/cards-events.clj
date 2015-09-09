@@ -241,6 +241,12 @@
                                :effect (req (doseq [c (take 5 (:deck corp))]
                                               (move state side c :play-area)))}} card))}
 
+   "Independent Thinking"
+   (let [cards-to-draw (fn [ts] (* (count ts) (if (not-any? #(has? % :subtype "Directive") ts) 1 2)))]
+     {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
+      :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
+      :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
+
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
