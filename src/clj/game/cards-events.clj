@@ -261,6 +261,19 @@
    "Inside Job"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
+   "Itinerant Protesters"
+   {:effect (req (lose state :corp :max-hand-size (:bad-publicity corp))
+                 (add-watch state :itin
+                   (fn [k ref old new]
+                     (let [bpnew (get-in new [:corp :bad-publicity])
+                           bpold (get-in old [:corp :bad-publicity])]
+                       (when (> bpnew bpold)
+                         (lose state :corp :max-hand-size (- bpnew bpold)))
+                       (when (< bpnew bpold)
+                         (gain state :corp :max-hand-size (- bpold bpnew)))))))
+    :leave-play (req (remove-watch state :itin)
+                     (gain state :corp :max-hand-size (:bad-publicity corp)))}
+
    "Knifed"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
