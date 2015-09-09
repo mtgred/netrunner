@@ -111,7 +111,7 @@
    "Escher"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
                                                       (get-in @state (cons :corp (:zone i))))))
-         eshelp (fn es [] {:prompt "Select two pieces of ice to swap positions"
+         eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
                            :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
                            :effect (req (if (= (count targets) 2)
                                           (let [fndx (ice-index state (first targets))
@@ -125,7 +125,7 @@
                                             (update-ice-strength state side fnew)
                                             (update-ice-strength state side snew)
                                             (resolve-ability state side (es) card nil))
-                                          (system-msg state side "has finished rearranging ice")))})]
+                                          (system-msg state side "has finished rearranging ICE")))})]
      {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ice"
                                                  :effect (effect (resolve-ability (eshelp) card nil))}} card))})
 
@@ -452,6 +452,16 @@
                   :pre-ice-strength {:req (req (= (:cid target) (:cid (:scrubbed-target card))))
                                      :effect (effect (ice-strength-bonus -2))}
                   :pass-ice sc :run-ends sc})}
+
+   "Showing Off"
+   {:effect (effect (run :rd
+                      {:replace-access
+                       {:msg "access cards from the bottom of R&D"
+                        :effect (req (swap! state assoc-in [:corp :deck]
+                                            (rseq (into [] (get-in @state [:corp :deck]))))
+                                     (do-access state side (:server run))
+                                     (swap! state assoc-in [:corp :deck]
+                                            (rseq (into [] (get-in @state [:corp :deck])))))}} card))}
 
    "Singularity"
    {:prompt "Choose a server" :choices (req remotes)
