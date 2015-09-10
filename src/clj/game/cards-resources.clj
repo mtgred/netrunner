@@ -481,6 +481,7 @@
 
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
+                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))

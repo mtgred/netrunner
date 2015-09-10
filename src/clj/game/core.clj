@@ -184,7 +184,8 @@
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
-                         (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone))))))
+                         (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone)))))
+                (not (seq (get-in @state [side :locked zone]))))
        (doseq [h (:hosted card)]
          (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
        (let [dest (if (sequential? to) (vec to) [to])
@@ -681,10 +682,11 @@
 
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
-        deck (shuffle (reduce concat (:deck player) (for [p args] (zone :deck (p player)))))]
-    (swap! state assoc-in [side :deck] deck))
-  (doseq [p args]
-    (swap! state assoc-in [side p] [])))
+        zones (filter #(not (seq (get-in @state [side :locked %]))) args)
+        deck (shuffle (reduce concat (:deck player) (for [p zones] (zone :deck (p player)))))]
+    (swap! state assoc-in [side :deck] deck)
+    (doseq [p zones]
+      (swap! state assoc-in [side p] []))))
 
 (defn mulligan [state side args]
   (shuffle-into-deck state side :hand)
@@ -1289,6 +1291,7 @@
 (defn play-instant
   ([state side card] (play-instant state side card nil))
   ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
+    (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
      (let [cdef (card-def card)
            additional-cost (if (has? card :subtype "Double")
                              (concat (:additional-cost cdef) [:click 1])
@@ -1313,7 +1316,7 @@
                      (card-init state side moved-card)))
                (do
                  (resolve-ability state side cdef card nil)
-                 (move state side (first (get-in @state [side :play-area])) :discard)))))))))
+                 (move state side (first (get-in @state [side :play-area])) :discard))))))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
@@ -1355,35 +1358,35 @@
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
     {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
-
-   (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
-     (resolve-ability state side
-                      {:choices hosting
-                       :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
-     (do
-       (trigger-event state side :pre-install card)
-       (let [cost (install-cost state side card
-                                (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost])
-                                        (when (and memoryunits (not facedown)) [:memory memoryunits])))]
-         (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
-                    (if-let [req (:req (card-def card))]
-                      (or facedown (req state side card nil)) true))
-           (when-let [cost-str (pay state side card cost)]
-             (let [c (if host-card
-                       (host state side host-card card)
-                       (move state side card [:rig (if facedown :facedown (to-keyword type))]))
-                   installed-card (card-init state side (assoc c :installed true) (not facedown))]
-               (if facedown
-                 (system-msg state side "installs a card facedown" )
-               (if custom-message
-                 (system-msg state side custom-message)
-                 (system-msg state side (str (build-spend-msg cost-str "install") title
-                                          (when host-card (str " on " (:title host-card)))
-                                          (when no-cost " at no cost")))))
-               (trigger-event state side :runner-install installed-card)
-               (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))))
-   (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
-   (swap! state update-in [:bonus] dissoc :install-cost)))
+   (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
+     (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
+       (resolve-ability state side
+                        {:choices hosting
+                         :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
+       (do
+         (trigger-event state side :pre-install card)
+         (let [cost (install-cost state side card
+                                  (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost])
+                                          (when (and memoryunits (not facedown)) [:memory memoryunits])))]
+           (when (and (or (not uniqueness) (not (in-play? state card)) facedown)
+                      (if-let [req (:req (card-def card))]
+                        (or facedown (req state side card nil)) true))
+             (when-let [cost-str (pay state side card cost)]
+               (let [c (if host-card
+                         (host state side host-card card)
+                         (move state side card [:rig (if facedown :facedown (to-keyword type))]))
+                     installed-card (card-init state side (assoc c :installed true) (not facedown))]
+                 (if facedown
+                   (system-msg state side "installs a card facedown" )
+                 (if custom-message
+                   (system-msg state side custom-message)
+                   (system-msg state side (str (build-spend-msg cost-str "install") title
+                                            (when host-card (str " on " (:title host-card)))
+                                            (when no-cost " at no cost")))))
+                 (trigger-event state side :runner-install installed-card)
+                 (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))))
+     (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
+     (swap! state update-in [:bonus] dissoc :install-cost))))
 
 (defn server-list [state card]
   (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
@@ -1514,6 +1517,12 @@
 
 (defn prevent-current [state side]
   (swap! state assoc-in [:runner :register :cannot-play-current] true))
+
+(defn lock-zone [state side cid tside tzone]
+  (swap! state update-in [tside :locked tzone] #(conj % cid)))
+
+(defn release-zone [state side cid tside tzone]
+  (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))

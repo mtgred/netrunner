@@ -62,6 +62,7 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
+                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
                  :choices (req (filter #(has? % :type "Program") (:discard runner)))
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
