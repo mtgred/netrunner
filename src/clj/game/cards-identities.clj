@@ -127,7 +127,7 @@
    "Jinteki Biotech: Life Imagined"
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
-                              :choices ["The Brewery" "The Tank" "The Greenhouse"]
+                              :choices ["[The Brewery~brewery]" "[The Tank~tank]" "[The Greenhouse~greenhouse]"]
                               :effect (effect (update! (assoc card :biotech-target target))
                                               (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
     :abilities [{:cost [:click 3]
@@ -135,15 +135,18 @@
                  :effect (req (let [flip (:biotech-target card)]
                                 (update! state side (assoc card :biotech-used true))
                                 (case flip
-                                  "The Brewery"
-                                  (do (system-msg state side "uses The Brewery to do 2 net damage")
-                                      (damage state side :net 2 {:card card}))
-                                  "The Tank"
-                                  (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
-                                      (shuffle-into-deck state side :discard))
-                                  "The Greenhouse"
-                                  (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
+                                  "[The Brewery~brewery]"
+                                  (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
+                                      (damage state side :net 2 {:card card})
+                                      (update! state side (assoc card :code "brewery")))
+                                  "[The Tank~tank]"
+                                  (do (system-msg state side "uses [The Tank~tank] to shuffle Archives into R&D")
+                                      (shuffle-into-deck state side :discard)
+                                      (update! state side (assoc card :code "tank")))
+                                  "[The Greenhouse~greenhouse]"
+                                  (do (system-msg state side (str "uses [The Greenhouse~greenhouse] to place 4 advancement tokens "
                                                                   "on a card that can be advanced"))
+                                      (update! state side (assoc card :code "greenhouse"))
                                       (resolve-ability
                                         state side
                                         {:prompt "Choose a card that can be advanced"
@@ -259,6 +262,19 @@
 
    "Sunny Lebeau: Security Specialist"
    {:effect (effect (gain :link 2))}
+
+   "SYNC: Everything, Everywhere"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :effect (effect (update! (assoc card :sync-front true)) (tag-remove-bonus -1))}}
+    :abilities [{:cost [:click 1]
+                 :effect (req (if (:sync-front card)
+                           (do (tag-remove-bonus state side 1)
+                               (trash-resource-bonus state side 2)
+                               (update! state side (-> card (assoc :sync-front false) (assoc :code "sync"))))
+                           (do (tag-remove-bonus state side -1)
+                               (trash-resource-bonus state side -2)
+                               (update! state side (-> card (assoc :sync-front true)(assoc :code "09001"))))))
+                 :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}

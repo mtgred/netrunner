@@ -644,6 +644,10 @@
                      :effect (effect (gain :credit 1))
                      :msg "to gain 1[Credit]"}}}
 
+   "Wireless Net Pavilion"
+   {:effect (effect (trash-resource-bonus -2))
+    :leave-play (effect (trash-resource-bonus 2))}
+                     
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")

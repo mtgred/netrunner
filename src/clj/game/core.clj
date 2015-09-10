@@ -750,14 +750,21 @@
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))))
 
+(defn tag-remove-bonus [state side n]
+  (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
+
+(defn trash-resource-bonus [state side n]
+  (swap! state update-in [:corp :trash-cost-bonus] (fnil #(+ % n) 0)))
+
 (defn trash-resource [state side args]
-  (when (pay state side nil :click 1 :credit 2)
-    (resolve-ability state side
-                     {:prompt "Choose a resource to trash"
-                      :choices {:req #(= (:type %) "Resource")}
-                      :effect (effect (trash target)
-                                      (system-msg (str "spends [Click] and 2 [Credits] to trash "
-                                                       (:title target))))} nil nil)))
+  (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
+    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost)]
+      (resolve-ability state side
+                       {:prompt "Choose a resource to trash"
+                        :choices {:req #(= (:type %) "Resource")}
+                        :effect (effect (trash target)
+                                        (system-msg (str (build-spend-msg cost-str "trash")
+                                                         (:title target))))} nil nil))))
 
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
@@ -1560,8 +1567,9 @@
     (purge state side)))
 
 (defn remove-tag [state side args]
-  (when (pay state side nil :click 1 :credit 2 :tag 1)
-    (system-msg state side "spend [Click] and 2 [Credits] to remove 1 tag")))
+  (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
+    (when-let [cost-str (pay state side nil :click 1 :credit remove-cost :tag 1)]
+      (system-msg state side (build-spend-msg cost-str "remove 1 Tag")))))
 
 (defn jack-out [state side args]
   (end-run state side)
