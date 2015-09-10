@@ -12,6 +12,18 @@
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
     :effect (effect (move target :hand) (shuffle! :deck))}
 
+   "An Offer You Cant Refuse"
+   {:prompt "Choose a server" :choices ["HQ" "R&D" "Archives"]
+    :effect (req (let [serv target]
+                   (resolve-ability
+                     state side
+                     {:optional
+                      {:prompt (msg "Make a run on " serv "?") :player :runner
+                       :yes-ability {:msg (msg "let the Runner make a run on " serv)}
+                       :no-ability {:effect (effect (as-agenda :corp (last (:discard corp)) 1))
+                                    :msg "add it to their score area and gain 1 agenda point"}}}
+                    card nil)))}
+
    "Anonymous Tip"
    {:effect (effect (draw 3))}
 
