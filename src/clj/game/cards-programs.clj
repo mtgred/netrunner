@@ -414,6 +414,13 @@
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
-                 :cost [:click 1] :msg (msg "reshuffle " (:counter card) " card" (when (> (:counter card) 1) "s")
-                                            " in the Heap back into their Stack")
-                 :effect (effect (move card :rfg))}]}})
+                 :effect (effect
+                          (move card :rfg)
+                          (resolve-ability
+                           {:show-discard true
+                            :choices {:max (:counter card) :req #(and (:side % "Runner") (= (:zone %) [:discard]))}
+                            :msg (msg "shuffle " (join ", " (map :title targets))
+                                      " into their Stack")
+                            :effect (req (doseq [c targets] (move state side c :deck))
+                                         (shuffle! state side :deck))}
+                           card nil))}]}})
