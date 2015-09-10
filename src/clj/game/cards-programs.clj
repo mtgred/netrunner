@@ -411,6 +411,30 @@
                                                               :yes-ability {:msg "jack out"
                                                                             :effect (effect (jack-out nil))}}}
                                                   card nil))}]}
+   "Surfer"
+   {:abilities [{:cost [:credit 2]
+                 :req (req (and (:run @state) (:rezzed current-ice)))
+                 :label "Swap a piece of barrier ice currently being encountered with a piece of ice directly before or after it"
+                 :effect (req (let [cice current-ice]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (msg "Choose an ice before or after " (:title cice))
+                                   :choices {:req #(and (= (:type %) "ICE") 
+                                                        (= (:zone %) (:zone cice))
+                                                        (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
+                                   :msg "swap a piece of barrier ice"
+                                   :effect (req (let [tgtndx (ice-index state target)
+                                                      oldndx (ice-index state cice)]
+                                                  (swap! state update-in (cons :corp (:zone cice))
+                                                      #(assoc % tgtndx cice))
+                                                  (swap! state update-in (cons :corp (:zone cice))
+                                                      #(assoc % oldndx target))
+                                                  (swap! state update-in [:run] 
+                                                      #(assoc % :position (inc tgtndx)))
+                                                  (update-ice-strength state side (cons :corp (:zone cice)))
+                                                  (update-run-ice state side)))}
+                                 card nil)))}]}
+   
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"

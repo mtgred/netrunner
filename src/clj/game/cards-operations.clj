@@ -367,9 +367,7 @@
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
 
    "Sunset"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))
-         sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
+   (let [sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
                                  :choices {:req #(and (= serv (rest (butlast (:zone %))))
                                                       (= (:type %) "ICE")) :max 2}
                                  :effect (req (if (= (count targets) 2)

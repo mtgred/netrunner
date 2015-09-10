@@ -518,31 +518,29 @@
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
    "Tenma Line"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))]
-     {:abilities [{:label "Swap 2 pieces of installed ICE"
-                   :cost [:click 1]
-                   :prompt "Select two pieces of ICE to swap positions"
-                   :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
-                   :effect (req (if (= (count targets) 2)
-                                  (let [fndx (ice-index state (first targets))
-                                        sndx (ice-index state (second targets))
-                                        fnew (assoc (first targets) :zone (:zone (second targets)))
-                                        snew (assoc (second targets) :zone (:zone (first targets)))]
-                                    (swap! state update-in (cons :corp (:zone (first targets)))
-                                           #(assoc % fndx snew))
-                                    (swap! state update-in (cons :corp (:zone (second targets)))
-                                           #(assoc % sndx fnew))
-                                    (doseq [newcard [fnew snew]]
-                                      (doseq [h (:hosted newcard)]
-                                        (let [newh (-> h (assoc-in [:zone] '(:onhost))
-                                                       (assoc-in [:host :zone] (:zone newcard)))]
-                                          (update! state side newh)
-                                          (unregister-events state side h)
-                                          (register-events state side (:events (card-def newh)) newh))))
-                                    (update-ice-strength state side fnew)
-                                    (update-ice-strength state side snew))))
-                   :msg "swap the positions of two ICE"}]})
+   {:abilities [{:label "Swap 2 pieces of installed ICE"
+                 :cost [:click 1]
+                 :prompt "Select two pieces of ICE to swap positions"
+                 :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
+                 :effect (req (if (= (count targets) 2)
+                                (let [fndx (ice-index state (first targets))
+                                      sndx (ice-index state (second targets))
+                                      fnew (assoc (first targets) :zone (:zone (second targets)))
+                                      snew (assoc (second targets) :zone (:zone (first targets)))]
+                                  (swap! state update-in (cons :corp (:zone (first targets)))
+                                         #(assoc % fndx snew))
+                                  (swap! state update-in (cons :corp (:zone (second targets)))
+                                         #(assoc % sndx fnew))
+                                  (doseq [newcard [fnew snew]]
+                                    (doseq [h (:hosted newcard)]
+                                      (let [newh (-> h (assoc-in [:zone] '(:onhost))
+                                                     (assoc-in [:host :zone] (:zone newcard)))]
+                                        (update! state side newh)
+                                        (unregister-events state side h)
+                                        (register-events state side (:events (card-def newh)) newh))))
+                                  (update-ice-strength state side fnew)
+                                  (update-ice-strength state side snew))))
+                 :msg "swap the positions of two ICE"}]}
 
    "Team Sponsorship"
    {:events {:agenda-scored
