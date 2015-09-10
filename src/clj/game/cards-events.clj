@@ -111,7 +111,7 @@
    "Escher"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
                                                       (get-in @state (cons :corp (:zone i))))))
-         eshelp (fn es [] {:prompt "Select two pieces of ice to swap positions"
+         eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
                            :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
                            :effect (req (if (= (count targets) 2)
                                           (let [fndx (ice-index state (first targets))
@@ -125,7 +125,7 @@
                                             (update-ice-strength state side fnew)
                                             (update-ice-strength state side snew)
                                             (resolve-ability state side (es) card nil))
-                                          (system-msg state side "has finished rearranging ice")))})]
+                                          (system-msg state side "has finished rearranging ICE")))})]
      {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ice"
                                                  :effect (effect (resolve-ability (eshelp) card nil))}} card))})
 
@@ -266,6 +266,19 @@
 
    "Inside Job"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+
+   "Itinerant Protesters"
+   {:effect (req (lose state :corp :max-hand-size (:bad-publicity corp))
+                 (add-watch state :itin
+                   (fn [k ref old new]
+                     (let [bpnew (get-in new [:corp :bad-publicity])
+                           bpold (get-in old [:corp :bad-publicity])]
+                       (when (> bpnew bpold)
+                         (lose state :corp :max-hand-size (- bpnew bpold)))
+                       (when (< bpnew bpold)
+                         (gain state :corp :max-hand-size (- bpold bpnew)))))))
+    :leave-play (req (remove-watch state :itin)
+                     (gain state :corp :max-hand-size (:bad-publicity corp)))}
 
    "Knifed"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
@@ -458,6 +471,16 @@
                   :pre-ice-strength {:req (req (= (:cid target) (:cid (:scrubbed-target card))))
                                      :effect (effect (ice-strength-bonus -2))}
                   :pass-ice sc :run-ends sc})}
+
+   "Showing Off"
+   {:effect (effect (run :rd
+                      {:replace-access
+                       {:msg "access cards from the bottom of R&D"
+                        :effect (req (swap! state assoc-in [:corp :deck]
+                                            (rseq (into [] (get-in @state [:corp :deck]))))
+                                     (do-access state side (:server run))
+                                     (swap! state assoc-in [:corp :deck]
+                                            (rseq (into [] (get-in @state [:corp :deck])))))}} card))}
 
    "Singularity"
    {:prompt "Choose a server" :choices (req remotes)
