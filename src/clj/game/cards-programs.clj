@@ -102,7 +102,7 @@
                                                  (ice-strength-bonus state side (- c))))}
                :pass-ice ds :run-ends ds})
     :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))
-                 :req (req current-ice)
+                 :req (req (and current-ice (:rezzed current-ice)))
                  :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
                               (update-ice-strength state side current-ice))}]}
 
