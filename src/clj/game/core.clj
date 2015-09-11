@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs-to-symbol vdissoc distinct-by String->Num safe-split]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]))
 
@@ -12,9 +12,15 @@
   (when-let [title (:title card)]
     (cards (.replace title "'" ""))))
 
+(declare parse-command)
+
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
-    (swap! state update-in [:log] #(conj % {:user author :text text}))))
+    (if-let [command (parse-command text)]
+      (when (not= side :spectator)
+        (do (command state side)
+            (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
+      (swap! state update-in [:log] #(conj % {:user author :text text})))))
 
 (defn system-msg
   ([state side text] (system-msg state side text nil))
@@ -1609,5 +1615,27 @@
 
 (defn first-event [state side ev]
   (empty? (turn-events state side ev)))
+
+(defn parse-command [text]
+  (let [[command & args] (split text #" ");"
+        value (if-let [n (String->Num (first args))] n 1)
+        num   (if-let [n (-> args first (safe-split #"#") second String->Num)] (dec n) 0)]
+    (when (<= (count args) 1)
+      (case command
+        "/draw"       #(draw %1 %2 (max 0 value))
+        "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
+        "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
+        "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
+        "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
+        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
+        "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
+        "/handsize"   #(swap! %1 assoc-in [%2 :max-hand-size] (max 0 value))
+        "/take-meat"  #(when (= %2 runner) (damage %1 %2 :meat  (max 0 value)))
+        "/take-net"   #(when (= %2 runner) (damage %1 %2 :net   (max 0 value)))
+        "/take-brain" #(when (= %2 runner) (damage %1 %2 :brain (max 0 value)))
+        "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
+        "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
+        nil
+    ))))
 
 (load "cards")
