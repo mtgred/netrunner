@@ -61,8 +61,6 @@
                    :effect (effect (draw :runner))}}}
 
    "Copycat"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))]
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed current-ice)))
                  :effect (req (let [icename (:title current-ice)]
@@ -76,7 +74,7 @@
                                                   (swap! state update-in [:run]
                                                          #(assoc % :position tgtndx :server [dest]))
                                                   (trash state side card {:cause :ability-cost})))}
-                                 card nil)))}]})
+                                 card nil)))}]}
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
