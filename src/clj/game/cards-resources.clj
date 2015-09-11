@@ -481,6 +481,7 @@
 
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
+                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
                  :prompt "Choose an event to play" :msg (msg "play " (:title target))
                  :choices (req (filter #(and (has? % :type "Event")
                                              (<= (:cost %) (:credit runner))) (:discard runner)))
@@ -644,6 +645,10 @@
                      :effect (effect (gain :credit 1))
                      :msg "to gain 1[Credit]"}}}
 
+   "Wireless Net Pavilion"
+   {:effect (effect (trash-resource-bonus -2))
+    :leave-play (effect (trash-resource-bonus 2))}
+                     
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")

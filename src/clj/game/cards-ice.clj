@@ -226,8 +226,8 @@
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
    "Gemini"
-   {:abilities [{:label "Trace 2"
-                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1) {:card card})
+   {:abilities [{:label "Trace 2 - Do 1 net damage"
+                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))
                          :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}]}
 
    "Grim"
@@ -536,7 +536,7 @@
 
    "Searchlight"
    {:advanceable :always
-    :abilities [{:label "Trace X - Give the runner 1 tag"
+    :abilities [{:label "Trace X - Give the Runner 1 tag"
                  :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (tag-runner :runner 1))
                          :msg "give the Runner 1 tag"}}]}
 
@@ -576,7 +576,7 @@
    "Snoop"
    {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
                 {:counter-cost 1 :label "Look at all cards in Grip and trash 1 card"
-                 :msg (msg "Look at all cards in Grip and trashes " (:title target))
+                 :msg (msg "look at all cards in Grip and trash " (:title target))
                  :choices (req (:hand runner)) :prompt "Choose a card to trash"
                  :effect (effect (trash target))}]}
 
@@ -628,7 +628,7 @@
    {:abilities [end-the-run]}
 
    "Troll"
-   {:abilities [{:label "Trace 2 - Force the runner to lose [Click] or end the run"
+   {:abilities [{:label "Trace 2 - Force the Runner to lose [Click] or end the run"
                  :trace {:base 2 :player :runner
                          :prompt "Choose one" :choices ["Lose [Click]" "End the run"]
                          :effect (req (if-not (and (= target "Lose [Click]") (pay state side card :click 1))
