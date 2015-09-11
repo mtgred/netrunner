@@ -50,11 +50,8 @@
              {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
               :effect (effect (update-all-advancement-costs))}}}
 
-
-
    "Cloak"
    {:recurring 1}
-
 
    "Clot"
    {:events {:purge {:effect (effect (trash card))}}}
@@ -63,6 +60,23 @@
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
                    :effect (effect (draw :runner))}}}
 
+   "Copycat"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))]
+   {:abilities [{:req (req (and (:run @state)
+                                (:rezzed current-ice)))
+                 :effect (req (let [icename (:title current-ice)]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (msg "Choose a rezzed copy of " icename)
+                                   :choices {:req #(and (:rezzed %) (= (:type %) "ICE") (= (:title %) icename))}
+                                   :msg "redirect the run"
+                                   :effect (req (let [dest (second (:zone target))
+                                                      tgtndx (ice-index state target)]
+                                                  (swap! state update-in [:run]
+                                                         #(assoc % :position tgtndx :server [dest]))
+                                                  (trash state side card {:cause :ability-cost})))}
+                                 card nil)))}]})
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
@@ -414,6 +428,13 @@
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
-                 :cost [:click 1] :msg (msg "reshuffle " (:counter card) " card" (when (> (:counter card) 1) "s")
-                                            " in the Heap back into their Stack")
-                 :effect (effect (move card :rfg))}]}})
+                 :effect (effect
+                          (move card :rfg)
+                          (resolve-ability
+                           {:show-discard true
+                            :choices {:max (:counter card) :req #(and (:side % "Runner") (= (:zone %) [:discard]))}
+                            :msg (msg "shuffle " (join ", " (map :title targets))
+                                      " into their Stack")
+                            :effect (req (doseq [c targets] (move state side c :deck))
+                                         (shuffle! state side :deck))}
+                           card nil))}]}})

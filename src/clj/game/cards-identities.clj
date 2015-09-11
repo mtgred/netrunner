@@ -33,10 +33,9 @@
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:effect (effect (gain :link 1))
-    :events {:runner-trash {:optional {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
-                                       :prompt "Draw a card?"
-                                       :yes-ability {:msg "draw a card"
-                                                     :effect (effect (draw 1))}}}}}
+    :events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                            :msg "draw a card"
+                            :effect (effect (draw 1))}}}
 
    "Blue Sun: Powering the Future"
    {:abilities [{:choices {:req #(:rezzed %)}
@@ -76,6 +75,10 @@
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
+
+   "Gagarin Deep Space: Expanding the Horizon"
+   {:events {:pre-access-card {:req (req (= (second (:zone target)) :remote))
+                               :effect (effect (access-cost-bonus [:credit 1]))}}}
 
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
@@ -124,7 +127,7 @@
    "Jinteki Biotech: Life Imagined"
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
-                              :choices ["The Brewery" "The Tank" "The Greenhouse"]
+                              :choices ["[The Brewery~brewery]" "[The Tank~tank]" "[The Greenhouse~greenhouse]"]
                               :effect (effect (update! (assoc card :biotech-target target))
                                               (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
     :abilities [{:cost [:click 3]
@@ -132,15 +135,18 @@
                  :effect (req (let [flip (:biotech-target card)]
                                 (update! state side (assoc card :biotech-used true))
                                 (case flip
-                                  "The Brewery"
-                                  (do (system-msg state side "uses The Brewery to do 2 net damage")
-                                      (damage state side :net 2 {:card card}))
-                                  "The Tank"
-                                  (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
-                                      (shuffle-into-deck state side :discard))
-                                  "The Greenhouse"
-                                  (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
+                                  "[The Brewery~brewery]"
+                                  (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
+                                      (damage state side :net 2 {:card card})
+                                      (update! state side (assoc card :code "brewery")))
+                                  "[The Tank~tank]"
+                                  (do (system-msg state side "uses [The Tank~tank] to shuffle Archives into R&D")
+                                      (shuffle-into-deck state side :discard)
+                                      (update! state side (assoc card :code "tank")))
+                                  "[The Greenhouse~greenhouse]"
+                                  (do (system-msg state side (str "uses [The Greenhouse~greenhouse] to place 4 advancement tokens "
                                                                   "on a card that can be advanced"))
+                                      (update! state side (assoc card :code "greenhouse"))
                                       (resolve-ability
                                         state side
                                         {:prompt "Choose a card that can be advanced"
@@ -207,6 +213,22 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
+   "New Angeles Sol: Your News"
+   (let [nasol {:optional
+                {:prompt "Play a Current?" :player :corp
+                 :req (req (not (empty? (filter #(has? % :subtype "Current") (concat (:hand corp) (:discard corp))))))
+                 :yes-ability {:prompt "Play a Current from HQ or Archives?" :player :corp
+                               :choices ["Archives" "HQ"]
+                               :msg (msg "play a Current from " target)
+                               :effect (effect (resolve-ability
+                                                 {:prompt "Choose a Current to play"
+                                                  :choices (req (filter #(and (has? % :subtype "Current")
+                                                                              (<= (:cost %) (:credit corp)))
+                                                                                ((if (= target "HQ") :hand :discard) corp)))
+                                                  :effect (effect (play-instant target))}
+                                                card targets))}}}]
+     {:events {:agenda-scored nasol :agenda-stolen nasol}})
+
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
@@ -240,6 +262,19 @@
 
    "Sunny Lebeau: Security Specialist"
    {:effect (effect (gain :link 2))}
+
+   "SYNC: Everything, Everywhere"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :effect (effect (update! (assoc card :sync-front true)) (tag-remove-bonus -1))}}
+    :abilities [{:cost [:click 1]
+                 :effect (req (if (:sync-front card)
+                           (do (tag-remove-bonus state side 1)
+                               (trash-resource-bonus state side 2)
+                               (update! state side (-> card (assoc :sync-front false) (assoc :code "sync"))))
+                           (do (tag-remove-bonus state side -1)
+                               (trash-resource-bonus state side -2)
+                               (update! state side (-> card (assoc :sync-front true)(assoc :code "09001"))))))
+                 :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
    {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}

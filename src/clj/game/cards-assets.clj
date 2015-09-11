@@ -31,6 +31,10 @@
                  :effect (effect (trash card))
                  :msg (msg "Swap " (:advance-counter card) " cards in HQ and Archives")}]}
 
+   "Blacklist"
+   {:effect (effect (lock-zone (:cid card) :runner :discard))
+    :leave-play (effect (release-zone (:cid card) :runner :discard))}
+                 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
              {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))

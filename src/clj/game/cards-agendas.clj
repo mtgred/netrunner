@@ -35,10 +35,11 @@
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
-    :msg (msg "trigger the score ability on " (:title target))
-    :prompt "Choose an agenda to trigger"
-    :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
-    :effect (effect (card-init target))}
+    :optional {:prompt "Trigger the ability of a scored agenda?"
+               :yes-ability {:prompt "Choose an agenda to trigger its \"when scored\" ability"
+                             :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
+                             :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                             :effect (effect (card-init target))}}}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
@@ -50,7 +51,8 @@
     :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
-   {:prompt "Choose a resource to trash" :choices (req (get-in runner [:rig :resource]))
+   {:prompt "Choose a resource to trash"
+    :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
 
    "Chronos Project"

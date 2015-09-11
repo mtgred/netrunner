@@ -48,6 +48,17 @@
    {:effect (effect (damage :brain 1 {:card card}) (gain :max-hand-size 3))
     :leave-play (effect (lose :max-hand-size 3))}
 
+   "Brain Chip"
+   (let [runner-points (fn [s] (or (get-in s [:runner :agenda-point]) 0))]
+     {:effect (req (gain state :runner :memory (:agenda-point runner) :max-hand-size (:agenda-point runner))
+                   (add-watch state (keyword (str "brainchip" (:cid card)))
+                          (fn [k ref old new]
+                            (let [bonus (- (runner-points new) (runner-points old))]
+                              (when (not= 0 bonus)
+                               (gain state :runner :memory bonus :max-hand-size bonus))))))
+      :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
+                       (lose state :runner :memory (runner-points @state) :max-hand-size (runner-points @state)))})
+
    "Chop Bot 3000"
    {:abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
@@ -62,6 +73,7 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
+                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
                  :choices (req (filter #(has? % :type "Program") (:discard runner)))
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
@@ -322,6 +334,28 @@
                                        :effect (effect (move (some #(when (= (:title %) (:title target)) %)
                                                                   (:deck runner)) :hand)
                                                       (shuffle! :deck))}}}}}
+
+   "Security Chip"
+   {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
+                 :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
+                 :req (req (:run @state))
+                 :prompt "Choose one non-Cloud icebreaker"
+                 :choices {:req #(and (has? % :subtype "Icebreaker")
+                                      (not (has? % :subtype "Cloud"))
+                                      (:installed %))}
+                 :effect (effect (pump target (:link runner) :all-run)
+                                 (trash (get-card state card) {:cause :ability-cost}))}
+                {:label "[Trash]: Add [Link] strength to any Cloud icebreakers until the end of the run"
+                 :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
+                 :req (req (:run @state))
+                 :prompt "Choose any number of Cloud icebreakers"
+                 :choices {:max 50 :req #(and (has? % :subtype "Icebreaker")
+                                              (has? % :subtype "Cloud")
+                                              (:installed %))}
+                 :effect (req (doseq [t targets]
+                                (pump state side t (:link runner) :all-run)
+                                (update-breaker-strength state side t))
+                              (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Security Nexus"
    {:effect (effect (gain :link 1) (gain :memory 1))
