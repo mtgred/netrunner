@@ -48,3 +48,10 @@
                             (step more seen)
                             (cons x (step more (conj seen k))))))))]
     (step coll #{})))
+
+(defn String->Num [s]
+  (try
+    (bigdec s)
+  (catch Exception e nil)))
+
+(def safe-split (fnil clojure.string/split ""))
