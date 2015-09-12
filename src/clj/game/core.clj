@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs-to-symbol vdissoc distinct-by abs]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]))
 
@@ -884,6 +884,12 @@
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
 
+(defn update-run-ice [state side]
+  (when (get-in @state [:run])
+    (let [s (get-in @state [:run :server])
+          ices (get-in @state (concat [:corp :servers] s [:ices]))]
+      (swap! state assoc-in [:run :ices] ices))))
+  
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -1417,7 +1423,9 @@
                                      (update-in [:host :zone] #(map to-keyword %)))))
            (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                        (:title card) (when no-cost " at no cost")))
-           (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
+           (when (#{"ICE"} (:type card)) 
+             (update-ice-strength state side card)
+             (update-run-ice state side))
            (trigger-event state side :rez card))))
      (swap! state update-in [:bonus] dissoc :cost)))
 
@@ -1610,4 +1618,7 @@
 (defn first-event [state side ev]
   (empty? (turn-events state side ev)))
 
+(defn ice-index [state ice]
+  (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
+  
 (load "cards")

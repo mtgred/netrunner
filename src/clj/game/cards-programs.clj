@@ -61,8 +61,6 @@
                    :effect (effect (draw :runner))}}}
 
    "Copycat"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))]
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed current-ice)))
                  :effect (req (let [icename (:title current-ice)]
@@ -76,7 +74,7 @@
                                                   (swap! state update-in [:run]
                                                          #(assoc % :position tgtndx :server [dest]))
                                                   (trash state side card {:cause :ability-cost})))}
-                                 card nil)))}]})
+                                 card nil)))}]}
 
    "Crescentus"
    {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
@@ -104,7 +102,7 @@
                                                  (ice-strength-bonus state side (- c))))}
                :pass-ice ds :run-ends ds})
     :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))
-                 :req (req current-ice)
+                 :req (req (and current-ice (:rezzed current-ice)))
                  :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
                               (update-ice-strength state side current-ice))}]}
 
@@ -416,7 +414,8 @@
                                    {:req (req (= target :archives))
                                     :successful-run
                                     {:msg "make a successful run on HQ"
-                                     :effect (req (swap! state assoc-in [:run :server] [:hq]))}} card))}]}
+                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                  (update-run-ice state side))}} card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
@@ -425,6 +424,30 @@
                                                               :yes-ability {:msg "jack out"
                                                                             :effect (effect (jack-out nil))}}}
                                                   card nil))}]}
+   "Surfer"
+   {:abilities [{:cost [:credit 2]
+                 :req (req (and (:run @state) (:rezzed current-ice)))
+                 :label "Swap a piece of barrier ice currently being encountered with a piece of ice directly before or after it"
+                 :effect (req (let [cice current-ice]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (msg "Choose an ice before or after " (:title cice))
+                                   :choices {:req #(and (= (:type %) "ICE") 
+                                                        (= (:zone %) (:zone cice))
+                                                        (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
+                                   :msg "swap a piece of barrier ice"
+                                   :effect (req (let [tgtndx (ice-index state target)
+                                                      oldndx (ice-index state cice)]
+                                                  (swap! state update-in (cons :corp (:zone cice))
+                                                      #(assoc % tgtndx cice))
+                                                  (swap! state update-in (cons :corp (:zone cice))
+                                                      #(assoc % oldndx target))
+                                                  (swap! state update-in [:run] 
+                                                      #(assoc % :position (inc tgtndx)))
+                                                  (update-ice-strength state side (cons :corp (:zone cice)))
+                                                  (update-run-ice state side)))}
+                                 card nil)))}]}
+   
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"

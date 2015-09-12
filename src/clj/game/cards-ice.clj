@@ -70,7 +70,8 @@
                                        (swap! state update-in [:run]
                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                         :server (rest dest))))
-                                     (move state side card (conj (server->zone state target) :ices)))}}}]}
+                                     (move state side card (conj (server->zone state target) :ices))
+                                     (update-run-ice state side))}}}]}
 
    "Burke Bugs"
    {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
@@ -596,7 +597,8 @@
                  :msg "make the Runner continue the run on Archives"
                  :effect (req (swap! state update-in [:run]
                                      #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                               :server [:archives])))}]}
+                                               :server [:archives]))
+                              (update-run-ice state side))}]}
 
    "Swarm"
    {:effect (effect (gain :bad-publicity 1))
