@@ -305,6 +305,21 @@
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
+   "Rebranding Team"
+   {:effect (req (doseq [c (filter #(= (:type %) "Asset") (all-installed state :corp))]
+                   (update! state side (assoc c :subtype
+                                                (->> (vec (.split (:subtype c) " - "))
+                                                     (cons "Advertisement")
+                                                     distinct
+                                                     (join " - "))))))
+    :msg "make all assets gain Advertisement"
+    :events {:corp-install
+             {:req (req (and (= (:type target) "Asset") (not (has? target :subtype "Advertisement"))))
+              :effect (effect (update! (assoc target :subtype
+                                                     (->> (vec (.split (:subtype target) " - "))
+                                                          (cons "Advertisement")
+                                                          (join " - ")))))}}}
+
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
