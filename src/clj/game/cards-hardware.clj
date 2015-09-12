@@ -141,7 +141,7 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:successful-run-ends
              {:optional
-              {:req (req (first-event state side :run))
+              {:req (req (has-one-event state side :run))
                :prompt "Use Doppelgänger to run again?" :player :runner
                :yes-ability {:prompt "Choose a server" 
                              :choices (req servers)
