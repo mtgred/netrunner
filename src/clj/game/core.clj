@@ -1650,9 +1650,9 @@
         "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
         "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
         "/handsize"   #(swap! %1 assoc-in [%2 :max-hand-size] (max 0 value))
-        "/take-meat"  #(when (= %2 runner) (damage %1 %2 :meat  (max 0 value)))
-        "/take-net"   #(when (= %2 runner) (damage %1 %2 :net   (max 0 value)))
-        "/take-brain" #(when (= %2 runner) (damage %1 %2 :brain (max 0 value)))
+        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
+        "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
+        "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil
