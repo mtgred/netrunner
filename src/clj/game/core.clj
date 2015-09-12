@@ -1618,6 +1618,9 @@
 (defn first-event [state side ev]
   (empty? (turn-events state side ev)))
 
+(defn has-one-event [state side ev]
+  (= (turn-events state side ev) 1))
+
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
   
