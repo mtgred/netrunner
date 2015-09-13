@@ -308,7 +308,7 @@
    "Quantum Predictive Model"
    {:steal-req (req (not tagged))
     :access {:req (req tagged)
-             :effect (effect (as-agenda :corp card 1))
+             :effect (effect (as-agenda card 1))
              :msg "score because the runner is tagged"}}
 
    "Research Grant"
