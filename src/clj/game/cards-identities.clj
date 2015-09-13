@@ -246,6 +246,22 @@
              :rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
+   "Rielle \"Kit\" Peddler: Transhuman"
+   {:abilities [{:req (req (and (:run @state)
+                                (:rezzed (get-card state current-ice))))
+                 :once :per-turn :msg (msg "make " (:title current-ice) " gain code gate until the end of the run")
+                 :effect (req (let [ice current-ice
+                                    stypes (:subtype ice)]
+                                (update! state side (assoc ice :subtype
+                                                               (->> (vec (.split (:subtype ice) " - "))
+                                                                    (cons "Code Gate")
+                                                                    distinct
+                                                                    (join " - "))))
+                                (register-events state side {:run-ends
+                                                             {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                              (unregister-events card))}} card)))}]
+    :events {:run-ends nil}}
+
    "Silhouette: Stealth Operative"
    {:events {:successful-run
              {:req (req (= target :hq)) :once :per-turn
