@@ -295,13 +295,23 @@
    "Paintbrush"
    {:abilities [{:cost [:click 1]
                  :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}
-                 :effect (req (let [ice target]
+                 :effect (req (let [ice target
+                                    stypes (:subtype ice)]
                            (resolve-ability
                               state :runner
-                              {:prompt (msg "Choose a type")
-                               :choices ["sentry" "code gate" "barrier"]
-                               :msg (msg "give " (:title ice) " " target " until the end of next run this turn")}
-                              card nil)))}]}
+                              {:prompt (msg "Choose a subtype")
+                               :choices ["Sentry" "Code Gate" "Barrier"]
+                               :msg (msg "give " (:title ice) " " (.toLowerCase target) " until the end of the next run this turn")
+                               :effect (effect (update! (assoc ice :subtype
+                                                                   (->> (vec (.split (:subtype ice) " - "))
+                                                                        (cons target)
+                                                                        distinct
+                                                                        (join " - "))))
+                                               (register-events {:run-ends
+                                                                 {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                                  (unregister-events card))}} card))}
+                              card nil)))}]
+    :events {:run-ends nil}}
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
