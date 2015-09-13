@@ -305,6 +305,12 @@
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
+   "Quantum Predictive Model"
+   {:steal-req (req (not tagged))
+    :access {:req (req tagged)
+             :effect (effect (as-agenda :corp card 1))
+             :msg "score because the runner is tagged"}}
+
    "Research Grant"
    {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
     :prompt "You may choose another installed copy of Research Grant to score."
