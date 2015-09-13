@@ -542,8 +542,29 @@
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
-   {:choices {:req #(and (has? % :type "ICE") (= (first (:zone %)) :servers))}
-    :msg (msg "give " (if (:rezzed target) (:title target) "an ice") " sentry, code gate, and barrier until the end of turn")}
+   {:prompt "Choose a piece of ICE"
+    :choices {:req #(and (= (last (:zone %)) :ices) (= (:type %) "ICE"))}
+    :effect (req (let [ice target
+                       serv (cond
+                             (= (second (:zone ice)) :hq) "HQ"
+                             (= (second (:zone ice)) :rd) "R&D"
+                             (= (second (:zone ice)) :archives) "Archives"
+                             :else (join " " ["Server" (last (butlast (:zone ice)))]))
+                       stypes (:subtype ice)]
+              (resolve-ability
+                 state :runner
+                 {:msg (msg "give sentry, code gate, and barrier to " (if (:rezzed ice) (:title ice) "the ICE at position ")
+                              (ice-index state ice) " of " serv " until the end of the turn")
+                  :effect (effect (update! (assoc ice :subtype
+                                                      (->> (vec (.split (:subtype ice) " - "))
+                                                           (concat ["Sentry" "Code Gate" "Barrier"])
+                                                           distinct
+                                                           (join " - "))))
+                                  (register-events {:runner-turn-ends
+                                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}
+                                  (assoc card :zone '(:discard))))}
+               card nil)))
+    :events {:runner-turn-ends nil}}
 
    "Trade-In"
    {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
