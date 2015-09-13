@@ -170,14 +170,15 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)
-                                             (empty? (let [successes (map first (turn-events state side :successful-run))]
-                                                       (do
-                                                         (prn successes)
-                                                         (filter #(not (= % :remote)) successes))))))
-                              :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :yes-ability {:msg "force the Corp to draw 1 card"
-                                                       :effect (effect (draw :corp))}}}}}
+   {:abilities [{:msg "force the Corp to draw 1 card"
+                 :req (req (and run
+                                (some #{:hq :rd :archives} (:server run))
+                                (:no-action run)
+                                (not current-ice)
+                                (not (get-in @state [:per-turn (:cid card)]))
+                                (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                          (filter #(not (= % :remote)) successes)))))
+                 :effect (req (effect (draw :corp)) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
