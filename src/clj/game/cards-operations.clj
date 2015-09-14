@@ -379,7 +379,12 @@
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (host target (assoc card :zone [:discard] :seen true)))}
+    :effect (effect (update! (assoc target :subtype
+                                           (->> (vec (.split (:subtype target) " - "))
+                                                (concat ["Barrier"])
+                                                distinct
+                                                (join " - "))))
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
