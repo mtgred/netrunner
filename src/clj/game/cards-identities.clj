@@ -170,7 +170,14 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:abilities [{:msg "force the Corp to draw 1 card"
+   {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk"))
+                         :req (req (and run
+                                        (some #{:hq :rd :archives} (:server run))
+                                        (not current-ice)
+                                        (not (get-in @state [:per-turn (:cid card)]))
+                                        (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                                  (filter #(not (= % :remote)) successes)))))}}
+    :abilities [{:msg "force the Corp to draw 1 card"
                  :req (req (and run
                                 (some #{:hq :rd :archives} (:server run))
                                 (:no-action run)
