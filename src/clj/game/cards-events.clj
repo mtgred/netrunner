@@ -511,6 +511,28 @@
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
 
+   "Social Engineering"
+   {:prompt "Choose an unrezzed piece of ICE"
+    :choices {:req #(and (= (last (:zone %)) :ices) (not (:rezzed %)) (= (:type %) "ICE"))}
+    :effect (req (let [ice target
+                       serv (cond
+                             (= (second (:zone ice)) :hq) "HQ"
+                             (= (second (:zone ice)) :rd) "R&D"
+                             (= (second (:zone ice)) :archives) "Archives"
+                             :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+              (resolve-ability
+                 state :runner
+                 {:msg (msg "choose the ICE at position " (ice-index state ice) " of " serv)
+                  :effect (effect (register-events {:pre-rez-cost
+                                                    {:req (req (= target ice))
+                                                     :effect (req (let [cost (rez-cost state side (get-card state target))]
+                                                                    (gain state :runner :credit cost)))
+                                                     :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
+                                  (assoc card :zone '(:discard))))}
+               card nil)))
+    :events {:pre-rez-cost nil}
+    :end-turn {:effect (effect (unregister-events card))}}
+
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
