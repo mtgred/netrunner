@@ -58,6 +58,28 @@
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
+   "Cyber Threat"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (req (let [serv target
+                       runtgt [(last (server->zone state serv))]
+                       ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
+                   (resolve-ability
+                     state :corp
+                     {:optional
+                      {:prompt (msg "Rez a piece of ICE protecting " serv "?")
+                       :yes-ability {:prompt (msg "Choose a piece of " serv " ICE to rez") :player :corp
+                                     :choices {:req #(and (not (:rezzed %))
+                                                          (= (last (:zone %)) :ices))}
+                                     :effect (req (rez state :corp target nil))}
+                       :no-ability {:effect (req (swap! state assoc :per-run nil
+                                                        :run {:server runtgt :position (count ices) :ices ices
+                                                              :access-bonus 0 :run-effect nil})
+                                                 (gain-run-credits state :runner (:bad-publicity corp))
+                                                 (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
+                                                 (trigger-event state :runner :run runtgt))
+                                    :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
+                    card nil)))}
+
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
