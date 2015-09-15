@@ -77,6 +77,28 @@
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
+   "Director Haas Pet Project"
+   (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
+                              :show-discard true
+                              :choices {:req #(and (:side % "Corp")
+                                                   (not= (:type %) "Operation")
+                                                   (or (= (:zone %) [:hand])
+                                                       (= (:zone %) [:discard])))}
+                              :effect (req (corp-install state side target
+                                            (str "Server " (dec (count (get-in @state [:corp :servers :remote])))) {:no-install-cost true})
+                                           (when (< n 2)
+                                             (resolve-ability state side (dpp (inc n)) card nil)))})]
+     {:optional {:prompt "Create a new remote server?"
+                 :yes-ability {:prompt "Select a card to install"
+                               :show-discard true
+                               :choices {:req #(and (:side % "Corp")
+                                                    (not= (:type %) "Operation")
+                                                    (or (= (:zone %) [:hand])
+                                                        (= (:zone %) [:discard])))}
+                               :effect (req (corp-install state side target "New remote" {:no-install-cost true})
+                                            (resolve-ability state side (dhelper 1) card nil))
+                               :msg "create a new remote server, installing cards at no cost"}}})
+
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect (req (when (zero? (:counter card))
