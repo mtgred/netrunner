@@ -340,6 +340,14 @@
     :msg (msg "1 advancement tokens on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
 
+   "Shipment from MirrorMorph"
+   (let [shelper (fn sh [n] {:prompt "Select a card to install"
+                             :choices {:req #(and (:side % "Corp") (not= (:type %) "Operation") (= (:zone %) [:hand]))}
+                             :effect (req (corp-install state side target nil)
+                                          (when (< n 3)
+                                            (resolve-ability state side (sh (inc n)) card nil)))})]
+     {:effect (effect (resolve-ability (shelper 1) card nil))})
+
    "Shipment from SanSan"
    {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
     :effect (req (let [c (Integer/parseInt target)]
