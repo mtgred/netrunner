@@ -177,6 +177,24 @@
    {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
                               :effect (effect (steal-cost-bonus [:click 1]))}}}
 
+   "The Twins"
+   {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
+                 :req (req (and this-server
+                                (> (count (:ices run)) (:position run))
+                                (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
+                 :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
+                                (resolve-ability
+                                  state side
+                                  {:prompt "Choose a copy of the ICE just passed"
+                                   :choices {:req #(and (= (:zone %) [:hand])
+                                                        (= (:type %) "ICE")
+                                                        (= (:title %) icename))}
+                                   :effect (req (trash state side (assoc target :seen true))
+                                                (swap! state update-in [:run]
+                                                       #(assoc % :position (inc (:position run)))))
+                                   :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")}
+                                 card nil)))}]}
+
    "Tyrs Hand"
    {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
