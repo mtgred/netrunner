@@ -1,10 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-<<<<<<< HEAD
-                                costs-to-symbol vdissoc distinct-by abs]]
-=======
-                                costs-to-symbol vdissoc distinct-by String->Num safe-split]]
->>>>>>> 640c209... Added commands to manually change the game state
+                                costs-to-symbol vdissoc distinct-by abs String->Num safe-split]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]))
 
