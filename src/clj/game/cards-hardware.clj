@@ -139,14 +139,19 @@
 
    "Doppelgänger"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:successful-run-ends
+    :events {:runner-install
+             {:req (req (= card target))
+              :effect (effect (update! (assoc card :dopp-active true)))}
+             :runner-turn-begins
+             {:effect (effect (update! (assoc card :dopp-active true)))}
+             :successful-run-ends
              {:optional
-              {:req (req (first-event state side :run))
+              {:req (req (:dopp-active card))
                :prompt "Use Doppelgänger to run again?" :player :runner
                :yes-ability {:prompt "Choose a server" 
                              :choices (req servers)
                              :msg (msg "to make a run on " target)
-                             :effect (effect (run target))}}}}}
+                             :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
 
    "Dorm Computer"
    {:data {:counter 4}
