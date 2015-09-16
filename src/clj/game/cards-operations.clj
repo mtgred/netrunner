@@ -210,6 +210,27 @@
     :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
+   "Mutate"
+   {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
+    :choices {:req (every-pred rezzed? ice?)}
+    :msg (msg "to trash " (:title target))
+    :effect (req (let [i (ice-index state target)
+                       [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
+                       titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
+                   (trash state side target {:cause :ability-cost})
+                   (when (seq titles) 
+                     (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
+                   (if-let [ice (first r)]
+                     (let [newice (assoc ice :zone (:zone target) :rezzed true)
+                           ices (get-in @state (cons :corp (:zone target)))
+                           newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
+                       (swap! state assoc-in (cons :corp (:zone target)) newices)
+                       (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
+                       (trigger-event state side :corp-install newice)
+                       (system-msg state side (str "uses Mutate to install " (:title newice) " from R&D at no cost")))
+                     (system-msg state side (str "does not find any ICE to install from R&D")))
+                   (shuffle! state :corp :deck)))}
+
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
