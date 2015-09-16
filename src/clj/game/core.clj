@@ -893,7 +893,7 @@
     (let [s (get-in @state [:run :server])
           ices (get-in @state (concat [:corp :servers] s [:ices]))]
       (swap! state assoc-in [:run :ices] ices))))
-  
+
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -1222,6 +1222,7 @@
 (defn no-action [state side args]
   (swap! state assoc-in [:run :no-action] true)
   (system-msg state side "has no further action")
+  (trigger-event state side :no-action)
   (when-let [pos (get-in @state [:run :position])]
     (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
       (when (:rezzed ice)
@@ -1427,7 +1428,7 @@
                                      (update-in [:host :zone] #(map to-keyword %)))))
            (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                        (:title card) (when no-cost " at no cost")))
-           (when (#{"ICE"} (:type card)) 
+           (when (#{"ICE"} (:type card))
              (update-ice-strength state side card)
              (update-run-ice state side))
            (trigger-event state side :rez card))))
@@ -1624,5 +1625,5 @@
 
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
-  
+
 (load "cards")
