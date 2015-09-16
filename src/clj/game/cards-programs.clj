@@ -295,13 +295,23 @@
    "Paintbrush"
    {:abilities [{:cost [:click 1]
                  :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}
-                 :effect (req (let [ice target]
+                 :effect (req (let [ice target
+                                    stypes (:subtype ice)]
                            (resolve-ability
                               state :runner
-                              {:prompt (msg "Choose a type")
-                               :choices ["sentry" "code gate" "barrier"]
-                               :msg (msg "give " (:title ice) " " target " until the end of next run this turn")}
-                              card nil)))}]}
+                              {:prompt (msg "Choose a subtype")
+                               :choices ["Sentry" "Code Gate" "Barrier"]
+                               :msg (msg "give " (:title ice) " " (.toLowerCase target) " until the end of the next run this turn")
+                               :effect (effect (update! (assoc ice :subtype
+                                                                   (->> (vec (.split (:subtype ice) " - "))
+                                                                        (cons target)
+                                                                        distinct
+                                                                        (join " - "))))
+                                               (register-events {:run-ends
+                                                                 {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                                  (unregister-events card))}} card))}
+                              card nil)))}]
+    :events {:run-ends nil}}
 
    "Parasite"
    {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
@@ -424,25 +434,26 @@
                                                               :yes-ability {:msg "jack out"
                                                                             :effect (effect (jack-out nil))}}}
                                                   card nil))}]}
+
    "Surfer"
    {:abilities [{:cost [:credit 2]
-                 :req (req (and (:run @state) (:rezzed current-ice)))
-                 :label "Swap a piece of barrier ice currently being encountered with a piece of ice directly before or after it"
+                 :req (req (and (:run @state) (:rezzed current-ice) (has? current-ice :subtype "Barrier")))
+                 :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                  :effect (req (let [cice current-ice]
                                 (resolve-ability
                                   state side
-                                  {:prompt (msg "Choose an ice before or after " (:title cice))
-                                   :choices {:req #(and (= (:type %) "ICE") 
+                                  {:prompt (msg "Choose an ICE before or after " (:title cice))
+                                   :choices {:req #(and (= (:type %) "ICE")
                                                         (= (:zone %) (:zone cice))
                                                         (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
-                                   :msg "swap a piece of barrier ice"
+                                   :msg "swap a piece of barrier ICE"
                                    :effect (req (let [tgtndx (ice-index state target)
                                                       oldndx (ice-index state cice)]
                                                   (swap! state update-in (cons :corp (:zone cice))
                                                       #(assoc % tgtndx cice))
                                                   (swap! state update-in (cons :corp (:zone cice))
                                                       #(assoc % oldndx target))
-                                                  (swap! state update-in [:run] 
+                                                  (swap! state update-in [:run]
                                                       #(assoc % :position (inc tgtndx)))
                                                   (update-ice-strength state side (cons :corp (:zone cice)))
                                                   (update-run-ice state side)))}
