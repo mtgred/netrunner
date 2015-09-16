@@ -58,6 +58,28 @@
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
+   "Cyber Threat"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (req (let [serv target
+                       runtgt [(last (server->zone state serv))]
+                       ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
+                   (resolve-ability
+                     state :corp
+                     {:optional
+                      {:prompt (msg "Rez a piece of ICE protecting " serv "?")
+                       :yes-ability {:prompt (msg "Choose a piece of " serv " ICE to rez") :player :corp
+                                     :choices {:req #(and (not (:rezzed %))
+                                                          (= (last (:zone %)) :ices))}
+                                     :effect (req (rez state :corp target nil))}
+                       :no-ability {:effect (req (swap! state assoc :per-run nil
+                                                        :run {:server runtgt :position (count ices) :ices ices
+                                                              :access-bonus 0 :run-effect nil})
+                                                 (gain-run-credits state :runner (:bad-publicity corp))
+                                                 (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
+                                                 (trigger-event state :runner :run runtgt))
+                                    :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
+                    card nil)))}
+
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
@@ -488,6 +510,28 @@
                        {:msg "trash all cards in the server at no cost"
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
+
+   "Social Engineering"
+   {:prompt "Choose an unrezzed piece of ICE"
+    :choices {:req #(and (= (last (:zone %)) :ices) (not (:rezzed %)) (= (:type %) "ICE"))}
+    :effect (req (let [ice target
+                       serv (cond
+                             (= (second (:zone ice)) :hq) "HQ"
+                             (= (second (:zone ice)) :rd) "R&D"
+                             (= (second (:zone ice)) :archives) "Archives"
+                             :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+              (resolve-ability
+                 state :runner
+                 {:msg (msg "choose the ICE at position " (ice-index state ice) " of " serv)
+                  :effect (effect (register-events {:pre-rez-cost
+                                                    {:req (req (= target ice))
+                                                     :effect (req (let [cost (rez-cost state side (get-card state target))]
+                                                                    (gain state :runner :credit cost)))
+                                                     :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
+                                  (assoc card :zone '(:discard))))}
+               card nil)))
+    :events {:pre-rez-cost nil}
+    :end-turn {:effect (effect (unregister-events card))}}
 
    "Special Order"
    {:prompt "Choose an Icebreaker"
