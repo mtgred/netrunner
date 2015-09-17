@@ -612,7 +612,7 @@
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :trash-effect {:effect (effect (damage :meat 3 {:unboostable true :card card}))}}
+    :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
