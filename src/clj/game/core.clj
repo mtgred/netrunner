@@ -267,7 +267,7 @@
                 (or (nil? card)
                     (empty? (->> (get-in @state [side :prompt])
                                  (map #(vec [(get-in % [:card :cid]) (:msg %)]))
-                                 (filter #(= % (vec [(:cid card) msg])))))))
+                                 (filter #(and (not (nil? (:cid card))) (= % (vec [(:cid card) msg]))))))))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
