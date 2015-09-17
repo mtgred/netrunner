@@ -135,7 +135,7 @@
                                       (not (has? % :subtype "Icebreaker"))
                                       (:installed %))}
                  :msg (msg "host " (:title target)) :effect (effect (host card target))}]}
-
+   
    "Expert Schedule Analyzer"
    {:abilities
     [{:cost [:click 1] :msg "make a run on HQ"
