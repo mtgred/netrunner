@@ -7,7 +7,7 @@
 (def cards-ice
   {"Archangel"
    {:access {:optional
-             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?" 
+             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
               :yes-ability {:cost [:credit 3]
                             :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
     :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
@@ -456,7 +456,7 @@
                  :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
                 {:label "End the run if a Current is active"
                  :req (req (or (not (empty? (runner :current)))
-                               (not (empty? (corp :current))))) 
+                               (not (empty? (corp :current)))))
                  :effect (effect (end-run)) :msg "end the run"}]}
 
    "NEXT Bronze"
@@ -538,6 +538,10 @@
     :abilities [{:label "Trace X - Give the Runner 1 tag"
                  :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (tag-runner :runner 1))
                          :msg "give the Runner 1 tag"}}]}
+
+   "Sensei"
+   {:abilities [{:label "Give each other ICE encountered \"End the run\" for the remainder of the run"
+                 :msg (msg "give each other ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}
 
    "Shadow"
    {:advanceable :always
