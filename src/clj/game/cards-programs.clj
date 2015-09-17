@@ -135,7 +135,7 @@
                                       (not (has? % :subtype "Icebreaker"))
                                       (:installed %))}
                  :msg (msg "host " (:title target)) :effect (effect (host card target))}]}
-   
+
    "Expert Schedule Analyzer"
    {:abilities
     [{:cost [:click 1] :msg "make a run on HQ"
@@ -162,7 +162,7 @@
                  :effect (effect (mill :corp))}]}
 
     "Harbinger"
-    {:trash-effect 
+    {:trash-effect
       {:req (req (not (some #{:facedown} (:previous-zone card))))
        :effect (effect (runner-install card {:facedown true}))}}
 
@@ -458,7 +458,7 @@
                                                   (update-ice-strength state side (cons :corp (:zone cice)))
                                                   (update-run-ice state side)))}
                                  card nil)))}]}
-   
+
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
