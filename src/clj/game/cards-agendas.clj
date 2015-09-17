@@ -77,6 +77,28 @@
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
+   "Director Haas Pet Project"
+   (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
+                              :show-discard true
+                              :choices {:req #(and (:side % "Corp")
+                                                   (not= (:type %) "Operation")
+                                                   (or (= (:zone %) [:hand])
+                                                       (= (:zone %) [:discard])))}
+                              :effect (req (corp-install state side target
+                                            (str "Server " (dec (count (get-in @state [:corp :servers :remote])))) {:no-install-cost true})
+                                           (when (< n 2)
+                                             (resolve-ability state side (dpp (inc n)) card nil)))})]
+     {:optional {:prompt "Create a new remote server?"
+                 :yes-ability {:prompt "Select a card to install"
+                               :show-discard true
+                               :choices {:req #(and (:side % "Corp")
+                                                    (not= (:type %) "Operation")
+                                                    (or (= (:zone %) [:hand])
+                                                        (= (:zone %) [:discard])))}
+                               :effect (req (corp-install state side target "New remote" {:no-install-cost true})
+                                            (resolve-ability state side (dhelper 1) card nil))
+                               :msg "create a new remote server, installing cards at no cost"}}})
+
    "Domestic Sleepers"
    {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect (req (when (zero? (:counter card))
@@ -318,6 +340,21 @@
     :effect (effect (score (assoc target :advance-counter (:advancementcost target))))
     :msg (msg "score another copy of Research Grant")
    }
+
+   "Rebranding Team"
+   {:effect (req (doseq [c (filter #(= (:type %) "Asset") (all-installed state :corp))]
+                   (update! state side (assoc c :subtype
+                                                (->> (vec (.split (:subtype c) " - "))
+                                                     (cons "Advertisement")
+                                                     distinct
+                                                     (join " - "))))))
+    :msg "make all assets gain Advertisement"
+    :events {:corp-install
+             {:req (req (and (= (:type target) "Asset") (not (has? target :subtype "Advertisement"))))
+              :effect (effect (update! (assoc target :subtype
+                                                     (->> (vec (.split (:subtype target) " - "))
+                                                          (cons "Advertisement")
+                                                          (join " - ")))))}}}
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]

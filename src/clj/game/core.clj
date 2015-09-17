@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs-to-symbol vdissoc distinct-by abs]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]))
 
@@ -263,7 +263,11 @@
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f {:keys [priority prompt-type show-discard] :as args}]
    (let [prompt (if (string? msg) msg (msg state side card nil))]
-     (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
+     (when (and (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
+                (or (nil? card)
+                    (empty? (->> (get-in @state [side :prompt])
+                                 (map #(vec [(get-in % [:card :cid]) (:msg %)]))
+                                 (filter #(= % (vec [(:cid card) msg])))))))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
@@ -884,6 +888,12 @@
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
 
+(defn update-run-ice [state side]
+  (when (get-in @state [:run])
+    (let [s (get-in @state [:run :server])
+          ices (get-in @state (concat [:corp :servers] s [:ices]))]
+      (swap! state assoc-in [:run :ices] ices))))
+
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -1212,6 +1222,7 @@
 (defn no-action [state side args]
   (swap! state assoc-in [:run :no-action] true)
   (system-msg state side "has no further action")
+  (trigger-event state side :no-action)
   (when-let [pos (get-in @state [:run :position])]
     (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
       (when (:rezzed ice)
@@ -1417,7 +1428,9 @@
                                      (update-in [:host :zone] #(map to-keyword %)))))
            (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                        (:title card) (when no-cost " at no cost")))
-           (when (#{"ICE"} (:type card)) (update-ice-strength state side card))
+           (when (#{"ICE"} (:type card))
+             (update-ice-strength state side card)
+             (update-run-ice state side))
            (trigger-event state side :rez card))))
      (swap! state update-in [:bonus] dissoc :cost)))
 
@@ -1609,5 +1622,8 @@
 
 (defn first-event [state side ev]
   (empty? (turn-events state side ev)))
+
+(defn ice-index [state ice]
+  (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
 (load "cards")

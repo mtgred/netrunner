@@ -170,14 +170,22 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:req (req (and (#{:hq :rd :archives} target)
-                                             (empty? (let [successes (map first (turn-events state side :successful-run))]
-                                                       (do
-                                                         (prn successes)
-                                                         (filter #(not (= % :remote)) successes))))))
-                              :optional {:prompt "Force the Corp to draw 1 card?"
-                                         :yes-ability {:msg "force the Corp to draw 1 card"
-                                                       :effect (effect (draw :corp))}}}}}
+   {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk"))
+                         :req (req (and run
+                                        (some #{:hq :rd :archives} (:server run))
+                                        (not current-ice)
+                                        (not (get-in @state [:per-turn (:cid card)]))
+                                        (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                                  (filter #(not (= % :remote)) successes)))))}}
+    :abilities [{:msg "force the Corp to draw 1 card"
+                 :req (req (and run
+                                (some #{:hq :rd :archives} (:server run))
+                                (:no-action run)
+                                (not current-ice)
+                                (not (get-in @state [:per-turn (:cid card)]))
+                                (empty? (let [successes (map first (turn-events state side :successful-run))]
+                                          (filter #(not (= % :remote)) successes)))))
+                 :effect (req (effect (draw :corp)) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
@@ -245,6 +253,22 @@
                        :effect (effect (rez-cost-bonus 1))}
              :rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
+
+   "Rielle \"Kit\" Peddler: Transhuman"
+   {:abilities [{:req (req (and (:run @state)
+                                (:rezzed (get-card state current-ice))))
+                 :once :per-turn :msg (msg "make " (:title current-ice) " gain code gate until the end of the run")
+                 :effect (req (let [ice current-ice
+                                    stypes (:subtype ice)]
+                                (update! state side (assoc ice :subtype
+                                                               (->> (vec (.split (:subtype ice) " - "))
+                                                                    (cons "Code Gate")
+                                                                    distinct
+                                                                    (join " - "))))
+                                (register-events state side {:run-ends
+                                                             {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                              (unregister-events card))}} card)))}]
+    :events {:run-ends nil}}
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run

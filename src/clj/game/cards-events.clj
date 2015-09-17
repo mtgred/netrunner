@@ -58,6 +58,28 @@
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
+   "Cyber Threat"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (req (let [serv target
+                       runtgt [(last (server->zone state serv))]
+                       ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
+                   (resolve-ability
+                     state :corp
+                     {:optional
+                      {:prompt (msg "Rez a piece of ICE protecting " serv "?")
+                       :yes-ability {:prompt (msg "Choose a piece of " serv " ICE to rez") :player :corp
+                                     :choices {:req #(and (not (:rezzed %))
+                                                          (= (last (:zone %)) :ices))}
+                                     :effect (req (rez state :corp target nil))}
+                       :no-ability {:effect (req (swap! state assoc :per-run nil
+                                                        :run {:server runtgt :position (count ices) :ices ices
+                                                              :access-bonus 0 :run-effect nil})
+                                                 (gain-run-credits state :runner (:bad-publicity corp))
+                                                 (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
+                                                 (trigger-event state :runner :run runtgt))
+                                    :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
+                    card nil)))}
+
    "Day Job"
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
@@ -109,9 +131,7 @@
                        (register-events state side events (:identity corp))))}
 
    "Escher"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))
-         eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
+   (let [eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
                            :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
                            :effect (req (if (= (count targets) 2)
                                           (let [fndx (ice-index state (first targets))
@@ -491,6 +511,28 @@
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
                                        (trash state side c)))}} card))}
 
+   "Social Engineering"
+   {:prompt "Choose an unrezzed piece of ICE"
+    :choices {:req #(and (= (last (:zone %)) :ices) (not (:rezzed %)) (= (:type %) "ICE"))}
+    :effect (req (let [ice target
+                       serv (cond
+                             (= (second (:zone ice)) :hq) "HQ"
+                             (= (second (:zone ice)) :rd) "R&D"
+                             (= (second (:zone ice)) :archives) "Archives"
+                             :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+              (resolve-ability
+                 state :runner
+                 {:msg (msg "choose the ICE at position " (ice-index state ice) " of " serv)
+                  :effect (effect (register-events {:pre-rez-cost
+                                                    {:req (req (= target ice))
+                                                     :effect (req (let [cost (rez-cost state side (get-card state target))]
+                                                                    (gain state :runner :credit cost)))
+                                                     :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
+                                  (assoc card :zone '(:discard))))}
+               card nil)))
+    :events {:pre-rez-cost nil}
+    :end-turn {:effect (effect (unregister-events card))}}
+
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
@@ -544,8 +586,29 @@
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
-   {:choices {:req #(and (has? % :type "ICE") (= (first (:zone %)) :servers))}
-    :msg (msg "give " (if (:rezzed target) (:title target) "an ice") " sentry, code gate, and barrier until the end of turn")}
+   {:prompt "Choose a piece of ICE"
+    :choices {:req #(and (= (last (:zone %)) :ices) (= (:type %) "ICE"))}
+    :effect (req (let [ice target
+                       serv (cond
+                             (= (second (:zone ice)) :hq) "HQ"
+                             (= (second (:zone ice)) :rd) "R&D"
+                             (= (second (:zone ice)) :archives) "Archives"
+                             :else (join " " ["Server" (last (butlast (:zone ice)))]))
+                       stypes (:subtype ice)]
+              (resolve-ability
+                 state :runner
+                 {:msg (msg "give sentry, code gate, and barrier to " (if (:rezzed ice) (:title ice) "the ICE at position ")
+                              (ice-index state ice) " of " serv " until the end of the turn")
+                  :effect (effect (update! (assoc ice :subtype
+                                                      (->> (vec (.split (:subtype ice) " - "))
+                                                           (concat ["Sentry" "Code Gate" "Barrier"])
+                                                           distinct
+                                                           (join " - "))))
+                                  (register-events {:runner-turn-ends
+                                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}
+                                  (assoc card :zone '(:discard))))}
+               card nil)))
+    :events {:runner-turn-ends nil}}
 
    "Trade-In"
    {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}

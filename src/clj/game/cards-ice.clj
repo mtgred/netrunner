@@ -70,7 +70,8 @@
                                        (swap! state update-in [:run]
                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                         :server (rest dest))))
-                                     (move state side card (conj (server->zone state target) :ices)))}}}]}
+                                     (move state side card (conj (server->zone state target) :ices))
+                                     (update-run-ice state side))}}}]}
 
    "Burke Bugs"
    {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
@@ -276,7 +277,7 @@
                        {:prompt "Choose a Bioroid ICE to install"
                         :choices (req (filter #(and (= (:type %) "ICE") (has? % :subtype "Bioroid"))
                                               ((if (= fr "HQ") :hand :discard) corp)))
-                        :effect (req (let [newice (assoc target :zone (:zone card))
+                        :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
                                            hndx (ice-index state card)
                                            ices (get-in @state (cons :corp (:zone card)))
                                            newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
@@ -284,7 +285,6 @@
                                        (swap! state update-in (cons :corp (:zone target))
                                               (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
                                        (update! state side (assoc card :howler-target newice))
-                                       (swap! state update-in [:run :position] inc)
                                        (trigger-event state side :corp-install newice)))} card nil)))}]
     :events {:run-ends {:req (req (:howler-target card))
                         :effect (effect (trash card {:cause :self-trash})
@@ -596,7 +596,8 @@
                  :msg "make the Runner continue the run on Archives"
                  :effect (req (swap! state update-in [:run]
                                      #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                               :server [:archives])))}]}
+                                               :server [:archives]))
+                              (update-run-ice state side))}]}
 
    "Swarm"
    {:effect (effect (gain :bad-publicity 1))

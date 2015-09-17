@@ -1,5 +1,11 @@
 (in-ns 'game.core)
 
+(defn ice? [card] 
+  (= (:type card) "ICE"))
+
+(defn rezzed? [card] 
+  (:rezzed card))
+
 (def trash-program {:prompt "Choose a program to trash" :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (:installed %) (= (:type %) "Program"))}

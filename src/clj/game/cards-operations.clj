@@ -210,6 +210,27 @@
     :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
+   "Mutate"
+   {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
+    :choices {:req (every-pred rezzed? ice?)}
+    :msg (msg "to trash " (:title target))
+    :effect (req (let [i (ice-index state target)
+                       [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
+                       titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
+                   (trash state side target {:cause :ability-cost})
+                   (when (seq titles) 
+                     (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
+                   (if-let [ice (first r)]
+                     (let [newice (assoc ice :zone (:zone target) :rezzed true)
+                           ices (get-in @state (cons :corp (:zone target)))
+                           newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
+                       (swap! state assoc-in (cons :corp (:zone target)) newices)
+                       (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
+                       (trigger-event state side :corp-install newice)
+                       (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost")))
+                     (system-msg state side (str "does not find any ICE to install from R&D")))
+                   (shuffle! state :corp :deck)))}
+
    "Neural EMP"
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
@@ -340,6 +361,14 @@
     :msg (msg "1 advancement tokens on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
 
+   "Shipment from MirrorMorph"
+   (let [shelper (fn sh [n] {:prompt "Select a card to install"
+                             :choices {:req #(and (:side % "Corp") (not= (:type %) "Operation") (= (:zone %) [:hand]))}
+                             :effect (req (corp-install state side target nil)
+                                          (when (< n 3)
+                                            (resolve-ability state side (sh (inc n)) card nil)))})]
+     {:effect (effect (resolve-ability (shelper 1) card nil))})
+
    "Shipment from SanSan"
    {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
     :effect (req (let [c (Integer/parseInt target)]
@@ -379,7 +408,12 @@
 
    "Sub Boost"
    {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
-    :effect (effect (host target (assoc card :zone [:discard] :seen true)))}
+    :effect (effect (update! (assoc target :subtype
+                                           (->> (vec (.split (:subtype target) " - "))
+                                                (concat ["Barrier"])
+                                                distinct
+                                                (join " - "))))
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
    {:effect (effect (gain :credit 1)
@@ -390,9 +424,7 @@
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
 
    "Sunset"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
-                                                      (get-in @state (cons :corp (:zone i))))))
-         sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
+   (let [sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
                                  :choices {:req #(and (= serv (rest (butlast (:zone %))))
                                                       (= (:type %) "ICE")) :max 2}
                                  :effect (req (if (= (count targets) 2)
