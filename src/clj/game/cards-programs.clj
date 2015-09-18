@@ -143,6 +143,28 @@
                                 :replace-access
                                 {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
 
+   "False Echo"
+   {:abilities [{:req (req (and (:run @state)
+                                (< (:position run) (count (:ices run)))
+                                (not (:rezzed (nth (get-in @state
+                                                     (vec (concat [:corp :servers] (:server run) [:ices]))) (:position run))))))
+                 :msg "make the Corp rez the passed ICE or add it to HQ"
+                 :effect (req (let [s (:server run)
+                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))
+                                    icename (:title ice)
+                                    icecost (rez-cost state side ice)]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (msg "Rez " icename " or add it to HQ?") :player :corp
+                                   :choices (req (if (< (:credit corp) icecost)
+                                                     ["Add to HQ"]
+                                                     ["Rez" "Add to HQ"]))
+                                   :effect (req (if (= target "Rez")
+                                                  (rez state side ice)
+                                                  (do (move state :corp ice :hand nil)
+                                                      (system-msg state :corp (str "chooses to add the passed ICE to HQ"))))
+                                                (trash state side card))}
+                                 card nil)))}]}
 
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
