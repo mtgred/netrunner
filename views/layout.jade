@@ -17,7 +17,7 @@ html
 
     if env === "dev"
       script(type="text/javascript").
-        var iourl = location.hostname;
+        var iourl = window.location.origin;
     else
       script(type="text/javascript").
         var tokens = location.hostname.split(".");
