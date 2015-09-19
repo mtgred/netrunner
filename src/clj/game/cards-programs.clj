@@ -86,7 +86,7 @@
    "DaVinci"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:prompt "Choose a card to install"
-                 :choices (req (filter #(and (<= (:cost %) (:counter card))
+                 :choices (req (filter #(and (<= (:cost %) (or (:counter card) 0))
                                              (#{"Hardware" "Program" "Resource"} (:type %)))
                                        (:hand runner)))
                  :msg (msg "install " (:title target) " at no cost")
