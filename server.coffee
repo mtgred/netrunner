@@ -14,8 +14,8 @@ jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
 async = require('async');
-
 nodemailer = require('nodemailer');
+moment = require('moment');
 
 # MongoDB connection
 appName = 'netrunner'
@@ -404,6 +404,13 @@ app.post '/data/decks/delete', (req, res) ->
 app.get '/data/donators', (req, res) ->
   db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
     res.json(200, (d.username or d.name for d in data))
+
+app.get '/data/news', (req, res) ->
+  db.collection('news').find().sort({_id: -1}).toArray (err, data) ->
+    for d in data
+      d.date = moment(d._id.getTimestamp().toISOString()).format("MM/DD/YYYY HH:mm a");
+      delete d._id
+    res.json(200, data)
 
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
