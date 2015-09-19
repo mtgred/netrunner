@@ -256,14 +256,22 @@
    {:effect (effect (gain :memory 3))}
 
    "Monolith"
-   {:prevent {:damage [:net :brain]}
-    :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
-    :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
-                 :priority true
-                 :choices (req (filter #(= (:type %) "Program") (:hand runner)))
-                 :prompt "Choose a program to trash" :effect (effect (trash target)
-                                                                     (damage-prevent :brain 1)
-                                                                     (damage-prevent :net 1))}]}
+   (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
+                             :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
+                             :effect (req (install-cost-bonus state side [:credit -4])
+                                          (runner-install state side target nil)
+                                            (when (< n 3)
+                                              (resolve-ability state side (mh (inc n)) card nil)))})]
+     {:prevent {:damage [:net :brain]}
+      :effect (effect (gain :memory 3)
+                      (resolve-ability (mhelper 1) card nil))
+      :leave-play (effect (lose :memory 3))
+      :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
+                   :priority true
+                   :choices (req (filter #(= (:type %) "Program") (:hand runner)))
+                   :prompt "Choose a program to trash" :effect (effect (trash target)
+                                                                       (damage-prevent :brain 1)
+                                                                       (damage-prevent :net 1))}]})
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
