@@ -89,10 +89,18 @@
                                        :effect (effect (play-instant target))}}}}}
 
    "Cortez Chip"
-   {:abilities [{:label "increase cost to rez a piece of ice by 2 [Credits]"
-                 :prompt "Choose a piece of ice" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
-                 :effect (effect (update! (assoc card :cortez-target target))
-                                 (trash (get-card state card) {:cause :ability-cost}))}]
+   {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
+                 :effect (req (let [ice target
+                                    serv (cond
+                                          (= (second (:zone ice)) :hq) "HQ"
+                                          (= (second (:zone ice)) :rd) "R&D"
+                                          (= (second (:zone ice)) :archives) "Archives"
+                                          :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+                                (update! state side (assoc card :cortez-target ice))
+                                (trash state side (get-card state card) {:cause :ability-cost})
+                                (system-msg state side
+                                  (str "increases the cost to rez the ICE at position "
+                                    (ice-index state ice) " of " serv " by 2 [Credits] until the end of the turn"))))}]
     :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
                                                                :effect (effect (rez-cost-bonus 2))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
