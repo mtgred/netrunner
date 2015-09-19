@@ -9,7 +9,9 @@
                  [cheshire "5.4.0"]
                  [org.omcljs/om "0.8.8"]
                  [sablono "0.3.4"]
-                 [environ "1.0.0"]]
+                 [environ "1.0.0"]
+                 [com.novemberain/monger "3.0.0-rc2"]
+                 [org.slf4j/slf4j-nop "1.7.12"]]
 
   :profiles {:dev {:dependencies [[figwheel "0.3.7"]]}}
 
