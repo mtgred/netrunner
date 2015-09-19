@@ -131,7 +131,7 @@ button.small
   -webkit-user-select: none
   user-select: none
   -webkit-user-drag: element
-
+  
 .card.dragged
   opacity: 1
   box-shadow(0 0 1px 2px blue)
@@ -1199,6 +1199,9 @@ nav ul
     &:last-child
       margin-right: 0
 
+  .disable-transition
+    transition None
+
   .squeeze .card-wrapper
     position: absolute
 
@@ -1363,7 +1366,6 @@ nav ul
 
                 .abilities
                   transform(rotate(0))
-
             .counter
               transform(rotate(90deg))
 
@@ -1417,7 +1419,7 @@ nav ul
                 .counters
                   transform(rotate(-90deg))
 
-
+              
       .card-wrapper
         margin-right: 10px
         margin-bottom: 5px
@@ -1515,3 +1517,4 @@ nav ul
     &:hover
       .qr
         display: block
+     
