@@ -508,9 +508,11 @@
    {:abilities [end-the-run]}
 
    "Quicksand"
-   {:events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
-                             :effect (effect (add-prop card :counter 1))}}
-    :strength-bonus (req (or (:counter card) 0)) :abilities [end-the-run]}
+   {:abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
+                 :label "Add 1 power counter"
+                 :effect (effect (add-prop card :counter 1))}
+                 end-the-run]
+    :strength-bonus (req (or (:counter card) 0))}
 
    "Rainbow"
    {:abilities [end-the-run]}
