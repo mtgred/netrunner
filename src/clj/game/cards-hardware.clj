@@ -89,10 +89,18 @@
                                        :effect (effect (play-instant target))}}}}}
 
    "Cortez Chip"
-   {:abilities [{:label "increase cost to rez a piece of ice by 2 [Credits]"
-                 :prompt "Choose a piece of ice" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
-                 :effect (effect (update! (assoc card :cortez-target target))
-                                 (trash (get-card state card) {:cause :ability-cost}))}]
+   {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
+                 :effect (req (let [ice target
+                                    serv (cond
+                                          (= (second (:zone ice)) :hq) "HQ"
+                                          (= (second (:zone ice)) :rd) "R&D"
+                                          (= (second (:zone ice)) :archives) "Archives"
+                                          :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+                                (update! state side (assoc card :cortez-target ice))
+                                (trash state side (get-card state card) {:cause :ability-cost})
+                                (system-msg state side
+                                  (str "increases the cost to rez the ICE at position "
+                                    (ice-index state ice) " of " serv " by 2 [Credits] until the end of the turn"))))}]
     :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
                                                                :effect (effect (rez-cost-bonus 2))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
@@ -248,14 +256,22 @@
    {:effect (effect (gain :memory 3))}
 
    "Monolith"
-   {:prevent {:damage [:net :brain]}
-    :effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
-    :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
-                 :priority true
-                 :choices (req (filter #(= (:type %) "Program") (:hand runner)))
-                 :prompt "Choose a program to trash" :effect (effect (trash target)
-                                                                     (damage-prevent :brain 1)
-                                                                     (damage-prevent :net 1))}]}
+   (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
+                             :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
+                             :effect (req (install-cost-bonus state side [:credit -4])
+                                          (runner-install state side target nil)
+                                            (when (< n 3)
+                                              (resolve-ability state side (mh (inc n)) card nil)))})]
+     {:prevent {:damage [:net :brain]}
+      :effect (effect (gain :memory 3)
+                      (resolve-ability (mhelper 1) card nil))
+      :leave-play (effect (lose :memory 3))
+      :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
+                   :priority true
+                   :choices (req (filter #(= (:type %) "Program") (:hand runner)))
+                   :prompt "Choose a program to trash" :effect (effect (trash target)
+                                                                       (damage-prevent :brain 1)
+                                                                       (damage-prevent :net 1))}]})
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
