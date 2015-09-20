@@ -153,27 +153,6 @@
             [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
                               :data-dismiss "modal"} "Sign up!"]]]]]))))
 
-(defn forgot-form [cursor owner]
-  (reify
-    om/IInitState
-    (init-state [this] {:flash-message ""})
-
-    om/IRenderState
-    (render-state [this state]
-      (sab/html
-       [:div.modal.fade#forgot-form {:ref "forgot-form"}
-        [:div.modal-dialog
-         [:h3 "Reset your Password"]
-         [:p.flash-message (:flash-message state)]
-         [:form {:on-submit #(handle-post % owner "/forgot" "forgot-form")}
-          [:p [:input {:type "text" :placeholder "Email" :name "email"
-                       :on-blur #(check-email % owner)}]]
-          [:p [:button "Submit"]
-              [:button {:data-dismiss "modal"} "Cancel"]]
-          [:p "No account? "
-            [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
-                              :data-dismiss "modal"} "Sign up!"]]]]]))))
-
 (defn auth-forms [cursor owner]
   (om/component
    (sab/html
