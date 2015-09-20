@@ -268,12 +268,8 @@
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f {:keys [priority prompt-type show-discard] :as args}]
-   (let [prompt (if (string? msg) msg (msg state side card nil))]
-     (when (and (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
-                (or (nil? card)
-                    (empty? (->> (get-in @state [side :prompt])
-                                 (map #(vec [(get-in % [:card :cid]) (:msg %)]))
-                                 (filter #(and (not (nil? (:cid card))) (= % (vec [(:cid card) msg]))))))))
+  (let [prompt (if (string? msg) msg (msg state side card nil))]
+     (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
