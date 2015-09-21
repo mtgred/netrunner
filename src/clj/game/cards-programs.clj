@@ -15,24 +15,32 @@
                                                          (handle-end-run state side)) ; remove the replace-access prompt
                                             :msg "shuffle a card into R&D"}} card))}]}
 
-
-
    "Au Revoir"
    {:events {:jack-out {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}}}
 
-
    "Bishop"
-   {:abilities [{:label "Host Bishop on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
-                                      (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
-                 :effect (effect (host target card))}]
+   {:abilities [{:cost [:click 1]
+                 :effect (req (let [b (get-card state card)
+                                    hosted? (:host b)
+                                    remote? (some #{:remote} (rest (butlast (:zone (:host b)))))]
+                                (resolve-ability state side
+                                 {:prompt (msg "Host Bishop on a piece of ICE protecting "
+                                            (if hosted? (if remote? "a central" "a remote") "any") " server")
+                                  :choices {:req #(if hosted?
+                                                    (and (if (some #{:remote} (rest (butlast (:zone (:host b)))))
+                                                           (some #{:hq :rd :archives} (rest (butlast (:zone %))))
+                                                           (some #{:remote} (rest (butlast (:zone %)))))
+                                                         (= (:type %) "ICE")
+                                                         (= (last (:zone %)) :ices)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                    (and (= (:type %) "ICE")
+                                                         (= (last (:zone %)) :ices)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                                  :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
               :effect (effect (ice-strength-bonus -2))}}}
-
-
 
    "Bug"
    {:req (req (some #{:hq} (:successful-run runner-reg)))}
