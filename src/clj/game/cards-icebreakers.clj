@@ -301,7 +301,9 @@
                                  {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
 
    "Sage"
-   {:abilities [{:cost [:credit 2] :msg "break 1 code gate or barrier subroutine"}]
+   {:abilities [{:cost [:credit 2] :req (req (or (has? current-ice :subtype "Barrier")
+                                                 (has? current-ice :subtype "Code Gate")))
+                 :msg "break 1 code gate or barrier subroutine"}]
     :effect (req (add-watch state (keyword (str "sage" (:cid card)))
                             (fn [k ref old new]
                               (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
