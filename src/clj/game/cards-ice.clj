@@ -46,7 +46,14 @@
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Bandwidth"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}]}
+   {:abilities [{:msg "give the Runner 1 tag"
+                 :effect (effect (tag-runner :runner 1)
+                                 (register-events
+                                   {:successful-run {:effect (effect (lose :runner :tag 1))
+                                                     :msg "make the Runner lose 1 tag"}
+                                    :run-ends {:effect (effect (unregister-events card))}}
+                                  card))}]
+    :events {:successful-run nil :run-ends nil}}
 
    "Bastion"
    {:abilities [end-the-run]}
