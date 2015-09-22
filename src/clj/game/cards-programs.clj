@@ -15,24 +15,32 @@
                                                          (handle-end-run state side)) ; remove the replace-access prompt
                                             :msg "shuffle a card into R&D"}} card))}]}
 
-
-
    "Au Revoir"
    {:events {:jack-out {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}}}
 
-
    "Bishop"
-   {:abilities [{:label "Host Bishop on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
-                                      (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
-                 :effect (effect (host target card))}]
+   {:abilities [{:cost [:click 1]
+                 :effect (req (let [b (get-card state card)
+                                    hosted? (:host b)
+                                    remote? (some #{:remote} (rest (butlast (:zone (:host b)))))]
+                                (resolve-ability state side
+                                 {:prompt (msg "Host Bishop on a piece of ICE protecting "
+                                            (if hosted? (if remote? "a central" "a remote") "any") " server")
+                                  :choices {:req #(if hosted?
+                                                    (and (if (some #{:remote} (rest (butlast (:zone (:host b)))))
+                                                           (some #{:hq :rd :archives} (rest (butlast (:zone %))))
+                                                           (some #{:remote} (rest (butlast (:zone %)))))
+                                                         (= (:type %) "ICE")
+                                                         (= (last (:zone %)) :ices)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                    (and (= (:type %) "ICE")
+                                                         (= (last (:zone %)) :ices)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                                  :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
               :effect (effect (ice-strength-bonus -2))}}}
-
-
 
    "Bug"
    {:req (req (some #{:hq} (:successful-run runner-reg)))}
@@ -183,9 +191,9 @@
     :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}
 
-    "Harbinger"
-    {:trash-effect
-      {:req (req (not (some #{:facedown} (:previous-zone card))))
+   "Harbinger"
+   {:trash-effect
+     {:req (req (not (some #{:facedown} (:previous-zone card))))
        :effect (effect (runner-install card {:facedown true}))}}
 
    "Hemorrhage"
@@ -363,12 +371,29 @@
    {:recurring 2}
 
    "Pawn"
-   {:abilities [{:label "Host Pawn on a piece of ICE" :cost [:click 1]
+   {:abilities [{:prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
                  :choices {:req #(and (= (:type %) "ICE")
                                       (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                      (some #{:hq :rd :archives} (rest (butlast (:zone %)))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
-                 :effect (effect (host target card))}]}
+                 :effect (effect (host target card))}]
+    :events {:successful-run
+             {:effect (req (let [i (ice-index state (:host card))
+                                 nextice (when (> i 0) (nth (get-in @state
+                                                              (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
+                             (if (pos? i)
+                               (host state side nextice card)
+                               (do (resolve-ability state side
+                                     {:prompt "Install a Caïssa program from Grip or Heap?" :choices ["Grip" "Heap"]
+                                      :msg (msg "install a Caïssa program from " target)
+                                      :effect (req (let [p target]
+                                                     (resolve-ability state side
+                                                       {:prompt "Choose a Caïssa program to install"
+                                                        :choices (req (filter #(has? % :subtype "Caïssa")
+                                                                        ((if (= p "Heap") :discard :hand) runner)))
+                                                        :effect (effect (runner-install target {:no-cost true}))} card nil)))}
+                                    card nil)
+                                   (trash state side card)))))}}}
 
    "Pheromones"
    {:recurring (effect (set-prop card :rec-counter (:counter card)))
