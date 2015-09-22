@@ -532,7 +532,7 @@
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))])
        (when content
          [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
-          (for [card (reverse content)]
+          (for [card content]
             (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
           (om/build label content {:opts opts})])]))))
 
@@ -633,7 +633,7 @@
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
                (when-not (= side :spectator)
                  [:div.button-pane { :on-mouse-over card-preview-mouse-over
-                                    :on-mouse-out  card-preview-mouse-out  }
+                                     :on-mouse-out  card-preview-mouse-out  }
                   (when-not (:keep me)
                     [:div.panel.blue-shade
                      [:h4 "Keep hand?"]
