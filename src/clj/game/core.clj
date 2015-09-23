@@ -1313,7 +1313,8 @@
   ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
     (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
      (let [cdef (card-def card)
-           additional-cost (if (has? card :subtype "Double")
+           additional-cost (if (and (has? card :subtype "Double")
+                                    (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
