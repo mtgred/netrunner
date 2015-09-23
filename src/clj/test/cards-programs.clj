@@ -63,3 +63,28 @@
     (let [mopus (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
+
+(deftest progenitor-host-hivemind
+  "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Progenitor" 1) (qty "Virus Breeding Ground" 1) (qty "Hivemind" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Progenitor")
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (is (= 4 (:memory (get-runner))))
+    (let [prog (get-in @state [:runner :rig :program 0])
+          vbg (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner prog 0)
+      (core/resolve-prompt state :runner {:card (find-card "Hivemind" (:hand (get-runner)))})
+      (is (= 4 (:memory (get-runner))) "No memory used to host on Progenitor")
+      (let [hive (first (:hosted (refresh prog)))]
+        (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
+        (is (= 1 (:counter hive)) "Hivemind has 1 counter")
+        (is (= 0 (:credit (get-runner))) "Full cost to host on Progenitor")
+        (take-credits state :runner 1)
+        (take-credits state :corp)
+        (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
+        (core/select state :runner {:card (refresh hive)})
+        (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
+        (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
