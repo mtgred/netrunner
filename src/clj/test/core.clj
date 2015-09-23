@@ -47,7 +47,8 @@
 
 (defn card-ability
   ([state side card ability] (card-ability state side card ability nil))
-  ([state side card ability targets] (core/play-ability state side {:card card :ability ability :targets targets})))
+  ([state side card ability targets] (core/play-ability state side {:card (core/get-card state card)
+                                                                    :ability ability :targets targets})))
 
 (defn play-from-hand
   ([state side title] (play-from-hand state side title nil))

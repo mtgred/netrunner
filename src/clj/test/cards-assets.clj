@@ -11,6 +11,6 @@
       (core/rez state :corp jhow)
       (is (= 5 (count (:hand (get-corp)))))
       (is (= 2 (:click (get-corp))))
-      (card-ability state :corp (core/get-card state jhow) 0)
+      (card-ability state :corp jhow 0)
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
