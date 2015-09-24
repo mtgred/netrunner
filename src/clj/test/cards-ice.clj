@@ -11,6 +11,6 @@
     (is (= [:hq] (get-in @state [:run :server])))
     (let [iwall (get-in @state [:corp :servers :hq :ices 0])]
       (core/rez state :corp iwall)
-      (card-ability state :corp (core/get-card state iwall) 0)
+      (card-ability state :corp iwall 0)
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))

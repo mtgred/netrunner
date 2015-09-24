@@ -532,7 +532,7 @@
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
                  :choices (req (filter #(and (not= (:type %) "Event")
-                                             (<= (:cost %) (inc (:credit runner))))
+                                             (can-pay? state side (modified-install-cost state side % [:credit -1])))
                                        (:hosted card)))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (effect
@@ -642,9 +642,13 @@
    "Virus Breeding Ground"
    {:data {:counter-type "Virus"}
     :events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
-    :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "move 1 virus counter to " (:title target))
-                 :choices {:req #(and (has? % :subtype "Virus") (>= (:counter %) 1))}
-                 :effect (effect (add-prop target :counter 1))}]}
+    :abilities [{:cost [:click 1]
+                 :msg (msg "move 1 virus counter to " (:title target))
+                 :req (req (pos? (get card :counter 0)))
+                 :choices {:req #(and (has? % :subtype "Virus") (>= (get % :counter 0) 1))}
+                 :effect (req (when (pos? (get-virus-counters state side target))
+                                (add-prop state side card :counter -1)
+                                (add-prop state side target :counter 1)))}]}
 
    "Wasteland"
    {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (:installed target)))

@@ -15,7 +15,7 @@
     (take-credits state :runner 2)
     (let [cvs (first (get-in @state [:corp :servers :hq :content]))]
       (core/rez state :corp cvs)
-      (card-ability state :corp (core/get-card state cvs) 0)
+      (card-ability state :corp cvs 0)
       ; nothing in hq content
       (is (empty? (get-in @state [:corp :servers :hq :content])) "CVS was trashed")
       ; purged counters
