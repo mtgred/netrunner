@@ -34,7 +34,7 @@
 
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
-    :msg (msg "increase the rez cost of the 1st unrezzed ice approached by " target " [Credits]")
+    :msg (msg "increase the rez cost of the 1st unrezzed ICE approached by " target " [Credits]")
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
                                       :effect (effect (run target nil card))} card nil))}
 
@@ -146,7 +146,7 @@
                                             (update-ice-strength state side snew)
                                             (resolve-ability state side (es) card nil))
                                           (system-msg state side "has finished rearranging ICE")))})]
-     {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ice"
+     {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ICE"
                                                  :effect (effect (resolve-ability (eshelp) card nil))}} card))})
 
    "Eureka!"
@@ -340,7 +340,7 @@
                                                                       (damage-prevent :brain Integer/MAX_VALUE))}
                                          :runner-turn-begins {:effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard)))
-                       (system-msg state :runner "is immune to damage until the beginning of the runner's next turn"))))
+                       (system-msg state :runner "is immune to damage until the beginning of the Runner's next turn"))))
     ; This :events is a hack so that the unregister-events above will fire.
     :events {:runner-turn-begins nil :pre-damage nil}}
 
@@ -389,7 +389,8 @@
 
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double"))
-                                                      (:discard runner))))))}
+                                                      (:discard runner))))))
+    :msg (msg "gain " (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) (:discard runner)))) " [Credits]")}
 
    "Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
@@ -554,7 +555,7 @@
    {:effect (effect (gain :credit 9))}
 
    "Surge"
-   {:msg (msg "place 2 virus token on " (:title target))
+   {:msg (msg "place 2 virus tokens on " (:title target))
     :choices {:req #(has? % :subtype "Virus")}
     :effect (effect (add-prop target :counter 2))}
 
@@ -569,7 +570,7 @@
               :end-turn
               {:req (req (some #(when (and (= (:cid target) (:cid %)) (get-in % [:special :test-run])) %)
                                (get-in runner [:rig :program])))
-               :msg (msg "move " (:title target) " on top of Stack")
+               :msg (msg "move " (:title target) " on top of their Stack")
                :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
                                                    (get-in runner [:rig :program]))
                                   :deck {:front true}))}}

@@ -509,7 +509,13 @@
    {:events {:agenda-scored {:msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
 
    "Starlight Crusade Funding"
-   {:events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
+   {:msg "ignore additional costs on Double events"
+    :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))
+    :events {:runner-turn-begins
+             {:msg "lose [Click] and ignore additional costs on Double events"
+              :effect (req (lose state :runner :click 1)
+                           (swap! state assoc-in [:runner :register :double-ignore-additional] true))}}
+    :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))}
 
    "Stim Dealer"
    {:events {:runner-turn-begins
