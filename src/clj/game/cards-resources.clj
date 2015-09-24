@@ -6,10 +6,10 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (not tagged)) 
-                        :msg "take 1 tag" 
+    {:corp-turn-begins {:req (req (not tagged))
+                        :msg "take 1 tag"
                         :effect (effect (tag-runner :runner 1))}
-     :runner-turn-begins {:req (req (zero? (:bad-publicity corp))) 
+     :runner-turn-begins {:req (req (zero? (:bad-publicity corp)))
                           :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
@@ -124,6 +124,7 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:rd]) (= 0 (:position run)))
+                   (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
 
@@ -161,7 +162,7 @@
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
                                 (gain-agenda-point state :runner (:agendapoints c))))
                  :msg (msg (let [c (first (:hosted card))]
-                             (str "add " (:title c) " to his/her score area and gain "
+                             (str "add " (:title c) " to their score area and gain "
                              (:agendapoints c) " agenda point" (when (> (:agendapoints c) 1) "s"))))}]}
 
    "Gang Sign"
@@ -196,6 +197,7 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
+                   (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
 
@@ -209,10 +211,10 @@
              :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
                              :effect (effect (gain :credit (:agendapoints target)))}}}
    "Hunting Grounds"
-   {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ice"
-                 :msg "prevent a \"when encountered\" ability on a piece of ice"
+   {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
+                 :msg "prevent a \"when encountered\" ability on a piece of ICE"
                  :once :per-turn}
-                 {:label "Install the top 3 cards of your stack facedown"
+                 {:label "Install the top 3 cards of your Stack facedown"
                   :effect (req (trash state side card {:cause :ability-cost})
                                (doseq [c (take 3 (:deck runner))]
                                   (runner-install state side c {:facedown true})))}]}
@@ -636,6 +638,7 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:hq]) (= 0 (:position run)))
+                   (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
 
@@ -658,7 +661,7 @@
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))
     :leave-play (effect (trash-resource-bonus 2))}
-                     
+ 
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
