@@ -26,6 +26,62 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
 
+(deftest street-peddler-ability
+  "Street Peddler - Ability"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 1) (qty "Torch" 1)
+                                              (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    ; move Gordian back to deck
+    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
+      (card-ability state :runner sp 0)
+      (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
+      (core/resolve-prompt state :runner {:card (find-card "Gordian Blade" (:hosted sp))}) ; choose to install Gordian
+      (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
+      (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
+
+(deftest street-peddler-kate-discount
+  "Street Peddler - Interaction with Kate discount"
+  (do-game
+    (new-game (default-corp) (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker"
+                                        [(qty "Street Peddler" 1) (qty "Gordian Blade" 1) (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    ; move Gordian back to deck
+    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (core/lose state :runner :credit 3) ; should still be able to afford Gordian w/ Kate discount
+      (card-ability state :runner sp 0)
+      (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
+      (core/resolve-prompt state :runner {:card (find-card "Gordian Blade" (:hosted sp))}) ; choose to install Gordian
+      (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
+      (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
+
+(deftest street-peddler-memory-units
+  "Street Peddler - Programs Should Cost Memory. Issue #708"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Street Peddler" 1) (qty "Corroder" 3)]))
+    (take-credits state :corp)
+    ; move Corroders back to deck
+    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (is (= 4 (:memory (get-runner))) "No memory cost for hosting on Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (is (= "Corroder" (:title (first (:hosted sp)))) "Street Peddler is hosting Corroder")
+      (card-ability state :runner sp 0)
+      (core/resolve-prompt state :runner {:card (first (:hosted sp))}) ; choose to install Gordian
+      (is (= "Corroder" (:title (get-in @state [:runner :rig :program 0]))) "Corroder was installed")
+      (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
+
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"
   (do-game
