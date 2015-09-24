@@ -56,4 +56,5 @@
     (core/play state side {:card (find-card title (get-in @state [side :hand]))
                            :server server})))
 
+(load "core-game")
 (load "cards")
