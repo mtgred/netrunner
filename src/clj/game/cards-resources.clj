@@ -428,8 +428,8 @@
    {:effect (req (gain state :runner :click 1 :click-per-turn 1)
                  (add-watch state :rachel-beckman
                             (fn [k ref old new]
-                              (when (> (get-in new [:runner :tag]) 0)
-                                (remove-watch state :rachel-beckman)
+                              (when (is-tagged? new)
+                                (remove-watch ref :rachel-beckman)
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Rachel Beckman for being tagged")))))
     :leave-play (effect (lose :click 1 :click-per-turn 1))}
@@ -683,8 +683,8 @@
                  :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]
     :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
                             (fn [k ref old new]
-                              (when (> (get-in new [:runner :tag]) 0)
-                                (remove-watch state (keyword (str "zona-sul-shipping" (:cid card))))
+                              (when (is-tagged? new)
+                                (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
-                                (system-msg ref side "trash Zona Sul Shipping for being tagged")))))}})
+                                (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))}})
 

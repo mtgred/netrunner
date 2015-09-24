@@ -485,7 +485,7 @@
 (defmulti stats-view #(get-in % [:identity :side]))
 
 (defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag brain-damage agenda-point
-                                        max-hand-size]} owner]
+                                        tagged max-hand-size]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
@@ -500,7 +500,7 @@
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (> tag 0) [:div.warning "!"]) (when me? (controls :tag))]
+       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (> tag 0) (> tagged 0)) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))

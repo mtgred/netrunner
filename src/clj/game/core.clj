@@ -656,7 +656,7 @@
 (defn create-deck [deck]
   (shuffle (mapcat #(map (fn [card]
                            (let [c (assoc card :cid (make-cid))
-                                 c (dissoc c :setname :text :_id :influence :number :uniqueness :influencelimit
+                                 c (dissoc c :setname :text :_id :influence :number :influencelimit
                                            :faction :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
@@ -1384,6 +1384,10 @@
          (register-events state side events c)))
      c)))
 
+(defn is-tagged? [state]
+  (or (> (get-in state [:runner :tag]) 0)
+      (> (get-in state [:runner :tagged]) 0)))
+     
 (defn runner-install
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
