@@ -49,7 +49,9 @@
 (defn new-game [cursor owner]
   (authenticated
    (fn [user]
-     (om/set-state! owner :title (str (:username user) "'s game"))
+     (om/set-state! owner :title "Friendly game")
+     (om/set-state! owner :skill-level "Intermediate")
+     (om/set-state! owner :game-type "Friendly")
      (om/set-state! owner :editing true)
      (om/set-state! owner :allowspectator true)
      (-> ".game-title" js/$ .select))))
@@ -63,6 +65,12 @@
            (swap! app-state assoc :messages [])
            (send {:action "create" :title (om/get-state owner :title)
                   :allowspectator (om/get-state owner :allowspectator)}))))))
+
+(defn auto-game-title [skill game-type]
+  (cond
+    (= game-type "Private") "Private game"
+    (= skill "Intermediate") (str game-type " game")
+    :else (str game-type " game for " (clojure.string/lower-case skill) "s")))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -195,6 +203,20 @@
             [:div.button-bar
              [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
+            [:h4 "Game Type"]
+            [:select.game-type {:value (:game-type state)
+                                :on-change #(do (om/set-state! owner :game-type (.. % -target -value))
+                                                (om/set-state! owner :title (auto-game-title (:skill-level state)
+                                                                                             (.. % -target -value))))}
+             (for [option ["Private" "Friendly" "Serious" "Tournament"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
+            [:h4 "Skill Level"]
+            [:select.game-skill {:value (:skill-level state)
+                                 :on-change #(do (om/set-state! owner :skill-level (.. % -target -value))
+                                                 (om/set-state! owner :title (auto-game-title (.. % -target -value)
+                                                                                              (:game-type state))))}
+             (for [option ["Beginner" "Intermediate" "Expert"]]
+               [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title"}]
