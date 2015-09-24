@@ -97,6 +97,16 @@
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
                               :effect (req (damage state side :net 1 {:card card}))}}}
 
+   "Keegan Lane"
+   {:abilities [{:label "[Trash], remove a tag: Trash a program"
+                 :req (req (and this-server
+                                (> (get-in @state [:runner :tag]) 0)
+                                (not (empty? (filter #(has? % :type "Program") (all-installed state :runner))))))
+                 :msg (msg "remove 1 tag")
+                 :effect (req (resolve-ability state side trash-program card nil)
+                              (trash state side card {:cause :ability-cost})
+                              (lose state :runner :tag 1))}]}
+                            
    "Marcus Batty"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:req (req this-server)
