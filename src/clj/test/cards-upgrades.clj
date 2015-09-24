@@ -40,9 +40,9 @@
     (core/no-action state :corp nil)
     (core/successful-run state :runner nil)
     ; corp now has optional prompt to trigger virus purge
-    (core/resolve-prompt state :corp {:choice "Yes"})
+    (prompt-choice :corp "Yes")
     ; runner has prompt to trash CVS
-    (core/resolve-prompt state :runner {:choice "Yes"})
+    (prompt-choice :runner "Yes")
     ; purged counters
     (is (zero? (core/get-virus-counters state :runner (find-card "Cache" (get-in @state [:runner :rig :program]))))
         "Cache has no counters")

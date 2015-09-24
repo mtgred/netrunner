@@ -9,7 +9,7 @@
 
     ; play Account Siphon, use ability
     (play-run-event state (first (:hand (get-runner))) :hq)
-    (core/resolve-prompt state :runner {:choice "Run ability"})
+    (prompt-choice :runner "Run ability")
     (is (= 2 (:tag (get-runner)))) ; gained 2 tags
     (is (= 15 (:credit (get-runner)))) ; gained 10 credits
     (is (= 3 (:credit (get-corp)))))) ; corp lost 5 credits
@@ -22,7 +22,7 @@
     (is (= 8 (:credit (get-corp))))
     ; play another Siphon, do not use ability
     (play-run-event state (first (get-in @state [:runner :hand])) :hq)
-    (core/resolve-prompt state :runner {:choice "Access"})
+    (prompt-choice :runner "Access")
     (is (= 0 (:tag (get-runner)))) ; no new tags
     (is (= 5 (:credit (get-runner)))) ; no change in credits
     (is (= 8 (:credit (get-corp))))))
