@@ -119,7 +119,7 @@
                                    :prompt "Choose a target for Clairvoyant Monitor"
                                    :msg (msg "place 1 advancement token on "
                                              (if (:rezzed target) (:title target) "a card") " and end the run")
-                                   :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                                   :choices {:req #(= (first (:zone %)) :servers)}
                                    :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
 
    "Chum"
@@ -322,9 +322,16 @@
                          :effect (effect (damage :brain 1 {:card card}) (tag-runner :runner 1))}}]}
 
    "IQ"
-   {:abilities [end-the-run]
+   {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
+                   (fn [k ref old new]
+                     (let [handsize (count (get-in new [:corp :hand]))]
+                       (when (not= (count (get-in old [:corp :hand])) handsize)
+                         (update! ref side (assoc (get-card ref card) :strength-bonus handsize))
+                         (update-ice-strength ref side (get-card ref card)))))))
+    :abilities [end-the-run]
     :strength-bonus (req (count (:hand corp)))
-    :rez-cost-bonus (req (count (:hand corp)))}
+    :rez-cost-bonus (req (count (:hand corp)))
+    :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
 
    "Information Overload"
    {:abilities [{:label "Trace 1 - Give the Runner 1 tag"

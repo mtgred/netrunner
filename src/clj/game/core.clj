@@ -1309,7 +1309,8 @@
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
     (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
       (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
-        (set-prop state :runner card :counter 0))))
+        (set-prop state :runner card :counter 0)))
+    (update-all-ice state side))
   (trigger-event state side :purge))
 
 (defn get-virus-counters [state side card]
@@ -1489,7 +1490,7 @@
   (trigger-event state side :play card))
 
 (defn derez [state side card]
-  (system-msg state side (str "derez " (:title card)))
+  (system-msg state side (str "derezzes " (:title card)))
   (update! state :corp (desactivate state :corp card true))
   (when-let [derez-effect (:derez-effect (card-def card))]
     (resolve-ability state side derez-effect (get-card state card) nil))
@@ -1524,7 +1525,7 @@
     (add-prop state side (get-card state card) :advance-counter 1)))
 
 (defn forfeit [state side card]
-  (system-msg state side (str "forfeit " (:title card)))
+  (system-msg state side (str "forfeits " (:title card)))
   (gain state side :agenda-point (- (:agendapoints card)))
   (move state :corp card :rfg))
 
