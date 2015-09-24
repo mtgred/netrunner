@@ -128,8 +128,8 @@
          (doseq [psub pvec]
            (swap! state update-in [:prevent ptype psub] (fn [pv] (remove #(= (:cid %) (:cid card)) pv))))))
      (unregister-events state side card)
-     (when-let [mu (:memoryunits card)]
-       (gain state :runner :memory mu))
+     (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
+       (gain state :runner :memory (:memoryunits card)))
      c)))
 
 (defn get-nested-host [state card]
@@ -584,6 +584,14 @@
             (-> (concat (get-in @state [:bonus :install-cost]) all-cost
                         (when-let [instfun (:install-cost-bonus (card-def card))] (instfun state side card nil)))
             merge-costs flatten))))
+
+(defn modified-install-cost
+  ([state side card] (modified-install-cost state side card nil))
+  ([state side card additional]
+    (trigger-event state side :pre-install card)
+    (let [cost (install-cost state side card (merge-costs (concat additional [:credit (:cost card)])))]
+      (swap! state update-in [:bonus] dissoc :install-cost)
+      cost)))
 
 (defn damage-count [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
