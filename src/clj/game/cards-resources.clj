@@ -526,7 +526,7 @@
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
                  :choices (req (filter #(and (not= (:type %) "Event")
-                                             (<= (:cost %) (inc (:credit runner))))
+                                             (can-pay? state side (modified-install-cost state side % [:credit -1])))
                                        (:hosted card)))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (effect
