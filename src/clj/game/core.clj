@@ -1387,7 +1387,7 @@
 (defn is-tagged? [state]
   (or (> (get-in state [:runner :tag]) 0)
       (> (get-in state [:runner :tagged]) 0)))
-     
+
 (defn runner-install
   ([state side card] (runner-install state side card nil))
   ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
@@ -1564,6 +1564,7 @@
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
         label (if (and (not (= last-zone :play-area))
+                       (not (and (= (:side c)  "Runner") (= last-zone :hand) (= server "Grip")))
                        (or (and (= (:side c)  "Runner") (not (:facedown c)))
                            (:rezzed c)
                            (:seen c)
