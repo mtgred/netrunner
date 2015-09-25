@@ -42,7 +42,7 @@
                                 :msg "give the Runner 1 tag"}}}
 
    "Corporate Troubleshooter"
-   {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
+   {:abilities [{:label "[Trash]: Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"
                  :effect (req (let [boost target]
                                 (resolve-ability
@@ -76,7 +76,8 @@
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
                         :yes-ability {:msg (msg "purge viruses")
                                       :effect (effect (purge))}}}
-    :abilities [{:msg "purge viruses" :effect (effect (purge) (trash card))}]}
+    :abilities [{:label "[Trash]: Purge virus counters"
+                 :msg "purge viruses" :effect (effect (purge) (trash card))}]}
 
    "Dedicated Technician Team"
    {:recurring 2}
@@ -121,7 +122,7 @@
                               (lose state :runner :tag 1))}]}
                             
    "Marcus Batty"
-   {:abilities [{:msg "start a Psi game"
+   {:abilities [{:label "[Trash: Start a Psi game" :msg "start a Psi game"
                  :psi {:not-equal {:req (req this-server)
                                    :choices {:req #(and (has? % :type "ICE") (:rezzed %))}
                                    :msg (msg "resolve a subroutine on " (:title target))
@@ -161,7 +162,8 @@
                               :effect (effect (init-trace-bonus 2))}}}
     
    "Ryon Knight"
-   {:abilities [{:msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+   {:abilities [{:label "[Trash]: Do 1 brain damage"
+                 :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
@@ -174,7 +176,7 @@
 
    "Self-destruct"
    {:abilities [{:req (req this-server)
-                 :label "Trace X - Do 3 net damage"
+                 :label "[Trash]: Trace X - Do 3 net damage"
                  :effect (req (let [serv (card->server state card)
                                     cards (concat (:ices serv) (:content serv))]
                                 (trash state side card)
@@ -219,13 +221,13 @@
                                  card nil)))}]}
 
    "Tyrs Hand"
-   {:abilities [{:label "Prevent a subroutine on a Bioroid from being broken"
+   {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has? current-ice :subtype "Bioroid"))) :effect (effect (trash card))
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
 
    "Will-o-the-Wisp"
-   {:abilities [{:label "Add an icebreaker to the bottom of Stack"
+   {:abilities [{:label "[Trash]: Add an icebreaker to the bottom of Stack"
                  :choices {:req #(has? % :subtype "Icebreaker")}
                  :msg (msg "add " (:title target) " to the bottom of Stack")
                  :effect (effect (trash card) (move :runner target :deck))}]}})
