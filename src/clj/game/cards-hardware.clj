@@ -158,7 +158,7 @@
                :prompt "Use Doppelgänger to run again?" :player :runner
                :yes-ability {:prompt "Choose a server" 
                              :choices (req servers)
-                             :msg (msg "to make a run on " target)
+                             :msg (msg "make a run on " target)
                              :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
 
    "Dorm Computer"

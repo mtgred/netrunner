@@ -189,7 +189,7 @@
                  :label "Rez a card, lowering the cost by 1 [Credits]" :msg (msg "rez " (:title target))
                  :effect (effect (rez-cost-bonus -1) (rez target))}
                 {:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
-                 :activatemsg "searches HQ for an asset"
+                 :activatemsg "searches R&D for an asset"
                  :choices (req (filter #(has? % :type "Asset") (:deck corp)))
                  :cost [:credit 1] :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
@@ -197,7 +197,7 @@
    "Exposé"
    {:advanceable :always
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
-                 :msg (msg "remove " (:advance-counter card) " bad publicities")
+                 :msg (msg "remove " (:advance-counter card) " bad publicity")
                  :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
 
    "Franchise City"
@@ -267,16 +267,6 @@
                             :effect (req (doseq [c targets] (move state side c :deck))
                                          (shuffle! state side :deck))}
                            card nil))}]}
-
-   "Keegan Lane"
-   {:abilities [{:label "Remove a tag and trash to trash a program"
-                 :req (req (and this-server
-                                (> (get-in @state [:runner :tag]) 0)
-                                (not (empty? (filter #(has? % :type "Program") (all-installed state :runner))))))
-                 :msg (msg "remove 1 tag")
-                 :effect (req (resolve-ability state side trash-program card nil)
-                              (trash state side card {:cause :ability-cost})
-                              (lose state :runner :tag 1))}]}
 
    "Launch Campaign"
    {:effect (effect (add-prop card :counter 6))
