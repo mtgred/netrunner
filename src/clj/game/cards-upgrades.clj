@@ -122,7 +122,7 @@
                               (lose state :runner :tag 1))}]}
                             
    "Marcus Batty"
-   {:abilities [{:label "[Trash: Start a Psi game" :msg "start a Psi game"
+   {:abilities [{:label "[Trash]: Start a Psi game" :msg "start a Psi game"
                  :psi {:not-equal {:req (req this-server)
                                    :choices {:req #(and (has? % :type "ICE") (:rezzed %))}
                                    :msg (msg "resolve a subroutine on " (:title target))
