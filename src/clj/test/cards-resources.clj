@@ -41,7 +41,7 @@
       (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner sp 0)
       (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
-      (core/resolve-prompt state :runner {:card (find-card "Gordian Blade" (:hosted sp))}) ; choose to install Gordian
+      (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
 
@@ -60,7 +60,7 @@
       (core/lose state :runner :credit 3) ; should still be able to afford Gordian w/ Kate discount
       (card-ability state :runner sp 0)
       (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
-      (core/resolve-prompt state :runner {:card (find-card "Gordian Blade" (:hosted sp))}) ; choose to install Gordian
+      (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
 
@@ -78,7 +78,7 @@
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= "Corroder" (:title (first (:hosted sp)))) "Street Peddler is hosting Corroder")
       (card-ability state :runner sp 0)
-      (core/resolve-prompt state :runner {:card (first (:hosted sp))}) ; choose to install Gordian
+      (prompt-card :runner (first (:hosted sp))) ; choose to install Gordian
       (is (= "Corroder" (:title (get-in @state [:runner :rig :program 0]))) "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
