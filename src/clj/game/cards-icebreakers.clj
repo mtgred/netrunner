@@ -185,11 +185,11 @@
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
                  :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
                  :msg (msg "trash " (:title target) " and break 1 subroutine")
-                 :effect (effect (trash target))}
+                 :effect (effect (trash target {:unpreventable true}))}
                 {:label "Trash 1 card from Grip to add 2 strength"
                  :prompt "Choose a card to trash for Faust" :choices (req (:hand runner))
                  :msg (msg "trash " (:title target) " and add 2 strength")
-                 :effect (effect (trash target) (pump card 2))}]}
+                 :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
