@@ -102,7 +102,7 @@
                        (when (< clicknew clickold)
                          (resolve-ability ref side
                            {:req (req this-server)
-                            :msg "force the Runner to lose all credits" :once :per-turn
+                            :msg "force the Runner to lose all credits" :once :per-run
                             :effect (effect (lose :runner :credit :all))}
                           card nil))))))
     :leave-play (req (remove-watch state (keyword (str "heinlein" (:cid card)))))}
