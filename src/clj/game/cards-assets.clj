@@ -541,6 +541,7 @@
                              :msg (msg "install a card from " target)
                              :effect (effect (resolve-ability
                                                {:prompt "Choose a card to install"
+                                                :not-distinct true
                                                 :choices (req (filter #(not= (:type %) "Operation")
                                                                       ((if (= target "HQ") :hand :discard) corp)))
                                                 :effect (req (corp-install state side target nil {:no-install-cost true})
