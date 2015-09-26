@@ -361,7 +361,7 @@ app.post '/reset/:token', (req, res) ->
     res.redirect('/')
 
 hashPassword = (password, cb) ->
-    bcrypt.hash password, 3, cb
+    bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
