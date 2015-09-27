@@ -1586,17 +1586,18 @@
                            (= last-zone :deck)))
                 (:title c) "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
-    (case server
-      ("Heap" "Archives")
-      (do (trash state s c {:unpreventable true})
-          (system-msg state side (str "trashes " label from-str)))
-      ("HQ" "Grip")
-      (do (move state s (dissoc c :seen :rezzed) :hand)
-          (system-msg state side (str "moves " label from-str " to " server)))
-      ("Stack" "R&D")
-      (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
-          (system-msg state side (str "moves " label from-str " to the top of " server)))
-      nil)))
+    (if (= src server) nil
+      (case server
+        ("Heap" "Archives")
+        (do (trash state s c {:unpreventable true})
+            (system-msg state side (str "trashes " label from-str)))
+        ("HQ" "Grip")
+        (do (move state s (dissoc c :seen :rezzed) :hand)
+            (system-msg state side (str "moves " label from-str " to " server)))
+        ("Stack" "R&D")
+        (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
+            (system-msg state side (str "moves " label from-str " to the top of " server)))
+        nil))))
 
 (defn click-run [state side {:keys [server] :as args}]
   (when (and (not (get-in @state [:runner :register :cannot-run])) (pay state :runner nil :click 1))
