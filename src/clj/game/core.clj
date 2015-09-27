@@ -2,7 +2,8 @@
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split]]
             [game.macros :refer [effect req msg]]
-            [clojure.string :refer [split-lines split join]]))
+            [clojure.string :refer [split-lines split join]]
+            [clojure.core.match :refer [match]]))
 
 (declare cards)
 
@@ -1560,9 +1561,23 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
+(defn name-zone [side zone]
+  (match (into [] zone)
+    [:hand] (if (= side "Runner") "Grip" "HQ")
+    [:discard] (if (= side "Runner") "Heap" "Archives")
+    [:deck] (if (= side "Runner") "Stack" "R&D")
+    [:rig _] "Rig"
+    [:servers :hq _] "HQ Server"
+    [:servers :rd _] "R&D Server"
+    [:servers :archives _] "Archives Server"
+    [:servers :remote id _] (str "Remote Server " id)
+    :else nil))
+
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
+        src (name-zone (:side c) (:zone c))
+        from-str (if (nil? src) nil (str " from their " src))
         label (if (and (not (= last-zone :play-area))
                        (not (and (= (:side c)  "Runner") (= last-zone :hand) (= server "Grip")))
                        (or (and (= (:side c)  "Runner") (not (:facedown c)))
@@ -1574,13 +1589,13 @@
     (case server
       ("Heap" "Archives")
       (do (trash state s c {:unpreventable true})
-          (system-msg state side (str "trashes " label)))
+          (system-msg state side (str "trashes " label from-str)))
       ("HQ" "Grip")
       (do (move state s (dissoc c :seen :rezzed) :hand)
-          (system-msg state side (str "moves " label " to " server)))
+          (system-msg state side (str "moves " label from-str " to " server)))
       ("Stack" "R&D")
       (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
-          (system-msg state side (str "moves " label " to the top of " server)))
+          (system-msg state side (str "moves " label from-str " to the top of " server)))
       nil)))
 
 (defn click-run [state side {:keys [server] :as args}]

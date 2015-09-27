@@ -11,7 +11,8 @@
                  [sablono "0.3.4"]
                  [environ "1.0.0"]
                  [com.novemberain/monger "3.0.0-rc2"]
-                 [org.slf4j/slf4j-nop "1.7.12"]]
+                 [org.slf4j/slf4j-nop "1.7.12"]
+                 [org.clojure/core.match "0.3.0-alpha4"]]
 
   :profiles {:dev {:dependencies [[figwheel "0.3.7"]]}}
 
