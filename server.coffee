@@ -208,10 +208,10 @@ app.configure ->
 passport.use new localStrategy (username, password, done) ->
   db.collection('users').findOne {username: RegExp("^#{username}$", "i")}, (err, user) ->
     return done(err) if err or not user
-    if bcrypt.compareSync(password, user.password)
-      done(null, {username: user.username, emailhash: user.emailhash, _id: user._id})
-    else
-      return done(null, false)
+    bcrypt.compare password, user.password, (err, valid) ->
+    	return done(err) if err
+    	return done(null, false) if not valid
+    	done(null, {username: user.username, emailhash: user.emailhash, _id: user._id})
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
