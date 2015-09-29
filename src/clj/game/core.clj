@@ -1365,27 +1365,28 @@
 (defn host
   ([state side card target] (host state side card target nil))
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
-   (when installed
-     (unregister-events state side target))
-   (doseq [s [:runner :corp]]
-     (if host
-       (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                  (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
-         (update! state side (update-in host-card [:hosted]
-                                        (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-       (swap! state update-in (cons s (vec zone))
-              (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-   (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
-   (let [card (assoc-host-zones card)
-         c (assoc target :host (dissoc card :hosted)
-                         :facedown facedown
-                         :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
-                         :previous-zone (:zone target))]
-     (update! state side (update-in card [:hosted] #(conj % c)))
-     (when-let [events (:events (card-def target))]
-       (when installed
-         (register-events state side events c)))
-     c)))
+   (when (not= cid (:cid card))
+     (when installed
+       (unregister-events state side target))
+     (doseq [s [:runner :corp]]
+       (if host
+         (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
+                                    (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
+           (update! state side (update-in host-card [:hosted]
+                                          (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+         (swap! state update-in (cons s (vec zone))
+                (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+     (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+     (let [card (assoc-host-zones card)
+           c (assoc target :host (dissoc card :hosted)
+                           :facedown facedown
+                           :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
+                           :previous-zone (:zone target))]
+       (update! state side (update-in card [:hosted] #(conj % c)))
+       (when-let [events (:events (card-def target))]
+         (when installed
+           (register-events state side events c)))
+       c))))
 
 (defn is-tagged? [state]
   (or (> (get-in state [:runner :tag]) 0)
