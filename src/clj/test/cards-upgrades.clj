@@ -36,7 +36,7 @@
     (play-from-hand state :runner "Cache")
     (is (= 3 (core/get-virus-counters state :runner (find-card "Cache" (get-in @state [:runner :rig :program])))))
     (play-from-hand state :runner "Medium")
-    (core/click-run state :runner {:server "Server 0"})
+    (core/click-run state :runner {:server "Server 1"})
     (core/no-action state :corp nil)
     (core/successful-run state :runner nil)
     ; corp now has optional prompt to trigger virus purge
