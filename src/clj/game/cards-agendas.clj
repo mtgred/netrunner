@@ -2,13 +2,21 @@
 
 (def cards-agendas
   {"Accelerated Beta Test"
-   {:optional {:prompt "Look at the top 3 cards of R&D?"
-               :yes-ability {:msg (msg (let [c (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
-                                         (str "install " c " ICE and trash " (- 3 c) " cards")))
-                             :effect (req (doseq [c (take 3 (:deck corp))]
-                                           (if (= (:type c) "ICE")
-                                             (corp-install state side c nil {:no-install-cost true :install-state :rezzed})
-                                             (trash state side c))))}}}
+   (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE to install"
+                                  :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
+                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
+                                                 (when (< n i)
+                                                   (resolve-ability state side (abt (inc n) i) card nil)))})]
+     {:optional {:prompt "Look at the top 3 cards of R&D?"
+                 :yes-ability {:effect (req (let [numice (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                         (resolve-ability state side
+                                           {:msg (msg "install " numice " ICE and trash " (- 3 numice) " cards")
+                                            :effect (req (doseq [c (take 3 (:deck corp))]
+                                                           (if (= (:type c) "ICE")
+                                                             (move state side c :play-area)
+                                                             (trash state side c)))
+                                                         (resolve-ability state side (abthelper 1 numice) card nil))}
+                                          card nil)))}}})
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
