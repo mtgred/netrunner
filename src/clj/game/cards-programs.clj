@@ -456,7 +456,8 @@
                  :prompt "Choose a program to host on Scheherazade"
                  :choices {:req #(and (= (:type %) "Program") (:installed %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                 :effect (effect (host card target) (gain :credit 1))}]}
+                 :effect (req (when (host state side card target) 
+                                (gain state side :credit 1)))}]}
 
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
