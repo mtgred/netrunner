@@ -5,6 +5,7 @@
    (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE to install"
                                   :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
                                   :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
+                                               (trigger-event state side :rez target)
                                                  (when (< n i)
                                                    (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
