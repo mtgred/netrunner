@@ -352,9 +352,12 @@
    {:effect (effect (gain :credit 9))}
 
    "Mass Install"
-   {:choices {:max 3 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
-    :msg (msg "install " (join ", " (map :title targets)))
-    :effect (req (doseq [c targets] (runner-install state side c)))}
+   (let [mhelper (fn mi [n] {:prompt "Select a program to install"
+                             :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
+                             :effect (req (runner-install state side target)
+                                            (when (< n 3)
+                                              (resolve-ability state side (mi (inc n)) card nil)))})]
+     {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
    "Modded"
    {:prompt "Choose a card to install"
@@ -376,7 +379,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
-    :msg "add it to their score area as an agenda worth 1 agenda point"}
+    :msg "add it to their score area and gain 1 agenda point"}
 
    "Paper Tripping"
    {:effect (effect (lose :tag :all))}
@@ -560,10 +563,10 @@
     :effect (effect (add-prop target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a card from Stack or Heap?" :choices ["Stack" "Heap"]
-    :msg (msg "install a card from " target) :effect
+   {:prompt "Install a program from Stack or Heap?" :choices ["Stack" "Heap"]
+    :msg (msg "install a program from " target) :effect
     (effect (resolve-ability
-             {:prompt "Choose a card to install"
+             {:prompt "Choose a program to install"
               :choices (req (filter #(= (:type %) "Program")
                                     ((if (= target "Heap") :discard :deck) runner)))
               :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
