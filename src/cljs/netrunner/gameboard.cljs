@@ -121,7 +121,7 @@
                        ("Upgrade" "ICE") (if root
                                            (send-command "play" {:card card :server root})
                                            (-> (om/get-node owner "servers") js/$ .toggle))
-                       ("Agenda" "Asset") (if (empty? (get-in @game-state [:corp :servers :remote]))
+                       ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
                                             (send-command "play" {:card card :server "New remote"})
                                             (-> (om/get-node owner "servers") js/$ .toggle))
                        (send-command "play" {:card card}))
@@ -227,9 +227,6 @@
         [:form {:on-submit #(send-msg % owner)}
          [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
 
-(defn remote-list [remotes]
-  (map #(str "Server " %) (-> remotes count range reverse)))
-
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
   (-> e .-dataTransfer (.setData "card" (.stringify js/JSON (clj->js @cursor)))))
@@ -249,6 +246,21 @@
                          (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]")))
                          )))) ": ")))
 
+(defn remote->num [server]
+  (-> server str (clojure.string/split #":remote") last))
+
+(defn remote->name [server]
+  (let [num (remote->num server)]
+    (str "Server " num)))
+
+(defn get-remotes [servers]
+ (->> servers 
+     (filter #(not (#{:hq :rd :archives} (first %))))
+     (sort-by #(remote->name (first %)))))
+
+(defn remote-list [remotes]
+  (->> remotes (map #(remote->name (first %))) sort))
+  
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
                          side rec-counter facedown]
@@ -551,13 +563,11 @@
                               :run (when (= server-type "rd") run)})
        (om/build server-view {:server (:hq servers) :central true
                               :run (when (= server-type "hq") run)})
-       (map-indexed
-        (fn [i server]
-          (om/build server-view {:server server
-                                 :run (when (and (= server-type "remote")
-                                                 (= (js/parseInt (second s)) i)) run)}
-                    {:opts {:name (str "Server " i)}}))
-        (:remote servers))]))))
+       (for [server (get-remotes servers)]
+         (let [num (remote->num (first server))]
+           (om/build server-view {:server (second server)
+                                  :run (when (= server-type (str "remote" num)) run)}
+                                 {:opts {:name (remote->name (first server))}})))]))))
 
 (defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
@@ -572,6 +582,7 @@
   (om/component
    (sab/html
     [:div.dashboard
+     (js/console.log (str "ZONE:" (count remotes)))
      (om/build hand-view {:player player :remotes remotes})
      (om/build discard-view player)
      (om/build deck-view player)
@@ -614,7 +625,7 @@
                opponent ((if (= side :runner) :corp :runner) cursor)]
            [:div.gameboard
             [:div.mainpane
-             (om/build zones {:player opponent :remotes (get-in cursor [:corp :servers :remote])})
+             (om/build zones {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})
              [:div.centralpane
               [:div.leftpane
                [:div
@@ -706,7 +717,7 @@
                              (cond-button "Run" (and (>= (:click me) 1)
                                                      (not (get-in me [:register :cannot-run])))
                                           #(-> (om/get-node owner "servers") js/$ .toggle))
-                             (let [remotes (get-in cursor [:corp :servers :remote])
+                             (let [remotes (get-remotes (get-in cursor [:corp :servers]))
                                    servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
                                [:div.blue-shade.panel.servers-menu {:ref "servers"}
                                 (map (fn [label]
@@ -728,7 +739,7 @@
                (om/build board-view {:player opponent :run run})
                (om/build board-view {:player me :run run})]]
              [:div.me
-              (om/build zones {:player me :remotes (get-in cursor [:corp :servers :remote])})]]
+              (om/build zones {:player me :remotes (get-remotes (get-in cursor [:corp :servers]))})]]
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

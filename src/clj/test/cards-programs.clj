@@ -9,7 +9,7 @@
     (take-credits state :corp 2)
     (play-from-hand state :runner "Djinn")
     (let [djinn (get-in @state [:runner :rig :program 0])
-          agenda (get-in @state [:corp :servers :remote 0 :content 0])]
+          agenda (get-in @state [:corp :servers :remote1 :content 0])]
       (is agenda "Agenda was installed")
       (card-ability state :runner djinn 1)
       (prompt-card :runner (find-card "Chakana" (:hand (get-runner))))

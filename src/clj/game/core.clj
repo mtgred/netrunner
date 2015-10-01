@@ -1,6 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs String->Num safe-split]]
+                                costs-to-symbol vdissoc distinct-by abs String->Num safe-split
+                                dissoc-in]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -178,6 +179,42 @@
         (when-not (empty? tail)
           (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
+(defn remote->name [zone]
+  (let [kw (if (keyword? zone) zone (last zone))
+        s (str kw)]
+    (if (.startsWith s ":remote")
+      (let [num (last (split s #":remote"))]
+        (str "Server " num)))))
+
+(defn central->name [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :hq "HQ"
+    :rd "R&D"
+    :archives "Archives"
+    nil))
+
+(defn zone->name [zone]
+  (or (central->name zone) 
+      (remote->name zone)))
+
+(defn is-remote? [zone]
+  (not (nil? (remote->name zone))))
+
+(defn is-central? [zone]
+  (not (is-remote? zone)))
+
+(defn get-remotes [state]
+  (filter #(-> % first is-remote?) (get-in state [:corp :servers])))
+
+(defn get-remote-names [state]
+  (->> state get-remotes (map (comp zone->name first)) sort))
+
+(defn server-list [state card]
+  (let [remotes (cons "New remote" (get-remote-names @state))]
+    (if (#{"Asset" "Agenda"} (:type card))
+        remotes
+        (concat ["HQ" "R&D" "Archives"] remotes))))
+
 (defn move-zone [state side server to]
   (let [from-zone (cons side (if (sequential? server) server [server]))
         to-zone (cons side (if (sequential? to) to [to]))]
@@ -212,38 +249,15 @@
            (if host
              (remove-from-host state side card)
              (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-         (let [z (vec (cons :corp (butlast zone)))
-               n (last z)]
+         (let [z (vec (cons :corp (butlast zone)))]
            (when (and (not keep-server-alive)
-                      (number? n)
+                      (is-remote? z)
                       (empty? (get-in @state (conj z :content)))
                       (empty? (get-in @state (conj z :ices))))
              (when-let [run (:run @state)]
-               (when (= (last (:server run)) n)
+               (when (= (last (:server run)) (last z))
                  (handle-end-run state side)))
-             (swap! state update-in [:corp :servers :remote] vdissoc n)
-             (swap! state assoc-in [:corp :servers :remote]
-                    (vec (map-indexed
-                          (fn [i s]
-                            (if (< i n) s
-                                {:content (vec (for [c (:content s)]
-                                                 (let [c (update-in c [:zone] #(assoc (vec %) 2 i))]
-                                                   (assoc c :hosted
-                                                            (for [h (:hosted c)]
-                                                               (assoc-in h [:host :zone] (:zone c)))))))
-                                 :ices (vec (for [c (:ices s)]
-                                              (update-in c [:zone] #(assoc (vec %) 2 i))))}))
-                          (get-in @state [:corp :servers :remote]))))
-             (doseq [s (drop n (get-in @state [:corp :servers :remote]))
-                     c (concat (:content s) (:ices s))]
-               (when (:rezzed c)
-                 (when-let [events (:events (card-def c))]
-                   (unregister-events state side c)
-                   (register-events state side events c)))
-               (doseq [h (:hosted c)]
-                 (when-let [events (:events (card-def h))]
-                   (unregister-events state side h)
-                   (register-events state side events h))))))
+             (swap! state dissoc-in z)))
          (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
@@ -547,11 +561,9 @@
   (doseq [ice (:ices server)] (update-ice-strength state side ice) ))
 
 (defn update-all-ice [state side]
-  (doseq [central `(:archives :rd :hq)]
-    (update-ice-in-server state side (get-in @state [:corp :servers central])))
-  (doseq [remote (get-in @state [:corp :servers :remote])]
-    (update-ice-in-server state side remote)))
-
+  (doseq [server (get-in @state [:corp :servers])]
+    (update-ice-in-server state side (second server))))
+  
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
@@ -663,6 +675,9 @@
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))
 
+(defn make-rid [state]
+  (get-in (swap! state update-in [:rid] inc) [:rid]))
+
 (defn init-game [{:keys [players gameid] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
@@ -672,11 +687,12 @@
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
+                :rid 0
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
                        :discard [] :scored [] :rfg [] :play-area []
-                       :servers {:hq {} :rd{} :archives {} :remote []}
+                       :servers {:hq {} :rd{} :archives {}}
                        :click 0 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
                        :click-per-turn 3 :agenda-point-req 7 :keep false}
                 :runner {:user (:user runner) :identity runner-identity
@@ -881,9 +897,7 @@
 
 (defn card->server [state card]
   (let [z (:zone card)]
-       (if (= (second z) :remote)
-         (nth (get-in @state [:corp :servers :remote]) (nth z 2))
-         (get-in @state [:corp :servers (second z)]))))
+    (get-in @state [:corp :servers (second z)])))
 
 (defn server->zone [state server]
   (if (sequential? server)
@@ -892,9 +906,9 @@
       "HQ" [:servers :hq]
       "R&D" [:servers :rd]
       "Archives" [:servers :archives]
-      "New remote" [:servers :remote (count (get-in @state [:corp :servers :remote]))]
-      [:servers :remote (-> (split server #" ") last Integer/parseInt)])))
-
+      "New remote" [:servers (keyword (str "remote" (make-rid state)))]
+      [:servers (->> (split server #" ") last (str "remote") keyword)])))
+      
 (defn gain-run-credits [state side n]
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
@@ -909,12 +923,7 @@
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
      (when-not (get-in @state [:runner :register :cannot-run])
-       (let [s (cond
-                (= server "HQ") [:hq]
-                (= server "R&D") [:rd]
-                (= server "Archives") [:archives]
-                (keyword? server) [server]
-                :else [:remote (-> (split server #" ") last Integer/parseInt)])
+       (let [s [(if (keyword? server) server (last (server->zone state server)))]
              ices (get-in @state (concat [:corp :servers] s [:ices]))]
          (swap! state assoc :per-run nil
                 :run {:server s :position (count ices) :ices ices :access-bonus 0
@@ -1013,8 +1022,11 @@
     (if-let [max-access (:max-access run)]
       (min max-access accesses) accesses)))
 
-(defmulti access (fn [state side server] (first server)))
-(defmulti choose-access (fn [cards server] (first server)))
+(defn get-server-type [zone]
+  (or (#{:hq :rn :archives} zone) :remote))
+
+(defmulti access (fn [state side server] (get-server-type (first server))))
+(defmulti choose-access (fn [cards server] (get-server-type (first server))))
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
@@ -1180,7 +1192,7 @@
   (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
 
 (defmethod access :remote [state side server]
-  (get-in @state [:corp :servers :remote (last server) :content]))
+  (get-in @state [:corp :servers (first server) :content]))
 
 (defn access-bonus [state side n]
   (swap! state update-in [:run :access-bonus] #(+ % n)))
@@ -1425,13 +1437,6 @@
                  (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))))
      (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
      (swap! state update-in [:bonus] dissoc :install-cost))))
-
-(defn server-list [state card]
-  (let [remotes (cons "New remote" (for [i (range (count (get-in @state [:corp :servers :remote])))]
-                                     (str "Server " i)))]
-    (if (#{"Asset" "Agenda"} (:type card))
-        remotes
-        (concat ["HQ" "R&D" "Archives"] remotes))))
 
 (defn rez
   ([state side card] (rez state side card nil))
