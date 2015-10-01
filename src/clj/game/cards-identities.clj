@@ -185,7 +185,7 @@
                                 (not (get-in @state [:per-turn (:cid card)]))
                                 (empty? (let [successes (map first (turn-events state side :successful-run))]
                                           (filter #(not (= % :remote)) successes)))))
-                 :effect (req (effect (draw :corp)) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
+                 :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
