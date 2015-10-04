@@ -23,6 +23,27 @@
                                                          {:effect (effect (handle-access [ash])) :card ash}))))
                          :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
 
+   "Awakening Center"
+   {:abilities [{:label "Host a piece of bioroid ICE"
+                 :cost [:click 1] :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
+                 :choices (req (filter #(and (= (:type %) "ICE")
+                                             (has? % :subtype "Bioroid")) (:hand corp)))
+                 :msg "host a piece of bioroid ICE"
+                 :effect (effect (trigger-event :corp-install target)
+                                 (host card target {:facedown true}))}
+                {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
+                 :label "Rez a hosted piece of bioroid ICE"
+                 :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
+                 :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
+                 :effect (effect (rez-cost-bonus -7) (rez target)
+                                 (update! (dissoc (get-card state target) :facedown))
+                                 (register-events {:run-ends
+                                                    {:effect (req (doseq [c (:hosted card)]
+                                                                    (when (:rezzed c)
+                                                                      (trash state side c)))
+                                                                  (unregister-events state side card))}} card))}]
+    :events {:run-ends nil}}
+
    "Bernice Mai"
    {:events {:successful-run {:req (req this-server)
                               :trace {:base 5 :msg "give the Runner 1 tag"
