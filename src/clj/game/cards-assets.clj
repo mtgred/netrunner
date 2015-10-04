@@ -600,7 +600,7 @@
   
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
-                 :req (req (<= (count (:hosted card)) 3)) :cost [:click 1]
+                 :req (req (< (count (:hosted card)) 3)) :cost [:click 1]
                  :prompt "Choose an asset to install on Worlds Plaza"
                  :choices (req (filter #(and (= (:type %) "Asset")
                                              (<= (- (:cost %) 2) (:credit corp))) (:hand corp)))
