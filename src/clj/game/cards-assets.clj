@@ -34,7 +34,7 @@
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
-                 
+
    "Brain-Taping Warehouse"
    {:events {:pre-rez
              {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
@@ -291,8 +291,8 @@
                  :req (req (> (get-in @state [:runner :tag]) 0))
                  :effect (req (if (not= target "No Operation found")
                                 (let [c (move state :corp target :play-area)]
-                                  (shuffle! state :corp :deck) 
-                                  (move state :corp c :deck {:front true}) 
+                                  (shuffle! state :corp :deck)
+                                  (move state :corp c :deck {:front true})
                                   (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
                                 (do (shuffle! state :corp :deck)
                                     (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
@@ -353,7 +353,7 @@
    "Plan B"
    {:advanceable :always
     :access {:optional
-             {:prompt "Score an Agenda from HQ?" 
+             {:prompt "Score an Agenda from HQ?"
               :req (req installed)
               :yes-ability {:prompt "Choose an Agenda to score"
                            :choices (req (filter #(and (has? % :type "Agenda")
