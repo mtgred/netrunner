@@ -596,4 +596,16 @@
 
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}})
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+  
+   "Worlds Plaza"
+   {:abilities [{:label "Install an asset on Worlds Plaza"
+                 :req (req (<= (count (:hosted card)) 3)) :cost [:click 1]
+                 :prompt "Choose an asset to install on Worlds Plaza"
+                 :choices (req (filter #(and (= (:type %) "Asset")
+                                             (<= (- (:cost %) 2) (:credit corp))) (:hand corp)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (trigger-event :corp-install target)
+                                 (host card target)
+                                 (rez-cost-bonus -2) (rez (last (:hosted (get-card state card))))
+                                 (update! (dissoc (get-card state (last (:hosted card))) :facedown)))}]}})
