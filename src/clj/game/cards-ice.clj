@@ -526,7 +526,8 @@
    "Quicksand"
    {:abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
                  :label "Add 1 power counter"
-                 :effect (effect (add-prop card :counter 1))}
+                 :effect (effect (add-prop card :counter 1)
+                                 (update-all-ice))}
                  end-the-run]
     :strength-bonus (req (or (:counter card) 0))}
 
