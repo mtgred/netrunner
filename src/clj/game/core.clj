@@ -194,7 +194,7 @@
     nil))
 
 (defn zone->name [zone]
-  (or (central->name zone) 
+  (or (central->name zone)
       (remote->name zone)))
 
 (defn is-remote? [zone]
@@ -563,7 +563,7 @@
 (defn update-all-ice [state side]
   (doseq [server (get-in @state [:corp :servers])]
     (update-ice-in-server state side (second server))))
-  
+
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
@@ -908,7 +908,7 @@
       "Archives" [:servers :archives]
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (split server #" ") last (str "remote") keyword)])))
-      
+
 (defn gain-run-credits [state side n]
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
@@ -1023,7 +1023,7 @@
       (min max-access accesses) accesses)))
 
 (defn get-server-type [zone]
-  (or (#{:hq :rn :archives} zone) :remote))
+  (or (#{:hq :rd :archives} zone) :remote))
 
 (defmulti access (fn [state side server] (get-server-type (first server))))
 (defmulti choose-access (fn [cards server] (get-server-type (first server))))
