@@ -19,7 +19,7 @@
         (for [d (:news cursor)]
           [:li.news-item 
             [:div.date
-              (:date d)]
+              (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
             [:div.title
               (:title d)]])]
        ]])))
