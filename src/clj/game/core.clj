@@ -1192,7 +1192,8 @@
   (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
 
 (defmethod access :remote [state side server]
-  (get-in @state [:corp :servers (first server) :content]))
+  (let [contents (get-in @state [:corp :servers (first server) :content])]
+    (concat contents (mapcat :hosted contents))))
 
 (defn access-bonus [state side n]
   (swap! state update-in [:run :access-bonus] #(+ % n)))

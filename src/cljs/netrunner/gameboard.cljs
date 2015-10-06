@@ -125,7 +125,7 @@
                                             (send-command "play" {:card card :server "New remote"})
                                             (-> (om/get-node owner "servers") js/$ .toggle))
                        (send-command "play" {:card card}))
-              ("servers" "scored" "current") (handle-abilities card owner)
+              ("servers" "scored" "current" "onhost") (handle-abilities card owner)
               nil)))))))
 
 (defn in-play? [card]

@@ -34,7 +34,7 @@
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
-                 
+
    "Brain-Taping Warehouse"
    {:events {:pre-rez
              {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
@@ -291,8 +291,8 @@
                  :req (req (> (get-in @state [:runner :tag]) 0))
                  :effect (req (if (not= target "No Operation found")
                                 (let [c (move state :corp target :play-area)]
-                                  (shuffle! state :corp :deck) 
-                                  (move state :corp c :deck {:front true}) 
+                                  (shuffle! state :corp :deck)
+                                  (move state :corp c :deck {:front true})
                                   (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
                                 (do (shuffle! state :corp :deck)
                                     (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
@@ -353,7 +353,7 @@
    "Plan B"
    {:advanceable :always
     :access {:optional
-             {:prompt "Score an Agenda from HQ?" 
+             {:prompt "Score an Agenda from HQ?"
               :req (req installed)
               :yes-ability {:prompt "Choose an Agenda to score"
                            :choices (req (filter #(and (has? % :type "Agenda")
@@ -596,4 +596,16 @@
 
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}})
+    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+  
+   "Worlds Plaza"
+   {:abilities [{:label "Install an asset on Worlds Plaza"
+                 :req (req (< (count (:hosted card)) 3)) :cost [:click 1]
+                 :prompt "Choose an asset to install on Worlds Plaza"
+                 :choices (req (filter #(and (= (:type %) "Asset")
+                                             (<= (- (:cost %) 2) (:credit corp))) (:hand corp)))
+                 :msg (msg "host " (:title target))
+                 :effect (effect (trigger-event :corp-install target)
+                                 (host card target)
+                                 (rez-cost-bonus -2) (rez (last (:hosted (get-card state card))))
+                                 (update! (dissoc (get-card state (last (:hosted card))) :facedown)))}]}})

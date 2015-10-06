@@ -419,10 +419,12 @@
    {:abilities
     [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
       :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a card to trash"
-      :choices (req (filter #(and (:rezzed %)
-                                  (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
-                                      (has? % :subtype "Executive") (has? % :subtype "Sysop")))
-                            (mapcat :content (flatten (seq (:servers corp))))))
+      :choices (req (let [contents (mapcat :content (flatten (seq (:servers corp))))
+                          hosted (mapcat :hosted contents)]
+                      (filter #(and (:rezzed %)
+                                    (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
+                                        (has? % :subtype "Executive") (has? % :subtype "Sysop")))
+                               (concat hosted contents))))
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Vigil"
