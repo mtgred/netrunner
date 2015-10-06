@@ -129,8 +129,8 @@
                           (reduce (fn [c server]
                                     (+ c (count (filter (fn [ice] (and (has? ice :subtype "Code Gate")
                                                                        (:rezzed ice))) (:ices server)))))
-                                  0 (flatten (seq (:servers corp))))))
-
+                                  0 (flatten (seq (:servers corp)))))
+                    (update-all-ice))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Code Gate"))
                                 :effect (effect (ice-strength-bonus 1))}}}
 
