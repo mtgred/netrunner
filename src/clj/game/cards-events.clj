@@ -593,11 +593,7 @@
    {:prompt "Choose a piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (= (:type %) "ICE"))}
     :effect (req (let [ice target
-                       serv (cond
-                             (= (second (:zone ice)) :hq) "HQ"
-                             (= (second (:zone ice)) :rd) "R&D"
-                             (= (second (:zone ice)) :archives) "Archives"
-                             :else (join " " ["Server" (last (butlast (:zone ice)))]))
+                       serv (zone->name (second (:zone ice)))
                        stypes (:subtype ice)]
               (resolve-ability
                  state :runner
