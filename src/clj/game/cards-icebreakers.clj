@@ -194,7 +194,13 @@
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
+                    {:prompt "Choose a piece of ICE to target for bypassing" :choices {:req #(= (:type %) "ICE")}
+                     :effect (req (let [ice target
+                                        serv (zone->name (second (:zone ice)))]
+                                    (system-msg state side
+                                      (str "chooses " (if (:rezzed ice) (:title ice) "the ICE") " at position "
+                                        (ice-index state ice) " of " serv " for Femme Fatale's bypass ability"))))
+                     :abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
                                  {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
    "Force of Nature"
