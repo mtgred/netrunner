@@ -69,7 +69,7 @@ requester.connect("tcp://#{clojure_hostname}:1043")
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   unless response is "ok"
-    lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response})
+    lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response.diff})
 
 # Socket.io
 io.set("heartbeat timeout", 30000)
