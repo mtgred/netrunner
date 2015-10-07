@@ -201,8 +201,9 @@
                  :effect (effect (trash card) (lose :bad-publicity (:advance-counter card)))}]}
 
    "Franchise City"
-   {:events {:pre-steal-cost {:msg "add it to their score area and gain 1 agenda point"
-                              :effect (effect (as-agenda :corp card 1))}}}
+   {:events {:access {:req (req (= (:type target) "Agenda"))
+                      :msg "add it to their score area and gain 1 agenda point"
+                      :effect (effect (as-agenda :corp card 1))}}}
 
    "Ghost Branch"
    {:advanceable :always
