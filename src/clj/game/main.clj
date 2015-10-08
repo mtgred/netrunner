@@ -4,11 +4,13 @@
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
             [game.core :refer [game-states system-msg pay gain draw end-run] :as core]
-            [environ.core :refer [env]])
+            [environ.core :refer [env]]
+            [differ.core :as differ])
   (:gen-class :main true))
 
 (add-encoder java.lang.Object encode-str)
 
+(def last-states (atom {}))
 (def ctx (ZMQ/context 1))
 
 (def commands
@@ -62,7 +64,12 @@
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
         (if-let [state (@game-states gameid)]
-          (.send socket (generate-string (assoc (dissoc @state :events :turn-events) :action action)))
+          (let [strip #(dissoc % :events :turn-events :per-turn :prevent :damage)]
+            (case action
+              ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @state) :gameid gameid}))
+              (let [diff (differ/diff (strip (@last-states gameid)) (strip @state))]
+                (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
+            (swap! last-states assoc gameid (strip @state)))
           (.send socket (generate-string "ok")))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"

@@ -6,15 +6,18 @@
             [clojure.string :refer [capitalize]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]))
+            [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
+            [differ.core :as differ]))
 
 (defonce game-state (atom {}))
+(defonce last-state (atom {}))
 (defonce lock (atom false))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
-  (swap! game-state assoc :side side))
+  (swap! game-state assoc :side side)
+  (swap! last-state #(identity @game-state)))
 
 (defn notify [text]
   (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text})))
@@ -52,7 +55,9 @@
       (let [msg (<! socket-channel)]
         (reset! lock false)
         (case (:type msg)
-          ("do" "notification" "quit") (swap! game-state merge (:state msg))
+          ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
+                                                                             #(assoc (:state msg) :side (:side @game-state))))
+                                           (swap! last-state #(identity @game-state)))
           nil))))
 
 (defn send [msg]
@@ -582,7 +587,6 @@
   (om/component
    (sab/html
     [:div.dashboard
-     (js/console.log (str "ZONE:" (count remotes)))
      (om/build hand-view {:player player :remotes remotes})
      (om/build discard-view player)
      (om/build deck-view player)

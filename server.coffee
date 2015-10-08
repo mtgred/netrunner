@@ -73,7 +73,10 @@ requester.connect("tcp://#{clojure_hostname}:1043")
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   unless response is "ok"
-    lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response})
+    if response.diff
+      lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
+    else
+      lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response.state})
 
 # Socket.io
 io.set("heartbeat timeout", 30000)
@@ -214,6 +217,7 @@ app.configure ->
   app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
   app.use express.static(__dirname + '/resources/public')
   app.use app.router
+  app.locals.version = process.env['APP_VERSION'] || "0.1.0"
 
 # Auth
 passport.use new localStrategy (username, password, done) ->
@@ -443,7 +447,7 @@ app.configure 'development', ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(req.user, config.salt)
-    res.render('index.jade', { user: req.user, env: 'dev', token: token})
+    res.render('index.jade', { user: req.user, env: 'dev', token: token, version: app.locals.version})
 
 app.configure 'production', ->
   console.log "Prod environment"
@@ -451,7 +455,7 @@ app.configure 'production', ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(req.user, config.salt, {expiresInMinutes: 360})
-    res.render('index.jade', { user: req.user, env: 'prod', token: token})
+    res.render('index.jade', { user: req.user, env: 'prod', token: token, version: version})
 
 # Server
 terminate = () ->
