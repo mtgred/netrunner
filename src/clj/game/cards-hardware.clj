@@ -91,11 +91,7 @@
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
                  :effect (req (let [ice target
-                                    serv (cond
-                                          (= (second (:zone ice)) :hq) "HQ"
-                                          (= (second (:zone ice)) :rd) "R&D"
-                                          (= (second (:zone ice)) :archives) "Archives"
-                                          :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+                                    serv (zone->name (second (:zone ice)))]
                                 (update! state side (assoc card :cortez-target ice))
                                 (trash state side (get-card state card) {:cause :ability-cost})
                                 (system-msg state side

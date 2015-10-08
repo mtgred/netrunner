@@ -200,7 +200,7 @@
                      state :corp
                      {:prompt (msg "Rez " (:title ice) " or trash it?") :choices ["Rez" "Trash"]
                       :effect (effect (resolve-ability
-                                        (if (and (= target "Rez") (<= (:cost ice) (:credit corp)))
+                                        (if (and (= target "Rez") (<= (rez-cost state :corp ice) (:credit corp)))
                                           {:msg (msg "force the rez of " (:title ice))
                                            :effect (effect (rez :corp ice))}
                                           {:msg "trash the ICE" :effect (effect (trash :corp ice))})
@@ -593,11 +593,7 @@
    {:prompt "Choose a piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (= (:type %) "ICE"))}
     :effect (req (let [ice target
-                       serv (cond
-                             (= (second (:zone ice)) :hq) "HQ"
-                             (= (second (:zone ice)) :rd) "R&D"
-                             (= (second (:zone ice)) :archives) "Archives"
-                             :else (join " " ["Server" (last (butlast (:zone ice)))]))
+                       serv (zone->name (second (:zone ice)))
                        stypes (:subtype ice)]
               (resolve-ability
                  state :runner
