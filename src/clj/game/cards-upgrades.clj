@@ -141,13 +141,33 @@
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
                               (lose state :runner :tag 1))}]}
-                            
+
    "Marcus Batty"
    {:abilities [{:label "[Trash]: Start a Psi game" :msg "start a Psi game"
                  :psi {:not-equal {:req (req this-server)
                                    :choices {:req #(and (has? % :type "ICE") (:rezzed %))}
                                    :msg (msg "resolve a subroutine on " (:title target))
                                    :effect (effect (trash card {:cause :ability-cost}))}}}]}
+
+   "Midori"
+   {:abilities
+    [{:req (req this-server)
+      :label "Swap the ICE being approached with a piece of ICE from HQ"
+      :prompt "Choose a piece of ICE" :choices (req (filter #(has? % :type "ICE") (:hand corp))) :once :per-run
+      :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
+      :effect (req (let [hqice target
+                         c current-ice]
+                     (resolve-ability state side
+                       {:effect (req (let [newice (assoc hqice :zone (:zone c))
+                                           cndx (ice-index state c)
+                                           ices (get-in @state (cons :corp (:zone c)))
+                                           newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
+                                       (swap! state assoc-in (cons :corp (:zone c)) newices)
+                                       (swap! state update-in [:corp :hand]
+                                              (fn [coll] (remove-once #(not= (:cid %) (:cid hqice)) coll)))
+                                       (trigger-event state side :corp-install newice)
+                                       (move state side c :hand)
+                                       (update-run-ice state side)))} card nil)))}]}
 
    "NeoTokyo Grid"
    {:events {:advance {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
@@ -181,7 +201,7 @@
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
                               :effect (effect (init-trace-bonus 2))}}}
-    
+
    "Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
