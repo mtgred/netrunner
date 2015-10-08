@@ -200,7 +200,7 @@
                      state :corp
                      {:prompt (msg "Rez " (:title ice) " or trash it?") :choices ["Rez" "Trash"]
                       :effect (effect (resolve-ability
-                                        (if (and (= target "Rez") (<= (:cost ice) (:credit corp)))
+                                        (if (and (= target "Rez") (<= (rez-cost state :corp ice) (:credit corp)))
                                           {:msg (msg "force the rez of " (:title ice))
                                            :effect (effect (rez :corp ice))}
                                           {:msg "trash the ICE" :effect (effect (trash :corp ice))})
