@@ -66,7 +66,7 @@
         (if-let [state (@game-states gameid)]
           (let [strip #(dissoc % :events :turn-events :per-turn :prevent :damage)]
             (case action
-              ("start" "reconnect") (.send socket (generate-string {:action action :diff (strip @state) :gameid gameid}))
+              ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @state) :gameid gameid}))
               (let [diff (differ/diff (strip (@last-states gameid)) (strip @state))]
                 (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
             (swap! last-states assoc gameid (strip @state)))

@@ -55,7 +55,8 @@
       (let [msg (<! socket-channel)]
         (reset! lock false)
         (case (:type msg)
-          ("do" "notification" "quit") (do (swap! game-state #(differ/patch @last-state (:state msg)))
+          ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
+                                                                             #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))
           nil))))
 
