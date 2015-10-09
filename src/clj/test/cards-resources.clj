@@ -26,6 +26,35 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
 
+(deftest security-testing
+  "Security Testing - Ability"
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)]) (default-runner [(qty "Security Testing" 1)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp 2)
+    (play-from-hand state :runner "Security Testing")
+    (let [st (get-in @state [:runner :rig :resource 0])]
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (prompt-choice :runner "Server 1")
+      (core/run state :runner :remote1)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 10 (:credit (get-runner))) "Gained 2 credits from Security Testing")
+      (core/run state :runner :remote1)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "No")
+      (is (= 10 (:credit (get-runner))) "Did not gain credits on second run")
+      (take-credits state :runner 2)
+
+      (take-credits state :corp)
+      (prompt-choice :runner "Server 1")
+      (core/run state :runner :archives)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
+
 (deftest street-peddler-ability
   "Street Peddler - Ability"
   (do-game
@@ -81,6 +110,53 @@
       (prompt-card :runner (first (:hosted sp))) ; choose to install Gordian
       (is (= "Corroder" (:title (get-in @state [:runner :rig :program 0]))) "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
+
+(deftest the-supplier-ability
+  "The Supplier - Ability"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "The Supplier" 1) (qty "Plascrete Carapace" 1) (qty "Utopia Shard" 1)
+                                              (qty "Hedge Fund" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Supplier")
+    (let [ts (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner ts 0)
+      (is (= 2 (count (get-in @state [:runner :prompt 0 :choices]))) "Only resources and hardware in The Supplier prompt")
+      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (card-ability state :runner ts 0)
+      (is (= 1 (count (get-in @state [:runner :prompt 0 :choices]))))
+      (prompt-card :runner (find-card "Utopia Shard" (:hand (get-runner))))
+      (is (= 2 (count (:hosted (refresh ts)))) "The Supplier is hosting 2 cards")
+      (core/end-turn state :runner nil)
+      (take-credits state :corp)
+      ; Utopia Shard cannot be afforded and should not be in the prompt
+      (is (= 2 (count (get-in @state [:runner :prompt 0 :choices]))) "1 card and 'No install' choices for The Supplier")
+      (prompt-card :runner (find-card "Plascrete Carapace" (:hosted (refresh ts))))
+      (is (= 1 (:credit (get-runner))) "Runner charged 1 credit to install Plascrete off The Supplier")
+      (take-credits state :runner)
+      (is (= 5 (:credit (get-runner))))
+      (take-credits state :corp)
+      (prompt-choice :runner "No install")
+      (is (= 0 (count (get-in @state [:runner :prompt]))) "Resolved The Supplier prompt")
+      (is (= 1 (count (:hosted (refresh ts)))) "One card still on The Supplier"))))
+
+(deftest the-supplier-kate-discount
+  "The Supplier - Interaction with Kate discount. Issue #578."
+  (do-game
+    (new-game (default-corp) (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker"
+                                        [(qty "The Supplier" 1) (qty "Plascrete Carapace" 1) (qty "Kati Jones" 1)
+                                         (qty "Hedge Fund" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Supplier")
+    (let [ts (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner ts 0)
+      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (core/end-turn state :runner nil)
+      (take-credits state :corp)
+      (is (= 2 (count (get-in @state [:runner :prompt 0 :choices]))) "Able to install Plascrete from The Supplier")
+      (prompt-card :runner (find-card "Plascrete Carapace" (:hosted (refresh ts))))
+      (is (= 0 (:credit (get-runner))) "Kate discount applied")
+      (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"
