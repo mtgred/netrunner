@@ -1,5 +1,23 @@
 (in-ns 'test.core)
 
+(deftest franchise-city
+  (do-game
+    (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Franchise City" "New remote")
+    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+    (core/rez state :corp (first (get-in @state [:corp :servers :remote1 :content])))
+    (take-credits state :corp 1)
+    (core/run state :runner :remote2)
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "Steal")
+    (is (= 0 (count (get-in @state [:corp :servers :server2 :content]))) "Agenda was stolen")
+    (is (= 2 (:agenda-point (get-runner))) "Runner stole 2 points")
+    (is (= 0 (count (get-in @state [:corp :servers :server1 :content]))) "Franchise City no longer installed")
+    (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
+    (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
+
 (deftest jackson-howard-draw
   "Jackson Howard - Draw 2 cards"
   (do-game

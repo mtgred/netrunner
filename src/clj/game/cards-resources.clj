@@ -593,12 +593,13 @@
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
-              :choices (req (let [hosted (filter #(<= (- (or (:cost %) 0) 2) (:credit runner)) (:hosted card))]
+              :choices (req (let [hosted (filter #(can-pay? state side (modified-install-cost state side % [:credit -2]))
+                                                 (:hosted card))]
                               (if (empty? hosted)
                                 hosted (conj hosted "No install"))))
               :req (req (not (string? target)))
               :msg (msg "install " (:title target) " lowering its install cost by 2")
-              :effect (effect (gain :credit (min 2 (:cost target))) (runner-install target))}}}
+              :effect (effect (install-cost-bonus [:credit -2]) (runner-install target))}}}
 
    "The Source"
    {:effect (effect (update-all-advancement-costs))
