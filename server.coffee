@@ -423,7 +423,7 @@ app.get '/data/donators', (req, res) ->
 app.get '/data/news', (req, res) ->
   db.collection('news').find().sort({_id: -1}).toArray (err, data) ->
     for d in data
-      d.date = moment(d._id.getTimestamp().toISOString()).format("MM/DD/YYYY HH:mm a");
+      d.date = moment(d._id.getTimestamp().toISOString()).format("MM/DD/YYYY HH:mm");
       delete d._id
     res.json(200, data)
 
