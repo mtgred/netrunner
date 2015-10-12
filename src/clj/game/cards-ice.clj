@@ -22,15 +22,17 @@
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D"
-                 :prompt "Choose a card to install"
+                 :prompt (msg "You saw but could not install "
+                           (join ", " (map :title (filter #(= (:type %) "Operation") (take 5 (:deck corp)))))
+                           ". Choose a card to install")
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (not (string? target))) :not-distinct true
-                 :choices (req (conj (take 5 (:deck corp)) "No install"))
+                 :choices (req (conj (filter #(not= (:type %) "Operation") (take 5 (:deck corp))) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
-                {:msg "install a card from Archives" :choices (req (:discard corp))
+                {:msg "install a card from Archives" :choices (req (filter #(not= (:type %) "Operation") (:discard corp)))
                  :prompt "Choose a card to install" :not-distinct true
                  :effect (effect (corp-install target nil))}
-                {:msg "install a card from HQ" :choices (req (:hand corp))
+                {:msg "install a card from HQ" :choices (req (filter #(not= (:type %) "Operation") (:hand corp)))
                  :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
 
    "Ashigaru"
