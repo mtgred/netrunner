@@ -253,7 +253,21 @@
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"
-   {:effect (effect (run :archives))}
+   {:effect (effect (run :archives) (register-events (:events (card-def card))
+                                                     (assoc card :zone '(:discard))))
+    :events {:successful-run-ends
+             {:prompt "Choose a piece of ICE in Archives"
+              :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
+              :effect (req (let [icename (:title target)]
+                             (resolve-ability
+                               state side
+                               {:prompt (msg "Choose a rezzed copy of " icename " to trash")
+                                :choices {:req #(and (= (:type %) "ICE")
+                                                     (:rezzed %)
+                                                     (= (:title %) icename))}
+                                :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
+                                :effect (req (trash state :corp target))} card nil)
+                             (unregister-events state side card)))}}}
 
    "Indexing"
    {:effect (effect (run :rd {:replace-access
