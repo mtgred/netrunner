@@ -503,8 +503,9 @@
                                                       #(assoc % oldndx target))
                                                   (swap! state update-in [:run]
                                                       #(assoc % :position (inc tgtndx)))
-                                                  (update-ice-strength state side (cons :corp (:zone cice)))
-                                                  (update-run-ice state side)))}
+                                                  (update-all-ice state side)
+                                                  (update-run-ice state side)
+                                                  (trigger-event state side :approach-ice current-ice)))}
                                  card nil)))}]}
 
    "Trope"
