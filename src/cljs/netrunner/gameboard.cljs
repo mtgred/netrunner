@@ -119,7 +119,7 @@
                        (when (:installed card)
                          (handle-abilities card owner))
                        (send-command "play" {:card card}))
-              ("rig" "current" "onhost") (handle-abilities card owner)
+              ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
               nil)
             (case (first zone)
               "hand" (case type
