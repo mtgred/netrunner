@@ -11,17 +11,11 @@
 (defn news [cursor owner]
   (om/component
    (sab/html
-    [:div.news-app
-      [:div.news-box.panel.blue-shade
-       [:h4 "News"]
-
-       [:ul.list
-        (for [d (:news cursor)]
-          [:li.news-item 
-            [:div.date
-              (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-            [:div.title
-              (:title d)]])]
-       ]])))
+    [:div.news-box.panel.blue-shade
+     [:ul.list
+      (for [d (:news cursor)]
+        [:li.news-item
+         [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
+         [:span.title (:title d)]])]])))
 
 (om/root news app-state {:target (. js/document (getElementById "news"))})
