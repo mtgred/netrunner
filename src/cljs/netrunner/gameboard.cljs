@@ -204,6 +204,15 @@
 (defn card-preview-mouse-out [e]
   (if-let [code (get-card-code e)] (put! zoom-channel false)))
 
+(defn command-panel [data]
+  (om/component
+   (sab/html
+    [:div.commandbuttons 
+      [:div.buttoncontainer.panel.blue-shade
+        [:button.command {:on-click #(send-command "say" {:user (:user @app-state) :text "STOP!"}) :type "button"} "STOP"]
+        [:button.command {:on-click #(send-command "say" {:user (:user @app-state) :text "Thinking..."}) :type "button"} "Thinking..."]
+        [:button.command {:on-click #(send-command "say" {:user (:user @app-state) :text "Sorry, I'll be right back."}) :type "button"} "BRB"]]])))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -748,6 +757,7 @@
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
                 (om/build cb/card-view card))]
+             (om/build command-panel cursor)
              (om/build log-pane (:log cursor))]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})

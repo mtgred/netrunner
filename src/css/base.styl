@@ -126,6 +126,9 @@ button.small
     background-color: transparent-orange
     border-color: orange
 
+button.command
+  margin 5px 5px 5px 0
+ 
 [draggable]
   -moz-user-select: none
   -webkit-user-select: none
@@ -1452,10 +1455,21 @@ nav ul
         .text
           height: 195px
 
+    .commandbuttons
+      position: absolute
+      top: 315px
+      width: 225px
+      
+      .buttoncontainer
+        left: 0
+        right: 4px
+        margin: 0
+        position: absolute
+        
     .log
       width: 225px
       position: absolute
-      top: 317px
+      top: 365px
       bottom: 0
 
       .username
