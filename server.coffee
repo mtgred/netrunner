@@ -455,7 +455,7 @@ app.configure 'production', ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(req.user, config.salt, {expiresInMinutes: 360})
-    res.render('index.jade', { user: req.user, env: 'prod', token: token, version: version})
+    res.render('index.jade', { user: req.user, env: 'prod', token: token, version: app.locals.version})
 
 # Server
 terminate = () ->
