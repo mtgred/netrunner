@@ -117,7 +117,7 @@
                                            :effect (effect (gain :runner :credit 5))}} card))}
 
    "Drive By"
-   {:choices {:req #(and (= (second (:zone %)) :remote)
+   {:choices {:req #(and (is-remote? (second (:zone %)))
                          (= (last (:zone %)) :content)
                          (not (:rezzed %)))}
     :msg (msg "expose " (:title target) (when (#{"Asset" "Upgrade"} (:type target)) " and trash it"))
@@ -453,7 +453,7 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(and (= (second (:zone %)) :remote)
+                     {:choices {:req #(and (is-remote? (second (:zone %)))
                                            (= (last (:zone %)) :content)
                                            (not (:rezzed %)))}
                       :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
@@ -534,7 +534,7 @@
    "Singularity"
    {:prompt "Choose a server" :choices (req remotes)
     :effect (effect (run target
-                      {:req (req (= target :remote))
+                      {:req (req (is-remote? target))
                        :replace-access
                        {:msg "trash all cards in the server at no cost"
                         :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
@@ -544,11 +544,7 @@
    {:prompt "Choose an unrezzed piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (not (:rezzed %)) (= (:type %) "ICE"))}
     :effect (req (let [ice target
-                       serv (cond
-                             (= (second (:zone ice)) :hq) "HQ"
-                             (= (second (:zone ice)) :rd) "R&D"
-                             (= (second (:zone ice)) :archives) "Archives"
-                             :else (join " " ["Server" (last (butlast (:zone ice)))]))]
+                       serv (zone->name (second (:zone ice)))]
               (resolve-ability
                  state :runner
                  {:msg (msg "choose the ICE at position " (ice-index state ice) " of " serv)
