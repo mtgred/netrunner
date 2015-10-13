@@ -157,10 +157,10 @@
              {:req (req installed)
               :prompt "Pay 3 [Credits] to use Edge of World ability?"
               :yes-ability {:cost [:credit 3]
-                            :msg (msg "do " (count (get-in corp [:servers :remote (last (:server run)) :ices]))
+                            :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
                                       " brain damage")
                             :effect (req (damage state side :brain
-                                        (count (get-in corp [:servers :remote (last (:server run)) :ices])) {:card card}))}}}}
+                                        (count (get-in corp [:servers (last (:server run)) :ices])) {:card card}))}}}}
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
