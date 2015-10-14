@@ -365,7 +365,10 @@
                                                (swap! state assoc-in [:per-turn (:cid card)] true))}
              :corp-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
                                 :effect (req (gain state :runner :credit 1)
-                                             (swap! state assoc-in [:per-turn (:cid card)] true))}}
+                                             (swap! state assoc-in [:per-turn (:cid card)] true))}
+             :runner-install {:req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
+                              :effect (req (gain state :runner :credit 1)
+                                           (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "Paige Piper"

@@ -662,7 +662,7 @@
 
    "Turing"
    {:abilities [end-the-run]
-    :strength-bonus (req (if (= (second (:zone card)) :remote) 3 0))}
+    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))}
 
    "Turnpike"
    {:abilities [{:msg "force the Runner to lose 1 [Credits]"

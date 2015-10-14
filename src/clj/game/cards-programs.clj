@@ -509,7 +509,7 @@
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
-    :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
+    :abilities [{:cost [:click 1] :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
                  :effect (effect
                           (move card :rfg)
                           (resolve-ability

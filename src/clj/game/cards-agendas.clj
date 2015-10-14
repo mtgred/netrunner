@@ -94,7 +94,7 @@
                                                    (or (= (:zone %) [:hand])
                                                        (= (:zone %) [:discard])))}
                               :effect (req (corp-install state side target
-                                            (str "Server " (dec (count (get-in @state [:corp :servers :remote])))) {:no-install-cost true})
+                                            (last (get-remote-names @state)) {:no-install-cost true})
                                            (when (< n 2)
                                              (resolve-ability state side (dpp (inc n)) card nil)))})]
      {:optional {:prompt "Create a new remote server?"

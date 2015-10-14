@@ -103,7 +103,7 @@
 
    "Cerebral Cast"
    {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
-                      :choices ["1 tag" "1 brain damage"] :msg (msg "The Runner takes " target)
+                      :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :effect (req (if (= target "1 tag")
                                      (tag-runner state side 1)
                                      (damage state side :brain 1 {:card card})))}}}
@@ -132,10 +132,9 @@
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Diversified Portfolio"
-   {:msg (msg "gain " (count (filter #(not (empty? (:content %))) (get-in corp [:servers :remote])))
+   {:msg (msg "gain " (count (filter #(not (empty? (cons % [:content]))) (get-remotes @state)))
               " [Credits]")
-    :effect (effect (gain :credit (count (filter #(not (empty? (:content %)))
-                                                 (get-in corp [:servers :remote])))))}
+    :effect (effect (gain :credit (count (filter #(not (empty? (cons % [:content]))) (get-remotes @state)))))}
 
    "Fast Track"
    {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
