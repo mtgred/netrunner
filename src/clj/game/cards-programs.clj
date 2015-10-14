@@ -22,14 +22,14 @@
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
                                     hosted? (:host b)
-                                    remote? (some #{:remote} (rest (butlast (:zone (:host b)))))]
+                                    remote? (is-remote? (second (:zone (:host b))))]
                                 (resolve-ability state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "
                                             (if hosted? (if remote? "a central" "a remote") "any") " server")
                                   :choices {:req #(if hosted?
-                                                    (and (if (some #{:remote} (rest (butlast (:zone (:host b)))))
-                                                           (some #{:hq :rd :archives} (rest (butlast (:zone %))))
-                                                           (some #{:remote} (rest (butlast (:zone %)))))
+                                                    (and (if remote?
+                                                           (is-central? (second (:zone %)))
+                                                           (is-remote? (second (:zone %))))
                                                          (= (:type %) "ICE")
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
