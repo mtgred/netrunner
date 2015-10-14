@@ -374,9 +374,9 @@
 
    "Project Junebug"
    {:advanceable :always
-    :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?" :cost [:credit 1]
-                        :req (req installed)
-                        :yes-ability {:msg (msg "do " (* 2 (:advance-counter card)) " net damage")
+    :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?"
+                        :req (req (and installed (> (:credit corp) 0)))
+                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
                                       :effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}}
 
    "Psychic Field"
