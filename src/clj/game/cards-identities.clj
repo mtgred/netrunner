@@ -77,7 +77,7 @@
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
-   {:events {:pre-access-card {:req (req (= (second (:zone target)) :remote))
+   {:events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
                                :effect (effect (access-cost-bonus [:credit 1]))}}}
 
    "GRNDL: Power Unleashed"
