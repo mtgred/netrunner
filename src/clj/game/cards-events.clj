@@ -495,7 +495,8 @@
     :effect (req (doseq [c targets] (expose state side c)))}
 
    "Scavenge"
-   {:choices {:req #(= (:type %) "Program")}
+   {:req (req (> (count (filter #(= (:type %) "Program") (all-installed state :runner))) 0))
+    :choices {:req #(= (:type %) "Program")}
     :effect (req (let [trashed target]
                    (trash state side trashed)
                    (resolve-ability
