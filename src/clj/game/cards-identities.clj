@@ -172,19 +172,19 @@
    "Laramy Fisk: Savvy Investor"
    {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk"))
                          :req (req (and run
-                                        (some #{:hq :rd :archives} (:server run))
+                                        (is-central? (:server run))
                                         (not current-ice)
                                         (not (get-in @state [:per-turn (:cid card)]))
-                                        (empty? (let [successes (map first (turn-events state side :successful-run))]
-                                                  (filter #(not (= % :remote)) successes)))))}}
+                                        (empty? (let [successes (turn-events state side :successful-run)]
+                                                  (filter #(is-central? %) successes)))))}}
     :abilities [{:msg "force the Corp to draw 1 card"
                  :req (req (and run
-                                (some #{:hq :rd :archives} (:server run))
+                                (is-central? (:server run))
                                 (:no-action run)
                                 (not current-ice)
                                 (not (get-in @state [:per-turn (:cid card)]))
-                                (empty? (let [successes (map first (turn-events state side :successful-run))]
-                                          (filter #(not (= % :remote)) successes)))))
+                                (empty? (let [successes (turn-events state side :successful-run)]
+                                          (filter #(is-central? %) successes)))))
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
