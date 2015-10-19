@@ -30,7 +30,7 @@
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
-    :effect (effect (run target))}
+    :effect (effect (run target nil card))}
 
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
