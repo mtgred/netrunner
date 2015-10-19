@@ -98,7 +98,7 @@
    {:prompt "Choose a server" :choices ["HQ" "R&D"]
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
                  :effect (effect (trash-no-cost))}]
-    :effect (effect (run target)
+    :effect (effect (run target nil card)
                     (prompt! card (str "Click Demolition Run in the play area to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
@@ -126,7 +126,7 @@
                    (trash state side (assoc target :seen true))))}
 
    "Early Bird"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target nil card))}
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
