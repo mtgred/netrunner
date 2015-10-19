@@ -62,7 +62,12 @@
    {:recurring 1}
 
    "Clot"
-   {:events {:purge {:effect (effect (trash card))}}}
+   {:effect (req (let [agendas (map first (filter #(= (:type (first %) "Agenda")) (turn-events state :corp :corp-install)))]
+                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))
+    :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
+                                  (trash state side card))}
+             :corp-install {:req (req (= (:type target) "Agenda"))
+                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
