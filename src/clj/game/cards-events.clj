@@ -310,7 +310,7 @@
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
    "Inside Job"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
    {:effect (req (lose state :corp :max-hand-size (:bad-publicity corp))
@@ -326,7 +326,7 @@
                      (gain state :corp :max-hand-size (:bad-publicity corp)))}
 
    "Knifed"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
