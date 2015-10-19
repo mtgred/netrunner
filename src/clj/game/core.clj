@@ -865,7 +865,8 @@
 
 (defn score [state side args]
   (let [card (or (:card args) args)]
-    (when (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
+    (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+               (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
       (let [moved-card (move state :corp card :scored)
             c (card-init state :corp moved-card)]
         (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
