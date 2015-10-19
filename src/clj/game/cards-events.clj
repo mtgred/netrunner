@@ -30,7 +30,7 @@
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
-    :effect (effect (run target))}
+    :effect (effect (run target nil card))}
 
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
@@ -98,7 +98,7 @@
    {:prompt "Choose a server" :choices ["HQ" "R&D"]
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
                  :effect (effect (trash-no-cost))}]
-    :effect (effect (run target)
+    :effect (effect (run target nil card)
                     (prompt! card (str "Click Demolition Run in the play area to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
@@ -126,7 +126,7 @@
                    (trash state side (assoc target :seen true))))}
 
    "Early Bird"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target nil card))}
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
@@ -310,7 +310,7 @@
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
    "Inside Job"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
    {:effect (req (lose state :corp :max-hand-size (:bad-publicity corp))
@@ -326,7 +326,7 @@
                      (gain state :corp :max-hand-size (:bad-publicity corp)))}
 
    "Knifed"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
