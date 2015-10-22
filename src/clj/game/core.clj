@@ -1427,9 +1427,11 @@
                (let [c (if host-card
                          (host state side host-card card)
                          (move state side card [:rig (if facedown :facedown (to-keyword type))]))
-                     installed-card (card-init state side (assoc c :installed true) (not facedown))]
+                     installed-card (if facedown
+                                      (update! state side (assoc c :installed true))
+                                      (card-init state side (assoc c :installed true) true))]
                  (if facedown
-                   (system-msg state side "installs a card facedown" )
+                   (system-msg state side "installs a card facedown")
                  (if custom-message
                    (system-msg state side custom-message)
                    (system-msg state side (str (build-spend-msg cost-str "install") title
