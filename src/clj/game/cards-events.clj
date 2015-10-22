@@ -199,7 +199,7 @@
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "Feint"
-   {:effect (effect (run :hq) (max-access 0))}
+   {:effect (effect (run :hq nil card) (max-access 0))}
 
    "Fisk Investment Seminar"
    {:effect (effect (draw 3) (draw :corp 3))}
@@ -219,7 +219,7 @@
                      card nil)))}
 
    "Forked"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Frame Job"
    {:prompt "Choose an agenda to forfeit"
@@ -264,8 +264,8 @@
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"
-   {:effect (effect (run :archives) (register-events (:events (card-def card))
-                                                     (assoc card :zone '(:discard))))
+   {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
+                                                              (assoc card :zone '(:discard))))
     :events {:successful-run-ends
              {:prompt "Choose a piece of ICE in Archives"
               :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
@@ -347,8 +347,8 @@
    {:effect (effect (draw 3) (lose :tag 2))}
 
    "Legwork"
-   {:effect (effect (run :hq) (register-events (:events (card-def card))
-                                               (assoc card :zone '(:discard))))
+   {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
+                                                        (assoc card :zone '(:discard))))
     :events {:successful-run {:effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
@@ -429,6 +429,9 @@
                     (assoc card :zone '(:discard))))
     :events {:pre-steal-cost nil :runner-turn-ends nil}}
 
+   "Prey"
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+
    "Push Your Luck"
    {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
     :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
@@ -441,9 +444,6 @@
                                              (and (= guess "Odd") (even? target)))
                                      (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
                                      (gain state :runner :credit (* 2 target))))} card nil)))}
-
-   "Prey"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
 
    "Quality Time"
    {:effect (effect (draw 5))}
@@ -468,7 +468,7 @@
     :effect (effect (handle-access targets))}
 
    "Recon"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Retrieval Run"
    {:effect (effect (run :archives
@@ -480,7 +480,7 @@
 
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
-    :effect (effect (run target)
+    :effect (effect (run target nil card)
                     (register-events {:pre-rez
                                       {:req (req (= (:type target) "ICE"))
                                        :effect (effect (rez-cost-bonus (:cost target)))}
@@ -566,7 +566,7 @@
     :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
 
    "Spooned"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target))}
+   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req servers)
@@ -602,8 +602,8 @@
              card targets))}
 
    "The Makers Eye"
-   {:effect (effect (run :rd) (register-events (:events (card-def card))
-                                               (assoc card :zone '(:discard))))
+   {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
+                                                        (assoc card :zone '(:discard))))
     :events {:successful-run {:effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
