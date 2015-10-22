@@ -1545,7 +1545,10 @@
   (move state :corp card :rfg))
 
 (defn expose [state side target]
-  (system-msg state side (str "exposes " (:title target)))
+  (system-msg state side
+              (str "exposes " (:title target)
+                   (if (= (last (:zone target)) :ices) " protecting " " in ")
+                   (zone->name (second (:zone target)))))
   (when-let [ability (:expose (card-def target))]
     (resolve-ability state side ability target nil))
   (trigger-event state side :expose target))
