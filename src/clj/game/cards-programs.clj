@@ -21,7 +21,7 @@
    "Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
-                                    hosted? (:host b)
+                                    hosted? (= (:type (:host b)) "ICE")
                                     remote? (is-remote? (second (:zone (:host b))))]
                                 (resolve-ability state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "

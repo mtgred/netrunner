@@ -77,9 +77,10 @@
                                   :effect (effect (pump card 1 :all-run)) :pump 1}]})
 
    "BlacKat"
-   (auto-icebreaker ["Barrier"]
-                    {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
-                                 {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
+   {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"}
+                {:cost [:credit 1] :msg "break up to 3 barrier subroutines (using a stealth [Credits])"}
+                {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}
+                {:cost [:credit 2] :msg "add 2 strength (using at least 1 stealth [Credits])" :effect (effect (pump card 2)) :pump 2}]}
 
    "Breach"
    (auto-icebreaker ["Barrier"]
