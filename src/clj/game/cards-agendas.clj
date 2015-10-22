@@ -2,7 +2,7 @@
 
 (def cards-agendas
   {"Accelerated Beta Test"
-   (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE to install"
+   (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE from the top of the play area to install"
                                   :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
                                   :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
                                                (trigger-event state side :rez target)
@@ -340,30 +340,26 @@
    {:steal-req (req (not tagged))
     :access {:req (req tagged)
              :effect (effect (as-agenda card 1))
-             :msg "score because the runner is tagged"}}
-
-   "Research Grant"
-   {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
-    :prompt "You may choose another installed copy of Research Grant to score."
-    :choices {:req #(= (:title %) "Research Grant")}
-    :effect (effect (score (assoc target :advance-counter (:advancementcost target))))
-    :msg (msg "score another copy of Research Grant")
-   }
+             :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
-   {:effect (req (doseq [c (filter #(= (:type %) "Asset") (all-installed state :corp))]
+   {:effect (req (doseq [c (filter #(= (:type %) "Asset") (concat (all-installed state :corp)
+                                                                  (:deck corp)
+                                                                  (:hand corp)
+                                                                  (:discard corp)))]
                    (update! state side (assoc c :subtype
-                                                (->> (vec (.split (:subtype c) " - "))
+                                                (->> (vec (.split (or (:subtype c) "") " - "))
                                                      (cons "Advertisement")
                                                      distinct
                                                      (join " - "))))))
-    :msg "make all assets gain Advertisement"
-    :events {:corp-install
-             {:req (req (and (= (:type target) "Asset") (not (has? target :subtype "Advertisement"))))
-              :effect (effect (update! (assoc target :subtype
-                                                     (->> (vec (.split (:subtype target) " - "))
-                                                          (cons "Advertisement")
-                                                          (join " - ")))))}}}
+    :msg "make all assets gain Advertisement"}
+
+   "Research Grant"
+   {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
+    :prompt "Choose another installed copy of Research Grant to score"
+    :choices {:req #(= (:title %) "Research Grant")}
+    :effect (effect (score (assoc target :advance-counter (:advancementcost target))))
+    :msg (msg "score another copy of Research Grant")}
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
