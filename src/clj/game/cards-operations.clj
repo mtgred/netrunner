@@ -2,10 +2,10 @@
 
 (def cards-operations
   {"24/7 News Cycle"
-   {:req (req (> (count (:scored corp)) 1))
-    :additional-cost [:forfeit]
-    :prompt "Choose an agenda to trigger"
-    :msg (msg "trigger the score ability on " (:title target))
+   {:req (req (> (count (:scored corp)) 1)) :additional-cost [:forfeit]
+    :prompt "Choose an agenda to trigger its \"when scored\" ability"
+    :choices (req (filter #(= (:type %) "Agenda") (:scored corp)))
+    :msg (msg "trigger the \"when scored\" ability of " (:title target))
     :effect (effect (card-init target))}
 
    "Aggressive Negotiation"
