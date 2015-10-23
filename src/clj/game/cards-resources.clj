@@ -179,8 +179,9 @@
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
     :events {:runner-turn-begins
-             {:optional {:prompt "Use Globalsec Security Clearance to lose [Click]?" :msg "lose [Click]"
-                         :yes-ability {:effect (effect (lose :click 1)
+             {:optional {:prompt "Use Globalsec Security Clearance to lose [Click]?"
+                         :yes-ability {:msg "lose [Click] and look at the top card of R&D"
+                                       :effect (effect (lose :click 1)
                                                        (prompt! card (str "The top card of R&D is "
                                                                           (:title (first (:deck corp)))) ["OK"] {}))}}}}}
 
@@ -365,7 +366,10 @@
                                                (swap! state assoc-in [:per-turn (:cid card)] true))}
              :corp-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
                                 :effect (req (gain state :runner :credit 1)
-                                             (swap! state assoc-in [:per-turn (:cid card)] true))}}
+                                             (swap! state assoc-in [:per-turn (:cid card)] true))}
+             :runner-install {:req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
+                              :effect (req (gain state :runner :credit 1)
+                                           (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "Paige Piper"

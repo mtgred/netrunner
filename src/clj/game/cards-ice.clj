@@ -7,7 +7,8 @@
 (def cards-ice
   {"Archangel"
    {:access {:optional
-             {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
+             {:req (req (not= (first (:zone card)) :discard))
+              :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
               :yes-ability {:cost [:credit 3]
                             :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
     :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
@@ -24,13 +25,14 @@
    {:abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install"
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
-                 :req (req (not (string? target))) :not-distinct true
+                 :req (req (and (not (string? target))
+                                (not= (:type target) "Operation"))) :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
-                {:msg "install a card from Archives" :choices (req (:discard corp))
+                {:msg "install a card from Archives" :choices (req (filter #(not= (:type %) "Operation") (:discard corp)))
                  :prompt "Choose a card to install" :not-distinct true
                  :effect (effect (corp-install target nil))}
-                {:msg "install a card from HQ" :choices (req (:hand corp))
+                {:msg "install a card from HQ" :choices (req (filter #(not= (:type %) "Operation") (:hand corp)))
                  :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
 
    "Ashigaru"
@@ -596,8 +598,11 @@
                                 (handle-access state side [c])))}]}
 
    "Snoop"
-   {:abilities [{:msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}
-                {:counter-cost 1 :label "Look at all cards in Grip and trash 1 card"
+   {:abilities [{:req (req (= current-ice card)) :label "Reveal all cards in the Runner's Grip"
+                 :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
+                {:label "Trace 3 - Place 1 power counter on Snoop"
+                 :trace {:base 3 :msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}}
+                {:counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
                  :msg (msg "look at all cards in Grip and trash " (:title target))
                  :choices (req (:hand runner)) :prompt "Choose a card to trash"
                  :effect (effect (trash target))}]}
@@ -662,7 +667,7 @@
 
    "Turing"
    {:abilities [end-the-run]
-    :strength-bonus (req (if (= (second (:zone card)) :remote) 3 0))}
+    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))}
 
    "Turnpike"
    {:abilities [{:msg "force the Runner to lose 1 [Credits]"

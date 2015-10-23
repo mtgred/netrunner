@@ -21,15 +21,15 @@
    "Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
-                                    hosted? (:host b)
-                                    remote? (some #{:remote} (rest (butlast (:zone (:host b)))))]
+                                    hosted? (= (:type (:host b)) "ICE")
+                                    remote? (is-remote? (second (:zone (:host b))))]
                                 (resolve-ability state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "
                                             (if hosted? (if remote? "a central" "a remote") "any") " server")
                                   :choices {:req #(if hosted?
-                                                    (and (if (some #{:remote} (rest (butlast (:zone (:host b)))))
-                                                           (some #{:hq :rd :archives} (rest (butlast (:zone %))))
-                                                           (some #{:remote} (rest (butlast (:zone %)))))
+                                                    (and (if remote?
+                                                           (is-central? (second (:zone %)))
+                                                           (is-remote? (second (:zone %))))
                                                          (= (:type %) "ICE")
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
@@ -62,7 +62,12 @@
    {:recurring 1}
 
    "Clot"
-   {:events {:purge {:effect (effect (trash card))}}}
+   {:effect (req (let [agendas (map first (filter #(= (:type (first %) "Agenda")) (turn-events state :corp :corp-install)))]
+                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))
+    :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
+                                  (trash state side card))}
+             :corp-install {:req (req (= (:type target) "Agenda"))
+                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
@@ -503,13 +508,14 @@
                                                       #(assoc % oldndx target))
                                                   (swap! state update-in [:run]
                                                       #(assoc % :position (inc tgtndx)))
-                                                  (update-ice-strength state side (cons :corp (:zone cice)))
-                                                  (update-run-ice state side)))}
+                                                  (update-all-ice state side)
+                                                  (update-run-ice state side)
+                                                  (trigger-event state side :approach-ice current-ice)))}
                                  card nil)))}]}
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
-    :abilities [{:label "Remove Trope from the game to reshuffle cards from Heap back into Stack"
+    :abilities [{:cost [:click 1] :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
                  :effect (effect
                           (move card :rfg)
                           (resolve-ability
