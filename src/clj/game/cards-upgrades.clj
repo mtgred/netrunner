@@ -182,6 +182,21 @@
                               :effect (req (trash state :corp card)
                                            (system-msg state :corp (str "trashes Off the Grid")))}}}
 
+   "Old Hollywood Grid"
+   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+             :effect (req (if (not (some #(= (:title %) (:title target)) (:scored runner)))
+                            (prevent-steal state side)
+                            (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
+         un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
+     {:trash-effect
+      {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+                                                                                (:previous-zone card))))
+                                         :run-ends {:effect (req (unregister-events state side card)
+                                                                 (swap! state update-in [:runner :register] dissoc
+                                                                        :cannot-steal))}}
+                                        (assoc card :zone '(:discard))))}
+      :events {:pre-steal-cost ab :run-ends un}})
+
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
@@ -191,8 +206,13 @@
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
-   {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
-                              :effect (effect (steal-cost-bonus [:credit 5]))}}}
+   (let [ab {:req (req (= (:zone card) (:zone target)))
+             :effect (effect (steal-cost-bonus [:credit 5]))}]
+     {:trash-effect {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+                                                                                              (:previous-zone card))))
+                                                       :run-ends {:effect (effect (unregister-events card))}}
+                                                      (assoc card :zone '(:discard))))}
+      :events {:pre-steal-cost ab :run-ends nil}})
 
    "Research Station"
    {:init {:root "HQ"}
@@ -240,8 +260,13 @@
    {:recurring 2}
 
    "Strongbox"
-   {:events {:pre-steal-cost {:req (req (= (:zone card) (:zone target)))
-                              :effect (effect (steal-cost-bonus [:click 1]))}}}
+   (let [ab {:req (req (= (:zone card) (:zone target)))
+             :effect (effect (steal-cost-bonus [:click 1]))}]
+     {:trash-effect {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+                                                                                              (:previous-zone card))))
+                                                       :run-ends {:effect (effect (unregister-events card))}}
+                                                      (assoc card :zone '(:discard))))}
+      :events {:pre-steal-cost ab :run-ends nil}})
 
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
