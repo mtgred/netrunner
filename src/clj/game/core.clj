@@ -203,6 +203,13 @@
 (defn is-central? [zone]
   (not (is-remote? zone)))
 
+(defn central->zone [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :discard [:servers :archives]
+    :hand [:servers :hq]
+    :deck [:servers :rd]
+    nil))
+
 (defn get-remotes [state]
   (filter #(-> % first is-remote?) (get-in state [:corp :servers])))
 

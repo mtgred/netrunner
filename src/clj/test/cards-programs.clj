@@ -85,6 +85,6 @@
         (take-credits state :runner 1)
         (take-credits state :corp)
         (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
-        (core/select state :runner {:card (refresh hive)})
+        (prompt-select :runner hive)
         (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
         (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
