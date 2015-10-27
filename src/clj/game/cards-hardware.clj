@@ -79,14 +79,16 @@
 
    "Comet"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:play-event
-             {:optional {:prompt "Play another event?"
-                         :req (req (and (first-event state side :play-event)
-                                        (not (empty? (filter #(has? % :type "Event") (:hand runner))))))
-                         :yes-ability {:prompt "Choose an Event to play"
-                                       :choices (req (filter #(has? % :type "Event") (:hand runner)))
-                                       :msg (msg "play " (:title target))
-                                       :effect (effect (play-instant target))}}}}}
+    :events {:play-event {:req (req (first-event state side :play-event))
+                          :effect (req (system-msg state :runner
+                                                   (str "can play another event without spending a [Click] by clicking on Comet"))
+                                       (update! state side (assoc card :comet-event true)))}}
+    :abilities [{:req (req (:comet-event card))
+                 :prompt "Choose an Event in your Grip to play"
+                 :choices {:req #(and (= (:type %) "Event") (= (:zone %) [:hand]))}
+                 :msg (msg "play " (:title target))
+                 :effect (effect (play-instant target)
+                                 (update! (dissoc (get-card state card) :comet-event)))}]}
 
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
