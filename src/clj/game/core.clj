@@ -123,7 +123,8 @@
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (and (= (:side card) "Runner") (:installed card))
                  (:rezzed card)
-                 (= (first (:zone card)) :current))
+                 (= (first (:zone card)) :current)
+                 (= (first (:zone card)) :scored))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
@@ -1549,9 +1550,10 @@
     (add-prop state side (get-card state card) :advance-counter 1)))
 
 (defn forfeit [state side card]
-  (system-msg state side (str "forfeits " (:title card)))
-  (gain state side :agenda-point (- (:agendapoints card)))
-  (move state :corp card :rfg))
+  (let [c (desactivate state side card)]
+    (system-msg state side (str "forfeits " (:title c)))
+    (gain state side :agenda-point (- (:agendapoints c)))
+    (move state :corp c :rfg)))
 
 (defn expose [state side target]
   (system-msg state side
