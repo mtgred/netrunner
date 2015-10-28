@@ -254,7 +254,8 @@
                        :effect (effect (corp-install target nil {:install-state :rezzed}))} card targets))}
 
    "Mandatory Upgrades"
-   {:effect (effect (gain :click 1 :click-per-turn 1))}
+   {:effect (effect (gain :click 1 :click-per-turn 1))
+    :leave-play (effect (lose :click-per-turn 1))}
 
    "Market Research"
    {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
@@ -366,7 +367,8 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
-   {:effect (effect (lose :runner :max-hand-size 1))}
+   {:effect (effect (lose :runner :max-hand-size 1))
+    :leave-play (effect (gain :runner :max-hand-size 1))}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
