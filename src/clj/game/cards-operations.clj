@@ -132,9 +132,9 @@
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Diversified Portfolio"
-   {:msg (msg "gain " (count (filter #(not (empty? (cons % [:content]))) (get-remotes @state)))
+   {:msg (msg "gain " (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))
               " [Credits]")
-    :effect (effect (gain :credit (count (filter #(not (empty? (cons % [:content]))) (get-remotes @state)))))}
+    :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
    "Fast Track"
    {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
