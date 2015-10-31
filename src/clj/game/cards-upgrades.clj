@@ -189,7 +189,8 @@
                             (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
          un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
      {:trash-effect
-      {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+      {:req (req (= :servers (first (:previous-zone card))))
+       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
                                                                                 (:previous-zone card))))
                                          :run-ends {:effect (req (unregister-events state side card)
                                                                  (swap! state update-in [:runner :register] dissoc
@@ -208,7 +209,8 @@
    "Red Herrings"
    (let [ab {:req (req (= (:zone card) (:zone target)))
              :effect (effect (steal-cost-bonus [:credit 5]))}]
-     {:trash-effect {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+     {:trash-effect {:req (req (= :servers (first (:previous-zone card))))
+                     :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
                                                                                               (:previous-zone card))))
                                                        :run-ends {:effect (effect (unregister-events card))}}
                                                       (assoc card :zone '(:discard))))}
@@ -262,7 +264,8 @@
    "Strongbox"
    (let [ab {:req (req (= (:zone card) (:zone target)))
              :effect (effect (steal-cost-bonus [:click 1]))}]
-     {:trash-effect {:effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
+     {:trash-effect {:req (req (= :servers (first (:previous-zone card))))
+                     :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
                                                                                               (:previous-zone card))))
                                                        :run-ends {:effect (effect (unregister-events card))}}
                                                       (assoc card :zone '(:discard))))}
