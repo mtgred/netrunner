@@ -155,6 +155,22 @@
       (is (= 0 (:credit (get-runner))) "Runner was charged 5cr")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest red-herrings-trash-from-hand
+  "Red Herrings - Trashed from Hand"
+  (do-game
+    (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+              (default-runner))
+    (core/move-card state :corp {:card (find-card "Red Herrings" (:hand (get-corp))) :server "Archives"})
+    (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+    (take-credits state :corp 2)
+
+    (core/click-run state :runner {:server "HQ"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    ; prompt should be asking to steal HoK
+    (prn (:prompt (get-runner)))
+    (is (= "Steal" (first (:choices (first (:prompt (get-runner)))))) "Runner being asked to Steal")))
+
 (deftest red-herrings-other-server
   "Red Herrings - Don't affect runs on other servers"
   (do-game
