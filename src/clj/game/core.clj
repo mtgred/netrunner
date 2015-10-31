@@ -1404,9 +1404,8 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       (when-let [events (:events (card-def target))]
-         (when installed
-           (register-events state side events c)))
+       (when installed
+         (card-init state side c false))
        c))))
 
 (defn is-tagged? [state]
