@@ -409,7 +409,37 @@
    {:effect (effect (damage :meat 2 {:card card}))}
 
    "Turntable"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+    :events {:agenda-stolen {:effect (req (system-msg state :runner (str "can swap for a scored Corp agenda by clicking on Turntable"))
+                                          (update! state side (assoc card :swap true)))}}
+    :abilities [{:optional
+                  {:req (req (:swap card))
+                   :prompt "Swap for a scored Corp agenda?"
+                   :yes-ability
+                   {:effect (req (let [agendas (get-in corp [:scored])]
+                                   (resolve-ability
+                                     state side
+                                     {:prompt "Choose a scored Corp agenda"
+                                      :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) agendas)}
+                                      :effect (req (let [st (last (get-in runner [:scored]))
+                                                         sw target
+                                                         stpts (:agendapoints st)
+                                                         swpts (:agendapoints sw)]
+                                                     (swap! state update-in [:corp :scored]
+                                                       (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
+                                                     (swap! state update-in [:runner :scored]
+                                                       (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
+                                                                        (dissoc sw :counter :abilities :events))))
+                                                     (gain-agenda-point state :runner (- swpts stpts))
+                                                     (gain-agenda-point state :corp (- stpts swpts))
+                                                     (doseq [c (get-in @state [:corp :scored])]
+                                                       (card-init state :corp c false))
+                                                     (doseq [r (get-in @state [:runner :scored])]
+                                                       (desactivate state :corp r))
+                                                     (system-msg state side
+                                                       (str "uses Turntable to swap " (:title st) " for " (:title sw)))
+                                                     (update! state side (dissoc (get-card state card) :swap))))}
+                                    card nil)))}}}]}
 
    "Unregistered S&W 35"
    {:abilities
