@@ -547,11 +547,10 @@
             [:div.run-arrow {:style {:top (str (+ 20 (* 64 (:position run))) "px")}}])
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))
-          (when (:card (:run-effect run))
+          (when-let [run-card (:card (:run-effect run))]
             [:div.run-card {:on-mouse-over card-preview-mouse-over
                             :on-mouse-out  card-preview-mouse-out}
-                           (let [[title code] (extract-card-info (add-image-codes (get-in run [:run-effect :card :title])))]
-                             [:span.fake-link {:id code} title])])])
+             (om/build card-view run-card)])])
        (when content
          [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
           (for [card content]
