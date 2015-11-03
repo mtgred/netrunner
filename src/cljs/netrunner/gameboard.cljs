@@ -458,7 +458,7 @@
       (for [c discard]
         (if (or (:seen c) (:rezzed c))
           (om/build card-view c)
-          (if (= (:side @game-state) :runner)
+          (if (not= (:side @game-state) :corp)
             [:img.card {:src "/img/corp.png"}]
             [:div.unseen (om/build card-view c)])))]
 
