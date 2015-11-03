@@ -541,8 +541,8 @@
    (let [thelper (fn ts [n] {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
                              :msg (msg "install a card from " target)
                              :effect (effect (resolve-ability
-                                               {:prompt "Choose a card to install"
-                                                :not-distinct true
+                                               {:prompt "Choose a card to install" :not-distinct true
+                                                :msg (msg "install " (if (:seen target) (:title target) "an unseen card"))
                                                 :choices (req (filter #(not= (:type %) "Operation")
                                                                       ((if (= target "HQ") :hand :discard) corp)))
                                                 :effect (req (corp-install state side target nil {:no-install-cost true})
