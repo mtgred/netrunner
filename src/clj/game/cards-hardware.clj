@@ -59,6 +59,26 @@
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner :memory (runner-points @state) :max-hand-size (runner-points @state)))})
 
+   "Capstone"
+   {:abilities [{:req (req (> (count (:hand runner)) 0))
+                 :cost [:click 1]
+                 :effect (req (let [handsize (count (:hand runner))]
+                                (resolve-ability state side
+                                  {:prompt "Choose any number of cards to trash from your Grip"
+                                   :choices {:max handsize :req #(and (= (:side %) "Runner") (= (:zone %) [:hand]))}
+                                   :effect (req (let [trashed (count targets)
+                                                      remaining (- handsize trashed)]
+                                                  (doseq [c targets]
+                                                    (when (not (empty? (filter #(= (:title c) (:title %))
+                                                                               (all-installed state :runner))))
+                                                      (draw state side)))
+                                                  (trash-cards state side targets)
+                                                  (system-msg state side
+                                                    (str "spends [Click] to use Capstone to trash "
+                                                      (join ", " (map :title targets)) " and draw "
+                                                      (- (count (get-in @state [:runner :hand])) remaining) " cards"))))}
+                                 card nil)))}]}
+
    "Chop Bot 3000"
    {:abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
