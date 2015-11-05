@@ -83,7 +83,7 @@
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
-   "Haarpsichord Studios"
+   "Haarpsichord Studios: Entertainment Unleashed"
    {:events {:pre-steal-cost {:req (req (:stole-agenda runner-reg))
                               :effect (effect (prevent-steal))}}}
 
