@@ -170,7 +170,7 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk"))
+   {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk: Savvy Investor"))
                          :req (req (and run
                                         (is-central? (:server run))
                                         (not current-ice)
