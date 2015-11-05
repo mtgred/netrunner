@@ -145,10 +145,8 @@
       (core/no-action state :corp nil)
       (core/successful-run state :runner nil)
       ; runner now chooses which to access.
-      ;(prn (get-in @state [:events :pre-steal-cost]))
       (prompt-select :runner rh)
       (prompt-choice :runner "Yes") ; pay to trash
-      ;(prn (get-in @state [:events :pre-steal-cost]))
       (prompt-select :runner hok)
       ; should now have prompt to pay 5cr for HoK
       (prompt-choice :runner "Yes")
@@ -168,7 +166,6 @@
     (core/no-action state :corp nil)
     (core/successful-run state :runner nil)
     ; prompt should be asking to steal HoK
-    (prn (:prompt (get-runner)))
     (is (= "Steal" (first (:choices (first (:prompt (get-runner)))))) "Runner being asked to Steal")))
 
 (deftest red-herrings-other-server

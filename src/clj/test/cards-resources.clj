@@ -111,6 +111,30 @@
       (is (= "Corroder" (:title (get-in @state [:runner :rig :program 0]))) "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
+
+(deftest street-peddler-parasite-1cr
+  "Street Peddler - Installing Parasite with only 1cr. Issue #491."
+  (do-game
+    (new-game (default-corp [(qty "Pop-up Window" 3)]) (default-runner [(qty "Street Peddler" 1) (qty "Parasite" 3)]))
+    (play-from-hand state :corp "Pop-up Window" "HQ")
+    (take-credits state :corp 2)
+    ; move Parasites back to deck
+    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
+    (core/lose state :runner :credit 4) ; go down to 1 credit
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])
+          pu (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp pu)
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (first (:hosted sp))) ; choose to install Parasite
+      (is (= "Parasite" (:title (:card (first (get-in @state [:runner :prompt]))))) "Parasite target prompt")
+      (prompt-select :runner pu)
+      (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
+      (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
+
 (deftest the-supplier-ability
   "The Supplier - Ability"
   (do-game
