@@ -449,7 +449,7 @@
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
                                                      (swap! state update-in [:runner :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
-                                                                        (dissoc sw :counter :abilities :events))))
+                                                                        (dissoc sw :abilities :events))))
                                                      (gain-agenda-point state :runner (- swpts stpts))
                                                      (gain-agenda-point state :corp (- stpts swpts))
                                                      (doseq [c (get-in @state [:corp :scored])]
