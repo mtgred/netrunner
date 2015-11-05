@@ -255,7 +255,7 @@
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))
-    :leave-play (effect (lose :click-per-turn 1))}
+    :leave-play (req (lose state :corp :click 1 :click-per-turn 1))}
 
    "Market Research"
    {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
