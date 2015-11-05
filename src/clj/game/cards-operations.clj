@@ -3,10 +3,13 @@
 (def cards-operations
   {"24/7 News Cycle"
    {:req (req (> (count (:scored corp)) 1)) :additional-cost [:forfeit]
-    :prompt "Choose an agenda to trigger its \"when scored\" ability"
-    :choices (req (filter #(= (:type %) "Agenda") (:scored corp)))
-    :msg (msg "trigger the \"when scored\" ability of " (:title target))
-    :effect (effect (card-init target))}
+    :effect (req (let [agendas (get-in @state [:corp :scored])]
+                   (resolve-ability state side
+                     {:prompt "Choose an agenda to trigger its \"when scored\" ability"
+                      :choices (req (filter #(= (:type %) "Agenda") agendas))
+                      :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                      :effect (effect (card-init target))}
+                    card nil)))}
 
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
