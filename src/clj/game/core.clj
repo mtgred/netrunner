@@ -274,6 +274,8 @@
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
+   (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
+     (system-msg state side "is decked and the Runner wins the game"))
    (let [active-player (get-in @state [:active-player])]
      (when-not (get-in @state [active-player :register :cannot-draw])
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
