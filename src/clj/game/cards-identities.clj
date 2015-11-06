@@ -188,12 +188,19 @@
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
-   {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :player :runner :effect (effect (move :corp target :hand))}
-             :agenda-stolen {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :effect (req (move state :corp target :hand)
-                                          (swap! state update-in [:runner :prompt] rest)
-                                          (handle-end-run state side))}}}
+   {:events {:agenda-scored
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state :runner (assoc card :bounce-hq true)))}
+             :agenda-stolen
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state side (assoc card :bounce-hq true)))}}
+    :abilities [{:req (req (:bounce-hq card))
+                 :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
+                 :msg "add 1 unrezzed card to HQ"
+                 :effect (effect (move :corp target :hand)
+                                 (update! (dissoc (get-card state card) :bounce-hq)))}]}
 
    "MaxX: Maximum Punk Rock"
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
