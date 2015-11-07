@@ -56,6 +56,24 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
+   "Chronos Protocol: Selective Mind-mapping"
+   {:events {:pre-damage {:once :per-turn
+                          :effect (effect (system-msg "can choose first Net Damage by clicking on Chronos Protocol") (damage-prevent :net Integer/MAX_VALUE) (save-last-damage-info :net (last targets) (:cid card)))
+                         }}
+
+    :abilities [{:msg "reveal the Runner's Grip and choose the card trashed for the first net damage this turn."
+                 :req (req (and (get-in @state [:first-damage :net :amount]) (> (get-in @state [:first-damage :net :amount]) 0)))
+                 :effect (req (resolve-ability
+                                               state side
+                                               {:prompt (msg "Choose a card to trash")
+                                                :choices (req (:hand runner))
+                                                :msg (msg "trash " (:title target) " and do " (- (get-in @state [:first-damage :net :amount]) 1) " more net damage.")
+                                                :effect (effect (trash target) (damage :net (- (get-in @state [:first-damage :net :amount]) 1) {:card (get-in @state [:first-damage :net :card])}))} card nil))}
+
+                 {:msg "do all net damage without using ID ability"
+                 :req (req (and (get-in @state [:first-damage :net :amount]) (> (get-in @state [:first-damage :net :amount]) 0)))
+                 :effect (effect (damage :net (get-in @state [:first-damage :net :amount]) {:card (get-in @state [:first-damage :net :card])}))}]}
+
    "Cybernetics Division: Humanity Upgraded"
    {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
 
