@@ -628,26 +628,42 @@
 (defn damage-prevent [state side dtype n]
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0)))
 
+(defn save-last-damage-info [state side dtype n card]
+  (swap! state assoc-in [:first-damage dtype :amount] n )
+  (swap! state assoc-in [:first-damage dtype :card] card )
+)
+
+(defn damage-defer [state side dtype n]
+  (swap! state assoc-in [:damage :defer-damage dtype] n )
+)
+
+(defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
+  (when (not unpreventable) (get-in @state [:damage :defer-damage dtype]))
+)
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
-  (let [hand (get-in @state [:runner :hand])]
-       (when (< (count hand) n)
-             (flatline state))
-       (when (= type :brain)
-             (swap! state update-in [:runner :brain-damage] #(+ % n))
-             (swap! state update-in [:runner :max-hand-size] #(- % n)))
-       (doseq [c (take n (shuffle hand))]
-              (trash state side c {:unpreventable true :cause type} type))
-       (trigger-event state side :damage type card)))
+  (swap! state update-in [:damage :defer-damage] dissoc type)
+  (trigger-event state side :pre-resolve-damage type card n)
+  (let [n (if (get-defer-damage state side type args) 0 n)]
+    (let [hand (get-in @state [:runner :hand])]
+         (when (< (count hand) n)
+               (flatline state))
+         (when (= type :brain)
+               (swap! state update-in [:runner :brain-damage] #(+ % n))
+               (swap! state update-in [:runner :max-hand-size] #(- % n)))
+         (doseq [c (take n (shuffle hand))]
+                (trash state side c {:unpreventable true :cause type} type))
+         (trigger-event state side :damage type card))))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
   ([state side type n {:keys [unpreventable unboostable card] :as args}]
     (swap! state update-in [:damage :damage-bonus] dissoc type)
     (swap! state update-in [:damage :damage-prevent] dissoc type)
-    (trigger-event state side :pre-damage type card)
+    (trigger-event state side :pre-damage type card n)
     (let [n (damage-count state side type n args)]
          (let [prevent (get-in @state [:prevent :damage type])]
               (if (and (not unpreventable) prevent (> (count prevent) 0))
@@ -1309,7 +1325,7 @@
 
 (defn start-turn [state side args]
   (turn-message state side true)
-  (swap! state assoc :active-player side :per-turn nil :end-turn false)
+  (swap! state assoc :active-player side :per-turn nil :end-turn false :first-damage nil)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
