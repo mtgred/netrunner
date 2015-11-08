@@ -633,19 +633,30 @@
   (swap! state assoc-in [:first-damage dtype :card] card )
 )
 
+(defn damage-defer [state side dtype n]
+  (swap! state assoc-in [:damage :defer-damage dtype] n )
+)
+
+(defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
+  (when (not unpreventable) (get-in @state [:damage :defer-damage dtype]))
+)
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
-  (let [hand (get-in @state [:runner :hand])]
-       (when (< (count hand) n)
-             (flatline state))
-       (when (= type :brain)
-             (swap! state update-in [:runner :brain-damage] #(+ % n))
-             (swap! state update-in [:runner :max-hand-size] #(- % n)))
-       (doseq [c (take n (shuffle hand))]
-              (trash state side c {:unpreventable true :cause type} type))
-       (trigger-event state side :damage type card)))
+  (swap! state update-in [:damage :defer-damage] dissoc type)
+  (trigger-event state side :pre-resolve-damage type card n)
+  (let [n (if (get-defer-damage state side type args) 0 n)]
+    (let [hand (get-in @state [:runner :hand])]
+         (when (< (count hand) n)
+               (flatline state))
+         (when (= type :brain)
+               (swap! state update-in [:runner :brain-damage] #(+ % n))
+               (swap! state update-in [:runner :max-hand-size] #(- % n)))
+         (doseq [c (take n (shuffle hand))]
+                (trash state side c {:unpreventable true :cause type} type))
+         (trigger-event state side :damage type card))))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
