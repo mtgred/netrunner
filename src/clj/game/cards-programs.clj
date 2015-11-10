@@ -207,7 +207,7 @@
                  :effect (req (resolve-ability
                                 state :corp
                                 {:prompt "Choose a card to trash"
-                                 :choices (req (filter #(:hand corp)))
+                                 :choices (req (filter #(= (:side %) "Corp") (:hand corp)))
                                  :effect (effect (trash target))}
                                card nil))}]}
 
