@@ -123,7 +123,7 @@
    {:events {:successful-run {:effect (effect (add-prop card :counter 1)) :req (req (= target :rd))}
              :runner-turn-begins
                              {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
-                              :effect (effect (prompt! card (str "The top card of your R&D is "
+                              :effect (effect (prompt! card (str "The top card of R&D is "
                                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Djinn"
@@ -134,11 +134,10 @@
                                        (:deck runner)))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
                 {:label "Install a non-Icebreaker program on Djinn" :cost [:click 1]
-                 :prompt "Choose a non-Icebreaker program to install on Djinn"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (not (has? % :subtype "Icebreaker"))
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a non-Icebreaker program from your Grip to install on Djinn"
+                 :choices {:req #(and (= (:type %) "Program")
+                                      (not (has? % :subtype "Icebreaker"))
+                                      (= (:zone %) [:hand]))}
                  :msg (msg "install and host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
@@ -276,10 +275,8 @@
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
                  :req (req (<= (count (:hosted card)) 2)) :cost [:click 1]
-                 :prompt "Choose a program to install on Leprechaun"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a program from your Grip to install on Leprechaun"
+                 :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
