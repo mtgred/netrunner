@@ -140,7 +140,8 @@
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
    "Fast Track"
-   {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+   {:prompt "Choose an Agenda"
+    :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (move target :hand) (shuffle! :deck))}
 

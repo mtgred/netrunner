@@ -243,7 +243,7 @@
 
    "Hostage"
    {:prompt "Choose a Connection"
-    :choices (req (filter #(has? % :subtype "Connection") (:deck runner)))
+    :choices (req (cancellable (filter #(has? % :subtype "Connection") (:deck runner)) :sorted))
     :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack")
     :effect (req (let [connection target]
                    (resolve-ability
@@ -411,8 +411,8 @@
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
-    :choices (req (filter #(and (has? % :subtype "Run")
-                                (<= (:cost %) (:credit runner))) (:deck runner)))
+    :choices (req (cancellable (filter #(and (has? % :subtype "Run")
+                                             (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
 
    "Power Nap"
@@ -563,7 +563,7 @@
    {:prompt "Choose an Icebreaker"
     :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
                     (move target :hand) (shuffle! :deck))
-    :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
+    :choices (req (cancellable (filter #(has? % :subtype "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}

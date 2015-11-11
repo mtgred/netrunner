@@ -320,7 +320,9 @@
    {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
                  :msg (msg "add " (:title target) " to HQ from R&D")
-                 :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
+                 :choices (req (cancellable (:deck corp) :sorted))
+                 :cancelled (effect (system-msg "cancels the effect of Project Atlas"))
+                 :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Beale"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)

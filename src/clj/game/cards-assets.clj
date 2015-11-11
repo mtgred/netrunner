@@ -190,7 +190,7 @@
                  :effect (effect (rez-cost-bonus -1) (rez target))}
                 {:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
-                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Asset") (:deck corp)) :sorted))
                  :cost [:credit 1] :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
 
@@ -277,7 +277,7 @@
 
    "Levy University"
    {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
-                 :choices (req (filter #(has? % :type "ICE") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "ICE") (:deck corp)) :sorted))
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
@@ -559,7 +559,7 @@
    "Tech Startup"
    {:abilities [{:label "Install an asset from R&D"
                  :prompt "Choose an asset to install" :msg (msg "install " (:title target))
-                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Asset") (:deck corp)) :sorted))
                  :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
 
    "Test Ground"
@@ -601,12 +601,13 @@
   
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
-                 :req (req (< (count (:hosted card)) 3)) :cost [:click 1]
+                 :req (req (< (count (:hosted card)) 3))
+                 :cost [:click 1]
                  :prompt "Choose an asset to install on Worlds Plaza"
-                 :choices (req (filter #(and (= (:type %) "Asset")
-                                             (<= (- (:cost %) 2) (:credit corp))) (:hand corp)))
+                 :choices {:req #(and (= (:type %) "Asset") (= [:hand] (:zone %)) (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (trigger-event :corp-install target)
-                                 (host card target)
-                                 (rez-cost-bonus -2) (rez (last (:hosted (get-card state card))))
-                                 (update! (dissoc (get-card state (last (:hosted card))) :facedown)))}]}})
+                 :effect (req (trigger-event state side :corp-install target)
+                              (host state side card target)
+                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
+                              (when (:rezzed (last (:hosted (get-card state card))))
+                                (update! state side (dissoc (get-card state (last (:hosted card)) :facedown)))))}]}})

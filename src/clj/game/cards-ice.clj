@@ -23,17 +23,21 @@
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D"
-                 :prompt "Choose a card to install"
+                 :prompt "Choose a card to install" :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
                                 (not= (:type target) "Operation"))) :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
-                {:msg "install a card from Archives" :choices (req (filter #(not= (:type %) "Operation") (:discard corp)))
-                 :prompt "Choose a card to install" :not-distinct true
-                 :effect (effect (corp-install target nil))}
-                {:msg "install a card from HQ" :choices (req (filter #(not= (:type %) "Operation") (:hand corp)))
-                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
+                {:label "Install a card from HQ or Archives"
+                 :prompt "Choose a card to install from Archives or HQ"
+                 :show-discard true :priority true
+                 :choices {:req #(and (not= (:type %) "Operation")
+                                      (or (= (:zone %) [:discard])
+                                          (= (:zone %) [:hand]))
+                                      (= (:side %) "Corp"))}
+                 :effect (effect (corp-install target nil))
+                 :msg (msg "install a card from " (zone->name (central->zone (:zone target))))}]}
 
    "Ashigaru"
    {:abilities [end-the-run]}
@@ -135,8 +139,13 @@
 
    "Crick"
    {:abilities [{:msg "install a card from Archives"
-                 :choices (req (filter #(not= (:type %) "Operation") (:discard corp))) :not-distinct true
-                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]
+                  :prompt "Choose a card to install from Archives"
+                  :show-discard true :priority true
+                  :choices {:req #(and (not= (:type %) "Operation")
+                                       (or (= (:zone %) [:discard])
+                                           (= (:zone %) [:hand]))
+                                       (= (:side %) "Corp"))}
+                  :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"
