@@ -449,19 +449,16 @@
                  :effect (effect (runner-install target))}]}
 
    "Scheherazade"
-   {:abilities [{:label "Install and host a program from Grip"
-                 :cost [:click 1] :prompt "Choose a program to install on Scheherazade"
-                 :choices (req (filter #(and (has? % :type "Program")
-                                             (<= (:cost %) (:credit runner))
-                                             (<= (:memoryunits %) (:memory runner)))
-                                       (:hand runner)))
+   {:abilities [{:label "Install and host a program from your Grip"
+                 :cost [:click 1] :prompt "Choose a program from your Grip to install on Scheherazade"
+                 :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade"
                  :choices {:req #(and (= (:type %) "Program") (:installed %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                 :effect (req (when (host state side card target) 
+                 :effect (req (when (host state side card target)
                                 (gain state side :credit 1)))}]}
 
    "Self-modifying Code"
