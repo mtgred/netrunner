@@ -385,8 +385,9 @@
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
    "Modded"
-   {:prompt "Choose a card to install"
-    :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
+    :choices {:req #(and (or (= (:type %) "Hardware") (= (:type %) "Program"))
+                         (= (:zone %) [:hand]))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"
