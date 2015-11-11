@@ -4,7 +4,7 @@
   {"Accelerated Beta Test"
    (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE from the top of the play area to install"
                                   :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
-                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
+                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
                                                (trigger-event state side :rez target)
                                                  (when (< n i)
                                                    (resolve-ability state side (abt (inc n) i) card nil)))})]
@@ -251,7 +251,7 @@
                       {:prompt "Choose a card to install" :msg (msg "install and rez " (:title target))
                        :choices (req (filter #(#{"Asset" "Upgrade"} (:type %))
                                              ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:install-state :rezzed}))} card targets))}
+                       :effect (effect (corp-install target nil {:install-state :rezzed-no-cost}))} card targets))}
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))
