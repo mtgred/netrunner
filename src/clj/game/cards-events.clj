@@ -45,8 +45,8 @@
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
-   {:prompt "Choose a Resource to install"
-    :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
+   {:prompt "Choose a resource to install from your Grip"
+    :choices {:req #(and (= (:type %) "Resource") (= (:zone %) [:hand]))}
     :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
