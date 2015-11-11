@@ -406,10 +406,9 @@
    {:abilities [{:label "Install a virus program on Progenitor"
                  :cost [:click 1] :req (req (empty? (:hosted card)))
                  :prompt "Choose a Virus program to install on Progenitor"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (has? % :subtype "Virus")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :choices :choices {:req #(and (= (:type %) "Program")
+                                               (has? % :subtype "Virus")
+                                               (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
