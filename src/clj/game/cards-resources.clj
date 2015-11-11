@@ -331,10 +331,8 @@
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :cost [:click 1] :prompt "Choose a connection to install on Off-Campus Apartment"
-                 :choices (req (filter #(and (has? % :subtype "Connection")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                 :choices {:req #(and (has? % :subtype "Connection") (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"
