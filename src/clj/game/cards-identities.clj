@@ -56,23 +56,24 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
-   "Chronos Protocol: Selective Mind-mapping"
-   {:events {:pre-resolve-damage {:once :per-turn
-                          :effect (effect (damage-defer :net (last targets)) 
-                                          (resolve-ability
-                                            { :optional {:prompt "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's grip to select the first card trashed?"
-                                            :yes-ability {:effect (req (resolve-ability
-                                               state side
-                                               {:prompt (msg "Choose a card to trash")
-                                                :choices (req (:hand runner))
-                                                :effect (effect (system-msg (str "trashes " (:title target) " by using Chronos Protocol: Selective Mind-mapping and does " (- (get-defer-damage state side :net nil) 1) " more net damage")) 
-                                                                (trash target) 
-                                                                (damage :net (- (get-defer-damage state side :net nil) 1) {:unpreventable true :card card}))} card nil))}
-                                            :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil) {:unpreventable true :card card}))}
-                                            }} card nil))
-                                    }
-                                }
-                       }
+"Chronos Protocol: Selective Mind-mapping"
+   {:events
+    {:pre-resolve-damage
+     {:once :per-turn
+      :effect (effect (damage-defer :net (last targets))
+                      (resolve-ability
+                        {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
+                                                 "grip to select the first card trashed?")
+                                    :yes-ability {:prompt (msg "Choose a card to trash")
+                                                  :choices (req (:hand runner)) :not-distinct true
+                                                  :msg (msg "trash " (:title target) " and deal "
+                                                            (- (get-defer-damage state side :net nil) 1)
+                                                            " more net damage")
+                                                  :effect (effect (trash target)
+                                                                  (damage :net (- (get-defer-damage state side :net nil) 1)
+                                                                          {:unpreventable true :card card}))}
+                                    :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil)
+                                                                         {:unpreventable true :card card}))}}} card nil))}}}
 
    "Cybernetics Division: Humanity Upgraded"
    {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
