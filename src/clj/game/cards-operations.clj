@@ -42,7 +42,8 @@
    {:effect (effect (draw 3))}
 
    "Archived Memories"
-   {:prompt "Choose a card from Archives" :choices (req (:discard corp))
+   {:prompt "Choose a card from Archives" :show-discard true
+    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
 
