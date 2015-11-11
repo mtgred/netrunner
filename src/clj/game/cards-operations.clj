@@ -14,7 +14,7 @@
    "Ad Blitz"
    (let [abhelp (fn ab [n total]
                   {:prompt "Select an advertisement to install and rez" :show-discard true
-                   :choices {:req #(and (:side % "Corp")
+                   :choices {:req #(and (= (:side %) "Corp")
                                         (has? % :subtype "Advertisement")
                                         (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
                    :effect (req (corp-install state side target nil {:install-state :rezzed})
