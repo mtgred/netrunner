@@ -11,6 +11,18 @@
                       :effect (effect (card-init target))}
                     card nil)))}
 
+   "Ad Blitz"
+   (let [abhelp (fn ab [n total]
+                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                   :choices {:req #(and (:side % "Corp")
+                                        (has? % :subtype "Advertisement")
+                                        (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                   :effect (req (corp-install state side target nil {:install-state :rezzed})
+                                (when (< n total)
+                                  (resolve-ability state side (ab (inc n) total) card nil)))})]
+   {:prompt "How many advertisements?" :choices :credit :msg (msg "install and rez " target " advertisements")
+    :effect (effect (resolve-ability (abhelp 1 target) card nil))})
+
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
     :effect (effect (move target :hand) (shuffle! :deck))}
