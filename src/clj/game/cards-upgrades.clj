@@ -143,11 +143,13 @@
                               (lose state :runner :tag 1))}]}
 
    "Marcus Batty"
-   {:abilities [{:label "[Trash]: Start a Psi game" :msg "start a Psi game"
-                 :psi {:not-equal {:req (req this-server)
-                                   :choices {:req #(and (has? % :type "ICE") (:rezzed %))}
-                                   :msg (msg "resolve a subroutine on " (:title target))
-                                   :effect (effect (trash card {:cause :ability-cost}))}}}]}
+   {:abilities [{:req (req this-server)
+                 :label "[Trash]: Start a Psi game" :msg "start a Psi game"
+                 :psi {:not-equal {:prompt "Choose a rezzed piece of ICE to resolve one of its subroutines"
+                                   :choices {:req #(and (has? % :type "ICE")
+                                                        (:rezzed %))}
+                                   :msg (msg "resolve a subroutine on " (:title target))}}
+                 :effect (effect (trash card))}]}
 
    "Midori"
    {:abilities

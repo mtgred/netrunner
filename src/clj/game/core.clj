@@ -124,7 +124,7 @@
        (when (or (and (= (:side card) "Runner") (:installed card))
                  (:rezzed card)
                  (= (first (:zone card)) :current)
-                 (= (first (:zone card)) :scored))
+                 (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
@@ -274,6 +274,8 @@
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
+   (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
+     (system-msg state side "is decked and the Runner wins the game"))
    (let [active-player (get-in @state [:active-player])]
      (when-not (get-in @state [active-player :register :cannot-draw])
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
