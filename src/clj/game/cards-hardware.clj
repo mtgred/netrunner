@@ -452,8 +452,8 @@
                                                      (swap! state update-in [:runner :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
                                                                         (dissoc sw :abilities :events))))
-                                                     (gain-agenda-point state :runner (- swpts stpts))
-                                                     (gain-agenda-point state :corp (- stpts swpts))
+                                                     (gain-agenda-point state :runner (- swpts-runner stpts-runner))
+                                                     (gain-agenda-point state :corp (- stpts-corp swpts-corp))
                                                      (doseq [c (get-in @state [:corp :scored])]
                                                        (card-init state :corp c false))
                                                      (doseq [r (get-in @state [:runner :scored])]
