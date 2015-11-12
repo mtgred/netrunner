@@ -170,6 +170,10 @@
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Global Food Initiative"
+   {:agendapoints-runner (req (do 2))}
+
+
    "Glenn Station"
    {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
                  :prompt "Choose a card to host on Glenn Station" :choices (req (:hand corp))

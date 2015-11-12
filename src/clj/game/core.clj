@@ -873,16 +873,22 @@
     (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
     (update-breaker-strength state side (get-card state card))))
 
+(defn get-agenda-points [state side card]
+  ))
+)
+
 (defn score [state side args]
   (let [card (or (:card args) args)]
     (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
       (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card)]
-        (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
-                                    " agenda point" (when (> (:agendapoints c) 1) "s")))
-        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
-        (gain-agenda-point state :corp (:agendapoints c))
+            c (card-init state :corp moved-card)
+            points (get-agenda-points state :corp c)]
+            (prn "points" points)
+        (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                    " agenda point" (when (> points 1) "s")))
+        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+        (gain-agenda-point state :corp points)
         (set-prop state :corp c :advance-counter 0)
         (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
@@ -894,12 +900,13 @@
   (gain-agenda-point state side n))
 
 (defn steal [state side card]
-  (let [c (move state :runner (dissoc card :advance-counter) :scored)]
+  (let [c (move state :runner (dissoc card :advance-counter) :scored)
+        points (get-agenda-points state :runner c)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
-    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c)
-                                   " agenda point" (when (> (:agendapoints c) 1) "s")))
-    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
-    (gain-agenda-point state :runner (:agendapoints c))
+    (system-msg state :runner (str "steals " (:title c) " and gains " points
+                                   " agenda point" (when (> points 1) "s")))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) points))
+    (gain-agenda-point state :runner points)
     (when-let [current (first (get-in @state [:corp :current]))]
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
@@ -1553,7 +1560,7 @@
 (defn forfeit [state side card]
   (let [c (desactivate state side card)]
     (system-msg state side (str "forfeits " (:title c)))
-    (gain state side :agenda-point (- (:agendapoints c)))
+    (gain state side :agenda-point (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
 
 (defn expose [state side target]
