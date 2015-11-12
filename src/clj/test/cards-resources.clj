@@ -145,10 +145,10 @@
     (let [ts (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner ts 0)
       (is (= 2 (count (get-in @state [:runner :prompt 0 :choices]))) "Only resources and hardware in The Supplier prompt")
-      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
       (card-ability state :runner ts 0)
       (is (= 1 (count (get-in @state [:runner :prompt 0 :choices]))))
-      (prompt-card :runner (find-card "Utopia Shard" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Utopia Shard" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh ts)))) "The Supplier is hosting 2 cards")
       (core/end-turn state :runner nil)
       (take-credits state :corp)
@@ -173,7 +173,7 @@
     (play-from-hand state :runner "The Supplier")
     (let [ts (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner ts 0)
-      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
       (core/lose state :runner :credit (:credit (get-runner)))
       (core/end-turn state :runner nil)
       (take-credits state :corp)
