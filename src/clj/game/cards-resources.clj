@@ -271,11 +271,8 @@
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
-                 :prompt "Choose a non-virus program to install on London Library"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (not (has? % :subtype "Virus"))
-                                             (<= (:memoryunits %) (:memory runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a non-virus program from your Grip to install on London Library"
+                 :choices {:req #(and (= (:type %) "Program") (not (has? % :subtype "Virus")) (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
@@ -590,8 +587,9 @@
 
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
-                 :prompt "Choose a card to host on The Supplier"
-                 :choices (req (filter #(#{"Resource" "Hardware"} (:type %)) (:hand runner)))
+                 :prompt "Choose a resource or piece of hardware from your Grip to host on The Supplier"
+                 :choices {:req #(and (or (= (:type %) "Hardware") (= (:type %) "Resource"))
+                                      (= (:zone %) [:hand]))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
