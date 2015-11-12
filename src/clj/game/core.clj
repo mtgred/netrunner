@@ -874,6 +874,14 @@
     (update-breaker-strength state side (get-card state card))))
 
 (defn get-agenda-points [state side card]
+  (let [base-points (:agendapoints card)
+        runner-fn (:agendapoints-runner (card-def card))
+        corp-fn (:agendapoints-corp (card-def card))]
+    (if (and (= side :runner) (not (nil? runner-fn)))
+      (runner-fn state side card nil)
+        (if (and (= side :corp) (not  (nil? corp-fn)))
+          (corp-fn state side card nil)
+          base-points)
   ))
 )
 
