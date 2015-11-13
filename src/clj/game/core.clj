@@ -886,10 +886,10 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
         (gain-agenda-point state :corp (:agendapoints c))
         (set-prop state :corp c :advance-counter 0)
+        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
         (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-          (trash state side current))
-        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
+          (trash state side current))))))
 
 (defn as-agenda [state side card n]
   (move state side (assoc card :agendapoints n) :scored)
