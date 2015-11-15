@@ -160,10 +160,10 @@
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
-                                (gain-agenda-point state :runner (:agendapoints c))))
+                                (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                  :msg (msg (let [c (first (:hosted card))]
                              (str "add " (:title c) " to their score area and gain "
-                             (:agendapoints c) " agenda point" (when (> (:agendapoints c) 1) "s"))))}]}
+                             (:agendapoints c) " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
    {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
@@ -208,10 +208,10 @@
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Human First"
-   {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :runner :credit (:agendapoints target)))}
-             :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :credit (:agendapoints target)))}}}
+   {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :runner :credit (get-agenda-points state :runner target)))}
+             :agenda-stolen {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :credit (get-agenda-points state :runner target)))}}}
    "Hunting Grounds"
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"

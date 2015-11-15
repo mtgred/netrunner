@@ -569,11 +569,11 @@
 
    "The Board"
    {:effect (effect (lose :runner :agenda-point
-                          (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+                          (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :leave-play (effect (gain :runner :agenda-point
-                              (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+                              (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
-    :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
+    :events {:agenda-stolen {:req (req (> (get-agenda-points state :runner target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
    "The News Now Hour"

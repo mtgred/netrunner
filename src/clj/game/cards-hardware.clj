@@ -459,15 +459,17 @@
                                       :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) agendas)}
                                       :effect (req (let [st (last (get-in runner [:scored]))
                                                          sw target
-                                                         stpts (:agendapoints st)
-                                                         swpts (:agendapoints sw)]
+                                                         stpts-corp (get-agenda-points state :corp st)
+                                                         swpts-corp (get-agenda-points state :corp sw)
+                                                         stpts-runner (get-agenda-points state :runner st)
+                                                         swpts-runner (get-agenda-points state :runner sw)]
                                                      (swap! state update-in [:corp :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
                                                      (swap! state update-in [:runner :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
                                                                         (dissoc sw :abilities :events))))
-                                                     (gain-agenda-point state :runner (- swpts stpts))
-                                                     (gain-agenda-point state :corp (- stpts swpts))
+                                                     (gain-agenda-point state :runner (- swpts-runner stpts-runner))
+                                                     (gain-agenda-point state :corp (- stpts-corp swpts-corp))
                                                      (doseq [c (get-in @state [:corp :scored])]
                                                        (card-init state :corp c false))
                                                      (doseq [r (get-in @state [:runner :scored])]
