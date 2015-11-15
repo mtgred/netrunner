@@ -1512,7 +1512,7 @@
                      (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                               (:title prev-card) "a card") " in " server))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [card-name (if (or (= :rezzed install-state) (= :face-up install-state) (:rezzed c))
+                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
                                    (:title card) "a card")]
                    (system-msg state side (str (build-spend-msg cost-str "install")
                                                 card-name " in " server)))
@@ -1520,8 +1520,10 @@
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
                      (update-advancement-cost state side moved-card))
-                   (when (= install-state :rezzed)
+                   (when (= install-state :rezzed-no-cost)
                      (rez state side moved-card {:no-cost true}))
+                   (when (= install-state :rezzed)
+                     (rez state side moved-card))
                    (when (= install-state :face-up)
                      (card-init state side (assoc (get-card state moved-card) :rezzed true) false))))))))))
 
