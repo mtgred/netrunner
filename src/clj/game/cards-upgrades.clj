@@ -192,8 +192,9 @@
          un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
      {:trash-effect
       {:req (req (= :servers (first (:previous-zone card))))
-       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
-                                                                                (:previous-zone card))))
+       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
+                                                                                 (= (central->zone (:zone target))
+                                                                                    (butlast (:previous-zone card))))))
                                          :run-ends {:effect (req (unregister-events state side card)
                                                                  (swap! state update-in [:runner :register] dissoc
                                                                         :cannot-steal))}}
@@ -209,13 +210,15 @@
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
-   (let [ab {:req (req (= (:zone card) (:zone target)))
+   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
              :effect (effect (steal-cost-bonus [:credit 5]))}]
-     {:trash-effect {:req (req (= :servers (first (:previous-zone card))))
-                     :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
-                                                                                              (:previous-zone card))))
-                                                       :run-ends {:effect (effect (unregister-events card))}}
-                                                      (assoc card :zone '(:discard))))}
+     {:trash-effect
+      {:req (req (= :servers (first (:previous-zone card))))
+       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
+                                                                                 (= (central->zone (:zone target))
+                                                                                    (butlast (:previous-zone card))))))
+                                         :run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
 
    "Research Station"
@@ -264,13 +267,15 @@
    {:recurring 2}
 
    "Strongbox"
-   (let [ab {:req (req (= (:zone card) (:zone target)))
+   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
              :effect (effect (steal-cost-bonus [:click 1]))}]
-     {:trash-effect {:req (req (= :servers (first (:previous-zone card))))
-                     :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (= (:zone target)
-                                                                                              (:previous-zone card))))
-                                                       :run-ends {:effect (effect (unregister-events card))}}
-                                                      (assoc card :zone '(:discard))))}
+     {:trash-effect
+      {:req (req (= :servers (first (:previous-zone card))))
+       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
+                                                                                 (= (central->zone (:zone target))
+                                                                                    (butlast (:previous-zone card))))))
+                                         :run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
 
    "The Twins"
