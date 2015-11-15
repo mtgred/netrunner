@@ -56,14 +56,14 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
-"Chronos Protocol: Selective Mind-mapping"
+   "Chronos Protocol: Selective Mind-mapping"
    {:events
     {:pre-resolve-damage
      {:once :per-turn
       :effect (effect (damage-defer :net (last targets))
                       (resolve-ability
                         {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
-                                                 "grip to select the first card trashed?")
+                                                 "grip to select the first card trashed?") :player :corp
                                     :yes-ability {:prompt (msg "Choose a card to trash")
                                                   :choices (req (:hand runner)) :not-distinct true
                                                   :msg (msg "trash " (:title target) " and deal "
