@@ -179,9 +179,13 @@
                              (:agendapoints c) " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
-                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}}}
+   {:events {:agenda-scored {:effect (req (system-msg state :runner (str "can access cards in HQ by clicking on Gang Sign"))
+                                          (update! state side (assoc card :access-hq true)))}}
+    :abilities [{:req (req (:access-hq card))
+                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
+                 :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                (resolve-ability state :runner (choose-access c '(:hq)) card nil)
+                                (update! state side (dissoc (get-card state card) :access-hq))))}]}
 
    "Ghost Runner"
    {:data {:counter 3}
