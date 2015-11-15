@@ -194,7 +194,8 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (handle-access (get-in @state [:corp :discard])))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
