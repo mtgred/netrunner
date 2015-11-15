@@ -198,7 +198,7 @@
 
    "Harbinger"
    {:trash-effect
-     {:req (req (not (some #{:facedown} (:previous-zone card))))
+     {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
        :effect (effect (runner-install card {:facedown true}))}}
 
    "Hemorrhage"
