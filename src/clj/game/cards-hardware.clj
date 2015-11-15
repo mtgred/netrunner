@@ -471,7 +471,11 @@
                                                      (gain-agenda-point state :runner (- swpts-runner stpts-runner))
                                                      (gain-agenda-point state :corp (- stpts-corp swpts-corp))
                                                      (doseq [c (get-in @state [:corp :scored])]
-                                                       (card-init state :corp c false))
+                                                       (let [abilities (:abilities (card-def c))
+                                                             c (merge c {:abilities abilities})]
+                                                         (update! state :corp c)
+                                                         (when-let [events (:events (card-def c))]
+                                                           (register-events state side events c))))
                                                      (doseq [r (get-in @state [:runner :scored])]
                                                        (desactivate state :corp r))
                                                      (system-msg state side
