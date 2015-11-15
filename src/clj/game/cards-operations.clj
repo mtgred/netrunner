@@ -54,7 +54,8 @@
    {:effect (effect (draw 3))}
 
    "Archived Memories"
-   {:prompt "Choose a card from Archives" :choices (req (:discard corp))
+   {:prompt "Choose a card from Archives" :show-discard true
+    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
 
@@ -187,15 +188,10 @@
                               :effect (effect (trash target))}}}
 
    "Interns"
-   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
-    :msg (msg "install a card from " target)
-    :effect (effect (resolve-ability
-                      {:prompt "Choose a card to install"
-                       :not-distinct true
-                       :choices (req (filter #(not= (:type %) "Operation")
-                                             ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:no-install-cost true}))}
-                      card targets))}
+   {:prompt "Choose a card to install from Archives or HQ" :show-discard true
+    :choices {:req #(and (not= (:type %) "Operation")
+                         (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+    :effect (effect (corp-install target nil {:no-install-cost true}))}
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg (msg "reveal the Runner's Grip and trash up to " (- target (second targets)) " resources or events")
