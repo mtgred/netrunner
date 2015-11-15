@@ -104,6 +104,19 @@
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "Dr. Lovegood"
+   {:abilities [{:prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
+                 :choices {:req #(:installed %)}
+                 :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
+                 :effect (req (let [c target]
+                                (update! state side (dissoc target :events :abilities))
+                                (desactivate state side target)
+                                (register-events state side
+                                                 {:runner-turn-ends
+                                                  {:effect (effect (card-init (get-card state c) false)
+                                                                   (unregister-events card))}} card)))}]
+    :events {:runner-turn-ends nil}}
+
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
              :runner-turn-begins {:msg "lose 1 credit" :effect (effect (lose :credit 1))}}}
