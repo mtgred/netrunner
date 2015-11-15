@@ -4,6 +4,22 @@
   {"Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+   "Archives Interface"
+   {:events {:no-action {:effect (req (system-msg state :runner (str "may remove 1 card in Archives from the game instead of"
+                                                                     " accessing it by clicking on Archives Interface"))
+                                      (update! state side (assoc card :ai-active true)))
+                         :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
+    :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
+                 :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (resolve-ability
+                                state side
+                                {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                 :choices (req (:discard corp))
+                                 :msg (msg "remove " (:title target) " from the game")
+                                 :effect (req (move state :corp target :rfg)
+                                              (update! state side (dissoc (get-card state card) :ai-active)))}
+                               card nil))}]}
+
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
