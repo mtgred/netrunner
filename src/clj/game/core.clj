@@ -118,7 +118,7 @@
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
    (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
-         c (if (= (:side c) "Runner") (dissoc c :counter :rec-counter :pump) c)
+         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (and (= (:side card) "Runner") (:installed card))
@@ -248,7 +248,7 @@
                             (#{:hand :deck :discard} (first dest))
                             (not (:facedown c))))
                  (desactivate state side c) c)
-             c (if (= dest [:rig :facedown])(assoc c :facedown true) (dissoc c :facedown))
+             c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
