@@ -1686,6 +1686,31 @@
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
+(defn copy-events [state side dest source]
+  (let [source-def (card-def source)
+        source-events (if (:events source-def) (:events source-def) {})
+        dest-card (merge dest {:events source-events})]
+          (prn "copy-events")
+          (prn "source-events" source-events)
+          (prn "dest-card" dest-card)
+          (update! state side dest-card)
+          (register-events state side (:events dest-card) dest-card)
+        ))
+
+
+(defn copy-abilities [state side dest source]
+  (let [source-def (card-def source)
+        source-abilities (if (:abilities source-def) (:abilities source-def) ())
+        source-abilities (for [ab source-abilities]
+                    (assoc (select-keys ab [:cost :pump :breaks])
+                      :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")))
+        dest-card (merge dest {:abilities source-abilities})]
+          (prn "copy-abilities")
+          (prn "source-abilities" source-abilities)
+          (prn "dest-card" dest-card)
+          (update! state side dest-card)
+        ))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (String->Num (first args))] n 1)

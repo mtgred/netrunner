@@ -207,7 +207,7 @@
                      {:prompt "Choose an agenda to gain the text of"
                       :choices (req (filter #(= (:type %) "Agenda") agendas))
                       :msg (msg "gains the text of " (:title target))
-                      :effect (prn "media blitz" card}
+                      :effect (effect (copy-events card target) (copy-abilities card target))}
                     card nil)))}
 
    "Medical Research Fundraiser"
