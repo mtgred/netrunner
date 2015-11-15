@@ -295,21 +295,47 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Medium"
-   {:events
-    {:successful-run {:req (req (= target :rd))
-                      :effect (effect (add-prop card :counter 1))}
-     :pre-access {:req (req (= target :rd))
-                  :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
+   {:events {:no-action {:req (req (and run (= (:server run) [:rd]) (not current-ice))
+                                        (and (:counter card) (> (:counter card) 0)))
+                         :effect (req (system-msg state :runner (str "may choose fewer than all additional R&D accesses"
+                                                                     " by clicking on Medium"))
+                                      (update! state side (assoc card :medium-active true)))}
+             :successful-run {:req (req (and (= target :rd)
+                                             (or (:medium-active card) (nil? (:counter card)))))
+                              :effect (effect (add-prop card :counter 1))}
+             :pre-access {:req (req (and (= target :rd) (:medium-active card)))
+                          :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
+    :abilities [{:req (req (:medium-active card))
+                 :effect (effect (add-prop card :counter 1)
+                                 (resolve-ability
+                                   {:prompt "Choose how many additional R&D accesses to make"
+                                    :choices {:number (req (get-virus-counters state side card))}
+                                    :msg (msg "do " target " additional accesses from R&D")
+                                    :effect (effect (access-bonus (max 0 target))
+                                                    (update! (dissoc (get-card state card) :medium-active)))} card nil))}]}
 
    "Multithreader"
    {:recurring 2}
 
    "Nerve Agent"
-   {:events
-    {:successful-run {:req (req (= target :hq))
-                      :effect (effect (add-prop card :counter 1))}
-     :pre-access {:req (req (= target :hq))
-                  :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}}
+   {:events {:no-action {:req (req (and run (= (:server run) [:hq]) (not current-ice))
+                                        (and (:counter card) (> (:counter card) 0)))
+                         :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
+                                                                     " by clicking on Nerve Agent"))
+                                      (update! state side (assoc card :nerve-active true)))}
+             :successful-run {:req (req (and (= target :rd)
+                                             (or (:nerve-active card) (nil? (:counter card)))))
+                              :effect (effect (add-prop card :counter 1))}
+             :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
+                          :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
+    :abilities [{:req (req (:nerve-active card))
+                 :effect (effect (add-prop card :counter 1)
+                                 (resolve-ability
+                                   {:prompt "Choose how many additional HQ accesses to make"
+                                    :choices {:number (req (get-virus-counters state side card))}
+                                    :msg (msg "do " target " additional accesses from HQ")
+                                    :effect (effect (access-bonus (max 0 target))
+                                                    (update! (dissoc (get-card state card) :nerve-active)))} card nil))}]}
 
    "Net Shield"
    {:prevent {:damage [:net]}
