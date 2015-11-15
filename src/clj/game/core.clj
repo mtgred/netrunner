@@ -118,7 +118,7 @@
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
    (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
-         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
+         c (if (= (:side c) "Runner") (dissoc c :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (and (= (:side card) "Runner") (:installed card))
@@ -900,10 +900,10 @@
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
         (gain-agenda-point state :corp points)
         (set-prop state :corp c :advance-counter 0)
+        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
         (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-          (trash state side current))
-        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
+          (trash state side current))))))
 
 (defn as-agenda [state side card n]
   (move state side (assoc card :agendapoints n) :scored)
