@@ -402,6 +402,8 @@
    "Reversed Accounts"
    {:advanceable :always
     :abilities [{:cost [:click 1]
+                 :label "Force the Runner to lose 4 [Credits] per advancement"
+                 :msg (msg "force the Runner to lose " (min (* 4 (:advance-counter card)) (:credit runner)) " [Credits]")
                  :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
 
    "Rex Campaign"
