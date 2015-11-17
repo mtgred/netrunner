@@ -56,7 +56,8 @@
                                     :effect (effect (advancement-cost-bonus 1))}
              :counter-added
              {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
-              :effect (effect (update-all-advancement-costs))}}}
+              :effect (effect (update-all-advancement-costs))}
+             :purge {:effect (effect (update-all-advancement-costs))}}}
 
    "Cloak"
    {:recurring 1}
