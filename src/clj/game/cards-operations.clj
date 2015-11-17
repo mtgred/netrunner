@@ -458,6 +458,21 @@
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
 
+   "Targeted Marketing"
+   {:abilities [{:req (req (= (:zone card) [:current]))
+                 :label "Gain 10 [Credits] because the Runner installed the named card"
+                 :prompt "Choose the card you named in the Runner's rig"
+                 :choices {:req #(and (= (:side %) "Runner")
+                                      (not (:facedown %))
+                                      (not= (first (:zone %)) :discard)
+                                      (not= (:type %) "Identity"))}
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title target))
+                 :effect (effect (gain :credit 10))}
+                {:req (req (and (= (:zone card) [:current]) (= (:type (last (:discard runner))) "Event")))
+                 :label "Gain 10 [Credits] because the Runner played the named Event"
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title (last (:discard runner))))
+                 :effect (effect (gain :credit 10))}]}
+
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
                               :effect (req (doseq [resource (get-in runner [:rig :resource])]
