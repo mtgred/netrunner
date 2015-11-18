@@ -118,7 +118,7 @@
   (and (>= (card-count cards) (:minimumdecksize identity))
        (<= (influence deck) (:influencelimit identity))
        (every? #(and (allowed? (:card %) identity)
-                     (<= (:qty %) (or (get-in % [:card :limit]) 3))) cards)
+                     (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
@@ -292,7 +292,7 @@
         (go (while true
               (let [edit (<! edit-channel)
                     card (:card edit)
-                    max-qty (or (:limit card) 3)
+                    max-qty (or (:limited card) 3)
                     cards (om/get-state owner [:deck :cards])
                     match? #(when (= (get-in % [:card :title]) (:title card)) %)
                     existing-line (some match? cards)]

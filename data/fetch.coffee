@@ -40,13 +40,14 @@ cardFields = [
   "uniqueness",
   "memoryunits",
   "strength",
-  "trash"
+  "trash",
+  "limited"
 ]
 
 baseurl = "http://netrunnerdb.com/api/"
 
 selectFields = (fields, objectList) ->
-  ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj["limit"] = 1 if obj["limited"]; newObj), {}) for obj in objectList)
+  ((fields.reduce ((newObj, key) -> newObj[key] = obj[key]; newObj), {}) for obj in objectList)
 
 fetchSets = (callback) ->
   request.get baseurl + "sets", (error, response, body) ->
