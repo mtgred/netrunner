@@ -60,15 +60,18 @@
    {:events
     {:pre-resolve-damage
      {:once :per-turn
+      :req (req (= target :net))
       :effect (effect (damage-defer :net (last targets))
                       (resolve-ability
                         {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
                                                  "grip to select the first card trashed?") :player :corp
                                     :yes-ability {:prompt (msg "Choose a card to trash")
                                                   :choices (req (:hand runner)) :not-distinct true
-                                                  :msg (msg "trash " (:title target) " and deal "
-                                                            (- (get-defer-damage state side :net nil) 1)
-                                                            " more net damage")
+                                                  :msg (msg "trash " (:title target)
+                                                         (when (> (- (get-defer-damage state side :net nil) 1) 0)
+                                                           (str " and deal "
+                                                                (- (get-defer-damage state side :net nil) 1)
+                                                                " more net damage")))
                                                   :effect (effect (trash target)
                                                                   (damage :net (- (get-defer-damage state side :net nil) 1)
                                                                           {:unpreventable true :card card}))}
