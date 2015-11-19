@@ -1435,7 +1435,7 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       (when installed
+       (when (and installed (:recurring (card-def c)))
          (card-init state side c false))
        c))))
 
