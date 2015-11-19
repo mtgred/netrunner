@@ -1301,6 +1301,15 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
+(defn play-dynamic-ability [state side {:keys [card ability targets] :as args}]
+  (let [abilities (:abilities card)
+        ab (get-in card [:abilities ability])
+        cost (:cost ab)]
+    (when (or (nil? cost)
+              (apply can-pay? state side cost))
+        (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
+        (resolve-ability state side ab card targets))))
+
 (defn turn-message [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
         hand (if (= side :runner) "their Grip" "HQ")
@@ -1701,9 +1710,13 @@
 (defn copy-abilities [state side dest source]
   (let [source-def (card-def source)
         source-abilities (if (:abilities source-def) (:abilities source-def) ())
+        ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
+        ; source-abilities (for [ab source-abilities]
+        ;             (assoc (select-keys ab [:cost :pump :breaks])
+        ;               :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
+        ;               :dynamic :copy))
         source-abilities (for [ab source-abilities]
-                    (assoc (select-keys ab [:cost :pump :breaks])
-                      :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")))
+                      (conj {:dynamic :copy} ab))
         dest-card (merge dest {:abilities source-abilities})]
           (prn "copy-abilities")
           (prn "source-abilities" source-abilities)
