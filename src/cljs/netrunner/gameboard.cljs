@@ -702,7 +702,7 @@
                             [:div.panel.blue-shade
                              (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
                              (if (zero? (:position run))
-                               (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
+                               (cond-button "Successful Run" (:no-action run) #(send-command "access"))
                                (cond-button "Continue" (:no-action run) #(send-command "continue")))
                              (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
                                           #(send-command "jack-out"))]
