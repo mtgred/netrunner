@@ -324,7 +324,7 @@
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
                                                                      " by clicking on Nerve Agent"))
                                       (update! state side (assoc card :nerve-active true)))}
-             :successful-run {:req (req (and (= target :rd)
+             :successful-run {:req (req (and (= target :hq)
                                              (or (:nerve-active card) (nil? (:counter card)))))
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
