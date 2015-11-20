@@ -1301,14 +1301,38 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
-(defn play-dynamic-ability [state side {:keys [card ability targets] :as args}]
+(defn play-copied-ability [state side {:keys [card ability targets] :as args}]
   (let [abilities (:abilities card)
         ab (get-in card [:abilities ability])
         cost (:cost ab)]
+    (prn "play-copied-ability:abilities" abilities)
+    (prn "play-copied-ability:ab" ab)
+    (prn "play-copied-ability:cost" cost)    
     (when (or (nil? cost)
               (apply can-pay? state side cost))
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
+
+(defn play-auto-pump [state side args]
+  (let [run (:run @state) card (get-card state (:card args))
+        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                         (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
+      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
+      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
+                                  (:title card) " to " (:current-strength (get-card state card)))))))
+
+;; add more dynamic ability implementations here
+(def dynamicabilitymap
+  {"auto-pump" play-auto-pump
+   "copy" play-copied-ability})
+
+(defn play-dynamic-ability [state side args]
+  ((dynamicabilitymap (:type args)) state (keyword side) args))
 
 (defn turn-message [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")

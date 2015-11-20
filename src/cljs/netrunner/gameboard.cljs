@@ -102,8 +102,9 @@
     (when (not (and (= side "Runner") facedown))
       (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+                          (if (:dynamic (first abilities)) 
+                              (send-command "dynamicability" {:type (:dynamic (first abilities)) :card card :ability 0})
+                              (send-command "ability" {:card card :ability 0}))                          (send-command (first actions) {:card card}))))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
@@ -315,12 +316,12 @@
                   actions)
              (map-indexed
               (fn [i ab]
-                (if (:auto-pump ab)
-                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                (if (:dynamic ab)
+[:div {:on-click #(do (send-command "dynamicability" {:type (:dynamic ab) :card @cursor
+                                                                        :ability (- i (count (filter (fn [a] (not (:dynamic a))) abilities)))}))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                            (dec i) i)})
+                                                                 :ability  (- i (count (filter (fn [a] (:dynamic a)) abilities)))})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
               abilities)]))
