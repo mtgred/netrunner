@@ -74,15 +74,12 @@
       (>! cards-channel cards)))
 
 (defn distinct-by [f coll]
-  (let [step (fn step [xs seen]
-               (lazy-seq
-                ((fn [[x :as xs] seen]
-                   (when-let [s (seq xs)]
-                     (let [fx (f x)]
-                       (if (contains? seen fx)
-                         (recur (rest s) seen)
-                         (cons x (step (rest s) (conj seen fx)))))))
-                 xs seen)))]
+  (letfn [(step [xs seen]
+            (lazy-seq (when-let [[x & more] (seq xs)]
+                        (let [k (f x)]
+                          (if (seen k)
+                            (step more seen)
+                            (cons x (step more (conj seen k))))))))]
     (step coll #{})))
 
 (defn side-identities [side]
@@ -169,15 +166,6 @@
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
-
-(defn distinct-by [f coll]
-  (letfn [(step [xs seen]
-            (lazy-seq (when-let [[x & more] (seq xs)]
-                        (let [k (f x)]
-                          (if (seen k)
-                            (step more seen)
-                            (cons x (step more (conj seen k))))))))]
-    (step coll #{})))
 
 (defn match [identity query]
   (if (empty? query)
