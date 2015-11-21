@@ -100,7 +100,12 @@
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
-                               :effect (effect (access-cost-bonus [:credit 1]))}}}
+                               :effect (effect (access-cost-bonus [:credit 1]))
+                               :msg  (msg (if
+                                      (= (get-in @state [:runner :credit]) 0)
+                                      "prevent access"
+                                      "make the Runner spend 1 [Credits] to access"
+                                      ))}}}
 
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
