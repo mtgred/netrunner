@@ -22,11 +22,13 @@
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
 
+(defn alt-art? [card]
+  (or (get-in @app-state [:user :special])
+      (not= "Alternates" (:setname card))))
+
 (defn lookup [side query]
   (let [q (.toLowerCase query)
-        cards (filter #(and (= (:side %) side)
-                            (or (get-in @app-state [:user :special])
-                                (not= "Alternates" (:setname %))))
+        cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))]
     (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
       card
@@ -71,15 +73,27 @@
       (load-decks decks)
       (>! cards-channel cards)))
 
+(defn distinct-by [f coll]
+  (let [step (fn step [xs seen]
+               (lazy-seq
+                ((fn [[x :as xs] seen]
+                   (when-let [s (seq xs)]
+                     (let [fx (f x)]
+                       (if (contains? seen fx)
+                         (recur (rest s) seen)
+                         (cons x (step (rest s) (conj seen fx)))))))
+                 xs seen)))]
+    (step coll #{})))
+
 (defn side-identities [side]
-  (filter #(and (= (:side %) side)
-                (not= "Special" (:setname %))
-                (= (:type %) "Identity")) (:cards @app-state)))
+  (->> (:cards @app-state)
+       (filter #(and (= (:side %) side)
+                     (= (:type %) "Identity")
+                     (alt-art? %)))
+       (distinct-by :title)))
 
 (defn get-card [title]
-  (some #(when (and (= (:title %) title)
-                    (or (get-in @app-state [:user :special])
-                        (not= "Alternates" (:setname %)))) %)
+  (some #(when (and (= (:title %) title) (alt-art? %)) %)
         (:cards @app-state)))
 
 (defn deck->str [owner]
@@ -171,8 +185,7 @@
     (let [cards (->> (:cards @app-state)
                      (filter #(and (allowed? % identity)
                                    (not= "Special" (:setname %))
-                                   (or (get-in @app-state [:user :special])
-                                       (not= "Alternates" (:setname %)))))
+                                   (alt-art? %)))
                      (distinct-by :title))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
