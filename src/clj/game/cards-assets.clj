@@ -99,8 +99,10 @@
    "Corporate Town"
    {:additional-cost [:forfeit]
     :events {:corp-turn-begins
-             {:choices {:req #(and (= (:type %) "Resource"))} :msg (msg "trash " (:title target))
-              :effect (effect (trash target))}}}
+             {:prompt "Choose a resource to trash with Corporate Town"
+              :choices {:req #(and (= (:type %) "Resource"))}
+              :msg (msg "trash " (:title target))
+              :effect (effect (trash target {:unpreventable true}))}}}
 
    "Cybernetics Court"
    {:effect (effect (gain :max-hand-size 4)) :leave-play (effect (lose :max-hand-size 4))}
