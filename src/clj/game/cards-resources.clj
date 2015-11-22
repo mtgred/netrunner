@@ -119,7 +119,7 @@
 
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
-             :runner-turn-begins {:msg "lose 1 credit" :effect (effect (lose :credit 1))}}}
+             :runner-turn-begins {:msg "lose 1 [Credits]" :effect (effect (lose :credit 1))}}}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}

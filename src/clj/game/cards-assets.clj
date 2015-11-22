@@ -414,7 +414,7 @@
                              (trash state side card)
                              (resolve-ability state side
                                               {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                                               :choices ["Remove 1 bad publicity" "Gain 5 credits"]
+                                               :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
                                                :msg (msg (.toLowerCase target))
                                                :effect (req (if (= target "Remove 1 bad publicity")
                                                               (lose state side :bad-publicity 1)
