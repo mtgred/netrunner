@@ -1296,14 +1296,17 @@
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
+    (prn "play-ability" cost)
     (when (or (nil? cost)
               (apply can-pay? state side cost))
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
 (defn play-copied-ability [state side {:keys [card ability targets] :as args}]
-  (let [abilities (:abilities card)
-        ab (get-in card [:abilities ability])
+  (let [source-card (:source card)
+        cdef (card-def source-card)
+        abilities (:abilities cdef)
+        ab (get-in cdef [:abilities ability])
         cost (:cost ab)]
     (prn "play-copied-ability:abilities" abilities)
     (prn "play-copied-ability:ab" ab)
@@ -1735,13 +1738,11 @@
   (let [source-def (card-def source)
         source-abilities (if (:abilities source-def) (:abilities source-def) ())
         ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
-        ; source-abilities (for [ab source-abilities]
-        ;             (assoc (select-keys ab [:cost :pump :breaks])
-        ;               :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
-        ;               :dynamic :copy))
         source-abilities (for [ab source-abilities]
-                      (conj {:dynamic :copy} ab))
-        dest-card (merge dest {:abilities source-abilities})]
+                    (assoc (select-keys ab [:cost :pump :breaks])
+                      :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
+                      :dynamic :copy))
+        dest-card (merge dest {:abilities source-abilities :source source})]
           (prn "copy-abilities")
           (prn "source-abilities" source-abilities)
           (prn "dest-card" dest-card)
