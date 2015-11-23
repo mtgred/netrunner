@@ -1296,7 +1296,6 @@
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
-    (prn "play-ability" cost)
     (when (or (nil? cost)
               (apply can-pay? state side cost))
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
@@ -1723,9 +1722,6 @@
   (let [source-def (card-def source)
         source-events (if (:events source-def) (:events source-def) {})
         dest-card (merge dest {:events source-events})]
-          (prn "copy-events")
-          (prn "source-events" source-events)
-          (prn "dest-card" dest-card)
           (update! state side dest-card)
           (register-events state side (:events dest-card) dest-card)
         ))
@@ -1740,9 +1736,6 @@
                       :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
                       :dynamic :copy))
         dest-card (merge dest {:abilities source-abilities :source source})]
-          (prn "copy-abilities")
-          (prn "source-abilities" source-abilities)
-          (prn "dest-card" dest-card)
           (update! state side dest-card)
         ))
 
@@ -1756,14 +1749,6 @@
         (if (not (nil? source-effect)) (source-effect state side source nil))
         (update! state side dest-card))
       )))
-
-     ; (when-let [leave-effect (:leave-play (card-def card))]
-     ;   (when (or (and (= (:side card) "Runner") (:installed card))
-     ;             (:rezzed card)
-     ;             (= (first (:zone card)) :current)
-     ;             (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
-     ;     (leave-effect state side card nil)))
-
 
 (defn fire-leave-play-effects [state side card]
   (if-let [source-leave-play (:source-leave-play card)]
