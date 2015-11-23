@@ -207,8 +207,9 @@
                      {:prompt "Choose an agenda to gain the text of"
                       :choices (req (filter #(= (:type %) "Agenda") agendas))
                       :msg (msg "gains the text of " (:title target))
-                      :effect (effect (copy-events card target) (copy-abilities card target))}
-                    card nil)))}
+                      :effect (effect (copy-events card target) (copy-abilities card target) (copy-leave-play-effects card target))}
+                    card nil)))
+    :leave-play (effect (fire-leave-play-effects card))}
 
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}

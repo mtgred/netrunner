@@ -1308,9 +1308,6 @@
         abilities (:abilities cdef)
         ab (get-in cdef [:abilities ability])
         cost (:cost ab)]
-    (prn "play-copied-ability:abilities" abilities)
-    (prn "play-copied-ability:ab" ab)
-    (prn "play-copied-ability:cost" cost)    
     (when (or (nil? cost)
               (apply can-pay? state side cost))
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
@@ -1748,6 +1745,32 @@
           (prn "dest-card" dest-card)
           (update! state side dest-card)
         ))
+
+; I'm making the assumption that we only copy effects if there is a :leave-play effect, as these are persistent effects as opposed to a one-time scored effect.
+; think Mandatory Upgrades vs. Improved Tracers
+(defn copy-leave-play-effects [state side dest source]
+  (let [source-def (card-def source)]
+    (if-let [source-leave-play (:leave-play source-def)]
+      (let [source-effect (:effect source-def)
+            dest-card (merge dest {:source-leave-play source})]
+        (if (not (nil? source-effect)) (source-effect state side source nil))
+        (update! state side dest-card))
+      )))
+
+     ; (when-let [leave-effect (:leave-play (card-def card))]
+     ;   (when (or (and (= (:side card) "Runner") (:installed card))
+     ;             (:rezzed card)
+     ;             (= (first (:zone card)) :current)
+     ;             (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
+     ;     (leave-effect state side card nil)))
+
+
+(defn fire-leave-play-effects [state side card]
+  (if-let [source-leave-play (:source-leave-play card)]
+    (let [source-def (card-def source-leave-play)
+          leave-effect (:leave-play source-def)]
+          (if (not (nil? leave-effect)) (leave-effect state side card nil))
+      )))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
