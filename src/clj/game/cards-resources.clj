@@ -258,6 +258,15 @@
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
 
+   "Jak Sinclair"
+   {:install-cost-bonus (req [:credit (* -1 (:link runner))])
+    :events {:runner-turn-begins
+              {:optional {:prompt "Use Jak Sinclair to make a run?"
+                          :yes-ability {:prompt "Choose a server"
+                                        :choices (req servers)
+                                        :msg (msg "make a run on " target " during which no programs can be used")
+                                        :effect (effect (run target))}}}}}
+
    "John Masanori"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :msg "draw 1 card" :once-key :john-masanori-draw
