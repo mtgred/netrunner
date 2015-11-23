@@ -31,7 +31,10 @@
         (case (:type msg)
           "game" (do (swap! app-state assoc :gameid (:gameid msg))
                      (when (:started msg) (launch-game nil)))
-          "games" (do (swap! app-state assoc :games (sort-by :date > (vals (:games msg))))
+          "games" (do (swap! app-state assoc :games
+                             (sort-by #(vec (map (assoc % :started (not (:started %)))
+                                                 [:started :date]))
+                                      > (vals (:games msg))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
                           (.play (.getElementById js/document sound)))))
