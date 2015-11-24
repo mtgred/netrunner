@@ -4,7 +4,7 @@
   {"Accelerated Beta Test"
    (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE from the top of the play area to install"
                                   :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
-                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
+                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
                                                (trigger-event state side :rez target)
                                                  (when (< n i)
                                                    (resolve-ability state side (abt (inc n) i) card nil)))})]
@@ -168,6 +168,10 @@
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Global Food Initiative"
+   {:agendapoints-runner (req (do 2))}
+
+
    "Glenn Station"
    {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
                  :prompt "Choose a card to host on Glenn Station" :choices (req (:hand corp))
@@ -248,7 +252,7 @@
     :choices {:req #(and (#{"Asset" "Upgrade"} (:type %))
                          (#{[:hand] [:discard]} (:zone %))
                          (= (:side %) "Corp"))}
-    :effect (effect (corp-install target nil {:install-state :rezzed}))}
+    :effect (effect (corp-install target nil {:install-state :rezzed-no-cost}))}
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))

@@ -248,7 +248,7 @@
                             (#{:hand :deck :discard} (first dest))
                             (not (:facedown c))))
                  (desactivate state side c) c)
-             c (if (= dest [:rig :facedown])(assoc c :facedown true) (dissoc c :facedown))
+             c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
@@ -637,19 +637,30 @@
 (defn damage-prevent [state side dtype n]
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0)))
 
+(defn damage-defer [state side dtype n]
+  (swap! state assoc-in [:damage :defer-damage dtype] n )
+)
+
+(defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
+  (when (not unpreventable) (get-in @state [:damage :defer-damage dtype]))
+)
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
-  (let [hand (get-in @state [:runner :hand])]
-       (when (< (count hand) n)
-             (flatline state))
-       (when (= type :brain)
-             (swap! state update-in [:runner :brain-damage] #(+ % n))
-             (swap! state update-in [:runner :max-hand-size] #(- % n)))
-       (doseq [c (take n (shuffle hand))]
-              (trash state side c {:unpreventable true :cause type} type))
-       (trigger-event state side :damage type card)))
+  (swap! state update-in [:damage :defer-damage] dissoc type)
+  (trigger-event state side :pre-resolve-damage type card n)
+  (let [n (if (get-defer-damage state side type args) 0 n)]
+    (let [hand (get-in @state [:runner :hand])]
+         (when (< (count hand) n)
+               (flatline state))
+         (when (= type :brain)
+               (swap! state update-in [:runner :brain-damage] #(+ % n))
+               (swap! state update-in [:runner :max-hand-size] #(- % n)))
+         (doseq [c (take n (shuffle hand))]
+                (trash state side c {:unpreventable true :cause type} type))
+         (trigger-event state side :damage type card))))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
@@ -882,33 +893,47 @@
     (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
     (update-breaker-strength state side (get-card state card))))
 
+(defn get-agenda-points [state side card]
+  (let [base-points (:agendapoints card)
+        runner-fn (:agendapoints-runner (card-def card))
+        corp-fn (:agendapoints-corp (card-def card))]
+    (if (and (= side :runner) (not (nil? runner-fn)))
+      (runner-fn state side card nil)
+        (if (and (= side :corp) (not  (nil? corp-fn)))
+          (corp-fn state side card nil)
+          base-points)
+  ))
+)
+
 (defn score [state side args]
   (let [card (or (:card args) args)]
     (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
       (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card)]
-        (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
-                                    " agenda point" (when (> (:agendapoints c) 1) "s")))
-        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
-        (gain-agenda-point state :corp (:agendapoints c))
+            c (card-init state :corp moved-card)
+            points (get-agenda-points state :corp c)]
+        (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                    " agenda point" (when (> points 1) "s")))
+        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+        (gain-agenda-point state :corp points)
         (set-prop state :corp c :advance-counter 0)
+        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
         (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-          (trash state side current))
-        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
+          (trash state side current))))))
 
 (defn as-agenda [state side card n]
   (move state side (assoc card :agendapoints n) :scored)
   (gain-agenda-point state side n))
 
 (defn steal [state side card]
-  (let [c (move state :runner (dissoc card :advance-counter) :scored)]
+  (let [c (move state :runner (dissoc card :advance-counter) :scored)
+        points (get-agenda-points state :runner c)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
-    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c)
-                                   " agenda point" (when (> (:agendapoints c) 1) "s")))
-    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
-    (gain-agenda-point state :runner (:agendapoints c))
+    (system-msg state :runner (str "steals " (:title c) " and gains " points
+                                   " agenda point" (when (> points 1) "s")))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) points))
+    (gain-agenda-point state :runner points)
     (when-let [current (first (get-in @state [:corp :current]))]
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
@@ -1416,7 +1441,7 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       (when installed
+       (when (and installed (:recurring (card-def c)))
          (card-init state side c false))
        c))))
 
@@ -1504,7 +1529,7 @@
                      (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                               (:title prev-card) "a card") " in " server))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [card-name (if (or (= :rezzed install-state) (= :face-up install-state) (:rezzed c))
+                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
                                    (:title card) "a card")]
                    (system-msg state side (str (build-spend-msg cost-str "install")
                                                 card-name " in " server)))
@@ -1512,8 +1537,10 @@
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
                      (update-advancement-cost state side moved-card))
-                   (when (= install-state :rezzed)
+                   (when (= install-state :rezzed-no-cost)
                      (rez state side moved-card {:no-cost true}))
+                   (when (= install-state :rezzed)
+                     (rez state side moved-card))
                    (when (= install-state :face-up)
                      (card-init state side (assoc (get-card state moved-card) :rezzed true) false))))))))))
 
@@ -1562,7 +1589,7 @@
 (defn forfeit [state side card]
   (let [c (desactivate state side card)]
     (system-msg state side (str "forfeits " (:title c)))
-    (gain state side :agenda-point (- (:agendapoints c)))
+    (gain state side :agenda-point (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
 
 (defn expose [state side target]

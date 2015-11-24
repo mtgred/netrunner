@@ -56,6 +56,28 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
+   "Chronos Protocol: Selective Mind-mapping"
+   {:events
+    {:pre-resolve-damage
+     {:once :per-turn
+      :req (req (= target :net))
+      :effect (effect (damage-defer :net (last targets))
+                      (resolve-ability
+                        {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
+                                                 "grip to select the first card trashed?") :player :corp
+                                    :yes-ability {:prompt (msg "Choose a card to trash")
+                                                  :choices (req (:hand runner)) :not-distinct true
+                                                  :msg (msg "trash " (:title target)
+                                                         (when (> (- (get-defer-damage state side :net nil) 1) 0)
+                                                           (str " and deal "
+                                                                (- (get-defer-damage state side :net nil) 1)
+                                                                " more net damage")))
+                                                  :effect (effect (trash target)
+                                                                  (damage :net (- (get-defer-damage state side :net nil) 1)
+                                                                          {:unpreventable true :card card}))}
+                                    :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil)
+                                                                         {:unpreventable true :card card}))}}} card nil))}}}
+
    "Cybernetics Division: Humanity Upgraded"
    {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
 
@@ -100,14 +122,14 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
-                         :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
-                                        (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
+             {:optional {:prompt (msg "Install another " (:type target) " from your Grip?")
+                         :req (req (and (first-event state side :runner-install)
+                                        (some #(= (:type %) (:type target)) (:hand runner))))
                          :yes-ability {:effect (req (let [type (:type target)]
                                               (resolve-ability
                                                state side
-                                               {:prompt (msg "Choose a " type " to install")
-                                                :choices {:req #(and (has? % :type type) (= (:zone %) [:hand]))}
+                                               {:prompt (msg "Choose another " type " to install from your grip")
+                                                :choices {:req #(and (= (:type %) type) (= (:zone %) [:hand]))}
                                                 :msg (msg "install " (:title target))
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
 
@@ -188,12 +210,19 @@
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
-   {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :player :runner :effect (effect (move :corp target :hand))}
-             :agenda-stolen {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :effect (req (move state :corp target :hand)
-                                          (swap! state update-in [:runner :prompt] rest)
-                                          (handle-end-run state side))}}}
+   {:events {:agenda-scored
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state :runner (assoc card :bounce-hq true)))}
+             :agenda-stolen
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state side (assoc card :bounce-hq true)))}}
+    :abilities [{:req (req (:bounce-hq card))
+                 :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
+                 :msg "add 1 unrezzed card to HQ"
+                 :effect (effect (move :corp target :hand)
+                                 (update! (dissoc (get-card state card) :bounce-hq)))}]}
 
    "MaxX: Maximum Punk Rock"
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"

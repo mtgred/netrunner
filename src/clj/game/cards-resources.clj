@@ -104,9 +104,22 @@
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "Dr. Lovegood"
+   {:abilities [{:prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
+                 :choices {:req #(:installed %)}
+                 :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
+                 :effect (req (let [c target]
+                                (update! state side (dissoc target :events :abilities))
+                                (desactivate state side target)
+                                (register-events state side
+                                                 {:runner-turn-ends
+                                                  {:effect (effect (card-init (get-card state c) false)
+                                                                   (unregister-events card))}} card)))}]
+    :events {:runner-turn-ends nil}}
+
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
-             :runner-turn-begins {:msg "lose 1 credit" :effect (effect (lose :credit 1))}}}
+             :runner-turn-begins {:msg "lose 1 [Credits]" :effect (effect (lose :credit 1))}}}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
@@ -160,15 +173,19 @@
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
-                                (gain-agenda-point state :runner (:agendapoints c))))
+                                (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                  :msg (msg (let [c (first (:hosted card))]
                              (str "add " (:title c) " to their score area and gain "
-                             (:agendapoints c) " agenda point" (when (> (:agendapoints c) 1) "s"))))}]}
+                             (:agendapoints c) " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
-                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}}}
+   {:events {:agenda-scored {:effect (req (system-msg state :runner (str "can access cards in HQ by clicking on Gang Sign"))
+                                          (update! state side (assoc card :access-hq true)))}}
+    :abilities [{:req (req (:access-hq card))
+                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
+                 :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                (resolve-ability state :runner (choose-access c '(:hq)) card nil)
+                                (update! state side (dissoc (get-card state card) :access-hq))))}]}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -194,7 +211,9 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]
+                 :effect (req (trash state side card {:cause :ability-cost})
+                              (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (handle-access state side (get-in @state [:corp :discard])))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
@@ -207,10 +226,10 @@
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Human First"
-   {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :runner :credit (:agendapoints target)))}
-             :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :credit (:agendapoints target)))}}}
+   {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :runner :credit (get-agenda-points state :runner target)))}
+             :agenda-stolen {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :credit (get-agenda-points state :runner target)))}}}
    "Hunting Grounds"
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"
@@ -330,9 +349,8 @@
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :cost [:click 1] :prompt "Choose a connection to install on Off-Campus Apartment"
-                 :choices {:req #(and (has? % :subtype "Connection")
-                                      (= (:zone %) [:hand]))}
+                 :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                 :choices {:req #(and (has? % :subtype "Connection") (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"

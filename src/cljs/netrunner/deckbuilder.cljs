@@ -22,11 +22,13 @@
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
 
+(defn alt-art? [card]
+  (or (get-in @app-state [:user :special])
+      (not= "Alternates" (:setname card))))
+
 (defn lookup [side query]
   (let [q (.toLowerCase query)
-        cards (filter #(and (= (:side %) side)
-                            (or (get-in @app-state [:user :special])
-                                (not= "Alternates" (:setname %))))
+        cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))]
     (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
       card
@@ -71,15 +73,24 @@
       (load-decks decks)
       (>! cards-channel cards)))
 
+(defn distinct-by [f coll]
+  (letfn [(step [xs seen]
+            (lazy-seq (when-let [[x & more] (seq xs)]
+                        (let [k (f x)]
+                          (if (seen k)
+                            (step more seen)
+                            (cons x (step more (conj seen k))))))))]
+    (step coll #{})))
+
 (defn side-identities [side]
-  (filter #(and (= (:side %) side)
-                (not= "Special" (:setname %))
-                (= (:type %) "Identity")) (:cards @app-state)))
+  (->> (:cards @app-state)
+       (filter #(and (= (:side %) side)
+                     (= (:type %) "Identity")
+                     (alt-art? %)))
+       (distinct-by :title)))
 
 (defn get-card [title]
-  (some #(when (and (= (:title %) title)
-                    (or (get-in @app-state [:user :special])
-                        (not= "Alternates" (:setname %)))) %)
+  (some #(when (and (= (:title %) title) (alt-art? %)) %)
         (:cards @app-state)))
 
 (defn deck->str [owner]
@@ -118,7 +129,7 @@
   (and (>= (card-count cards) (:minimumdecksize identity))
        (<= (influence deck) (:influencelimit identity))
        (every? #(and (allowed? (:card %) identity)
-                     (<= (:qty %) (or (get-in % [:card :limit]) 3))) cards)
+                     (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
@@ -156,23 +167,13 @@
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
 
-(defn distinct-by [f coll]
-  (letfn [(step [xs seen]
-            (lazy-seq (when-let [[x & more] (seq xs)]
-                        (let [k (f x)]
-                          (if (seen k)
-                            (step more seen)
-                            (cons x (step more (conj seen k))))))))]
-    (step coll #{})))
-
 (defn match [identity query]
   (if (empty? query)
     []
     (let [cards (->> (:cards @app-state)
                      (filter #(and (allowed? % identity)
                                    (not= "Special" (:setname %))
-                                   (or (get-in @app-state [:user :special])
-                                       (not= "Alternates" (:setname %)))))
+                                   (alt-art? %)))
                      (distinct-by :title))]
       (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
@@ -292,7 +293,7 @@
         (go (while true
               (let [edit (<! edit-channel)
                     card (:card edit)
-                    max-qty (or (:limit card) 3)
+                    max-qty (or (:limited card) 3)
                     cards (om/get-state owner [:deck :cards])
                     match? #(when (= (get-in % [:card :title]) (:title card)) %)
                     existing-line (some match? cards)]

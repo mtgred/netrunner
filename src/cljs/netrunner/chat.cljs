@@ -8,8 +8,8 @@
             [netrunner.main :as main]))
 
 (def app-state
-  (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :français []
-                    :español [] :italia [] :português [] :sverige []}}))
+  (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
+                    :español [] :italia [] :português [] :sverige [] :stimhack-league []}}))
 
 (def chat-channel (chan))
 (def chat-socket (.connect js/io (str js/iourl "/chat")))
@@ -100,7 +100,7 @@
        [:div.chat-app
         [:div.blue-shade.panel.channel-list
          [:h4 "Channels"]
-         (for [ch (keys (:channels cursor))]
+         (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :português :sverige :stimhack-league]]
            (om/build channel-view {:channel ch :active-channel (:channel state)}
                      {:init-state {:channel-ch (:channel-ch state)}}))]
         [:div.chat-box

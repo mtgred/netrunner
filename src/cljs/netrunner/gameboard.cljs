@@ -252,7 +252,7 @@
                          )))) ": ")))
 
 (defn remote->num [server]
-  (-> server str (clojure.string/split #":remote") last))
+  (-> server str (clojure.string/split #":remote") last js/parseInt))
 
 (defn remote->name [server]
   (let [num (remote->num server)]
@@ -261,10 +261,10 @@
 (defn get-remotes [servers]
  (->> servers 
      (filter #(not (#{:hq :rd :archives} (first %))))
-     (sort-by #(remote->name (first %)))))
+     (sort-by #(remote->num (first %)))))
 
 (defn remote-list [remotes]
-  (->> remotes (map #(remote->name (first %))) sort))
+  (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
   
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
@@ -702,7 +702,7 @@
                             [:div.panel.blue-shade
                              (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
                              (if (zero? (:position run))
-                               (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
+                               (cond-button "Successful Run" (:no-action run) #(send-command "access"))
                                (cond-button "Continue" (:no-action run) #(send-command "continue")))
                              (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
                                           #(send-command "jack-out"))]

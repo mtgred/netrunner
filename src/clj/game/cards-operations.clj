@@ -11,6 +11,18 @@
                       :effect (effect (card-init target))}
                     card nil)))}
 
+   "Ad Blitz"
+   (let [abhelp (fn ab [n total]
+                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (has? % :subtype "Advertisement")
+                                        (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                   :effect (req (corp-install state side target nil {:install-state :rezzed})
+                                (when (< n total)
+                                  (resolve-ability state side (ab (inc n) total) card nil)))})]
+   {:prompt "How many advertisements?" :choices :credit :msg (msg "install and rez " target " advertisements")
+    :effect (effect (resolve-ability (abhelp 1 target) card nil))})
+
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
@@ -453,6 +465,21 @@
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
+
+   "Targeted Marketing"
+   {:abilities [{:req (req (= (:zone card) [:current]))
+                 :label "Gain 10 [Credits] because the Runner installed the named card"
+                 :prompt "Choose the card you named in the Runner's rig"
+                 :choices {:req #(and (= (:side %) "Runner")
+                                      (not (:facedown %))
+                                      (not= (first (:zone %)) :discard)
+                                      (not= (:type %) "Identity"))}
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title target))
+                 :effect (effect (gain :credit 10))}
+                {:req (req (and (= (:zone card) [:current]) (= (:type (last (:discard runner))) "Event")))
+                 :label "Gain 10 [Credits] because the Runner played the named Event"
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title (last (:discard runner))))
+                 :effect (effect (gain :credit 10))}]}
 
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner

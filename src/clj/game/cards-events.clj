@@ -45,8 +45,8 @@
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
-   {:prompt "Choose a Resource to install"
-    :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
+   {:prompt "Choose a resource to install from your Grip"
+    :choices {:req #(and (= (:type %) "Resource") (= (:zone %) [:hand]))}
     :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
@@ -268,18 +268,21 @@
    {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
                                                               (assoc card :zone '(:discard))))
     :events {:successful-run-ends
-             {:prompt "Choose a piece of ICE in Archives"
-              :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
-              :effect (req (let [icename (:title target)]
-                             (resolve-ability
-                               state side
-                               {:prompt (msg "Choose a rezzed copy of " icename " to trash")
-                                :choices {:req #(and (= (:type %) "ICE")
-                                                     (:rezzed %)
-                                                     (= (:title %) icename))}
-                                :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
-                                :effect (req (trash state :corp target))} card nil)
-                             (unregister-events state side card)))}}}
+             {:req (req (= target :archives))
+              :effect (effect (resolve-ability
+                                {:prompt "Choose a piece of ICE in Archives"
+                                 :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
+                                 :effect (req (let [icename (:title target)]
+                                                (resolve-ability
+                                                  state side
+                                                  {:prompt (msg "Choose a rezzed copy of " icename " to trash")
+                                                   :choices {:req #(and (= (:type %) "ICE")
+                                                                        (:rezzed %)
+                                                                        (= (:title %) icename))}
+                                                   :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
+                                                   :effect (req (trash state :corp target))} card nil)))}
+                               card nil)
+                              (unregister-events card))}}}
 
    "Indexing"
    {:effect (effect (run :rd {:replace-access
@@ -386,8 +389,9 @@
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
    "Modded"
-   {:prompt "Choose a card to install"
-    :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
+    :choices {:req #(and (or (= (:type %) "Hardware") (= (:type %) "Program"))
+                         (= (:zone %) [:hand]))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"

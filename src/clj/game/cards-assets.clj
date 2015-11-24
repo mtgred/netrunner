@@ -406,6 +406,8 @@
    "Reversed Accounts"
    {:advanceable :always
     :abilities [{:cost [:click 1]
+                 :label "Force the Runner to lose 4 [Credits] per advancement"
+                 :msg (msg "force the Runner to lose " (min (* 4 (:advance-counter card)) (:credit runner)) " [Credits]")
                  :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
 
    "Rex Campaign"
@@ -416,7 +418,7 @@
                              (trash state side card)
                              (resolve-ability state side
                                               {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                                               :choices ["Remove 1 bad publicity" "Gain 5 credits"]
+                                               :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
                                                :msg (msg (.toLowerCase target))
                                                :effect (req (if (= target "Remove 1 bad publicity")
                                                               (lose state side :bad-publicity 1)
@@ -516,6 +518,25 @@
    {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
+   "Team Sponsorship"
+   {:events {:agenda-scored {:effect (req (system-msg state :corp (str "can install a card from Archives or HQ"
+                                                                       " by clicking on Team Sponsorship"))
+                                          (update! state side (assoc card :ts-active true)))}}
+    :abilities [{:label "Install a card from Archives or HQ"
+                 :req (req (:ts-active card))
+                 :prompt "Choose a card from Archives or HQ to install" :show-discard true
+                 :choices {:req #(and (not= (:type %) "Operation")
+                                      (#{[:hand] [:discard]} (:zone %)))}
+                 :msg (msg "install " (if (:seen target) (:title target) "an unseen card"))
+                 :effect (effect (corp-install target nil {:no-install-cost true})
+                                 (update! (dissoc (get-card state card) :ts-active)))}]}
+
+   "Tech Startup"
+   {:abilities [{:label "Install an asset from R&D"
+                 :prompt "Choose an asset to install" :msg (msg "install " (:title target))
+                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
+
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"
                  :cost [:click 1]
@@ -541,31 +562,6 @@
                                   (update-ice-strength state side snew))))
                  :msg "swap the positions of two ICE"}]}
 
-   "Team Sponsorship"
-   (let [thelper (fn ts [n] {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
-                             :msg (msg "install a card from " target)
-                             :effect (effect (resolve-ability
-                                               {:prompt "Choose a card to install" :not-distinct true
-                                                :msg (msg "install " (if (:seen target) (:title target) "an unseen card"))
-                                                :choices (req (filter #(not= (:type %) "Operation")
-                                                                      ((if (= target "HQ") :hand :discard) corp)))
-                                                :effect (req (corp-install state side target nil {:no-install-cost true})
-                                                             (when (pos? (dec n))
-                                                               (resolve-ability state side (ts (dec n)) card nil)))}
-                                               card targets))})]
-   {:events {:agenda-scored
-             {:req (req (not (get-in @state [:per-turn (keyword (str "team-sponsorship-" (:cid target)))]))) ; only one TS responds per score
-              :effect (req (let [ts (->> (:corp @state) :servers seq flatten (mapcat :content)
-                                         (filter #(and (:rezzed %) (= (:title %) "Team Sponsorship"))) count)]
-                             (swap! state assoc-in [:per-turn (keyword (str "team-sponsorship-" (:cid target)))] true)
-                             (resolve-ability state side (thelper ts) card nil)))}}})
-
-   "Tech Startup"
-   {:abilities [{:label "Install an asset from R&D"
-                 :prompt "Choose an asset to install" :msg (msg "install " (:title target))
-                 :choices (req (cancellable (filter #(has? % :type "Asset") (:deck corp)) :sorted))
-                 :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
-
    "Test Ground"
    {:advanceable :always
     :abilities [{:label "Derez 1 card for each advancement token"
@@ -573,11 +569,11 @@
 
    "The Board"
    {:effect (effect (lose :runner :agenda-point
-                          (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+                          (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :leave-play (effect (gain :runner :agenda-point
-                              (count (filter #(> (:agendapoints %) 0) (:scored runner)))))
+                              (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
-    :events {:agenda-stolen {:req (req (> (:agendapoints target) 0))
+    :events {:agenda-stolen {:req (req (> (get-agenda-points state :runner target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
    "The News Now Hour"
