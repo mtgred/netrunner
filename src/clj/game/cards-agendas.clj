@@ -39,7 +39,7 @@
                              {:choices {:req #(or (= (:advanceable %) "always")
                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                   (= (:type %) "Agenda"))}
-                              :msg (msg "add " c " advancement tokens on a card")
+                              :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
                               :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
    "Bifrost Array"
@@ -227,7 +227,7 @@
                                                     (or (= (:advanceable %) "always")
                                                         (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                         (= (:type %) "Agenda")))}
-                               :msg (msg "add " n " advancement tokens on "
+                               :msg (msg "place " n " advancement tokens on "
                                          (if (:rezzed target) (:title target) "a card"))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
