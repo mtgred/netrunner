@@ -149,7 +149,7 @@
                  :choices {:req #(or (= (:advanceable %) "always")
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                      (= (:type %) "Agenda"))}
-                 :effect (effect (add-prop target :advance-counter 1)) :once :per-turn
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))}]}
 
    "Edge of World"
