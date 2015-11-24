@@ -89,10 +89,9 @@
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
                               :show-discard true
-                              :choices {:req #(and (:side % "Corp")
+                              :choices {:req #(and (= (:side %) "Corp")
                                                    (not= (:type %) "Operation")
-                                                   (or (= (:zone %) [:hand])
-                                                       (= (:zone %) [:discard])))}
+                                                   (#{[:hand] [:discard]} (:zone %)))}
                               :effect (req (corp-install state side target
                                             (last (get-remote-names @state)) {:no-install-cost true})
                                            (when (< n 2)
@@ -102,8 +101,7 @@
                                :show-discard true
                                :choices {:req #(and (:side % "Corp")
                                                     (not= (:type %) "Operation")
-                                                    (or (= (:zone %) [:hand])
-                                                        (= (:zone %) [:discard])))}
+                                                    (#{[:hand] [:discard]} (:zone %)))}
                                :effect (req (corp-install state side target "New remote" {:no-install-cost true})
                                             (resolve-ability state side (dhelper 1) card nil))
                                :msg "create a new remote server, installing cards at no cost"}}})
@@ -245,13 +243,12 @@
                  :msg "prevent the Runner from jacking out"}]}
 
    "License Acquisition"
-   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
-    :msg (msg "install a card from " target)
-    :effect (effect (resolve-ability
-                      {:prompt "Choose a card to install" :msg (msg "install and rez " (:title target))
-                       :choices (req (filter #(#{"Asset" "Upgrade"} (:type %))
-                                             ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:install-state :rezzed}))} card targets))}
+   {:prompt "Choose an asset or upgrade to install from Archives or HQ" :show-discard true
+    :msg (msg "install and rez " (:title target))
+    :choices {:req #(and (#{"Asset" "Upgrade"} (:type %))
+                         (#{[:hand] [:discard]} (:zone %))
+                         (= (:side %) "Corp"))}
+    :effect (effect (corp-install target nil {:install-state :rezzed}))}
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))
@@ -321,7 +318,7 @@
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (cancellable (:deck corp) :sorted))
-                 :cancelled (effect (system-msg "cancels the effect of Project Atlas"))
+                 :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
                  :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Beale"

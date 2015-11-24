@@ -33,8 +33,7 @@
                  :prompt "Choose a card to install from Archives or HQ"
                  :show-discard true :priority true
                  :choices {:req #(and (not= (:type %) "Operation")
-                                      (or (= (:zone %) [:discard])
-                                          (= (:zone %) [:hand]))
+                                      (#{[:hand] [:discard]} (:zone %))
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))
                  :msg (msg "install a card from " (zone->name (central->zone (:zone target))))}]}
@@ -142,8 +141,7 @@
                   :prompt "Choose a card to install from Archives"
                   :show-discard true :priority true
                   :choices {:req #(and (not= (:type %) "Operation")
-                                       (or (= (:zone %) [:discard])
-                                           (= (:zone %) [:hand]))
+                                       (#{[:hand] [:discard]} (:zone %))
                                        (= (:side %) "Corp"))}
                   :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
@@ -362,7 +360,8 @@
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
 
    "Kitsune"
-   {:abilities [{:prompt "Choose a card in HQ" :choices (req (:hand corp))
+   {:abilities [{:prompt "Choose a card in HQ to force access"
+                 :choices {:req #(= (:zone %) [:hand])}
                  :label "Force the Runner to access a card in HQ"
                  :msg (msg "force the Runner to access " (:title target))
                  :effect (effect (handle-access targets) (trash card))}]}
@@ -440,9 +439,9 @@
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
-                 :choices (req (filter #(has? % :type "ICE") (:hand corp)))
-                 :prompt "Choose an ICE to install"
-                 :effect (req (corp-install state side target (:server run)))}]}
+                 :choices {:req #(and (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                 :prompt "Choose an ICE to install from HQ"
+                 :effect (req (corp-install state side target (:server run) {:no-install-cost true}))}]}
 
    "Mother Goddess"
    (let [ab {:req (req (= (:type target) "ICE"))

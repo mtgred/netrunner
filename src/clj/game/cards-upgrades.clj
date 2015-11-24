@@ -26,8 +26,9 @@
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
                  :cost [:click 1] :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
-                 :choices (req (filter #(and (= (:type %) "ICE")
-                                             (has? % :subtype "Bioroid")) (:hand corp)))
+                 :choices {:req #(and (= (:type %) "ICE")
+                                      (has? % :subtype "Bioroid")
+                                      (= (:zone %) [:hand]))}
                  :msg "host a piece of bioroid ICE"
                  :effect (effect (trigger-event :corp-install target)
                                  (host card target {:facedown true}))}
@@ -155,7 +156,10 @@
    {:abilities
     [{:req (req this-server)
       :label "Swap the ICE being approached with a piece of ICE from HQ"
-      :prompt "Choose a piece of ICE" :choices (req (filter #(has? % :type "ICE") (:hand corp))) :once :per-run
+      :prompt "Choose a piece of ICE"
+      :choices {:req #(and (= (:type %) "ICE")
+                           (= (:zone %) [:hand]))}
+      :once :per-run
       :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
       :effect (req (let [hqice target
                          c current-ice]

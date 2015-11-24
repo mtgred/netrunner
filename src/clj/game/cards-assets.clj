@@ -356,12 +356,16 @@
     :access {:optional
              {:prompt "Score an Agenda from HQ?"
               :req (req installed)
-              :yes-ability {:prompt "Choose an Agenda to score"
-                           :choices (req (filter #(and (has? % :type "Agenda")
-                                                       (<= (:advancementcost %) (:advance-counter card)))
-                                                 (:hand corp)))
-                           :msg (msg "score " (:title target))
-                           :effect (effect (score (assoc target :advance-counter (:advancementcost target))))}}}}
+              :yes-ability {:effect (req (let [c card]
+                                           (resolve-ability
+                                             state side
+                                             {:prompt "Choose an Agenda in HQ to score"
+                                              :choices {:req #(and (= (:type %) "Agenda")
+                                                                   (<= (:advancementcost %) (:advance-counter c))
+                                                                   (= (:zone %) [:hand]))}
+                                              :msg (msg "score " (:title target))
+                                              :effect (effect (score (assoc target :advance-counter
+                                                                                   (:advancementcost target))))} c nil)))}}}}
 
    "Primary Transmission Dish"
    {:recurring 3}
@@ -457,12 +461,12 @@
                  :effect (effect (move (last (:deck corp)) :hand))}
                 {:label "[Trash]: Search R&D for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
-                 :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
                  :effect (effect (shuffle! :deck) (move target :deck)
                                  (trash card {:cause :ability-cost}))}
                 {:label "[Trash]: Search Archives for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
-                 :choices (req (filter #(has? % :type "Agenda") (:discard corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Agenda") (:discard corp)) :sorted))
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
