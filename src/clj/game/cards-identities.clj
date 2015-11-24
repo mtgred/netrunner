@@ -175,7 +175,7 @@
                                          :choices {:req #(or (= (:advanceable %) "always")
                                                              (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                              (= (:type %) "Agenda"))}
-                                         :effect (effect (add-prop target :advance-counter 4))} card nil)))))}]}
+                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))
