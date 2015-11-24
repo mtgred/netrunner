@@ -40,7 +40,7 @@
                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                   (= (:type %) "Agenda"))}
                               :msg (msg "add " c " advancement tokens on a card")
-                              :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}}
+                              :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
@@ -229,7 +229,7 @@
                                                         (= (:type %) "Agenda")))}
                                :msg (msg "add " n " advancement tokens on "
                                          (if (:rezzed target) (:title target) "a card"))
-                               :effect (effect (add-prop :corp target :advance-counter n))} card nil)))}}}
+                               :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"
    {:data {:counter 3}
