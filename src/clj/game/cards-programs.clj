@@ -296,8 +296,10 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Medium"
-   {:events {:no-action {:req (req (and run (= (:server run) [:rd]) (not current-ice))
-                                        (and (:counter card) (> (:counter card) 0)))
+   {:events {:no-action {:req (req (and run
+                                        (= (first (get-in @state [:run :server])) :rd)
+                                        (not current-ice)
+                                        (and (:counter card) (> (:counter card) 0))))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional R&D accesses"
                                                                      " by clicking on Medium"))
                                       (update! state side (assoc card :medium-active true)))}
@@ -319,8 +321,10 @@
    {:recurring 2}
 
    "Nerve Agent"
-   {:events {:no-action {:req (req (and run (= (:server run) [:hq]) (not current-ice))
-                                        (and (:counter card) (> (:counter card) 0)))
+   {:events {:no-action {:req (req (and run
+                                        (= (first (get-in @state [:run :server])) :hq)
+                                        (not current-ice)
+                                        (and (:counter card) (> (:counter card) 0))))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
                                                                      " by clicking on Nerve Agent"))
                                       (update! state side (assoc card :nerve-active true)))}
