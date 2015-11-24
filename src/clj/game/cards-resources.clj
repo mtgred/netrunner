@@ -271,11 +271,10 @@
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
-                 :prompt "Choose a non-virus program to install on London Library"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (not (has? % :subtype "Virus"))
-                                             (<= (:memoryunits %) (:memory runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a non-virus program to install on London Library from your grip"
+                 :choices {:req #(and (= (:type %) "Program")
+                                      (not (has? % :subtype "Virus"))
+                                      (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
@@ -332,9 +331,8 @@
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
                  :cost [:click 1] :prompt "Choose a connection to install on Off-Campus Apartment"
-                 :choices (req (filter #(and (has? % :subtype "Connection")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :choices {:req #(and (has? % :subtype "Connection")
+                                      (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"
@@ -488,9 +486,9 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :prompt "Choose an event to play" :msg (msg "play " (:title target))
-                 :choices (req (filter #(and (has? % :type "Event")
-                                             (<= (:cost %) (:credit runner))) (:discard runner)))
+                 :prompt "Choose an event to play" :msg (msg "play " (:title target)) :show-discard true
+                 :choices {:req #(and (= (:type %) "Event")
+                                      (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
    "Scrubber"
@@ -537,9 +535,9 @@
    {:effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
-                 :choices (req (filter #(and (not= (:type %) "Event")
-                                             (can-pay? state side (modified-install-cost state side % [:credit -1])))
-                                       (:hosted card)))
+                 :choices (req (cancellable (filter #(and (not= (:type %) "Event")
+                                                          (can-pay? state side (modified-install-cost state side % [:credit -1])))
+                                                    (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (effect
                            (install-cost-bonus [:credit -1]) (runner-install (dissoc target :facedown))
@@ -593,7 +591,8 @@
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Choose a card to host on The Supplier"
-                 :choices (req (filter #(#{"Resource" "Hardware"} (:type %)) (:hand runner)))
+                 :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
+                                      (= (:zone %) [:hand]))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
@@ -629,7 +628,7 @@
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
-                 :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
+                 :choices (req (cancellable (filter #(has? % :type "Hardware") (:deck runner)) :sorted))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"

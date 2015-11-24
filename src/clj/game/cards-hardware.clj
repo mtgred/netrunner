@@ -143,11 +143,10 @@
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a non-AI icebreaker to install on Dinosaurus"
-                 :choices (req (filter #(and (has? % :subtype "Icebreaker")
-                                             (not (has? % :subtype "AI")))
-                                       (:hand runner)))
-                 :msg (msg "host " (:title target))
+                 :prompt "Choose a non-AI icebreaker to install on Dinosaurus from your grip"
+                 :choices {:req #(and (has? % :subtype "Icebreaker")
+                                      (not (has? % :subtype "AI"))
+                                      (= (:zone %) [:hand]))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
                                  (update-breaker-strength target))}
@@ -284,8 +283,8 @@
       :leave-play (effect (lose :memory 3))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority true
-                   :choices (req (filter #(= (:type %) "Program") (:hand runner)))
-                   :prompt "Choose a program to trash" :effect (effect (trash target)
+                   :choices {:req #(and (= (:type %) "Program") (= [:hand] (:zone %)))}
+                   :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
                                                                        (damage-prevent :brain 1)
                                                                        (damage-prevent :net 1))}]})
 
@@ -305,11 +304,10 @@
    {:recurring 1
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-Drive"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (<= (:memoryunits %) 1)
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive from your grip"
+                 :choices {:req #(and (= (:type %) "Program")
+                                      (<= (:memoryunits %) 1)
+                                      (= [:hand] (:zone %)))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}

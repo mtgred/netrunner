@@ -84,14 +84,15 @@
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
    "Déjà Vu"
-   {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
+   {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "add " (:title target) " to their Grip")
     :effect (req (move state side target :hand)
                  (when (has? target :subtype "Virus")
                    (resolve-ability state side
                                     {:prompt "Choose a virus to add to Grip"
                                      :msg (msg "add " (:title target) " to their Grip")
-                                     :choices (req (filter #(has? % :subtype "Virus") (:discard runner)))
+                                     :choices (req (cancellable
+                                                     (filter #(has? % :subtype "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
 
    "Demolition Run"
@@ -496,22 +497,19 @@
 
    "Scavenge"
    {:req (req (> (count (filter #(= (:type %) "Program") (all-installed state :runner))) 0))
-    :choices {:req #(= (:type %) "Program")}
-    :effect (req (let [trashed target]
+    :prompt "Choose an installed program to trash"
+    :choices {:req #(and (= (:type %) "Program") (:installed %))}
+    :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
                    (trash state side trashed)
                    (resolve-ability
                      state side
-                     {:prompt "Install a card from Grip or Heap?" :choices ["Grip" "Heap"]
-                      :effect (req (let [fr target]
-                                     (system-msg state side (str "trashes " (:title trashed) " to install a card from " fr))
-                                     (resolve-ability
-                                       state side
-                                       {:prompt "Choose a program to install"
-                                        :choices (req (filter #(and (= (:type %) "Program")
-                                                                    (<= (:cost %) (+ (:credit runner) (:cost trashed))))
-                                                              ((if (= fr "Grip") :hand :discard) runner)))
-                                        :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                                        (runner-install target))} card nil)))} card nil)))}
+                     {:prompt "Choose a program to install from your grip or heap" :show-discard true
+                      :choices {:req #(and (= (:type %) "Program")
+                                           (#{[:hand] [:discard]} (:zone %))
+                                           (can-pay? st si (modified-install-cost st si % [:credit tcost])))}
+                      :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
+                                      (runner-install target))
+                      :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
 
 
    "Scrubbed"
@@ -585,12 +583,12 @@
     :effect (effect (add-prop target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a program from Stack or Heap?" :choices ["Stack" "Heap"]
+   {:prompt "Install a program from Stack or Heap?" :choices (cancellable ["Stack" "Heap"])
     :msg (msg "install a program from " target) :effect
     (effect (resolve-ability
              {:prompt "Choose a program to install"
-              :choices (req (filter #(= (:type %) "Program")
-                                    ((if (= target "Heap") :discard :deck) runner)))
+              :choices (req (cancellable (filter #(= (:type %) "Program")
+                                                 ((if (= target "Heap") :discard :deck) runner))))
               :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
               :end-turn
               {:req (req (some #(when (and (= (:cid target) (:cid %)) (get-in % [:special :test-run])) %)

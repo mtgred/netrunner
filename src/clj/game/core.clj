@@ -294,15 +294,15 @@
 
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f {:keys [priority prompt-type show-discard cancelled] :as args}]
+  ([state side card msg choices f {:keys [priority prompt-type show-discard cancel-effect] :as args}]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
      (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
-                        :prompt-type prompt-type :show-discard show-discard :cancelled cancelled} (vec %))
+                        :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect} (vec %))
                 #(conj (vec %) {:msg prompt :choices choices :effect f :card card
-                                :prompt-type prompt-type :show-discard show-discard :cancelled cancelled})))))))
+                                :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -325,9 +325,10 @@
 
 (defn prompt!
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
-  ([state side card msg choices ability {:keys [priority prompt-type cancelled] :as args}]
+  ([state side card msg choices ability {:keys [priority prompt-type cancel-effect] :as args}]
     (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
-                 (assoc args :cancelled #(resolve-ability state side cancelled card [%])))))
+                 (if cancel-effect (assoc args :cancel-effect #(cancel-effect state side card [%]))
+                                   args))))
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
@@ -393,7 +394,7 @@
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
-                                          not-distinct priority cancelled] :as ability}
+                                          not-distinct priority cancel-effect] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when ability
     (when (and optional
@@ -412,13 +413,15 @@
           (if (:req choices)
             (show-select state (or player side) card ability {:priority priority})
             (let [n ((:number choices) state side card targets)]
-              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices) {:priority priority :cancelled cancelled})))
+              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices)
+                       {:priority priority :cancel-effect cancel-effect})))
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices) {:priority priority :cancelled cancelled})))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices)
+                     {:priority priority :cancel-effect cancel-effect})))
         (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
                    (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0))))
           (when-let [cost-str (apply pay (concat [state side card] cost))]
@@ -482,8 +485,8 @@
           (when (= (:choices prompt) :counter)
             (add-prop state side (:card prompt) :counter (- choice)))
           ((:effect prompt) (or choice card)))
-      (when (:cancelled prompt)
-        ((:cancelled prompt) choice)))
+      (when (:cancel-effect prompt)
+        ((:cancel-effect prompt) choice)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
