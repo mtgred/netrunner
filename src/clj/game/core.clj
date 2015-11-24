@@ -1327,6 +1327,38 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
+(defn play-copied-ability [state side {:keys [card ability targets] :as args}]
+  (let [source-card (:source card)
+        cdef (card-def source-card)
+        abilities (:abilities cdef)
+        ab (get-in cdef [:abilities ability])
+        cost (:cost ab)]
+    (when (or (nil? cost)
+              (apply can-pay? state side cost))
+        (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
+        (resolve-ability state side ab card targets))))
+
+(defn play-auto-pump [state side args]
+  (let [run (:run @state) card (get-card state (:card args))
+        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                         (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
+      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
+      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
+                                  (:title card) " to " (:current-strength (get-card state card)))))))
+
+;; add more dynamic ability implementations here
+(def dynamicabilitymap
+  {"auto-pump" play-auto-pump
+   "copy" play-copied-ability})
+
+(defn play-dynamic-ability [state side args]
+  ((dynamicabilitymap (:type args)) state (keyword side) args))
+
 (defn turn-message [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
         hand (if (= side :runner) "their Grip" "HQ")
@@ -1719,6 +1751,45 @@
 
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
+
+(defn copy-events [state side dest source]
+  (let [source-def (card-def source)
+        source-events (if (:events source-def) (:events source-def) {})
+        dest-card (merge dest {:events source-events})]
+          (update! state side dest-card)
+          (register-events state side (:events dest-card) dest-card)
+        ))
+
+
+(defn copy-abilities [state side dest source]
+  (let [source-def (card-def source)
+        source-abilities (if (:abilities source-def) (:abilities source-def) ())
+        ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
+        source-abilities (for [ab source-abilities]
+                    (assoc (select-keys ab [:cost :pump :breaks])
+                      :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
+                      :dynamic :copy))
+        dest-card (merge dest {:abilities source-abilities :source source})]
+          (update! state side dest-card)
+        ))
+
+; I'm making the assumption that we only copy effects if there is a :leave-play effect, as these are persistent effects as opposed to a one-time scored effect.
+; think Mandatory Upgrades vs. Improved Tracers
+(defn copy-leave-play-effects [state side dest source]
+  (let [source-def (card-def source)]
+    (if-let [source-leave-play (:leave-play source-def)]
+      (let [source-effect (:effect source-def)
+            dest-card (merge dest {:source-leave-play source})]
+        (if (not (nil? source-effect)) (source-effect state side source nil))
+        (update! state side dest-card))
+      )))
+
+(defn fire-leave-play-effects [state side card]
+  (if-let [source-leave-play (:source-leave-play card)]
+    (let [source-def (card-def source-leave-play)
+          leave-effect (:leave-play source-def)]
+          (if (not (nil? leave-effect)) (leave-effect state side card nil))
+      )))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
