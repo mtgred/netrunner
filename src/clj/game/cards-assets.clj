@@ -508,7 +508,7 @@
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
              :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-             :effect (effect (add-prop target :advance-counter 1))}}
+             :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
    {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
