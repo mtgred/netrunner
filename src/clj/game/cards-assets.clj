@@ -151,7 +151,7 @@
                  :choices {:req #(or (= (:advanceable %) "always")
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                      (= (:type %) "Agenda"))}
-                 :effect (effect (add-prop target :advance-counter 1)) :once :per-turn
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))}]}
 
    "Edge of World"
@@ -510,7 +510,7 @@
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
              :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-             :effect (effect (add-prop target :advance-counter 1))}}
+             :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
    {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn

@@ -240,7 +240,7 @@
                        [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
                        titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
                    (trash state side target {:cause :ability-cost})
-                   (when (seq titles) 
+                   (when (seq titles)
                      (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                    (if-let [ice (first r)]
                      (let [newice (assoc ice :zone (:zone target) :rezzed true)
@@ -319,7 +319,7 @@
                                     {:msg (msg "place " c " advancement tokens on "
                                                (if (:rezzed target) (:title target) "a card"))
                                      :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                                     :effect (effect (add-prop target :advance-counter c))} card nil)))}
+                                     :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
@@ -380,8 +380,8 @@
    {:choices {:max 2 :req #(or (= (:advanceable %) "always")
                                (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                (= (:type %) "Agenda"))}
-    :msg (msg "1 advancement tokens on " (count targets) " cards")
-    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
+    :msg (msg "place 1 advancement token on " (count targets) " cards")
+    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true})))}
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install"
@@ -399,8 +399,8 @@
                      {:choices {:req #(or (= (:advanceable %) "always")
                                           (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                           (= (:type %) "Agenda"))}
-                      :msg (msg "add " c " advancement tokens on a card")
-                      :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}
+                      :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                      :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
@@ -521,8 +521,8 @@
                                                               (or (= (:advanceable %) "always")
                                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                                   (= (:type %) "Agenda")))}
-                                         :effect  (effect (add-prop :corp target :advance-counter c)
-                                                          (add-prop :corp fr :advance-counter (- c))
+                                         :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
+                                                          (add-prop :corp fr :advance-counter (- c) {:placed true})
                                                           (system-msg (str "moves " c " advancement tokens from "
                                                                            (if (:rezzed fr) (:title fr) "a card") " to "
                                                                            (if (:rezzed target) (:title target) "a card"))))}

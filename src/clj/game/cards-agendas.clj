@@ -39,8 +39,8 @@
                              {:choices {:req #(or (= (:advanceable %) "always")
                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                   (= (:type %) "Agenda"))}
-                              :msg (msg "add " c " advancement tokens on a card")
-                              :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}}
+                              :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                              :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
@@ -227,9 +227,9 @@
                                                     (or (= (:advanceable %) "always")
                                                         (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                         (= (:type %) "Agenda")))}
-                               :msg (msg "add " n " advancement tokens on "
+                               :msg (msg "place " n " advancement tokens on "
                                          (if (:rezzed target) (:title target) "a card"))
-                               :effect (effect (add-prop :corp target :advance-counter n))} card nil)))}}}
+                               :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"
    {:data {:counter 3}
@@ -280,6 +280,7 @@
    "Oaktown Renovation"
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))
+                       :msg (msg "gain " (if (>= (:advance-counter (get-card state card)) 5) "3" "2") " [Credits]")
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 

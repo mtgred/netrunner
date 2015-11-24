@@ -66,10 +66,12 @@
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
-                {:label "Place 1 advancement token on an ICE that can be advanced on this server"
+                {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :choices {:req #(and (= (last (:zone %)) :ices)
+                                      (or (= (:advanceable %) "always")
+                                          (and (= (:advanceable %) "while-rezzed") (:rezzed %))))}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
    {:abilities [{:msg "start a Psi game"
@@ -123,7 +125,7 @@
                                    :msg (msg "place 1 advancement token on "
                                              (if (:rezzed target) (:title target) "a card") " and end the run")
                                    :choices {:req #(= (first (:zone %)) :servers)}
-                                   :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
+                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}

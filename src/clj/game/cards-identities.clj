@@ -175,7 +175,7 @@
                                          :choices {:req #(or (= (:advanceable %) "always")
                                                              (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                              (= (:type %) "Agenda"))}
-                                         :effect (effect (add-prop target :advance-counter 4))} card nil)))))}]}
+                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))
@@ -330,9 +330,10 @@
                  :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
+   {:abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+                 :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "The Foundry: Refining the Process"
    {:events
