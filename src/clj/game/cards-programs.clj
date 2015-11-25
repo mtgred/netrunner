@@ -154,7 +154,8 @@
     [{:cost [:click 1] :msg "make a run on HQ"
       :effect (effect (run :hq {:req (req (= target :hq))
                                 :replace-access
-                                {:msg (msg "reveal cards in HQ: " (map :title (:hand corp)))}} card))}]}
+                                {:msg (msg "reveal cards in HQ: "
+                                           (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
    {:abilities [{:req (req (and (:run @state)
