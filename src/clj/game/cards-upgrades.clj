@@ -191,7 +191,7 @@
                             (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
          un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
      {:trash-effect
-      {:req (req (= :servers (first (:previous-zone card))))
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
                                                                                  (= (central->zone (:zone target))
                                                                                     (butlast (:previous-zone card))))))
@@ -213,7 +213,7 @@
    (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
              :effect (effect (steal-cost-bonus [:credit 5]))}]
      {:trash-effect
-      {:req (req (= :servers (first (:previous-zone card))))
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
                                                                                  (= (central->zone (:zone target))
                                                                                     (butlast (:previous-zone card))))))
@@ -270,7 +270,7 @@
    (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
              :effect (effect (steal-cost-bonus [:click 1]))}]
      {:trash-effect
-      {:req (req (= :servers (first (:previous-zone card))))
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
                                                                                  (= (central->zone (:zone target))
                                                                                     (butlast (:previous-zone card))))))
