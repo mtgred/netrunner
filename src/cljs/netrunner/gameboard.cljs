@@ -7,7 +7,8 @@
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
-            [differ.core :as differ]))
+            [differ.core :as differ]
+            [om.dom :as dom]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
@@ -362,7 +363,8 @@
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
-                      [:div.card-wrapper {:class (if (and (not (:selected card)) (playable? card))
+                      [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                                          (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
                        (if (= (:user player) (:user @app-state))
@@ -624,7 +626,10 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (when (get-in cursor [side :prompt 0 :show-discard])
-        (-> ".me .discard .popup" js/$ .fadeIn)))
+        (-> ".me .discard .popup" js/$ .fadeIn))
+      (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
+        (set! (.-cursor (.-style (.-body js/document))) "url('/img/crosshair.png') 12 12, crosshair")
+        (set! (.-cursor (.-style (.-body js/document))) "default")))
 
     om/IRenderState
     (render-state [this state]

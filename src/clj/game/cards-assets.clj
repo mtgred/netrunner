@@ -192,7 +192,7 @@
                  :effect (effect (rez-cost-bonus -1) (rez target))}
                 {:prompt "Choose an asset to add to HQ" :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
-                 :choices (req (filter #(has? % :type "Asset") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Asset") (:deck corp)) :sorted))
                  :cost [:credit 1] :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
 
@@ -279,7 +279,7 @@
 
    "Levy University"
    {:abilities [{:prompt "Choose an ICE" :msg (msg "adds " (:title target) " to HQ")
-                 :choices (req (filter #(has? % :type "ICE") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "ICE") (:deck corp)) :sorted))
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
@@ -358,12 +358,16 @@
     :access {:optional
              {:prompt "Score an Agenda from HQ?"
               :req (req installed)
-              :yes-ability {:prompt "Choose an Agenda to score"
-                           :choices (req (filter #(and (has? % :type "Agenda")
-                                                       (<= (:advancementcost %) (:advance-counter card)))
-                                                 (:hand corp)))
-                           :msg (msg "score " (:title target))
-                           :effect (effect (score (assoc target :advance-counter (:advancementcost target))))}}}}
+              :yes-ability {:effect (req (let [c card]
+                                           (resolve-ability
+                                             state side
+                                             {:prompt "Choose an Agenda in HQ to score"
+                                              :choices {:req #(and (= (:type %) "Agenda")
+                                                                   (<= (:advancementcost %) (:advance-counter c))
+                                                                   (= (:zone %) [:hand]))}
+                                              :msg (msg "score " (:title target))
+                                              :effect (effect (score (assoc target :advance-counter
+                                                                                   (:advancementcost target))))} c nil)))}}}}
 
    "Primary Transmission Dish"
    {:recurring 3}
@@ -461,12 +465,12 @@
                  :effect (effect (move (last (:deck corp)) :hand))}
                 {:label "[Trash]: Search R&D for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
-                 :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
                  :effect (effect (shuffle! :deck) (move target :deck)
                                  (trash card {:cause :ability-cost}))}
                 {:label "[Trash]: Search Archives for an agenda" :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
-                 :choices (req (filter #(has? % :type "Agenda") (:discard corp)))
+                 :choices (req (cancellable (filter #(has? % :type "Agenda") (:discard corp)) :sorted))
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
@@ -528,7 +532,7 @@
                  :req (req (:ts-active card))
                  :prompt "Choose a card from Archives or HQ to install" :show-discard true
                  :choices {:req #(and (not= (:type %) "Operation")
-                                      (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                                      (#{[:hand] [:discard]} (:zone %)))}
                  :msg (msg "install " (if (:seen target) (:title target) "an unseen card"))
                  :effect (effect (corp-install target nil {:no-install-cost true})
                                  (update! (dissoc (get-card state card) :ts-active)))}]}
@@ -603,12 +607,13 @@
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
-                 :req (req (< (count (:hosted card)) 3)) :cost [:click 1]
+                 :req (req (< (count (:hosted card)) 3))
+                 :cost [:click 1]
                  :prompt "Choose an asset to install on Worlds Plaza"
-                 :choices (req (filter #(and (= (:type %) "Asset")
-                                             (<= (- (:cost %) 2) (:credit corp))) (:hand corp)))
+                 :choices {:req #(and (= (:type %) "Asset") (= [:hand] (:zone %)) (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (trigger-event :corp-install target)
-                                 (host card target)
-                                 (rez-cost-bonus -2) (rez (last (:hosted (get-card state card))))
-                                 (update! (dissoc (get-card state (last (:hosted card))) :facedown)))}]}})
+                 :effect (req (trigger-event state side :corp-install target)
+                              (host state side card target)
+                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
+                              (when (:rezzed (last (:hosted (get-card state card))))
+                                (update! state side (dissoc (get-card state (last (:hosted card)) :facedown)))))}]}})

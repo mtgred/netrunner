@@ -6,7 +6,7 @@
     :effect (req (let [agendas (get-in @state [:corp :scored])]
                    (resolve-ability state side
                      {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                      :choices (req (filter #(= (:type %) "Agenda") agendas))
+                      :choices (req (cancellable (filter #(= (:type %) "Agenda") agendas)))
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
                       :effect (effect (card-init target))}
                     card nil)))}
@@ -24,7 +24,8 @@
     :effect (effect (resolve-ability (abhelp 1 target) card nil))})
 
    "Aggressive Negotiation"
-   {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
+   {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
+    :choices (req (cancellable (:deck corp) :sorted))
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "An Offer You Cant Refuse"
@@ -54,7 +55,7 @@
    {:effect (effect (draw 3))}
 
    "Archived Memories"
-   {:prompt "Choose a card from Archives" :show-discard true
+   {:prompt "Choose a card from Archives to add to HQ" :show-discard true
     :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
@@ -153,7 +154,8 @@
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
    "Fast Track"
-   {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+   {:prompt "Choose an Agenda"
+    :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (move target :hand) (shuffle! :deck))}
 
@@ -182,15 +184,18 @@
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
-   {:events {:runner-install {:req (req (= side :runner)) :choices (req (:hand runner))
-                              :prompt "Choose a card to trash for Housekeeping" :once :per-turn
+   {:events {:runner-install {:req (req (= side :runner))
+                              :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Runner"))}
+                              :prompt "Choose a card from your grip to trash for Housekeeping" :once :per-turn
                               :msg (msg "to force the Runner to trash " (:title target) " from Grip")
                               :effect (effect (trash target))}}}
 
    "Interns"
    {:prompt "Choose a card to install from Archives or HQ" :show-discard true
+    :not-distinct true
     :choices {:req #(and (not= (:type %) "Operation")
-                         (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                         (= (:side %) "Corp")
+                         (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install target nil {:no-install-cost true}))}
 
    "Invasion of Privacy"
@@ -228,8 +233,10 @@
             :effect (effect (tag-runner :runner (- target (second targets))))}}
 
    "Mushin No Shin"
-   {:prompt "Choose a card to install"
-    :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
+   {:prompt "Choose a card to install from HQ"
+    :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                         (= (:side %) "Corp")
+                         (= (:zone %) [:hand]))}
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "Mutate"
@@ -327,7 +334,8 @@
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
-    :choices (req (filter #(not= (:title %) "Reclamation Order") (:discard corp)))
+    :show-discard true
+    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
@@ -335,8 +343,8 @@
    (let [rthelp (fn rt [total left selected]
                   (if (> left 0)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
-                     :choices (req (filter #(and (has? % :subtype "Sysop")
-                                                 (not (some #{(:title %)} selected))) (:deck corp)))
+                     :choices (req (cancellable (filter #(and (has? % :subtype "Sysop")
+                                                              (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
                      :effect (req (move state side target :hand)
                                   (resolve-ability
@@ -351,10 +359,9 @@
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
-    :choices (req (filter #(and (:rezzed %)
-                                (or (has? % :subtype "Clone") (has? % :subtype "Executive")
-                                    (has? % :subtype "Sysop")))
-                          (mapcat :content (flatten (seq (:servers corp))))))
+    :choices {:req #(and (:rezzed %)
+                         (or (has? % :subtype "Clone") (has? % :subtype "Executive")
+                             (has? % :subtype "Sysop")))}
     :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
@@ -366,7 +373,8 @@
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Rework"
-   {:prompt "Choose a card to shuffle into R&D" :choices (req (:hand corp))
+   {:prompt "Choose a card from HQ to shuffle into R&D"
+    :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Corp"))}
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Scorched Earth"

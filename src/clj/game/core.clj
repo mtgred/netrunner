@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in]]
+                                dissoc-in cancellable]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -294,15 +294,15 @@
 
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f {:keys [priority prompt-type show-discard] :as args}]
+  ([state side card msg choices f {:keys [priority prompt-type show-discard cancel-effect] :as args}]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
      (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
-                        :prompt-type prompt-type :show-discard show-discard} (vec %))
+                        :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect} (vec %))
                 #(conj (vec %) {:msg prompt :choices choices :effect f :card card
-                                :prompt-type prompt-type :show-discard show-discard})))))))
+                                :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -325,8 +325,10 @@
 
 (defn prompt!
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
-  ([state side card msg choices ability {:keys [priority prompt-type] :as args}]
-    (show-prompt state side card msg choices #(resolve-ability state side ability card [%]) args)))
+  ([state side card msg choices ability {:keys [priority prompt-type cancel-effect] :as args}]
+    (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
+                 (if cancel-effect (assoc args :cancel-effect #(cancel-effect state side card [%]))
+                                   args))))
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
@@ -392,7 +394,7 @@
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
-                                          not-distinct priority] :as ability}
+                                          not-distinct priority cancel-effect] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when ability
     (when (and optional
@@ -411,13 +413,15 @@
           (if (:req choices)
             (show-select state (or player side) card ability {:priority priority})
             (let [n ((:number choices) state side card targets)]
-              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices))))
+              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices)
+                       {:priority priority :cancel-effect cancel-effect})))
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices) {:priority priority})))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices)
+                     {:priority priority :cancel-effect cancel-effect})))
         (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
                    (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0))))
           (when-let [cost-str (apply pay (concat [state side card] cost))]
@@ -478,11 +482,14 @@
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
-    (when (= (:choices prompt) :credit)
-      (pay state side card :credit choice))
-    (when (= (:choices prompt) :counter)
-      (add-prop state side (:card prompt) :counter (- choice)))
-    ((:effect prompt) (or choice card))
+    (if (not= choice "Cancel")
+      (do (when (= (:choices prompt) :credit)
+            (pay state side card :credit choice))
+          (when (= (:choices prompt) :counter)
+            (add-prop state side (:card prompt) :counter (- choice)))
+          ((:effect prompt) (or choice card)))
+      (when (:cancel-effect prompt)
+        ((:cancel-effect prompt) choice)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
@@ -908,7 +915,6 @@
       (let [moved-card (move state :corp card :scored)
             c (card-init state :corp moved-card)
             points (get-agenda-points state :corp c)]
-            (prn "points" points)
         (system-msg state :corp (str "scores " (:title c) " and gains " points
                                     " agenda point" (when (> points 1) "s")))
         (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))

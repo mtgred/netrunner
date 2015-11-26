@@ -128,7 +128,7 @@
                          :yes-ability {:effect (req (let [type (:type target)]
                                               (resolve-ability
                                                state side
-                                               {:prompt (msg "Choose another " type " to install from your Grip")
+                                               {:prompt (msg "Choose another " type " to install from your grip")
                                                 :choices {:req #(and (= (:type %) type) (= (:zone %) [:hand]))}
                                                 :msg (msg "install " (:title target))
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
@@ -254,16 +254,12 @@
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp
                  :req (req (not (empty? (filter #(has? % :subtype "Current") (concat (:hand corp) (:discard corp))))))
-                 :yes-ability {:prompt "Play a Current from HQ or Archives?" :player :corp
-                               :choices ["Archives" "HQ"]
-                               :msg (msg "play a Current from " target)
-                               :effect (effect (resolve-ability
-                                                 {:prompt "Choose a Current to play"
-                                                  :choices (req (filter #(and (has? % :subtype "Current")
-                                                                              (<= (:cost %) (:credit corp)))
-                                                                                ((if (= target "HQ") :hand :discard) corp)))
-                                                  :effect (effect (play-instant target))}
-                                                card targets))}}}]
+                 :yes-ability {:prompt "Choose a Current to play from HQ or Archives"  :show-discard true
+                               :choices {:req #(and (has? % :subtype "Current")
+                                                    (= (:side %) "Corp")
+                                                    (#{[:hand] [:discard]} (:zone %)))}
+                               :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
+                               :effect (effect (play-instant target))}}}]
      {:events {:agenda-scored nasol :agenda-stolen nasol}})
 
    "Nisei Division: The Next Generation"
