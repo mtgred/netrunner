@@ -480,22 +480,26 @@
                                                         :effect (effect (trash-cards targets))) shat nil)))}}}}
 
    "Shi.Kyū"
-   {:access {:req (req (not= (first (:zone card)) :deck))
-             :prompt "How many [Credits] for Shi.Kyū?" :choices :credit
-             :msg (msg "attempt to do " target " net damage")
-             :effect (effect (resolve-ability
+   {:access 
+    {:optional {:req (req (not= (first (:zone card)) :deck))
+                :prompt "Pay [Credits] to use Shi.Kyū?"
+                :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
+                              :msg (msg "attempt to do " target " net damage")
+                              :effect (effect (resolve-ability
                                {:player :runner
                                 :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
                                 :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
                                 :effect (let [dmg target]
                                           (req (if (= target "Add Shi.Kyū to score area")
-                                                 (do (as-agenda state :runner card -1)
+                                                 (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
+                                                         (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work 
+                                                   (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds Shi.Kyū to their score area as -1 agenda point")))
                                                  (do (damage state :corp :net dmg {:card card})
                                                    (system-msg state :corp
                                                     (str "uses Shi.Kyū to do " dmg " net damage"))))))}
-                              card targets))}}
+                              card targets))}}}}
 
    "Shock!"
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
