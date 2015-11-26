@@ -435,11 +435,11 @@
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault" :cost [:credit 1]
                  :prompt "How many [Credits]?" :choices :credit :msg (msg "store " target " [Credits]")
                  :effect (effect (add-prop card :counter target))}
-                {:label "Spend [Click] to move any number of [Credits] to your credit pool"
+                {:label "Move any number of [Credits] to your credit pool"
                  :cost [:click 1] :prompt "How many [Credits]?"
-                 :choices :counter :msg (msg "spend [Click] to gain " target " [Credits]")
+                 :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (effect (gain :credit target))}
-                {:label "Trash Sealed Vault to move any number of [Credits] to your credit pool"
+                {:label "[Trash]: Move any number of [Credits] to your credit pool"
                  :prompt "How many [Credits]?" :choices :counter
                  :msg (msg "trash it and gain " target " [Credits]")
                  :effect (effect (gain :credit target) (trash card))}]}
@@ -596,7 +596,7 @@
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
-  
+
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
                  :req (req (< (count (:hosted card)) 3)) :cost [:click 1]

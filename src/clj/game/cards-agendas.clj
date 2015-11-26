@@ -29,7 +29,7 @@
                  :choices {:req #(or (= (:advanceable %) "always")
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                      (= (:type %) "Agenda"))}
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
    {:access {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
@@ -285,7 +285,8 @@
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
    "Philotic Entanglement"
-   {:msg (msg "do " (count (:scored runner)) " net damage")
+   {:req (req (> (count (:scored runner)) 0))
+    :msg (msg "do " (count (:scored runner)) " net damage")
     :effect (effect (damage :net (count (:scored runner)) {:card card}))}
 
    "Posted Bounty"

@@ -50,10 +50,15 @@
 
    "Bank Job"
    {:data {:counter 8}
-    :abilities [{:label "Take any number of [Credits] on Bank Job"
+    :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
+                 :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
-                              (when (= target (:counter card)) (trash state :runner card {:unpreventable true})))}]}
+                              (register-successful-run state side (:server run))
+                              (swap! state update-in [:runner :prompt] rest)
+                              (handle-end-run state side)
+                              (when (= target (:counter card))
+                                (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
    {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
@@ -690,7 +695,7 @@
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))
     :leave-play (effect (trash-resource-bonus 2))}
- 
+
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
@@ -719,4 +724,3 @@
                                 (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))}})
-
