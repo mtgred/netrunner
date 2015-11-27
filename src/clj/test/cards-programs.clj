@@ -64,6 +64,25 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
+(deftest parasite-gain-counter
+  "Parasite - Gain 1 counter every Runner turn"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp wrap)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner wrap)
+      (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
+      (let [psite (first (:hosted (refresh wrap)))]
+        (is (= 0 (:counter psite)) "Parasite has no counters yet")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (:counter (refresh psite))) "Parasite gained 1 virus counter at start of Runner turn")
+        (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
+
 (deftest progenitor-host-hivemind
   "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"
   (do-game
