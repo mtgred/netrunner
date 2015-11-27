@@ -1477,7 +1477,8 @@
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
        (when-let [events (:events (card-def target))]
-         (register-events state side events c))
+         (when installed
+           (register-events state side events c)))
        (when (and installed (:recurring (card-def c)))
          (card-init state side c false))
        (when-let [events (:events (card-def target))]
