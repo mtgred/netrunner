@@ -11,6 +11,24 @@
                       :effect (effect (card-init target))}
                     card nil)))}
 
+   "Accelerated Diagnostics"
+   (letfn [(ad [i n]
+             {:prompt "Select an operation to play"
+              :choices {:req #(and (= (:side %) "Corp") (= (:type %) "Operation") (= (:zone %) [:play-area]))}
+              :msg (msg "play " (:title target))
+              :effect (req (when (< i n)
+                             (resolve-ability state side (ad (inc i) n) card nil))
+                           (play-instant state side target {:no-additional-cost true}))})]
+     {:effect (req (let [n (count (filter #(= (:type %) "Operation") (take 3 (:deck corp))))]
+                     (resolve-ability state side
+                                      {:msg (msg "play " n " operations and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                       :effect (req (doseq [c (take 3 (:deck corp))]
+                                                      (if (= (:type c) "Operation")
+                                                        (move state side c :play-area)
+                                                        (trash state side c)))
+                                                    (resolve-ability state side (ad 1 n) card nil))}
+                                      card nil)))})
+
    "Ad Blitz"
    (let [abhelp (fn ab [n total]
                   {:prompt "Select an advertisement to install and rez" :show-discard true

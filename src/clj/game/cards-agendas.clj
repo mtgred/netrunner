@@ -2,22 +2,24 @@
 
 (def cards-agendas
   {"Accelerated Beta Test"
-   (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE from the top of the play area to install"
-                                  :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
-                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
-                                               (trigger-event state side :rez target)
-                                                 (when (< n i)
-                                                   (resolve-ability state side (abt (inc n) i) card nil)))})]
+   (letfn [(abt [n i]
+             {:prompt "Select a piece of ICE from the top of the play area to install"
+              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
+              :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
+                           (trigger-event state side :rez target)
+                           (when (< n i)
+                             (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
-                 :yes-ability {:effect (req (let [numice (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
-                                         (resolve-ability state side
-                                           {:msg (msg "install " numice " ICE and trash " (- 3 numice) " cards")
-                                            :effect (req (doseq [c (take 3 (:deck corp))]
-                                                           (if (= (:type c) "ICE")
-                                                             (move state side c :play-area)
-                                                             (trash state side c)))
-                                                         (resolve-ability state side (abthelper 1 numice) card nil))}
-                                          card nil)))}}})
+                 :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                              (resolve-ability state side
+                                                               {:req (req (> n 0))
+                                                                :msg (msg "install " n " ICE and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                                                :effect (req (doseq [c (take 3 (:deck corp))]
+                                                                               (if (= (:type c) "ICE")
+                                                                                 (move state side c :play-area)
+                                                                                 (trash state side c)))
+                                                                             (resolve-ability state side (abt 1 n) card nil))}
+                                                               card nil)))}}})
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}

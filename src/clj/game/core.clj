@@ -1440,9 +1440,9 @@
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                      (card-init state side moved-card)))
-               (do
-                 (resolve-ability state side cdef card nil)
-                 (move state side (first (get-in @state [side :play-area])) :discard))))))))))
+               (do (resolve-ability state side cdef card nil)
+                   (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
+                     (move state side c :discard)))))))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
