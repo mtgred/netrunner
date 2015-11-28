@@ -1336,38 +1336,6 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
-(defn play-copied-ability [state side {:keys [card ability targets] :as args}]
-  (let [source-card (:source card)
-        cdef (card-def source-card)
-        abilities (:abilities cdef)
-        ab (get-in cdef [:abilities ability])
-        cost (:cost ab)]
-    (when (or (nil? cost)
-              (apply can-pay? state side cost))
-        (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
-        (resolve-ability state side ab card targets))))
-
-(defn play-auto-pump [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
-        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
-        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                         (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
-    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
-      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
-                                  (:title card) " to " (:current-strength (get-card state card)))))))
-
-;; add more dynamic ability implementations here
-(def dynamicabilitymap
-  {"auto-pump" play-auto-pump
-   "copy" play-copied-ability})
-
-(defn play-dynamic-ability [state side args]
-  ((dynamicabilitymap (:type args)) state (keyword side) args))
-
 (defn turn-message [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
         hand (if (= side :runner) "their Grip" "HQ")

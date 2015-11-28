@@ -41,7 +41,7 @@
    "shuffle" core/shuffle-deck
    "ability" core/play-ability
    "trash-resource" core/trash-resource
-   "dynamicability" core/play-dynamic-ability})
+   "auto-pump" core/auto-pump})
 
 (defn convert [args]
   (try
