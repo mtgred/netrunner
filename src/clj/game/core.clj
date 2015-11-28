@@ -726,7 +726,7 @@
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
-                :rid 0
+                :rid 0 :turn 0
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
@@ -1346,16 +1346,20 @@
         hand (if (= side :runner) "their Grip" "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " their turn with " credits " [Credit] and " cards " cards in " hand)]
+        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn start-turn [state side args]
+  (when (= side :corp)
+    (swap! state update-in [:turn] inc))
   (turn-message state side true)
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp) (do (draw state :corp) (update-all-advancement-costs state side))))
+  (when (= side :corp)
+    (do (draw state :corp)
+        (update-all-advancement-costs state side))))
 
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
