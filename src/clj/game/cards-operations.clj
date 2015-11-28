@@ -5,8 +5,10 @@
    {:req (req (> (count (:scored corp)) 1)) :additional-cost [:forfeit]
     :effect (req (let [agendas (get-in @state [:corp :scored])]
                    (resolve-ability state side
-                     {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                      :choices (req (cancellable (filter #(= (:type %) "Agenda") agendas)))
+                     {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                      :choices {:req #(and (= (:type %) "Agenda")
+                                           (= (first (:zone %)) :scored)
+                                           (:abilities %))}
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
                       :effect (effect (card-init target))}
                     card nil)))}
