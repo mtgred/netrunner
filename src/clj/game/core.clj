@@ -271,11 +271,16 @@
          (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
+(defn win [state side reason]
+  (system-msg state side "wins the game")
+  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
    (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
-     (system-msg state side "is decked and the Runner wins the game"))
+     (system-msg state side "is decked")
+     (win state :runner "Decked"))
    (let [active-player (get-in @state [:active-player])]
      (when-not (get-in @state [active-player :register :cannot-draw])
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
@@ -649,7 +654,8 @@
 )
 
 (defn flatline [state]
-  (system-msg state :runner "is flatlined"))
+  (system-msg state :runner "is flatlined")
+  (win state :corp "Flatline"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
@@ -771,8 +777,7 @@
 (defn gain-agenda-point [state side n]
   (gain state side :agenda-point n)
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-    (system-msg state side "wins the game")))
-
+    (win state side "Agenda")))
 
 (defn tag-prevent [state side n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0)))

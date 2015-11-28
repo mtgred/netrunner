@@ -10,6 +10,7 @@ crypto = require('crypto')
 bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
+uuid = require('node-uuid')
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
@@ -23,7 +24,6 @@ mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
 
 # Game lobby
-gameid = 0
 games = {}
 lobbyUpdate = false
 
@@ -72,7 +72,10 @@ requester = zmq.socket('req')
 requester.connect("tcp://#{clojure_hostname}:1043")
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  unless response is "ok"
+  if response.action is "remove"
+    db.collection('games').update {gameid: response.gameid}, {$set: {state: response.state}}, (err) ->
+      throw err if err
+  else
     if response.diff
       lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
     else
@@ -106,7 +109,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     switch msg.action
       when "create"
-        game = {date: new Date(), gameid: ++gameid, title: msg.title, allowspectator: msg.allowspectator,\
+        gameid = uuid.v1()
+        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator,\
                 players: [{user: socket.request.user, id: socket.id, side: "Corp"}], spectators: []}
         games[gameid] = game
         socket.join(gameid)
@@ -177,6 +181,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "start"
         game = games[socket.gameid]
         if game
+          db.collection('games').insert game, (err, data) ->
+            console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"
