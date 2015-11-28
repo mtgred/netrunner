@@ -7,7 +7,8 @@
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
-            [differ.core :as differ]))
+            [differ.core :as differ]
+            [om.dom :as dom]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
@@ -102,9 +103,8 @@
     (when (not (and (= side "Runner") facedown))
       (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
-                          (if (:dynamic (first abilities)) 
-                              (send-command "dynamicability" {:type (:dynamic (first abilities)) :card card :ability 0})
-                              (send-command "ability" {:card card :ability 0}))                          (send-command (first actions) {:card card}))))))
+                          (send-command "ability" {:card card :ability 0})
+                          (send-command (first actions) {:card card}))))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
@@ -253,7 +253,7 @@
                          )))) ": ")))
 
 (defn remote->num [server]
-  (-> server str (clojure.string/split #":remote") last))
+  (-> server str (clojure.string/split #":remote") last js/parseInt))
 
 (defn remote->name [server]
   (let [num (remote->num server)]
@@ -262,10 +262,10 @@
 (defn get-remotes [servers]
  (->> servers 
      (filter #(not (#{:hq :rd :archives} (first %))))
-     (sort-by #(remote->name (first %)))))
+     (sort-by #(remote->num (first %)))))
 
 (defn remote-list [remotes]
-  (->> remotes (map #(remote->name (first %))) sort))
+  (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
   
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
@@ -316,12 +316,12 @@
                   actions)
              (map-indexed
               (fn [i ab]
-                (if (:dynamic ab)
-[:div {:on-click #(do (send-command "dynamicability" {:type (:dynamic ab) :card @cursor
-                                                                        :ability (- i (count (filter (fn [a] (not (:dynamic a))) abilities)))}))
+                (if (:auto-pump ab)
+                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability  (- i (count (filter (fn [a] (:dynamic a)) abilities)))})
+                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                            (dec i) i)})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
               abilities)]))
@@ -362,7 +362,8 @@
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
-                      [:div.card-wrapper {:class (if (and (not (:selected card)) (playable? card))
+                      [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                                          (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
                        (if (= (:user player) (:user @app-state))
@@ -624,7 +625,10 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (when (get-in cursor [side :prompt 0 :show-discard])
-        (-> ".me .discard .popup" js/$ .fadeIn)))
+        (-> ".me .discard .popup" js/$ .fadeIn))
+      (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
+        (set! (.-cursor (.-style (.-body js/document))) "url('/img/crosshair.png') 12 12, crosshair")
+        (set! (.-cursor (.-style (.-body js/document))) "default")))
 
     om/IRenderState
     (render-state [this state]
@@ -703,7 +707,7 @@
                             [:div.panel.blue-shade
                              (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
                              (if (zero? (:position run))
-                               (cond-button "Succesful Run" (:no-action run) #(send-command "access"))
+                               (cond-button "Successful Run" (:no-action run) #(send-command "access"))
                                (cond-button "Continue" (:no-action run) #(send-command "continue")))
                              (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
                                           #(send-command "jack-out"))]

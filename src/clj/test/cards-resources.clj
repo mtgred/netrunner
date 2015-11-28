@@ -69,7 +69,6 @@
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner sp 0)
-      (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
       (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
@@ -88,7 +87,7 @@
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (core/lose state :runner :credit 3) ; should still be able to afford Gordian w/ Kate discount
       (card-ability state :runner sp 0)
-      (is (= 1 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice to install off Peddler")
+      (is (= 2 (count (:choices (first (:prompt (get-runner)))))) "Only 1 choice (plus Cancel) to install off Peddler")
       (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
@@ -144,11 +143,10 @@
     (play-from-hand state :runner "The Supplier")
     (let [ts (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner ts 0)
-      (is (= 2 (count (get-in @state [:runner :prompt 0 :choices]))) "Only resources and hardware in The Supplier prompt")
-      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
       (card-ability state :runner ts 0)
       (is (= 1 (count (get-in @state [:runner :prompt 0 :choices]))))
-      (prompt-card :runner (find-card "Utopia Shard" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Utopia Shard" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh ts)))) "The Supplier is hosting 2 cards")
       (core/end-turn state :runner nil)
       (take-credits state :corp)
@@ -173,7 +171,7 @@
     (play-from-hand state :runner "The Supplier")
     (let [ts (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner ts 0)
-      (prompt-card :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Plascrete Carapace" (:hand (get-runner))))
       (core/lose state :runner :credit (:credit (get-runner)))
       (core/end-turn state :runner nil)
       (take-credits state :corp)

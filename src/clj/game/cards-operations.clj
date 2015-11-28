@@ -6,13 +6,44 @@
     :effect (req (let [agendas (get-in @state [:corp :scored])]
                    (resolve-ability state side
                      {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                      :choices (req (filter #(= (:type %) "Agenda") agendas))
+                      :choices (req (cancellable (filter #(= (:type %) "Agenda") agendas)))
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
                       :effect (effect (card-init target))}
                     card nil)))}
 
+   "Accelerated Diagnostics"
+   (letfn [(ad [i n]
+             {:prompt "Select an operation to play"
+              :choices {:req #(and (= (:side %) "Corp") (= (:type %) "Operation") (= (:zone %) [:play-area]))}
+              :msg (msg "play " (:title target))
+              :effect (req (when (< i n)
+                             (resolve-ability state side (ad (inc i) n) card nil))
+                           (play-instant state side target {:no-additional-cost true}))})]
+     {:effect (req (let [n (count (filter #(= (:type %) "Operation") (take 3 (:deck corp))))]
+                     (resolve-ability state side
+                                      {:msg (msg "play " n " operations and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                       :effect (req (doseq [c (take 3 (:deck corp))]
+                                                      (if (= (:type c) "Operation")
+                                                        (move state side c :play-area)
+                                                        (trash state side c)))
+                                                    (resolve-ability state side (ad 1 n) card nil))}
+                                      card nil)))})
+
+   "Ad Blitz"
+   (let [abhelp (fn ab [n total]
+                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (has? % :subtype "Advertisement")
+                                        (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                   :effect (req (corp-install state side target nil {:install-state :rezzed})
+                                (when (< n total)
+                                  (resolve-ability state side (ab (inc n) total) card nil)))})]
+   {:prompt "How many advertisements?" :choices :credit :msg (msg "install and rez " target " advertisements")
+    :effect (effect (resolve-ability (abhelp 1 target) card nil))})
+
    "Aggressive Negotiation"
-   {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card" :choices (req (:deck corp))
+   {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
+    :choices (req (cancellable (:deck corp) :sorted))
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "An Offer You Cant Refuse"
@@ -42,7 +73,8 @@
    {:effect (effect (draw 3))}
 
    "Archived Memories"
-   {:prompt "Choose a card from Archives" :choices (req (:discard corp))
+   {:prompt "Choose a card from Archives to add to HQ" :show-discard true
+    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (effect (move target :hand)
                     (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
 
@@ -140,7 +172,8 @@
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
    "Fast Track"
-   {:prompt "Choose an Agenda" :choices (req (filter #(has? % :type "Agenda") (:deck corp)))
+   {:prompt "Choose an Agenda"
+    :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (move target :hand) (shuffle! :deck))}
 
@@ -169,21 +202,19 @@
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
-   {:events {:runner-install {:req (req (= side :runner)) :choices (req (:hand runner))
-                              :prompt "Choose a card to trash for Housekeeping" :once :per-turn
+   {:events {:runner-install {:req (req (= side :runner))
+                              :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Runner"))}
+                              :prompt "Choose a card from your grip to trash for Housekeeping" :once :per-turn
                               :msg (msg "to force the Runner to trash " (:title target) " from Grip")
                               :effect (effect (trash target))}}}
 
    "Interns"
-   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
-    :msg (msg "install a card from " target)
-    :effect (effect (resolve-ability
-                      {:prompt "Choose a card to install"
-                       :not-distinct true
-                       :choices (req (filter #(not= (:type %) "Operation")
-                                             ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:no-install-cost true}))}
-                      card targets))}
+   {:prompt "Choose a card to install from Archives or HQ" :show-discard true
+    :not-distinct true
+    :choices {:req #(and (not= (:type %) "Operation")
+                         (= (:side %) "Corp")
+                         (#{[:hand] [:discard]} (:zone %)))}
+    :effect (effect (corp-install target nil {:no-install-cost true}))}
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg (msg "reveal the Runner's Grip and trash up to " (- target (second targets)) " resources or events")
@@ -200,17 +231,6 @@
                               :trace {:base 2 :msg "give the Runner 1 tag"
                                       :effect (effect (tag-runner :runner 1))}}}}
 
-  "Media Blitz"
-   {:req (req (> (count (:scored runner)) 0))
-    :effect (req (let [agendas (get-in @state [:runner :scored])]
-                   (resolve-ability state side
-                     {:prompt "Choose an agenda to gain the text of"
-                      :choices (req (filter #(= (:type %) "Agenda") agendas))
-                      :msg (msg "gains the text of " (:title target))
-                      :effect (effect (copy-events card target) (copy-abilities card target) (copy-leave-play-effects card target))}
-                    card nil)))
-    :leave-play (effect (fire-leave-play-effects card))}
-
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
@@ -220,8 +240,10 @@
             :effect (effect (tag-runner :runner (- target (second targets))))}}
 
    "Mushin No Shin"
-   {:prompt "Choose a card to install"
-    :choices (req (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %)) (:hand corp)))
+   {:prompt "Choose a card to install from HQ"
+    :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                         (= (:side %) "Corp")
+                         (= (:zone %) [:hand]))}
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "Mutate"
@@ -232,7 +254,7 @@
                        [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
                        titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
                    (trash state side target {:cause :ability-cost})
-                   (when (seq titles) 
+                   (when (seq titles)
                      (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                    (if-let [ice (first r)]
                      (let [newice (assoc ice :zone (:zone target) :rezzed true)
@@ -311,7 +333,7 @@
                                     {:msg (msg "place " c " advancement tokens on "
                                                (if (:rezzed target) (:title target) "a card"))
                                      :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                                     :effect (effect (add-prop target :advance-counter c))} card nil)))}
+                                     :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
@@ -319,7 +341,8 @@
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
-    :choices (req (filter #(not= (:title %) "Reclamation Order") (:discard corp)))
+    :show-discard true
+    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
@@ -327,8 +350,8 @@
    (let [rthelp (fn rt [total left selected]
                   (if (> left 0)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
-                     :choices (req (filter #(and (has? % :subtype "Sysop")
-                                                 (not (some #{(:title %)} selected))) (:deck corp)))
+                     :choices (req (cancellable (filter #(and (has? % :subtype "Sysop")
+                                                              (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
                      :effect (req (move state side target :hand)
                                   (resolve-ability
@@ -343,10 +366,9 @@
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
-    :choices (req (filter #(and (:rezzed %)
-                                (or (has? % :subtype "Clone") (has? % :subtype "Executive")
-                                    (has? % :subtype "Sysop")))
-                          (mapcat :content (flatten (seq (:servers corp))))))
+    :choices {:req #(and (:rezzed %)
+                         (or (has? % :subtype "Clone") (has? % :subtype "Executive")
+                             (has? % :subtype "Sysop")))}
     :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
@@ -358,7 +380,8 @@
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Rework"
-   {:prompt "Choose a card to shuffle into R&D" :choices (req (:hand corp))
+   {:prompt "Choose a card from HQ to shuffle into R&D"
+    :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Corp"))}
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Scorched Earth"
@@ -372,8 +395,8 @@
    {:choices {:max 2 :req #(or (= (:advanceable %) "always")
                                (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                (= (:type %) "Agenda"))}
-    :msg (msg "1 advancement tokens on " (count targets) " cards")
-    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1)))}
+    :msg (msg "place 1 advancement token on " (count targets) " cards")
+    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true})))}
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install"
@@ -391,8 +414,8 @@
                      {:choices {:req #(or (= (:advanceable %) "always")
                                           (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                           (= (:type %) "Agenda"))}
-                      :msg (msg "add " c " advancement tokens on a card")
-                      :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}
+                      :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                      :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
@@ -461,6 +484,21 @@
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))}
 
+   "Targeted Marketing"
+   {:abilities [{:req (req (= (:zone card) [:current]))
+                 :label "Gain 10 [Credits] because the Runner installed the named card"
+                 :prompt "Choose the card you named in the Runner's rig"
+                 :choices {:req #(and (= (:side %) "Runner")
+                                      (not (:facedown %))
+                                      (not= (first (:zone %)) :discard)
+                                      (not= (:type %) "Identity"))}
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title target))
+                 :effect (effect (gain :credit 10))}
+                {:req (req (and (= (:zone card) [:current]) (= (:type (last (:discard runner))) "Event")))
+                 :label "Gain 10 [Credits] because the Runner played the named Event"
+                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title (last (:discard runner))))
+                 :effect (effect (gain :credit 10))}]}
+
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
                               :effect (req (doseq [resource (get-in runner [:rig :resource])]
@@ -498,8 +536,8 @@
                                                               (or (= (:advanceable %) "always")
                                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                                   (= (:type %) "Agenda")))}
-                                         :effect  (effect (add-prop :corp target :advance-counter c)
-                                                          (add-prop :corp fr :advance-counter (- c))
+                                         :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
+                                                          (add-prop :corp fr :advance-counter (- c) {:placed true})
                                                           (system-msg (str "moves " c " advancement tokens from "
                                                                            (if (:rezzed fr) (:title fr) "a card") " to "
                                                                            (if (:rezzed target) (:title target) "a card"))))}

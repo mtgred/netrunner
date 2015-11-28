@@ -45,8 +45,8 @@
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
-   {:prompt "Choose a Resource to install"
-    :choices (req (filter #(#{"Resource"} (:type %)) (:hand runner)))
+   {:prompt "Choose a resource to install from your Grip"
+    :choices {:req #(and (= (:type %) "Resource") (= (:zone %) [:hand]))}
     :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
@@ -84,14 +84,15 @@
    {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
 
    "Déjà Vu"
-   {:prompt "Choose a card to add to Grip" :choices (req (:discard runner))
+   {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "add " (:title target) " to their Grip")
     :effect (req (move state side target :hand)
                  (when (has? target :subtype "Virus")
                    (resolve-ability state side
                                     {:prompt "Choose a virus to add to Grip"
                                      :msg (msg "add " (:title target) " to their Grip")
-                                     :choices (req (filter #(has? % :subtype "Virus") (:discard runner)))
+                                     :choices (req (cancellable
+                                                     (filter #(has? % :subtype "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
 
    "Demolition Run"
@@ -243,7 +244,7 @@
 
    "Hostage"
    {:prompt "Choose a Connection"
-    :choices (req (filter #(has? % :subtype "Connection") (:deck runner)))
+    :choices (req (cancellable (filter #(has? % :subtype "Connection") (:deck runner)) :sorted))
     :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack")
     :effect (req (let [connection target]
                    (resolve-ability
@@ -267,18 +268,21 @@
    {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
                                                               (assoc card :zone '(:discard))))
     :events {:successful-run-ends
-             {:prompt "Choose a piece of ICE in Archives"
-              :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
-              :effect (req (let [icename (:title target)]
-                             (resolve-ability
-                               state side
-                               {:prompt (msg "Choose a rezzed copy of " icename " to trash")
-                                :choices {:req #(and (= (:type %) "ICE")
-                                                     (:rezzed %)
-                                                     (= (:title %) icename))}
-                                :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
-                                :effect (req (trash state :corp target))} card nil)
-                             (unregister-events state side card)))}}}
+             {:req (req (= target :archives))
+              :effect (effect (resolve-ability
+                                {:prompt "Choose a piece of ICE in Archives"
+                                 :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
+                                 :effect (req (let [icename (:title target)]
+                                                (resolve-ability
+                                                  state side
+                                                  {:prompt (msg "Choose a rezzed copy of " icename " to trash")
+                                                   :choices {:req #(and (= (:type %) "ICE")
+                                                                        (:rezzed %)
+                                                                        (= (:title %) icename))}
+                                                   :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
+                                                   :effect (req (trash state :corp target))} card nil)))}
+                               card nil)
+                              (unregister-events card))}}}
 
    "Indexing"
    {:effect (effect (run :rd {:replace-access
@@ -385,8 +389,9 @@
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
    "Modded"
-   {:prompt "Choose a card to install"
-    :choices (req (filter #(#{"Hardware" "Program"} (:type %)) (:hand runner)))
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
+    :choices {:req #(and (or (= (:type %) "Hardware") (= (:type %) "Program"))
+                         (= (:zone %) [:hand]))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"
@@ -411,8 +416,8 @@
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
-    :choices (req (filter #(and (has? % :subtype "Run")
-                                (<= (:cost %) (:credit runner))) (:deck runner)))
+    :choices (req (cancellable (filter #(and (has? % :subtype "Run")
+                                             (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
 
    "Power Nap"
@@ -457,7 +462,7 @@
                                            (= (last (:zone %)) :content)
                                            (not (:rezzed %)))}
                       :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
-                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c))}
+                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}
 
    "Quest Completed"
@@ -496,22 +501,19 @@
 
    "Scavenge"
    {:req (req (> (count (filter #(= (:type %) "Program") (all-installed state :runner))) 0))
-    :choices {:req #(= (:type %) "Program")}
-    :effect (req (let [trashed target]
+    :prompt "Choose an installed program to trash"
+    :choices {:req #(and (= (:type %) "Program") (:installed %))}
+    :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
                    (trash state side trashed)
                    (resolve-ability
                      state side
-                     {:prompt "Install a card from Grip or Heap?" :choices ["Grip" "Heap"]
-                      :effect (req (let [fr target]
-                                     (system-msg state side (str "trashes " (:title trashed) " to install a card from " fr))
-                                     (resolve-ability
-                                       state side
-                                       {:prompt "Choose a program to install"
-                                        :choices (req (filter #(and (= (:type %) "Program")
-                                                                    (<= (:cost %) (+ (:credit runner) (:cost trashed))))
-                                                              ((if (= fr "Grip") :hand :discard) runner)))
-                                        :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                                        (runner-install target))} card nil)))} card nil)))}
+                     {:prompt "Choose a program to install from your grip or heap" :show-discard true
+                      :choices {:req #(and (= (:type %) "Program")
+                                           (#{[:hand] [:discard]} (:zone %))
+                                           (can-pay? st si (modified-install-cost st si % [:credit tcost])))}
+                      :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
+                                      (runner-install target))
+                      :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
 
 
    "Scrubbed"
@@ -563,7 +565,7 @@
    {:prompt "Choose an Icebreaker"
     :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
                     (move target :hand) (shuffle! :deck))
-    :choices (req (filter #(has? % :subtype "Icebreaker") (:deck runner)))}
+    :choices (req (cancellable (filter #(has? % :subtype "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
@@ -585,12 +587,12 @@
     :effect (effect (add-prop target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a program from Stack or Heap?" :choices ["Stack" "Heap"]
+   {:prompt "Install a program from Stack or Heap?" :choices (cancellable ["Stack" "Heap"])
     :msg (msg "install a program from " target) :effect
     (effect (resolve-ability
              {:prompt "Choose a program to install"
-              :choices (req (filter #(= (:type %) "Program")
-                                    ((if (= target "Heap") :discard :deck) runner)))
+              :choices (req (cancellable (filter #(= (:type %) "Program")
+                                                 ((if (= target "Heap") :discard :deck) runner))))
               :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
               :end-turn
               {:req (req (some #(when (and (= (:cid target) (:cid %)) (get-in % [:special :test-run])) %)

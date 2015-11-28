@@ -56,6 +56,28 @@
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
 
+   "Chronos Protocol: Selective Mind-mapping"
+   {:events
+    {:pre-resolve-damage
+     {:once :per-turn
+      :req (req (= target :net))
+      :effect (effect (damage-defer :net (last targets))
+                      (resolve-ability
+                        {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
+                                                 "grip to select the first card trashed?") :player :corp
+                                    :yes-ability {:prompt (msg "Choose a card to trash")
+                                                  :choices (req (:hand runner)) :not-distinct true
+                                                  :msg (msg "trash " (:title target)
+                                                         (when (> (- (get-defer-damage state side :net nil) 1) 0)
+                                                           (str " and deal "
+                                                                (- (get-defer-damage state side :net nil) 1)
+                                                                " more net damage")))
+                                                  :effect (effect (trash target)
+                                                                  (damage :net (- (get-defer-damage state side :net nil) 1)
+                                                                          {:unpreventable true :card card}))}
+                                    :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil)
+                                                                         {:unpreventable true :card card}))}}} card nil))}}}
+
    "Cybernetics Division: Humanity Upgraded"
    {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
 
@@ -78,7 +100,12 @@
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
-                               :effect (effect (access-cost-bonus [:credit 1]))}}}
+                               :effect (effect (access-cost-bonus [:credit 1]))
+                               :msg  (msg (if
+                                      (= (get-in @state [:runner :credit]) 0)
+                                      "prevent access"
+                                      "make the Runner spend 1 [Credits] to access"
+                                      ))}}}
 
    "GRNDL: Power Unleashed"
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
@@ -100,14 +127,14 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from Grip?")
-                         :req (req (and (first-event state side :runner-install) ;; If this is the first installation of the turn
-                                        (some #(= (:type  %) (:type target)) (:hand runner)))) ;; and there are additional cards of that type in hand
+             {:optional {:prompt (msg "Install another " (:type target) " from your Grip?")
+                         :req (req (and (first-event state side :runner-install)
+                                        (some #(= (:type %) (:type target)) (:hand runner))))
                          :yes-ability {:effect (req (let [type (:type target)]
                                               (resolve-ability
                                                state side
-                                               {:prompt (msg "Choose a " type " to install")
-                                                :choices (req (filter #(has? % :type type) (:hand runner)))
+                                               {:prompt (msg "Choose another " type " to install from your grip")
+                                                :choices {:req #(and (= (:type %) type) (= (:zone %) [:hand]))}
                                                 :msg (msg "install " (:title target))
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
 
@@ -153,7 +180,7 @@
                                          :choices {:req #(or (= (:advanceable %) "always")
                                                              (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                              (= (:type %) "Agenda"))}
-                                         :effect (effect (add-prop target :advance-counter 4))} card nil)))))}]}
+                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))
@@ -188,12 +215,19 @@
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
-   {:events {:agenda-scored {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :player :runner :effect (effect (move :corp target :hand))}
-             :agenda-stolen {:choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :msg "add 1 unrezzed card to HQ"
-                             :effect (req (move state :corp target :hand)
-                                          (swap! state update-in [:runner :prompt] rest)
-                                          (handle-end-run state side))}}}
+   {:events {:agenda-scored
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state :runner (assoc card :bounce-hq true)))}
+             :agenda-stolen
+             {:effect (req (system-msg state :runner
+                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+                           (update! state side (assoc card :bounce-hq true)))}}
+    :abilities [{:req (req (:bounce-hq card))
+                 :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
+                 :msg "add 1 unrezzed card to HQ"
+                 :effect (effect (move :corp target :hand)
+                                 (update! (dissoc (get-card state card) :bounce-hq)))}]}
 
    "MaxX: Maximum Punk Rock"
    {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
@@ -225,16 +259,12 @@
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp
                  :req (req (not (empty? (filter #(has? % :subtype "Current") (concat (:hand corp) (:discard corp))))))
-                 :yes-ability {:prompt "Play a Current from HQ or Archives?" :player :corp
-                               :choices ["Archives" "HQ"]
-                               :msg (msg "play a Current from " target)
-                               :effect (effect (resolve-ability
-                                                 {:prompt "Choose a Current to play"
-                                                  :choices (req (filter #(and (has? % :subtype "Current")
-                                                                              (<= (:cost %) (:credit corp)))
-                                                                                ((if (= target "HQ") :hand :discard) corp)))
-                                                  :effect (effect (play-instant target))}
-                                                card targets))}}}]
+                 :yes-ability {:prompt "Choose a Current to play from HQ or Archives"  :show-discard true
+                               :choices {:req #(and (has? % :subtype "Current")
+                                                    (= (:side %) "Corp")
+                                                    (#{[:hand] [:discard]} (:zone %)))}
+                               :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
+                               :effect (effect (play-instant target))}}}]
      {:events {:agenda-scored nasol :agenda-stolen nasol}})
 
    "Nisei Division: The Next Generation"
@@ -301,9 +331,10 @@
                  :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg "add 1 advancement counter on a card" :choices {:req #(= (first (:zone %)) :servers)}
+   {:abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+                 :choices {:req #(= (first (:zone %)) :servers)}
                  :req (req (not (:successful-run runner-reg))) :once :per-turn
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "The Foundry: Refining the Process"
    {:events

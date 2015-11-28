@@ -12,7 +12,7 @@
           agenda (get-in @state [:corp :servers :remote1 :content 0])]
       (is agenda "Agenda was installed")
       (card-ability state :runner djinn 1)
-      (prompt-card :runner (find-card "Chakana" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
       (let [chak (first (:hosted (refresh djinn)))]
         (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
         (core/add-prop state :runner (first (:hosted (refresh djinn))) :counter 3) ; manually add 3 counters
@@ -30,7 +30,7 @@
     (is (= 3 (:memory (get-runner))))
     (let [djinn (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner djinn 1)
-      (prompt-card :runner (find-card "Chakana" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
       (is (= 3 (:memory (get-runner))) "No memory used to host on Djinn")
       (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
       (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
@@ -64,6 +64,25 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
+(deftest parasite-gain-counter
+  "Parasite - Gain 1 counter every Runner turn"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp wrap)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner wrap)
+      (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
+      (let [psite (first (:hosted (refresh wrap)))]
+        (is (= 0 (:counter psite)) "Parasite has no counters yet")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (:counter (refresh psite))) "Parasite gained 1 virus counter at start of Runner turn")
+        (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
+
 (deftest progenitor-host-hivemind
   "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"
   (do-game
@@ -76,7 +95,7 @@
     (let [prog (get-in @state [:runner :rig :program 0])
           vbg (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner prog 0)
-      (prompt-card :runner (find-card "Hivemind" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 4 (:memory (get-runner))) "No memory used to host on Progenitor")
       (let [hive (first (:hosted (refresh prog)))]
         (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")

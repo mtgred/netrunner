@@ -71,3 +71,10 @@
           (dissoc m k)))
       m)
     (dissoc m k)))
+
+(defn cancellable
+  ([choices] (cancellable choices false))
+  ([choices sorted]
+   (if sorted
+     (conj (vec (sort-by :title choices)) "Cancel")
+     (conj (vec choices) "Cancel"))))

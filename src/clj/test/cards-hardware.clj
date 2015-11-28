@@ -24,6 +24,22 @@
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
   
+(deftest comet-event-play
+  "Comet - Play event without spending a click after first event played"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Comet" 3) (qty "Easy Mark" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Comet")
+    (let [comet (get-in @state [:runner :rig :hardware 0])]
+      (play-from-hand state :runner "Easy Mark")
+      (is (= true (:comet-event (core/get-card state comet)))) ; Comet ability enabled
+      (card-ability state :runner comet 0)
+      (is (= (:cid comet) (get-in @state [:runner :prompt 0 :card :cid])))
+      (core/select state :runner {:card (find-card "Easy Mark" (:hand (get-runner)))})
+      (is (= 7 (:credit (get-runner))))
+      (is (= 2 (:click (get-runner))))
+      (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+  
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"
   (do-game

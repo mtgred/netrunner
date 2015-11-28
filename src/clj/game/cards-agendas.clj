@@ -2,22 +2,24 @@
 
 (def cards-agendas
   {"Accelerated Beta Test"
-   (let [abthelper (fn abt [n i] {:prompt "Select a piece of ICE from the top of the play area to install"
-                                  :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
-                                  :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed})
-                                               (trigger-event state side :rez target)
-                                                 (when (< n i)
-                                                   (resolve-ability state side (abt (inc n) i) card nil)))})]
+   (letfn [(abt [n i]
+             {:prompt "Select a piece of ICE from the top of the play area to install"
+              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
+              :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
+                           (trigger-event state side :rez target)
+                           (when (< n i)
+                             (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
-                 :yes-ability {:effect (req (let [numice (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
-                                         (resolve-ability state side
-                                           {:msg (msg "install " numice " ICE and trash " (- 3 numice) " cards")
-                                            :effect (req (doseq [c (take 3 (:deck corp))]
-                                                           (if (= (:type c) "ICE")
-                                                             (move state side c :play-area)
-                                                             (trash state side c)))
-                                                         (resolve-ability state side (abthelper 1 numice) card nil))}
-                                          card nil)))}}})
+                 :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                              (resolve-ability state side
+                                                               {:req (req (> n 0))
+                                                                :msg (msg "install " n " ICE and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                                                :effect (req (doseq [c (take 3 (:deck corp))]
+                                                                               (if (= (:type c) "ICE")
+                                                                                 (move state side c :play-area)
+                                                                                 (trash state side c)))
+                                                                             (resolve-ability state side (abt 1 n) card nil))}
+                                                               card nil)))}}})
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
@@ -29,7 +31,7 @@
                  :choices {:req #(or (= (:advanceable %) "always")
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                      (= (:type %) "Agenda"))}
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
    {:access {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
@@ -39,8 +41,8 @@
                              {:choices {:req #(or (= (:advanceable %) "always")
                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                   (= (:type %) "Agenda"))}
-                              :msg (msg "add " c " advancement tokens on a card")
-                              :effect (effect (add-prop :corp target :advance-counter c))} card nil)))}}
+                              :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                              :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
@@ -89,10 +91,9 @@
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
                               :show-discard true
-                              :choices {:req #(and (:side % "Corp")
+                              :choices {:req #(and (= (:side %) "Corp")
                                                    (not= (:type %) "Operation")
-                                                   (or (= (:zone %) [:hand])
-                                                       (= (:zone %) [:discard])))}
+                                                   (#{[:hand] [:discard]} (:zone %)))}
                               :effect (req (corp-install state side target
                                             (last (get-remote-names @state)) {:no-install-cost true})
                                            (when (< n 2)
@@ -102,8 +103,7 @@
                                :show-discard true
                                :choices {:req #(and (:side % "Corp")
                                                     (not= (:type %) "Operation")
-                                                    (or (= (:zone %) [:hand])
-                                                        (= (:zone %) [:discard])))}
+                                                    (#{[:hand] [:discard]} (:zone %)))}
                                :effect (req (corp-install state side target "New remote" {:no-install-cost true})
                                             (resolve-ability state side (dhelper 1) card nil))
                                :msg "create a new remote server, installing cards at no cost"}}})
@@ -170,6 +170,10 @@
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Global Food Initiative"
+   {:agendapoints-runner (req (do 2))}
+
+
    "Glenn Station"
    {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
                  :prompt "Choose a card to host on Glenn Station" :choices (req (:hand corp))
@@ -223,9 +227,9 @@
                                                     (or (= (:advanceable %) "always")
                                                         (and (= (:advanceable %) "while-rezzed") (:rezzed %))
                                                         (= (:type %) "Agenda")))}
-                               :msg (msg "add " n " advancement tokens on "
+                               :msg (msg "place " n " advancement tokens on "
                                          (if (:rezzed target) (:title target) "a card"))
-                               :effect (effect (add-prop :corp target :advance-counter n))} card nil)))}}}
+                               :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"
    {:data {:counter 3}
@@ -245,13 +249,12 @@
                  :msg "prevent the Runner from jacking out"}]}
 
    "License Acquisition"
-   {:prompt "Install a card from Archives or HQ?" :choices ["Archives" "HQ"]
-    :msg (msg "install a card from " target)
-    :effect (effect (resolve-ability
-                      {:prompt "Choose a card to install" :msg (msg "install and rez " (:title target))
-                       :choices (req (filter #(#{"Asset" "Upgrade"} (:type %))
-                                             ((if (= target "HQ") :hand :discard) corp)))
-                       :effect (effect (corp-install target nil {:install-state :rezzed}))} card targets))}
+   {:prompt "Choose an asset or upgrade to install from Archives or HQ" :show-discard true
+    :msg (msg "install and rez " (:title target))
+    :choices {:req #(and (#{"Asset" "Upgrade"} (:type %))
+                         (#{[:hand] [:discard]} (:zone %))
+                         (= (:side %) "Corp"))}
+    :effect (effect (corp-install target nil {:install-state :rezzed-no-cost}))}
 
    "Mandatory Upgrades"
    {:effect (effect (gain :click 1 :click-per-turn 1))
@@ -276,11 +279,13 @@
    "Oaktown Renovation"
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))
+                       :msg (msg "gain " (if (>= (:advance-counter (get-card state card)) 5) "3" "2") " [Credits]")
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
    "Philotic Entanglement"
-   {:msg (msg "do " (count (:scored runner)) " net damage")
+   {:req (req (> (count (:scored runner)) 0))
+    :msg (msg "do " (count (:scored runner)) " net damage")
     :effect (effect (damage :net (count (:scored runner)) {:card card}))}
 
    "Posted Bounty"
@@ -320,7 +325,9 @@
    {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
                  :msg (msg "add " (:title target) " to HQ from R&D")
-                 :choices (req (:deck corp)) :effect (effect (move target :hand) (shuffle! :deck))}]}
+                 :choices (req (cancellable (:deck corp) :sorted))
+                 :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
+                 :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Beale"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)

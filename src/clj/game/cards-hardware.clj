@@ -4,6 +4,22 @@
   {"Akamatsu Mem Chip"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
+   "Archives Interface"
+   {:events {:no-action {:effect (req (system-msg state :runner (str "may remove 1 card in Archives from the game instead of"
+                                                                     " accessing it by clicking on Archives Interface"))
+                                      (update! state side (assoc card :ai-active true)))
+                         :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
+    :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
+                 :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (resolve-ability
+                                state side
+                                {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                 :choices (req (:discard corp))
+                                 :msg (msg "remove " (:title target) " from the game")
+                                 :effect (req (move state :corp target :rfg)
+                                              (update! state side (dissoc (get-card state card) :ai-active)))}
+                               card nil))}]}
+
    "Astrolabe"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
     :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
@@ -91,22 +107,24 @@
                                                    (lose state side :tag 1)))} card nil))}]}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
-                 :priority true
+   {:abilities [{:prompt "Choose a program to install from your Heap" :msg (msg "install " (:title target))
+                 :priority true :show-discard true
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :choices (req (filter #(has? % :type "Program") (:discard runner)))
+                 :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Comet"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:play-event
-             {:optional {:prompt "Play another event?"
-                         :req (req (and (first-event state side :play-event)
-                                        (not (empty? (filter #(has? % :type "Event") (:hand runner))))))
-                         :yes-ability {:prompt "Choose an Event to play"
-                                       :choices (req (filter #(has? % :type "Event") (:hand runner)))
-                                       :msg (msg "play " (:title target))
-                                       :effect (effect (play-instant target))}}}}}
+    :events {:play-event {:req (req (first-event state side :play-event))
+                          :effect (req (system-msg state :runner
+                                                   (str "can play another event without spending a [Click] by clicking on Comet"))
+                                       (update! state side (assoc card :comet-event true)))}}
+    :abilities [{:req (req (:comet-event card))
+                 :prompt "Choose an Event in your Grip to play"
+                 :choices {:req #(and (= (:type %) "Event") (= (:zone %) [:hand]))}
+                 :msg (msg "play " (:title target))
+                 :effect (effect (play-instant target)
+                                 (update! (dissoc (get-card state card) :comet-event)))}]}
 
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
@@ -143,11 +161,10 @@
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a non-AI icebreaker to install on Dinosaurus"
-                 :choices (req (filter #(and (has? % :subtype "Icebreaker")
-                                             (not (has? % :subtype "AI")))
-                                       (:hand runner)))
-                 :msg (msg "host " (:title target))
+                 :prompt "Choose a non-AI icebreaker to install on Dinosaurus from your grip"
+                 :choices {:req #(and (has? % :subtype "Icebreaker")
+                                      (not (has? % :subtype "AI"))
+                                      (= (:zone %) [:hand]))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
                                  (update-breaker-strength target))}
@@ -284,8 +301,8 @@
       :leave-play (effect (lose :memory 3))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority true
-                   :choices (req (filter #(= (:type %) "Program") (:hand runner)))
-                   :prompt "Choose a program to trash" :effect (effect (trash target)
+                   :choices {:req #(and (= (:type %) "Program") (= [:hand] (:zone %)))}
+                   :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
                                                                        (damage-prevent :brain 1)
                                                                        (damage-prevent :net 1))}]})
 
@@ -305,11 +322,10 @@
    {:recurring 1
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-Drive"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (<= (:memoryunits %) 1)
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive from your grip"
+                 :choices {:req #(and (= (:type %) "Program")
+                                      (<= (:memoryunits %) 1)
+                                      (= [:hand] (:zone %)))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
@@ -443,17 +459,23 @@
                                       :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) agendas)}
                                       :effect (req (let [st (last (get-in runner [:scored]))
                                                          sw target
-                                                         stpts (:agendapoints st)
-                                                         swpts (:agendapoints sw)]
+                                                         stpts-corp (get-agenda-points state :corp st)
+                                                         swpts-corp (get-agenda-points state :corp sw)
+                                                         stpts-runner (get-agenda-points state :runner st)
+                                                         swpts-runner (get-agenda-points state :runner sw)]
                                                      (swap! state update-in [:corp :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
                                                      (swap! state update-in [:runner :scored]
                                                        (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
                                                                         (dissoc sw :abilities :events))))
-                                                     (gain-agenda-point state :runner (- swpts stpts))
-                                                     (gain-agenda-point state :corp (- stpts swpts))
+                                                     (gain-agenda-point state :runner (- swpts-runner stpts-runner))
+                                                     (gain-agenda-point state :corp (- stpts-corp swpts-corp))
                                                      (doseq [c (get-in @state [:corp :scored])]
-                                                       (card-init state :corp c false))
+                                                       (let [abilities (:abilities (card-def c))
+                                                             c (merge c {:abilities abilities})]
+                                                         (update! state :corp c)
+                                                         (when-let [events (:events (card-def c))]
+                                                           (register-events state side events c))))
                                                      (doseq [r (get-in @state [:runner :scored])]
                                                        (desactivate state :corp r))
                                                      (system-msg state side

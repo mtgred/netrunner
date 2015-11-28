@@ -50,10 +50,15 @@
 
    "Bank Job"
    {:data {:counter 8}
-    :abilities [{:label "Take any number of [Credits] on Bank Job"
+    :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
+                 :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
-                              (when (= target (:counter card)) (trash state :runner card {:unpreventable true})))}]}
+                              (register-successful-run state side (:server run))
+                              (swap! state update-in [:runner :prompt] rest)
+                              (handle-end-run state side)
+                              (when (= target (:counter card))
+                                (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
    {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
@@ -104,9 +109,22 @@
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "Dr. Lovegood"
+   {:abilities [{:prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
+                 :choices {:req #(:installed %)}
+                 :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
+                 :effect (req (let [c target]
+                                (update! state side (dissoc target :events :abilities))
+                                (desactivate state side target)
+                                (register-events state side
+                                                 {:runner-turn-ends
+                                                  {:effect (effect (card-init (get-card state c) false)
+                                                                   (unregister-events card))}} card)))}]
+    :events {:runner-turn-ends nil}}
+
    "Drug Dealer"
    {:events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
-             :runner-turn-begins {:msg "lose 1 credit" :effect (effect (lose :credit 1))}}}
+             :runner-turn-begins {:msg "lose 1 [Credits]" :effect (effect (lose :credit 1))}}}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
@@ -160,15 +178,19 @@
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
-                                (gain-agenda-point state :runner (:agendapoints c))))
+                                (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                  :msg (msg (let [c (first (:hosted card))]
                              (str "add " (:title c) " to their score area and gain "
-                             (:agendapoints c) " agenda point" (when (> (:agendapoints c) 1) "s"))))}]}
+                             (:agendapoints c) " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
-                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}}}
+   {:events {:agenda-scored {:effect (req (system-msg state :runner (str "can access cards in HQ by clicking on Gang Sign"))
+                                          (update! state side (assoc card :access-hq true)))}}
+    :abilities [{:req (req (:access-hq card))
+                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
+                 :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                (resolve-ability state :runner (choose-access c '(:hq)) card nil)
+                                (update! state side (dissoc (get-card state card) :access-hq))))}]}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -194,7 +216,9 @@
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
-                 :effect (effect (trash card {:cause :ability-cost}) (handle-access (access state side [:archives])))}]
+                 :effect (req (trash state side card {:cause :ability-cost})
+                              (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (handle-access state side (get-in @state [:corp :discard])))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
@@ -207,10 +231,10 @@
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Human First"
-   {:events {:agenda-scored {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :runner :credit (:agendapoints target)))}
-             :agenda-stolen {:msg (msg "gain " (:agendapoints target) " [Credits]")
-                             :effect (effect (gain :credit (:agendapoints target)))}}}
+   {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :runner :credit (get-agenda-points state :runner target)))}
+             :agenda-stolen {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+                             :effect (effect (gain :credit (get-agenda-points state :runner target)))}}}
    "Hunting Grounds"
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"
@@ -238,6 +262,15 @@
    {:req (req (> (:bad-publicity corp) 0))
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
+
+   "Jak Sinclair"
+   {:install-cost-bonus (req [:credit (* -1 (:link runner))])
+    :events {:runner-turn-begins
+              {:optional {:prompt "Use Jak Sinclair to make a run?"
+                          :yes-ability {:prompt "Choose a server"
+                                        :choices (req servers)
+                                        :msg (msg "make a run on " target " during which no programs can be used")
+                                        :effect (effect (run target))}}}}}
 
    "John Masanori"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
@@ -271,11 +304,10 @@
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
-                 :prompt "Choose a non-virus program to install on London Library"
-                 :choices (req (filter #(and (= (:type %) "Program")
-                                             (not (has? % :subtype "Virus"))
-                                             (<= (:memoryunits %) (:memory runner)))
-                                       (:hand runner)))
+                 :prompt "Choose a non-virus program to install on London Library from your grip"
+                 :choices {:req #(and (= (:type %) "Program")
+                                      (not (has? % :subtype "Virus"))
+                                      (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
@@ -331,10 +363,8 @@
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :cost [:click 1] :prompt "Choose a connection to install on Off-Campus Apartment"
-                 :choices (req (filter #(and (has? % :subtype "Connection")
-                                             (<= (:cost %) (:credit runner)))
-                                       (:hand runner)))
+                 :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                 :choices {:req #(and (has? % :subtype "Connection") (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"
@@ -488,9 +518,9 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :prompt "Choose an event to play" :msg (msg "play " (:title target))
-                 :choices (req (filter #(and (has? % :type "Event")
-                                             (<= (:cost %) (:credit runner))) (:discard runner)))
+                 :prompt "Choose an event to play" :msg (msg "play " (:title target)) :show-discard true
+                 :choices {:req #(and (= (:type %) "Event")
+                                      (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
    "Scrubber"
@@ -537,9 +567,9 @@
    {:effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
-                 :choices (req (filter #(and (not= (:type %) "Event")
-                                             (can-pay? state side (modified-install-cost state side % [:credit -1])))
-                                       (:hosted card)))
+                 :choices (req (cancellable (filter #(and (not= (:type %) "Event")
+                                                          (can-pay? state side (modified-install-cost state side % [:credit -1])))
+                                                    (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (effect
                            (install-cost-bonus [:credit -1]) (runner-install (dissoc target :facedown))
@@ -593,7 +623,8 @@
    "The Supplier"
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Choose a card to host on The Supplier"
-                 :choices (req (filter #(#{"Resource" "Hardware"} (:type %)) (:hand runner)))
+                 :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
+                                      (= (:zone %) [:hand]))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
@@ -629,7 +660,7 @@
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
-                 :choices (req (filter #(has? % :type "Hardware") (:deck runner)))
+                 :choices (req (cancellable (filter #(has? % :type "Hardware") (:deck runner)) :sorted))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"
@@ -666,7 +697,7 @@
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))
     :leave-play (effect (trash-resource-bonus 2))}
- 
+
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
@@ -695,4 +726,3 @@
                                 (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
                                 (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))}})
-

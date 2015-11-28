@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in]]
+                                dissoc-in cancellable]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -248,7 +248,7 @@
                             (#{:hand :deck :discard} (first dest))
                             (not (:facedown c))))
                  (desactivate state side c) c)
-             c (if (= dest [:rig :facedown])(assoc c :facedown true) (dissoc c :facedown))
+             c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
@@ -294,15 +294,15 @@
 
 (defn show-prompt
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f {:keys [priority prompt-type show-discard] :as args}]
+  ([state side card msg choices f {:keys [priority prompt-type show-discard cancel-effect] :as args}]
   (let [prompt (if (string? msg) msg (msg state side card nil))]
      (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
               (if priority
                 #(cons {:msg prompt :choices choices :effect f :card card
-                        :prompt-type prompt-type :show-discard show-discard} (vec %))
+                        :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect} (vec %))
                 #(conj (vec %) {:msg prompt :choices choices :effect f :card card
-                                :prompt-type prompt-type :show-discard show-discard})))))))
+                                :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect})))))))
 
 (defn resolve-psi [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
@@ -325,8 +325,10 @@
 
 (defn prompt!
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
-  ([state side card msg choices ability {:keys [priority prompt-type] :as args}]
-    (show-prompt state side card msg choices #(resolve-ability state side ability card [%]) args)))
+  ([state side card msg choices ability {:keys [priority prompt-type cancel-effect] :as args}]
+    (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
+                 (if cancel-effect (assoc args :cancel-effect #(cancel-effect state side card [%]))
+                                   args))))
 
 (defn optional-ability [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(if (= % "Yes")
@@ -392,7 +394,7 @@
 
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
-                                          not-distinct priority] :as ability}
+                                          not-distinct priority cancel-effect] :as ability}
                        {:keys [title cid counter advance-counter] :as card} targets]
   (when ability
     (when (and optional
@@ -411,13 +413,15 @@
           (if (:req choices)
             (show-select state (or player side) card ability {:priority priority})
             (let [n ((:number choices) state side card targets)]
-              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices))))
+              (prompt! state (or player side) card prompt {:number n} (dissoc ability :choices)
+                       {:priority priority :cancel-effect cancel-effect})))
           (let [cs (if-not (fn? choices)
                      choices
                      (let [cards (choices state side card targets)]
                              (if not-distinct
                                cards (distinct-by :title cards))))]
-            (prompt! state (or player side) card prompt cs (dissoc ability :choices) {:priority priority})))
+            (prompt! state (or player side) card prompt cs (dissoc ability :choices)
+                     {:priority priority :cancel-effect cancel-effect})))
         (when (and (or (not counter-cost) (<= counter-cost (or counter 0)))
                    (or (not advance-counter-cost) (<= advance-counter-cost (or advance-counter 0))))
           (when-let [cost-str (apply pay (concat [state side card] cost))]
@@ -460,12 +464,15 @@
         (swap! state assoc-in [:runner :run-credit] 0)
         (swap! state assoc :run nil))))
 
-(defn add-prop [state side card key n]
-  (update! state side (update-in card [key] #(+ (or % 0) n)))
-  (if (= key :advance-counter)
-    (do (trigger-event state side :advance (get-card state card))
-        (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card)))
-    (trigger-event state side :counter-added (get-card state card))))
+(defn add-prop
+  ([state side card key n] (add-prop state side card key n nil))
+  ([state side card key n {:keys [placed] :as args}]
+    (update! state side (update-in card [key] #(+ (or % 0) n)))
+    (if (= key :advance-counter)
+      (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
+          (when (not placed)
+            (trigger-event state side :advance (get-card state card))))
+      (trigger-event state side :counter-added (get-card state card)))))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -475,11 +482,14 @@
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
-    (when (= (:choices prompt) :credit)
-      (pay state side card :credit choice))
-    (when (= (:choices prompt) :counter)
-      (add-prop state side (:card prompt) :counter (- choice)))
-    ((:effect prompt) (or choice card))
+    (if (not= choice "Cancel")
+      (do (when (= (:choices prompt) :credit)
+            (pay state side card :credit choice))
+          (when (= (:choices prompt) :counter)
+            (add-prop state side (:card prompt) :counter (- choice)))
+          ((:effect prompt) (or choice card)))
+      (when (:cancel-effect prompt)
+        ((:cancel-effect prompt) choice)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
@@ -630,19 +640,30 @@
 (defn damage-prevent [state side dtype n]
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0)))
 
+(defn damage-defer [state side dtype n]
+  (swap! state assoc-in [:damage :defer-damage dtype] n )
+)
+
+(defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
+  (when (not unpreventable) (get-in @state [:damage :defer-damage dtype]))
+)
+
 (defn flatline [state]
   (system-msg state :runner "is flatlined"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
-  (let [hand (get-in @state [:runner :hand])]
-       (when (< (count hand) n)
-             (flatline state))
-       (when (= type :brain)
-             (swap! state update-in [:runner :brain-damage] #(+ % n))
-             (swap! state update-in [:runner :max-hand-size] #(- % n)))
-       (doseq [c (take n (shuffle hand))]
-              (trash state side c {:unpreventable true :cause type} type))
-       (trigger-event state side :damage type card)))
+  (swap! state update-in [:damage :defer-damage] dissoc type)
+  (trigger-event state side :pre-resolve-damage type card n)
+  (let [n (if (get-defer-damage state side type args) 0 n)]
+    (let [hand (get-in @state [:runner :hand])]
+         (when (< (count hand) n)
+               (flatline state))
+         (when (= type :brain)
+               (swap! state update-in [:runner :brain-damage] #(+ % n))
+               (swap! state update-in [:runner :max-hand-size] #(- % n)))
+         (doseq [c (take n (shuffle hand))]
+                (trash state side c {:unpreventable true :cause type} type))
+         (trigger-event state side :damage type card))))
 
 (defn damage
   ([state side type n] (damage state side type n nil))
@@ -875,33 +896,47 @@
     (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
     (update-breaker-strength state side (get-card state card))))
 
+(defn get-agenda-points [state side card]
+  (let [base-points (:agendapoints card)
+        runner-fn (:agendapoints-runner (card-def card))
+        corp-fn (:agendapoints-corp (card-def card))]
+    (if (and (= side :runner) (not (nil? runner-fn)))
+      (runner-fn state side card nil)
+        (if (and (= side :corp) (not  (nil? corp-fn)))
+          (corp-fn state side card nil)
+          base-points)
+  ))
+)
+
 (defn score [state side args]
   (let [card (or (:card args) args)]
     (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
       (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card)]
-        (system-msg state :corp (str "scores " (:title c) " and gains " (:agendapoints c)
-                                    " agenda point" (when (> (:agendapoints c) 1) "s")))
-        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) (:agendapoints c)))
-        (gain-agenda-point state :corp (:agendapoints c))
+            c (card-init state :corp moved-card)
+            points (get-agenda-points state :corp c)]
+        (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                    " agenda point" (when (> points 1) "s")))
+        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+        (gain-agenda-point state :corp points)
         (set-prop state :corp c :advance-counter 0)
+        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
         (when-let [current (first (get-in @state [:runner :current]))]
           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-          (trash state side current))
-        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))))))
+          (trash state side current))))))
 
 (defn as-agenda [state side card n]
   (move state side (assoc card :agendapoints n) :scored)
   (gain-agenda-point state side n))
 
 (defn steal [state side card]
-  (let [c (move state :runner (dissoc card :advance-counter) :scored)]
+  (let [c (move state :runner (dissoc card :advance-counter) :scored)
+        points (get-agenda-points state :runner c)]
     (resolve-ability state :runner (:stolen (card-def c)) c nil)
-    (system-msg state :runner (str "steals " (:title c) " and gains " (:agendapoints c)
-                                   " agenda point" (when (> (:agendapoints c) 1) "s")))
-    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c)))
-    (gain-agenda-point state :runner (:agendapoints c))
+    (system-msg state :runner (str "steals " (:title c) " and gains " points
+                                   " agenda point" (when (> points 1) "s")))
+    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) points))
+    (gain-agenda-point state :runner points)
     (when-let [current (first (get-in @state [:corp :current]))]
       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
       (trash state side current))
@@ -1301,38 +1336,6 @@
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
-(defn play-copied-ability [state side {:keys [card ability targets] :as args}]
-  (let [source-card (:source card)
-        cdef (card-def source-card)
-        abilities (:abilities cdef)
-        ab (get-in cdef [:abilities ability])
-        cost (:cost ab)]
-    (when (or (nil? cost)
-              (apply can-pay? state side cost))
-        (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
-        (resolve-ability state side ab card targets))))
-
-(defn play-auto-pump [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
-        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
-        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                         (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
-    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
-      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
-                                  (:title card) " to " (:current-strength (get-card state card)))))))
-
-;; add more dynamic ability implementations here
-(def dynamicabilitymap
-  {"auto-pump" play-auto-pump
-   "copy" play-copied-ability})
-
-(defn play-dynamic-ability [state side args]
-  ((dynamicabilitymap (:type args)) state (keyword side) args))
-
 (defn turn-message [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
         hand (if (= side :runner) "their Grip" "HQ")
@@ -1405,9 +1408,9 @@
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                      (card-init state side moved-card)))
-               (do
-                 (resolve-ability state side cdef card nil)
-                 (move state side (first (get-in @state [side :play-area])) :discard))))))))))
+               (do (resolve-ability state side cdef card nil)
+                   (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
+                     (move state side c :discard)))))))))))
 
 (defn in-play? [state card]
   (let [dest (when (= (:side card) "Runner")
@@ -1441,8 +1444,15 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       (when installed
+       (when-let [events (:events (card-def target))]
+         (when installed
+           (register-events state side events c)))
+       (when (and installed (:recurring (card-def c)))
          (card-init state side c false))
+       (when-let [events (:events (card-def target))]
+         (when (and installed (:recurring (card-def c)))
+           (unregister-events state side target)
+           (register-events state side events c)))
        c))))
 
 (defn is-tagged? [state]
@@ -1529,7 +1539,7 @@
                      (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                               (:title prev-card) "a card") " in " server))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [card-name (if (or (= :rezzed install-state) (= :face-up install-state) (:rezzed c))
+                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
                                    (:title card) "a card")]
                    (system-msg state side (str (build-spend-msg cost-str "install")
                                                 card-name " in " server)))
@@ -1537,8 +1547,10 @@
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
                      (update-advancement-cost state side moved-card))
-                   (when (= install-state :rezzed)
+                   (when (= install-state :rezzed-no-cost)
                      (rez state side moved-card {:no-cost true}))
+                   (when (= install-state :rezzed)
+                     (rez state side moved-card))
                    (when (= install-state :face-up)
                      (card-init state side (assoc (get-card state moved-card) :rezzed true) false))))))))))
 
@@ -1587,7 +1599,7 @@
 (defn forfeit [state side card]
   (let [c (desactivate state side card)]
     (system-msg state side (str "forfeits " (:title c)))
-    (gain state side :agenda-point (- (:agendapoints c)))
+    (gain state side :agenda-point (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
 
 (defn expose [state side target]

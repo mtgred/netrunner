@@ -23,17 +23,20 @@
 
    "Architect"
    {:abilities [{:msg "look at the top 5 cards of R&D"
-                 :prompt "Choose a card to install"
+                 :prompt "Choose a card to install" :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
                                 (not= (:type target) "Operation"))) :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
-                {:msg "install a card from Archives" :choices (req (filter #(not= (:type %) "Operation") (:discard corp)))
-                 :prompt "Choose a card to install" :not-distinct true
-                 :effect (effect (corp-install target nil))}
-                {:msg "install a card from HQ" :choices (req (filter #(not= (:type %) "Operation") (:hand corp)))
-                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]}
+                {:label "Install a card from HQ or Archives"
+                 :prompt "Choose a card to install from Archives or HQ"
+                 :show-discard true :priority true
+                 :choices {:req #(and (not= (:type %) "Operation")
+                                      (#{[:hand] [:discard]} (:zone %))
+                                      (= (:side %) "Corp"))}
+                 :effect (effect (corp-install target nil))
+                 :msg (msg "install a card from " (zone->name (central->zone (:zone target))))}]}
 
    "Ashigaru"
    {:abilities [end-the-run]}
@@ -66,10 +69,12 @@
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
-                {:label "Place 1 advancement token on an ICE that can be advanced on this server"
+                {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
-                 :effect (effect (add-prop target :advance-counter 1))}]}
+                 :choices {:req #(and (= (last (:zone %)) :ices)
+                                      (or (= (:advanceable %) "always")
+                                          (and (= (:advanceable %) "while-rezzed") (:rezzed %))))}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
    {:abilities [{:msg "start a Psi game"
@@ -123,7 +128,7 @@
                                    :msg (msg "place 1 advancement token on "
                                              (if (:rezzed target) (:title target) "a card") " and end the run")
                                    :choices {:req #(= (first (:zone %)) :servers)}
-                                   :effect (effect (add-prop target :advance-counter 1) (end-run))}}}]}
+                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
    "Chum"
    {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
@@ -135,8 +140,12 @@
 
    "Crick"
    {:abilities [{:msg "install a card from Archives"
-                 :choices (req (filter #(not= (:type %) "Operation") (:discard corp))) :not-distinct true
-                 :prompt "Choose a card to install" :effect (effect (corp-install target nil))}]
+                  :prompt "Choose a card to install from Archives"
+                  :show-discard true :priority true
+                  :choices {:req #(and (not= (:type %) "Operation")
+                                       (#{[:hand] [:discard]} (:zone %))
+                                       (= (:side %) "Corp"))}
+                  :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"
@@ -353,7 +362,8 @@
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
 
    "Kitsune"
-   {:abilities [{:prompt "Choose a card in HQ" :choices (req (:hand corp))
+   {:abilities [{:prompt "Choose a card in HQ to force access"
+                 :choices {:req #(= (:zone %) [:hand])}
                  :label "Force the Runner to access a card in HQ"
                  :msg (msg "force the Runner to access " (:title target))
                  :effect (effect (handle-access targets) (trash card))}]}
@@ -431,9 +441,9 @@
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
-                 :choices (req (filter #(has? % :type "ICE") (:hand corp)))
-                 :prompt "Choose an ICE to install"
-                 :effect (req (corp-install state side target (:server run)))}]}
+                 :choices {:req #(and (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                 :prompt "Choose an ICE to install from HQ"
+                 :effect (req (corp-install state side target (:server run) {:no-install-cost true}))}]}
 
    "Mother Goddess"
    (let [ab {:req (req (= (:type target) "ICE"))
