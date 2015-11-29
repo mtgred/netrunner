@@ -469,7 +469,7 @@
   ([state side card key n {:keys [placed] :as args}]
     (update! state side (update-in card [key] #(+ (or % 0) n)))
    ;If the counter is for a virus, flag the virus as having added a counter this turn.
-   (if (= (:counter-type card) "Virus") (update! state side (assoc card :added-virus-counter true)))
+   (if (= (:subtype card) "Virus") (update! state side (assoc card :added-virus-counter true)))
     (if (= key :advance-counter)
       (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
           (when (not placed)
@@ -1501,7 +1501,7 @@
                                             (when host-card (str " on " (:title host-card)))
                                             (when no-cost " at no cost")))))
                  ;Apply added-virus-counter flag for this turn if the card enters play with a counter
-                 (if (and (= (:counter-type installed-card) "Virus") (> (:counter installed-card) 0))
+                 (if (and (= (:subtype installed-card) "Virus") (> (:counter installed-card) 0))
                    (update! state side (assoc installed-card :added-virus-counter true))
                    )
                  (trigger-event state side :runner-install installed-card)
