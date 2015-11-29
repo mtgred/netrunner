@@ -217,9 +217,10 @@
     :effect (effect (corp-install target nil {:no-install-cost true}))}
 
    "Invasion of Privacy"
-   {:trace {:base 2 :msg (msg "reveal the Runner's Grip and trash up to " (- target (second targets)) " resources or events")
+   {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"
             :effect (req (doseq [c (:hand runner)]
-                           (move state side c :play-area)))
+                           (move state side c :play-area))
+                           (system-msg state :corp (str "reveals the Runner's Grip and can trash up to " (- target (second targets)) " resources or events")))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Lag Time"
@@ -236,8 +237,9 @@
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
-    :trace {:base 6 :msg (msg "give the Runner " (- target (second targets)) " tags")
-            :effect (effect (tag-runner :runner (- target (second targets))))}}
+    :trace {:base 6 :msg "give the Runner X tags"
+            :effect (effect (tag-runner :runner (- target (second targets)))
+                            (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
 
    "Mushin No Shin"
    {:prompt "Choose a card to install from HQ"
@@ -300,15 +302,15 @@
    {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
 
    "Power Grid Overload"
-   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost less than or equal to "
-                              (- target (second targets)))
+   {:trace {:base 2 :msg "trash 1 piece of hardware with install cost less than or equal to X"
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
                                             {:choices {:req #(and (has? % :type "Hardware")
                                                                   (<= (:cost %) max-cost))}
                                              :msg (msg "trash " (:title target))
                                              :effect (effect (trash target))}
-                                            card nil)))}}
+                                            card nil))
+                         (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
