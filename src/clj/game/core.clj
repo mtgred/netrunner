@@ -468,6 +468,7 @@
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
     (update! state side (update-in card [key] #(+ (or % 0) n)))
+   ;If the counter is for a virus, flag the virus as having added a counter this turn.
    (if (= (:counter-type card) "Virus") (update! state side (assoc card :added-virus-counter true)))
     (if (= key :advance-counter)
       (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
@@ -1368,6 +1369,7 @@
             hosted-cards (filter :installed (mapcat :hosted rig-cards))
             hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
         (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+          ;Clear the added-virus-counter flag for each virus in play.
           (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
             (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
@@ -1497,6 +1499,7 @@
                    (system-msg state side (str (build-spend-msg cost-str "install") title
                                             (when host-card (str " on " (:title host-card)))
                                             (when no-cost " at no cost")))))
+                 ;Apply added-virus-counter flag for this turn if the card enters play with a counter
                  (if (and (= (:counter-type installed-card) "Virus") (> (:counter installed-card) 0))
                    (update! state side (assoc installed-card :added-virus-counter true))
                    )
