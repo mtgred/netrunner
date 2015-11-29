@@ -464,17 +464,17 @@
         (swap! state assoc-in [:runner :run-credit] 0)
         (swap! state assoc :run nil))))
 
+
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
-    (update! state side (update-in card [key] #(+ (or % 0) n)))
-   ;If the counter is for a virus, flag the virus as having added a counter this turn.
    (if (= (:subtype card) "Virus") (update! state side (assoc card :added-virus-counter true)))
-    (if (= key :advance-counter)
-      (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
-          (when (not placed)
-            (trigger-event state side :advance (get-card state card))))
-      (trigger-event state side :counter-added (get-card state card)))))
+   (update! state side (update-in card [key] #(+ (or % 0) n)))
+   (if (= key :advance-counter)
+     (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
+         (when (not placed)
+           (trigger-event state side :advance (get-card state card))))
+     (trigger-event state side :counter-added (get-card state card)))))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
