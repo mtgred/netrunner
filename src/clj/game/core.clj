@@ -1497,6 +1497,9 @@
                    (system-msg state side (str (build-spend-msg cost-str "install") title
                                             (when host-card (str " on " (:title host-card)))
                                             (when no-cost " at no cost")))))
+                 (if (and (= (:counter-type installed-card) "Virus") (> (:counter installed-card) 0))
+                   (update! state side (assoc installed-card :added-virus-counter true))
+                   )
                  (trigger-event state side :runner-install installed-card)
                  (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
          (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
