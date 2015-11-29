@@ -15,6 +15,7 @@
 
 (def commands
   {"say" core/say
+   "concede" core/concede
    "system-msg" #(system-msg %1 %2 (:msg %3))
    "change" core/change
    "move" core/move-card
@@ -52,6 +53,9 @@
     (catch Exception e
       (println "Convert error " e))))
 
+(defn strip [state]
+  (dissoc state :events :turn-events :per-turn :prevent :damage))
+
 (defn run [socket]
   (while true
     (let [{:keys [gameid action command side args text] :as msg} (convert (.recv socket))
@@ -63,14 +67,13 @@
           "do" ((commands command) state (keyword side) args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-        (if-let [state (@game-states gameid)]
-          (let [strip #(dissoc % :events :turn-events :per-turn :prevent :damage)]
-            (case action
-              ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @state) :gameid gameid}))
-              (let [diff (differ/diff (strip (@last-states gameid)) (strip @state))]
-                (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
-            (swap! last-states assoc gameid (strip @state)))
-          (.send socket (generate-string "ok")))
+        (if-let [new-state (@game-states gameid)]
+          (do (case action
+                ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
+                (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
+                  (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
+              (swap! last-states assoc gameid (strip @new-state)))
+          (.send socket (generate-string {:action action :gameid gameid :state (strip @state)})))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))
@@ -78,20 +81,18 @@
             (.send socket (generate-string state))
             (.send socket (generate-string "error"))))))))
 
-(defn zmq-url
-  []
-  (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
+(def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 
 (defn dev []
   (println "[Dev] Listening on port 1043 for incoming commands...")
   (let [socket (.socket ctx ZMQ/REP)]
-    (.bind socket (zmq-url))
+    (.bind socket zmq-url)
     (run socket)))
 
 (defn -main []
   (println "[Prod] Listening on port 1043 for incoming commands...")
   (let [worker-url "inproc://responders"
-        router (doto (.socket ctx ZMQ/ROUTER) (.bind (zmq-url)))
+        router (doto (.socket ctx ZMQ/ROUTER) (.bind zmq-url))
         dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
     (dotimes [n 2]
       (.start
