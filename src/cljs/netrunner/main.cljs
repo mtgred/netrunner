@@ -53,6 +53,8 @@
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          [:div.float-right
+          (when (not= (:side @app-state) :spectator)
+            [:a {:on-click #(netrunner.gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
           [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)

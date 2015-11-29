@@ -132,6 +132,9 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} left the game."}))
           removePlayer(socket)
 
+      when "concede"
+        requester.send(JSON.stringify(msg))
+
       when "join"
         joinGame(socket, msg.gameid)
         socket.broadcast.to(msg.gameid).emit 'netrunner',

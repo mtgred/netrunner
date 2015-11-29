@@ -15,6 +15,7 @@
 
 (def commands
   {"say" core/say
+   "concede" core/concede
    "system-msg" #(system-msg %1 %2 (:msg %3))
    "change" core/change
    "move" core/move-card

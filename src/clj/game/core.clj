@@ -750,6 +750,10 @@
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
    :runner {:credit 5 :run-credit 0 :link 0 :memory 4 :max-hand-size 5}})
 
+(defn concede [state side args]
+  (system-msg state side "concedes")
+  (win state (if (= side :corp) :runner :corp) "Concede"))
+
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
         zones (filter #(not (seq (get-in @state [side :locked %]))) args)
