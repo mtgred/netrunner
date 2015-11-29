@@ -470,7 +470,7 @@
   ([state side card key n {:keys [placed] :as args}]
    (let [updated-card (if (re-find #"Virus" (:subtype card))
                         (assoc card :added-virus-counter true)
-                        (card)
+                        card
                         )]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
