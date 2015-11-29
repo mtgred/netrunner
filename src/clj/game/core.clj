@@ -468,6 +468,7 @@
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
     (update! state side (update-in card [key] #(+ (or % 0) n)))
+   (if (= (:counter-type card) "Virus") (update! state side (assoc card :added-virus-counter true)))
     (if (= key :advance-counter)
       (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
           (when (not placed)
@@ -1363,6 +1364,12 @@
         (trigger-event state side :corp-turn-ends))
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))
+      (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
+            hosted-cards (filter :installed (mapcat :hosted rig-cards))
+            hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
+        (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+          (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
+            (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
       (swap! state dissoc :turn-events))))
 
