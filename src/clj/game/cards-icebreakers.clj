@@ -4,7 +4,7 @@
 ; encountering a rezzed ice with a subtype we can break.
 (def breaker-auto-pump
   {:effect
-   (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
+   (req (let [abs (filter #(not (:dynamic %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
               pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
               current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
               strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
@@ -15,7 +15,7 @@
                                                    (or (some #(has? current-ice :subtype %) (:breaks card))
                                                        (= (first (:breaks card)) "All"))
                                                    (> strdif 0))
-                                            (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
+                                            (vec (cons {:dynamic :auto-pump :cost [:credit (* pumpcst pumpnum)]
                                                         :label (str "Match strength of " (:title current-ice))} abs))
                                             abs)))))})
 
