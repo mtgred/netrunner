@@ -1506,8 +1506,9 @@
                                             (when no-cost " at no cost")))))
                  ;Apply added-virus-counter flag for this turn if the card enters play with a counter
                  (if (and
-                       (re-find #"Virus" (:subtype card))
                        (contains? installed-card :counter)
+                       (contains? installed-card :subtype)
+                       (re-find #"Virus" (:subtype card))
                        (> (:counter installed-card) 0))
                    (update! state side (assoc installed-card :added-virus-counter true))
                    )
