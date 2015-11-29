@@ -468,13 +468,17 @@
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
-   (if (= (:subtype card) "Virus") (update! state side (assoc card :added-virus-counter true)))
-   (update! state side (update-in card [key] #(+ (or % 0) n)))
-   (if (= key :advance-counter)
-     (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
-         (when (not placed)
-           (trigger-event state side :advance (get-card state card))))
-     (trigger-event state side :counter-added (get-card state card)))))
+   (let [updated-card (if (re-find #"Virus" (:subtype card))
+                        (assoc card :added-virus-counter true)
+                        (card)
+                        )]
+     (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
+     (if (= key :advance-counter)
+       (do (when (and (#{"ICE"} (:type updated-card)) (:rezzed updated-card)) (update-ice-strength state side updated-card))
+           (when (not placed)
+             (trigger-event state side :advance (get-card state updated-card))))
+       (trigger-event state side :counter-added (get-card state updated-card)))
+     )))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
