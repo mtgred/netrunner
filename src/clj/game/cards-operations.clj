@@ -302,7 +302,7 @@
    {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
 
    "Power Grid Overload"
-   {:trace {:base 2 :msg "trash 1 piece of hardware with install cost less than or equal to X"
+   {:trace {:base 2 :msg "trash 1 piece of hardware"
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
                                             {:choices {:req #(and (has? % :type "Hardware")
