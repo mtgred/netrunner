@@ -80,7 +80,33 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Crypsis")
     (let [crypsis (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner crypsis 2)
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
       (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis did not add a virus token")
       (is (get-in (refresh crypsis) [:added-virus-counter] "Counter flag was not set on Crypsis"))
       )))
+
+(deftest virus-counter-flag-clear-on-end-turn
+  "Clear the virus counter flag at the end of each turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
+      (take-credits state :runner 2)
+      (take-credits state :corp 1)
+      (is (not (get-in (refresh crypsis) [:added-virus-counter])) "Counter flag was not cleared on Crypsis")
+      )))
+
+(deftest surge-valid-target
+  "Add counters if target is a virus and had a counter added this turn"
+  )
+
+(deftest surge-target-not-virus
+  "Don't fire surge if target is not a virus"
+  )
+
+(deftest surge-target-no-token-this-turn
+  "Don't fire surge if target does not have virus counter flag set"
+  )
