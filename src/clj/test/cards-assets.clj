@@ -40,6 +40,24 @@
             (count (get-in @state [:runner :rig :program]))))
       )))
 
+(deftest alix-t4lb07
+  (do-game
+    (new-game
+      (default-corp [(qty "Alix T4LB07" 1) (qty "PAD Campaign" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Alix T4LB07" "New remote")
+    (let [alix (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp alix)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 2 (get-in (refresh alix) [:counter])))
+      (is (= 4 (get-in @state [:corp :credit])))
+      (card-ability state :corp alix 0)
+      (is (= 8 (get-in @state [:corp :credit])))
+      )))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
