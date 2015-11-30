@@ -13,6 +13,33 @@
       (is (= 6 (get-in @state [:corp :credit])))
       )))
 
+(deftest aggressive-secretary
+  (do-game
+    (new-game
+      (default-corp [(qty "Aggressive Secretary" 1)])
+      (default-runner [(qty "Cache" 3)]))
+    (play-from-hand state :corp "Aggressive Secretary" "New remote")
+    (let [as (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/advance state :corp as)
+      (take-credits state :corp)
+      ;Run on AggSec with 3 programs
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (core/run state :runner :remote1)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :corp "Yes")
+      (is (= 3 (get-in @state [:corp :credit])))
+      (prompt-select :corp (get-in @state [:runner :rig :program 1]))
+      (prompt-choice :corp "Done")
+      ;There should be one Cache left
+      (is (= 3 (get-in @state [:corp :credit])))
+      (is (=
+            2
+            (count (get-in @state [:runner :rig :program]))))
+      )))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
