@@ -136,9 +136,26 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-in @state [:runner :rig :program 0])]
       (is (= 2 (get-in imp [:counter])))
-      (take-credits state :runner 2)
+      (take-credits state :runner 3)
       (take-credits state :corp)
       (play-from-hand state :runner "Surge")
       (prompt-select :runner imp)
       (is (= 2 (get-in (refresh imp) [:counter])))
+      )))
+
+(deftest surge-target-gorman-drip
+  "Don't allow surging Gorman Drip, since it happens on the corp turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Gorman Drip v1" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gorman Drip v1")
+    (let [gd (get-in @state [:runner :rig :program 0])]
+      (is (= nil (get-in gd [:counter])))
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (is (= 3 (get-in (refresh gd) [:counter])))
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner gd)
+      (is (= 3 (get-in (refresh gd) [:counter])))
       )))
