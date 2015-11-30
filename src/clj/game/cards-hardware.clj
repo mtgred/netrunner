@@ -189,7 +189,7 @@
              {:optional
               {:req (req (:dopp-active card))
                :prompt "Use Doppelgänger to run again?" :player :runner
-               :yes-ability {:prompt "Choose a server" 
+               :yes-ability {:prompt "Choose a server"
                              :choices (req servers)
                              :msg (msg "make a run on " target)
                              :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
@@ -378,6 +378,19 @@
                                                      (runner-install state side c)
                                                      (shuffle! state :runner :deck)))}}} card nil))
     :leave-play (effect (lose :link 1))}
+
+   "Record Reconstructor"
+   {:events
+    {:successful-run
+     {:req (req (= (get-in @state [:run :server]) [:archives]))
+      :effect (req (let [rr card]
+                     (swap! state assoc-in [:run :run-effect :replace-access]
+                       {:effect (effect (resolve-ability
+                                          {:prompt "Choose one faceup card to add to the top of R&D"
+                                           :choices (req (filter #(:seen %) (:discard corp)))
+                                           :msg (msg "add " (:title target) " to the top of R&D")
+                                           :effect (req (move state :corp target :deck {:front true}))}
+                                         rr nil))})))}}}
 
    "Replicator"
    {:events {:runner-install
