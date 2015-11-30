@@ -106,6 +106,20 @@
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
 
+(deftest launch-campaign
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (let [launch (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp launch)
+      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 6 (get-in (refresh launch) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 8 (get-in @state [:corp :credit])))
+      (is (= 4 (get-in (refresh launch) [:counter])))
+      )))
+
 (deftest team-sponsorship-hq
   "Team Sponsorship - Install from HQ"
   (do-game
