@@ -115,7 +115,17 @@
 
 (deftest surge-target-not-virus
   "Don't fire surge if target is not a virus"
-  )
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Security Testing" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (let [st (get-in @state [:runner :rig :resource 0])]
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner st)
+      (is (not (contains? st :counter)))
+      )
+    ))
 
 (deftest surge-target-no-token-this-turn
   "Don't fire surge if target does not have virus counter flag set"
