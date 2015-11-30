@@ -1,5 +1,18 @@
 (in-ns 'test.core)
 
+(deftest adonis-campaign
+  (do-game
+    (new-game (default-corp [(qty "Adonis Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (let [ac (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp ac)
+      (is (= 1 (get-in @state [:corp :credit])))
+      (is (= 12 (get-in (refresh ac) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 6 (get-in @state [:corp :credit])))
+      )))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
