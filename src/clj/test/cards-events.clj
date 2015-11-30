@@ -129,4 +129,16 @@
 
 (deftest surge-target-no-token-this-turn
   "Don't fire surge if target does not have virus counter flag set"
-  )
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (= 2 (get-in imp [:counter])))
+      (take-credits state :runner 2)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner imp)
+      (is (= 2 (get-in (refresh imp) [:counter])))
+      )))
