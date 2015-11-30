@@ -60,3 +60,27 @@
     (is (= 5 (:credit (get-runner))))
     (core/play state :runner {:card (first (:hand (get-runner)))})
     (is (= 9 (:credit (get-runner))))))
+
+;Surge and virus counter flag tests
+(deftest virus-counter-flag-on-enter
+  "Set counter flag when virus card enters play with counters"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Surge" 1) (qty "Imp" 1) (qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (get-in imp [:added-virus-counter]) "Counter flag was not set on Imp")
+      )))
+
+(deftest virus-counter-flag-on-add-prop
+  "Set counter flag when add-prop is called on a virus"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2)
+      (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis did not add a virus token")
+      (is (get-in (refresh crypsis) [:added-virus-counter] "Counter flag was not set on Crypsis"))
+      )))
