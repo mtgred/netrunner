@@ -364,7 +364,7 @@
                                  " to initiate a trace with strength " total
                                  " (" base
                                  (when (> bonus 0) (str " + " bonus " bonus"))
-                                 " + " boost " [Credits])"))
+                                 " + " boost " [Credits]) (" (:msg ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
     (swap! state assoc :trace {:strength total :ability ability :card card})
