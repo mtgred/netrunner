@@ -101,7 +101,17 @@
 
 (deftest surge-valid-target
   "Add counters if target is a virus and had a counter added this turn"
-  )
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (= 2 (get-in imp [:counter])))
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner imp)
+      (is (= 4 (get-in (refresh imp) [:counter])))
+      )))
 
 (deftest surge-target-not-virus
   "Don't fire surge if target is not a virus"
