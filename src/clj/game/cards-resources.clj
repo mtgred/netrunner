@@ -118,7 +118,7 @@
                                 (desactivate state side target)
                                 (register-events state side
                                                  {:runner-turn-ends
-                                                  {:effect (effect (card-init (get-card state c) false)
+                                                  {:effect (effect (card-init (get-card state c))
                                                                    (unregister-events card))}} card)))}]
     :events {:runner-turn-ends nil}}
 
