@@ -343,10 +343,12 @@
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                                 (do (as-agenda state :runner card -1)
+                                               (do (or (move state :runner (assoc card :agendapoints -1) :scored)
+                                                       (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored))
+                                                   (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds News Team to their score area as -1 agenda point")))
-                                                 (do (tag-runner state :runner 2)
+                                               (do (tag-runner state :runner 2)
                                                    (system-msg state side (str "takes 2 tags from News Team")))))}
                               card targets))}}
 

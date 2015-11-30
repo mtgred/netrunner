@@ -305,7 +305,7 @@
    {:events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :rd)
                                         (not current-ice)
-                                        (and (:counter card) (> (:counter card) 0))))
+                                        (> (get-virus-counters state side card) 0)))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional R&D accesses"
                                                                      " by clicking on Medium"))
                                       (update! state side (assoc card :medium-active true)))}
@@ -314,7 +314,10 @@
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :rd) (:medium-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (:medium-active card))
+    :abilities [{:req (req (and run
+                                (= (first (get-in @state [:run :server])) :rd)
+                                (not current-ice)
+                                (:medium-active card)))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional R&D accesses to make"
@@ -330,7 +333,7 @@
    {:events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :hq)
                                         (not current-ice)
-                                        (and (:counter card) (> (:counter card) 0))))
+                                        (> (get-virus-counters state side card) 0)))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
                                                                      " by clicking on Nerve Agent"))
                                       (update! state side (assoc card :nerve-active true)))}
@@ -339,7 +342,10 @@
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (:nerve-active card))
+    :abilities [{:req (req (and run
+                                (= (first (get-in @state [:run :server])) :hq)
+                                (not current-ice)
+                                (:nerve-active card)))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional HQ accesses to make"
