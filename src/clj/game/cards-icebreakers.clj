@@ -140,7 +140,10 @@
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]
-                    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
+                    {:prompt "Choose a server where this copy of Cyber-Cypher can be used" :choices (req servers)
+                     :effect (effect (update! (assoc card :named-target target)))
+                     :leave-play (effect (update! (dissoc card :named-target)))
+                     :abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}
                                  {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
    "Dagger"
