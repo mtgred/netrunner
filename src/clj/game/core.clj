@@ -468,7 +468,8 @@
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
-   (let [updated-card (if (re-find #"Virus" (:subtype card))
+   (let [updated-card (if
+                        (and (contains? card :subtype) (re-find #"Virus" (:subtype card)))
                         (assoc card :added-virus-counter true)
                         card
                         )]
