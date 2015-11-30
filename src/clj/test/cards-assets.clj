@@ -11,6 +11,7 @@
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 6 (get-in @state [:corp :credit])))
+      (is (= 9 (get-in (refresh ac) [:counter])))
       )))
 
 (deftest aggressive-secretary
@@ -56,6 +57,20 @@
       (is (= 4 (get-in @state [:corp :credit])))
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit])))
+      )))
+
+(deftest eve-campaign
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (let [eve (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp eve)
+      (is (= 0 (get-in @state [:corp :credit])))
+      (is (= 16 (get-in (refresh eve) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 14 (get-in (refresh eve) [:counter])))
       )))
 
 (deftest franchise-city
