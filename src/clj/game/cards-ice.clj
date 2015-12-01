@@ -22,7 +22,10 @@
                 trash-program end-the-run]}
 
    "Architect"
-   {:abilities [{:msg "look at the top 5 cards of R&D"
+   {:flags {
+            :untrashable-while-rezzed true
+            }
+    :abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install" :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
