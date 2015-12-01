@@ -39,6 +39,8 @@
    (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
 
+;Display a message related to a rules enforcement on a given card.
+;Example: Architect cannot be trashed while installed.
 (defn enforce-msg [state card text]
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
   )
