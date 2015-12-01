@@ -14,12 +14,21 @@
   (when-let [title (:title card)]
     (cards (.replace title "'" ""))))
 
+;Detect special card conditions from the card definition
+;These definitions are intended to remain immutable, and should be used
+;for things like Architect being untrashable while installed (i.e. conditions inherent to the card).
+;TODO: add a register for mutable state card flags, separate from this
+(defn flag? [card flag value]
+  (let [cdef (card-def card)]
+    (= value (get-in cdef [:flags flag]))
+    ))
+
 (declare parse-command)
 
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
     (if-let [command (parse-command text)]
-      (when (not= side :spectator)
+      (when (and (not= side nil) (not= side :spectator))
         (do (command state side)
             (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
       (swap! state update-in [:log] #(conj % {:user author :text text})))))
@@ -29,6 +38,10 @@
   ([state side text {:keys [hr]}]
    (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
+
+(defn enforce-msg [state card text]
+  (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
+  )
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
