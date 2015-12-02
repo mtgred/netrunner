@@ -155,8 +155,8 @@
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target) " [Credits]")
-    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
+   {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
+    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (or (:advance-counter target) 0)))}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
