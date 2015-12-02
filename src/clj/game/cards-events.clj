@@ -32,7 +32,7 @@
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
     :msg "prevent ICE from being rezzed during this run"
     :effect (effect
-              (resolve-ability (register-run-flag! state :no-rez-ice true card) card nil)
+              (resolve-ability (register-run-flag! state :no-rez-ice card) card nil)
               (run target nil card))}
 
    "Bribery"

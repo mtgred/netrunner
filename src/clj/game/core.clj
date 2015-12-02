@@ -97,7 +97,7 @@
 ;Register a flag for the current run only
 ;end-run clears this register, preventing state pollution between runs
 ;Example: Blackmail flags the current run as not allowing rezzing of ICE
-(defn register-run-flag! [state flag value card]
+(defn register-run-flag! [state flag card]
   (swap! state assoc-in [:register :current-run flag] card)
   )
 
