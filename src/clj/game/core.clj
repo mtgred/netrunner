@@ -94,6 +94,17 @@
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
 
+;Register a flag for the current run only
+;Example: Blackmail flags the current run as not allowing rezzing of ICE
+(defn register-run-flag! [state flag value]
+  (swap! state assoc-in [:register :current-run flag] value)
+  )
+
+;Clear the current run register
+(defn clear-run-register! [state]
+  (swap! state assoc-in [:register :current-run] nil)
+  )
+
 (defn register-suppress [state side events card]
   (doseq [e events]
     (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
@@ -467,7 +478,8 @@
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
-        (swap! state assoc :run nil))))
+        (swap! state assoc :run nil)
+        (clear-run-register! state))))
 
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
