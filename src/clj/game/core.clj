@@ -110,6 +110,18 @@
   (swap! state assoc-in [:register :current-run] nil)
   )
 
+(defn register-turn-flag! [state flag card]
+  (swap! state assoc-in [:register :current-turn flag] card)
+  )
+
+(defn turn-flag [state flag]
+  (get-in @state [:register :current-turn flag])
+  )
+
+(defn clear-turn-register! [state]
+  (swap! state assoc-in [:register :current-turn] nil)
+  )
+
 (defn register-suppress [state side events card]
   (doseq [e events]
     (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
@@ -1394,6 +1406,7 @@
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))
       (swap! state assoc :end-turn true)
+      (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
 
 (defn purge [state side]
