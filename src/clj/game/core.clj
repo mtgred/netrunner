@@ -95,9 +95,14 @@
       (deduce state side r))))
 
 ;Register a flag for the current run only
+;end-run clears this register, preventing state pollution between runs
 ;Example: Blackmail flags the current run as not allowing rezzing of ICE
-(defn register-run-flag! [state flag value]
-  (swap! state assoc-in [:register :current-run flag] value)
+(defn register-run-flag! [state flag value card]
+  (swap! state assoc-in [:register :current-run flag] card)
+  )
+
+(defn run-flag [state flag]
+  (get-in @state [:register :current-run flag])
   )
 
 ;Clear the current run register
@@ -1523,6 +1528,9 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
+   (if (run-flag state :no-rez-ice)
+     (system-msg state side (str "is prevented from rezzing ICE on this run by " (:title (run-flag state :no-rez-ice))))
+     (do
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (trigger-event state side :pre-rez-cost card)
@@ -1539,7 +1547,7 @@
              (update-ice-strength state side card)
              (update-run-ice state side))
            (trigger-event state side :rez card))))
-     (swap! state update-in [:bonus] dissoc :cost)))
+     (swap! state update-in [:bonus] dissoc :cost)))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
