@@ -94,6 +94,22 @@
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
 
+;Register a flag for the current run only
+;end-run clears this register, preventing state pollution between runs
+;Example: Blackmail flags the current run as not allowing rezzing of ICE
+(defn register-run-flag! [state flag card]
+  (swap! state assoc-in [:register :current-run flag] card)
+  )
+
+(defn run-flag [state flag]
+  (get-in @state [:register :current-run flag])
+  )
+
+;Clear the current run register
+(defn clear-run-register! [state]
+  (swap! state assoc-in [:register :current-run] nil)
+  )
+
 (defn register-suppress [state side events card]
   (doseq [e events]
     (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
@@ -467,7 +483,8 @@
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
-        (swap! state assoc :run nil))))
+        (swap! state assoc :run nil)
+        (clear-run-register! state))))
 
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
@@ -1511,6 +1528,9 @@
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
+   (if (run-flag state :no-rez-ice)
+     (system-msg state side (str "is prevented from rezzing ICE on this run by " (:title (run-flag state :no-rez-ice))))
+     (do
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (trigger-event state side :pre-rez-cost card)
@@ -1527,7 +1547,7 @@
              (update-ice-strength state side card)
              (update-run-ice state side))
            (trigger-event state side :rez card))))
-     (swap! state update-in [:bonus] dissoc :cost)))
+     (swap! state update-in [:bonus] dissoc :cost)))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
