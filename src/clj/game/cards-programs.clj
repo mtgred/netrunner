@@ -68,7 +68,8 @@
     :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                                   (trash state side card))}
              :corp-install {:req (req (= (:type target) "Agenda"))
-                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}}
+                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}
+    :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
