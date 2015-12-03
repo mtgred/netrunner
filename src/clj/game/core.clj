@@ -121,16 +121,23 @@
   (swap! state assoc-in [:stack :current-run] nil)
   )
 
-(defn register-turn-flag! [state flag card]
-  (swap! state assoc-in [:register :current-turn flag] card)
+(defn register-turn-flag! [state flag condition card]
+  (let [stack (get-in @state [:stack :current-turn flag])]
+    (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition})
+           ))
   )
 
-(defn turn-flag [state flag]
-  (get-in @state [:register :current-turn flag])
-  )
+(defn turn-flag? [state side card flag]
+  (empty?
+    (for [
+          condition (get-in @state [:stack :current-turn flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+          ]
+      [result])))
 
 (defn clear-turn-register! [state]
-  (swap! state assoc-in [:register :current-turn] nil)
+  (swap! state assoc-in [:stack :current-turn] nil)
   )
 
 (defn register-suppress [state side events card]
