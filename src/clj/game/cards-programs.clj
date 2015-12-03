@@ -310,7 +310,7 @@
                                                                      " by clicking on Medium"))
                                       (update! state side (assoc card :medium-active true)))}
              :successful-run {:req (req (and (= target :rd)
-                                             (or (:medium-active card) (nil? (:counter card)))))
+                                             (or (:medium-active card) (nil? (:counter card)) (= 0 (:counter card)))))
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :rd) (:medium-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
@@ -338,7 +338,7 @@
                                                                      " by clicking on Nerve Agent"))
                                       (update! state side (assoc card :nerve-active true)))}
              :successful-run {:req (req (and (= target :hq)
-                                             (or (:nerve-active card) (nil? (:counter card)))))
+                                             (or (:nerve-active card) (nil? (:counter card)) (= 0 (:counter card)))))
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
