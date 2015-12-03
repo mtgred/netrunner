@@ -1547,7 +1547,7 @@
                                     (system-msg state side (str "is prevented from rezzing ICE on this run by "
                                                                 (:title (run-flag state :no-rez-ice)))))
      ;DDoS
-     (and (turn-flag state :no-rez-outermost-ice) (= 1 (get-in @state [:run :position]))) ( (constantly false)
+     (and (turn-flag state :no-rez-outermost-ice) (= (count (get-in @state [:run :ices])) (get-in @state [:run :position]))) ( (constantly false)
                                                (system-msg state side (str "is prevented from rezzing outermost ice by "
                                                                            (:title (turn-flag state :no-rez-outermost-ice)))))
      :else true)))
