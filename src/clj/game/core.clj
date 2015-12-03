@@ -97,17 +97,30 @@
 ;Register a flag for the current run only
 ;end-run clears this register, preventing state pollution between runs
 ;Example: Blackmail flags the current run as not allowing rezzing of ICE
-(defn register-run-flag! [state flag card]
-  (swap! state assoc-in [:register :current-run flag] card)
+(defn register-run-flag! [state flag condition card]
+  (let [stack (get-in @state [:stack :current-run flag])]
+    (if (= stack nil)
+      (swap! state assoc-in [:stack :current-run flag] (list {:card card :condition condition}))
+      (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition}))
+      ))
   )
 
-(defn run-flag [state flag]
-  (get-in @state [:register :current-run flag])
-  )
+;Execute all conditions for the given run flag
+;The resulting collection is expected to be empty if nothing is blocking the action
+;If the collection has any contents, the flag is considered to be false
+; (consider it as something has flagged the action as not being allowed)
+(defn run-flag? [state side card flag]
+  (empty?
+  (for [
+        condition (get-in @state [:stack :current-run flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+        ]
+    [result])))
 
 ;Clear the current run register
 (defn clear-run-register! [state]
-  (swap! state assoc-in [:register :current-run] nil)
+  (swap! state assoc-in [:register :current-run] (list))
   )
 
 (defn register-turn-flag! [state flag card]
@@ -1542,15 +1555,8 @@
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
    (cond
-     ;Blackmail
-     (run-flag state :no-rez-ice) ( (constantly false)
-                                    (system-msg state side (str "is prevented from rezzing ICE on this run by "
-                                                                (:title (run-flag state :no-rez-ice)))))
-     ;DDoS
-     (and (turn-flag state :no-rez-outermost-ice) (= (count (get-in @state [:run :ices])) (get-in @state [:run :position]))) ( (constantly false)
-                                               (system-msg state side (str "is prevented from rezzing outermost ice by "
-                                                                           (:title (turn-flag state :no-rez-outermost-ice)))))
-     :else true)))
+     (run-flag? state side card :can-rez-ice) true
+     :else false)))
 
 (defn rez
   ([state side card] (rez state side card nil))
