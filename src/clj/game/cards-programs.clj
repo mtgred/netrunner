@@ -424,22 +424,19 @@
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:successful-run
-             {:effect (req (let [i (ice-index state (:host card))
+             {:req (req (= (:type (:host card)) "ICE"))
+              :effect (req (let [i (ice-index state (:host card))
                                  nextice (when (> i 0) (nth (get-in @state
-                                                              (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
+                                                            (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
                              (if (pos? i)
                                (host state side nextice card)
                                (do (resolve-ability state side
-                                     {:prompt "Install a Caïssa program from Grip or Heap?" :choices ["Grip" "Heap"]
-                                      :msg (msg "install a Caïssa program from " target)
-                                      :effect (req (let [p target]
-                                                     (resolve-ability state side
-                                                       {:prompt "Choose a Caïssa program to install"
-                                                        :choices (req (filter #(has? % :subtype "Caïssa")
-                                                                        ((if (= p "Heap") :discard :hand) runner)))
-                                                        :effect (effect (runner-install target {:no-cost true}))} card nil)))}
-                                    card nil)
-                                   (trash state side card)))))}}}
+                                     {:prompt "Choose a Caïssa program to install from your Grip or Heap"
+                                      :show-discard true
+                                      :choices {:req #(and (has? % :subtype "Caïssa")
+                                                           (#{[:hand] [:discard]} (:zone %)))}
+                                      :effect (effect (runner-install target {:no-cost true}))} card nil)
+                                    (trash state side card)))))}}}
 
    "Pheromones"
    {:recurring (effect (set-prop card :rec-counter (:counter card)))
