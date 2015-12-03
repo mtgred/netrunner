@@ -34,9 +34,10 @@
     :effect (effect
               (resolve-ability (register-run-flag! state :can-rez-ice
                                              (fn [state side card]
-                                               ( (constantly false)
-                                                 (system-msg state side (str "is prevented from rezzing ICE on this run by "
-                                                                             (:title card))))
+                                               (if (has? card :type "ICE")
+                                                 ( (constantly false) (system-msg state side (str "is prevented from rezzing ICE on this run by Blackmail")))
+                                                 true
+                                                 )
                                                ) card) card nil)
               (run target nil card))}
 

@@ -1561,6 +1561,7 @@
   ([state side card {:as args}]
    (cond
      (run-flag? state side card :can-rez-ice) true
+     (turn-flag? state side card :can-rez-ice) true
      :else false)))
 
 (defn rez
