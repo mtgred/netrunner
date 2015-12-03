@@ -117,11 +117,12 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
-         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :named-target)
+         c (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
+             (dissoc c :installed :facedown :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (and (= (:side card) "Runner") (:installed card))
+       (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
                  (:rezzed card)
                  (= (first (:zone card)) :current)
                  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
@@ -243,13 +244,14 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (or (and (= dest [:rig :facedown]) installed)
-                       (and (or installed host (#{:servers :scored :current} (first zone)))
-                            (#{:hand :deck :discard} (first dest))
-                            (not (:facedown c))))
+             c (if (and (or installed host (#{:servers :scored :current} (first zone)))
+                        (#{:hand :deck :discard} (first dest))
+                        (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
+             moved-card (if (and (:facedown moved-card) (:installed moved-card))
+                          (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
          (if front
