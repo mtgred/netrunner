@@ -237,6 +237,9 @@
                         (if (= (:user player) user)
                           (:name deck)
                           "Deck selected")])
+                     (when-let [deck (:deck player)]
+                       (when-not (valid? deck)
+                         [:span.invalid "Invalid deck"]))
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
