@@ -99,9 +99,7 @@
 ;Example: Blackmail flags the current run as not allowing rezzing of ICE
 (defn register-run-flag! [state flag condition card]
   (let [stack (get-in @state [:stack :current-run flag])]
-    (if (= stack nil)
-      (swap! state assoc-in [:stack :current-run flag] (list {:card card :condition condition}))
-      (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition}))
+      (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition})
       ))
   )
 
@@ -120,7 +118,7 @@
 
 ;Clear the current run register
 (defn clear-run-register! [state]
-  (swap! state assoc-in [:register :current-run] (list))
+  (swap! state assoc-in [:stack :current-run] nil)
   )
 
 (defn register-turn-flag! [state flag card]
