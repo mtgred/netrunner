@@ -105,6 +105,15 @@
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))
                  :msg "force the Corp to trash the top card of R&D"}]}
 
+   "DDoS"
+   {:abilities [{
+                 :msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
+                 :effect (effect
+                           (resolve-ability (register-turn-flag! state :no-rez-outermost-ice card) card nil)
+                           (trash card {:cause :ability-cost}))
+                 }]
+    }
+
    "Decoy"
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}

@@ -1538,11 +1538,24 @@
          (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
          (swap! state update-in [:bonus] dissoc :install-cost))))))
 
+(defn can-rez?
+  ([state side card] (can-rez? state side card nil))
+  ([state side card {:as args}]
+   (cond
+     ;Blackmail
+     (run-flag state :no-rez-ice) ( (constantly false)
+                                    (system-msg state side (str "is prevented from rezzing ICE on this run by "
+                                                                (:title (run-flag state :no-rez-ice)))))
+     ;DDoS
+     (and (turn-flag state :no-rez-outermost-ice) (= 1 (get-in @state [:run :position]))) ( (constantly false)
+                                               (system-msg state side (str "is prevented from rezzing outermost ice by "
+                                                                           (:title (turn-flag state :no-rez-outermost-ice)))))
+     :else true)))
+
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
-   (if (run-flag state :no-rez-ice)
-     (system-msg state side (str "is prevented from rezzing ICE on this run by " (:title (run-flag state :no-rez-ice))))
+   (if (can-rez? state side card)
      (do
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
