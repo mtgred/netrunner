@@ -109,7 +109,18 @@
    {:abilities [{
                  :msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
                  :effect (effect
-                           (resolve-ability (register-turn-flag! state :no-rez-outermost-ice card) card nil)
+                           (resolve-ability (register-turn-flag! state :can-rez-ice
+                                                                 (fn [state side card]
+                                                                   (if (and
+                                                                         (has? card :type "ICE")
+                                                                         (= (count (get-in @state [:run :ices])) (get-in @state [:run :position]))
+                                                                         )
+                                                                     ((constantly false)
+                                                                       (system-msg state side (str "is prevented from rezzing any outermost ICE by DDoS"))
+                                                                       )
+                                                                     true
+                                                                     )
+                                                                   ) card) card nil)
                            (trash card {:cause :ability-cost}))
                  }]
     }
