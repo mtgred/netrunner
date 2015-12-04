@@ -1638,7 +1638,7 @@
 (defn forfeit [state side card]
   (let [c (desactivate state side card)]
     (system-msg state side (str "forfeits " (:title c)))
-    (gain state side :agenda-point (- (get-agenda-points state side c)))
+    (gain-agenda-point state side (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
 
 (defn expose [state side target]
