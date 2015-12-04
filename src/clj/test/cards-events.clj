@@ -87,3 +87,30 @@
     (is (= 5 (:credit (get-runner))))
     (core/play state :runner {:card (first (:hand (get-runner)))})
     (is (= 9 (:credit (get-runner))))))
+
+(deftest blackmail
+  "Prevent rezzing of ice for one run"
+  (do-game
+    (new-game
+      (default-corp [(qty "Ice Wall" 3)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Blackmail")
+    (prompt-choice :runner "HQ")
+    (let [iwall1 (get-in @state [:corp :servers :hq :ices 0])
+          iwall2 (get-in @state [:corp :servers :hq :ices 1])]
+      (core/rez state :corp iwall1)
+      (is (not (get-in (refresh iwall1) [:rezzed])))
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/rez state :corp iwall2)
+      (is (not (get-in (refresh iwall2) [:rezzed])))
+      (core/jack-out state :runner nil)
+      ;Do another run, where the ice should rez
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall1)
+      (is (get-in (refresh iwall1) [:rezzed]))
+    )))
