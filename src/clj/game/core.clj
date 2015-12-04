@@ -138,9 +138,9 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special :named-target)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special)
          c (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
-             (dissoc c :installed :facedown :counter :rec-counter :pump) c)
+             (dissoc c :installed :facedown :counter :rec-counter :pump :named-target) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
        (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
