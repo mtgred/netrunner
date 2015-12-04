@@ -14,12 +14,27 @@
   (when-let [title (:title card)]
     (cards (.replace title "'" ""))))
 
+;Detect special card conditions from the card definition
+;These definitions are intended to remain immutable, and should be used
+;for things like Architect being untrashable while installed (i.e. conditions inherent to the card).
+;TODO: add a register for mutable state card flags, separate from this
+(defn flag? [card flag value]
+  (let [cdef (card-def card)]
+    (= value (get-in cdef [:flags flag]))
+    ))
+
+(defn untrashable-while-rezzed? [card]
+  (and
+    (flag? card :untrashable-while-rezzed true)
+    (and (contains? card :rezzed) (get-in card [:rezzed]))
+    ))
+
 (declare parse-command)
 
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
     (if-let [command (parse-command text)]
-      (when (not= side :spectator)
+      (when (and (not= side nil) (not= side :spectator))
         (do (command state side)
             (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
       (swap! state update-in [:log] #(conj % {:user author :text text})))))
@@ -29,6 +44,12 @@
   ([state side text {:keys [hr]}]
    (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
+
+;Display a message related to a rules enforcement on a given card.
+;Example: Architect cannot be trashed while installed.
+(defn enforce-msg [state card text]
+  (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
+  )
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
@@ -163,11 +184,12 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown)
-         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :named-target)
+         c (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
+             (dissoc c :installed :facedown :counter :rec-counter :pump) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (and (= (:side card) "Runner") (:installed card))
+       (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
                  (:rezzed card)
                  (= (first (:zone card)) :current)
                  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
@@ -289,13 +311,14 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (or (and (= dest [:rig :facedown]) installed)
-                       (and (or installed host (#{:servers :scored :current} (first zone)))
-                            (#{:hand :deck :discard} (first dest))
-                            (not (:facedown c))))
+             c (if (and (or installed host (#{:servers :scored :current} (first zone)))
+                        (#{:hand :deck :discard} (first dest))
+                        (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
+             moved-card (if (and (:facedown moved-card) (:installed moved-card))
+                          (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
          (if front
@@ -895,26 +918,29 @@
   ([state side {:keys [zone type] :as card}] (trash state side card nil))
   ([state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
    (when (not (some #{:discard} zone))
-     (let [ktype (keyword (clojure.string/lower-case type))]
-        (when (and (not unpreventable) (not= cause :ability-cost))
-          (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-        (when (not= (last zone) :current)
-          (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
-        (let [prevent (get-in @state [:prevent :trash ktype])]
-          (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
-            (do
-              (system-msg state :runner "has the option to prevent trash effects")
-              (show-prompt
-                state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                (fn [choice]
-                  (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
-                    (do
-                      (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                      (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-                    (do
-                      (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                      (apply resolve-trash state side card args targets))))))
-            (apply resolve-trash state side card args targets)))))))
+     (if (untrashable-while-rezzed? card)
+       (enforce-msg state card "cannot be trashed while installed")
+       ;Card is not enforced untrashable
+       (let [ktype (keyword (clojure.string/lower-case type))]
+          (when (and (not unpreventable) (not= cause :ability-cost))
+            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+          (when (not= (last zone) :current)
+            (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
+          (let [prevent (get-in @state [:prevent :trash ktype])]
+            (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
+              (do
+                (system-msg state :runner "has the option to prevent trash effects")
+                (show-prompt
+                  state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
+                  (fn [choice]
+                    (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                      (do
+                        (system-msg state :runner (str "prevents the trashing of " (:title card)))
+                        (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+                      (do
+                        (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
+                        (apply resolve-trash state side card args targets))))))
+              (apply resolve-trash state side card args targets))))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))

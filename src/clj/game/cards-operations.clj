@@ -155,8 +155,8 @@
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target) " [Credits]")
-    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
+   {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
+    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (or (:advance-counter target) 0)))}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
@@ -275,7 +275,7 @@
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
    "Oversight AI"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
