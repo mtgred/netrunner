@@ -1559,10 +1559,9 @@
 (defn can-rez?
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
-   (cond
-     (run-flag? state side card :can-rez-ice) true
-     (turn-flag? state side card :can-rez-ice) true
-     :else false)))
+   (and
+     (run-flag? state side card :can-rez-ice)
+     (turn-flag? state side card :can-rez-ice))))
 
 (defn rez
   ([state side card] (rez state side card nil))
