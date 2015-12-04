@@ -115,6 +115,52 @@
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
 
+;Register a flag for the current run only
+;end-run clears this register, preventing state pollution between runs
+;Example: Blackmail flags the current run as not allowing rezzing of ICE
+(defn register-run-flag! [state flag condition card]
+  (let [stack (get-in @state [:stack :current-run flag])]
+      (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition})
+      ))
+  )
+
+;Execute all conditions for the given run flag
+;The resulting collection is expected to be empty if nothing is blocking the action
+;If the collection has any contents, the flag is considered to be false
+; (consider it as something has flagged the action as not being allowed)
+(defn run-flag? [state side card flag]
+  (empty?
+  (for [
+        condition (get-in @state [:stack :current-run flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+        ]
+    [result])))
+
+;Clear the current run register
+(defn clear-run-register! [state]
+  (swap! state assoc-in [:stack :current-run] nil)
+  )
+
+(defn register-turn-flag! [state flag condition card]
+  (let [stack (get-in @state [:stack :current-turn flag])]
+    (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition})
+           ))
+  )
+
+(defn turn-flag? [state side card flag]
+  (empty?
+    (for [
+          condition (get-in @state [:stack :current-turn flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+          ]
+      [result])))
+
+(defn clear-turn-register! [state]
+  (swap! state assoc-in [:stack :current-turn] nil)
+  )
+
 (defn register-suppress [state side events card]
   (doseq [e events]
     (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
@@ -490,7 +536,8 @@
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
-        (swap! state assoc :run nil))))
+        (swap! state assoc :run nil)
+        (clear-run-register! state))))
 
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
@@ -1403,6 +1450,7 @@
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))
       (swap! state assoc :end-turn true)
+      (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
 
 (defn purge [state side]
@@ -1534,9 +1582,18 @@
          (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
          (swap! state update-in [:bonus] dissoc :install-cost))))))
 
+(defn can-rez?
+  ([state side card] (can-rez? state side card nil))
+  ([state side card {:as args}]
+   (and
+     (run-flag? state side card :can-rez)
+     (turn-flag? state side card :can-rez))))
+
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
+   (if (can-rez? state side card)
+     (do
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (trigger-event state side :pre-rez-cost card)
@@ -1553,7 +1610,7 @@
              (update-ice-strength state side card)
              (update-run-ice state side))
            (trigger-event state side :rez card))))
-     (swap! state update-in [:bonus] dissoc :cost)))
+     (swap! state update-in [:bonus] dissoc :cost)))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))

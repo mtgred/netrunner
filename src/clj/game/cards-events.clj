@@ -30,7 +30,16 @@
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
-    :effect (effect (run target nil card))}
+    :msg "prevent ICE from being rezzed during this run"
+    :effect (effect
+              (resolve-ability (register-run-flag! state :can-rez
+                                             (fn [state side card]
+                                               (if (has? card :type "ICE")
+                                                 ( (constantly false) (system-msg state side (str "is prevented from rezzing ICE on this run by Blackmail")))
+                                                 true
+                                                 )
+                                               ) card) card nil)
+              (run target nil card))}
 
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
