@@ -1586,8 +1586,8 @@
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
    (and
-     (run-flag? state side card :can-rez-ice)
-     (turn-flag? state side card :can-rez-ice))))
+     (run-flag? state side card :can-rez)
+     (turn-flag? state side card :can-rez))))
 
 (defn rez
   ([state side card] (rez state side card nil))

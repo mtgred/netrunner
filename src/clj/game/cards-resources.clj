@@ -109,7 +109,7 @@
    {:abilities [{
                  :msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
                  :effect (effect
-                           (resolve-ability (register-turn-flag! state :can-rez-ice
+                           (resolve-ability (register-turn-flag! state :can-rez
                                                                  (fn [state side card]
                                                                    (if (and
                                                                          (has? card :type "ICE")
