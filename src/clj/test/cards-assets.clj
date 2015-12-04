@@ -1,5 +1,78 @@
 (in-ns 'test.core)
 
+(deftest adonis-campaign
+  (do-game
+    (new-game (default-corp [(qty "Adonis Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (let [ac (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp ac)
+      (is (= 1 (get-in @state [:corp :credit])))
+      (is (= 12 (get-in (refresh ac) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 6 (get-in @state [:corp :credit])))
+      (is (= 9 (get-in (refresh ac) [:counter])))
+      )))
+
+(deftest aggressive-secretary
+  (do-game
+    (new-game
+      (default-corp [(qty "Aggressive Secretary" 1)])
+      (default-runner [(qty "Cache" 3)]))
+    (play-from-hand state :corp "Aggressive Secretary" "New remote")
+    (let [as (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/advance state :corp as)
+      (take-credits state :corp)
+      ;Run on AggSec with 3 programs
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (core/run state :runner :remote1)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :corp "Yes")
+      (is (= 3 (get-in @state [:corp :credit])))
+      (prompt-select :corp (get-in @state [:runner :rig :program 1]))
+      (prompt-choice :corp "Done")
+      ;There should be one Cache left
+      (is (= 3 (get-in @state [:corp :credit])))
+      (is (=
+            2
+            (count (get-in @state [:runner :rig :program]))))
+      )))
+
+(deftest alix-t4lb07
+  (do-game
+    (new-game
+      (default-corp [(qty "Alix T4LB07" 1) (qty "PAD Campaign" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Alix T4LB07" "New remote")
+    (let [alix (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp alix)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 2 (get-in (refresh alix) [:counter])))
+      (is (= 4 (get-in @state [:corp :credit])))
+      (card-ability state :corp alix 0)
+      (is (= 8 (get-in @state [:corp :credit])))
+      )))
+
+(deftest eve-campaign
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (let [eve (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp eve)
+      (is (= 0 (get-in @state [:corp :credit])))
+      (is (= 16 (get-in (refresh eve) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 14 (get-in (refresh eve) [:counter])))
+      )))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
@@ -32,6 +105,20 @@
       (card-ability state :corp jhow 0)
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
+
+(deftest launch-campaign
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 1)]) (default-runner))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (let [launch (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp launch)
+      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 6 (get-in (refresh launch) [:counter])))
+      (take-credits state :corp 2)
+      (take-credits state :runner)
+      (is (= 8 (get-in @state [:corp :credit])))
+      (is (= 4 (get-in (refresh launch) [:counter])))
+      )))
 
 (deftest team-sponsorship-hq
   "Team Sponsorship - Install from HQ"
