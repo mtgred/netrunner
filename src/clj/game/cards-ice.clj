@@ -95,7 +95,7 @@
    {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
                  :trace (assoc trash-program :base 0 :not-distinct true
                                              :player :runner
-                                             :msg (msg "force the Runner to trash " (:title target)))}]}
+                                             :msg "force the Runner to trash a program")}]}
 
    "Caduceus"
    {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
