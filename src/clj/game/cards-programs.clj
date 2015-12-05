@@ -43,7 +43,11 @@
               :effect (effect (ice-strength-bonus -2))}}}
 
    "Bug"
-   {:req (req (some #{:hq} (:successful-run runner-reg)))}
+   {:req (req (some #{:hq} (:successful-run runner-reg)))
+    :events {:corp-draw {:optional
+                         {:prompt (msg "Pay 2 [Credits] to reveal card just drawn?") :player :runner
+                          :yes-ability {:msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))
+                                        :cost [:credit 2]}}}}}
 
    "Cache"
    {:abilities [{:counter-cost 1 :effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}]
