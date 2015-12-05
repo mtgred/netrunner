@@ -183,7 +183,7 @@
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
             :choices {:req #(and (:installed %)
                                  (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
-            :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
+            :msg "trash 1 virtual resource or link" :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
 
    "Freelancer"
    {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
