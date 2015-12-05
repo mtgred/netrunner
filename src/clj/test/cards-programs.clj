@@ -64,6 +64,16 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
+(deftest parasite-apex
+  "Paraiste - Installed facedown w/ Apex"
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
+    (take-credits state :corp)
+    (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
+    (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
+    (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
+
 (deftest parasite-gain-counter
   "Parasite - Gain 1 counter every Runner turn"
   (do-game
