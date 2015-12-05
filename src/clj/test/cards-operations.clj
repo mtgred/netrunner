@@ -41,5 +41,5 @@
       (play-from-hand state :corp "24/7 News Cycle")
       (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
-      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))

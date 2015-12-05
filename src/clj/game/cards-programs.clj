@@ -72,7 +72,8 @@
     :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                                   (trash state side card))}
              :corp-install {:req (req (= (:type target) "Agenda"))
-                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}}
+                            :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}
+    :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
    "Collective Consciousness"
    {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
@@ -309,16 +310,19 @@
    {:events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :rd)
                                         (not current-ice)
-                                        (and (:counter card) (> (:counter card) 0))))
+                                        (> (get-virus-counters state side card) 0)))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional R&D accesses"
                                                                      " by clicking on Medium"))
                                       (update! state side (assoc card :medium-active true)))}
              :successful-run {:req (req (and (= target :rd)
-                                             (or (:medium-active card) (nil? (:counter card)))))
+                                             (or (:medium-active card) (nil? (:counter card)) (= 0 (:counter card)))))
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :rd) (:medium-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (:medium-active card))
+    :abilities [{:req (req (and run
+                                (= (first (get-in @state [:run :server])) :rd)
+                                (not current-ice)
+                                (:medium-active card)))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional R&D accesses to make"
@@ -334,16 +338,19 @@
    {:events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :hq)
                                         (not current-ice)
-                                        (and (:counter card) (> (:counter card) 0))))
+                                        (> (get-virus-counters state side card) 0)))
                          :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
                                                                      " by clicking on Nerve Agent"))
                                       (update! state side (assoc card :nerve-active true)))}
              :successful-run {:req (req (and (= target :hq)
-                                             (or (:nerve-active card) (nil? (:counter card)))))
+                                             (or (:nerve-active card) (nil? (:counter card)) (= 0 (:counter card)))))
                               :effect (effect (add-prop card :counter 1))}
              :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
                           :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (:nerve-active card))
+    :abilities [{:req (req (and run
+                                (= (first (get-in @state [:run :server])) :hq)
+                                (not current-ice)
+                                (:nerve-active card)))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional HQ accesses to make"
@@ -421,22 +428,19 @@
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:successful-run
-             {:effect (req (let [i (ice-index state (:host card))
+             {:req (req (= (:type (:host card)) "ICE"))
+              :effect (req (let [i (ice-index state (:host card))
                                  nextice (when (> i 0) (nth (get-in @state
-                                                              (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
+                                                            (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
                              (if (pos? i)
                                (host state side nextice card)
                                (do (resolve-ability state side
-                                     {:prompt "Install a Caïssa program from Grip or Heap?" :choices ["Grip" "Heap"]
-                                      :msg (msg "install a Caïssa program from " target)
-                                      :effect (req (let [p target]
-                                                     (resolve-ability state side
-                                                       {:prompt "Choose a Caïssa program to install"
-                                                        :choices (req (filter #(has? % :subtype "Caïssa")
-                                                                        ((if (= p "Heap") :discard :hand) runner)))
-                                                        :effect (effect (runner-install target {:no-cost true}))} card nil)))}
-                                    card nil)
-                                   (trash state side card)))))}}}
+                                     {:prompt "Choose a Caïssa program to install from your Grip or Heap"
+                                      :show-discard true
+                                      :choices {:req #(and (has? % :subtype "Caïssa")
+                                                           (#{[:hand] [:discard]} (:zone %)))}
+                                      :effect (effect (runner-install target {:no-cost true}))} card nil)
+                                    (trash state side card)))))}}}
 
    "Pheromones"
    {:recurring (effect (set-prop card :rec-counter (:counter card)))
