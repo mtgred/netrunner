@@ -1551,7 +1551,7 @@
   ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
     {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
    (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
-     (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
+     (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
        (resolve-ability state side
                         {:choices hosting
                          :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
