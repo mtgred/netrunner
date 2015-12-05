@@ -48,7 +48,7 @@
    {:abilities [{:label "Trace 5 - Do 3 net damage"
                  :trace {:base 5 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}
                 {:label "Trace 4 - Trash a program"
-                 :trace (assoc trash-program :base 4)}]}
+                 :trace (assoc trash-program :base 4 :msg "trash a program")}]}
 
    "Asteroid Belt"
    {:advanceable :always :abilities [end-the-run]

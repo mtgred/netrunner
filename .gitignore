@@ -12,6 +12,10 @@ pom.xml
 .lein-plugins/
 .repl
 .nrepl-port
+.idea/
+launch-web.bat
+mongo.bat
+netrunner.iml
 
 /resources/public/js/
 /resources/public/cljs/
@@ -19,5 +23,6 @@ pom.xml
 /resources/public/css/
 /resources/public/img/cards
 /data/andb-*.json
+/data/db
 /data/img
 /.lein-failures
