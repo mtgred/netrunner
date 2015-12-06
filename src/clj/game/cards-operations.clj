@@ -340,8 +340,8 @@
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
-            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}))}}
+   {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
+            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
