@@ -300,9 +300,6 @@
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
-   "Precognition"
-   {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
-
    "Power Grid Overload"
    {:trace {:base 2 :msg "trash 1 piece of hardware"
             :effect (req (let [max-cost (- target (second targets))]
@@ -326,6 +323,11 @@
                                                           (<= (:cost %) n))}
                                      :msg (msg "trash " (:title target)) :effect (effect (trash target))}
                                     card nil)))}
+
+   "Precognition"
+   {:effect (req (prompt! state side card
+                         (str "Drag cards from the play area back onto R&D") ["OK"] {})
+                 (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
 
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
