@@ -431,8 +431,7 @@
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
    "Snatch and Grab"
-   {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
-            :msg (msg "attempt to trash " (:title target))
+   {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}
             :effect (req (let [c target]
                            (resolve-ability
                              state side
