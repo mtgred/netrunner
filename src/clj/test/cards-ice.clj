@@ -32,3 +32,30 @@
       (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
       (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))
       )))
+
+(deftest tmi
+  "TMI ICE test"
+  (do-game
+    (new-game (default-corp [(qty "TMI" 3)])
+              (default-runner))
+    (play-from-hand state :corp "TMI" "HQ")
+    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp tmi)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (get-in (refresh tmi) [:rezzed]))
+      )))
+
+
+(deftest tmi-derez
+  "TMI ICE trace derez"
+  (do-game
+    (new-game (default-corp [(qty "TMI" 3)])
+              (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
+    (play-from-hand state :corp "TMI" "HQ")
+    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp tmi)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (not (get-in (refresh tmi) [:rezzed])))
+      )))
