@@ -142,7 +142,7 @@
   (swap! state assoc-in [:stack :current-run] nil)
   )
 
-(defn register-turn-flag! [state flag condition card]
+(defn register-turn-flag! [state side card flag condition]
   (let [stack (get-in @state [:stack :current-turn flag])]
     (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition})
            ))
