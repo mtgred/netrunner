@@ -508,8 +508,9 @@
                                     :msg (msg "expose " (:title target))} card nil))}]}
 
    "Rolodex"
-   {:effect (req (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
-    :leave-play (effect (mill :runner 3))}
+   {:effect (req (prompt! state side card
+                          (str "Drag cards from the play area back onto your Stack") ["OK"] {})
+                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
