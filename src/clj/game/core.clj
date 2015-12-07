@@ -118,7 +118,7 @@
 ;Register a flag for the current run only
 ;end-run clears this register, preventing state pollution between runs
 ;Example: Blackmail flags the current run as not allowing rezzing of ICE
-(defn register-run-flag! [state flag condition card]
+(defn register-run-flag! [state side card flag condition]
   (let [stack (get-in @state [:stack :current-run flag])]
       (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition})
       ))
@@ -142,7 +142,7 @@
   (swap! state assoc-in [:stack :current-run] nil)
   )
 
-(defn register-turn-flag! [state flag condition card]
+(defn register-turn-flag! [state side card flag condition]
   (let [stack (get-in @state [:stack :current-turn flag])]
     (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition})
            ))
