@@ -114,3 +114,24 @@
       (core/rez state :corp iwall1)
       (is (get-in (refresh iwall1) [:rezzed]))
     )))
+
+(deftest blackmail-tmi-interaction
+  "Regression test for a rezzed tmi breaking game state on a blackmail run"
+  (do-game
+    (new-game (default-corp [(qty "TMI" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "TMI" "HQ")
+    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp tmi)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (get-in (refresh tmi) [:rezzed]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Blackmail")
+      (prompt-choice :runner "HQ")
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/jack-out state :runner nil)
+      (core/click-run state :runner {:server "Archives"})
+      )))
