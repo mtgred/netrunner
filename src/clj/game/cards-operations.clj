@@ -183,7 +183,7 @@
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
             :choices {:req #(and (:installed %)
                                  (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
-            :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
+            :msg "trash 1 virtual resource or link" :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
 
    "Freelancer"
    {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
@@ -199,8 +199,8 @@
    "Hellion Alpha Test"
    {:req (req (:installed-resource runner-reg))
     :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
-            :msg (msg "add " (:title target) " to the top of the Stack")
-            :effect (effect (move :runner target :deck {:front true}))
+            :msg "add a Resource to the top of the Stack"
+            :effect (effect (move :runner target :deck {:front true}) (system-msg (str "adds " (:title target) " to the top of the Stack")))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
@@ -340,8 +340,8 @@
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
-            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}))}}
+   {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
+            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
@@ -431,8 +431,7 @@
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
    "Snatch and Grab"
-   {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
-            :msg (msg "attempt to trash " (:title target))
+   {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}
             :effect (req (let [c target]
                            (resolve-ability
                              state side
