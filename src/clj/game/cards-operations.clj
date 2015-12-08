@@ -252,12 +252,13 @@
 
    "Mutate"
    {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
+    :prompt "Choose a rezzed piece of ICE to trash"
     :choices {:req (every-pred rezzed? ice?)}
     :msg (msg "to trash " (:title target))
     :effect (req (let [i (ice-index state target)
                        [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
                        titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
-                   (trash state side target {:cause :ability-cost})
+                   (trash state side target {:cause :ability-cost :keep-server-alive true})
                    (when (seq titles)
                      (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                    (if-let [ice (first r)]
