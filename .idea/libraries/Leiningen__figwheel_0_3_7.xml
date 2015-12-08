@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: figwheel:0.3.7">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/figwheel/figwheel/0.3.7/figwheel-0.3.7.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

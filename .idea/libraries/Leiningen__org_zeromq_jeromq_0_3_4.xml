@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: org.zeromq/jeromq:0.3.4">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/zeromq/jeromq/0.3.4/jeromq-0.3.4.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
