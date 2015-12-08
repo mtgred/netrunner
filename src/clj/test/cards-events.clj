@@ -27,6 +27,33 @@
     (is (= 5 (:credit (get-runner)))) ; no change in credits
     (is (= 8 (:credit (get-corp))))))
 
+(deftest apocalypse-turn-facedown
+  "Apocalypse - Turn Runner cards facedown without firing their leave play effects"
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
+              (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tri-maf Contact")
+    (core/gain state :runner :click 2)
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (core/click-run state :runner {:server "R&D"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (core/click-run state :runner {:server "HQ"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (play-from-hand state :runner "Apocalypse")
+    (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+    (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+    (let [tmc (get-in @state [:runner :rig :facedown 0])]
+      (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
+      (is (= 3 (count (:hand (get-runner)))) "No meat damage dealt by Tri-maf's leave play effect"))))
+
 (deftest demolition-run
   "Demolition Run - Trash at no cost"
   (do-game
@@ -60,3 +87,51 @@
     (is (= 5 (:credit (get-runner))))
     (core/play state :runner {:card (first (:hand (get-runner)))})
     (is (= 9 (:credit (get-runner))))))
+
+(deftest blackmail
+  "Prevent rezzing of ice for one run"
+  (do-game
+    (new-game
+      (default-corp [(qty "Ice Wall" 3)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Blackmail")
+    (prompt-choice :runner "HQ")
+    (let [iwall1 (get-in @state [:corp :servers :hq :ices 0])
+          iwall2 (get-in @state [:corp :servers :hq :ices 1])]
+      (core/rez state :corp iwall1)
+      (is (not (get-in (refresh iwall1) [:rezzed])))
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/rez state :corp iwall2)
+      (is (not (get-in (refresh iwall2) [:rezzed])))
+      (core/jack-out state :runner nil)
+      ;Do another run, where the ice should rez
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall1)
+      (is (get-in (refresh iwall1) [:rezzed]))
+    )))
+
+(deftest blackmail-tmi-interaction
+  "Regression test for a rezzed tmi breaking game state on a blackmail run"
+  (do-game
+    (new-game (default-corp [(qty "TMI" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "TMI" "HQ")
+    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp tmi)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (get-in (refresh tmi) [:rezzed]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Blackmail")
+      (prompt-choice :runner "HQ")
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/jack-out state :runner nil)
+      (core/click-run state :runner {:server "Archives"})
+      )))

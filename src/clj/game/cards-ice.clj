@@ -22,7 +22,10 @@
                 trash-program end-the-run]}
 
    "Architect"
-   {:abilities [{:msg "look at the top 5 cards of R&D"
+   {:flags {
+            :untrashable-while-rezzed true
+            }
+    :abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install" :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
@@ -45,7 +48,7 @@
    {:abilities [{:label "Trace 5 - Do 3 net damage"
                  :trace {:base 5 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}
                 {:label "Trace 4 - Trash a program"
-                 :trace (assoc trash-program :base 4)}]}
+                 :trace (assoc trash-program :base 4 :msg "trash a program")}]}
 
    "Asteroid Belt"
    {:advanceable :always :abilities [end-the-run]
@@ -92,7 +95,7 @@
    {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
                  :trace (assoc trash-program :base 0 :not-distinct true
                                              :player :runner
-                                             :msg (msg "force the Runner to trash " (:title target)))}]}
+                                             :msg "force the Runner to trash a program")}]}
 
    "Caduceus"
    {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
@@ -184,7 +187,7 @@
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target))
     :strength-bonus (req (or (:counter card) 0))
-    :abilities [{:label "Trace 2"
+    :abilities [{:label "Trace 2 - Give the Runner 1 tag and end the run"
                  :trace {:base 2 :msg "give the Runner 1 tag and end the run"
                          :effect (effect (tag-runner :runner 1) (end-run))}}]}
 
@@ -595,7 +598,7 @@
                  :trace {:base 1 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
                 {:label "Trace 2 - Do 2 net damage"
                  :trace {:base 2 :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}}
-                {:label "Trace 3 - Do 3 net damage"
+                {:label "Trace 3 - Do 3 net damage and end the run"
                  :trace {:base 3 :msg "do 3 net damage and end the run"
                          :effect (effect (damage :net 3 {:card card}) (end-run))}}]}
 
@@ -739,7 +742,13 @@
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"
-                 :effect (effect (trash card) (prevent-jack-out))}]}
+                 :effect (req (when (and (is-remote? (second (:zone card)))
+                                         (> (count (concat (:ices (card->server state card))
+                                                           (:content (card->server state card)))) 1))
+                                (prevent-jack-out state side))
+                              (trash state side card)
+                              (when (:run @state)
+                                (swap! state update-in [:run] #(assoc % :position (dec (:position run))))))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed

@@ -105,6 +105,28 @@
     :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))
                  :msg "force the Corp to trash the top card of R&D"}]}
 
+   "DDoS"
+   {:abilities [{
+                 :msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
+                 :effect (effect
+                           (register-turn-flag!
+                                    card
+                                    :can-rez
+                                     (fn [state side card]
+                                       (if (and
+                                             (has? card :type "ICE")
+                                             (= (count (get-in @state [:run :ices])) (get-in @state [:run :position]))
+                                             )
+                                         ((constantly false)
+                                           (system-msg state side (str "is prevented from rezzing any outermost ICE by DDoS"))
+                                           )
+                                         true
+                                         )
+                                       ))
+                           (trash card {:cause :ability-cost}))
+                 }]
+    }
+
    "Decoy"
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
@@ -488,8 +510,9 @@
                                     :msg (msg "expose " (:title target))} card nil))}]}
 
    "Rolodex"
-   {:effect (req (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
-    :leave-play (effect (mill :runner 3))}
+   {:effect (req (prompt! state side card
+                          (str "Drag cards from the play area back onto your Stack") ["OK"] {})
+                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}

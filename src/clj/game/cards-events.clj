@@ -30,7 +30,19 @@
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
-    :effect (effect (run target nil card))}
+    :msg "prevent ICE from being rezzed during this run"
+    :effect (effect
+              (register-run-flag!
+                          card
+                          :can-rez
+                                   (fn [state side card]
+                                     (if (has? card :type "ICE")
+                                       ( (constantly false) (system-msg state side (str "is prevented from rezzing ICE on this run by Blackmail")))
+                                       true
+                                       )
+                                     )
+                          )
+              (run target nil card))}
 
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
@@ -284,17 +296,19 @@
                                card nil)
                               (unregister-events card))}}}
 
-   "Indexing"
-   {:effect (effect (run :rd {:replace-access
-                              {:msg "rearrange the top 5 cards of R&D"
-                               :effect (req (doseq [c (take 5 (:deck corp))]
-                                              (move state side c :play-area)))}} card))}
-
    "Independent Thinking"
    (let [cards-to-draw (fn [ts] (* (count ts) (if (not-any? #(has? % :subtype "Directive") ts) 1 2)))]
      {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
       :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
       :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
+
+   "Indexing"
+   {:effect (effect (run :rd {:replace-access
+                              {:msg "rearrange the top 5 cards of R&D"
+                               :effect (req (prompt! state side card
+                                                     (str "Drag cards from the play area back onto R&D") ["OK"] {})
+                                            (doseq [c (take 5 (:deck corp))]
+                                              (move state side c :play-area)))}} card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -663,16 +677,14 @@
                                :effect (effect (lose :corp :credit target) (gain :tag 1))}} card))}
 
    "Wanton Destruction"
-   {:effect (effect
-             (run :hq {:req (req (= target :hq))
-                       :replace-access
-                       {:msg (msg "Wanton Destruction to force the Corp to discard " target
-                                  " cards from HQ at random")
-                        :prompt "How many [Click] do you want to spend?"
-                        :choices (req (map str (range 1 (inc (:click runner)))))
-                        :effect (req (let [n (Integer/parseInt target)]
-                                       (when (pay state :runner card :click n)
-                                         (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
+                              {:msg (msg "force the Corp to discard " target " cards from HQ at random")
+                               :prompt "How many [Click] do you want to spend?"
+                               :choices (req (map str (range 1 (inc (:click runner)))))
+                               :effect (req (let [n (Integer/parseInt target)]
+                                              (when (pay state :runner card :click n)
+                                                (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
    "Windfall"
    {:effect (req (shuffle! state :runner :deck)
