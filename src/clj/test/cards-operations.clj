@@ -42,4 +42,6 @@
       (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
       (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
+      (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
+      (take-credits state :corp 2)
+      (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
