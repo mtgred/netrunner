@@ -1,5 +1,26 @@
 (in-ns 'test.core)
 
+(deftest film-critic-fetal-ai
+  "Film Critic - Fetal AI interaction"
+  (do-game
+    (new-game (default-corp [(qty "Fetal AI" 3)])
+              (default-runner [(qty "Film Critic" 1) (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (core/click-run state :runner {:server :hq})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      ; should not have taken damage yet
+      (is (= 3 (count (:hand (get-runner)))) "No damage dealt yet")
+      (card-ability state :runner fc 0)
+      (is (= 3 (count (:hand (get-runner)))) "No damage dealt")
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (card-ability state :runner fc 1)
+      (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
+      (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
+
+
 (deftest kati-jones
   "Kati Jones - Click to store and take"
   (do-game

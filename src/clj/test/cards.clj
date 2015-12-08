@@ -1,4 +1,5 @@
 (in-ns 'test.core)
+(load "cards-agendas")
 (load "cards-assets")
 (load "cards-events")
 (load "cards-hardware")
