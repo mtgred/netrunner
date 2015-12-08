@@ -8,4 +8,7 @@
          ~'refresh (fn [~'card] (core/get-card ~'state ~'card))
          ~'prompt-choice (fn [~'side ~'choice] (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
          ~'prompt-card (fn [~'side ~'card] (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))
-         ~'prompt-select (fn [~'side ~'card] (core/select ~'state ~'side {:card (~'refresh ~'card)}))] ~@body))
+         ~'prompt-select (fn [~'side ~'card] (core/select ~'state ~'side {:card (~'refresh ~'card)}))
+         ~'advance-card (fn [~'card ~'count]
+                          (dotimes [~'n ~'count]
+                            (core/advance ~'state :corp {:card (~'refresh ~'card)})))] ~@body))
