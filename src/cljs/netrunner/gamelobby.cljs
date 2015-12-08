@@ -21,6 +21,7 @@
                (if (= (get-in game [:corp :user]) user)
                  :corp
                  :spectator))]
+    (swap! app-state assoc :side side)
     (init-game game side))
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
@@ -90,11 +91,15 @@
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
-  (swap! app-state dissoc :gameid)
+  (swap! app-state dissoc :gameid :side)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
+
+(defn concede []
+  (send {:action "concede" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state)}))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -232,6 +237,9 @@
                         (if (= (:user player) user)
                           (:name deck)
                           "Deck selected")])
+                     (when-let [deck (:deck player)]
+                       (when-not (valid? deck)
+                         [:span.invalid "Invalid deck"]))
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]

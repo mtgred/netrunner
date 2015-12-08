@@ -43,7 +43,7 @@
                       :effect (effect (rez :corp target))}}}
 
    "Bookmark"
-   {:abilities [{:label "Host 3 cards from your Grip facedown"
+   {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
                  :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
                  :effect (req (doseq [c targets]
@@ -54,7 +54,8 @@
                 {:label "[Trash]: Add all hosted cards to Grip" :msg "add all hosted cards to their Grip"
                  :effect (req (doseq [c (:hosted card)]
                                 (move state side c :hand))
-                              (trash state side card {:cause :ability-cost}))}]}
+                              (update! state side (dissoc card :hosted))
+                              (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
    {:effect (effect (gain :memory 2 :max-hand-size 2))
@@ -189,7 +190,7 @@
              {:optional
               {:req (req (:dopp-active card))
                :prompt "Use Doppelgänger to run again?" :player :runner
-               :yes-ability {:prompt "Choose a server" 
+               :yes-ability {:prompt "Choose a server"
                              :choices (req servers)
                              :msg (msg "make a run on " target)
                              :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
@@ -379,6 +380,19 @@
                                                      (shuffle! state :runner :deck)))}}} card nil))
     :leave-play (effect (lose :link 1))}
 
+   "Record Reconstructor"
+   {:events
+    {:successful-run
+     {:req (req (= (get-in @state [:run :server]) [:archives]))
+      :effect (req (let [rr card]
+                     (swap! state assoc-in [:run :run-effect :replace-access]
+                       {:effect (effect (resolve-ability
+                                          {:prompt "Choose one faceup card to add to the top of R&D"
+                                           :choices (req (filter #(:seen %) (:discard corp)))
+                                           :msg (msg "add " (:title target) " to the top of R&D")
+                                           :effect (req (move state :corp target :deck {:front true}))}
+                                         rr nil))})))}}}
+
    "Replicator"
    {:events {:runner-install
              {:optional {:req (req (= (:type target) "Hardware"))
@@ -486,13 +500,11 @@
    "Unregistered S&W 35"
    {:abilities
     [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
-      :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a card to trash"
-      :choices (req (let [contents (mapcat :content (flatten (seq (:servers corp))))
-                          hosted (mapcat :hosted contents)]
-                      (filter #(and (:rezzed %)
-                                    (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
-                                        (has? % :subtype "Executive") (has? % :subtype "Sysop")))
-                               (concat hosted contents))))
+      :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
+      :choices {:req #(and (:rezzed %)
+                           (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
+                               (has? % :subtype "Executive") (has? % :subtype "Sysop"))
+                           (or (= (last (:zone %)) :content) (= (last (:zone %)) :onhost)))}
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Vigil"

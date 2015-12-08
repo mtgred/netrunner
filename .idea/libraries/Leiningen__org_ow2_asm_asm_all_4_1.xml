@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.ow2.asm/asm-all:4.1">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

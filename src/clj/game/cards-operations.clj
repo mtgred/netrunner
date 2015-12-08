@@ -5,8 +5,10 @@
    {:req (req (> (count (:scored corp)) 1)) :additional-cost [:forfeit]
     :effect (req (let [agendas (get-in @state [:corp :scored])]
                    (resolve-ability state side
-                     {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                      :choices (req (cancellable (filter #(= (:type %) "Agenda") agendas)))
+                     {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                      :choices {:req #(and (= (:type %) "Agenda")
+                                           (= (first (:zone %)) :scored)
+                                           (:abilities %))}
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
                       :effect (effect (card-init target))}
                     card nil)))}
@@ -153,8 +155,8 @@
    {:req (req tagged) :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target) " [Credits]")
-    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (:advance-counter target)))}
+   {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
+    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (or (:advance-counter target) 0)))}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
@@ -181,7 +183,7 @@
    {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
             :choices {:req #(and (:installed %)
                                  (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
-            :msg (msg "trash " (:title target)) :effect (effect (trash target))}}
+            :msg "trash 1 virtual resource or link" :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
 
    "Freelancer"
    {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
@@ -197,8 +199,8 @@
    "Hellion Alpha Test"
    {:req (req (:installed-resource runner-reg))
     :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
-            :msg (msg "add " (:title target) " to the top of the Stack")
-            :effect (effect (move :runner target :deck {:front true}))
+            :msg "add a Resource to the top of the Stack"
+            :effect (effect (move :runner target :deck {:front true}) (system-msg (str "adds " (:title target) " to the top of the Stack")))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
@@ -217,9 +219,10 @@
     :effect (effect (corp-install target nil {:no-install-cost true}))}
 
    "Invasion of Privacy"
-   {:trace {:base 2 :msg (msg "reveal the Runner's Grip and trash up to " (- target (second targets)) " resources or events")
+   {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"
             :effect (req (doseq [c (:hand runner)]
-                           (move state side c :play-area)))
+                           (move state side c :play-area))
+                           (system-msg state :corp (str "reveals the Runner's Grip and can trash up to " (- target (second targets)) " resources or events")))
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Lag Time"
@@ -236,8 +239,9 @@
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
-    :trace {:base 6 :msg (msg "give the Runner " (- target (second targets)) " tags")
-            :effect (effect (tag-runner :runner (- target (second targets))))}}
+    :trace {:base 6 :msg "give the Runner X tags"
+            :effect (effect (tag-runner :runner (- target (second targets)))
+                            (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
 
    "Mushin No Shin"
    {:prompt "Choose a card to install from HQ"
@@ -271,7 +275,7 @@
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
    "Oversight AI"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
+   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
@@ -296,19 +300,16 @@
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
-   "Precognition"
-   {:effect (req (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
-
    "Power Grid Overload"
-   {:trace {:base 2 :msg (msg "trash 1 piece of hardware with install cost less than or equal to "
-                              (- target (second targets)))
+   {:trace {:base 2 :msg "trash 1 piece of hardware"
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
                                             {:choices {:req #(and (has? % :type "Hardware")
                                                                   (<= (:cost %) max-cost))}
                                              :msg (msg "trash " (:title target))
                                              :effect (effect (trash target))}
-                                            card nil)))}}
+                                            card nil))
+                         (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
    "Power Shutdown"
    {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
@@ -323,6 +324,11 @@
                                      :msg (msg "trash " (:title target)) :effect (effect (trash target))}
                                     card nil)))}
 
+   "Precognition"
+   {:effect (req (prompt! state side card
+                         (str "Drag cards from the play area back onto R&D") ["OK"] {})
+                 (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
+
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
@@ -336,8 +342,8 @@
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg (msg "do " (or (:stole-agenda runner-reg) 0) " meat damage")
-            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}))}}
+   {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
+            :effect (effect (damage :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
@@ -427,8 +433,7 @@
     :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
 
    "Snatch and Grab"
-   {:trace {:base 3 :choices {:req #(has? % :subtype "Connection")}
-            :msg (msg "attempt to trash " (:title target))
+   {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}
             :effect (req (let [c target]
                            (resolve-ability
                              state side

@@ -231,8 +231,10 @@
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
    "Isabel McGuire"
-   {:abilities [{:label "Add an installed card to HQ" :choices {:req #(= (first (:zone %)) :servers)}
-                 :msg (msg "move " (:title target) " to HQ") :effect (effect (move target :hand))}]}
+   {:abilities [{:cost [:click 1] :label "Add an installed card to HQ"
+                 :choices {:req #(= (first (:zone %)) :servers)}
+                 :msg (msg "move " (if (:rezzed target) (:title target) "a card") " to HQ")
+                 :effect (effect (move target :hand))}]}
 
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
@@ -343,10 +345,12 @@
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                                 (do (as-agenda state :runner card -1)
+                                               (do (or (move state :runner (assoc card :agendapoints -1) :scored)
+                                                       (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored))
+                                                   (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds News Team to their score area as -1 agenda point")))
-                                                 (do (tag-runner state :runner 2)
+                                               (do (tag-runner state :runner 2)
                                                    (system-msg state side (str "takes 2 tags from News Team")))))}
                               card targets))}}
 
@@ -421,11 +425,13 @@
                              (resolve-ability state side
                                               {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
                                                :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                                               :msg (msg (.toLowerCase target))
+                                               :msg (msg (if (= target "Remove 1 bad publicity")
+                                                           "remove 1 bad publicity" "gain 5 [Credits]"))
                                                :effect (req (if (= target "Remove 1 bad publicity")
                                                               (lose state side :bad-publicity 1)
                                                               (gain state side :credit 5)))}
                                               card targets)))}}}
+
    "Ronald Five"
    {:events {:runner-trash {:req (req (and (= (:side target) "Corp") (> (:click runner) 0)))
                             :msg "force the runner to lose 1 [Click]" :effect (effect (lose :runner :click 1))}}}
@@ -484,7 +490,7 @@
                                                         :effect (effect (trash-cards targets))) shat nil)))}}}}
 
    "Shi.Kyū"
-   {:access 
+   {:access
     {:optional {:req (req (not= (first (:zone card)) :deck))
                 :prompt "Pay [Credits] to use Shi.Kyū?"
                 :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
@@ -496,7 +502,7 @@
                                 :effect (let [dmg target]
                                           (req (if (= target "Add Shi.Kyū to score area")
                                                  (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
-                                                         (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work 
+                                                         (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
                                                    (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds Shi.Kyū to their score area as -1 agenda point")))
@@ -616,4 +622,4 @@
                               (host state side card target)
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
                               (when (:rezzed (last (:hosted (get-card state card))))
-                                (update! state side (dissoc (get-card state (last (:hosted card)) :facedown)))))}]}})
+                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}})

@@ -214,3 +214,30 @@
       (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
       (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter"))))
 
+(deftest ddos
+  "Prevent rezzing of outermost ice for the rest of the turn"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 3)]) (default-runner [(qty "DDoS" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "DDoS")
+    (let [ddos (get-in @state [:runner :rig :resource 0])
+          iwall (get-in @state [:corp :servers :hq :ices 0])]
+      (card-ability state :runner ddos 0)
+      (is (= (:title ddos) (get-in @state [:runner :discard 0 :title]) ))
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (not (get-in (refresh iwall) [:rezzed])))
+      (core/end-run state :runner)
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (not (get-in (refresh iwall) [:rezzed])))
+      (core/end-run state :runner)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (get-in (refresh iwall) [:rezzed]))
+      )))
+

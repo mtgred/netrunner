@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: com.novemberain/monger:3.0.0-rc2">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/novemberain/monger/3.0.0-rc2/monger-3.0.0-rc2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

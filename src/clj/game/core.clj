@@ -14,12 +14,27 @@
   (when-let [title (:title card)]
     (cards (.replace title "'" ""))))
 
+;Detect special card conditions from the card definition
+;These definitions are intended to remain immutable, and should be used
+;for things like Architect being untrashable while installed (i.e. conditions inherent to the card).
+;TODO: add a register for mutable state card flags, separate from this
+(defn flag? [card flag value]
+  (let [cdef (card-def card)]
+    (= value (get-in cdef [:flags flag]))
+    ))
+
+(defn untrashable-while-rezzed? [card]
+  (and
+    (flag? card :untrashable-while-rezzed true)
+    (and (contains? card :rezzed) (get-in card [:rezzed]))
+    ))
+
 (declare parse-command)
 
 (defn say [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))]
     (if-let [command (parse-command text)]
-      (when (not= side :spectator)
+      (when (and (not= side nil) (not= side :spectator))
         (do (command state side)
             (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
       (swap! state update-in [:log] #(conj % {:user author :text text})))))
@@ -29,6 +44,12 @@
   ([state side text {:keys [hr]}]
    (let [username (get-in @state [side :user :username])]
     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
+
+;Display a message related to a rules enforcement on a given card.
+;Example: Architect cannot be trashed while installed.
+(defn enforce-msg [state card text]
+  (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
+  )
 
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
@@ -94,6 +115,52 @@
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
 
+;Register a flag for the current run only
+;end-run clears this register, preventing state pollution between runs
+;Example: Blackmail flags the current run as not allowing rezzing of ICE
+(defn register-run-flag! [state side card flag condition]
+  (let [stack (get-in @state [:stack :current-run flag])]
+      (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition})
+      ))
+  )
+
+;Execute all conditions for the given run flag
+;The resulting collection is expected to be empty if nothing is blocking the action
+;If the collection has any contents, the flag is considered to be false
+; (consider it as something has flagged the action as not being allowed)
+(defn run-flag? [state side card flag]
+  (empty?
+  (for [
+        condition (get-in @state [:stack :current-run flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+        ]
+    [result])))
+
+;Clear the current run register
+(defn clear-run-register! [state]
+  (swap! state assoc-in [:stack :current-run] nil)
+  )
+
+(defn register-turn-flag! [state side card flag condition]
+  (let [stack (get-in @state [:stack :current-turn flag])]
+    (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition})
+           ))
+  )
+
+(defn turn-flag? [state side card flag]
+  (empty?
+    (for [
+          condition (get-in @state [:stack :current-turn flag])
+          :let [result ((:condition condition) state side card)]
+          :when (not result)
+          ]
+      [result])))
+
+(defn clear-turn-register! [state]
+  (swap! state assoc-in [:stack :current-turn] nil)
+  )
+
 (defn register-suppress [state side events card]
   (doseq [e events]
     (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
@@ -117,11 +184,12 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special :facedown :added-virus-counter)
-         c (if (= (:side c) "Runner") (dissoc c :installed :counter :rec-counter :pump) c)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :added-virus-counter)
+         c (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
+             (dissoc c :installed :facedown :counter :rec-counter :pump :named-target) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
      (when-let [leave-effect (:leave-play (card-def card))]
-       (when (or (and (= (:side card) "Runner") (:installed card))
+       (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
                  (:rezzed card)
                  (= (first (:zone card)) :current)
                  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
@@ -243,13 +311,14 @@
        (let [dest (if (sequential? to) (vec to) [to])
              c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
                  (assoc card :seen true) card)
-             c (if (or (and (= dest [:rig :facedown]) installed)
-                       (and (or installed host (#{:servers :scored :current} (first zone)))
-                            (#{:hand :deck :discard} (first dest))
-                            (not (:facedown c))))
+             c (if (and (or installed host (#{:servers :scored :current} (first zone)))
+                        (#{:hand :deck :discard} (first dest))
+                        (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
+             moved-card (if (and (:facedown moved-card) (:installed moved-card))
+                          (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)]
          (if front
@@ -271,11 +340,16 @@
          (trigger-event state side :card-moved card moved-card)
          moved-card)))))
 
+(defn win [state side reason]
+  (system-msg state side "wins the game")
+  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+
 (defn draw
   ([state side] (draw state side 1))
   ([state side n]
    (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
-     (system-msg state side "is decked and the Runner wins the game"))
+     (system-msg state side "is decked")
+     (win state :runner "Decked"))
    (let [active-player (get-in @state [:active-player])]
      (when-not (get-in @state [active-player :register :cannot-draw])
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
@@ -359,7 +433,7 @@
                                  " to initiate a trace with strength " total
                                  " (" base
                                  (when (> bonus 0) (str " + " bonus " bonus"))
-                                 " + " boost " [Credits])"))
+                                 " + " boost " [Credits]) (" (:msg ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
     (swap! state assoc :trace {:strength total :ability ability :card card})
@@ -462,7 +536,8 @@
               (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
-        (swap! state assoc :run nil))))
+        (swap! state assoc :run nil)
+        (clear-run-register! state))))
 
 
 (defn add-prop
@@ -656,7 +731,8 @@
 )
 
 (defn flatline [state]
-  (system-msg state :runner "is flatlined"))
+  (system-msg state :runner "is flatlined")
+  (win state :corp "Flatline"))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
@@ -727,7 +803,7 @@
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                {:gameid gameid :log [] :active-player :runner :end-turn true
-                :rid 0
+                :rid 0 :turn 0
                 :corp {:user (:user corp) :identity corp-identity
                        :deck (zone :deck (drop 5 corp-deck))
                        :hand (zone :hand (take 5 corp-deck))
@@ -750,6 +826,10 @@
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
    :runner {:credit 5 :run-credit 0 :link 0 :memory 4 :max-hand-size 5}})
+
+(defn concede [state side args]
+  (system-msg state side "concedes")
+  (win state (if (= side :corp) :runner :corp) "Concede"))
 
 (defn shuffle-into-deck [state side & args]
   (let [player (side @state)
@@ -778,8 +858,7 @@
 (defn gain-agenda-point [state side n]
   (gain state side :agenda-point n)
   (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-    (system-msg state side "wins the game")))
-
+    (win state side "Agenda")))
 
 (defn tag-prevent [state side n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0)))
@@ -846,26 +925,29 @@
   ([state side {:keys [zone type] :as card}] (trash state side card nil))
   ([state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
    (when (not (some #{:discard} zone))
-     (let [ktype (keyword (clojure.string/lower-case type))]
-        (when (and (not unpreventable) (not= cause :ability-cost))
-          (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-        (when (not= (last zone) :current)
-          (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
-        (let [prevent (get-in @state [:prevent :trash ktype])]
-          (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
-            (do
-              (system-msg state :runner "has the option to prevent trash effects")
-              (show-prompt
-                state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                (fn [choice]
-                  (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
-                    (do
-                      (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                      (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-                    (do
-                      (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                      (apply resolve-trash state side card args targets))))))
-            (apply resolve-trash state side card args targets)))))))
+     (if (untrashable-while-rezzed? card)
+       (enforce-msg state card "cannot be trashed while installed")
+       ;Card is not enforced untrashable
+       (let [ktype (keyword (clojure.string/lower-case type))]
+          (when (and (not unpreventable) (not= cause :ability-cost))
+            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+          (when (not= (last zone) :current)
+            (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
+          (let [prevent (get-in @state [:prevent :trash ktype])]
+            (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
+              (do
+                (system-msg state :runner "has the option to prevent trash effects")
+                (show-prompt
+                  state :runner nil (str "Prevent the trashing of " (:title card) "?") ["Done"]
+                  (fn [choice]
+                    (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                      (do
+                        (system-msg state :runner (str "prevents the trashing of " (:title card)))
+                        (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+                      (do
+                        (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
+                        (apply resolve-trash state side card args targets))))))
+              (apply resolve-trash state side card args targets))))))))
 
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
@@ -1348,16 +1430,20 @@
         hand (if (= side :runner) "their Grip" "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " their turn with " credits " [Credit] and " cards " cards in " hand)]
+        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn start-turn [state side args]
+  (when (= side :corp)
+    (swap! state update-in [:turn] inc))
   (turn-message state side true)
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp) (do (draw state :corp) (update-all-advancement-costs state side))))
+  (when (= side :corp)
+    (do (draw state :corp)
+        (update-all-advancement-costs state side))))
 
 (defn end-turn [state side args]
   (let [max-hand-size (get-in @state [side :max-hand-size])]
@@ -1379,6 +1465,7 @@
           (when (re-find #"Virus" (:subtype card))
             (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
+      (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
 
 (defn purge [state side]
@@ -1479,7 +1566,7 @@
   ([state side {:keys [title type cost memoryunits uniqueness ] :as card}
     {:keys [extra-cost no-cost host-card facedown custom-message] :as params}]
    (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
-     (if-let [hosting (and (not host-card) (:hosting (card-def card)))]
+     (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
        (resolve-ability state side
                         {:choices hosting
                          :effect (effect (runner-install card (assoc params :host-card target)))} card nil)
@@ -1518,9 +1605,18 @@
          (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
          (swap! state update-in [:bonus] dissoc :install-cost))))))
 
+(defn can-rez?
+  ([state side card] (can-rez? state side card nil))
+  ([state side card {:as args}]
+   (and
+     (run-flag? state side card :can-rez)
+     (turn-flag? state side card :can-rez))))
+
 (defn rez
   ([state side card] (rez state side card nil))
   ([state side card {:keys [no-cost] :as args}]
+   (if (can-rez? state side card)
+     (do
      (trigger-event state side :pre-rez card)
      (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
        (trigger-event state side :pre-rez-cost card)
@@ -1537,7 +1633,7 @@
              (update-ice-strength state side card)
              (update-run-ice state side))
            (trigger-event state side :rez card))))
-     (swap! state update-in [:bonus] dissoc :cost)))
+     (swap! state update-in [:bonus] dissoc :cost)))))
 
 (defn corp-install
   ([state side card server] (corp-install state side card server nil))
@@ -1622,7 +1718,7 @@
 (defn forfeit [state side card]
   (let [c (desactivate state side card)]
     (system-msg state side (str "forfeits " (:title c)))
-    (gain state side :agenda-point (- (get-agenda-points state side c)))
+    (gain-agenda-point state side (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
 
 (defn expose [state side target]
