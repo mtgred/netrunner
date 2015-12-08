@@ -21,3 +21,7 @@ pom.xml
 /data/andb-*.json
 /data/img
 /.lein-failures
+
+# Add entries to prevent committing IntelliJ Cursive project configs
+/.idea
+netrunner.iml
