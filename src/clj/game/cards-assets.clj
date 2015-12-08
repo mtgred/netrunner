@@ -523,7 +523,7 @@
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
-   {:events {:runner-spent-click {:req (req (not (= (:server run) (:zone card)))) :once :per-turn
+   {:events {:runner-spent-click {:req (req (not this-server)) :once :per-turn
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
    "Team Sponsorship"

@@ -1038,10 +1038,13 @@
                     (let [cost (steal-cost state side c)]
                       (if (pos? (count cost))
                         (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                          {:yes-ability {:cost cost
-                                                         :effect (effect (system-msg (str "pays " (costs-to-symbol cost)
-                                                                                          " to steal " (:title c)))
-                                                                         (resolve-steal c))}
+                                          {:yes-ability
+                                            {:effect (req (if (can-pay? state side cost)
+                                                            (do (pay state side nil cost)
+                                                                (system-msg state side (str "pays " (costs-to-symbol cost)
+                                                                                      " to steal " (:title c)))
+                                                                (resolve-steal state side c))
+                                                            (resolve-steal-events state side c)))}
                                            :no-ability {:effect (effect (resolve-steal-events c))}} nil)
                         (resolve-ability state :runner
                                          {:prompt (str "You access " (:title c)) :choices ["Steal"]
@@ -1684,9 +1687,10 @@
         nil))))
 
 (defn click-run [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (pay state :runner nil :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner nil :click 1))
     (system-msg state :runner (str "makes a run on " server))
-    (run state side server)))
+    (run state side server)
+    (pay state :runner nil :click 1)))
 
 (defn click-draw [state side args]
   (when (and (not (get-in @state [side :register :cannot-draw])) (pay state side nil :click 1))
