@@ -1,5 +1,25 @@
 (in-ns 'test.core)
 
+(deftest ancestral-imager
+  "Ancestral Imager - damage on jack out"
+  (do-game
+    (new-game (default-corp [(qty "Ancestral Imager" 3)]) (default-runner))
+    (play-from-hand state :corp "Ancestral Imager" "New remote")
+    (let [ai (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/advance state :corp {:card (refresh ai)})
+      (core/advance state :corp {:card (refresh ai)})
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh ai)})
+      (is (= 3 (get-in (refresh ai) [:advance-counter])))
+      (core/score state :corp {:card (refresh ai)})
+      (take-credits state :corp)
+      (is (= 3 (count(get-in @state [:runner :hand]))))
+      (core/click-run state :runner {:server :hq})
+      (core/jack-out state :runner nil)
+      (is (= 2 (count(get-in @state [:runner :hand]))))
+      )))
+
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
   (do-game
