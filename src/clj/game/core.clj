@@ -544,7 +544,7 @@
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
    (let [updated-card (if
-                        (and (contains? card :subtype) (re-find #"Virus" (:subtype card)))
+                        (has? card :subtype "Virus")
                         (assoc card :added-virus-counter true)
                         card
                         )]
@@ -1599,7 +1599,7 @@
                  (if (and
                        (contains? installed-card :counter)
                        (contains? installed-card :subtype)
-                       (re-find #"Virus" (:subtype card))
+                       (has? card :subtype "Virus")
                        (> (:counter installed-card) 0))
                    (update! state side (assoc installed-card :added-virus-counter true))
                    )
