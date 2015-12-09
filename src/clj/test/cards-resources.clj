@@ -262,3 +262,15 @@
       (is (get-in (refresh iwall) [:rezzed]))
       )))
 
+(deftest daily-casts
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Daily Casts" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (let [dc (get-in @state [:runner :rig :resource 0])]
+      ;Number of credits
+      (is (= 8 (get-in dc [:counter])))
+      ;End turn
+      (take-credits state :runner)
+      (take-credits state :corp)
+      )))
