@@ -263,6 +263,7 @@
       )))
 
 (deftest daily-casts
+  "Play and tick through all turns of daily casts"
   (do-game
     (new-game (default-corp) (default-runner [(qty "Daily Casts" 3)]))
     (take-credits state :corp)
@@ -273,4 +274,14 @@
       ;End turn
       (take-credits state :runner)
       (take-credits state :corp)
+      (is (= 6 (get-in (refresh dc) [:counter])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 4 (get-in (refresh dc) [:counter])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 2 (get-in (refresh dc) [:counter])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (nil? (get-in @state [:runner :rig :resource 0])))
       )))
