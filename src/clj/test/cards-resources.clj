@@ -271,16 +271,20 @@
     (let [dc (get-in @state [:runner :rig :resource 0])]
       ;Number of credits
       (is (= 8 (get-in dc [:counter])))
+      (is (= 2 (get-in @state [:runner :credit])))
       ;End turn
       (take-credits state :runner)
       (take-credits state :corp)
       (is (= 6 (get-in (refresh dc) [:counter])))
+      (is (= 7 (get-in @state [:runner :credit])))
       (take-credits state :runner)
       (take-credits state :corp)
       (is (= 4 (get-in (refresh dc) [:counter])))
+      (is (= 13 (get-in @state [:runner :credit])))
       (take-credits state :runner)
       (take-credits state :corp)
       (is (= 2 (get-in (refresh dc) [:counter])))
+      (is (= 19 (get-in @state [:runner :credit])))
       (take-credits state :runner)
       (take-credits state :corp)
       (is (nil? (get-in @state [:runner :rig :resource 0])))
