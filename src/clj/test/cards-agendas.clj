@@ -20,6 +20,14 @@
       (is (= 2 (count(get-in @state [:runner :hand]))))
       )))
 
+(deftest breaking-news
+  "Test scoring breaking news"
+  (do-game
+    (new-game (default-corp [(qty "Breaking News" 3)]) (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (score-agenda state :corp (get-in @state [:corp :servers :remote1 :content 0]))
+    ))
+
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
   (do-game

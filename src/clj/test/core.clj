@@ -56,5 +56,17 @@
     (core/play state side {:card (find-card title (get-in @state [side :hand]))
                            :server server})))
 
+(defn score-agenda
+  ([state side card]
+   (let [title (get-in card [:title])
+         advancementcost (get-in card [:advancementcost])]
+    (core/gain state :corp :click advancementcost :credit advancementcost)
+    (dotimes [n advancementcost]
+      (core/advance state :corp {:card (core/get-card state card)}))
+    (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
+    (core/score state :corp {:card (core/get-card state card)})
+    (is (find-card title (get-in @state [:corp :scored])))
+  )))
+
 (load "core-game")
 (load "cards")
