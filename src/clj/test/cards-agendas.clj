@@ -20,6 +20,9 @@
     (new-game (default-corp [(qty "Breaking News" 3)]) (default-runner))
     (play-from-hand state :corp "Breaking News" "New remote")
     (score-agenda state :corp (get-in @state [:corp :servers :remote1 :content 0]))
+    (is (= 2 (get-in @state [:runner :tag])))
+    (take-credits state :corp)
+    (is (= 0 (get-in @state [:runner :tag])))
     ))
 
 (deftest fetal-ai-damage
