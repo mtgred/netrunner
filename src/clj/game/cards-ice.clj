@@ -267,6 +267,17 @@
                  :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]
     :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}
 
+   "Gyri Labyrinth"
+   {:abilities [{:req (req (:run @state))
+                 :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
+                 :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
+                 :effect (effect (lose :runner :max-hand-size 2)
+                                 (register-events {:corp-turn-begins
+                                                   {:msg "increase the Runner's maximum hand size by 2"
+                                                    :effect (effect (gain :runner :max-hand-size 2)
+                                                                    (unregister-events card))}} card))}]
+    :events {:corp-turn-begins nil}}
+
    "Hadrians Wall"
    {:advanceable :always
     :abilities [end-the-run]
