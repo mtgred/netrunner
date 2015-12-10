@@ -61,10 +61,8 @@
     (new-game (default-corp [(qty "The Cleaners" 1) (qty "Scorched Earth" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
     (play-from-hand state :corp "The Cleaners" "New remote")
-    (core/gain state :corp :click 5 :credit 5)
     (let [clean (first (get-in @state [:corp :servers :remote1 :content]))]
-      (advance-card clean 5)
-      (core/score state :corp {:card (refresh clean)})
+      (score-agenda state :corp clean)
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
