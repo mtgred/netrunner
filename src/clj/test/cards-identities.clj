@@ -123,6 +123,36 @@
       (card-ability state :runner nasir 0)
       (is (= 2 (:credit (get-runner)))))))
 
+(deftest quetzal-ability
+  "Quetzal ability- once per turn"
+  (do-game
+    (new-game
+      (default-corp [(qty "Ice Wall" 3)])
+      (make-deck "Quetzal: Free Spirit" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/run state :runner "HQ")
+    (let [q (get-in @state [:runner :identity])
+          iwall (get-in @state [:corp :servers :hq :ices 0])
+          qdef (core/card-def (get-in @state [:runner :identity]))]
+      (core/rez state :corp iwall)
+      (card-ability state :runner q 0)
+      (is (last-log-contains? state (get-in qdef [:abilities 0 :msg])))
+      (core/jack-out state :runner nil)
+      (core/click-credit state :runner nil)
+      (core/run state :runner "HQ")
+      (card-ability state :runner (refresh q) 0)
+      (is (not (last-log-contains? state (get-in qdef [:abilities 0 :msg]))))
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/click-credit state :runner nil)
+      (core/run state :runner "HQ")
+      (card-ability state :runner (refresh q) 0)
+      (is (last-log-contains? state (get-in qdef [:abilities 0 :msg])))
+      (core/jack-out state :runner nil)
+      )))
+
 (deftest reina-rez-cost-increase
   "Reina Roja - Increase cost of first rezzed ICE"
   (do-game

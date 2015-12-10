@@ -56,5 +56,15 @@
     (core/play state side {:card (find-card title (get-in @state [side :hand]))
                            :server server})))
 
+(defn last-log-contains?
+  [state content]
+  (not (nil?
+         (re-find (re-pattern content)
+                     (get (last (get-in @state [:log])) :text)))))
+
+(defn trash-from-hand
+  ([state side title]
+   (core/trash state side (find-card title (get-in @state [side :hand])))))
+
 (load "core-game")
 (load "cards")
