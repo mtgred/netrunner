@@ -432,20 +432,23 @@ app.get '/data/donators', (req, res) ->
     res.json(200, (d.username or d.name for d in data))
 
 app.get '/data/news', (req, res) ->
-  cached = cache.get('news')
-  if not cached
-    t = new trello(process.env['TRELLO_API_KEY'])
-    t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name'}, (err, data) ->
-      throw err if err
-      for d in data
-        d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")
-        d.title = d.name
-        delete d.id
-        delete d.name
-      cache.put('news', data, 60000) # 60 seconds timeout
-      res.json(200, data)
+  if process.env['TRELLO_API_KEY']
+    cached = cache.get('news')
+    if not cached
+      t = new trello(process.env['TRELLO_API_KEY'])
+      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name'}, (err, data) ->
+        throw err if err
+        for d in data
+          d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")
+          d.title = d.name
+          delete d.id
+          delete d.name
+        cache.put('news', data, 60000) # 60 seconds timeout
+        res.json(200, data)
+    else
+      res.json(200, cached)
   else
-    res.json(200, cached)
+    res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
