@@ -184,7 +184,7 @@
 (defn desactivate
   ([state side card] (desactivate state side card nil))
   ([state side card keep-counter]
-   (let [c (dissoc card :current-strength :abilities :rezzed :special)
+   (let [c (dissoc card :current-strength :abilities :rezzed :special :added-virus-counter)
          c (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
              (dissoc c :installed :facedown :counter :rec-counter :pump :named-target) c)
          c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
@@ -539,15 +539,22 @@
         (swap! state assoc :run nil)
         (clear-run-register! state))))
 
+
 (defn add-prop
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
-    (update! state side (update-in card [key] #(+ (or % 0) n)))
-    (if (= key :advance-counter)
-      (do (when (and (#{"ICE"} (:type card)) (:rezzed card)) (update-ice-strength state side card))
-          (when (not placed)
-            (trigger-event state side :advance (get-card state card))))
-      (trigger-event state side :counter-added (get-card state card)))))
+   (let [updated-card (if
+                        (has? card :subtype "Virus")
+                        (assoc card :added-virus-counter true)
+                        card
+                        )]
+     (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
+     (if (= key :advance-counter)
+       (do (when (and (#{"ICE"} (:type updated-card)) (:rezzed updated-card)) (update-ice-strength state side updated-card))
+           (when (not placed)
+             (trigger-event state side :advance (get-card state updated-card))))
+       (trigger-event state side :counter-added (get-card state updated-card)))
+     )))
 
 (defn set-prop [state side card & args]
   (update! state side (apply assoc (cons card args))))
@@ -1452,6 +1459,14 @@
         (trigger-event state side :corp-turn-ends))
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))
+      (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
+            hosted-cards (filter :installed (mapcat :hosted rig-cards))
+            hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
+        (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+          ;Clear the added-virus-counter flag for each virus in play.
+          ;We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+          (when (has? card :subtype "Virus")
+            (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
       (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
@@ -1580,6 +1595,14 @@
                    (system-msg state side (str (build-spend-msg cost-str "install") title
                                             (when host-card (str " on " (:title host-card)))
                                             (when no-cost " at no cost")))))
+                 ;Apply added-virus-counter flag for this turn if the card enters play with a counter
+                 (if (and
+                       (contains? installed-card :counter)
+                       (contains? installed-card :subtype)
+                       (has? card :subtype "Virus")
+                       (> (:counter installed-card) 0))
+                   (update! state side (assoc installed-card :added-virus-counter true))
+                   )
                  (trigger-event state side :runner-install installed-card)
                  (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
          (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))

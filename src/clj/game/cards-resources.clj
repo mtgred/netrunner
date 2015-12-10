@@ -253,10 +253,11 @@
                                   :effect (effect (lose :click 1) (gain :credit 2))}}}
 
    "Human First"
-   {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
-                             :effect (effect (gain :runner :credit (get-agenda-points state :runner target)))}
+   {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
+                             :effect (effect (gain :runner :credit (get-agenda-points state :corp target)))}
              :agenda-stolen {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
                              :effect (effect (gain :credit (get-agenda-points state :runner target)))}}}
+
    "Hunting Grounds"
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"

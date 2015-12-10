@@ -516,9 +516,11 @@
                  :effect (effect (run :archives
                                    {:req (req (= target :archives))
                                     :successful-run
-                                    {:msg "make a successful run on HQ"
-                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                  (update-run-ice state side))}} card))}]}
+                                    {:effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                  (update-run-ice state side)
+                                                  (system-msg state side
+                                                              (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
+                                  card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))

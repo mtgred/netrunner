@@ -597,8 +597,9 @@
 
    "Surge"
    {:msg (msg "place 2 virus tokens on " (:title target))
-    :choices {:req #(has? % :subtype "Virus")}
-    :effect (effect (add-prop target :counter 2))}
+    :choices {:req #(and (has? % :subtype "Virus") (% :added-virus-counter))}
+    :effect (req (add-prop state :runner target :counter 2))
+    }
 
    "Test Run"
    {:prompt "Install a program from Stack or Heap?" :choices (cancellable ["Stack" "Heap"])

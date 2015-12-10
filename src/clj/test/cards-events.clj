@@ -88,6 +88,104 @@
     (core/play state :runner {:card (first (:hand (get-runner)))})
     (is (= 9 (:credit (get-runner))))))
 
+;Surge and virus counter flag tests
+(deftest virus-counter-flag-on-enter
+  "Set counter flag when virus card enters play with counters"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Surge" 1) (qty "Imp" 1) (qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (get-in imp [:added-virus-counter]) "Counter flag was not set on Imp")
+      )))
+
+(deftest virus-counter-flag-on-add-prop
+  "Set counter flag when add-prop is called on a virus"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
+      (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis did not add a virus token")
+      (is (get-in (refresh crypsis) [:added-virus-counter] "Counter flag was not set on Crypsis"))
+      )))
+
+(deftest virus-counter-flag-clear-on-end-turn
+  "Clear the virus counter flag at the end of each turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
+      (take-credits state :runner 2)
+      (take-credits state :corp 1)
+      (is (not (get-in (refresh crypsis) [:added-virus-counter])) "Counter flag was not cleared on Crypsis")
+      )))
+
+(deftest surge-valid-target
+  "Add counters if target is a virus and had a counter added this turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (= 2 (get-in imp [:counter])))
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner imp)
+      (is (= 4 (get-in (refresh imp) [:counter])))
+      )))
+
+(deftest surge-target-not-virus
+  "Don't fire surge if target is not a virus"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Security Testing" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (let [st (get-in @state [:runner :rig :resource 0])]
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner st)
+      (is (not (contains? st :counter)))
+      )
+    ))
+
+(deftest surge-target-no-token-this-turn
+  "Don't fire surge if target does not have virus counter flag set"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (= 2 (get-in imp [:counter])))
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner imp)
+      (is (= 2 (get-in (refresh imp) [:counter])))
+      )))
+
+(deftest surge-target-gorman-drip
+  "Don't allow surging Gorman Drip, since it happens on the corp turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Gorman Drip v1" 1) (qty "Surge" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gorman Drip v1")
+    (let [gd (get-in @state [:runner :rig :program 0])]
+      (is (= nil (get-in gd [:counter])))
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (is (= 3 (get-in (refresh gd) [:counter])))
+      (play-from-hand state :runner "Surge")
+      (prompt-select :runner gd)
+      (is (= 3 (get-in (refresh gd) [:counter]))))))
+
 (deftest blackmail
   "Prevent rezzing of ice for one run"
   (do-game
