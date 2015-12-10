@@ -23,7 +23,24 @@
     (core/play state :corp {:card (first (:hand (get-corp))) :server "Server 0"})
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
-  
+
+(deftest clone-chip
+  "Test clone chip usage- outside and during run"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Datasucker" 1) (qty "Clone Chip" 2)]))
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Datasucker")
+    (play-from-hand state :runner "Clone Chip")
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Datasucker" (:discard (get-runner))))
+      (let [ds (get-in @state [:runner :rig :program 0])]
+        (is (not (nil? ds)))
+        (is (= (:title ds) "Datasucker"))
+        )
+      )
+    ))
+
 (deftest comet-event-play
   "Comet - Play event without spending a click after first event played"
   (do-game
