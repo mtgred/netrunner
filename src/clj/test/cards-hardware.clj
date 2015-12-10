@@ -33,6 +33,11 @@
     (play-from-hand state :runner "Clone Chip")
     (let [chip (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Datasucker" (:discard (get-runner))))
+      (let [ds (get-in @state [:runner :rig :program 0])]
+        (is (not (nil? ds)))
+        (is (= (:title ds) "Datasucker"))
+        )
       )
     ))
 

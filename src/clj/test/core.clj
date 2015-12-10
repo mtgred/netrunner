@@ -58,7 +58,7 @@
 
 (defn trash-from-hand
   ([state side title]
-   (core/trash state side {:card (find-card title (get-in @state [side :hand]))})))
+   (core/trash state side (find-card title (get-in @state [side :hand])))))
 
 (load "core-game")
 (load "cards")
