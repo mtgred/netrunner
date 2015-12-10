@@ -436,13 +436,10 @@ app.get '/data/news', (req, res) ->
     cached = cache.get('news')
     if not cached
       t = new trello(process.env['TRELLO_API_KEY'])
-      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name'}, (err, data) ->
+      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name,labels'}, (err, data) ->
         throw err if err
-        for d in data
-          d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")
-          d.title = d.name
-          delete d.id
-          delete d.name
+        data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
+          for d in data when d.labels.length == 0)
         cache.put('news', data, 60000) # 60 seconds timeout
         res.json(200, data)
     else
