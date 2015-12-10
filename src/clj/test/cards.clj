@@ -10,3 +10,4 @@
 (load "cards-programs")
 (load "cards-resources")
 (load "cards-upgrades")
+(load "games-scenarios")
