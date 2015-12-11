@@ -15,8 +15,10 @@ jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
 async = require('async');
-nodemailer = require('nodemailer');
-moment = require('moment');
+nodemailer = require('nodemailer')
+moment = require('moment')
+trello = require('node-trello')
+cache = require('memory-cache')
 
 # MongoDB connection
 appName = 'netrunner'
@@ -430,11 +432,20 @@ app.get '/data/donators', (req, res) ->
     res.json(200, (d.username or d.name for d in data))
 
 app.get '/data/news', (req, res) ->
-  db.collection('news').find().sort({_id: -1}).toArray (err, data) ->
-    for d in data
-      d.date = moment(d._id.getTimestamp().toISOString()).format("MM/DD/YYYY HH:mm");
-      delete d._id
-    res.json(200, data)
+  if process.env['TRELLO_API_KEY']
+    cached = cache.get('news')
+    if not cached
+      t = new trello(process.env['TRELLO_API_KEY'])
+      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name,labels'}, (err, data) ->
+        throw err if err
+        data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
+          for d in data when d.labels.length == 0)
+        cache.put('news', data, 60000) # 60 seconds timeout
+        res.json(200, data)
+    else
+      res.json(200, cached)
+  else
+    res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
   db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
