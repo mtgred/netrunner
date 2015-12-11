@@ -539,7 +539,7 @@
                  :prompt "Choose a card from Archives or HQ to install" :show-discard true
                  :choices {:req #(and (not= (:type %) "Operation")
                                       (#{[:hand] [:discard]} (:zone %)))}
-                 :msg (msg "install " (if (:seen target) (:title target) "an unseen card") (if (= (:zone target) [:hand]) " from HQ" " from Archives"))
+                 :msg (msg "install " (if (:seen target) (:title target) "an unseen card") " from " (name-zone :corp (:zone target)))
                  :effect (effect (corp-install target nil {:no-install-cost true})
                                  (update! (dissoc (get-card state card) :ts-active)))}]}
 

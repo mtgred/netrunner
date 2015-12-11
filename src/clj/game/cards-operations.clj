@@ -217,7 +217,7 @@
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install target nil {:no-install-cost true}))
-    :msg (msg "install " (if (:seen target) (:title target) "an unseen card") (if (= (:zone target) [:hand]) " from HQ" " from Archives"))}
+    :msg (msg "install " (if (:seen target) (:title target) "an unseen card") " from " (name-zone :corp (:zone target)))}
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"
