@@ -42,3 +42,17 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (:rec-counter (refresh cehosted))) "Compromised Employee recurring credit refreshed")))))
+
+(deftest invalid-score-attempt
+  "Test scoring with an incorrect number of advancement tokens"
+  (do-game
+    (new-game (default-corp [(qty "Ancestral Imager" 1)]) (default-runner))
+    (play-from-hand state :corp "Ancestral Imager" "New remote")
+    (let [ai (get-in @state [:corp :servers :remote1 :content 0])]
+      ;Trying to score without any tokens throws NPE
+      (is (thrown? java.lang.NullPointerException (core/score state :corp {:card (refresh ai)})))
+      (is (not (nil? (get-in @state [:corp :servers :remote1 :content 0]))))
+      (core/advance state :corp {:card (refresh ai)})
+      (core/score state :corp {:card (refresh ai)})
+      (is (not (nil? (get-in @state [:corp :servers :remote1 :content 0]))))
+      )))
