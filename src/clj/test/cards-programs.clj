@@ -51,6 +51,28 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest leprechaun-mu-savings
+  "Leprechaun - Keep MU the same when hosting or trashing hosted programs"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Leprechaun" 1) (qty "Hyperdriver" 1) (qty "Imp" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Leprechaun")
+    (let [lep (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner lep 0)
+      (core/select state :runner {:card (find-card "Hyperdriver" (:hand (get-runner)))})
+      (is (= 2 (:click (get-runner))))
+      (is (= 2 (:credit (get-runner))))
+      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not deducted from available MU")
+      (card-ability state :runner lep 0)
+      (core/select state :runner {:card (find-card "Imp" (:hand (get-runner)))})
+      (is (= 1 (:click (get-runner))))
+      (is (= 0 (:credit (get-runner))))
+      (is (= 3 (:memory (get-runner))) "Imp 1 MU not deducted from available MU")
+      (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard) ; trash Hyperdriver
+      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not added to available MU")
+      (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
+      (is (= 3 (:memory (get-runner))) "Imp 1 MU not added to available MU"))))
+
 (deftest magnum-opus-click
   "Magnum Opus - Gain 2 cr"
   (do-game
