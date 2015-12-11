@@ -470,7 +470,25 @@
                                   (host state side card (assoc target :counter (:cost target)))))
                    :msg (msg "host " (:title target) "")}
                   (assoc remove-counter
-                         :label "Remove 1 counter from a hosted card" :cost [:credit 1])]
+                         :label "Remove 1 counter from a hosted card" :cost [:credit 1])
+                  {:label "X[Credit]:Remove counters from a hosted card" :choices {:req #(:host %)}
+                   :req (req (not (empty? (:hosted card))))
+                   :effect (req (let [paydowntarget target]
+                                  (resolve-ability 
+                                    state side
+                                    {:prompt "How many counters to remove?"
+                                     :choices {:number (req (min (:credit runner) (:counter paydowntarget)))}
+                                     :msg (msg "remove " target " counters from " (:title paydowntarget))
+                                     :effect (req (do 
+                                                    (lose state side :credit target)
+                                                    (if (= (:counter paydowntarget) target)
+                                                      (runner-install state side (dissoc paydowntarget :counter) {:no-cost true})
+                                                      (add-prop state side paydowntarget :counter (- target)))))}
+                                    card nil
+                                  )
+                                  ))
+                   }
+                  ]
       :events {:runner-turn-begins remove-counter}})
 
    "Power Tap"
