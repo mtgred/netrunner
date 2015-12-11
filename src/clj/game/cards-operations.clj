@@ -78,7 +78,7 @@
    {:prompt "Choose a card from Archives to add to HQ" :show-discard true
     :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
     :effect (effect (move target :hand)
-                    (system-msg (str "adds " (if (:seen target) (:title target) "a card") " to HQ")))}
+                    (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
 
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
@@ -217,7 +217,7 @@
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install target nil {:no-install-cost true}))
-    :msg (msg "install " (if (:seen target) (:title target) "an unseen card") " from " (name-zone :corp (:zone target)))}
+    :msg (msg (corp-install-msg target))}
 
    "Invasion of Privacy"
    {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"

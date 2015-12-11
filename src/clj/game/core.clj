@@ -1766,6 +1766,9 @@
     [:servers :remote id _] (str "Remote Server " id)
     :else nil))
 
+(defn corp-install-msg [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
+
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
