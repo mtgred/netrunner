@@ -628,7 +628,7 @@
       (when (get-in cursor [side :prompt 0 :show-discard])
         (-> ".me .discard .popup" js/$ .fadeIn))
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
-        (set! (.-cursor (.-style (.-body js/document))) "url('/img/crosshair.png') 12 12, crosshair")
+        (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default")))
 
     om/IRenderState
