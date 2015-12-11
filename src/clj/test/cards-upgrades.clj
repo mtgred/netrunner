@@ -239,3 +239,23 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (:click (get-runner))) "Runner was charged 1click")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
+(deftest valley-grid-trash
+  "Valley Grid - Reduce Runner max hand size and restore it even if trashed"
+  (do-game
+    (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Valley Grid" "New remote")
+    (take-credits state :corp 2)
+    (core/click-run state :runner {:server "Server 1"})
+    (let [vg (find-card "Valley Grid" (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp vg)
+      (card-ability state :corp vg 0)
+      (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+      (is (= 3 (:max-hand-size (get-runner))) "Runner max hand size reduced by 2")
+      (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Yes") ; pay to trash
+      (take-credits state :runner 3)
+      (is (= 5 (:max-hand-size (get-runner))) "Runner max hand size increased by 2 at start of Corp turn"))))
