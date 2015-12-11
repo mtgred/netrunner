@@ -279,24 +279,34 @@
                                                      (shuffle! :corp :deck))}} card))}]}
 
    "Lamprey"
-   {:events {:successful-run {:req (req (= target :hq)) :msg "to force the Corp to lose 1 [Credits]"
+   {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
                               :effect (effect (lose :corp :credit 1))}
              :purge {:effect (effect (trash card))}}}
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
                  :req (req (<= (count (:hosted card)) 2)) :cost [:click 1]
-                 :prompt "Choose a program to install on Leprechaun from your grip"
+                 :prompt "Choose a program in your Grip to install on Leprechaun"
                  :choices {:req #(and (= (:type %) "Program")
                                       (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}
+                                 (runner-install target {:host-card card})
+                                 (update! (assoc (get-card state card)
+                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}
                 {:label "Host an installed program on Leprechaun"
                  :req (req (<= (count (:hosted card)) 2))
-                 :prompt "Choose a program to host on Leprechaun"
+                 :prompt "Choose an installed program to host on Leprechaun"
                  :choices {:req #(and (= (:type %) "Program") (:installed %))}
-                 :msg (msg "host " (:title target)) :effect (effect (host card target))}]}
+                 :msg (msg "host " (:title target))
+                 :effect (effect (host card target)
+                                 (gain :memory (:memoryunits target))
+                                 (update! (assoc (get-card state card)
+                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
+                          :effect (effect (update! (assoc card
+                                                          :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
+                                          (lose :memory (:memoryunits target)))}}}
 
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
