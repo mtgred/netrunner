@@ -5,8 +5,10 @@
 (defn load-card [title]
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
         db (mg/get-db conn "netrunner")
-        card (mc/find-maps db "cards" {:title title})]
-    (first card)))
+        card (mc/find-maps db "cards" {:title title})
+        ret (first card)]
+    (mg/disconnect conn)
+    ret))
 
 (defn make-deck [identity deck]
   {:identity identity :deck deck})

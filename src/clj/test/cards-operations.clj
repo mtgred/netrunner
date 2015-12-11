@@ -45,3 +45,32 @@
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
       (take-credits state :corp 2)
       (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
+      
+(deftest scorched-earth
+  "Scorched Earth - burn 'em"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
+
+(deftest scorched-earth-no-tag
+  "Scorched Earth - not tagged"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 3 (:click (get-corp))) "Corp not charged a click")
+    (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
+
+(deftest scorched-earth-flatline
+  "Scorched Earth - murderize 'em"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 1)])
+              (default-runner))
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+    (is (= :corp (:winner @state)) "Corp wins")
+    (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
