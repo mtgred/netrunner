@@ -54,5 +54,47 @@
       (is (not (nil? (get-in @state [:corp :servers :remote1 :content 0]))))
       (core/advance state :corp {:card (refresh ai)})
       (core/score state :corp {:card (refresh ai)})
-      (is (not (nil? (get-in @state [:corp :servers :remote1 :content 0]))))
-      )))
+      (is (not (nil? (get-in @state [:corp :servers :remote1 :content 0])))))))
+
+(deftest trash-seen-and-unseen
+  "Trash installed assets that are both seen and unseen by runner"
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 3)])
+              (default-runner))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp 1)
+    (core/click-run state :runner {:server :remote1})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "No")
+    ; run and trash the second asset
+    (core/click-run state :runner {:server :remote2})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "Yes")
+    (take-credits state :runner 2)
+    (play-from-hand state :corp "PAD Campaign" "Remote 1")
+    (is (= 2 (count (:discard (get-corp)))) "Trashed existing asset")
+    (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
+    (is (not (:seen (second (get-in @state [:corp :discard])))) "Asset trashed by corp is Unseen")
+    (is (not (:seen (first (get-in @state [:corp :servers :remote1 :content])))) "New asset is unseen")))
+
+(deftest reinstall-seen-asset
+  "Install a faceup card in Archives, make sure it is not :seen"
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1) (qty "Interns" 1)])
+              (default-runner))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp 2)
+    ; run and trash the asset
+    (core/click-run state :runner {:server :remote1})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "Yes")
+    (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
+    (take-credits state :runner 3)
+    (play-from-hand state :corp "Interns")
+    (prompt-select :corp (first (get-in @state [:corp :discard])))
+    (prompt-choice :corp "New remote")
+    (is (not (:seen (first (get-in @state [:corp :servers :remote2 :content])))) "New asset is unseen")))

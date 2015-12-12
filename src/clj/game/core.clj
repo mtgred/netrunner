@@ -1647,7 +1647,7 @@
        (do (when (= server "New remote")
              (trigger-event state side :server-created card))
            (let [cdef (card-def card)
-                 c (assoc card :advanceable (:advanceable cdef))
+                 c (dissoc (assoc card :advanceable (:advanceable cdef)) :seen)
                  slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
                  install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
@@ -1674,7 +1674,7 @@
                    (when (= install-state :rezzed)
                      (rez state side moved-card))
                    (when (= install-state :face-up)
-                     (card-init state side (assoc (get-card state moved-card) :rezzed true) false))))))))))
+                     (card-init state side (assoc (get-card state moved-card) :rezzed true :seen true) false))))))))))
 
 (defn play [state side {:keys [card server]}]
   (case (:type card)
