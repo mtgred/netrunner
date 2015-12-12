@@ -675,7 +675,7 @@
                               :replace-access
                               {:prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :corp :credit target) (gain :tag 1))}} card))}
+                               :effect (effect (lose :corp :credit target) (tag-runner 1))}} card))}
 
    "Wanton Destruction"
    {:effect (effect (run :hq {:req (req (= target :hq))
