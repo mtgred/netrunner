@@ -466,6 +466,10 @@
                   ["Done"] (fn [choice] (resolve-select state side))
                   (assoc args :prompt-type :select :show-discard (:show-discard ability))))))
 
+(defn corp-trace-prompt [state card trace]
+  (show-prompt state :corp card "Boost trace strength?" :credit
+               #(init-trace state :corp card trace %)))
+
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
                                           not-distinct priority cancel-effect] :as ability}
@@ -478,8 +482,7 @@
     (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
       (psi-game state side card psi))
     (when (and trace (or (not (:req trace)) ((:req trace) state side card targets)))
-      (show-prompt state :corp card "Boost trace strength?" :credit
-                   #(init-trace state :corp card trace %)))
+      (corp-trace-prompt state card trace))
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets)))
       (if choices
@@ -1909,6 +1912,18 @@
         "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
         "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
         "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
+        "/psi"        #(when (= %2 :corp) (psi-game %1 %2
+                                 {:title "/psi command" :side %2}
+                                 {:equal  {:msg "resolve equal bets effect"}
+                                  :not-equal {:msg "resolve unequal bets effect"}}))
+        "/trace"      #(when (= %2 :corp)
+                             (corp-trace-prompt %1
+                                                {:title "/trace command" :side %2}
+                                                {:base (max 0 value)
+                                                 :msg "resolve successful trace effect"}))
+        "/counter"    #(do (show-select %1 %2 {:title "/counter command"} {:choices {:req nil}}))
+        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
+        "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil
