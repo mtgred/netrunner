@@ -1,7 +1,16 @@
 (in-ns 'game.core)
 
 (def cards-agendas
-  {"Accelerated Beta Test"
+
+  {"15 Minutes"
+   (let [agenda-owner :corp]
+     {:abilities [{:cost   [:click 1] :msg (msg (str "shuffle 15 Minutes into R&D " card))
+                   :effect (req (move state :corp (dissoc card :seen :rezzed) :deck {:front true})
+                                (shuffle! state :corp :deck)
+                                (gain-agenda-point state agenda-owner -1))
+                   }]})
+
+   "Accelerated Beta Test"
    (letfn [(abt [n i]
              {:req (req (> i 0))
               :prompt "Select a piece of ICE from the top of the play area to install"
