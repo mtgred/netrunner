@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in cancellable]]
+                                dissoc-in cancellable side-str]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -1921,8 +1921,18 @@
                                                 {:title "/trace command" :side %2}
                                                 {:base (max 0 value)
                                                  :msg "resolve successful trace effect"}))
-        "/counter"    #(do (show-select %1 %2 {:title "/counter command"} {:choices {:req nil}}))
-        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info: " target)))
+                                               :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                        {:title "/card-info command"} nil)
+        "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
+                                                               (system-msg (str "sets counters on " (:title target) " to " value )))
+                                                 :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                          {:title "/counter command"} nil)
+        "/adv-counter" #(resolve-ability %1 %2
+                                         {:effect (effect (set-prop target :advance-counter value)
+                                                          (system-msg (str "sets advancement counters on " (:title target) " to " value )))
+                                          :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                        {:title "/adv-counter command"} nil)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
