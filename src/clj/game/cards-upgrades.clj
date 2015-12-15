@@ -117,17 +117,10 @@
                                 :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Heinlein Grid"
-   {:effect (req (add-watch state (keyword (str "heinlein" (:cid card)))
-                   (fn [k ref old new]
-                     (let [clicknew (get-in new [:runner :click])
-                           clickold (get-in old [:runner :click])]
-                       (when (< clicknew clickold)
-                         (resolve-ability ref side
-                           {:req (req this-server)
-                            :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
-                            :effect (effect (lose :runner :credit :all))}
-                          card nil))))))
-    :leave-play (req (remove-watch state (keyword (str "heinlein" (:cid card)))))}
+   {:abilities [{:req (req this-server)
+                 :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
+                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
+                 :effect (effect (lose :runner :credit :all))}]}
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
