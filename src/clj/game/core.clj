@@ -954,7 +954,7 @@
 
 (defn trash-ice-in-run [state]
   (when-let [run (:run @state)]
-    (swap! state update-in [:run] #(assoc % :position (dec (:position run))))))
+    (swap! state update-in [:run :position] dec)))
 
 (defn all-installed [state side]
   (if (= side :runner)
