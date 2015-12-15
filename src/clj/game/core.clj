@@ -1925,12 +1925,12 @@
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
-                                                               (system-msg (str "sets counters on " (:title target) " to " value )))
+                                                               (system-msg (str "sets counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
                                                  :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                           {:title "/counter command"} nil)
         "/adv-counter" #(resolve-ability %1 %2
                                          {:effect (effect (set-prop target :advance-counter value)
-                                                          (system-msg (str "sets advancement counters on " (:title target) " to " value )))
+                                                          (system-msg (str "sets advancement counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
                                           :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/adv-counter command"} nil)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
