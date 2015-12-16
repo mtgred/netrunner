@@ -3,12 +3,12 @@
 (def cards-agendas
 
   {"15 Minutes"
-   (let [agenda-owner :corp]
-     {:abilities [{:cost   [:click 1] :msg (msg (str "shuffle 15 Minutes into R&D " card))
+     {:abilities [{:cost   [:click 1] :msg "shuffle 15 Minutes into R&D"
                    :effect (req (move state :corp (dissoc card :seen :rezzed) :deck {:front true})
                                 (shuffle! state :corp :deck)
-                                (gain-agenda-point state agenda-owner -1))
-                   }]})
+                                (let [agenda-owner (if (= (:zone card) :scored) :corp :runner)]
+                                  (gain-agenda-point state agenda-owner -1)))
+                   }]}
 
    "Accelerated Beta Test"
    (letfn [(abt [n i]
