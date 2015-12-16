@@ -541,7 +541,7 @@
                                          :choices {:req #(and (not= (:cid fr) (:cid %))
                                                               (or (= (:advanceable %) "always")
                                                                   (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                                                  (= (:type %) "Agenda")))}
+                                                                  (and (= (:type %) "Agenda") (is-remote? (second (:zone %))))))}
                                          :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
                                                           (add-prop :corp fr :advance-counter (- c) {:placed true})
                                                           (system-msg (str "moves " c " advancement tokens from "

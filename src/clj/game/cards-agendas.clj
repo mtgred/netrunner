@@ -30,7 +30,7 @@
                                            (if (:rezzed target) (:title target) "a card"))
                  :choices {:req #(or (= (:advanceable %) "always")
                                      (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                     (= (:type %) "Agenda"))}
+                                     (and (= (:type %) "Agenda") (is-remote? (second (:zone %)))))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
