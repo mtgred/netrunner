@@ -54,6 +54,7 @@
   (authenticated
    (fn [user]
      (om/set-state! owner :title (str (:username user) "'s game"))
+     (om/set-state! owner :side "Corp")
      (om/set-state! owner :editing true)
      (om/set-state! owner :allowspectator true)
      (-> ".game-title" js/$ .select))))
@@ -66,7 +67,8 @@
        (do (om/set-state! owner :editing false)
            (swap! app-state assoc :messages [])
            (send {:action "create" :title (om/get-state owner :title)
-                  :allowspectator (om/get-state owner :allowspectator)}))))))
+                  :allowspectator (om/get-state owner :allowspectator)
+                  :side (om/get-state owner :side)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -210,7 +212,10 @@
             [:label
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
-             "Allow spectators"]]
+             "Allow spectators"]
+            [:h4 "Side"]
+            [:select.side {:value (:side state) :on-change #(om/set-state! owner :side (.. % -target -value))}
+            (for [option ["Corp" "Runner"]] [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
