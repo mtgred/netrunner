@@ -28,7 +28,8 @@
               :events (merge (:events cdef)
                              {:run breaker-auto-pump :pass-ice breaker-auto-pump
                               :run-ends breaker-auto-pump :ice-strength-changed breaker-auto-pump
-                              :breaker-strength-changed breaker-auto-pump :approach-ice breaker-auto-pump })))
+                              :ice-subtype-changed breaker-auto-pump :breaker-strength-changed breaker-auto-pump
+                              :approach-ice breaker-auto-pump })))
 
 (defn cloud-icebreaker [cdef]
   (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
