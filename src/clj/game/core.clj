@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in cancellable]]
+                                dissoc-in cancellable side-str]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -466,6 +466,10 @@
                   ["Done"] (fn [choice] (resolve-select state side))
                   (assoc args :prompt-type :select :show-discard (:show-discard ability))))))
 
+(defn corp-trace-prompt [state card trace]
+  (show-prompt state :corp card "Boost trace strength?" :credit
+               #(init-trace state :corp card trace %)))
+
 (defn resolve-ability [state side {:keys [counter-cost advance-counter-cost cost effect msg req once
                                           once-key optional prompt choices end-turn player psi trace
                                           not-distinct priority cancel-effect] :as ability}
@@ -478,8 +482,7 @@
     (when (and psi (or (not (:req psi)) ((:req psi) state side card targets)))
       (psi-game state side card psi))
     (when (and trace (or (not (:req trace)) ((:req trace) state side card targets)))
-      (show-prompt state :corp card "Boost trace strength?" :credit
-                   #(init-trace state :corp card trace %)))
+      (corp-trace-prompt state card trace))
     (when (and (not (get-in @state [once (or once-key cid)]))
                (or (not req) (req state side card targets)))
       (if choices
@@ -1661,10 +1664,11 @@
                      (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                               (:title prev-card) "a card") " in " server))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                   (:title card) "a card")]
+                 (let [is-ice (= (:type c) "ICE")
+                       card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
+                                   (:title card) (if is-ice "ice" "a card"))]
                    (system-msg state side (str (build-spend-msg cost-str "install")
-                                                card-name " in " server)))
+                                                card-name (if is-ice " protecting " " in ") server)))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
@@ -1765,6 +1769,9 @@
     [:servers :archives _] "Archives Server"
     [:servers :remote id _] (str "Remote Server " id)
     :else nil))
+
+(defn corp-install-msg [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
@@ -1909,6 +1916,28 @@
         "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
         "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
         "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
+        "/psi"        #(when (= %2 :corp) (psi-game %1 %2
+                                 {:title "/psi command" :side %2}
+                                 {:equal  {:msg "resolve equal bets effect"}
+                                  :not-equal {:msg "resolve unequal bets effect"}}))
+        "/trace"      #(when (= %2 :corp)
+                             (corp-trace-prompt %1
+                                                {:title "/trace command" :side %2}
+                                                {:base (max 0 value)
+                                                 :msg "resolve successful trace effect"}))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info: " target)))
+                                               :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                        {:title "/card-info command"} nil)
+        "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
+                                                               (system-msg (str "sets counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
+                                                 :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                          {:title "/counter command"} nil)
+        "/adv-counter" #(resolve-ability %1 %2
+                                         {:effect (effect (set-prop target :advance-counter value)
+                                                          (system-msg (str "sets advancement counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
+                                          :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                        {:title "/adv-counter command"} nil)
+        "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil
