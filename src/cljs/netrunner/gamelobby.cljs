@@ -214,8 +214,11 @@
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
              "Allow spectators"]
             [:h4 "Side"]
-            [:select.side {:value (:side state) :on-change #(om/set-state! owner :side (.. % -target -value))}
-            (for [option ["Corp" "Runner"]] [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])]]
+            (for [option ["Corp" "Runner"]] [:label [:input {:type "radio"
+                                                             :name "side"
+                                                             :value option
+                                                             :on-change #(om/set-state! owner :side (.. % -target -value))
+                                                             :checked (= (om/get-state owner :side) option)}] option])]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
