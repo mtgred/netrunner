@@ -445,7 +445,7 @@
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
-                                                   :effect (effect (tag-runner :runner 1))}
+                                                   :effect (effect (tag-runner 1 {:unpreventable true}))}
                                                   {:effect (trash state side c) :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
