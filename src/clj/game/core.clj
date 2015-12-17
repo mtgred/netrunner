@@ -1666,7 +1666,7 @@
                      (trash state side prev-card {:keep-server-alive true})))
                  (let [is-ice (= (:type c) "ICE")
                        card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                   (:title card) (if is-ice "ice" "a card"))]
+                                   (:title card) (if is-ice "ICE" "a card"))]
                    (system-msg state side (str (build-spend-msg cost-str "install")
                                                 card-name (if is-ice " protecting " " in ") server)))
                  (let [moved-card (move state side c slot)]
