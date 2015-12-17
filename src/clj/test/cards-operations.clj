@@ -74,3 +74,16 @@
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
+(deftest shipment-from-sansan
+  "Shipment from SanSan - placing advancements"
+  (do-game
+    (new-game (default-corp [(qty "Shipment from SanSan" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iwall (get-in @state [:corp :servers :hq :ices 0])]
+      (play-from-hand state :corp "Shipment from SanSan")
+      (prompt-choice :corp "2")
+      (prompt-select :corp iwall)
+      (is (= 5 (:credit (get-corp))))
+      (is (= 2 (:advance-counter (refresh iwall)))))))
