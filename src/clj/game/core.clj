@@ -54,15 +54,16 @@
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
 
-(defn can-pay? [state side & args]
+(defn cost-names [value attr]
+  (when (> value 0)
+    (case attr
+      :credit (str value " [$]")
+      :click  (->> "[Click]" repeat (take value) (apply str))
+      nil)))
+
+(defn can-pay? [state side pay-for & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
-        scored (get-in @state [side :scored])]
-    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0)
-                          (= (first %) :memory)) ;; memoryunits may be negative
-                     costs)
-             (or (not forfeit-cost) (not (empty? scored))))
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
 
 (defn build-spend-msg
   ([cost-str verb] (build-spend-msg cost-str verb nil))
@@ -71,13 +72,6 @@
             (= "" cost-str))
       (str (or verb2 (str verb "s")) " ")
       (str "spends " cost-str " to " verb " "))))
-
-(defn cost-names [value attr]
-  (when (> value 0)
-    (case attr
-      :credit (str value " [$]")
-      :click  (->> "[Click]" repeat (take value) (apply str))
-      nil)))
 
 (defn deduce [state side [attr value]]
   (swap! state update-in [side attr] (if (= attr :memory)
@@ -89,7 +83,6 @@
     cost-name))
 
 (defn pay [state side card & args]
-  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
     (when forfeit-cost
          (if (= (count scored) 1)
            (forfeit state side (first scored))
@@ -1122,7 +1115,6 @@
                       (if (pos? (count cost))
                         (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                                           {:yes-ability
-                                            {:effect (req (if (can-pay? state side cost)
                                                             (do (pay state side nil cost)
                                                                 (system-msg state side (str "pays " (costs-to-symbol cost)
                                                                                       " to steal " (:title c)))
@@ -1142,7 +1134,6 @@
                     (if-let [trash-cost (trash-cost state side c)]
                       (let [card (assoc c :seen true)]
                         (if (and (get-in @state [:runner :register :force-trash])
-                                 (can-pay? state :runner :credit trash-cost))
                           (resolve-ability state :runner {:cost [:credit trash-cost]
                                                           :effect (effect (trash card)
                                                                           (system-msg (str "is forced to pay " trash-cost
@@ -1427,7 +1418,6 @@
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
     (when (or (nil? cost)
-              (apply can-pay? state side cost))
         (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
         (resolve-ability state side ab card targets))))
 
@@ -1800,7 +1790,6 @@
         nil))))
 
 (defn click-run [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner nil :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)
     (pay state :runner nil :click 1)))
