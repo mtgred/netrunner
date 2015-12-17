@@ -87,7 +87,7 @@
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
 (deftest parasite-apex
-  "Paraiste - Installed facedown w/ Apex"
+  "Parasite - Installed facedown w/ Apex"
   (do-game
     (new-game (default-corp)
               (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
