@@ -977,6 +977,10 @@
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
 
+(defn trash-ice-in-run [state]
+  (when-let [run (:run @state)]
+    (swap! state update-in [:run :position] dec)))
+
 (defn all-installed [state side]
   (if (= side :runner)
     (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))]
