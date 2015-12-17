@@ -35,7 +35,8 @@
     "Corp" "Corp"
     "Runner" "Runner"
     :corp "Corp"
-    :runner "Runner"))
+    :runner "Runner"
+    nil))
 
 (defn side-key [s]
   "Takes a side string and converts it to a key (:runner/:corp)."
@@ -43,7 +44,8 @@
     "Corp" :corp
     "Runner" :runner
     :corp :corp
-    :runner :runner))
+    :runner :runner
+    nil))
 
 
 (defn capitalize [string]

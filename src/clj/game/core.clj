@@ -273,15 +273,19 @@
 (defn rezzed? [card]
   (:rezzed card))
 
-(defn card-str [card]
+(defn ice-index [state ice]
+  (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
+
+(defn card-str [state card]
   ; using side-key since card can be both clicked (strings) or passed (keys)
   (str (if (= (side-key (:side card)) :corp)
          (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
               (if (ice? card) " protecting " " in ")
               ;TODO add naming of scoring area of corp/runner
-              (zone->name (second (:zone card))))
+              (zone->name (second (:zone card)))
+              (if (ice? card) (str " at position " (ice-index state card))))
          (if (:facedown card) "a facedown card" (:title card)))
-       (if (:host card) (str " hosted on " (card-str (:host card))))))
+       (if (:host card) (str " hosted on " (card-str state (:host card))))))
 
 (defn is-remote? [zone]
   (not (nil? (remote->name zone))))
@@ -1873,9 +1877,6 @@
 
 (defn first-event [state side ev]
   (empty? (turn-events state side ev)))
-
-(defn ice-index [state ice]
-  (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
 (defn copy-events [state side dest source]
   (let [source-def (card-def source)
