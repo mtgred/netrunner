@@ -85,7 +85,9 @@
                                                                         (and (= (:advanceable %) "while-rezzed")
                                                                              (:rezzed %))))}
                                                :effect (effect (add-prop :corp target :advance-counter 1)
-                                                               (add-prop :corp fr :advance-counter -1))} card nil)
+                                                               (add-prop :corp fr :advance-counter -1)
+                                                               (system-msg (str "uses Constellation Protocol to move an advancement token from "
+                                                                                (card-str fr) " to " (card-str target))))} card nil)
                                             card nil))}}}}}
 
    "Contract Killer"
