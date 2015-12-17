@@ -1916,6 +1916,20 @@
           (if (not (nil? leave-effect)) (leave-effect state side card nil))
       )))
 
+(defn command-adv-counter [state side value]
+  (resolve-ability state side
+                   {:effect (effect (set-prop target :advance-counter value)
+                                    (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
+                    :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                   {:title "/adv-counter command"} nil))
+
+(defn command-counter [state side value]
+  (resolve-ability state side
+                   {:effect (effect (set-prop target :counter value)
+                                    (system-msg (str "sets counters on " (card-str state target) " to " value )))
+                    :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                   {:title "/counter command"} nil))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (String->Num (first args))] n 1)
@@ -1945,15 +1959,8 @@
         "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str state target) ": " target)))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
-        "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
-                                                               (system-msg (str "sets counters on " (card-str state target) " to " value )))
-                                                 :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
-                                          {:title "/counter command"} nil)
-        "/adv-counter" #(resolve-ability %1 %2
-                                         {:effect (effect (set-prop target :advance-counter value)
-                                                          (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
-                                          :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
-                                        {:title "/adv-counter command"} nil)
+        "/counter"    #(command-counter %1 %2 value)
+        "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
