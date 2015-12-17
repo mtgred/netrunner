@@ -1920,14 +1920,14 @@
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
                                     (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
-                    :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
                                     (system-msg (str "sets counters on " (card-str state target) " to " value )))
-                    :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/counter command"} nil))
 
 (defn parse-command [text]
