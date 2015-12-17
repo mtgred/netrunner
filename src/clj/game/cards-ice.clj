@@ -39,7 +39,7 @@
                                       (#{[:hand] [:discard]} (:zone %))
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))
-                 :msg (msg "install a card from " (zone->name (central->zone (:zone target))))}]}
+                 :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
    {:abilities [end-the-run]}
@@ -142,13 +142,14 @@
                  :effect (effect (damage :net (:memory runner) {:card card}))}]}
 
    "Crick"
-   {:abilities [{:msg "install a card from Archives"
-                  :prompt "Choose a card to install from Archives"
-                  :show-discard true :priority true
-                  :choices {:req #(and (not= (:type %) "Operation")
-                                       (#{[:hand] [:discard]} (:zone %))
-                                       (= (:side %) "Corp"))}
-                  :effect (effect (corp-install target nil))}]
+   {:abilities [{:label "install a card from Archives"
+                 :msg (msg (corp-install-msg target))
+                 :prompt "Choose a card to install from Archives"
+                 :show-discard true :priority true
+                 :choices {:req #(and (not= (:type %) "Operation")
+                                      (= (:zone %) [:discard])
+                                      (= (:side %) "Corp"))}
+                 :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"

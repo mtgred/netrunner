@@ -36,10 +36,7 @@
       (prompt-select :runner (find-card "Datasucker" (:discard (get-runner))))
       (let [ds (get-in @state [:runner :rig :program 0])]
         (is (not (nil? ds)))
-        (is (= (:title ds) "Datasucker"))
-        )
-      )
-    ))
+        (is (= (:title ds) "Datasucker"))))))
 
 (deftest comet-event-play
   "Comet - Play event without spending a click after first event played"
@@ -56,6 +53,24 @@
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+
+(deftest dinosaurus-strength-boost-mu-savings
+  "Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dinosaurus")
+    (let [dino (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner dino 0)
+      (core/select state :runner {:card (find-card "Battering Ram" (:hand (get-runner)))})
+      (is (= 2 (:click (get-runner))))
+      (is (= 0 (:credit (get-runner))))
+      (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not deducted from available MU")
+      (let [ram (first (:hosted (refresh dino)))]
+        (is (= 5 (:current-strength (refresh ram))) "Dinosaurus giving +2 strength to Battering Ram")
+        (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard) ; trash Battering Ram
+        (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
   
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"

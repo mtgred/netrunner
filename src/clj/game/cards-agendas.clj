@@ -97,7 +97,8 @@
                               :effect (req (corp-install state side target
                                             (last (get-remote-names @state)) {:no-install-cost true})
                                            (when (< n 2)
-                                             (resolve-ability state side (dpp (inc n)) card nil)))})]
+                                             (resolve-ability state side (dpp (inc n)) card nil)))
+                              :msg (msg (corp-install-msg target))})]
      {:optional {:prompt "Create a new remote server?"
                  :yes-ability {:prompt "Select a card to install"
                                :show-discard true

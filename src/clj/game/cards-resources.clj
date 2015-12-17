@@ -347,7 +347,7 @@
                                          (:title (first (:deck runner)))) ["OK"] {}))}}}
    "Mr. Li"
    {:abilities [{:cost [:click 1] :prompt "Card to keep?"
-                 :choices (req (take 2 (:deck runner))) :msg "choose 1 card to draw"
+                 :choices (req (take 2 (:deck runner))) :not-distinct true :msg "choose 1 card to draw"
                  :effect (req (move state side target :hand)
                               (if (= target (first (:deck runner)))
                                 (move state side (second (:deck runner)) :deck)
