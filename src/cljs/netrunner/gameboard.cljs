@@ -101,7 +101,10 @@
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when (not (and (= side "Runner") facedown))
-      (-> (om/get-node owner "abilities") js/$ .toggle))))
+      (cond (or (= side "Corp") (> c 1)) (-> (om/get-node owner "abilities") js/$ .toggle)
+            (= c 1) (if (= (count abilities) 1)
+                          (send-command "ability" {:card card :ability 0})
+                          (send-command (first actions) {:card card}))))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
@@ -307,21 +310,22 @@
                      label])
                   servers)]))
         (let [actions (action-list cursor)]
-          [:div.blue-shade.panel.abilities {:ref "abilities"}
-            (map (fn [action]
-                  [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
-                actions)
-            (map-indexed
-            (fn [i ab]
-              (if (:auto-pump ab)
-                [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
-                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
-                [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                          (dec i) i)})
-                                      (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-            abilities)])
+          (when (or (= side "Corp") (> (+ (count actions) (count abilities)) 1))
+            [:div.blue-shade.panel.abilities {:ref "abilities"}
+             (map (fn [action]
+                    [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
+                  actions)
+             (map-indexed
+              (fn [i ab]
+                (if (:auto-pump ab)
+                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                  [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                            (dec i) i)})
+                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+              abilities)]))
         (when (= (first zone) "servers")
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
