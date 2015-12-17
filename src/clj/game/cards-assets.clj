@@ -85,7 +85,9 @@
                                                                         (and (= (:advanceable %) "while-rezzed")
                                                                              (:rezzed %))))}
                                                :effect (effect (add-prop :corp target :advance-counter 1)
-                                                               (add-prop :corp fr :advance-counter -1))} card nil)
+                                                               (add-prop :corp fr :advance-counter -1)
+                                                               (system-msg (str "uses Constellation Protocol to move an advancement token from "
+                                                                                (card-str state fr) " to " (card-str state target))))} card nil)
                                             card nil))}}}}}
 
    "Contract Killer"
@@ -399,7 +401,7 @@
    {:effect (effect (add-prop card :counter 3))
     :events {:corp-turn-begins
              {:effect (req (add-prop state side card :counter -1)
-                           (when (= (:counter card) 1)
+                           (when (<= (:counter card) 1)
                              (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
