@@ -1942,16 +1942,16 @@
                                                 {:title "/trace command" :side %2}
                                                 {:base (max 0 value)
                                                  :msg "resolve successful trace effect"}))
-        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str target) ": " target)))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str state target) ": " target)))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
-                                                               (system-msg (str "sets counters on " (card-str target) " to " value )))
+                                                               (system-msg (str "sets counters on " (card-str state target) " to " value )))
                                                  :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                           {:title "/counter command"} nil)
         "/adv-counter" #(resolve-ability %1 %2
                                          {:effect (effect (set-prop target :advance-counter value)
-                                                          (system-msg (str "sets advancement counters on " (card-str target) " to " value )))
+                                                          (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
                                           :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/adv-counter command"} nil)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
