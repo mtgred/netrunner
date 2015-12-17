@@ -2,7 +2,6 @@
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
                                 dissoc-in cancellable side-key side-str]]
-            [game.cards :refer ice?]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -267,10 +266,17 @@
   (or (central->name zone)
       (remote->name zone)))
 
+
+(defn ice? [card]
+  (= (:type card) "ICE"))
+
+(defn rezzed? [card]
+  (:rezzed card))
+
 (defn card-str [card]
   ; using side-key since card can be both clicked (strings) or passed (keys)
   (str (if (= (side-key (:side card)) :corp)
-         (str (if (:rezzed card) (:title card) (if (ice? card) "ICE" "a card"))
+         (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
               (if (ice? card) " protecting " " in ")
               ;TODO add naming of scoring area of corp/runner
               (zone->name (second (:zone card))))
