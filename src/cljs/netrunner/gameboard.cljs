@@ -97,14 +97,20 @@
           (if (not rezzed) (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
+(defn show-menu? [side show-menu]
+  (or (and (= side "Corp")
+           (not (= show-menu false)))     ; menu opt-out for scored corp cards
+      (and (= side "Runner") show-menu))) ; menu opt-in for runner cards
+
+(defn handle-abilities [{:keys [abilities facedown side show-menu] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when (not (and (= side "Runner") facedown))
-      (cond (or (= side "Corp") (> c 1)) (-> (om/get-node owner "abilities") js/$ .toggle)
+      (cond (or (show-menu? side show-menu)
+                (> c 1)) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+                        (send-command "ability" {:card card :ability 0})
+                        (send-command (first actions) {:card card}))))))
 
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
@@ -269,7 +275,7 @@
   
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target]
+                         side rec-counter facedown named-target show-menu]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -310,7 +316,8 @@
                      label])
                   servers)]))
         (let [actions (action-list cursor)]
-          (when (or (= side "Corp") (> (+ (count actions) (count abilities)) 1))
+          (when (or (show-menu? side show-menu)
+                    (> (+ (count actions) (count abilities)) 1))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
