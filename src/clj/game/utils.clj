@@ -37,6 +37,15 @@
     :corp "Corp"
     :runner "Runner"))
 
+(defn side-key [s]
+  "Takes a side string and converts it to a key (:runner/:corp)."
+  (case s
+    "Corp" :corp
+    "Runner" :runner
+    :corp :corp
+    :runner :runner))
+
+
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
 

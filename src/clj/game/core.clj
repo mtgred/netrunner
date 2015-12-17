@@ -266,6 +266,16 @@
   (or (central->name zone)
       (remote->name zone)))
 
+(defn card-str [card]
+  ; using side-key since card can be both clicked (strings) or passed (keys)
+  (str (if (= (side-key (:side card)) :corp)
+         (str (if (:rezzed card) (:title card) (if (ice? card) "ICE" "a card"))
+              (if (ice? card) " protecting " " in ")
+              ;TODO add naming of scoring area of corp/runner
+              (zone->name (second (:zone card))))
+         (if (:facedown card) "a facedown card" (:title card)))
+       (if (:host card) (str " hosted on " (card-str (:host card))))))
+
 (defn is-remote? [zone]
   (not (nil? (remote->name zone))))
 
@@ -1772,9 +1782,6 @@
 
 (defn corp-install-msg [card]
   (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
-
-(defn card-str [card]
-  (:title card))
 
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))

@@ -62,11 +62,11 @@
     (let [hqiwall0 (get-in @state [:corp :servers :hq :ices 0])
           hqiwall1 (get-in @state [:corp :servers :hq :ices 1])
           rdiwall (get-in @state [:corp :servers :rd :ices 0])
-          jh1 (first (get-in @state [:corp :servers :remote1 :content]))
-          jh2 (first (get-in @state [:corp :servers :remote2 :content]))
+          jh1 (first (get-in @state [:corp :servers :remote0 :content]))
+          jh2 (first (get-in @state [:corp :servers :remote1 :content]))
           corr (get-in @state [:runner :rig :program 0])
           desp (get-in @state [:runner :rig :hardware 0])
-          pap (get-in @state [:runner :rig :resources 0])]
+          pap (get-in @state [:runner :rig :resource 0])]
       (core/rez state :corp hqiwall0)
       (core/rez state :corp jh1)
       (is (= (core/card-str hqiwall0) "Ice Wall protecting HQ at position 0"))
