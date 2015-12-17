@@ -330,7 +330,7 @@
        (doseq [h (:hosted card)]
          (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
        (let [dest (if (sequential? to) (vec to) [to])
-             c (if (and (= side :corp) (= (first dest) :discard) (:rezzed card))
+             c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
                         (#{:hand :deck :discard} (first dest))
@@ -574,7 +574,7 @@
                         )]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
-       (do (when (and (#{"ICE"} (:type updated-card)) (:rezzed updated-card)) (update-ice-strength state side updated-card))
+       (do (when (and (#{"ICE"} (:type updated-card)) (rezzed? updated-card)) (update-ice-strength state side updated-card))
            (when (not placed)
              (trigger-event state side :advance (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card)))
@@ -1685,11 +1685,10 @@
                      (system-msg state side (str "trashes " (if (:rezzed prev-card)
                                                               (:title prev-card) "a card") " in " server))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [is-ice (= (:type c) "ICE")
-                       card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                   (:title card) (if is-ice "ICE" "a card"))]
+                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
+                                   (:title card) (if (ice? c) "ICE" "a card"))]
                    (system-msg state side (str (build-spend-msg cost-str "install")
-                                                card-name (if is-ice " protecting " " in ") server)))
+                                                card-name (if (ice? c) " protecting " " in ") server)))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
