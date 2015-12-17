@@ -87,7 +87,7 @@
                                                :effect (effect (add-prop :corp target :advance-counter 1)
                                                                (add-prop :corp fr :advance-counter -1)
                                                                (system-msg (str "uses Constellation Protocol to move an advancement token from "
-                                                                                (card-str fr) " to " (card-str target))))} card nil)
+                                                                                (card-str state fr) " to " (card-str state target))))} card nil)
                                             card nil))}}}}}
 
    "Contract Killer"
