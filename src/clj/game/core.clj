@@ -734,8 +734,9 @@
 )
 
 (defn flatline [state]
-  (system-msg state :runner "is flatlined")
-  (win state :corp "Flatline"))
+  (when-not (:winner state)
+    (system-msg state :runner "is flatlined")
+    (win state :corp "Flatline")))
 
 (defn resolve-damage [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
