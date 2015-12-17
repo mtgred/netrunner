@@ -43,6 +43,42 @@
         (take-credits state :corp)
         (is (= 1 (:rec-counter (refresh cehosted))) "Compromised Employee recurring credit refreshed")))))
 
+(deftest card-str-test-simple
+  "ensure card-str names cards in simple situations properly"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)])
+              (default-runner [(qty "Corroder" 1) (qty "Desperado" 1) (qty "Paparazzi" 1)]))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Jackson Howard")
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/end-turn state :corp nil)
+    (core/start-turn state :runner nil)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Desperado")
+    (play-from-hand state :runner "Paparazzi")
+    (let [hqiwall0 (get-in @state [:corp :servers :hq :ices 0])
+          hqiwall1 (get-in @state [:corp :servers :hq :ices 1])
+          rdiwall (get-in @state [:corp :servers :rd :ices 0])
+          jh1 (first (get-in @state [:corp :servers :remote1 :content]))
+          jh2 (first (get-in @state [:corp :servers :remote2 :content]))
+          corr (get-in @state [:runner :rig :program 0])
+          desp (get-in @state [:runner :rig :hardware 0])
+          pap (get-in @state [:runner :rig :resources 0])]
+      (core/rez state :corp hqiwall0)
+      (core/rez state :corp jh1)
+      (is (= (core/card-str hqiwall0) "Ice Wall protecting HQ at position 0"))
+      (is (= (core/card-str hqiwall1) "unrezzed ICE protecting HQ at position 1"))
+      (is (= (core/card-str rdiwall) "unrezzed ICE protecting R&D at position 0"))
+      (is (= (core/card-str jh1) "Jackson Howard in Server 1"))
+      (is (= (core/card-str jh2) "unrezzed card in Server 2"))
+      (is (= (core/card-str corr) "Corroder"))
+      (is (= (core/card-str desp) "Desperado"))
+      (is (= (core/card-str pap) "Paparazzi"))
+      )))
+
 (deftest invalid-score-attempt
   "Test scoring with an incorrect number of advancement tokens"
   (do-game

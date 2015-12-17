@@ -1773,6 +1773,9 @@
 (defn corp-install-msg [card]
   (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
+(defn card-str [card]
+  (:title card))
+
 (defn move-card [state side {:keys [card server]}]
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
@@ -1925,16 +1928,16 @@
                                                 {:title "/trace command" :side %2}
                                                 {:base (max 0 value)
                                                  :msg "resolve successful trace effect"}))
-        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info: " target)))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str target) ": " target)))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(resolve-ability %1 %2 {:effect (effect (set-prop target :counter value)
-                                                               (system-msg (str "sets counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
+                                                               (system-msg (str "sets counters on " (card-str target) " to " value )))
                                                  :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                           {:title "/counter command"} nil)
         "/adv-counter" #(resolve-ability %1 %2
                                          {:effect (effect (set-prop target :advance-counter value)
-                                                          (system-msg (str "sets advancement counters on " (if (:seen target) (:title target) "an unseen card") " to " value )))
+                                                          (system-msg (str "sets advancement counters on " (card-str target) " to " value )))
                                           :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/adv-counter command"} nil)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
