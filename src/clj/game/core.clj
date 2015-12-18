@@ -1927,7 +1927,7 @@
 (defn command-counter [state side value]
     (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
-                                    (system-msg (str "sets counters to " value " on " (card-str state target) (get-card state target))))
+                                    (system-msg (str "sets counters to " value " on " (card-str state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/counter command"} nil))
 
