@@ -401,7 +401,7 @@
    {:effect (effect (add-prop card :counter 3))
     :events {:corp-turn-begins
              {:effect (req (add-prop state side card :counter -1)
-                           (when (<= (:counter card) 1)
+                           (when (= (:counter card) 1)
                              (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 

@@ -574,7 +574,7 @@
                         )]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
-       (do (when (and (#{"ICE"} (:type updated-card)) (rezzed? updated-card)) (update-ice-strength state side updated-card))
+       (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
            (when (not placed)
              (trigger-event state side :advance (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card)))
@@ -1920,16 +1920,17 @@
 (defn command-adv-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
-                                    (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
+                                    (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
+  (let [value (int value)]
   (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
-                                    (system-msg (str "sets counters on " (card-str state target) " to " value )))
+                                    (system-msg (str "sets counters to " value " on " (card-str state target) (get-card state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
-                   {:title "/counter command"} nil))
+                   {:title "/counter command"} nil)))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
@@ -1957,9 +1958,11 @@
                                                 {:title "/trace command" :side %2}
                                                 {:base (max 0 value)
                                                  :msg "resolve successful trace effect"}))
-        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str state target) ": " target)))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
+                                                                                (card-str state target) ": " (get-card state target))))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
+        "/state"  #(system-msg %1 %2 (str @%1))
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
