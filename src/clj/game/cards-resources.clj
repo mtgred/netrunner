@@ -323,7 +323,7 @@
    {:data {:counter 16}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
                  :effect (req (gain state :runner :credit 4)
-                              (when (= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
+                              (when (<= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
@@ -457,7 +457,7 @@
    (let [remove-counter
          {:req (req (not (empty? (:hosted card))))
           :msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
-          :effect (req (if (= (:counter target) 1)
+          :effect (req (if (<= (:counter target) 1)
                          (runner-install state side (dissoc target :counter) {:no-cost true})
                          (add-prop state side target :counter -1)))}]
      {:abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
