@@ -177,9 +177,7 @@
                                       (resolve-ability
                                         state side
                                         {:prompt "Choose a card that can be advanced"
-                                         :choices {:req #(or (= (:advanceable %) "always")
-                                                             (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                                             (= (:type %) "Agenda"))}
+                                         :choices {:req #(can-be-advanced? %)}
                                          :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"

@@ -28,9 +28,7 @@
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
                                            (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:advanceable %) "always")
-                                     (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                     (and (= (:type %) "Agenda") (= (first (:zone %)) :servers)))}
+                 :choices {:req #(can-be-advanced? %)}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
@@ -38,9 +36,7 @@
              :effect (req (let [c (Integer/parseInt target)]
                             (resolve-ability
                              state side
-                             {:choices {:req #(or (= (:advanceable %) "always")
-                                                  (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                                  (= (:type %) "Agenda"))}
+                             {:choices {:req #(can-be-advanced? %)}
                               :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
                               :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
@@ -154,7 +150,7 @@
 
    "Firmware Updates"
    {:data [:counter 3]
-    :abilities [{:counter-cost 1 :choices {:req #(and (= (:type %) "ICE") (:advanceable %))}
+    :abilities [{:counter-cost 1 :choices {:req #(and (= (:type %) "ICE") (can-be-advanced? %))}
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
                  :once :per-turn :effect (effect (add-prop target :advance-counter 1))}]}
 
@@ -224,9 +220,7 @@
                              (resolve-ability
                               state side
                               {:choices {:req #(and (not= (:cid %) (:cid card))
-                                                    (or (= (:advanceable %) "always")
-                                                        (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                                        (= (:type %) "Agenda")))}
+                                                    (can-be-advanced? %))}
                                :msg (msg "place " n " advancement tokens on "
                                          (if (:rezzed target) (:title target) "a card"))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}

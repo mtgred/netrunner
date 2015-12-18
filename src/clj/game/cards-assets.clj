@@ -81,9 +81,7 @@
                                                :prompt "Move to where?"
                                                :choices {:req #(and (= (:type %) "ICE")
                                                                     (not= (:cid fr) (:cid %))
-                                                                    (or (= (:advanceable %) "always")
-                                                                        (and (= (:advanceable %) "while-rezzed")
-                                                                             (:rezzed %))))}
+                                                                    (can-be-advanced? %))}
                                                :effect (effect (add-prop :corp target :advance-counter 1)
                                                                (add-prop :corp fr :advance-counter -1))} card nil)
                                             card nil))}}}}}
@@ -147,12 +145,12 @@
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Early Premiere"
-   {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced"
-                 :choices {:req #(or (= (:advanceable %) "always")
-                                     (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                     (= (:type %) "Agenda"))}
+   {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced in a server"
+                 :choices {:req #(and (can-be-advanced? %)
+                                      (= (first (:zone %)) :servers)
+                                      (= (last (:zone %)) :content))} ; should be *in* a server
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))}]}
+                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
 
    "Edge of World"
    {:access {:optional
@@ -523,7 +521,7 @@
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-             :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+             :choices {:req #(can-be-advanced? %)}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"

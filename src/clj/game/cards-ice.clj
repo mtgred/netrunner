@@ -75,8 +75,7 @@
                 {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
                  :choices {:req #(and (= (last (:zone %)) :ices)
-                                      (or (= (:advanceable %) "always")
-                                          (and (= (:advanceable %) "while-rezzed") (:rezzed %))))}
+                                      (can-be-advanced? %))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
@@ -434,7 +433,7 @@
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                 :choices {:req #(can-be-advanced? %)}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
                 {:label "Trace 2 - Give the Runner 1 tag"
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
