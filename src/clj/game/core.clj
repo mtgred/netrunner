@@ -1511,8 +1511,8 @@
                             (get-in @state [side :register :cannot-play-current])))
                   (not (and (has? card :subtype "Priority")
                             (get-in @state [side :register :spent-click]))))
-         (when-let [cost-str (pay state side card :credit (:cost card) extra-cost
-                              (when-not no-additional-cost additional-cost))]
+         (when-let [cost-str (pay state side card (concat [:credit (:cost card)] extra-cost
+                              (when-not no-additional-cost additional-cost)))]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
