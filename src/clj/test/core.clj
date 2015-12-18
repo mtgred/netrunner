@@ -48,7 +48,7 @@
   (is (get-in @state [:run :successful]))) ; the run was marked successful)
 
 (defn find-card [title from]
-  "Return true if there is a card with given title in given sequence"
+  "Return a card with given title from given sequence"
   (some #(when (= (:title %) title) %) from))
 
 (defn card-ability

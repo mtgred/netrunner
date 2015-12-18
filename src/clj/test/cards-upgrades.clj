@@ -158,9 +158,9 @@
   (do-game
     (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
               (default-runner))
-    (core/move-card state :corp {:card (find-card "Red Herrings" (:hand (get-corp))) :server "Archives"})
+    (trash-from-hand state :corp "Red Herrings")
     (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
-    (take-credits state :corp 2)
+    (take-credits state :corp)
 
     (core/click-run state :runner {:server "HQ"})
     (core/no-action state :corp nil)
