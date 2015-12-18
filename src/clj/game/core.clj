@@ -1925,12 +1925,11 @@
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
-  (let [value (int value)]
-  (resolve-ability state side
+    (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
                                     (system-msg (str "sets counters to " value " on " (card-str state target) (get-card state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
-                   {:title "/counter command"} nil)))
+                   {:title "/counter command"} nil))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
@@ -1962,7 +1961,6 @@
                                                                                 (card-str state target) ": " (get-card state target))))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
-        "/state"  #(system-msg %1 %2 (str @%1))
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))

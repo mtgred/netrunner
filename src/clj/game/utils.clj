@@ -72,7 +72,8 @@
 
 (defn String->Num [s]
   (try
-    (bigdec s)
+    (let [num (bigdec s)]
+      (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
   (catch Exception e nil)))
 
 (def safe-split (fnil clojure.string/split ""))
