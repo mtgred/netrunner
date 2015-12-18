@@ -143,6 +143,7 @@
   (do-game
     (new-game (default-corp [(qty "Adonis Campaign" 1) (qty "Public Support" 2) (qty "Oaktown Renovation" 1)])
               (default-runner))
+    ; Turn 1 Corp, install oaktown and assets
     (core/gain state :corp :click 4)
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (play-from-hand state :corp "Public Support" "New remote")
@@ -156,21 +157,39 @@
     (core/advance state :corp {:card (refresh oaktown)})
     (core/advance state :corp {:card (refresh oaktown)})
     (is (= 8 (:credit (get-corp))))
+    (core/end-turn state :corp nil)
+    ; Turn 1 Runner
+    (core/start-turn state :runner nil)
+    (take-credits state :runner 3)
+    (core/click-credit state :runner nil)
+    (core/end-turn state :runner nil)
     (core/rez state :corp (refresh adonis))
     (core/rez state :corp (refresh publics1))
+    ; Turn 2 Corp
+    (core/start-turn state :corp nil)
     (core/rez state :corp (refresh publics2))
-    (take-credits state :runner 4)
     (is (= 3 (:click (get-corp))))
     (is (= 3 (:credit (get-corp))))
     (is (= 9 (:counter (refresh adonis))))
     (is (= 2 (:counter (refresh publics1))))
+    (is (= 3 (:counter (refresh publics2))))
+    ; oops, forgot to rez 2nd public support before start of turn, let me fix it with a /command
+    (core/command-counter state :corp 2)
+    (prompt-select :corp (refresh publics2))
     (is (= 2 (:counter (refresh publics2))))
+    ; Oaktown checks
     (is (= 3 (:advance-counter (refresh oaktown))))
+    (core/command-adv-counter state :corp 2)
+    (prompt-select :corp (refresh oaktown))
+    (core/score state :corp (refresh oaktown)) ; shouldn't be able to score with 2 advancement tokens
+    (is (= 0 (:agenda-point (get-corp))))
     (core/command-adv-counter state :corp 4)
-    (prompt-select :corp oaktown)
+    (prompt-select :corp (refresh oaktown))
     (is (= 4 (:advance-counter (refresh oaktown))))
     (is (= 3 (:credit (get-corp))))
     (is (= 3 (:click (get-corp))))
-    (core/score state :corp (refresh oaktown))
+    (core/score state :corp (refresh oaktown)) ; now the score should go through
     (is (= 2 (:agenda-point (get-corp))))
+
+
     )))
