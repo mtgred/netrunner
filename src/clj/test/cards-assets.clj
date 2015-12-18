@@ -140,6 +140,7 @@
       ; Corp turn 2, creds, check if supports are ticking
       (is (= 2 (get-in (refresh publics1) [:counter])))
       (is (= 0 (:agenda-point (get-corp))))
+      (is (nil? (:agendapoints (refresh publics1))))
       (take-credits state :corp)
       ; Runner turn 2, run and trash publics2
       (core/click-run state :runner {:server :remote2})

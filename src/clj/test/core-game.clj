@@ -156,7 +156,7 @@
     (core/advance state :corp {:card (refresh oaktown)})
     (core/advance state :corp {:card (refresh oaktown)})
     (core/advance state :corp {:card (refresh oaktown)})
-    (is (= 8 (:credit (get-corp))))
+    (is (= 8 (:credit (get-corp))) "Corp 5+3 creds from Oaktown")
     (core/end-turn state :corp nil)
     ; Turn 1 Runner
     (core/start-turn state :runner nil)
@@ -169,7 +169,7 @@
     (core/start-turn state :corp nil)
     (core/rez state :corp (refresh publics2))
     (is (= 3 (:click (get-corp))))
-    (is (= 3 (:credit (get-corp))))
+    (is (= 3 (:credit (get-corp))) "only Adonis money")
     (is (= 9 (:counter (refresh adonis))))
     (is (= 2 (:counter (refresh publics1))))
     (is (= 3 (:counter (refresh publics2))))
@@ -177,11 +177,11 @@
     (core/command-counter state :corp 2)
     (prompt-select :corp (refresh publics2))
     (is (= 2 (:counter (refresh publics2))))
-    ; Oaktown checks
+    ; Oaktown checks and manipulation
     (is (= 3 (:advance-counter (refresh oaktown))))
     (core/command-adv-counter state :corp 2)
     (prompt-select :corp (refresh oaktown))
-    (core/score state :corp (refresh oaktown)) ; shouldn't be able to score with 2 advancement tokens
+    (core/score state :corp (refresh oaktown)) ; score should fail, shouldn't be able to score with 2 advancement tokens
     (is (= 0 (:agenda-point (get-corp))))
     (core/command-adv-counter state :corp 4)
     (prompt-select :corp (refresh oaktown))
@@ -190,6 +190,24 @@
     (is (= 3 (:click (get-corp))))
     (core/score state :corp (refresh oaktown)) ; now the score should go through
     (is (= 2 (:agenda-point (get-corp))))
-
-
+    (take-credits state :corp)
+    ; Turn 2 Runner
+    (core/command-counter state :corp 1) ; cheating with publics1 going too fast. Why? because I can
+    (prompt-select :corp (refresh publics1))
+    (core/command-counter state :corp 3) ; let's adjust Adonis while at it
+    (prompt-select :corp (refresh adonis))
+    (take-credits state :runner)
+    ; Turn 3 Corp
+    (is (= 3 (:agenda-point (get-corp)))) ; cheated PS1 should get scored
+    (is (= 9 (:credit (get-corp))) "twice Adonis money and money turn")
+    (is (= (:zone (refresh publics1) :scored)))
+    (is (= (:zone (refresh publics2)) [:servers :remote3 :content]))
+    (is (= (:zone (refresh adonis) :discard)))
+    (take-credits state :corp)
+    ; Turn 3 Runner
+    (take-credits state :runner)
+    ; Turn 4 Corp
+    (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
+    (is (= (:zone (refresh publics2) :scored)))
+    (is (= 12 (:credit (get-corp))) "twice Adonis money and 2xmoney turn, no third Adonis")
     )))
