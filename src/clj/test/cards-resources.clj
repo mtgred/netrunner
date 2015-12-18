@@ -79,13 +79,13 @@
 (deftest street-peddler-ability
   "Street Peddler - Ability"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 1) (qty "Torch" 1)
+    (new-game (default-corp) (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 1) (qty "Yog.0" 1)
                                               (qty "Sure Gamble" 2)]))
     (take-credits state :corp)
     ; move Gordian back to deck
     (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Yog.0" (:hand (get-runner))) :deck)
     (play-from-hand state :runner "Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
