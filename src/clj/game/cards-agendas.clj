@@ -28,7 +28,7 @@
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
                                            (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(can-be-advanced? %)}
+                 :choices {:req can-be-advanced?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
@@ -36,7 +36,7 @@
              :effect (req (let [c (Integer/parseInt target)]
                             (resolve-ability
                              state side
-                             {:choices {:req #(can-be-advanced? %)}
+                             {:choices {:req can-be-advanced?}
                               :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
                               :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 

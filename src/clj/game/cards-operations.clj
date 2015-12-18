@@ -339,7 +339,7 @@
                    (resolve-ability state side
                                     {:msg (msg "place " c " advancement tokens on "
                                                (if (:rezzed target) (:title target) "a card"))
-                                     :choices {:req #(can-be-advanced? %)}
+                                     :choices {:req can-be-advanced?}
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
@@ -399,7 +399,7 @@
     :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
-   {:choices {:max 2 :req #(can-be-advanced? %)}
+   {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true})))}
 
@@ -416,7 +416,7 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(can-be-advanced? %)}
+                     {:choices {:req can-be-advanced?}
                       :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 

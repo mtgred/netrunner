@@ -521,7 +521,7 @@
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-             :choices {:req #(can-be-advanced? %)}
+             :choices {:req can-be-advanced?}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
