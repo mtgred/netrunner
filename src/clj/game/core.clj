@@ -57,8 +57,12 @@
 (defn can-be-advanced? [card]
   "Returns true if the card can be advanced"
   (or (= (:advanceable card) "always")
-      (and (= (:advanceable card) "while-rezzed") (:rezzed card))
-      (and (= (:type card) "Agenda") (= (first (:zone card)) :servers))))
+      (= (:advanceable card) :always) ; needed for testing
+      (and (or (= (:advanceable card) "while-rezzed")
+               (= (:advanceable card) :while-rezzed)) ; needed for testing
+           (:rezzed card))
+      (and (= (:type card) "Agenda")
+           (= (first (:zone card)) :servers))))
 
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
