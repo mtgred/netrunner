@@ -53,7 +53,7 @@ removePlayer = (socket) ->
     socket.gameid = false
     refreshLobby()
   for k, v of games
-    delete games[k] if v.players.length < 2 and (new Date() - v.date) > 3600000
+    delete games[k] if (not v.started or v.players.length < 2) and (new Date() - v.date) > 3600000
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
