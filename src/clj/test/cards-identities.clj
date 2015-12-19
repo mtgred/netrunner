@@ -11,6 +11,17 @@
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
     (is (= 13 (:max-hand-size (get-corp))) "Max hand size is 13")))
 
+(deftest haas-bioroid-stronger-together
+  "Stronger Together - +1 strength for Bioroid ice"
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Stronger Together" [(qty "Eli 1.0" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Eli 1.0" "Archives")
+    (let [eli (first (get-in @state [:corp :servers :archives :ices]))]
+      (core/rez state :corp eli)
+      (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+
 (deftest iain-stirling-credits
   "Iain Stirling - Gain 2 credits when behind"
   (do-game

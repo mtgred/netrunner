@@ -30,8 +30,33 @@
       (is (= nil (get-in @state [:corp :servers :hq :ices 0])) "Architect was not trashed, but should be trashable")
       (core/trash state :corp (get-in @state [:corp :hand 0]))
       (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
-      (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))
-      )))
+      (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
+
+(deftest lotus-field-unlowerable
+  "Lotus Field strength cannot be lowered"
+  (do-game
+    (new-game (default-corp [(qty "Lotus Field" 1) (qty "Lag Time" 1)])
+              (default-runner [(qty "Ice Carver" 1) (qty "Parasite" 1)]))
+    (play-from-hand state :corp "Lotus Field" "Archives")
+    (take-credits state :corp 2)
+    (let [lotus (first (get-in @state [:corp :servers :archives :ices]))]
+      (core/rez state :corp lotus)
+      (play-from-hand state :runner "Ice Carver")
+      (core/click-run state :runner {:server "Archives"})
+      (is (= 4 (:current-strength (refresh lotus))) "Lotus Field strength unchanged")
+      (core/jack-out state :runner nil)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner lotus)
+      (is (= 1 (count (:hosted (refresh lotus)))) "Parasite hosted on Lotus Field")
+      (take-credits state :runner 1)
+      (take-credits state :corp)
+      (is (= 1 (core/get-virus-counters state :runner (first (:hosted (refresh lotus))))) "Parasite has 1 virus counter")
+      (is (= 4 (:current-strength (refresh lotus))) "Lotus Field strength unchanged")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Lag Time")
+      (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased")
+      (take-credits state :corp 2)
+      (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
 
 (deftest tmi
   "TMI ICE test"
@@ -43,8 +68,7 @@
       (core/rez state :corp tmi)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (get-in (refresh tmi) [:rezzed]))
-      )))
+      (is (get-in (refresh tmi) [:rezzed])))))
 
 
 (deftest tmi-derez
@@ -57,5 +81,4 @@
       (core/rez state :corp tmi)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (not (get-in (refresh tmi) [:rezzed])))
-      )))
+      (is (not (get-in (refresh tmi) [:rezzed]))))))

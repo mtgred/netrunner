@@ -20,14 +20,12 @@
 ;TODO: add a register for mutable state card flags, separate from this
 (defn flag? [card flag value]
   (let [cdef (card-def card)]
-    (= value (get-in cdef [:flags flag]))
-    ))
+    (= value (get-in cdef [:flags flag]))))
 
 (defn untrashable-while-rezzed? [card]
   (and
     (flag? card :untrashable-while-rezzed true)
-    (and (contains? card :rezzed) (get-in card [:rezzed]))
-    ))
+    (and (contains? card :rezzed) (get-in card [:rezzed]))))
 
 (declare parse-command)
 
@@ -550,7 +548,6 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
-          (update-all-ice state side)
           (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
             (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
@@ -561,6 +558,7 @@
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
         (swap! state assoc :run nil)
+        (update-all-ice state side)
         (clear-run-register! state))))
 
 
@@ -668,8 +666,16 @@
       (resolve-ability state side cdef c nil))
     (get-card state c))))
 
-(defn ice-strength-bonus [state side n]
-  (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0)))
+(defn update-run-ice [state side]
+  (when (get-in @state [:run])
+    (let [s (get-in @state [:run :server])
+          ices (get-in @state (concat [:corp :servers] s [:ices]))]
+      (swap! state assoc-in [:run :ices] ices))))
+
+(defn ice-strength-bonus [state side n ice]
+  ; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
+  (when (or (pos? n) (not (flag? ice :cannot-lower-strength true)))
+    (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0))))
 
 (defn ice-strength [state side {:keys [strength] :as card}]
   (-> (if-let [strfun (:strength-bonus (card-def card))]
@@ -690,7 +696,8 @@
 
 (defn update-all-ice [state side]
   (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server))))
+    (update-ice-in-server state side (second server)))
+  (update-run-ice state :corp))
 
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
@@ -1074,12 +1081,6 @@
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
 
-(defn update-run-ice [state side]
-  (when (get-in @state [:run])
-    (let [s (get-in @state [:run :server])
-          ices (get-in @state (concat [:corp :servers] s [:ices]))]
-      (swap! state assoc-in [:run :ices] ices))))
-
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -1091,6 +1092,7 @@
                       :run-effect (assoc run-effect :card card)})
          (gain-run-credits state side (get-in @state [:corp :bad-publicity]))
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+         (update-all-ice state :corp)
          (trigger-event state :runner :run s)))))
 
 (defn access-cost-bonus [state side costs]
