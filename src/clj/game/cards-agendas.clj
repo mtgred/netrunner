@@ -151,8 +151,8 @@
 
    "Firmware Updates"
    {:data [:counter 3]
-    :abilities [{:counter-cost 1 :choices {:req #(and (= (:type %) "ICE") (can-be-advanced? %))}
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+    :abilities [{:counter-cost 1 :choices {:req #(and (ice? %) (can-be-advanced? %))}
+                 :msg (msg "place 1 advancement token on " (if (rezzed? target) (:title target) "a card"))
                  :once :per-turn :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Genetic Resequencing"

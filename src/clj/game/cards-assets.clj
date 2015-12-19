@@ -72,14 +72,14 @@
    {:events {:corp-turn-begins
              {:optional
               {:prompt "Move one advancement token between ICE?"
-               :yes-ability {:choices {:req #(and (= (:type %) "ICE") (:advance-counter %))}
+               :yes-ability {:choices {:req #(and (ice? %) (:advance-counter %))}
                              :priority true
                              :effect (req (let [fr target]
                                             (resolve-ability
                                               state side
                                               {:priority true
                                                :prompt "Move to where?"
-                                               :choices {:req #(and (= (:type %) "ICE")
+                                               :choices {:req #(and (ice? %)
                                                                     (not= (:cid fr) (:cid %))
                                                                     (can-be-advanced? %))}
                                                :effect (effect (add-prop :corp target :advance-counter 1)
