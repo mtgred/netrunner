@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in cancellable card-is? side-key side-str]]
+                                dissoc-in cancellable card-is?]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -275,8 +275,7 @@
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
 (defn card-str [state card]
-  ; using side-key since card can be both clicked (strings) or passed (keys)
-  (str (if (= (side-key (:side card)) :corp)
+  (str (if (card-is? card :side :corp)
          (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
               (if (ice? card) " protecting " " in ")
               ;TODO add naming of scoring area of corp/runner
@@ -1923,14 +1922,14 @@
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
                                     (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
     (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
                                     (system-msg (str "sets counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/counter command"} nil))
 
 (defn parse-command [text]
@@ -1961,7 +1960,7 @@
                                                  :msg "resolve successful trace effect"}))
         "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
                                                                                 (card-str state target) ": " (get-card state target))))
-                                               :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                               :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
