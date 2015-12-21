@@ -1966,6 +1966,7 @@
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
+        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil
