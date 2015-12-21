@@ -232,7 +232,10 @@
       (if host
         (get-card-hosted state card)
         (some #(when (= cid (:cid %)) %)
-              (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
+              (let [zones (map to-keyword zone)]
+                (if (= (first zones) :scored)
+                  (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
+                  (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
 (defn update! [state side {:keys [type zone cid host] :as card}]
