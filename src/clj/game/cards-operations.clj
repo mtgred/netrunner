@@ -46,7 +46,8 @@
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
-    :effect (effect (move target :hand) (shuffle! :deck))}
+    :effect (effect (move target :hand) (shuffle! :deck))
+    :msg "search R&D for a card and add it to HQ"}
 
    "An Offer You Cant Refuse"
    {:prompt "Choose a server" :choices ["HQ" "R&D" "Archives"]
@@ -83,7 +84,7 @@
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
     :effect (effect (gain :credit (* 3 (:advance-counter target))) (trash target))
-    :msg (msg "trash " (if (:rezzed target) (:title target) " a card") " and gain "
+    :msg (msg "trash " (card-str state target) " and gain "
               (* 3 (:advance-counter target)) " [Credits]")}
 
    "Bad Times"
@@ -103,7 +104,7 @@
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at no cost")
+    :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
@@ -374,7 +375,7 @@
 
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
-    :msg (msg "trash " (:title target) " to remove 2 bad publicity")
+    :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
     :choices {:req #(and (:rezzed %)
                          (or (has? % :subtype "Clone") (has? % :subtype "Executive")
                              (has? % :subtype "Sysop")))}
@@ -423,7 +424,7 @@
                      {:choices {:req #(or (card-is? % :advanceable :always)
                                           (and (card-is? % :advanceable :while-rezzed) (:rezzed %))
                                           (= (:type %) "Agenda"))}
-                      :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                      :msg (msg "place " c " advancement tokens on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
@@ -548,8 +549,7 @@
                                          :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
                                                           (add-prop :corp fr :advance-counter (- c) {:placed true})
                                                           (system-msg (str "moves " c " advancement tokens from "
-                                                                           (if (:rezzed fr) (:title fr) "a card") " to "
-                                                                           (if (:rezzed target) (:title target) "a card"))))}
+                                                                           (card-str state fr) " to " (card-str state target))))}
                                         tol nil)))}
                       card nil)))}
 
