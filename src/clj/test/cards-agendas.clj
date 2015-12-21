@@ -21,6 +21,7 @@
       (is (= 0 (:agenda-point (get-runner))))
       (is (= 0 (count (:scored (get-runner))))))
     (is (= "15 Minutes" (:title (first (:deck (get-corp))))))
+    ; TODO: could also check for deck shuffle
     (is (= 2 (:click (get-corp))))
     ; use 15 minutes to take it away from corp (hey, maybe some obscure case happens where corp would want that)
     (core/click-draw state :corp 1)
