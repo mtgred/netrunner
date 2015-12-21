@@ -119,7 +119,7 @@
                             :effect (effect (gain :credit 1))}}}
 
    "Haas-Bioroid: Stronger Together"
-   {:events {:pre-ice-strength {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+   {:events {:pre-ice-strength {:req (req (and (ice? target) (has? target :subtype "Bioroid")))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Harmony Medtech: Biomedical Pioneer"
@@ -279,9 +279,9 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))
-    :events {:pre-rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+    :events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                        :effect (effect (rez-cost-bonus 1))}
-             :rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+             :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Rielle \"Kit\" Peddler: Transhuman"
