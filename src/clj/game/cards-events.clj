@@ -640,13 +640,13 @@
                        stypes (:subtype ice)]
               (resolve-ability
                  state :runner
-                 {:msg (msg "give sentry, code gate, and barrier to " (if (:rezzed ice) (:title ice) "the ICE at position ")
-                              (ice-index state ice) " of " serv " until the end of the turn")
+                 {:msg (msg "make " (card-str state ice) " gain sentry, code gate, and barrier until the end of the turn")
                   :effect (effect (update! (assoc ice :subtype
                                                       (->> (vec (.split (:subtype ice) " - "))
                                                            (concat ["Sentry" "Code Gate" "Barrier"])
                                                            distinct
                                                            (join " - "))))
+                                  (update-ice-strength (get-card state ice))
                                   (register-events {:runner-turn-ends
                                                     {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}
                                   (assoc card :zone '(:discard))))}
