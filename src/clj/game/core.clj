@@ -338,13 +338,13 @@
                         (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
-             c (if (and (= (second dest) :scored) (:has-abilities-when-stolen (card-def c)))
-                 (merge c {:abilities (:abilities (card-def c))}) c)
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
-                          (dissoc moved-card :seen) moved-card)]
+                          (dissoc moved-card :seen) moved-card)
+             moved-card (if (and (= (first (:zone moved-card)) :scored) (:has-abilities-when-stolen (card-def moved-card)))
+                          (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
