@@ -20,6 +20,20 @@
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest ice-carver
+  "Ice Carver - lower ice strength on encounter"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Ice Carver" 1)]))
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :corp 2)
+    (let [iwall (first (get-in @state [:corp :servers :archives :ices]))]
+      (core/rez state :corp iwall)
+      (play-from-hand state :runner "Ice Carver")
+      (core/click-run state :runner {:server "Archives"})
+      (is (= 0 (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (core/jack-out state :runner nil)
+      (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
 (deftest kati-jones
   "Kati Jones - Click to store and take"

@@ -133,7 +133,7 @@
                                   0 (flatten (seq (:servers corp)))))
                     (update-all-ice))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Code Gate"))
-                                :effect (effect (ice-strength-bonus 1))}}}
+                                :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Executive Retreat"
    {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
@@ -240,7 +240,7 @@
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Tracer"))
-                                :effect (effect (ice-strength-bonus 1))}
+                                :effect (effect (ice-strength-bonus 1 target))}
              :pre-init-trace {:req (req (has? target :type "ICE"))
                               :effect (effect (init-trace-bonus 1))}}}
 
@@ -395,7 +395,7 @@
                                    0 (flatten (seq (:servers corp)))))
                      (update-all-ice state side)))
     :events {:pre-ice-strength {:req (req (has? target :subtype "Barrier"))
-                                :effect (effect (ice-strength-bonus 1))}}}
+                                :effect (effect (ice-strength-bonus 1 target))}}}
 
    "TGTBT"
    {:access {:msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}

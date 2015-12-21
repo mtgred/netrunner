@@ -378,7 +378,7 @@
     :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
               {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice)) (:wyrm-count card)))
                                   :effect (req (let [c (:wyrm-count (get-card state card))]
-                                                 (ice-strength-bonus state side (- c))))}
+                                                 (ice-strength-bonus state side (- c) target)))}
                :pass-ice wy :run-ends wy})}
 
    "Yog.0"

@@ -40,7 +40,7 @@
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
-              :effect (effect (ice-strength-bonus -2))}}}
+              :effect (effect (ice-strength-bonus -2 target))}}}
 
    "Bug"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -122,7 +122,7 @@
                :pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
                                                  (:datasucker-count card)))
                                   :effect (req (let [c (:datasucker-count (get-card state card))]
-                                                 (ice-strength-bonus state side (- c))))}
+                                                 (ice-strength-bonus state side (- c) target)))}
                :pass-ice ds :run-ends ds})
     :abilities [{:counter-cost 1 :msg (msg "give -1 strength to " (:title current-ice))
                  :req (req (and current-ice (:rezzed current-ice)))
@@ -427,7 +427,7 @@
               :effect (effect (update-ice-strength (:host card)))}
              :pre-ice-strength
              {:req (req (= (:cid target) (:cid (:host card))))
-              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card))))}
+              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card)) target))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
               :effect (req (unregister-events state side card)

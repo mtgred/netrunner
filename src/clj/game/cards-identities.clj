@@ -120,7 +120,7 @@
 
    "Haas-Bioroid: Stronger Together"
    {:events {:pre-ice-strength {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
-                                :effect (effect (ice-strength-bonus 1))}}}
+                                :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Harmony Medtech: Biomedical Pioneer"
    {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))}

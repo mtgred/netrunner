@@ -84,7 +84,7 @@
                                                       (update-ice-strength state side (:troubleshooter-target card)))}]
                                  {:pre-ice-strength
                                                     {:req (req (= (:cid target) (:cid (:troubleshooter-target card))))
-                                                     :effect (effect (ice-strength-bonus (:troubleshooter-amount card)))}
+                                                     :effect (effect (ice-strength-bonus (:troubleshooter-amount card) target))}
                                   :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
    "Crisium Grid"
@@ -107,7 +107,7 @@
    "Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
     :events {:pre-ice-strength {:req (req (= (card->server state card) (card->server state target)))
-                                :effect (effect (ice-strength-bonus 1))}}
+                                :effect (effect (ice-strength-bonus 1 target))}}
     :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
     :trash-effect {:effect (req (update-all-ice state side))}}
 
