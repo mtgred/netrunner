@@ -343,7 +343,7 @@
                           (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)
-             moved-card (if (and (= (first (:zone moved-card)) :scored) (:has-abilities-when-stolen (card-def moved-card)))
+             moved-card (if (and (= (first (:zone moved-card)) :scored) (flag? moved-card :has-abilities-when-stolen true))
                           (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
