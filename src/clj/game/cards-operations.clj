@@ -419,8 +419,8 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(or (= (:advanceable %) "always")
-                                          (and (= (:advanceable %) "while-rezzed") (:rezzed %))
+                     {:choices {:req #(or (card-is? % :advanceable :always)
+                                          (and (card-is? % :advanceable :while-rezzed) (:rezzed %))
                                           (= (:type %) "Agenda"))}
                       :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
