@@ -52,14 +52,14 @@
 (declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
          update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
 
+(declare rezzed?)
+
 (defn can-be-advanced? [card]
   "Returns true if the card can be advanced"
-  (or (= (:advanceable card) "always")
-      (= (:advanceable card) :always) ; needed for testing
-      (and (or (= (:advanceable card) "while-rezzed")
-               (= (:advanceable card) :while-rezzed)) ; needed for testing
-           (:rezzed card))
-      (and (= (:type card) "Agenda")
+  (or (card-is? card :advanceable :always)
+      (and (card-is? card :advanceable :while-rezzed)
+           (rezzed? card))
+      (and (card-is? card :type "Agenda")
            (= (first (:zone card)) :servers))))
 
 (defn can-pay? [state side & args]
