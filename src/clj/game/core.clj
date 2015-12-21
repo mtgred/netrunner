@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs String->Num safe-split
+                                costs-to-symbol vdissoc distinct-by abs string->num safe-split
                                 dissoc-in cancellable card-is?]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
@@ -263,7 +263,6 @@
 (defn zone->name [zone]
   (or (central->name zone)
       (remote->name zone)))
-
 
 (defn ice? [card]
   (= (:type card) "ICE"))
@@ -1934,8 +1933,8 @@
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
-        value (if-let [n (String->Num (first args))] n 1)
-        num   (if-let [n (-> args first (safe-split #"#") second String->Num)] (dec n) 0)]
+        value (if-let [n (string->num (first args))] n 1)
+        num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 1)
       (case command
         "/draw"       #(draw %1 %2 (max 0 value))

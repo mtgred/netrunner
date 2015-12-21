@@ -60,7 +60,7 @@
                             (cons x (step more (conj seen k))))))))]
     (step coll #{})))
 
-(defn String->Num [s]
+(defn string->num [s]
   (try
     (let [num (bigdec s)]
       (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
