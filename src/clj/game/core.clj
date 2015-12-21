@@ -275,13 +275,13 @@
 
 (defn card-str
   ([state card] (card-str state card nil))
-  ([state card {:keys [visible] :as args}]
+  ([state card {:keys [visible where] :as args}]
    (str (if (card-is? card :side :corp)
          ; Corp card messages
          (str (if (or (rezzed? card) visible) (:title card) (if (ice? card) "ICE" "a card"))
               (if (ice? card) " protecting " " in ")
               ;TODO add naming of scoring area of corp/runner
-              (zone->name (second (:zone card)))
+              (or where (zone->name (second (:zone card))))
               (if (ice? card) (str " at position " (ice-index state card))))
          ; Runner card messages
          (if (or (:facedown card) visible) "a facedown card" (:title card)))
@@ -1691,7 +1691,8 @@
                      (trash state side prev-card {:keep-server-alive true})))
                  (let [visible (or (= :rezzed-no-cost install-state) (= :face-up install-state))]
                    ; TODO code above could be simplified, check whether visible is really needed here or if card-str is smart enough to figure it out on its own
-                   (system-msg state side (str (build-spend-msg cost-str "install") (card-str state c {:visible visible}))))
+                   (system-msg state side (str (build-spend-msg cost-str "install")
+                                               (card-str state c {:visible visible :where server }))))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
