@@ -49,8 +49,8 @@
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
   )
 
-(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
+(declare all-installed card-init forfeit get-card handle-end-run prompt! resolve-steal-events trash trigger-event update!
+         update-advancement-cost update-all-advancement-costs update-all-ice update-breaker-strength update-ice-strength)
 
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -335,7 +335,8 @@
                         (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
-             c (if (and (= (first dest) [:scored]) (:active-when-stolen (card-def c))) (card-init state :corp c) c)
+             c (if (and (= (first dest) [:scored]) (:has-abilities-when-stolen (card-def c)))
+                 (merge c {:abilities (:abilities (card-def c))}) c)
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (desactivate state side moved-card) moved-card)

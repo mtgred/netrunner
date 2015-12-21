@@ -12,7 +12,7 @@
                                 (shuffle! state :corp :deck)
                                 )
                    }]
-      :active-when-stolen true}
+      :has-abilities-when-stolen true}
 
    "Accelerated Beta Test"
    (letfn [(abt [n i]
