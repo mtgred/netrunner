@@ -120,6 +120,49 @@
       (is (= 4 (get-in (refresh launch) [:counter])))
       )))
 
+(deftest public-support
+  "Public support scoring and trashing"
+  ;TODO could also test for NOT triggering "when scored" events
+  (do-game
+    (new-game (default-corp [(qty "Public Support" 2)]) (default-runner))
+    ; Corp turn 1, install and rez public supports
+    (play-from-hand state :corp "Public Support" "New remote")
+    (play-from-hand state :corp "Public Support" "New remote")
+    (let [publics1 (first (get-in @state [:corp :servers :remote1 :content]))
+          publics2 (first (get-in @state [:corp :servers :remote2 :content]))]
+      (core/rez state :corp (refresh publics1))
+      (core/rez state :corp (refresh publics2))
+      (take-credits state :corp)
+      ; Runner turn 1, creds
+      (is (= 2 (:credit (get-corp))))
+      (is (= 3 (get-in (refresh publics1) [:counter])))
+      (take-credits state :runner)
+      ; Corp turn 2, creds, check if supports are ticking
+      (is (= 2 (get-in (refresh publics1) [:counter])))
+      (is (= 0 (:agenda-point (get-corp))))
+      (is (nil? (:agendapoints (refresh publics1))))
+      (take-credits state :corp)
+      ; Runner turn 2, run and trash publics2
+      (core/click-run state :runner {:server :remote2})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Yes") ; pay to trash
+      (is (= 5 (:credit (get-runner))))
+      (take-credits state :runner)
+      ; Corp turn 3, check how publics1 is doing
+      (is (= 1 (get-in (refresh publics1) [:counter])))
+      (is (= 0 (:agenda-point (get-corp))))
+      (take-credits state :corp)
+      ; Runner turn 3, boring
+      (take-credits state :runner)
+      ; Corp turn 4, check the delicious agenda points
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (= (:zone (refresh publics1) :scored)))
+      (is (= (:zone (refresh publics2) :discard)))
+      (is (= "Public Support" (:title (first (get-in @state [:corp :scored])))))
+      (is (= 1 (:agendapoints (first (get-in @state [:corp :scored])))))
+      )))
+
 (deftest sundew
   "Sundew"
   (do-game

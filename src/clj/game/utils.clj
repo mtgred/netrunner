@@ -17,8 +17,17 @@
     (vec (concat head (rest tail)))))
 
 (defn has? [card property value]
+  "Checks the string property of the card to see if it contains the given value"
   (when-let [p (property card)]
     (> (.indexOf p value) -1)))
+
+(defn card-is? [card property value]
+  "Checks the property of the card to see if it is equal to the given value, as either a string or a keyword"
+  (let [cv (property card)]
+    (cond
+      (or (keyword? cv) (and (string? value) (string? cv))) (= value cv)
+      (and (keyword? value) (string? cv)) (= value (keyword (.toLowerCase cv)))
+      :else (= value cv))))
 
 (defn zone [zone coll]
   (let [dest (if (sequential? zone) (vec zone) [zone])]
@@ -72,7 +81,8 @@
 
 (defn String->Num [s]
   (try
-    (bigdec s)
+    (let [num (bigdec s)]
+      (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
   (catch Exception e nil)))
 
 (def safe-split (fnil clojure.string/split ""))

@@ -414,7 +414,8 @@
                  :msg "prevent the Runner from drawing cards" :effect (effect (prevent-draw))}]}
 
    "Lotus Field"
-   {:abilities [end-the-run]}
+   {:abilities [end-the-run]
+    :flags {:cannot-lower-strength true}}
 
    "Lycan"
    {:advanceable :always

@@ -420,7 +420,7 @@
    {:effect (effect (add-prop card :counter 3))
     :events {:corp-turn-begins
              {:effect (req (add-prop state side card :counter -1)
-                           (when (= (:counter card) 1)
+                           (when (<= (:counter card) 1)
                              (trash state side card)
                              (resolve-ability state side
                                               {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"

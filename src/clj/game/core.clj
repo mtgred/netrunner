@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in cancellable side-key side-str]]
+                                dissoc-in cancellable card-is? side-key side-str]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -20,14 +20,12 @@
 ;TODO: add a register for mutable state card flags, separate from this
 (defn flag? [card flag value]
   (let [cdef (card-def card)]
-    (= value (get-in cdef [:flags flag]))
-    ))
+    (= value (get-in cdef [:flags flag]))))
 
 (defn untrashable-while-rezzed? [card]
   (and
     (flag? card :untrashable-while-rezzed true)
-    (and (contains? card :rezzed) (get-in card [:rezzed]))
-    ))
+    (and (contains? card :rezzed) (get-in card [:rezzed]))))
 
 (declare parse-command)
 
@@ -560,7 +558,6 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
-          (update-all-ice state side)
           (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
             (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
@@ -571,6 +568,7 @@
         (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
         (swap! state assoc-in [:runner :run-credit] 0)
         (swap! state assoc :run nil)
+        (update-all-ice state side)
         (clear-run-register! state))))
 
 
@@ -584,7 +582,7 @@
                         )]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
-       (do (when (and (#{"ICE"} (:type updated-card)) (rezzed? updated-card)) (update-ice-strength state side updated-card))
+       (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
            (when (not placed)
              (trigger-event state side :advance (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card)))
@@ -678,8 +676,16 @@
       (resolve-ability state side cdef c nil))
     (get-card state c))))
 
-(defn ice-strength-bonus [state side n]
-  (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0)))
+(defn update-run-ice [state side]
+  (when (get-in @state [:run])
+    (let [s (get-in @state [:run :server])
+          ices (get-in @state (concat [:corp :servers] s [:ices]))]
+      (swap! state assoc-in [:run :ices] ices))))
+
+(defn ice-strength-bonus [state side n ice]
+  ; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
+  (when (or (pos? n) (not (flag? ice :cannot-lower-strength true)))
+    (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0))))
 
 (defn ice-strength [state side {:keys [strength] :as card}]
   (-> (if-let [strfun (:strength-bonus (card-def card))]
@@ -700,7 +706,8 @@
 
 (defn update-all-ice [state side]
   (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server))))
+    (update-ice-in-server state side (second server)))
+  (update-run-ice state :corp))
 
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
@@ -1084,12 +1091,6 @@
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
 
-(defn update-run-ice [state side]
-  (when (get-in @state [:run])
-    (let [s (get-in @state [:run :server])
-          ices (get-in @state (concat [:corp :servers] s [:ices]))]
-      (swap! state assoc-in [:run :ices] ices))))
-
 (defn run
   ([state side server] (run state side server nil nil))
   ([state side server run-effect card]
@@ -1101,6 +1102,7 @@
                       :run-effect (assoc run-effect :card card)})
          (gain-run-credits state side (get-in @state [:corp :bad-publicity]))
          (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+         (update-all-ice state :corp)
          (trigger-event state :runner :run s)))))
 
 (defn access-cost-bonus [state side costs]
@@ -1930,14 +1932,14 @@
 (defn command-adv-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
-                                    (system-msg (str "sets advancement counters on " (card-str state target) " to " value )))
+                                    (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
-  (resolve-ability state side
+    (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
-                                    (system-msg (str "sets counters on " (card-str state target) " to " value )))
+                                    (system-msg (str "sets counters to " value " on " (card-str state target))))
                     :choices {:req (fn [t] (= (:side t) (side-str side)))}}
                    {:title "/counter command"} nil))
 
@@ -1967,7 +1969,8 @@
                                                 {:title "/trace command" :side %2}
                                                 {:base (max 0 value)
                                                  :msg "resolve successful trace effect"}))
-        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of " (card-str state target) ": " target)))
+        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
+                                                                                (card-str state target) ": " (get-card state target))))
                                                :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(command-counter %1 %2 value)

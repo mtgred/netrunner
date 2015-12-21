@@ -10,6 +10,7 @@
             [clojure.test :refer :all]))
 
 (defn new-game [corp runner]
+  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   (let [states (core/init-game
                  {:gameid 1
                   :players [{:side "Corp"
@@ -25,13 +26,17 @@
     state))
 
 (defn take-credits
+  "Take credits for n clicks, or if no n given, for all remaining clicks of a side. If all clicks are used up,
+  end turn and start the opponent's turn."
   ([state side] (take-credits state side nil))
   ([state side n]
-    (let [n (or n (if (= side :corp) 3 4))
-          other (if (= side :corp) :runner :corp)]
+    (let  [remaining-clicks (get-in @state [side :click])
+           n (or n remaining-clicks)
+           other (if (= side :corp) :runner :corp)]
       (dotimes [i n] (core/click-credit state side nil))
-      (core/end-turn state side nil)
-      (core/start-turn state other nil))))
+      (if (= (get-in @state [side :click]) 0)
+        (do (core/end-turn state side nil)
+            (core/start-turn state other nil))))))
 
 (defn play-run-event [state card server]
   (core/play state :runner {:card card})
@@ -43,6 +48,7 @@
   (is (get-in @state [:run :successful]))) ; the run was marked successful)
 
 (defn find-card [title from]
+  "Return a card with given title from given sequence"
   (some #(when (= (:title %) title) %) from))
 
 (defn card-ability

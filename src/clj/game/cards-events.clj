@@ -539,7 +539,7 @@
                  {:encounter-ice {:once :per-turn
                                   :effect (effect (update! (assoc card :scrubbed-target target)))}
                   :pre-ice-strength {:req (req (= (:cid target) (:cid (:scrubbed-target card))))
-                                     :effect (effect (ice-strength-bonus -2))}
+                                     :effect (effect (ice-strength-bonus -2 target))}
                   :pass-ice sc :run-ends sc})}
 
    "Showing Off"

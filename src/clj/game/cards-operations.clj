@@ -227,7 +227,8 @@
             :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Lag Time"
-   {:events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1))}}
+   {:effect (effect (update-all-ice))
+    :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
     :leave-play (effect (update-all-ice))}
 
    "Manhunt"
@@ -287,7 +288,7 @@
     :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
-                                :effect (effect (ice-strength-bonus 2))}}}
+                                :effect (effect (ice-strength-bonus 2 target))}}}
 
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
