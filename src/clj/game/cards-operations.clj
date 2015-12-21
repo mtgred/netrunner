@@ -490,7 +490,8 @@
                      (resolve-ability state side (sunhelp serv) card nil)))})
 
    "Sweeps Week"
-   {:effect (effect (gain :credit (count (:hand runner))))}
+   {:effect (effect (gain :credit (count (:hand runner))))
+    :msg (msg "gain " (count (:hand runner)) " [Credits]")}
 
    "Targeted Marketing"
    {:abilities [{:req (req (= (:zone card) [:current]))
