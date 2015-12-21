@@ -335,6 +335,7 @@
                         (not (:facedown c)))
                  (desactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
+             c (if (and (= (first dest) [:scored]) (:active-when-stolen (card-def c))) (card-init state :corp c) c)
              moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (desactivate state side moved-card) moved-card)

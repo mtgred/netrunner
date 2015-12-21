@@ -11,7 +11,8 @@
                                 (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
                                 (shuffle! state :corp :deck)
                                 )
-                   }]}
+                   }]
+      :active-when-stolen true}
 
    "Accelerated Beta Test"
    (letfn [(abt [n i]
