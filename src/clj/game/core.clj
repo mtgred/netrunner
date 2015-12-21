@@ -273,15 +273,19 @@
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
-(defn card-str [state card]
-  (str (if (card-is? card :side :corp)
-         (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
+(defn card-str
+  ([state card] (card-str state card nil))
+  ([state card {:keys [visible] :as args}]
+   (str (if (card-is? card :side :corp)
+         ; Corp card messages
+         (str (if (or (rezzed? card) visible) (:title card) (if (ice? card) "ICE" "a card"))
               (if (ice? card) " protecting " " in ")
               ;TODO add naming of scoring area of corp/runner
               (zone->name (second (:zone card)))
               (if (ice? card) (str " at position " (ice-index state card))))
-         (if (:facedown card) "a facedown card" (:title card)))
-       (if (:host card) (str " hosted on " (card-str state (:host card))))))
+         ; Runner card messages
+         (if (or (:facedown card) visible) "a facedown card" (:title card)))
+       (if (:host card) (str " hosted on " (card-str state (:host card)))))))
 
 (defn is-remote? [zone]
   (not (nil? (remote->name zone))))
@@ -1673,9 +1677,9 @@
              (trigger-event state side :server-created card))
            (let [cdef (card-def card)
                  c (dissoc (assoc card :advanceable (:advanceable cdef)) :seen)
-                 slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
+                 slot (conj (server->zone state server) (if (ice? c) :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
-                 install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
+                 install-cost (if (and (ice? c) (not no-install-cost))
                                 (count dest-zone) 0)
                  install-state (or install-state (:install-state cdef))]
              (when (not (and (has? c :subtype "Region")
@@ -1683,13 +1687,11 @@
                (when-let [cost-str (pay state side card extra-cost :credit install-cost)]
                  (when (#{"Asset" "Agenda"} (:type c))
                    (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
-                     (system-msg state side (str "trashes " (if (:rezzed prev-card)
-                                                              (:title prev-card) "a card") " in " server))
+                     (system-msg state side (str "trashes " (card-str state prev-card)))
                      (trash state side prev-card {:keep-server-alive true})))
-                 (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                   (:title card) (if (ice? c) "ICE" "a card"))]
-                   (system-msg state side (str (build-spend-msg cost-str "install")
-                                                card-name (if (ice? c) " protecting " " in ") server)))
+                 (let [visible (or (= :rezzed-no-cost install-state) (= :face-up install-state))]
+                   ; TODO code above could be simplified, check whether visible is really needed here or if card-str is smart enough to figure it out on its own
+                   (system-msg state side (str (build-spend-msg cost-str "install") (card-str state c {:visible visible}))))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
@@ -1739,7 +1741,7 @@
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
-    (system-msg state side "advances a card")
+    (system-msg state side (str "advances " (card-str state card)))
     (update-advancement-cost state side card)
     (add-prop state side (get-card state card) :advance-counter 1)))
 
@@ -1751,9 +1753,7 @@
 
 (defn expose [state side target]
   (system-msg state side
-              (str "exposes " (:title target)
-                   (if (= (last (:zone target)) :ices) " protecting " " in ")
-                   (zone->name (second (:zone target)))))
+              (str "exposes " (card-str state target {:visible true})))
   (when-let [ability (:expose (card-def target))]
     (resolve-ability state side ability target nil))
   (trigger-event state side :expose target))
