@@ -276,7 +276,8 @@
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blue-shade.card {:class (when selected "selected") :draggable true
+       [:div.blue-shade.card {:class (when selected "selected")
+                              :draggable (when (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)) true)
                               :on-drag-start #(handle-dragstart % cursor)
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
