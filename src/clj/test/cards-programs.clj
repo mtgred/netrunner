@@ -51,6 +51,29 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest incubator-transfer-virus-counters
+  "Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Incubator" 1) (qty "Datasucker" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Datasucker")
+    (play-from-hand state :runner "Incubator")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [ds (get-in @state [:runner :rig :program 0])
+          incub (get-in @state [:runner :rig :program 1])]
+      (is (= 1 (:counter (refresh incub))) "Incubator gained 1 virus counter")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 2 (:counter (refresh incub))) "Incubator has 2 virus counters")
+      (card-ability state :runner incub 0)
+      (prompt-select :runner ds)
+      (is (= 2 (:counter (refresh ds))) "Datasucker has 2 virus counters moved from Incubator")
+      (is (= 1 (count (get-in @state [:runner :rig :program]))))
+      (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
+      (is (= 3 (:click (get-runner)))))))
+
 (deftest leprechaun-mu-savings
   "Leprechaun - Keep MU the same when hosting or trashing hosted programs"
   (do-game
@@ -85,6 +108,17 @@
     (let [mopus (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
+
+(deftest origami
+  "Origami - Increases Runner max hand size"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Origami" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Origami")
+    (is (= 6 (:max-hand-size (get-runner))))
+    (play-from-hand state :runner "Origami")
+    (is (= 9 (:max-hand-size (get-runner))) "Max hand size increased by 2 for each copy installed")))
 
 (deftest parasite-apex
   "Parasite - Installed facedown w/ Apex"
