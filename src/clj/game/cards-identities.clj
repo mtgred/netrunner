@@ -119,7 +119,7 @@
                             :effect (effect (gain :credit 1))}}}
 
    "Haas-Bioroid: Stronger Together"
-   {:events {:pre-ice-strength {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+   {:events {:pre-ice-strength {:req (req (and (ice? target) (has? target :subtype "Bioroid")))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Harmony Medtech: Biomedical Pioneer"
@@ -265,6 +265,22 @@
                                :effect (effect (play-instant target))}}}]
      {:events {:agenda-scored nasol :agenda-stolen nasol}})
 
+   "NEXT Design: Guarding the Net"
+   (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
+                                           "Choose a piece of ICE in HQ to install:")
+                              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                              :effect (req (corp-install state side target nil)
+                                           (when (< n 3)
+                                             (resolve-ability state side (nd (inc n)) card nil)))})]
+     {:events {:pre-first-turn {:req (req (= side :corp))
+                                :msg "install up to 3 pieces of ICE and draw back up to 5 cards"
+                                :effect (effect (resolve-ability (ndhelper 1) card nil)
+                                                (update! (assoc card :fill-hq true)))}}
+      :abilities [{:req (req (:fill-hq card))
+                   :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
+                   :effect (effect (draw (- 5 (count (:hand corp))))
+                                   (update! (dissoc card :fill-hq)))}]})
+
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
@@ -277,9 +293,9 @@
 
    "Reina Roja: Freedom Fighter"
    {:effect (effect (gain :link 1))
-    :events {:pre-rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+    :events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                        :effect (effect (rez-cost-bonus 1))}
-             :rez {:req (req (and (= (:type target) "ICE") (not (get-in @state [:per-turn (:cid card)]))))
+             :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Rielle \"Kit\" Peddler: Transhuman"

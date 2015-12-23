@@ -74,6 +74,7 @@
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
       (is (= (core/card-str state (refresh hqiwall1)) "ICE protecting HQ at position 1"))
       (is (= (core/card-str state (refresh rdiwall)) "ICE protecting R&D at position 0"))
+      (is (= (core/card-str state (refresh rdiwall) {:visible true}) "Ice Wall protecting R&D at position 0"))
       (is (= (core/card-str state (refresh jh1)) "Jackson Howard in Server 1"))
       (is (= (core/card-str state (refresh jh2)) "a card in Server 2"))
       (is (= (core/card-str state (refresh corr)) "Corroder"))
