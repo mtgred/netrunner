@@ -267,6 +267,22 @@
                                :effect (effect (play-instant target))}}}]
      {:events {:agenda-scored nasol :agenda-stolen nasol}})
 
+   "NEXT Design: Guarding the Net"
+   (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
+                                           "Choose a piece of ICE in HQ to install:")
+                              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                              :effect (req (corp-install state side target nil)
+                                           (when (< n 3)
+                                             (resolve-ability state side (nd (inc n)) card nil)))})]
+     {:events {:pre-first-turn {:req (req (= side :corp))
+                                :msg "install up to 3 pieces of ICE and draw back up to 5 cards"
+                                :effect (effect (resolve-ability (ndhelper 1) card nil)
+                                                (update! (assoc card :fill-hq true)))}}
+      :abilities [{:req (req (:fill-hq card))
+                   :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
+                   :effect (effect (draw (- 5 (count (:hand corp))))
+                                   (update! (dissoc card :fill-hq)))}]})
+
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
