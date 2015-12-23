@@ -11,8 +11,7 @@
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 6 (get-in @state [:corp :credit])))
-      (is (= 9 (get-in (refresh ac) [:counter])))
-      )))
+      (is (= 9 (get-in (refresh ac) [:counter]))))))
 
 (deftest aggressive-secretary
   (do-game
@@ -36,10 +35,7 @@
       (prompt-choice :corp "Done")
       ;There should be one Cache left
       (is (= 3 (get-in @state [:corp :credit])))
-      (is (=
-            2
-            (count (get-in @state [:runner :rig :program]))))
-      )))
+      (is (= 2 (count (get-in @state [:runner :rig :program])))))))
 
 (deftest alix-t4lb07
   (do-game
@@ -56,8 +52,29 @@
       (is (= 2 (get-in (refresh alix) [:counter])))
       (is (= 4 (get-in @state [:corp :credit])))
       (card-ability state :corp alix 0)
-      (is (= 8 (get-in @state [:corp :credit])))
-      )))
+      (is (= 8 (get-in @state [:corp :credit]))))))
+
+(deftest chairman-hiro
+  "Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him"
+  (do-game
+    (new-game (default-corp [(qty "Chairman Hiro" 2)]) (default-runner))
+    (play-from-hand state :corp "Chairman Hiro" "New remote")
+    (play-from-hand state :corp "Chairman Hiro" "Server 1")
+    (is (= 1 (count (:discard (get-corp)))))
+    (is (= 0 (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
+    (let [hiro (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp hiro)
+      (is (= 3 (:max-hand-size (get-runner))) "Runner max hand size reduced by 2")
+      (take-credits state :corp)
+      (take-credits state :runner 3)
+      (core/click-run state :runner {:server :remote1})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Yes") ; trash Hiro
+      (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
+      (is (= 5 (:max-hand-size (get-runner))) "Runner max hand size restored to 5")
+      (is (= 1 (count (get-in @state [:runner :scored]))) "Chairman Hiro added to Runner score area")
+      (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
 (deftest eve-campaign
   (do-game
@@ -70,8 +87,7 @@
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 4 (get-in @state [:corp :credit])))
-      (is (= 14 (get-in (refresh eve) [:counter])))
-      )))
+      (is (= 14 (get-in (refresh eve) [:counter]))))))
 
 (deftest franchise-city
   (do-game
@@ -117,8 +133,7 @@
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 8 (get-in @state [:corp :credit])))
-      (is (= 4 (get-in (refresh launch) [:counter])))
-      )))
+      (is (= 4 (get-in (refresh launch) [:counter]))))))
 
 (deftest public-support
   "Public support scoring and trashing"
@@ -160,8 +175,7 @@
       (is (= (:zone (refresh publics1) :scored)))
       (is (= (:zone (refresh publics2) :discard)))
       (is (= "Public Support" (:title (first (get-in @state [:corp :scored])))))
-      (is (= 1 (:agendapoints (first (get-in @state [:corp :scored])))))
-      )))
+      (is (= 1 (:agendapoints (first (get-in @state [:corp :scored]))))))))
 
 (deftest sundew
   "Sundew"
