@@ -108,7 +108,16 @@
                  :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
 
    "Changeling"
-   {:advanceable :always :abilities [end-the-run]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Sentry" "Barrier")
+                            (morph state side card "Barrier" "Sentry")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Sentry" "Barrier")
+                     (morph state side card "Barrier" "Sentry")))
+      :abilities [end-the-run]
+      :events {:advance ab :advancement-placed ab}})
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -426,8 +435,16 @@
     :flags {:cannot-lower-strength true}}
 
    "Lycan"
-   {:advanceable :always
-    :abilities [trash-program]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Code Gate" "Sentry")
+                            (morph state side card "Sentry" "Code Gate")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Code Gate" "Sentry")
+                     (morph state side card "Sentry" "Code Gate")))
+      :abilities [trash-program]
+      :events {:advance ab :advancement-placed ab}})
 
    "Mamba"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -759,8 +776,16 @@
    {:abilities [end-the-run {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Wendigo"
-   {:advanceable :always
-    :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Barrier" "Code Gate")
+                            (morph state side card "Code Gate" "Barrier")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Barrier" "Code Gate")
+                     (morph state side card "Code Gate" "Barrier")))
+      :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]
+      :events {:advance ab :advancement-placed ab}})
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"

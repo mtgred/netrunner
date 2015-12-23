@@ -403,16 +403,18 @@
                               state :runner
                               {:prompt (msg "Choose a subtype")
                                :choices ["Sentry" "Code Gate" "Barrier"]
-                               :msg (msg "give " (:title ice) " " (.toLowerCase target) " until the end of the next run this turn")
+                               :msg (msg "make " (card-str state ice) " gain " (.toLowerCase target) " until the end of the next run this turn")
                                :effect (effect (update! (assoc ice :subtype
                                                                    (->> (vec (.split (:subtype ice) " - "))
                                                                         (cons target)
                                                                         distinct
                                                                         (join " - "))))
+                                               (update-ice-strength (get-card state ice))
                                                (register-events {:run-ends
                                                                  {:effect (effect (update! (assoc ice :subtype stypes))
-                                                                                  (unregister-events card))}} card))}
-                              card nil)))}]
+                                                                                  (unregister-events card)
+                                                                                  (update-ice-strength (get-card state ice)))}} card))}
+                            card nil)))}]
     :events {:run-ends nil}}
 
    "Parasite"
