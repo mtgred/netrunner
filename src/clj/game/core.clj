@@ -49,8 +49,8 @@
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")})
   )
 
-(declare prompt! forfeit trigger-event handle-end-run trash update-advancement-cost update-all-advancement-costs
-         update! get-card update-all-ice update-ice-strength update-breaker-strength all-installed resolve-steal-events)
+(declare all-installed card-init forfeit get-card handle-end-run prompt! resolve-steal-events trash trigger-event update!
+         update-advancement-cost update-all-advancement-costs update-all-ice update-breaker-strength update-ice-strength)
 
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
@@ -232,7 +232,10 @@
       (if host
         (get-card-hosted state card)
         (some #(when (= cid (:cid %)) %)
-              (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
+              (let [zones (map to-keyword zone)]
+                (if (= (first zones) :scored)
+                  (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
+                  (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
 (defn update! [state side {:keys [type zone cid host] :as card}]
@@ -339,7 +342,9 @@
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (desactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
-                          (dissoc moved-card :seen) moved-card)]
+                          (dissoc moved-card :seen) moved-card)
+             moved-card (if (and (= (first (:zone moved-card)) :scored) (flag? moved-card :has-abilities-when-stolen true))
+                          (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
