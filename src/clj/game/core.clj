@@ -1,7 +1,7 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs String->Num safe-split
-                                dissoc-in cancellable card-is? side-key side-str]]
+                                costs-to-symbol vdissoc distinct-by abs string->num safe-split
+                                dissoc-in cancellable card-is?]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))
@@ -267,7 +267,6 @@
   (or (central->name zone)
       (remote->name zone)))
 
-
 (defn ice? [card]
   (= (:type card) "ICE"))
 
@@ -277,16 +276,21 @@
 (defn ice-index [state ice]
   (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
 
-(defn card-str [state card]
-  ; using side-key since card can be both clicked (strings) or passed (keys)
-  (str (if (= (side-key (:side card)) :corp)
-         (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
-              (if (ice? card) " protecting " " in ")
-              ;TODO add naming of scoring area of corp/runner
-              (zone->name (second (:zone card)))
-              (if (ice? card) (str " at position " (ice-index state card))))
-         (if (:facedown card) "a facedown card" (:title card)))
-       (if (:host card) (str " hosted on " (card-str state (:host card))))))
+(defn card-str
+  ([state card] (card-str state card nil))
+  ([state card {:keys [visible] :as args}]
+   (str (if (card-is? card :side :corp)
+         ; Corp card messages
+         (str (if (or (rezzed? card) visible) (:title card) (if (ice? card) "ICE" "a card"))
+              ; Hosted cards do not need "in server 1" messages, host has them
+              (if-not (:host card)
+                (str (if (ice? card) " protecting " " in ")
+                     ;TODO add naming of scoring area of corp/runner
+                     (zone->name (second (:zone card)))
+                     (if (ice? card) (str " at position " (ice-index state card))))))
+         ; Runner card messages
+         (if (or (:facedown card) visible) "a facedown card" (:title card)))
+       (if (:host card) (str " hosted on " (card-str state (:host card)))))))
 
 (defn is-remote? [zone]
   (not (nil? (remote->name zone))))
@@ -1684,9 +1688,9 @@
              (trigger-event state side :server-created card))
            (let [cdef (card-def card)
                  c (dissoc (assoc card :advanceable (:advanceable cdef)) :seen)
-                 slot (conj (server->zone state server) (if (= (:type c) "ICE") :ices :content))
+                 slot (conj (server->zone state server) (if (ice? c) :ices :content))
                  dest-zone (get-in @state (cons :corp slot))
-                 install-cost (if (and (= (:type c) "ICE") (not no-install-cost))
+                 install-cost (if (and (ice? c) (not no-install-cost))
                                 (count dest-zone) 0)
                  install-state (or install-state (:install-state cdef))]
              (when (not (and (has? c :subtype "Region")
@@ -1694,13 +1698,12 @@
                (when-let [cost-str (pay state side card extra-cost :credit install-cost)]
                  (when (#{"Asset" "Agenda"} (:type c))
                    (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
-                     (system-msg state side (str "trashes " (if (:rezzed prev-card)
-                                                              (:title prev-card) "a card") " in " server))
+                     (system-msg state side (str "trashes " (card-str state prev-card)))
                      (trash state side prev-card {:keep-server-alive true})))
                  (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
                                    (:title card) (if (ice? c) "ICE" "a card"))]
                    (system-msg state side (str (build-spend-msg cost-str "install")
-                                                card-name (if (ice? c) " protecting " " in ") server)))
+                                               card-name (if (ice? c) " protecting " " in ") server)))
                  (let [moved-card (move state side c slot)]
                    (trigger-event state side :corp-install moved-card)
                    (when (= (:type c) "Agenda")
@@ -1750,7 +1753,7 @@
 
 (defn advance [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
-    (system-msg state side "advances a card")
+    (system-msg state side (str "advances " (card-str state card)))
     (update-advancement-cost state side card)
     (add-prop state side (get-card state card) :advance-counter 1)))
 
@@ -1762,9 +1765,7 @@
 
 (defn expose [state side target]
   (system-msg state side
-              (str "exposes " (:title target)
-                   (if (= (last (:zone target)) :ices) " protecting " " in ")
-                   (zone->name (second (:zone target)))))
+              (str "exposes " (card-str state target {:visible true})))
   (when-let [ability (:expose (card-def target))]
     (resolve-ability state side ability target nil))
   (trigger-event state side :expose target))
@@ -1932,20 +1933,20 @@
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
                                     (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
     (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
                                     (system-msg (str "sets counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/counter command"} nil))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
-        value (if-let [n (String->Num (first args))] n 1)
-        num   (if-let [n (-> args first (safe-split #"#") second String->Num)] (dec n) 0)]
+        value (if-let [n (string->num (first args))] n 1)
+        num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 1)
       (case command
         "/draw"       #(draw %1 %2 (max 0 value))
@@ -1970,11 +1971,12 @@
                                                  :msg "resolve successful trace effect"}))
         "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
                                                                                 (card-str state target) ": " (get-card state target))))
-                                               :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                               :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
+        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil
