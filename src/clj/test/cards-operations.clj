@@ -1,5 +1,14 @@
 (in-ns 'test.core)
 
+(deftest biotic-labor
+  "Biotic Labor - Gain 2 clicks"
+  (do-game
+    (new-game (default-corp [(qty "Biotic Labor" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Biotic Labor")
+    (is (= 1 (:credit (get-corp))))
+    (is (= 4 (:click (get-corp))) "Spent 1 click to gain 2 additional clicks")))
+
 (deftest hedge-fund
   (do-game
     (new-game (default-corp) (default-runner))
@@ -19,7 +28,29 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
-  
+
+(deftest midseason-replacements
+  "Midseason Replacements - Trace to give Runner tags after they steal an agenda"
+  (do-game
+    (new-game (default-corp [(qty "Midseason Replacements" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Midseason Replacements")
+    (is (= 3 (:click (get-corp))) "Midseason precondition not met; Corp not charged a click")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (is (= 7 (:credit (get-corp))))
+    (let [bn (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Stole Breaking News")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Midseason Replacements")
+      (prompt-choice :corp 0) ; default trace
+      (prompt-choice :runner 0) ; Runner won't match
+      (is (= 6 (:tag (get-runner))) "Runner took 6 tags"))))
+
 (deftest news-cycle
   (do-game
     (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
@@ -45,7 +76,38 @@
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
       (take-credits state :corp 2)
       (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
-      
+
+(deftest oversight-ai
+  "Oversight AI - Rez a piece of ICE ignoring all costs"
+  (do-game
+    (new-game (default-corp [(qty "Oversight AI" 1) (qty "Archer" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Archer" "R&D")
+    (let [archer (get-in @state [:corp :servers :rd :ices 0])]
+      (play-from-hand state :corp "Oversight AI")
+      (prompt-select :corp archer)
+      (is (get-in (refresh archer) [:rezzed]))
+      (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
+      (is (= "Oversight AI" (:title (first (:hosted (refresh archer))))) "Archer hosting OAI as a condition"))))
+
+(deftest paywall-implementation
+  "Paywall Implementation - Gain 1 credit for every successful run"
+  (do-game
+    (new-game (default-corp [(qty "Paywall Implementation" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Paywall Implementation")
+    (is (= "Paywall Implementation" (:title (first (get-in @state [:corp :current])))) "Paywall active in Current area")
+    (take-credits state :corp)
+    (is (= 7 (:credit (get-corp))))
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 8 (:credit (get-corp))) "Gained 1 credit from successful run")
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 9 (:credit (get-corp))) "Gained 1 credit from successful run")))
+
 (deftest scorched-earth
   "Scorched Earth - burn 'em"
   (do-game
