@@ -654,7 +654,8 @@
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
-                (om/build rfg-view {:cards (:play-area me)})
+                (when (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state))
+                  (om/build rfg-view {:cards (:play-area me)}))
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
                (when-not (= side :spectator)
