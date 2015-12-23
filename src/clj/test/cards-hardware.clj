@@ -71,7 +71,39 @@
         (is (= 5 (:current-strength (refresh ram))) "Dinosaurus giving +2 strength to Battering Ram")
         (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard) ; trash Battering Ram
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
-  
+
+(deftest grimoire
+  "Grimoire - Gain 2 MU, add a free virus counter to installed virus programs"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Grimoire" 1) (qty "Imp" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Grimoire")
+    (is (= 6 (:memory (get-runner))) "Gained 2 MU")
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (= 3 (:counter (refresh imp))) "Imp received an extra virus counter on install"))))
+
+(deftest plascrete
+  "Plascrete Carapace - Prevent meat damage"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 1)])
+              (default-runner [(qty "Plascrete Carapace" 1) (qty "Sure Gamble" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Plascrete Carapace")
+    (let [plas (get-in @state [:runner :rig :hardware 0])]
+      (is (= 4 (:counter (refresh plas))) "4 counters on install")
+      (take-credits state :runner)
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (card-ability state :runner plas 0)
+      (card-ability state :runner plas 0)
+      (card-ability state :runner plas 0)
+      (card-ability state :runner plas 0)
+      (prompt-choice :runner "Done")
+      (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
+      (is (empty? (get-in @state [:runner :rig :hardware])) "Plascrete depleted and trashed"))))
+
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"
   (do-game

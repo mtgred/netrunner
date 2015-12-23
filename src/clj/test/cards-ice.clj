@@ -32,6 +32,21 @@
       (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
       (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
 
+(deftest curtain-wall
+  "Curtain Wall - Strength boost when outermost ICE"
+  (do-game
+    (new-game (default-corp [(qty "Curtain Wall" 1) (qty "Paper Wall" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Curtain Wall" "HQ")
+    (let [curt (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp curt)
+      (is (= 10 (:current-strength (refresh curt))) "Curtain Wall has +4 strength as outermost ICE")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (let [paper (get-in @state [:corp :servers :hq :ices 1])]
+        (core/rez state :corp paper)
+        (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
+
 (deftest lotus-field-unlowerable
   "Lotus Field strength cannot be lowered"
   (do-game
@@ -98,3 +113,16 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (not (get-in (refresh tmi) [:rezzed]))))))
+
+(deftest wraparound
+  "Wraparound - Strength boosted when no fracter is installed"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Corroder" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp wrap)
+      (is (= 7 (:current-strength (refresh wrap))) "Wraparound +7 strength with no fracter in play")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (is (= 0 (:current-strength (refresh wrap))) "Wraparound 0 strength after Corroder installed"))))

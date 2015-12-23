@@ -58,3 +58,18 @@
       (card-ability state :runner faust 1)
       (prompt-card :runner (find-card "Armitage Codebusting" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource"))))
+
+(deftest overmind-counters
+  "Overmind - Start with counters equal to unused MU"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Overmind" 1) (qty "Akamatsu Mem Chip" 2)]))
+    (take-credits state :corp)
+    (take-credits state :runner 1)
+    (play-from-hand state :runner "Akamatsu Mem Chip")
+    (play-from-hand state :runner "Akamatsu Mem Chip")
+    (is (= 6 (:memory (get-runner))))
+    (play-from-hand state :runner "Overmind")
+    (is (= 5 (:memory (get-runner))))
+    (let [ov (get-in @state [:runner :rig :program 0])]
+      (is (= 5 (:counter (refresh ov))) "Overmind has 5 counters"))))

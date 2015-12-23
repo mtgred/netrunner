@@ -6,7 +6,6 @@
     (new-game (default-corp) (default-runner [(qty "Account Siphon" 3)]))
     (take-credits state :corp) ; pass to runner's turn by taking credits
     (is (= 8 (:credit (get-corp))))
-
     ; play Account Siphon, use ability
     (play-run-event state (first (:hand (get-runner))) :hq)
     (prompt-choice :runner "Run ability")
@@ -54,6 +53,52 @@
       (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
       (is (= 3 (count (:hand (get-runner)))) "No meat damage dealt by Tri-maf's leave play effect"))))
 
+(deftest blackmail
+  "Prevent rezzing of ice for one run"
+  (do-game
+    (new-game
+      (default-corp [(qty "Ice Wall" 3)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Blackmail")
+    (prompt-choice :runner "HQ")
+    (let [iwall1 (get-in @state [:corp :servers :hq :ices 0])
+          iwall2 (get-in @state [:corp :servers :hq :ices 1])]
+      (core/rez state :corp iwall1)
+      (is (not (get-in (refresh iwall1) [:rezzed])))
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/rez state :corp iwall2)
+      (is (not (get-in (refresh iwall2) [:rezzed])))
+      (core/jack-out state :runner nil)
+      ;Do another run, where the ice should rez
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall1)
+      (is (get-in (refresh iwall1) [:rezzed])))))
+
+(deftest blackmail-tmi-interaction
+  "Regression test for a rezzed tmi breaking game state on a blackmail run"
+  (do-game
+    (new-game (default-corp [(qty "TMI" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
+    (is 1 (get-in @state [:corp :bad-publicity]))
+    (play-from-hand state :corp "TMI" "HQ")
+    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp tmi)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (get-in (refresh tmi) [:rezzed]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Blackmail")
+      (prompt-choice :runner "HQ")
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/jack-out state :runner nil)
+      (core/click-run state :runner {:server "Archives"}))))
+
 (deftest demolition-run
   "Demolition Run - Trash at no cost"
   (do-game
@@ -79,6 +124,60 @@
       (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
       (is (empty? (:prompt (get-runner))) "Run concluded"))))
 
+(deftest freelance-coding-contract
+  "Freelance Coding Contract - Gain 2 credits per program trashed from Grip"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Freelance Coding Contract" 1) (qty "Paricia" 1) (qty "Cloak" 1) (qty "Inti" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Freelance Coding Contract")
+    (prompt-select :runner (find-card "Cloak" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Paricia" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Inti" (:hand (get-runner))))
+    (prompt-choice :runner "Done")
+    (is (= 3 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "3 programs in Heap")
+    (is (= 11 (:credit (get-runner))) "Gained 6 credits from 3 trashed programs")))
+
+(deftest notoriety
+  "Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point"
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)])
+              (default-runner [(qty "Notoriety" 1)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (core/click-run state :runner {:server "R&D"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (core/click-run state :runner {:server "HQ"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (play-from-hand state :runner "Notoriety")
+    (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
+    (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
+
+(deftest stimhack
+  "Stimhack - Gain 9 temporary credits and take 1 brain damage after the run"
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1)])
+              (default-runner [(qty "Stimhack" 1) (qty "Sure Gamble" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stimhack")
+    (prompt-choice :runner "HQ")
+    (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 14 (:credit (get-runner))))
+    (is (= 9 (:run-credit (get-runner))) "Gained 9 credits for use during the run")
+    (prompt-choice :runner "Yes") ; choose to trash Eve
+    (is (and (= 0 (count (:hand (get-corp)))) (= 1 (count (:discard (get-corp))))) "Corp hand empty and Eve in Archives")
+    (is (= 5 (:credit (get-runner))))
+    (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+    (is (= 4 (:max-hand-size (get-runner))))
+    (is (= 1 (:brain-damage (get-runner))))))
+
 (deftest sure-gamble
   "Sure Gamble"
   (do-game
@@ -89,43 +188,6 @@
     (is (= 9 (:credit (get-runner))))))
 
 ;Surge and virus counter flag tests
-(deftest virus-counter-flag-on-enter
-  "Set counter flag when virus card enters play with counters"
-  (do-game
-    (new-game (default-corp) (default-runner [(qty "Surge" 1) (qty "Imp" 1) (qty "Crypsis" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Imp")
-    (let [imp (get-in @state [:runner :rig :program 0])]
-      (is (get-in imp [:added-virus-counter]) "Counter flag was not set on Imp")
-      )))
-
-(deftest virus-counter-flag-on-add-prop
-  "Set counter flag when add-prop is called on a virus"
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Crypsis" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner crypsis 2) ;click to add a virus counter
-      (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis did not add a virus token")
-      (is (get-in (refresh crypsis) [:added-virus-counter] "Counter flag was not set on Crypsis"))
-      )))
-
-(deftest virus-counter-flag-clear-on-end-turn
-  "Clear the virus counter flag at the end of each turn"
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Crypsis" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner crypsis 2) ;click to add a virus counter
-      (take-credits state :runner 2)
-      (take-credits state :corp 1)
-      (is (not (get-in (refresh crypsis) [:added-virus-counter])) "Counter flag was not cleared on Crypsis")
-      )))
-
 (deftest surge-valid-target
   "Add counters if target is a virus and had a counter added this turn"
   (do-game
@@ -137,8 +199,7 @@
       (is (= 2 (get-in imp [:counter])))
       (play-from-hand state :runner "Surge")
       (prompt-select :runner imp)
-      (is (= 4 (get-in (refresh imp) [:counter])))
-      )))
+      (is (= 4 (get-in (refresh imp) [:counter]))))))
 
 (deftest surge-target-not-virus
   "Don't fire surge if target is not a virus"
@@ -150,9 +211,7 @@
     (let [st (get-in @state [:runner :rig :resource 0])]
       (play-from-hand state :runner "Surge")
       (prompt-select :runner st)
-      (is (not (contains? st :counter)))
-      )
-    ))
+      (is (not (contains? st :counter))))))
 
 (deftest surge-target-no-token-this-turn
   "Don't fire surge if target does not have virus counter flag set"
@@ -167,8 +226,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Surge")
       (prompt-select :runner imp)
-      (is (= 2 (get-in (refresh imp) [:counter])))
-      )))
+      (is (= 2 (get-in (refresh imp) [:counter]))))))
 
 (deftest surge-target-gorman-drip
   "Don't allow surging Gorman Drip, since it happens on the corp turn"
@@ -186,50 +244,36 @@
       (prompt-select :runner gd)
       (is (= 3 (get-in (refresh gd) [:counter]))))))
 
-(deftest blackmail
-  "Prevent rezzing of ice for one run"
+(deftest virus-counter-flag-on-enter
+  "Set counter flag when virus card enters play with counters"
   (do-game
-    (new-game
-      (default-corp [(qty "Ice Wall" 3)])
-      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
-    (is 1 (get-in @state [:corp :bad-publicity]))
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
+    (new-game (default-corp) (default-runner [(qty "Surge" 1) (qty "Imp" 1) (qty "Crypsis" 1)]))
     (take-credits state :corp)
-    (play-from-hand state :runner "Blackmail")
-    (prompt-choice :runner "HQ")
-    (let [iwall1 (get-in @state [:corp :servers :hq :ices 0])
-          iwall2 (get-in @state [:corp :servers :hq :ices 1])]
-      (core/rez state :corp iwall1)
-      (is (not (get-in (refresh iwall1) [:rezzed])))
-      (core/no-action state :corp nil)
-      (core/continue state :runner nil)
-      (core/rez state :corp iwall2)
-      (is (not (get-in (refresh iwall2) [:rezzed])))
-      (core/jack-out state :runner nil)
-      ;Do another run, where the ice should rez
-      (core/click-run state :runner {:server "HQ"})
-      (core/rez state :corp iwall1)
-      (is (get-in (refresh iwall1) [:rezzed]))
-    )))
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (is (get-in imp [:added-virus-counter]) "Counter flag was not set on Imp"))))
 
-(deftest blackmail-tmi-interaction
-  "Regression test for a rezzed tmi breaking game state on a blackmail run"
+(deftest virus-counter-flag-on-add-prop
+  "Set counter flag when add-prop is called on a virus"
   (do-game
-    (new-game (default-corp [(qty "TMI" 3)])
-              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
-    (is 1 (get-in @state [:corp :bad-publicity]))
-    (play-from-hand state :corp "TMI" "HQ")
-    (let [tmi (get-in @state [:corp :servers :hq :ices 0])]
-      (core/rez state :corp tmi)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (get-in (refresh tmi) [:rezzed]))
-      (take-credits state :corp)
-      (play-from-hand state :runner "Blackmail")
-      (prompt-choice :runner "HQ")
-      (core/no-action state :corp nil)
-      (core/continue state :runner nil)
-      (core/jack-out state :runner nil)
-      (core/click-run state :runner {:server "Archives"})
-      )))
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
+      (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis did not add a virus token")
+      (is (get-in (refresh crypsis) [:added-virus-counter] "Counter flag was not set on Crypsis")))))
+
+(deftest virus-counter-flag-clear-on-end-turn
+  "Clear the virus counter flag at the end of each turn"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Crypsis" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2) ;click to add a virus counter
+      (take-credits state :runner 2)
+      (take-credits state :corp 1)
+      (is (not (get-in (refresh crypsis) [:added-virus-counter])) "Counter flag was not cleared on Crypsis"))))
