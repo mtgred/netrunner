@@ -52,6 +52,16 @@
 (declare all-installed card-init forfeit get-card handle-end-run prompt! resolve-steal-events trash trigger-event update!
          update-advancement-cost update-all-advancement-costs update-all-ice update-breaker-strength update-ice-strength)
 
+(declare rezzed?)
+
+(defn can-be-advanced? [card]
+  "Returns true if the card can be advanced"
+  (or (card-is? card :advanceable :always)
+      (and (card-is? card :advanceable :while-rezzed)
+           (rezzed? card))
+      (and (card-is? card :type "Agenda")
+           (= (first (:zone card)) :servers))))
+
 (defn can-pay? [state side & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
