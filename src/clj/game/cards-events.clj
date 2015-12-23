@@ -12,7 +12,8 @@
                                                (lose :corp :credit (min 5 (:credit corp))))}} card))}
 
    "Amped Up"
-   {:effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
+   {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
+    :effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
 
    "Apocalypse"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))

@@ -342,7 +342,8 @@
     :abilities [{:req (req (and run
                                 (= (first (get-in @state [:run :server])) :rd)
                                 (not current-ice)
-                                (:medium-active card)))
+                                (:medium-active card)
+                                (empty? (get-in @state [:runner :prompt]))))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional R&D accesses to make"
@@ -370,7 +371,8 @@
     :abilities [{:req (req (and run
                                 (= (first (get-in @state [:run :server])) :hq)
                                 (not current-ice)
-                                (:nerve-active card)))
+                                (:nerve-active card)
+                                (empty? (get-in @state [:runner :prompt]))))
                  :effect (effect (add-prop card :counter 1)
                                  (resolve-ability
                                    {:prompt "Choose how many additional HQ accesses to make"

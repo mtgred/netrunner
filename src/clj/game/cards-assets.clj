@@ -22,8 +22,8 @@
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
-                 :msg (msg "gain " (* 2 (:counter card)) " [Credits]")
-                 :effect (effect (gain :credit (* 2 (:counter card))) (trash card))}]}
+                 :msg (msg "gain " (* 2 (get card :counter 0)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (get card :counter 0))) (trash card))}]}
 
    "Allele Repression"
    {:advanceable :always
@@ -219,8 +219,8 @@
    "GRNDL Refinery"
    {:advanceable :always
     :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
-                 :cost [:click 1] :msg (msg "gain " (* 4 (:advance-counter card)) " [Credits]")
-                 :effect (effect (trash card) (gain :credit (* 4 (:advance-counter card))))}]}
+                 :cost [:click 1] :msg (msg "gain " (* 4 (get card :advance-counter 0)) " [Credits]")
+                 :effect (effect (trash card) (gain :credit (* 4 (get card :advance-counter 0))))}]}
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
@@ -388,8 +388,8 @@
    {:advanceable :always
     :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?"
                         :req (req (and installed (> (:credit corp) 0)))
-                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
-                                      :effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}}
+                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (get card :advance-counter 0)) " net damage")
+                                      :effect (effect (damage :net (* 2 (get card :advance-counter 0)) {:card card}))}}}}
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
@@ -415,8 +415,8 @@
    {:advanceable :always
     :abilities [{:cost [:click 1]
                  :label "Force the Runner to lose 4 [Credits] per advancement"
-                 :msg (msg "force the Runner to lose " (min (* 4 (:advance-counter card)) (:credit runner)) " [Credits]")
-                 :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
+                 :msg (msg "force the Runner to lose " (min (* 4 (get card :advance-counter 0)) (:credit runner)) " [Credits]")
+                 :effect (effect (lose :runner :credit (* 4 (get card :advance-counter 0))) (trash card))}]}
 
    "Rex Campaign"
    {:effect (effect (add-prop card :counter 3))
@@ -600,8 +600,8 @@
 
    "Thomas Haas"
    {:advanceable :always
-    :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (:advance-counter card)) " [Credits]")
-                 :effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
+    :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (get card :advance-counter 0)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (get card :advance-counter 0))) (trash card))}]}
 
    "Toshiyuki Sakai"
    {:advanceable :always}
