@@ -58,6 +58,30 @@
       (take-credits state :corp 2)
       (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
 
+(deftest morph-ice-subtype-changing
+  "Morph ice gain and lose subtypes from normal advancements and placed advancements"
+  (do-game
+    (new-game (default-corp [(qty "Wendigo" 1) (qty "Shipment from SanSan" 1) (qty "Superior Cyberwalls" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Superior Cyberwalls" "New remote")
+    (let [sc (get-in @state [:corp :servers :remote1 :content 0])]
+      (score-agenda state :corp sc)
+      (play-from-hand state :corp "Wendigo" "HQ")
+      (let [wend (get-in @state [:corp :servers :hq :ices 0])]
+        (core/rez state :corp wend)
+        (is (= 4 (:current-strength (refresh wend))) "Wendigo at normal 4 strength")
+        (core/advance state :corp {:card (refresh wend)})
+        (is (= true (has? (refresh wend) :subtype "Barrier")) "Wendigo gained Barrier")
+        (is (= false (has? (refresh wend) :subtype "Code Gate")) "Wendigo lost Code Gate")
+        (is (= 5 (:current-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "1")
+        (prompt-select :corp wend)
+        (is (= false (has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
+        (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
+        (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
 (deftest special-offer-trash-ice-during-run
   "Special Offer trashes itself and updates the run position"
   (do-game
