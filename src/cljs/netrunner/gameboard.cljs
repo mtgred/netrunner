@@ -104,7 +104,8 @@
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when (not (and (= side "Runner") facedown))
-      (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
+      (cond (or (> c 1)
+                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
                           (send-command "ability" {:card card :ability 0})
                           (send-command (first actions) {:card card}))))))
@@ -314,7 +315,8 @@
                      label])
                   servers)]))
         (let [actions (action-list cursor)]
-          (when (> (+ (count actions) (count abilities)) 1)
+          (when (or (> (+ (count actions) (count abilities)) 1)
+                    (= (first actions) "derez"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
