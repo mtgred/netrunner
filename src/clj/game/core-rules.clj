@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare card-init deactivate enforce-msg gain-agenda-point get-agenda-points handle-end-run
+(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points handle-end-run
          resolve-steal-events show-prompt untrashable-while-rezzed? update-all-ice win)
 
 ; Functions for applying core Netrunner game rules.
@@ -322,9 +322,7 @@
   "Exposes the given card."
   [state side target]
   (system-msg state side
-              (str "exposes " (:title target)
-                   (if (= (last (:zone target)) :ices) " protecting " " in ")
-                   (zone->name (second (:zone target)))))
+              (str "exposes " (card-str state target {:visible true})))
   (when-let [ability (:expose (card-def target))]
     (resolve-ability state side ability target nil))
   (trigger-event state side :expose target))

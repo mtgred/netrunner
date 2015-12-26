@@ -31,15 +31,21 @@
 (defn card-str
   "Gets a string description of an installed card, reflecting whether it is rezzed,
   in/protecting a server, facedown, or hosted."
-  [state card]
+  ([state card] (card-str state card nil))
+  ([state card {:keys [visible] :as args}]
   (str (if (card-is? card :side :corp)
-         (str (if (rezzed? card) (:title card) (if (ice? card) "ICE" "a card"))
-              (if (ice? card) " protecting " " in ")
-              ;TODO add naming of scoring area of corp/runner
-              (zone->name (second (:zone card)))
-              (if (ice? card) (str " at position " (ice-index state card))))
-         (if (:facedown card) "a facedown card" (:title card)))
-       (if (:host card) (str " hosted on " (card-str state (:host card))))))
+         ; Corp card messages
+         (str (if (or (rezzed? card) visible) (:title card) (if (ice? card) "ICE" "a card"))
+              ; Hosted cards do not need "in server 1" messages, host has them
+              (if-not (:host card)
+                (str (if (ice? card) " protecting " " in ")
+                     ;TODO add naming of scoring area of corp/runner
+                     (zone->name (second (:zone card)))
+                     (if (ice? card) (str " at position " (ice-index state card))))))
+         ; Runner card messages
+         (if (or (:facedown card) visible) "a facedown card" (:title card)))
+       (if (:host card) (str " hosted on " (card-str state (:host card)))))))
+
 
 (defn name-zone
   "Gets a string representation for the given zone."
@@ -61,20 +67,20 @@
   (resolve-ability state side
                    {:effect (effect (set-prop target :advance-counter value)
                                     (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)
                                     (system-msg (str "sets counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (= (:side t) (side-str side)))}}
+                    :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/counter command"} nil))
 
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
-        value (if-let [n (String->Num (first args))] n 1)
-        num   (if-let [n (-> args first (safe-split #"#") second String->Num)] (dec n) 0)]
+        value (if-let [n (string->num (first args))] n 1)
+        num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 1)
       (case command
         "/draw"       #(draw %1 %2 (max 0 value))
@@ -99,11 +105,12 @@
                                             :msg "resolve successful trace effect"}))
         "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
                                                                                 (card-str state target) ": " (get-card state target))))
-                                               :choices {:req (fn [t] (= (:side t) (side-str %2)))}}
+                                               :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/card-info command"} nil)
         "/counter"    #(command-counter %1 %2 value)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
+        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         nil))))

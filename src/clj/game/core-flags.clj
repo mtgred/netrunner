@@ -2,6 +2,13 @@
 
 ; Various functions for checking small "flag" values of cards, runs, players, etc.
 
+(defn card-flag?
+  "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
+  ;TODO: add a register for mutable state card flags, separate from this
+  [card flag-key value]
+  (let [cdef (card-def card)]
+    (= value (get-in cdef [:flags flag-key]))))
+
 (defn is-tagged?
   "Returns true if the runner is tagged."
   [state]
@@ -69,15 +76,6 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-;Detect special card conditions from the card definition
-;These definitions are intended to remain immutable, and should be used
-;for things like Architect being untrashable while installed (i.e. conditions inherent to the card).
-;TODO: add a register for mutable state card flags, separate from this
-(defn card-flag? [card flag-key value]
-  "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
-  (let [cdef (card-def card)]
-    (= value (get-in cdef [:flags flag-key]))))
-
 
 ; Small utilities for card properties.
 (defn ice? [card]
@@ -97,3 +95,12 @@
   ([state side card {:as args}]
    (and (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez))))
+
+(defn can-be-advanced?
+  "Returns true if the card can be advanced"
+  [card]
+  (or (card-is? card :advanceable :always)
+      (and (card-is? card :advanceable :while-rezzed)
+           (rezzed? card))
+      (and (card-is? card :type "Agenda")
+           (= (first (:zone card)) :servers))))

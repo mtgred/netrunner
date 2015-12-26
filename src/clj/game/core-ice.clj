@@ -48,6 +48,12 @@
           ices (get-in @state (concat [:corp :servers] s [:ices]))]
       (swap! state assoc-in [:run :ices] ices))))
 
+(defn trash-ice-in-run
+  "Decreases the position of each ice in the run. For when an ice is trashed mid-run."
+  [state]
+  (when-let [run (:run @state)]
+    (swap! state update-in [:run :position] dec)))
+
 ; Icebreaker functions.
 (defn breaker-strength-bonus
   "Increase the strength of the breaker by n. Negative values cause a decrease."

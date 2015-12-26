@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-installed cards deactivate get-card-hosted handle-end-run ice? remove-from-host rezzed?
+(declare all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice? remove-from-host rezzed?
          trash update-hosted! update-ice-strength)
 
 ; Functions for loading card information.
@@ -20,7 +20,10 @@
       (if host
         (get-card-hosted state card)
         (some #(when (= cid (:cid %)) %)
-              (get-in @state (cons (to-keyword side) (map to-keyword zone)))))
+              (let [zones (map to-keyword zone)]
+                (if (= (first zones) :scored)
+                  (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
+                  (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
 ; Functions for updating cards
@@ -60,7 +63,9 @@
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (deactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
-                          (dissoc moved-card :seen) moved-card)]
+                          (dissoc moved-card :seen) moved-card)
+             moved-card (if (and (= (first (:zone moved-card)) :scored) (card-flag? moved-card :has-abilities-when-stolen true))
+                          (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
            (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
            (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
@@ -100,8 +105,9 @@
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
        (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
-           (when (not placed)
-             (trigger-event state side :advance (get-card state updated-card))))
+           (if (not placed)
+             (trigger-event state side :advance (get-card state updated-card))
+             (trigger-event state side :advancement-placed (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card))))))
 
 (defn set-prop
