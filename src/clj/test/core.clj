@@ -39,6 +39,8 @@
             (core/start-turn state other nil))))))
 
 (defn play-run-event [state card server]
+  "Play a run event with a replace-access effect on an unprotected server. Advances the run timings
+  to the point where replace-access occurs."
   (core/play state :runner {:card card})
   (is (= [server] (get-in @state [:run :server])))
   (is (get-in @state [:run :run-effect]))
@@ -52,27 +54,31 @@
   (some #(when (= (:title %) title) %) from))
 
 (defn card-ability
+  "Trigger a card's ability with its 0-based index. Refreshes the card argument before
+  triggering the ability."
   ([state side card ability] (card-ability state side card ability nil))
   ([state side card ability targets] (core/play-ability state side {:card (core/get-card state card)
                                                                     :ability ability :targets targets})))
 
 (defn play-from-hand
+  "Play a card from hand based on its title. If installing a Corp card, also indicate
+  the server to install into with a string."
   ([state side title] (play-from-hand state side title nil))
   ([state side title server]
     (core/play state side {:card (find-card title (get-in @state [side :hand]))
                            :server server})))
 
 (defn score-agenda
+  "Take clicks and credits needed to advance and score the given agenda."
   ([state side card]
-   (let [title (get-in card [:title])
-         advancementcost (get-in card [:advancementcost])]
+   (let [title (:title card)
+         advancementcost (:advancementcost card)]
     (core/gain state :corp :click advancementcost :credit advancementcost)
     (dotimes [n advancementcost]
       (core/advance state :corp {:card (core/get-card state card)}))
     (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
     (core/score state :corp {:card (core/get-card state card)})
-    (is (find-card title (get-in @state [:corp :scored])))
-  )))
+    (is (find-card title (get-in @state [:corp :scored]))))))
 
 (defn last-log-contains?
   [state content]

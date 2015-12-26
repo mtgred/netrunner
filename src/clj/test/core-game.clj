@@ -10,8 +10,8 @@
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
 
-(deftest desactivate-program
-  "desactivate - Program; ensure MU are restored"
+(deftest deactivate-program
+  "deactivate - Program; ensure MU are restored"
   (do-game
     (new-game (default-corp) (default-runner [(qty "Gordian Blade" 1)]))
     (take-credits state :corp)
