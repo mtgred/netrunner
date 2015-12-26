@@ -106,26 +106,16 @@
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "DDoS"
-   {:abilities [{
-                 :msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
+   {:abilities [{:msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
                  :effect (effect
                            (register-turn-flag!
-                                    card
-                                    :can-rez
-                                     (fn [state side card]
-                                       (if (and
-                                             (has? card :type "ICE")
-                                             (= (count (get-in @state [:run :ices])) (get-in @state [:run :position]))
-                                             )
-                                         ((constantly false)
-                                           (system-msg state side (str "is prevented from rezzing any outermost ICE by DDoS"))
-                                           )
-                                         true
-                                         )
-                                       ))
-                           (trash card {:cause :ability-cost}))
-                 }]
-    }
+                             card :can-rez
+                             (fn [state side card]
+                               (if (and (has? card :type "ICE")
+                                        (= (count (get-in @state [:run :ices])) (get-in @state [:run :position])))
+                                 ((constantly false) (system-msg state side (str "is prevented from rezzing any outermost ICE by DDoS")))
+                                 true)))
+                           (trash card {:cause :ability-cost}))}]}
 
    "Decoy"
    {:prevent {:tag [:all]}
@@ -137,7 +127,7 @@
                  :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
                  :effect (req (let [c target]
                                 (update! state side (dissoc target :events :abilities))
-                                (desactivate state side target)
+                                (deactivate state side target)
                                 (register-events state side
                                                  {:runner-turn-ends
                                                   {:effect (effect (card-init (get-card state c))
@@ -613,12 +603,14 @@
                                                           (can-pay? state side (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
-                 :effect (effect
-                           (install-cost-bonus [:credit -1]) (runner-install (dissoc target :facedown))
-                           (trash (update-in card [:hosted]
-                                             (fn [coll]
-                                               (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                  {:cause :ability-cost}))}]}
+                 :effect (req
+                           (when (can-pay? state side (modified-install-cost state side target [:credit -1]))
+                             (install-cost-bonus state side [:credit -1])
+                             (runner-install state side (dissoc target :facedown))
+                             (trash state side (update-in card [:hosted]
+                                                          (fn [coll]
+                                                            (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                    {:cause :ability-cost})))}]}
 
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (first-event state side :runner-click-draw))
