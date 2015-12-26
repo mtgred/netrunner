@@ -237,6 +237,17 @@
                               :trace {:base 2 :msg "give the Runner 1 tag"
                                       :effect (effect (tag-runner :runner 1))}}}}
 
+  "Media Blitz"
+   {:req (req (> (count (:scored runner)) 0))
+    :effect (req (let [agendas (get-in @state [:runner :scored])]
+                   (resolve-ability state side
+                     {:prompt "Choose an agenda to gain the text of"
+                      :choices (req (filter #(= (:type %) "Agenda") agendas))
+                      :msg (msg "gains the text of " (:title target))
+                      :effect (effect (copy-events card target) (copy-abilities card target) (copy-leave-play-effects card target))}
+                    card nil)))
+    :leave-play (effect (fire-leave-play-effects card))}
+
    "Medical Research Fundraiser"
    {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
