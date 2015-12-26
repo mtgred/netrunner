@@ -16,6 +16,7 @@
                       :choices {:req #(and (:installed %) (= (:side %) "Runner"))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
+; Load all card definitions into the current namespace.
 (load "cards-agendas")
 (load "cards-assets")
 (load "cards-events")
