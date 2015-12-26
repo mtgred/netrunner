@@ -74,9 +74,8 @@
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
                 {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(and (= (last (:zone %)) :ices)
-                                      (or (= (:advanceable %) "always")
-                                          (and (= (:advanceable %) "while-rezzed") (:rezzed %))))}
+                 :choices {:req #(and (ice? %)
+                                      (can-be-advanced? %))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
@@ -108,7 +107,16 @@
                  :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
 
    "Changeling"
-   {:advanceable :always :abilities [end-the-run]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Sentry" "Barrier")
+                            (morph state side card "Barrier" "Sentry")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Sentry" "Barrier")
+                     (morph state side card "Barrier" "Sentry")))
+      :abilities [end-the-run]
+      :events {:advance ab :advancement-placed ab}})
 
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
@@ -170,7 +178,10 @@
                                       )}}]}
 
    "Data Mine"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (trash card) (damage :net 1 {:card card}))}]}
+   {:abilities [{:msg "do 1 net damage"
+                 :effect (req (damage state :runner :net 1 {:card card})
+                              (trash state side card)
+                              (trash-ice-in-run state))}]}
 
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
@@ -373,7 +384,9 @@
 
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
-    :abilities [(assoc trash-installed :effect (effect (trash card) (trash target {:cause :subroutine})))]}
+    :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
+                                                    (trash state side card)
+                                                    (trash-ice-in-run state)))]}
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
@@ -391,8 +404,10 @@
    "Lab Dog"
    {:abilities [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
                                       :player :runner
-                                      :msg (msg "force the runner to trash " (:title target))
-                                      :effect (effect (trash target) (trash card)))]}
+                                      :msg (msg "force the Runner to trash " (:title target))
+                                      :effect (req (trash state side target)
+                                                   (trash state side card)
+                                                   (trash-ice-in-run state)))]}
 
    "Lancelot"
    {:abilities [trash-program
@@ -419,8 +434,16 @@
     :flags {:cannot-lower-strength true}}
 
    "Lycan"
-   {:advanceable :always
-    :abilities [trash-program]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Code Gate" "Sentry")
+                            (morph state side card "Sentry" "Code Gate")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Code Gate" "Sentry")
+                     (morph state side card "Sentry" "Code Gate")))
+      :abilities [trash-program]
+      :events {:advance ab :advancement-placed ab}})
 
    "Mamba"
    {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
@@ -436,7 +459,7 @@
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                 :choices {:req can-be-advanced?}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
                 {:label "Trace 2 - Give the Runner 1 tag"
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
@@ -641,8 +664,10 @@
 
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
-                 :effect (effect (gain :corp :credit 5) (trash card)
-                                 (system-msg (str "gains 5 [Credits] and trashes Special Offer")))}]}
+                 :effect (req (gain state :corp :credit 5)
+                              (trash state side card)
+                              (trash-ice-in-run state)
+                              (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
    "Spiderweb"
    {:abilities [end-the-run]}
@@ -750,8 +775,16 @@
    {:abilities [end-the-run {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
 
    "Wendigo"
-   {:advanceable :always
-    :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]}
+   (let [ab {:req (req (= (:cid card) (:cid target)))
+             :effect (req (if (odd? (:advance-counter (get-card state card)))
+                            (morph state side card "Barrier" "Code Gate")
+                            (morph state side card "Code Gate" "Barrier")))}]
+     {:advanceable :always
+      :effect (req (if (odd? (get card :advance-counter 0))
+                     (morph state side card "Barrier" "Code Gate")
+                     (morph state side card "Code Gate" "Barrier")))
+      :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]
+      :events {:advance ab :advancement-placed ab}})
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"
@@ -760,8 +793,7 @@
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
                               (trash state side card)
-                              (when (:run @state)
-                                (swap! state update-in [:run] #(assoc % :position (dec (:position run))))))}]}
+                              (trash-ice-in-run state))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed

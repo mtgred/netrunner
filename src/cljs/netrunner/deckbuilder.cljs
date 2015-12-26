@@ -11,6 +11,7 @@
 
 (def select-channel (chan))
 (def zoom-channel (chan))
+(def INFINITY 2147483647)
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
@@ -18,6 +19,10 @@
 
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
+
+(defn influencelimit [identity]
+  "Returns influence limit of an identity or INFINITY in case of draft IDs."
+  (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
 
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
@@ -51,11 +56,13 @@
   (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
 
 (defn allowed? [card {:keys [side faction title] :as identity}]
+  "Checks if a card is allowed in deck of a given identity - not accounting for influence"
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
            (= (:faction card) "Neutral")
-           (= (:faction card) faction))
+           (= (:faction card) faction)
+           (= title "The Shadow: Pulling the Strings"))
        (or (not= title "Custom Biotics: Engineered for Success")
            (not= (:faction card) "Jinteki"))))
 
@@ -127,7 +134,7 @@
 
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (:minimumdecksize identity))
-       (<= (influence deck) (:influencelimit identity))
+       (<= (influence deck) (influencelimit identity))
        (every? #(and (allowed? (:card %) identity)
                      (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
        (or (= (:side identity) "Runner")
@@ -357,10 +364,10 @@
                     (when (< count min-count)
                       [:span.invalid (str "(minimum " min-count ")")])])
                  (let [inf (influence deck)
-                       limit (:influencelimit identity)]
+                       limit (influencelimit identity)]
                    [:div "Influence: "
                     [:span {:class (when (> inf limit) "invalid")} inf]
-                    "/" (:influencelimit identity)])
+                    "/" (if (= INFINITY limit) "∞" limit)])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
                          points (agenda-points deck)]
@@ -409,7 +416,7 @@
              [:h3 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity :title])
                                 :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
-              (for [card (side-identities (get-in state [:deck :identity :side]))]
+              (for [card (sort-by :title (side-identities (get-in state [:deck :identity :side])))]
                 [:option (:title card)])]]
             (om/build card-lookup cursor {:state state})
             [:h3 "Decklist"

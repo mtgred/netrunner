@@ -230,7 +230,7 @@
    {:abilities [{:msg "access all cards in Archives"
                  :effect (req (trash state side card {:cause :ability-cost})
                               (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                              (handle-access state side (get-in @state [:corp :discard])))}]
+                              (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
@@ -416,25 +416,26 @@
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "Paige Piper"
-   (let [pphelper (fn [card cards]
+   (let [pphelper (fn [title cards]
                     (let [num (count cards)]
                       {:optional
-                       {:prompt (str "Use Paige Piper to trash copies of " (:title card) "?")
+                       {:prompt (str "Use Paige Piper to trash copies of " title "?")
                         :yes-ability {:prompt "How many would you like to trash?"
                                       :choices {:number (req num)}
                                       :msg "shuffle their Stack"
                                       :effect (req (doseq [c (take (int target) cards)]
-                                                               (trash state side c))
+                                                     (trash state side c {:unpreventable true}))
                                                    (shuffle! state :runner :deck)
                                                    (when (> (int target) 0)
                                                      (system-msg state side (str "trashes " (int target)
                                                                                  " cop" (if (> (int target) 1) "ies" "y")
-                                                                                 " of " (:title card)))))}}}))]
+                                                                                 " of " title))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
                                 :effect (effect (resolve-ability
-                                                 (pphelper target (->> (:deck runner)
-                                                                       (filter #(has? % :title (:title target)))
-                                                                       (vec)))
+                                                 (pphelper (:title target) 
+                                                           (->> (:deck runner)
+                                                                (filter #(has? % :title (:title target)))
+                                                                (vec)))
                                                  card nil))}}})
 
    "Paparazzi"

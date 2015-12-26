@@ -32,6 +32,21 @@
       (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
       (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
 
+(deftest curtain-wall
+  "Curtain Wall - Strength boost when outermost ICE"
+  (do-game
+    (new-game (default-corp [(qty "Curtain Wall" 1) (qty "Paper Wall" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Curtain Wall" "HQ")
+    (let [curt (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp curt)
+      (is (= 10 (:current-strength (refresh curt))) "Curtain Wall has +4 strength as outermost ICE")
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (let [paper (get-in @state [:corp :servers :hq :ices 1])]
+        (core/rez state :corp paper)
+        (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
+
 (deftest lotus-field-unlowerable
   "Lotus Field strength cannot be lowered"
   (do-game
@@ -58,6 +73,47 @@
       (take-credits state :corp 2)
       (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
 
+(deftest morph-ice-subtype-changing
+  "Morph ice gain and lose subtypes from normal advancements and placed advancements"
+  (do-game
+    (new-game (default-corp [(qty "Wendigo" 1) (qty "Shipment from SanSan" 1) (qty "Superior Cyberwalls" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Superior Cyberwalls" "New remote")
+    (let [sc (get-in @state [:corp :servers :remote1 :content 0])]
+      (score-agenda state :corp sc)
+      (play-from-hand state :corp "Wendigo" "HQ")
+      (let [wend (get-in @state [:corp :servers :hq :ices 0])]
+        (core/rez state :corp wend)
+        (is (= 4 (:current-strength (refresh wend))) "Wendigo at normal 4 strength")
+        (core/advance state :corp {:card (refresh wend)})
+        (is (= true (has? (refresh wend) :subtype "Barrier")) "Wendigo gained Barrier")
+        (is (= false (has? (refresh wend) :subtype "Code Gate")) "Wendigo lost Code Gate")
+        (is (= 5 (:current-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "1")
+        (prompt-select :corp wend)
+        (is (= false (has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
+        (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
+        (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest special-offer-trash-ice-during-run
+  "Special Offer trashes itself and updates the run position"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1) (qty "Special Offer" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Special Offer" "HQ")
+    (take-credits state :corp 1)
+    (core/click-run state :runner {:server "HQ"})
+    (is (= 2 (:position (get-in @state [:run]))) "Initial position approaching Special Offer")
+    (let [special (get-in @state [:corp :servers :hq :ices 1])]
+      (core/rez state :corp special)
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :corp special 0)
+      (is (= 9 (:credit (get-corp))) "Special Offer paid 5 credits")
+      (is (= 1 (:position (get-in @state [:run]))) "Run position updated; now approaching Ice Wall"))))
+
 (deftest tmi
   "TMI ICE test"
   (do-game
@@ -70,7 +126,6 @@
       (prompt-choice :runner 0)
       (is (get-in (refresh tmi) [:rezzed])))))
 
-
 (deftest tmi-derez
   "TMI ICE trace derez"
   (do-game
@@ -82,3 +137,16 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (not (get-in (refresh tmi) [:rezzed]))))))
+
+(deftest wraparound
+  "Wraparound - Strength boosted when no fracter is installed"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Corroder" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp wrap)
+      (is (= 7 (:current-strength (refresh wrap))) "Wraparound +7 strength with no fracter in play")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (is (= 0 (:current-strength (refresh wrap))) "Wraparound 0 strength after Corroder installed"))))

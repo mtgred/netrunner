@@ -46,7 +46,8 @@
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
-    :effect (effect (move target :hand) (shuffle! :deck))}
+    :effect (effect (move target :hand) (shuffle! :deck))
+    :msg "search R&D for a card and add it to HQ"}
 
    "An Offer You Cant Refuse"
    {:prompt "Choose a server" :choices ["HQ" "R&D" "Archives"]
@@ -83,7 +84,7 @@
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
     :effect (effect (gain :credit (* 3 (:advance-counter target))) (trash target))
-    :msg (msg "trash " (if (:rezzed target) (:title target) " a card") " and gain "
+    :msg (msg "trash " (card-str state target) " and gain "
               (* 3 (:advance-counter target)) " [Credits]")}
 
    "Bad Times"
@@ -103,7 +104,7 @@
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
-    :msg (msg "rez " (:title target) " at no cost")
+    :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (effect (rez target {:no-cost true})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
@@ -341,7 +342,7 @@
                    (resolve-ability state side
                                     {:msg (msg "place " c " advancement tokens on "
                                                (if (:rezzed target) (:title target) "a card"))
-                                     :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+                                     :choices {:req can-be-advanced?}
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
    "Punitive Counterstrike"
@@ -374,7 +375,7 @@
 
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
-    :msg (msg "trash " (:title target) " to remove 2 bad publicity")
+    :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
     :choices {:req #(and (:rezzed %)
                          (or (has? % :subtype "Clone") (has? % :subtype "Executive")
                              (has? % :subtype "Sysop")))}
@@ -401,9 +402,7 @@
     :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
-   {:choices {:max 2 :req #(or (= (:advanceable %) "always")
-                               (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                               (= (:type %) "Agenda"))}
+   {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true})))}
 
@@ -420,10 +419,8 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(or (card-is? % :advanceable :always)
-                                          (and (card-is? % :advanceable :while-rezzed) (:rezzed %))
-                                          (= (:type %) "Agenda"))}
-                      :msg (msg "place " c " advancement tokens on " (if (:rezzed target) (:title target) "a card"))
+                     {:choices {:req can-be-advanced?}
+                      :msg (msg "place " c " advancement tokens on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
@@ -490,7 +487,8 @@
                      (resolve-ability state side (sunhelp serv) card nil)))})
 
    "Sweeps Week"
-   {:effect (effect (gain :credit (count (:hand runner))))}
+   {:effect (effect (gain :credit (count (:hand runner))))
+    :msg (msg "gain " (count (:hand runner)) " [Credits]")}
 
    "Targeted Marketing"
    {:abilities [{:req (req (= (:zone card) [:current]))
@@ -541,14 +539,11 @@
                                         state side
                                         {:prompt  "Move to where?"
                                          :choices {:req #(and (not= (:cid fr) (:cid %))
-                                                              (or (= (:advanceable %) "always")
-                                                                  (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                                                  (= (:type %) "Agenda")))}
+                                                              (can-be-advanced? %))}
                                          :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
                                                           (add-prop :corp fr :advance-counter (- c) {:placed true})
                                                           (system-msg (str "moves " c " advancement tokens from "
-                                                                           (if (:rezzed fr) (:title fr) "a card") " to "
-                                                                           (if (:rezzed target) (:title target) "a card"))))}
+                                                                           (card-str state fr) " to " (card-str state target))))}
                                         tol nil)))}
                       card nil)))}
 

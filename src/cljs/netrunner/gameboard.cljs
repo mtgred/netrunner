@@ -64,6 +64,9 @@
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
 
+(defn not-spectator? [game-state app-state]
+  (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
+
 (defn send-command
   ([command] (send-command command nil))
   ([command args]
@@ -101,7 +104,8 @@
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when (not (and (= side "Runner") facedown))
-      (cond (> c 1) (-> (om/get-node owner "abilities") js/$ .toggle)
+      (cond (or (> c 1)
+                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
                           (send-command "ability" {:card card :ability 0})
                           (send-command (first actions) {:card card}))))))
@@ -109,7 +113,7 @@
 (defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
                                  root] :as card} owner]
   (let [side (:side @game-state)]
-    (when (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state))
+    (when (not-spectator? game-state app-state)
       (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
         (send-command "select" {:card card})
         (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
@@ -276,7 +280,8 @@
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blue-shade.card {:class (when selected "selected") :draggable true
+       [:div.blue-shade.card {:class (when selected "selected")
+                              :draggable (when (not-spectator? game-state app-state) true)
                               :on-drag-start #(handle-dragstart % cursor)
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
@@ -310,7 +315,8 @@
                      label])
                   servers)]))
         (let [actions (action-list cursor)]
-          (when (> (+ (count actions) (count abilities)) 1)
+          (when (or (> (+ (count actions) (count abilities)) 1)
+                    (= (first actions) "derez"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
@@ -653,7 +659,7 @@
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
-                (om/build rfg-view {:cards (:play-area me)})
+                (when (not-spectator? game-state app-state) (om/build rfg-view {:cards (:play-area me)}))
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
                (when-not (= side :spectator)

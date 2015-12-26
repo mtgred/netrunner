@@ -1,5 +1,58 @@
 (in-ns 'test.core)
 
+(deftest daily-casts
+  "Play and tick through all turns of daily casts"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Daily Casts" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (let [dc (get-in @state [:runner :rig :resource 0])]
+      ;Number of credits
+      (is (= 8 (get-in dc [:counter])))
+      (is (= 2 (get-in @state [:runner :credit])))
+      ;End turn
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 6 (get-in (refresh dc) [:counter])))
+      (is (= 7 (get-in @state [:runner :credit])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 4 (get-in (refresh dc) [:counter])))
+      (is (= 13 (get-in @state [:runner :credit])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 2 (get-in (refresh dc) [:counter])))
+      (is (= 19 (get-in @state [:runner :credit])))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (nil? (get-in @state [:runner :rig :resource 0]))))))
+
+(deftest ddos
+  "Prevent rezzing of outermost ice for the rest of the turn"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 3)]) (default-runner [(qty "DDoS" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "DDoS")
+    (let [ddos (get-in @state [:runner :rig :resource 0])
+          iwall (get-in @state [:corp :servers :hq :ices 0])]
+      (card-ability state :runner ddos 0)
+      (is (= (:title ddos) (get-in @state [:runner :discard 0 :title]) ))
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (not (get-in (refresh iwall) [:rezzed])))
+      (core/end-run state :runner)
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (not (get-in (refresh iwall) [:rezzed])))
+      (core/end-run state :runner)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp iwall)
+      (is (get-in (refresh iwall) [:rezzed])))))
+
 (deftest film-critic-fetal-ai
   "Film Critic - Fetal AI interaction"
   (do-game
@@ -35,6 +88,42 @@
       (core/jack-out state :runner nil)
       (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
+(deftest john-masanori
+  "John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "John Masanori" 3) (qty "Sure Gamble" 3) (qty "Fall Guy" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "John Masanori")
+    (is (= 4 (count (:hand (get-runner)))))
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 5 (count (:hand (get-runner)))) "No card drawn from second successful run")
+    (core/click-run state :runner {:server "HQ"})
+    (core/jack-out state :runner nil)
+    (is (= 1 (:tag (get-runner))) "1 tag taken from first unsuccessful run")
+    (core/click-run state :runner {:server "HQ"})
+    (core/jack-out state :runner nil)
+    (is (= 1 (:tag (get-runner))) "No tag taken from second unsuccessful run")))
+
+(deftest joshua-b
+  "Joshua B. - Take 1 tag at turn end if you choose to gain the extra click"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Joshua B." 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Joshua B.")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "Yes") ; gain the extra click
+    (is (= 5 (:click (get-runner))) "Gained extra click")
+    (take-credits state :runner)
+    (is (= 1 (:tag (get-runner))) "Took 1 tag")))
+
 (deftest kati-jones
   "Kati Jones - Click to store and take"
   (do-game
@@ -60,6 +149,35 @@
       (card-ability state :runner (refresh kati) 1)
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
+
+(deftest new-angeles-city-hall
+  "New Angeles City Hall - Avoid tags; trash when agenda is stolen"
+  (do-game
+    (new-game (default-corp [(qty "SEA Source" 1) (qty "Breaking News" 1)])
+              (default-runner [(qty "New Angeles City Hall" 1)]))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp 2)
+    (play-from-hand state :runner "New Angeles City Hall")
+    (let [nach (get-in @state [:runner :rig :resource 0])]
+      (core/click-run state :runner {:server "Archives"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (take-credits state :runner)
+      (is (= 6 (:credit (get-runner))))
+      (play-from-hand state :corp "SEA Source")
+      (prompt-choice :corp 0) ; default trace
+      (prompt-choice :runner 0) ; Runner won't match
+      (card-ability state :runner nach 0)
+      (prompt-choice :runner "Done")
+      (is (= 0 (:tag (get-runner))) "Avoided SEA Source tag")
+      (is (= 4 (:credit (get-runner))) "Paid 2 credits")
+      (take-credits state :corp)
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))))
+      (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
 (deftest security-testing
   "Security Testing - Ability"
@@ -188,6 +306,18 @@
       (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
       (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
 
+(deftest symmetrical-visage
+  "Symmetrical Visage - Gain 1 credit the first time you click to draw each turn"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Symmetrical Visage" 3) (qty "Sure Gamble" 3) (qty "Fall Guy" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Symmetrical Visage")
+    (is (= 3 (:credit (get-runner))))
+    (core/click-draw state :runner nil)
+    (is (= 4 (:credit (get-runner))) "Gained 1 credit from first click spent to draw")
+    (core/click-draw state :runner nil)
+    (is (= 4 (:credit (get-runner))) "No credit gained from second click spent to draw")))
+
 (deftest the-supplier-ability
   "The Supplier - Ability"
   (do-game
@@ -267,58 +397,3 @@
       (prompt-select :runner hive)
       (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
       (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter"))))
-
-(deftest ddos
-  "Prevent rezzing of outermost ice for the rest of the turn"
-  (do-game
-    (new-game (default-corp [(qty "Ice Wall" 3)]) (default-runner [(qty "DDoS" 1)]))
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "DDoS")
-    (let [ddos (get-in @state [:runner :rig :resource 0])
-          iwall (get-in @state [:corp :servers :hq :ices 0])]
-      (card-ability state :runner ddos 0)
-      (is (= (:title ddos) (get-in @state [:runner :discard 0 :title]) ))
-      (core/click-run state :runner {:server "HQ"})
-      (core/rez state :corp iwall)
-      (is (not (get-in (refresh iwall) [:rezzed])))
-      (core/end-run state :runner)
-      (core/click-run state :runner {:server "HQ"})
-      (core/rez state :corp iwall)
-      (is (not (get-in (refresh iwall) [:rezzed])))
-      (core/end-run state :runner)
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (core/click-run state :runner {:server "HQ"})
-      (core/rez state :corp iwall)
-      (is (get-in (refresh iwall) [:rezzed]))
-      )))
-
-(deftest daily-casts
-  "Play and tick through all turns of daily casts"
-  (do-game
-    (new-game (default-corp) (default-runner [(qty "Daily Casts" 3)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Daily Casts")
-    (let [dc (get-in @state [:runner :rig :resource 0])]
-      ;Number of credits
-      (is (= 8 (get-in dc [:counter])))
-      (is (= 2 (get-in @state [:runner :credit])))
-      ;End turn
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (= 6 (get-in (refresh dc) [:counter])))
-      (is (= 7 (get-in @state [:runner :credit])))
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (= 4 (get-in (refresh dc) [:counter])))
-      (is (= 13 (get-in @state [:runner :credit])))
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (= 2 (get-in (refresh dc) [:counter])))
-      (is (= 19 (get-in @state [:runner :credit])))
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (nil? (get-in @state [:runner :rig :resource 0])))
-      )))

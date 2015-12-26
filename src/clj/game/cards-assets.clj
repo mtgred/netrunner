@@ -22,8 +22,8 @@
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
-                 :msg (msg "gain " (* 2 (:counter card)) " [Credits]")
-                 :effect (effect (gain :credit (* 2 (:counter card))) (trash card))}]}
+                 :msg (msg "gain " (* 2 (get card :counter 0)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (get card :counter 0))) (trash card))}]}
 
    "Allele Repression"
    {:advanceable :always
@@ -72,18 +72,16 @@
    {:events {:corp-turn-begins
              {:optional
               {:prompt "Move one advancement token between ICE?"
-               :yes-ability {:choices {:req #(and (= (:type %) "ICE") (:advance-counter %))}
+               :yes-ability {:choices {:req #(and (ice? %) (:advance-counter %))}
                              :priority true
                              :effect (req (let [fr target]
                                             (resolve-ability
                                               state side
                                               {:priority true
                                                :prompt "Move to where?"
-                                               :choices {:req #(and (= (:type %) "ICE")
+                                               :choices {:req #(and (ice? %)
                                                                     (not= (:cid fr) (:cid %))
-                                                                    (or (= (:advanceable %) "always")
-                                                                        (and (= (:advanceable %) "while-rezzed")
-                                                                             (:rezzed %))))}
+                                                                    (can-be-advanced? %))}
                                                :effect (effect (add-prop :corp target :advance-counter 1)
                                                                (add-prop :corp fr :advance-counter -1)
                                                                (system-msg (str "uses Constellation Protocol to move an advancement token from "
@@ -149,12 +147,12 @@
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Early Premiere"
-   {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced"
-                 :choices {:req #(or (= (:advanceable %) "always")
-                                     (and (= (:advanceable %) "while-rezzed") (:rezzed %))
-                                     (= (:type %) "Agenda"))}
+   {:abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced in a server"
+                 :choices {:req #(and (can-be-advanced? %)
+                                      (= (first (:zone %)) :servers)
+                                      (= (last (:zone %)) :content))} ; should be *in* a server
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))}]}
+                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
 
    "Edge of World"
    {:access {:optional
@@ -219,8 +217,8 @@
    "GRNDL Refinery"
    {:advanceable :always
     :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
-                 :cost [:click 1] :msg (msg "gain " (* 4 (:advance-counter card)) " [Credits]")
-                 :effect (effect (trash card) (gain :credit (* 4 (:advance-counter card))))}]}
+                 :cost [:click 1] :msg (msg "gain " (* 4 (get card :advance-counter 0)) " [Credits]")
+                 :effect (effect (trash card) (gain :credit (* 4 (get card :advance-counter 0))))}]}
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
@@ -388,8 +386,8 @@
    {:advanceable :always
     :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?"
                         :req (req (and installed (> (:credit corp) 0)))
-                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (:advance-counter card)) " net damage")
-                                      :effect (effect (damage :net (* 2 (:advance-counter card)) {:card card}))}}}}
+                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (get card :advance-counter 0)) " net damage")
+                                      :effect (effect (damage :net (* 2 (get card :advance-counter 0)) {:card card}))}}}}
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
@@ -415,8 +413,8 @@
    {:advanceable :always
     :abilities [{:cost [:click 1]
                  :label "Force the Runner to lose 4 [Credits] per advancement"
-                 :msg (msg "force the Runner to lose " (min (* 4 (:advance-counter card)) (:credit runner)) " [Credits]")
-                 :effect (effect (lose :runner :credit (* 4 (:advance-counter card))) (trash card))}]}
+                 :msg (msg "force the Runner to lose " (min (* 4 (get card :advance-counter 0)) (:credit runner)) " [Credits]")
+                 :effect (effect (lose :runner :credit (* 4 (get card :advance-counter 0))) (trash card))}]}
 
    "Rex Campaign"
    {:effect (effect (add-prop card :counter 3))
@@ -525,7 +523,7 @@
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-             :choices {:req #(or (= (:type %) "Agenda") (:advanceable %))}
+             :choices {:req can-be-advanced?}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
@@ -600,8 +598,8 @@
 
    "Thomas Haas"
    {:advanceable :always
-    :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (:advance-counter card)) " [Credits]")
-                 :effect (effect (gain :credit (* 2 (:advance-counter card))) (trash card))}]}
+    :abilities [{:label "Gain credits" :msg (msg "gain " (* 2 (get card :advance-counter 0)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (get card :advance-counter 0))) (trash card))}]}
 
    "Toshiyuki Sakai"
    {:advanceable :always}

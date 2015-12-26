@@ -2,7 +2,7 @@
 
 ; These functions are called by main.clj in response to commands sent by users.
 
-(declare can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
+(declare card-str can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
          jack-out move name-zone play-instant purge resolve-select run
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win)
 
@@ -203,7 +203,7 @@
   "Advance a corp card that can be advanced."
   [state side {:keys [card]}]
   (when (pay state side card :click 1 :credit 1)
-    (system-msg state side "advances a card")
+    (system-msg state side (str "advances " (card-str state card)))
     (update-advancement-cost state side card)
     (add-prop state side (get-card state card) :advance-counter 1)))
 
