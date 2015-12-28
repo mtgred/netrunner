@@ -1,5 +1,48 @@
 (in-ns 'test.core)
 
+(deftest amazon-industrial-zone
+  "Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount"
+  (do-game
+    (new-game (default-corp [(qty "Spiderweb" 1) (qty "Amazon Industrial Zone" 1)])
+              (default-runner))
+    (take-credits state :corp 1)
+    (play-from-hand state :corp "Amazon Industrial Zone" "New remote")
+    (let [aiz (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/rez state :corp aiz)
+      (is (= 2 (:credit (get-corp))))
+      (play-from-hand state :corp "Spiderweb" "Server 1")
+      (prompt-choice :corp "Yes") ; optional ability
+      (let [spid (get-in @state [:corp :servers :remote1 :ices 0])]
+        (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
+        (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
+
+(deftest chilo-city-grid
+  "ChiLo City Grid - Give 1 tag for successful traces during runs on its server"
+  (do-game
+    (new-game (default-corp [(qty "Caduceus" 2) (qty "ChiLo City Grid" 1)])
+              (default-runner))
+    (play-from-hand state :corp "ChiLo City Grid" "New remote")
+    (play-from-hand state :corp "Caduceus" "Server 1")
+    (take-credits state :corp)
+    (let [chilo (get-in @state [:corp :servers :remote1 :content 0])
+          cad (get-in @state [:corp :servers :remote1 :ices 0])]
+      (core/click-run state :runner {:server "R&D"})
+      (core/rez state :corp cad)
+      (core/rez state :corp chilo)
+      (card-ability state :corp cad 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 3 (:credit (get-corp))) "Trace was successful")
+      (is (= 0 (:tag (get-runner))) "No tags given for run on different server")
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (core/click-run state :runner {:server "Server 1"})
+      (card-ability state :corp cad 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 6 (:credit (get-corp))) "Trace was successful")
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag given from successful trace during run on ChiLo server"))))
+
 (deftest cyberdex-virus-suite-purge
   "Cyberdex Virus Suite - Purge ability"
   (do-game
@@ -95,6 +138,25 @@
       ; prompt shows "You cannot steal"
       (prompt-choice :runner "OK")
       (is (= 0 (count (:scored (get-runner)))) "No scored agendas"))))
+
+(deftest product-placement
+  "Product Placement - Gain 2 credits when Runner accesses it"
+  (do-game
+    (new-game (default-corp [(qty "Product Placement" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Product Placement" "New remote")
+    (take-credits state :corp)
+    (is (= 7 (:credit (get-corp))))
+    (let [pp (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 9 (:credit (get-corp))) "Gained 2 credits from Runner accessing Product Placement")
+      (prompt-choice :runner "Yes") ; Runner trashes PP
+      (core/click-run state :runner {:server "Archives"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 9 (:credit (get-corp))) "No credits gained when Product Placement accessed in Archives"))))
 
 (deftest red-herrings
   "Red Herrings - Ability"
