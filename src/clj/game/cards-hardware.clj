@@ -498,7 +498,7 @@
                                                          (when-let [events (:events (card-def c))]
                                                            (register-events state side events c))))
                                                      (doseq [r (get-in @state [:runner :scored])]
-                                                       (desactivate state :corp r))
+                                                       (deactivate state :corp r))
                                                      (system-msg state side
                                                        (str "uses Turntable to swap " (:title st) " for " (:title sw)))
                                                      (update! state side (dissoc (get-card state card) :swap))))}

@@ -226,6 +226,26 @@
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0]))) "Gordian Blade was installed")
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
 
+(deftest street-peddler-cant-afford
+  "Street Peddler - Can't afford install"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 3)]))
+    (take-credits state :corp)
+    ; move Gordian back to deck
+    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner sp 0)
+      (core/lose state :runner :credit 3)
+      (is (= 2 (count (:choices (first (:prompt (get-runner)))))) "1 card and 1 cancel option on Street Peddler")
+      (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
+      (is (zero? (count (get-in @state [:runner :rig :program]))) "Gordian Blade was not installed")
+      (is (and (:installed (refresh sp)) (= 3 (count (:hosted (refresh sp))))
+               "Street Peddler still installed with 3 hosted cards")))))
+
 (deftest street-peddler-kate-discount
   "Street Peddler - Interaction with Kate discount"
   (do-game
