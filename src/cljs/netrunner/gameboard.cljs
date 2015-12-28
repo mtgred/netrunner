@@ -642,6 +642,7 @@
          (let [me ((if (= side :runner) :runner :corp) cursor)
                opponent ((if (= side :runner) :corp :runner) cursor)]
            [:div.gameboard
+            [:div.gameboard-bg {:class (:background (:user @app-state))}]
             [:div.mainpane
              (om/build zones {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})
              [:div.centralpane

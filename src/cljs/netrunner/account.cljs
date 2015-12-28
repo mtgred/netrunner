@@ -52,11 +52,12 @@
          (:username user)
         [:hr]
         [:h4 "Background"]
-          (for [option ["Beanstalk" "The Root" "Project Atlas" "Dyson Mem Chip" "Fast Track" "Logos"]] [:label [:input {:type "radio"
+          (for [option [{:name "Beanstalk", :ref "home-bg"} {:name "The Root", :ref "root-bg"} {:name "Project Atlas", :ref "deckbuilder-bg"} {:name "Dyson Mem Chip", :ref "cardbrowser-bg"} {:name "Fast Track", :ref "about-bg"} {:name "Logos", :ref "reset-bg"}]] [:label [:input {:type "radio"
                                      :name "background"
-                                     :value option
+                                     :value (:ref option)
                                      :on-change #(om/set-state! owner :background (.. % -target -value))
-                                     :checked (= (om/get-state owner :background) option)}] option])
+                                     :checked (= (om/get-state owner :background) (:ref option))}] (:name option)])
+        [:hr]
         [:div.button-bar
          [:button "Update Profile"]]]
      ]))))
