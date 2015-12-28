@@ -66,8 +66,8 @@
     :leave-play (effect (lose :max-hand-size 3))}
 
    "Brain Chip"
-   (let [runner-points (fn [s] (or (get-in s [:runner :agenda-point]) 0))]
-     {:effect (req (gain state :runner :memory (:agenda-point runner) :max-hand-size (:agenda-point runner))
+   (let [runner-points (fn [s] (max (or (get-in s [:runner :agenda-point]) 0) 0))]
+     {:effect (req (gain state :runner :memory (runner-points @state) :max-hand-size (runner-points @state))
                    (add-watch state (keyword (str "brainchip" (:cid card)))
                           (fn [k ref old new]
                             (let [bonus (- (runner-points new) (runner-points old))]
