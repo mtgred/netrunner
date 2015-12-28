@@ -13,6 +13,9 @@
 (def last-states (atom {}))
 (def ctx (ZMQ/context 1))
 
+(def spectator-commands
+  {"say" core/say})
+
 (def commands
   {"say" core/say
    "concede" core/concede
@@ -56,15 +59,26 @@
 (defn strip [state]
   (dissoc state :events :turn-events :per-turn :prevent :damage))
 
+(defn not-spectator? [state user]
+  "Returns true if the specified user in the specified state is not a spectator"
+  (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user))
+
+(defn handle-do [user command state side args]
+  "Ensures the user is allowed to do command they are trying to do"
+  (if (not-spectator? state user)
+    ((commands command) state (keyword side) args)
+    (when-let [cmd (spectator-commands command)]
+      (cmd state (keyword side) args))))
+
 (defn run [socket]
   (while true
-    (let [{:keys [gameid action command side args text] :as msg} (convert (.recv socket))
+    (let [{:keys [gameid action command side user args text] :as msg} (convert (.recv socket))
           state (@game-states gameid)]
       (try
         (case action
           "start" (core/init-game msg)
           "remove" (swap! game-states dissoc gameid)
-          "do" ((commands command) state (keyword side) args)
+          "do" (handle-do user command state side args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
         (if-let [new-state (@game-states gameid)]

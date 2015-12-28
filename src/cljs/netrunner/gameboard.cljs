@@ -74,6 +74,7 @@
        (try (js/ga "send" "event" "game" command) (catch js/Error e))
        (reset! lock true)
        (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
+              :user (:user @app-state)
               :command command :args args}))))
 
 (defn send-msg [event owner]
