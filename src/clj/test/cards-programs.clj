@@ -1,5 +1,37 @@
 (in-ns 'test.core)
 
+(deftest datasucker
+  "Datasucker - Reduce strength of encountered ICE"
+  (do-game
+    (new-game (default-corp [(qty "Fire Wall" 1)])
+              (default-runner [(qty "Datasucker" 1)]))
+    (play-from-hand state :corp "Fire Wall" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :click 3)
+    (play-from-hand state :runner "Datasucker")
+    (let [ds (get-in @state [:runner :rig :program 0])
+          fw (get-in @state [:corp :servers :remote1 :ices 0])]
+      (core/click-run state :runner {:server "Archives"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 1 (:counter (refresh ds))))
+      (core/click-run state :runner {:server "Archives"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 2 (:counter (refresh ds))))
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 2 (:counter (refresh ds))) "No counter gained, not a central server")
+      (core/click-run state :runner {:server "Server 1"})
+      (core/rez state :corp fw)
+      (is (= 5 (:current-strength (refresh fw))))
+      (card-ability state :runner ds 0)
+      (is (= 1 (:counter (refresh ds))) "1 counter spent from Datasucker")
+      (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
+
 (deftest djinn-host-chakana
   "Djinn - Hosted Chakana does not disable advancing agendas. Issue #750"
   (do-game
@@ -119,6 +151,32 @@
     (is (= 6 (:max-hand-size (get-runner))))
     (play-from-hand state :runner "Origami")
     (is (= 9 (:max-hand-size (get-runner))) "Max hand size increased by 2 for each copy installed")))
+
+(deftest paintbrush
+  "Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Paintbrush" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paintbrush")
+    (is (= 2 (:memory (get-runner))))
+    (let [iwall (get-in @state [:corp :servers :hq :ices 0])
+          pb (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner pb 0)
+      (prompt-select :runner iwall)
+      (is (= 3 (:click (get-runner))) "Ice Wall not rezzed, so no click charged")
+      (prompt-choice :runner "Done") ; cancel out
+      (core/rez state :corp iwall)
+      (card-ability state :runner pb 0)
+      (prompt-select :runner iwall)
+      (prompt-choice :runner "Code Gate")
+      (is (= 2 (:click (get-runner))) "Click charged")
+      (is (= true (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall gained Code Gate")
+      (core/click-run state :runner {:server "Archives"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= false (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest parasite-apex
   "Parasite - Installed facedown w/ Apex"
