@@ -1,5 +1,29 @@
 (in-ns 'test.core)
 
+(deftest argus-security
+  "Argus Security - Runner chooses to take 1 tag or 2 meat damage when stealing an agenda"
+  (do-game
+    (new-game
+      (make-deck "Argus Security: Protection Guaranteed" [(qty "Hostile Takeover" 2)])
+      (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+    (let [ht1 (get-in @state [:corp :servers :remote1 :content 0])
+          ht2 (get-in @state [:corp :servers :remote2 :content 0])]
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "1 tag")
+      (is (= 1 (:tag (get-runner))) "Took 1 tag from stealing an agenda")
+      (core/click-run state :runner {:server "Server 2"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "2 meat damage")
+      (is (= 2 (count (:discard (get-runner)))) "Took 2 meat damage from stealing an agenda"))))
+
 (deftest cerebral-imaging-max-hand-size
   "Cerebral Imaging - Maximum hand size equal to credits"
   (do-game
@@ -133,6 +157,32 @@
       (is (= 3 (:credit (get-runner))))
       (card-ability state :runner nasir 0)
       (is (= 2 (:credit (get-runner)))))))
+
+(deftest nisei-division
+  "Nisei Division - Gain 1 credit from every psi game"
+  (do-game
+    (new-game
+      (make-deck "Nisei Division: The Next Generation" [(qty "Snowflake" 2)])
+      (default-runner))
+    (play-from-hand state :corp "Snowflake" "HQ")
+    (play-from-hand state :corp "Snowflake" "HQ")
+    (take-credits state :corp)
+    (let [s1 (get-in @state [:corp :servers :hq :ices 0])
+          s2 (get-in @state [:corp :servers :hq :ices 1])]
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp s2)
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :corp s2 0)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game")
+      (core/no-action state :corp nil)
+      (core/rez state :corp s1)
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :corp s1 0)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
 
 (deftest quetzal-ability
   "Quetzal ability- once per turn"
