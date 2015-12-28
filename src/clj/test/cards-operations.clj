@@ -1,5 +1,16 @@
 (in-ns 'test.core)
 
+(deftest big-brother
+  "Big Brother - Give the Runner 2 tags if already tagged"
+  (do-game
+    (new-game (default-corp [(qty "Big Brother" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Big Brother")
+    (is (= 1 (count (:hand (get-corp)))) "Card not played because Runner has no tags")
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Big Brother")
+    (is (= 3 (:tag (get-runner))) "Runner gained 2 tags")))
+
 (deftest biotic-labor
   "Biotic Labor - Gain 2 clicks"
   (do-game
@@ -8,6 +19,16 @@
     (play-from-hand state :corp "Biotic Labor")
     (is (= 1 (:credit (get-corp))))
     (is (= 4 (:click (get-corp))) "Spent 1 click to gain 2 additional clicks")))
+
+(deftest blue-level-clearance
+  "Blue Level Clearance - Gain 5 credits and draw 2 cards"
+  (do-game
+    (new-game (default-corp [(qty "Blue Level Clearance" 3) (qty "Hedge Fund" 3) (qty "Sweeps Week" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Blue Level Clearance")
+    (is (= 8 (:credit (get-corp))) "Gained 5 credits")
+    (is (= 1 (:click (get-corp))))
+    (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
 
 (deftest hedge-fund
   (do-game

@@ -208,6 +208,22 @@
       (core/successful-run state :runner nil)
       (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
 
+(deftest spoilers
+  "Spoilers - Mill the Corp when it scores an agenda"
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Spoilers" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Spoilers")
+    (take-credits state :runner)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (is (= 1 (count (:deck (get-corp)))))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-in @state [:corp :servers :remote1 :content 0])]
+      (score-agenda state :corp ht)
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 0 (count (:deck (get-corp)))) "Last card from R&D milled"))))
+
 (deftest street-peddler-ability
   "Street Peddler - Ability"
   (do-game

@@ -124,6 +124,36 @@
       (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
       (is (empty? (:prompt (get-runner))) "Run concluded"))))
 
+(deftest drive-by
+  "Drive By - Expose card in remote server and trash if asset or upgrade"
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 2) (qty "Product Placement" 1) (qty "Project Atlas" 1)])
+              (default-runner [(qty "Drive By" 2)]))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Product Placement" "HQ")
+    (take-credits state :corp)
+    (let [eve1 (get-in @state [:corp :servers :remote1 :content 0])
+          eve2 (get-in @state [:corp :servers :remote2 :content 0])
+          atl (get-in @state [:corp :servers :remote3 :content 0])
+          pp (get-in @state [:corp :servers :hq :content 0])]
+      (core/rez state :corp eve1)
+      (play-from-hand state :runner "Drive By")
+      (prompt-select :runner pp)
+      (is (= 1 (count (get-in @state [:corp :servers :hq :content]))) "Upgrades in root of central servers can't be targeted")
+      (prompt-select :runner (refresh eve1))
+      (is (= 1 (count (get-in @state [:corp :servers :remote1 :content]))) "Rezzed cards can't be targeted")
+      (prompt-select :runner eve2)
+      (is (= 2 (:click (get-runner))) "Spent 2 clicks")
+      (is (and (= 1 (count (:discard (get-corp)))) (= 5 (:credit (get-runner)))) "Eve trashed at no cost")
+      (is (nil? (get-in @state [:corp :servers :remote2 :content])) "Server 2 no longer exists")
+      (play-from-hand state :runner "Drive By")
+      (prompt-select :runner atl)
+      (is (= 0 (:click (get-runner))))
+      (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "Project Atlas not trashed from Server 3"))))
+
 (deftest freelance-coding-contract
   "Freelance Coding Contract - Gain 2 credits per program trashed from Grip"
   (do-game
@@ -137,6 +167,22 @@
     (prompt-choice :runner "Done")
     (is (= 3 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "3 programs in Heap")
     (is (= 11 (:credit (get-runner))) "Gained 6 credits from 3 trashed programs")))
+
+(deftest inject
+  "Inject - Draw 4 cards from Stack and gain 1 credit per trashed program"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Inject" 1) (qty "Imp" 2) (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Imp" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Imp" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (is (= 4 (count (:deck (get-runner)))))
+    (play-from-hand state :runner "Inject")
+    (is (= 2 (count (:hand (get-runner)))) "2 non-programs kept in Grip")
+    (is (= 2 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "2 programs in Heap")
+    (is (= 6 (:credit (get-runner))) "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
 
 (deftest notoriety
   "Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point"
@@ -157,6 +203,44 @@
     (play-from-hand state :runner "Notoriety")
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
+
+(deftest retrieval-run
+  "Retrieval Run - Run Archives successfully and install a program from Heap for free"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Retrieval Run" 1) (qty "Morning Star" 1)]))
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Morning Star" (:hand (get-runner))) :discard)
+    (play-from-hand state :runner "Retrieval Run")
+    (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "Run ability")
+    (let [ms (first (:discard (get-runner)))]
+      (prompt-choice :runner ms)
+      (is (= "Morning Star" (:title (first (get-in @state [:runner :rig :program])))))
+      (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
+      (is (= 2 (:memory (get-runner)))))))
+
+(deftest singularity
+  "Singularity - Run a remote; if successful, trash all contents at no cost"
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Breaker Bay Grid" 1) (qty "Eve Campaign" 1)])
+              (default-runner [(qty "Singularity" 1)]))
+    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
+    (play-from-hand state :corp "Caprice Nisei" "Server 1")
+    (play-from-hand state :corp "Eve Campaign" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Singularity")
+    (prompt-choice :runner "Server 1")
+    (is (= 2 (:click (get-runner))))
+    (is (= 1 (:credit (get-runner))))
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :runner "Run ability")
+    (is (= 3 (count (:discard (get-corp)))) "All 3 cards trashed from Server 1")
+    (is (= 1 (:credit (get-runner))) "No credits paid for trashing")
+    (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")))
 
 (deftest stimhack
   "Stimhack - Gain 9 temporary credits and take 1 brain damage after the run"

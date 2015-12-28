@@ -129,6 +129,55 @@
     (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
     (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
 
+(deftest genetic-resequencing
+  "Genetic Resequencing - Place 1 agenda counter on a scored agenda"
+  (do-game
+    (new-game (default-corp [(qty "Genetic Resequencing" 1) (qty "Braintrust" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Genetic Resequencing" "New remote")
+    (let [bt1 (get-in @state [:corp :servers :remote1 :content 0])
+          bt2 (get-in @state [:corp :servers :remote2 :content 0])
+          gr (get-in @state [:corp :servers :remote3 :content 0])]
+      (score-agenda state :corp bt1)
+      (let [btscored (get-in @state [:corp :scored 0])]
+        (is (= 0 (:counter (refresh btscored))) "No agenda counters on scored Braintrust")
+        (score-agenda state :corp gr)
+        (prompt-select :corp bt2)
+        (is (nil? (:counter (refresh bt2))) "No agenda counters on installed Braintrust; not a valid target")
+        (prompt-select :corp btscored)
+        (is (= 1 (:counter (refresh btscored))) "1 agenda counter placed on scored Braintrust")))))
+
+(deftest high-risk-investment
+  "High-Risk Investment - Gain 1 agenda counter when scored; spend it to gain credits equal to Runner's credits"
+  (do-game
+    (new-game (default-corp [(qty "High-Risk Investment" 1)]) (default-runner))
+    (play-from-hand state :corp "High-Risk Investment" "New remote")
+    (let [hri (get-in @state [:corp :servers :remote1 :content 0])]
+      (score-agenda state :corp hri)
+      (let [hriscored (get-in @state [:corp :scored 0])]
+        (is (= 1 (:counter (refresh hriscored))) "Has 1 agenda counter")
+        (take-credits state :corp)
+        (is (= 7 (:credit (get-corp))))
+        (take-credits state :runner)
+        (is (= 9 (:credit (get-runner))))
+        (card-ability state :corp hriscored 0)
+        (is (= 16 (:credit (get-corp))) "Gained 9 credits")
+        (is (= 2 (:click (get-corp))) "Spent 1 click")
+        (is (= 0 (:counter (refresh hriscored))) "Spent agenda counter")))))
+
+(deftest hostile-takeover
+  "Hostile Takeover - Gain 7 credits and take 1 bad publicity"
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-in @state [:corp :servers :remote1 :content 0])]
+      (score-agenda state :corp ht)
+      (is (= 12 (:credit (get-corp))))
+      (is (= 1 (:bad-publicity (get-corp)))))))
+
 (deftest napd-contract
   "NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity"
   (do-game
@@ -214,6 +263,33 @@
           (core/advance state :corp {:card (refresh pb2)})
           (core/score state :corp {:card (refresh pb2)})
           (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
+
+(deftest tgtbt
+  "TGTBT - Give the Runner 1 tag when they access"
+  (do-game
+    (new-game (default-corp [(qty "TGTBT" 2) (qty "Old Hollywood Grid" 1)])
+              (default-runner))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (play-from-hand state :corp "Old Hollywood Grid" "Server 1")
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (take-credits state :corp)
+    (let [tg1 (get-in @state [:corp :servers :remote1 :content 0])
+          ohg (get-in @state [:corp :servers :remote1 :content 1])
+          tg2 (get-in @state [:corp :servers :remote2 :content 0])]
+      (core/click-run state :runner {:server :remote1})
+      (core/rez state :corp ohg)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-select :runner tg1)
+      (prompt-choice :runner "OK") ; Accesses TGTBT but can't steal
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
+      (prompt-select :runner ohg)
+      (prompt-choice :runner "Yes") ; Trashes OHG
+      (core/click-run state :runner {:server :remote2})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :runner "Steal") ; Accesses TGTBT but can't steal
+      (is (= 2 (:tag (get-runner))) "Runner took 1 tag from accessing and stealing"))))
 
 (deftest the-cleaners
   "The Cleaners - Bonus damage"

@@ -76,6 +76,66 @@
       (is (= 1 (count (get-in @state [:runner :scored]))) "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
+(deftest elizabeth-mills
+  "Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location"
+  (do-game
+    (new-game (default-corp [(qty "Elizabeth Mills" 1)])
+              (default-runner [(qty "Earthrise Hotel" 1)]))
+    (core/gain state :corp :bad-publicity 1)
+    (play-from-hand state :corp "Elizabeth Mills" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (take-credits state :runner)
+    (let [liz (get-in @state [:corp :servers :remote1 :content 0])
+          hotel (get-in @state [:runner :rig :resource 0])]
+      (core/rez state :corp liz)
+      (is (= 0 (:bad-publicity (get-corp))) "1 bad publicity removed")
+      (card-ability state :corp liz 0)
+      (prompt-select :corp hotel)
+      (is (= 1 (count (:discard (get-runner)))) "Earthrise trashed")
+      (is (= 1 (count (:discard (get-corp)))) "Elizabeth Mills trashed")
+      (is (= 1 (:bad-publicity (get-corp))) "1 bad publicity taken from trashing a location"))))
+
+(deftest elizas-toybox
+  "Eliza's Toybox - Rez a card ignoring all costs"
+  (do-game
+    (new-game (default-corp [(qty "Eliza's Toybox" 1) (qty "Wotan" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Wotan" "R&D")
+    (play-from-hand state :corp "Eliza's Toybox" "New remote")
+    (let [wotan (get-in @state [:corp :servers :rd :ices 0])
+          eliza (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/rez state :corp eliza)
+      (is (= 1 (:credit (get-corp))))
+      (card-ability state :corp eliza 0)
+      (prompt-select :corp wotan)
+      (is (get-in (refresh wotan) [:rezzed]))
+      (is (= 0 (:click (get-corp))) "3 clicks spent")
+      (is (= 1 (:credit (get-corp))) "No credits spent"))))
+
+(deftest encryption-protocol
+  "Encryption Protocol - Trash cost of installed cards increased by 1"
+  (do-game
+    (new-game (default-corp [(qty "Encryption Protocol" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Encryption Protocol" "New remote")
+    (play-from-hand state :corp "Encryption Protocol" "New remote")
+    (let [ep1 (get-in @state [:corp :servers :remote1 :content 0])
+          ep2 (get-in @state [:corp :servers :remote2 :content 0])]
+      (core/rez state :corp ep1)
+      (core/rez state :corp ep2)
+      (take-credits state :corp)
+      (core/click-run state :runner {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 4 (core/trash-cost state :runner (refresh ep1))) "Trash cost increased to 4 by two active Encryption Protocols")
+      (prompt-choice :runner "Yes") ; trash first EP
+      (core/click-run state :runner {:server "Server 2"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 3 (core/trash-cost state :runner (refresh ep2))) "Trash cost increased to 3 by one active Encryption Protocol"))))
+
 (deftest eve-campaign
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 1)]) (default-runner))
@@ -135,6 +195,25 @@
       (is (= 8 (get-in @state [:corp :credit])))
       (is (= 4 (get-in (refresh launch) [:counter]))))))
 
+(deftest mark-yale
+  "Mark Yale - Spend agenda counters or trash himself to gain credits"
+  (do-game
+    (new-game (default-corp [(qty "Firmware Updates" 1) (qty "Mark Yale" 1)]) (default-runner))
+    (play-from-hand state :corp "Firmware Updates" "New remote")
+    (play-from-hand state :corp "Mark Yale" "New remote")
+    (let [firm (get-in @state [:corp :servers :remote1 :content 0])
+          yale (get-in @state [:corp :servers :remote2 :content 0])]
+      (score-agenda state :corp firm)
+      (core/rez state :corp yale)
+      (let [firmscored (get-in @state [:corp :scored 0])]
+        (is (= 3 (get-in firmscored [:counter])))
+        (card-ability state :corp yale 1)
+        (prompt-select :corp firmscored)
+        (is (= 7 (:credit (get-corp))) "Gained 3 credits")
+        (card-ability state :corp yale 0)
+        (is (= 9 (:credit (get-corp))) "Gained 2 credits")
+        (is (= 1 (count (:discard (get-corp)))) "Mark Yale trashed")))))
+
 (deftest public-support
   "Public support scoring and trashing"
   ;TODO could also test for NOT triggering "when scored" events
@@ -176,6 +255,49 @@
       (is (= (:zone (refresh publics2) :discard)))
       (is (= "Public Support" (:title (first (get-in @state [:corp :scored])))))
       (is (= 1 (:agendapoints (first (get-in @state [:corp :scored]))))))))
+
+(deftest reversed-accounts
+  "Reversed Accounts - Trash to make Runner lose 4 credits per advancement"
+  (do-game
+    (new-game (default-corp [(qty "Reversed Accounts" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Reversed Accounts" "New remote")
+    (let [rev (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/advance state :corp {:card (refresh rev)})
+      (core/advance state :corp {:card (refresh rev)})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Sure Gamble")
+      (take-credits state :runner)
+      (is (= 18 (:credit (get-runner))))
+      (core/advance state :corp {:card (refresh rev)})
+      (core/advance state :corp {:card (refresh rev)})
+      (is (= 4 (:advance-counter (refresh rev))))
+      (core/rez state :corp (refresh rev))
+      (card-ability state :corp rev 0)
+      (is (= 1 (count (:discard (get-corp)))) "Reversed Accounts trashed")
+      (is (= 2 (:credit (get-runner))) "Runner lost 16 credits"))))
+
+(deftest ronin
+  "Ronin - Click-trash to do 3 net damage when it has 4 or more advancements"
+  (do-game
+    (new-game (default-corp [(qty "Ronin" 1) (qty "Mushin No Shin" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mushin No Shin")
+    (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
+    (let [ron (get-in @state [:corp :servers :remote1 :content 0])]
+      (is (= 3 (:advance-counter (refresh ron))))
+      (core/rez state :corp (refresh ron))
+      (card-ability state :corp ron 0)
+      (is (= 3 (count (:hand (get-runner)))) "Ronin ability didn't fire with only 3 advancements")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh ron)})
+      (is (= 4 (:advance-counter (refresh ron))))
+      (card-ability state :corp ron 0)
+      (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
+      (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
 
 (deftest sundew
   "Sundew"
@@ -284,3 +406,19 @@
       (is (= "Adonis Campaign" (get-in @state [:corp :servers :remote5 :content 0 :title])) "Adonis installed by Team Sponsorship")
       (is (nil? (:ts-active (refresh tsp1))) "Team Sponsorship 1 ability disabled")
       (is (nil? (:ts-active (refresh tsp2))) "Team Sponsorship 2 ability disabled"))))
+
+(deftest turtlebacks
+  "Turtlebacks - Gain 1 credit for every new server created"
+  (do-game
+    (new-game (default-corp [(qty "Turtlebacks" 1) (qty "PAD Campaign" 2) (qty "Wraparound" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Turtlebacks" "New remote")
+    (let [tb (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/rez state :corp tb)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (is (= 4 (:credit (get-corp))) "Gained 1 credit for new server created")
+      (play-from-hand state :corp "Wraparound" "Server 1")
+      (is (= 4 (:credit (get-corp))) "No credit gained for install into existing server")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))

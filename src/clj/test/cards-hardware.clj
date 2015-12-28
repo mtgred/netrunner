@@ -72,6 +72,39 @@
         (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard) ; trash Battering Ram
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
 
+(deftest feedback-filter
+  "Feedback Filter - Prevent net and brain damage"
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1) (qty "Cerebral Overwriter" 1) (qty "Mushin No Shin" 1)])
+              (default-runner [(qty "Feedback Filter" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Mushin No Shin")
+    (prompt-select :corp (find-card "Cerebral Overwriter" (:hand (get-corp))))
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (let [co (get-in @state [:corp :servers :remote1 :content 0])
+          dm (get-in @state [:corp :servers :remote1 :ices 0])]
+      (is (= 3 (:advance-counter (refresh co))) "3 advancements on Overwriter")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Feedback Filter")
+      (is (= 7 (:credit (get-runner))))
+      (let [ff (get-in @state [:runner :rig :hardware 0])]
+        (core/click-run state :runner {:server "Server 1"})
+        (core/rez state :corp dm)
+        (card-ability state :corp dm 0)
+        (card-ability state :runner ff 0)
+        (prompt-choice :runner "Done")
+        (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
+        (is (= 4 (:credit (get-runner))))
+        (core/no-action state :corp nil)
+        (core/successful-run state :runner nil)
+        (prompt-choice :corp "Yes") ; pay 3 to fire Overwriter
+        (prompt-choice :runner "Yes") ; trash Overwriter for 0 to get to prevention prompt
+        (card-ability state :runner ff 1)
+        (prompt-choice :runner "Done")
+        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
+        (is (= 2 (count (:hand (get-runner)))))
+        (is (empty? (get-in @state [:runner :rig :hardware])) "Feedback Filter trashed")))))
+
 (deftest grimoire
   "Grimoire - Gain 2 MU, add a free virus counter to installed virus programs"
   (do-game
@@ -103,6 +136,24 @@
       (prompt-choice :runner "Done")
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-in @state [:runner :rig :hardware])) "Plascrete depleted and trashed"))))
+
+(deftest the-personal-touch
+  "The Personal Touch - Give +1 strength to an icebreaker"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "The Personal Touch" 1) (qty "Paricia" 1) (qty "Faerie" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (play-from-hand state :runner "Faerie")
+    (let [par (get-in @state [:runner :rig :program 0])
+          fae (get-in @state [:runner :rig :program 1])]
+      (is (= 2 (:current-strength (refresh fae))))
+      (play-from-hand state :runner "The Personal Touch")
+      (prompt-select :runner par)
+      (is (nil? (:hosted (refresh par))) "TPT can't be hosted on a non-icebreaker")
+      (prompt-select :runner fae)
+      (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
+      (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
 
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"
