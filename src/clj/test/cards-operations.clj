@@ -98,6 +98,28 @@
       (take-credits state :corp 2)
       (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
 
+(deftest news-cycle-posted-bounty
+  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [ag1 (get-in @state [:corp :servers :remote1 :content 0])
+          ag2 (get-in @state [:corp :servers :remote2 :content 0])]
+      (score-agenda state :corp ag1)
+      (prompt-choice :corp "No")
+      (score-agenda state :corp ag2)
+      (prompt-choice :corp "No")
+      (play-from-hand state :corp "24/7 News Cycle")
+      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
+      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
+      (is (= 1 (:tag (get-runner))) "Runner given 1 tag")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+      (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
+
 (deftest oversight-ai
   "Oversight AI - Rez a piece of ICE ignoring all costs"
   (do-game

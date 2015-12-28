@@ -10,7 +10,7 @@
                                            (= (first (:zone %)) :scored)
                                            (:abilities %))}
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                      :effect (effect (resolve-ability (dissoc (card-def target) :end-turn) card nil))}
+                      :effect (effect (resolve-ability (dissoc (card-def target) :end-turn) target nil))}
                     card nil)))}
 
    "Accelerated Diagnostics"
