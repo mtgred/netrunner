@@ -24,6 +24,22 @@
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
+(deftest brain-chip
+  "Brain Chip handsize and memory limit"
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Brain Chip" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Brain Chip")
+   (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
+   (is (= (get-in @state [:runner :max-hand-size]) 5) "Hand size unaffected")
+   (is (= (get-in @state [:runner :memory]) 4) "Memory limit unaffected")
+   (swap! state assoc-in [:runner :agenda-point] 2)
+   (is (= (get-in @state [:runner :max-hand-size]) 7) "Hand size increased by 2")
+   (is (= (get-in @state [:runner :memory]) 6) "Memory limit increased by 2")
+   (core/move state :runner (get-in @state [:runner :rig :hardware 0]) :discard)
+   (is (= (get-in @state [:runner :max-hand-size]) 5) "Hand size reset")
+   (is (= (get-in @state [:runner :memory]) 4) "Memory limit reset")))
+
 (deftest clone-chip
   "Test clone chip usage- outside and during run"
   (do-game
