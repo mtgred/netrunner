@@ -32,6 +32,36 @@
       (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
       (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
 
+(deftest asteroid-belt
+  "Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement"
+  (do-game
+    (new-game (default-corp [(qty "Asteroid Belt" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 5)
+    (play-from-hand state :corp "Asteroid Belt" "HQ")
+    (let [ab (get-in @state [:corp :servers :hq :ices 0])]
+      (core/advance state :corp {:card (refresh ab)})
+      (core/advance state :corp {:card (refresh ab)})
+      (is (= 8 (:credit (get-corp))))
+      (is (= 2 (:advance-counter (refresh ab))))
+      (core/rez state :corp (refresh ab))
+      (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
+
+(deftest cortex-lock
+  "Cortex Lock - Do net damage equal to Runner's unused memory"
+  (do-game
+    (new-game (default-corp [(qty "Cortex Lock" 1)])
+              (default-runner [(qty "Corroder" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Cortex Lock" "HQ")
+    (take-credits state :corp)
+    (let [cort (get-in @state [:corp :servers :hq :ices 0])]
+      (play-from-hand state :runner "Corroder")
+      (is (= 3 (:memory (get-runner))))
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp cort)
+      (card-ability state :corp cort 0)
+      (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 net damage"))))
+
 (deftest curtain-wall
   "Curtain Wall - Strength boost when outermost ICE"
   (do-game
@@ -46,6 +76,43 @@
       (let [paper (get-in @state [:corp :servers :hq :ices 1])]
         (core/rez state :corp paper)
         (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
+
+(deftest enigma
+  "Enigma - Force Runner to lose 1 click if able"
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (let [enig (get-in @state [:corp :servers :hq :ices 0])]
+      (core/click-run state :runner {:server "HQ"})
+      (is (= 3 (:click (get-runner))))
+      (core/rez state :corp enig)
+      (card-ability state :corp enig 0)
+      (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
+
+(deftest lockdown
+  "Lockdown - Prevent Runner from drawing cards for the rest of the turn"
+  (do-game
+    (new-game (default-corp [(qty "Lockdown" 1)])
+              (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Lockdown" "R&D")
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (let [lock (get-in @state [:corp :servers :rd :ices 0])]
+      (core/click-run state :runner {:server "R&D"})
+      (core/rez state :corp lock)
+      (card-ability state :corp lock 0)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (play-from-hand state :runner "Diesel")
+      (is (= 1 (count (:hand (get-runner)))) "No cards drawn")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Diesel")
+      (is (= 3 (count (:hand (get-runner)))) "New turn ends prevention; remaining 3 cards drawn from Stack"))))
 
 (deftest lotus-field-unlowerable
   "Lotus Field strength cannot be lowered"
@@ -96,6 +163,27 @@
         (is (= false (has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
         (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest next-bronze
+  "NEXT Bronze - Add 1 strength for every rezzed NEXT ice"
+  (do-game
+    (new-game (default-corp [(qty "NEXT Bronze" 2) (qty "NEXT Silver" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 2)
+    (play-from-hand state :corp "NEXT Bronze" "HQ")
+    (play-from-hand state :corp "NEXT Bronze" "R&D")
+    (play-from-hand state :corp "NEXT Silver" "Archives")
+    (let [nb1 (get-in @state [:corp :servers :hq :ices 0])
+          nb2 (get-in @state [:corp :servers :rd :ices 0])
+          ns1 (get-in @state [:corp :servers :archives :ices 0])]
+      (core/rez state :corp nb1)
+      (is (= 1 (:current-strength (refresh nb1))) "NEXT Bronze at 1 strength: 1 rezzed NEXT ice")
+      (core/rez state :corp nb2)
+      (is (= 2 (:current-strength (refresh nb1))) "NEXT Bronze at 2 strength: 2 rezzed NEXT ice")
+      (is (= 2 (:current-strength (refresh nb2))) "NEXT Bronze at 2 strength: 2 rezzed NEXT ice")
+      (core/rez state :corp ns1)
+      (is (= 3 (:current-strength (refresh nb1))) "NEXT Bronze at 3 strength: 3 rezzed NEXT ice")
+      (is (= 3 (:current-strength (refresh nb2))) "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
 
 (deftest special-offer-trash-ice-during-run
   "Special Offer trashes itself and updates the run position"
