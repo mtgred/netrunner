@@ -27,15 +27,13 @@
                            (when (< n i)
                              (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
-                 :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE")
-                                                                   (take 3 (:deck corp))))]
-                                              (resolve-ability
-                                               state side
-                                               {:msg "look at the top 3 cards of R&D"
-                                                :effect (req (doseq [c (take 3 (:deck corp))]
-                                                               (move state side c :play-area))
-                                                             (resolve-ability state side (abt 1 n) card nil))}
-                                               card nil)))}}})
+                 :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                                              (resolve-ability state side
+                                                               {:msg "look at the top 3 cards of R&D"
+                                                                :effect (req (doseq [c (take 3 (:deck corp))]
+                                                                               (move state side c :play-area))
+                                                                             (resolve-ability state side (abt 1 n) card nil))}
+                                                               card nil)))}}})
 
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
