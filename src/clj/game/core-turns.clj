@@ -92,7 +92,7 @@
         (update-all-advancement-costs state side))))
 
 (defn end-turn [state side args]
-  (let [max-hand-size (get-in @state [side :max-hand-size])]
+  (let [max-hand-size (max (get-in @state [side :max-hand-size]) 0)]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (turn-message state side false)
       (if (= side :runner)

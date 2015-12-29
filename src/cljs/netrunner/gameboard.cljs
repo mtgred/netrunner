@@ -616,7 +616,7 @@
 
 (defn handle-end-turn [cursor owner]
   (let [me ((:side @game-state) @game-state)
-        max-size (:max-hand-size me)]
+        max-size (max (:max-hand-size me) 0)]
     (if (> (count (:hand me)) max-size)
       (om/set-state! owner :warning (str "Discard to " max-size " cards"))
       (do (om/set-state! owner :warning nil)
