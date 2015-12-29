@@ -16,18 +16,18 @@
    "Accelerated Diagnostics"
    (letfn [(ad [i n]
              {:prompt "Select an operation to play"
-              :choices {:req #(and (= (:side %) "Corp") (= (:type %) "Operation") (= (:zone %) [:play-area]))}
+              :choices {:req #(and (= (:side %) "Corp")
+                                   (= (:type %) "Operation")
+                                   (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
               :effect (req (when (< i n)
                              (resolve-ability state side (ad (inc i) n) card nil))
                            (play-instant state side target {:no-additional-cost true}))})]
      {:effect (req (let [n (count (filter #(= (:type %) "Operation") (take 3 (:deck corp))))]
                      (resolve-ability state side
-                                      {:msg (msg "play " n " operations and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                      {:msg "look at the top 3 cards of R&D"
                                        :effect (req (doseq [c (take 3 (:deck corp))]
-                                                      (if (= (:type c) "Operation")
-                                                        (move state side c :play-area)
-                                                        (trash state side c)))
+                                                      (move state side c :play-area))
                                                     (resolve-ability state side (ad 1 n) card nil))}
                                       card nil)))})
 
@@ -329,8 +329,9 @@
                                     card nil)))}
 
    "Precognition"
-   {:effect (req (prompt! state side card
-                         (str "Drag cards from the play area back onto R&D") ["OK"] {})
+   {:msg "rearrange the top 5 cards of R&D"
+    :effect (req (prompt! state side card
+                         (str "Drag cards from the Temporary Zone back onto R&D") ["OK"] {})
                  (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
 
    "Predictive Algorithm"

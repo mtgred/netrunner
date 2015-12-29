@@ -113,7 +113,7 @@
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
                  :effect (effect (trash-no-cost))}]
     :effect (effect (run target nil card)
-                    (prompt! card (str "Click Demolition Run in the play area to trash a card being accessed at no cost") ["OK"] {})
+                    (prompt! card (str "Click Demolition Run in the Temporary Zone to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c false)
@@ -311,7 +311,7 @@
    {:effect (effect (run :rd {:replace-access
                               {:msg "rearrange the top 5 cards of R&D"
                                :effect (req (prompt! state side card
-                                                     (str "Drag cards from the play area back onto R&D") ["OK"] {})
+                                                     (str "Drag cards from the Temporary Zone back onto R&D") ["OK"] {})
                                             (doseq [c (take 5 (:deck corp))]
                                               (move state side c :play-area)))}} card))}
 
