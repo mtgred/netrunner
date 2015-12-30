@@ -92,7 +92,7 @@
     :events {:successful-run {:req (req this-server)
                               :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                            (swap! state update-in [:run] dissoc :successful)
-                                           (swap! state update-in [:runner :register :successful-run] #(butlast %)))}}}
+                                           (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}
 
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
