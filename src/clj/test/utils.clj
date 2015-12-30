@@ -18,8 +18,8 @@
 
 (defn default-corp
   ([] (default-corp [(qty "Hedge Fund" 3)]))
-  ([deck] (make-deck "Custom Biotics" deck)))
+  ([deck] (make-deck "Custom Biotics: Engineered for Success" deck)))
 
 (defn default-runner
   ([] (default-runner [(qty "Sure Gamble" 3)]))
-  ([deck] (make-deck "The Professor" deck)))
+  ([deck] (make-deck "The Professor: Keeper of Knowledge" deck)))

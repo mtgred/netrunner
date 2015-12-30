@@ -344,6 +344,44 @@
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
 
+(deftest snare-cant-afford
+  "Snare! - Can't afford"
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (let [drt (first (get-in @state [:corp :servers :remote2 :content]))]
+      (take-credits state :corp)
+      (core/lose state :corp :credit 7)
+      (core/click-run state :corp {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (prompt-choice :runner "Yes")
+      (is (= 0 (count (:discard (get-runner)))) "Runner took no damage"))))
+
+(deftest snare-dedicated-response-team
+  "Snare! - with Dedicated Response Team"
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1) (qty "Dedicated Response Team" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (core/gain state :corp :click 1 :credit 4)
+    (let [drt (first (get-in @state [:corp :servers :remote2 :content]))]
+      (take-credits state :corp)
+      (core/click-run state :corp {:server "Server 1"})
+      (core/rez state :corp drt)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+      (prompt-choice :runner "Yes")
+      (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
+
 (deftest sundew
   "Sundew"
   (do-game

@@ -20,8 +20,8 @@
                              :deck {:identity (load-card (:identity runner))
                                     :cards (:deck runner)}}]})
         state (second (last states))]
-    (core/keep-hand state :corp nil)
-    (core/keep-hand state :runner nil)
+    (core/resolve-prompt state :corp {:choice "Keep"})
+    (core/resolve-prompt state :runner {:choice "Keep"})
     (core/start-turn state :corp nil)
     state))
 
