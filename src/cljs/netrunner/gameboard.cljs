@@ -666,95 +666,88 @@
                (when-not (= side :spectator)
                  [:div.button-pane { :on-mouse-over card-preview-mouse-over
                                      :on-mouse-out  card-preview-mouse-out  }
-                  (when-not (:keep me)
+                  (if-let [prompt (first (:prompt me))]
                     [:div.panel.blue-shade
-                     [:h4 "Keep hand?"]
-                     [:button {:on-click #(send-command "keep")} "Keep"]
-                     [:button {:on-click #(send-command "mulligan")} "Mulligan"]])
-
-                  (when (:keep me)
-                    (if-let [prompt (first (:prompt me))]
+                     [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
+                     (if-let [n (get-in prompt [:choices :number])]
+                       [:div
+                        [:div.credit-select
+                         [:select#credit (for [i (range (inc n))]
+                                           [:option {:value i} i])]]
+                        [:button {:on-click #(send-command "choice"
+                                                           {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                         "OK"]]
+                       (case (:choices prompt)
+                         "credit" [:div
+                                   [:div.credit-select
+                                    [:select#credit (for [i (range (inc (:credit me)))]
+                                                      [:option {:value i} i])] " credits"]
+                                   [:button {:on-click #(send-command "choice"
+                                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                    "OK"]]
+                         "counter" [:div
+                                    [:div.credit-select
+                                     [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
+                                                       [:option {:value i} i])] " credits"]
+                                    [:button {:on-click #(send-command "choice"
+                                                                       {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                     "OK"]]
+                         (for [c (:choices prompt)]
+                           (if (string? c)
+                             [:button {:on-click #(send-command "choice" {:choice c})}
+                              (for [item (get-message-parts c)] (create-span item))]
+                             (let [[title code] (extract-card-info (add-image-codes (:title c)))]
+                               [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
+                    (if run
+                      (let [s (:server run)
+                            kw (keyword (first s))
+                            server (if-let [n (second s)]
+                                     (get-in cursor [:corp :servers kw n])
+                                     (get-in cursor [:corp :servers kw]))]
+                        (if (= side :runner)
+                          [:div.panel.blue-shade
+                           (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
+                           (if (zero? (:position run))
+                             (cond-button "Successful Run" (:no-action run) #(send-command "access"))
+                             (cond-button "Continue" (:no-action run) #(send-command "continue")))
+                           (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
+                                        #(send-command "jack-out"))]
+                          [:div.panel.blue-shade
+                           (cond-button "No more action" (not (:no-action run))
+                                        #(send-command "no-action"))]))
                       [:div.panel.blue-shade
-                       [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
-                       (if-let [n (get-in prompt [:choices :number])]
+                       (when-let [warning (:warning state)] [:h4 warning])
+                       (if (= (keyword active-player) side)
+                         (when (and (zero? (:click me)) (not end-turn))
+                           [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
+                         (when end-turn
+                           [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                       (when (= side :runner)
                          [:div
-                          [:div.credit-select
-                           [:select#credit (for [i (range (inc n))]
-                                             [:option {:value i} i])]]
-                          [:button {:on-click #(send-command "choice"
-                                                             {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                           "OK"]]
-                         (case (:choices prompt)
-                           "credit" [:div
-                                     [:div.credit-select
-                                      [:select#credit (for [i (range (inc (:credit me)))]
-                                                        [:option {:value i} i])] " credits"]
-                                     [:button {:on-click #(send-command "choice"
-                                                                        {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                      "OK"]]
-                           "counter" [:div
-                                      [:div.credit-select
-                                       [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
-                                                         [:option {:value i} i])] " credits"]
-                                      [:button {:on-click #(send-command "choice"
-                                                                         {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                       "OK"]]
-                           (for [c (:choices prompt)]
-                             (if (string? c)
-                               [:button {:on-click #(send-command "choice" {:choice c})}
-                                (for [item (get-message-parts c)] (create-span item))]
-                               (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                                 [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
-                      (if run
-                        (let [s (:server run)
-                              kw (keyword (first s))
-                              server (if-let [n (second s)]
-                                       (get-in cursor [:corp :servers kw n])
-                                       (get-in cursor [:corp :servers kw]))]
-                          (if (= side :runner)
-                            [:div.panel.blue-shade
-                             (when-not (:no-action run) [:h4 "Waiting for Corp's actions" ])
-                             (if (zero? (:position run))
-                               (cond-button "Successful Run" (:no-action run) #(send-command "access"))
-                               (cond-button "Continue" (:no-action run) #(send-command "continue")))
-                             (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
-                                          #(send-command "jack-out"))]
-                            [:div.panel.blue-shade
-                             (cond-button "No more action" (not (:no-action run))
-                                          #(send-command "no-action"))]))
-                        [:div.panel.blue-shade
-                         (when-let [warning (:warning state)] [:h4 warning])
-                         (if (= (keyword active-player) side)
-                           (when (and (zero? (:click me)) (not end-turn))
-                             [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
-                           (when end-turn
-                             [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
-                         (when (= side :runner)
-                           [:div
-                            (cond-button "Remove Tag"
-                                         (and (>= (:click me) 1) (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0))) (>= (:tag me) 1))
-                                         #(send-command "remove-tag"))
-                            [:div.run-button
-                             (cond-button "Run" (and (>= (:click me) 1)
-                                                     (not (get-in me [:register :cannot-run])))
-                                          #(-> (om/get-node owner "servers") js/$ .toggle))
-                             (let [remotes (get-remotes (get-in cursor [:corp :servers]))
-                                   servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
-                               [:div.blue-shade.panel.servers-menu {:ref "servers"}
-                                (map (fn [label]
-                                       [:div {:on-click #(do (send-command "run" {:server label})
-                                                             (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                                        label])
-                                     servers)])]])
-                         (when (= side :corp)
-                           (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
-                         (when (= side :corp)
-                           (cond-button "Trash Resource" (and (> (:click me) 0) (>= (:credit me) (- 2 (or (:trash-cost-bonus me) 0)))
-                                                              (or (> (:tagged opponent) 0)
-                                                                  (> (:tag opponent) 0)))
-                                        #(send-command "trash-resource")))
-                         (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
-                         (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))])))])]
+                          (cond-button "Remove Tag"
+                                       (and (>= (:click me) 1) (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0))) (>= (:tag me) 1))
+                                       #(send-command "remove-tag"))
+                          [:div.run-button
+                           (cond-button "Run" (and (>= (:click me) 1)
+                                                   (not (get-in me [:register :cannot-run])))
+                                        #(-> (om/get-node owner "servers") js/$ .toggle))
+                           (let [remotes (get-remotes (get-in cursor [:corp :servers]))
+                                 servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
+                             [:div.blue-shade.panel.servers-menu {:ref "servers"}
+                              (map (fn [label]
+                                     [:div {:on-click #(do (send-command "run" {:server label})
+                                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                                      label])
+                                   servers)])]])
+                       (when (= side :corp)
+                         (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
+                       (when (= side :corp)
+                         (cond-button "Trash Resource" (and (> (:click me) 0) (>= (:credit me) (- 2 (or (:trash-cost-bonus me) 0)))
+                                                            (or (> (:tagged opponent) 0)
+                                                                (> (:tag opponent) 0)))
+                                      #(send-command "trash-resource")))
+                       (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
+                       (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))]))])]
 
               [:div.board
                (om/build board-view {:player opponent :run run})

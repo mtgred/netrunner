@@ -113,6 +113,7 @@
         "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
+        "/close-prompt" #(swap! %1 update-in [%2 :prompt] rest)
         nil))))
 
 (defn corp-install-msg

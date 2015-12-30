@@ -62,6 +62,7 @@
      {:once :per-turn
       :req (req (= target :net))
       :effect (effect (damage-defer :net (last targets))
+                      (show-wait-prompt :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                       (resolve-ability
                         {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
                                                  "grip to select the first card trashed?") :player :corp
@@ -72,10 +73,12 @@
                                                            (str " and deal "
                                                                 (- (get-defer-damage state side :net nil) 1)
                                                                 " more net damage")))
-                                                  :effect (effect (trash target {:cause :net})
+                                                  :effect (effect (clear-wait-prompt :runner)
+                                                                  (trash target {:cause :net})
                                                                   (damage :net (- (get-defer-damage state side :net nil) 1)
                                                                           {:unpreventable true :card card}))}
-                                    :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil)
+                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                 (damage :net (get-defer-damage state side :net nil)
                                                                          {:unpreventable true :card card}))}}} card nil))}}}
 
    "Cybernetics Division: Humanity Upgraded"

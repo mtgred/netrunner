@@ -31,7 +31,10 @@
         'select' prompt with targeting cursor; only cards that cause the 1-argument function to return true will
         be allowed.
   :prompt -- a string or 4-argument function returning a string to display in the prompt menu.
-  :priority -- true if the prompt should be added at the front of the prompt queue. Defaults to false.
+  :priority -- a numeric value, or true (equivalent to 1). Prompts are inserted into the prompt queue and sorted base
+               on priority, with higher priorities coming first. The sort is stable, so if two prompts have the same
+               priority, the prompt that was inserted first will remain first after the sort. You should rarely need
+               to use a priority larger than 1.
   :not-distinct -- true if the prompt should not collapse :choices entries of the same string to one button.
                    Defaults to false.
   :cancel-effect -- if the prompt uses a Cancel button, this 4-argument function will be called if the user
@@ -156,14 +159,15 @@
   when the prompt is resolved. All prompts flow through this method."
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f {:keys [priority prompt-type show-discard cancel-effect] :as args}]
-   (let [prompt (if (string? msg) msg (msg state side card nil))]
-     (when (or (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
+   (let [prompt (if (string? msg) msg (msg state side card nil))
+         priority-comp #(case % true 1 nil 0 %)
+         newitem {:msg prompt :choices choices :effect f :card card :prompt-type prompt-type :show-discard show-discard
+                  :priority priority :cancel-effect cancel-effect}]
+     (when (or (= prompt-type :waiting) (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
        (swap! state update-in [side :prompt]
-              (if priority
-                #(cons {:msg prompt :choices choices :effect f :card card
-                        :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect} (vec %))
-                #(conj (vec %) {:msg prompt :choices choices :effect f :card card
-                                :prompt-type prompt-type :show-discard show-discard :cancel-effect cancel-effect})))))))
+              ; insert the new prompt into the already-sorted queue based on its priority.
+              #(let [[head tail] (split-with (fn [p] (>= (priority-comp (:priority p)) (priority-comp priority))) %)]
+                (concat head (cons newitem tail))))))))
 
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
@@ -199,6 +203,21 @@
     (swap! state update-in [side :selected] #(vec (rest %)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))))
 
+(defn show-wait-prompt
+  "Shows a 'Waiting for ...' prompt to the given side with the given message.
+  The prompt cannot be closed except by a later call to clear-wait-prompt.
+  The prompt has default priority 1, but can be overridden."
+  ([state side msg] (show-wait-prompt state side msg {:priority 1}))
+  ([state side msg {:keys [priority] :as args}]
+   (show-prompt state side nil (str "Waiting for " msg) nil
+                (fn [c] (system-msg state side (str "is waiting for " msg))) ; this function is never called, because the prompt has no button.
+                {:priority priority :prompt-type :waiting})))
+
+(defn clear-wait-prompt
+  "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
+  [state side]
+  (when (= :waiting (-> @state side :prompt first :prompt-type))
+    (swap! state update-in [side :prompt] rest)))
 
 ; Psi games
 (defn psi-game
@@ -209,7 +228,8 @@
   (doseq [s [:corp :runner]]
     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                 #(resolve-psi state s card psi (Integer/parseInt (first (split % #" ")))))))
+                 #(resolve-psi state s card psi (Integer/parseInt (first (split % #" "))))
+                 {:priority 2})))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -217,20 +237,25 @@
   [state side card psi bet]
   (swap! state assoc-in [:psi side] bet)
   (let [opponent (if (= side :corp) :runner :corp)]
-    (when-let [opponent-bet (get-in @state [:psi opponent])]
-      (lose state opponent :credit opponent-bet)
-      (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-      (lose state side :credit bet)
-      (system-msg state side (str "spends " bet " [Credits]"))
-      (trigger-event state side :psi-game nil)
-      (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-        (resolve-ability state (:side card) ability card nil)))))
+    (if-let [opponent-bet (get-in @state [:psi opponent])]
+      (do (clear-wait-prompt state opponent)
+          (lose state opponent :credit opponent-bet)
+          (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
+          (lose state side :credit bet)
+          (system-msg state side (str "spends " bet " [Credits]"))
+          (trigger-event state side :psi-game nil)
+          (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+            (resolve-ability state (:side card) ability card nil)))
+      (show-wait-prompt
+        state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
 
 ; Traces
 (defn init-trace
   "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
   [state side card {:keys [base] :as ability} boost]
+  (clear-wait-prompt state :runner)
+  (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (trigger-event state side :pre-init-trace card)
   (let [bonus (or (get-in @state [:bonus :trace]) 0)
         base (if (fn? base) (base state side card nil) base)
@@ -241,13 +266,14 @@
                                  (when (> bonus 0) (str " + " bonus " bonus"))
                                  " + " boost " [Credits]) (" (:msg ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
-    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %))
+    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %) {:priority 2})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
 (defn resolve-trace
   "Compares trace strength and link strength and triggers the appropriate effects."
   [state side boost]
+  (clear-wait-prompt state :corp)
   (let [runner (:runner @state)
         {:keys [strength ability card]} (:trace @state)]
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
@@ -263,5 +289,6 @@
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."
   [state card trace]
+  (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
   (show-prompt state :corp card "Boost trace strength?" :credit
                #(init-trace state :corp card trace %)))

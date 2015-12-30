@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare clear-turn-register! create-deck turn-message)
+(declare clear-turn-register! clear-wait-prompt create-deck keep-hand mulligan show-wait-prompt turn-message)
 
 ; Functions for the creation of games and the progression of turns.
 (defn init-game
@@ -32,7 +32,14 @@
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
-    (swap! game-states assoc gameid state)))
+    (swap! game-states assoc gameid state)
+    (when (and (-> @state :corp :identity :title) (-> @state :runner :identity :title))
+      (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
+    (doseq [s [:corp :runner]]
+      (when (-> @state s :identity :title)
+        (show-prompt state s nil "Keep hand?" ["Keep" "Mulligan"]
+                     #(if (= % "Keep") (keep-hand state s nil) (mulligan state s nil)))))
+    @game-states))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards."
@@ -67,14 +74,24 @@
         (mul state side card nil))))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan")
-  (trigger-event state side :pre-first-turn))
+  (trigger-event state side :pre-first-turn)
+  (when (and (= side :corp) (-> @state :runner :identity :title))
+    (clear-wait-prompt state :runner)
+    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
+  (when (and (= side :runner)  (-> @state :corp :identity :title))
+    (clear-wait-prompt state :corp)))
 
 (defn keep-hand
   "Choose not to mulligan."
   [state side args]
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "keeps their hand")
-  (trigger-event state side :pre-first-turn))
+  (trigger-event state side :pre-first-turn)
+  (when (and (= side :corp) (-> @state :runner :identity :title))
+    (clear-wait-prompt state :runner)
+    (show-wait-prompt state :corp "Runner to keep hand or mulligan"))
+  (when (and (= side :runner)  (-> @state :corp :identity :title))
+    (clear-wait-prompt state :corp)))
 
 (defn start-turn
   "Start turn."
