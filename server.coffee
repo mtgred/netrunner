@@ -448,18 +448,24 @@ app.get '/data/news', (req, res) ->
     res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
-  db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
-    throw err if err
-    delete d._id for d in data
-    res.json(200, data)
+  if req.params.collection != 'users' && req.params.collection != 'games'
+    db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
+      throw err if err
+      delete d._id for d in data
+      res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
 
 app.get '/data/:collection/:field/:value', (req, res) ->
-  filter = {}
-  filter[req.params.field] = req.params.value
-  db.collection(req.params.collection).find(filter).toArray (err, data) ->
-    console.error(err) if err
-    delete d._id for d in data
-    res.json(200, data)
+  if req.params.collection != 'users' && req.params.collection != 'games'
+    filter = {}
+    filter[req.params.field] = req.params.value
+    db.collection(req.params.collection).find(filter).toArray (err, data) ->
+      console.error(err) if err
+      delete d._id for d in data
+      res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
 
 app.configure 'development', ->
   console.log "Dev environment"
