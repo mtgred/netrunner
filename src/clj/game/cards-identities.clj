@@ -72,7 +72,7 @@
                                                            (str " and deal "
                                                                 (- (get-defer-damage state side :net nil) 1)
                                                                 " more net damage")))
-                                                  :effect (effect (trash target)
+                                                  :effect (effect (trash target {:cause :net})
                                                                   (damage :net (- (get-defer-damage state side :net nil) 1)
                                                                           {:unpreventable true :card card}))}
                                     :no-ability {:effect (effect (damage :net (get-defer-damage state side :net nil)
