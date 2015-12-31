@@ -192,8 +192,8 @@
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
                                 (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                  :msg (msg (let [c (first (:hosted card))]
-                             (str "add " (:title c) " to their score area and gain "
-                             (:agendapoints c) " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
+                             (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
+                                  " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
    {:events {:agenda-scored {:effect (req (system-msg state :runner (str "can access cards in HQ by clicking on Gang Sign"))
