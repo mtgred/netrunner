@@ -197,7 +197,8 @@
 
    "Dracō"
    {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
-    :effect (effect (set-prop card :counter target))
+    :effect (effect (set-prop card :counter target)
+                    (update-ice-strength card))
     :strength-bonus (req (or (:counter card) 0))
     :abilities [{:label "Trace 2 - Give the Runner 1 tag and end the run"
                  :trace {:base 2 :msg "give the Runner 1 tag and end the run"
