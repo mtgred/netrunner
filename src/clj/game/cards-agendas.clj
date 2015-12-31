@@ -282,7 +282,9 @@
     :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "Nisei MK II"
-   {:data {:counter 1} :abilities [{:counter-cost 1 :msg "end the run" :effect (effect (end-run))}]}
+   {:data {:counter 1}
+    :abilities [{:req (req (:run @state)) :counter-cost 1 :msg "end the run"
+                 :effect (effect (end-run))}]}
 
    "Oaktown Renovation"
    {:install-state :face-up

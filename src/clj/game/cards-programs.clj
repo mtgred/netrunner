@@ -584,6 +584,7 @@
     :abilities [{:cost [:click 1] :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
                  :effect (effect
                           (move card :rfg)
+                          (gain :memory 1)
                           (resolve-ability
                            {:show-discard true
                             :choices {:max (:counter card) :req #(and (:side % "Runner") (= (:zone %) [:discard]))}

@@ -250,7 +250,7 @@
               {:pre-ice-strength {:req (req (get-in card [:it-targets (keyword (str (:cid target)))]))
                                   :effect (effect (ice-strength-bonus
                                                     (* (get-in card [:it-targets (keyword (str (:cid target)))])
-                                                       (inc (:counter card)))))}
+                                                       (inc (:counter card))) target))}
                :runner-turn-ends it :corp-turn-ends it})}
 
    "Jackson Howard"
