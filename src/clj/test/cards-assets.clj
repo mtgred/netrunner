@@ -76,6 +76,23 @@
       (is (= 1 (count (get-in @state [:runner :scored]))) "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
+(deftest city-surveillance
+  "City Surveillance - Runner chooses to pay 1 credit or take 1 tag at start of their turn"
+  (do-game
+    (new-game (default-corp [(qty "City Surveillance" 1)]) (default-runner))
+    (play-from-hand state :corp "City Surveillance" "New remote")
+    (let [surv (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp surv)
+      (take-credits state :corp)
+      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
+      (is (= 0 (:tag (get-runner))) "Runner didn't take a tag")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (prompt-choice :runner "Take 1 tag")
+      (is (= 8 (:credit (get-runner))) "Runner paid no credits")
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
+
 (deftest elizabeth-mills
   "Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location"
   (do-game
@@ -167,6 +184,22 @@
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
+(deftest ghost-branch
+  "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
+  (do-game
+    (new-game (default-corp [(qty "Ghost Branch" 1)]) (default-runner))
+    (play-from-hand state :corp "Ghost Branch" "New remote")
+    (let [gb (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/advance state :corp {:card (refresh gb)})
+      (core/advance state :corp {:card (refresh gb)})
+      (is (= 2 (get-in (refresh gb) [:advance-counter])))
+      (take-credits state :corp)
+      (core/click-run state :runner {:server :remote1})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (prompt-choice :corp "Yes") ; choose to do the optional ability
+      (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
+
 (deftest jackson-howard-draw
   "Jackson Howard - Draw 2 cards"
   (do-game
@@ -213,6 +246,18 @@
         (card-ability state :corp yale 0)
         (is (= 9 (:credit (get-corp))) "Gained 2 credits")
         (is (= 1 (count (:discard (get-corp)))) "Mark Yale trashed")))))
+
+(deftest mental-health-clinic
+  "Mental Health Clinic - Gain 1 credit when turn begins; Runner max hand size increased by 1"
+  (do-game
+    (new-game (default-corp [(qty "Mental Health Clinic" 1)]) (default-runner))
+    (play-from-hand state :corp "Mental Health Clinic" "New remote")
+    (let [mhc (first (get-in @state [:corp :servers :remote1 :content]))]
+      (core/rez state :corp mhc)
+      (is (= 6 (:max-hand-size (get-runner))) "Runner max hand size increased by 1")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
 (deftest public-support
   "Public support scoring and trashing"
