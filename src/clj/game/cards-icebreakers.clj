@@ -110,7 +110,7 @@
    "Chameleon"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
     :msg (msg "choose " target) :effect (effect (set-prop card :ice-type target))
-    :end-turn {:msg "add itself to Grip" :effect (effect (move card :hand))}
+    :events {:runner-turn-ends {:msg "add itself to Grip" :effect (effect (move card :hand))}}
     :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:ice-type card) " subroutine")}]}
 
    "Corroder"
