@@ -30,12 +30,16 @@
     (is (= 1 (:click (get-corp))))
     (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
 
-(deftest hedge-fund
+(deftest closed-accounts
+  "Closed Accounts - Play if Runner is tagged to make Runner lose all credits"
   (do-game
-    (new-game (default-corp) (default-runner))
-    (is (= 5 (:credit (get-corp))))
-    (core/play state :corp {:card (first (:hand (get-corp)))})
-    (is (= 9 (:credit (get-corp))))))
+    (new-game (default-corp [(qty "Closed Accounts" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Closed Accounts")
+    (is (and (= 3 (:click (get-corp))) (= 5 (:credit (get-runner)))) "Closed Accounts precondition not met; card not played")
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Closed Accounts")
+    (is (= 0 (:credit (get-runner))) "Runner lost all credits")))
 
 (deftest diversified-portfolio
   (do-game
@@ -49,6 +53,13 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+
+(deftest hedge-fund
+  (do-game
+    (new-game (default-corp) (default-runner))
+    (is (= 5 (:credit (get-corp))))
+    (core/play state :corp {:card (first (:hand (get-corp)))})
+    (is (= 9 (:credit (get-corp))))))
 
 (deftest midseason-replacements
   "Midseason Replacements - Trace to give Runner tags after they steal an agenda"
@@ -71,6 +82,21 @@
       (prompt-choice :corp 0) ; default trace
       (prompt-choice :runner 0) ; Runner won't match
       (is (= 6 (:tag (get-runner))) "Runner took 6 tags"))))
+
+(deftest neural-emp
+  "Neural EMP - Play if Runner made a run the previous turn to do 1 net damage"
+  (do-game
+    (new-game (default-corp [(qty "Neural EMP" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Neural EMP")
+    (is (= 3 (:click (get-corp))) "Neural precondition not met; card not played")
+    (take-credits state :corp)
+    (core/click-run state :runner {:server "Archives"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Neural EMP")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
 (deftest news-cycle
   (do-game
@@ -192,3 +218,18 @@
       (prompt-select :corp iwall)
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (:advance-counter (refresh iwall)))))))
+
+(deftest successful-demonstration
+  "Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits"
+  (do-game
+    (new-game (default-corp [(qty "Successful Demonstration" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Successful Demonstration")
+    (is (and (= 3 (:click (get-corp))) (= 5 (:credit (get-runner)))) "Successful Demonstration precondition not met; card not played")
+    (take-credits state :corp)
+    (core/click-run state :runner {:server "R&D"})
+    (core/no-action state :corp nil)
+    (core/jack-out state :runner nil)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Successful Demonstration")
+    (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))

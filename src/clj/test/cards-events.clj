@@ -26,6 +26,20 @@
     (is (= 5 (:credit (get-runner)))) ; no change in credits
     (is (= 8 (:credit (get-corp))))))
 
+(deftest amped-up
+  "Amped Up - Gain 3 clicks and take 1 unpreventable brain damage"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Amped Up" 1) (qty "Feedback Filter" 1) (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Amped Up")
+    (is (empty? (:prompt (get-runner))) "Feedback Filter brain damage prevention opportunity not given")
+    (is (= 5 (:click (get-runner))))
+    (is (= 2 (count (:discard (get-runner)))))
+    (is (= 4 (:max-hand-size (get-runner))))
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
+
 (deftest apocalypse-turn-facedown
   "Apocalypse - Turn Runner cards facedown without firing their leave play effects"
   (do-game
@@ -124,6 +138,23 @@
       (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
       (is (empty? (:prompt (get-runner))) "Run concluded"))))
 
+(deftest dirty-laundry
+  "Dirty Laundry - Gain 5 credits at the end of the run if it was successful"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Dirty Laundry" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dirty Laundry")
+    (prompt-choice :runner "Archives")
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= 8 (:credit (get-runner))) "Gained 5 credits")
+    (play-from-hand state :runner "Dirty Laundry")
+    (prompt-choice :runner "Archives")
+    (core/no-action state :corp nil)
+    (core/jack-out state :runner nil)
+    (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
+
 (deftest drive-by
   "Drive By - Expose card in remote server and trash if asset or upgrade"
   (do-game
@@ -183,6 +214,38 @@
     (is (= 2 (count (:hand (get-runner)))) "2 non-programs kept in Grip")
     (is (= 2 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "2 programs in Heap")
     (is (= 6 (:credit (get-runner))) "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
+
+(deftest lawyer-up
+  "Lawyer Up - Lose 2 tags and draw 3 cards"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Lawyer Up" 1) (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/gain state :runner :tag 3)
+    (play-from-hand state :runner "Lawyer Up")
+    (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
+    (is (= 2 (:click (get-runner))) "Spent 2 clicks")
+    (is (= 1 (:tag (get-runner))) "Lost 2 tags")))
+
+(deftest modded
+  "Modded - Install a program or piece of hardware at a 3 credit discount"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Modded" 2) (qty "HQ Interface" 1) (qty "Nerve Agent" 1) (qty "Earthrise Hotel" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Modded")
+    (prompt-select :runner (find-card "Earthrise Hotel" (:hand (get-runner))))
+    (is (empty? (get-in @state [:runner :rig :resource])) "Can't install resources with Modded")
+    (prompt-select :runner (find-card "HQ Interface" (:hand (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Installed HQ Interface")
+    (is (= 4 (:credit (get-runner))) "Paid 1 credit instead of 4")
+    (play-from-hand state :runner "Modded")
+    (prompt-select :runner (find-card "Nerve Agent" (:hand (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :program]))) "Installed Nerve Agent")
+    (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
 
 (deftest notoriety
   "Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point"
@@ -327,6 +390,22 @@
       (play-from-hand state :runner "Surge")
       (prompt-select :runner gd)
       (is (= 3 (get-in (refresh gd) [:counter]))))))
+
+(deftest vamp
+  "Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Vamp" 1) (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))))
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Sure Gamble")
+    (is (= 13 (:credit (get-runner))))
+    (play-run-event state (find-card "Vamp" (:hand (get-runner))) :hq)
+    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner 8)
+    (is (= 1 (:tag (get-runner))) "Took 1 tag")
+    (is (= 5 (:credit (get-runner))) "Paid 8 credits")
+    (is (= 0 (:credit (get-corp))) "Corp lost all 8 credits")))
 
 (deftest virus-counter-flag-on-enter
   "Set counter flag when virus card enters play with counters"

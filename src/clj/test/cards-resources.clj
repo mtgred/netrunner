@@ -179,6 +179,23 @@
       (is (= 1 (:agenda-point (get-runner))))
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
+(deftest professional-contacts
+  "Professional Contacts - Click to gain 1 credit and draw 1 card"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Professional Contacts" 3) (qty "Sure Gamble" 2) (qty "Shiv" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Professional Contacts")
+    (let [proco (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner proco 0)
+      (is (= 2 (:click (get-runner))) "Spent 1 click")
+      (is (= 1 (:credit (get-runner))) "Gained 1 credit")
+      (is (= 5 (count (:hand (get-runner)))) "Drew 1 card")
+      (card-ability state :runner proco 0)
+      (is (= 1 (:click (get-runner))) "Spent 1 click")
+      (is (= 2 (:credit (get-runner))) "Gained 1 credit")
+      (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
+
 (deftest security-testing
   "Security Testing - Ability"
   (do-game
@@ -413,3 +430,23 @@
       (prompt-select :runner hive)
       (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
       (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter"))))
+
+(deftest xanadu
+  "Xanadu - Increase all ICE rez cost by 1 credit"
+  (do-game
+    (new-game (default-corp [(qty "Paper Wall" 2) (qty "Launch Campaign" 1)])
+              (default-runner [(qty "Xanadu" 1)]))
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (play-from-hand state :corp "Paper Wall" "R&D")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Xanadu")
+    (let [pw1 (get-in @state [:corp :servers :hq :ices 0])
+          pw2 (get-in @state [:corp :servers :rd :ices 0])
+          lc (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/rez state :corp pw1)
+      (is (= 4 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
+      (core/rez state :corp pw2)
+      (is (= 3 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
+      (core/rez state :corp lc)
+      (is (= 2 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE"))))

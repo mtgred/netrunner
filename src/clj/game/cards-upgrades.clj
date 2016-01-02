@@ -199,7 +199,7 @@
       :events {:pre-steal-cost ab :run-ends un}})
 
    "Panic Button"
-   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
+   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Product Placement"

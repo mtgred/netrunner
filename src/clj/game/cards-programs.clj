@@ -433,7 +433,9 @@
              {:req (req (= (:cid target) (:cid (:host card))))
               :effect (effect (ice-strength-bonus (- (get-virus-counters state side card)) target))}
              :ice-strength-changed
-             {:req (req (and (= (:cid target) (:cid (:host card))) (<= (:current-strength target) 0)))
+             {:req (req (and (= (:cid target) (:cid (:host card)))
+                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
+                             (<= (:current-strength target) 0)))
               :effect (req (unregister-events state side card)
                            (when (get-in card [:special :installing])
                              (update! state side (update-in card [:special] dissoc :installing))

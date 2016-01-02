@@ -43,6 +43,31 @@
       (is (= 6 (:credit (get-corp))) "Trace was successful")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag given from successful trace during run on ChiLo server"))))
 
+(deftest corporate-troubleshooter
+  "Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE"
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 2) (qty "Corporate Troubleshooter" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 5)
+    (play-from-hand state :corp "Corporate Troubleshooter" "HQ")
+    (play-from-hand state :corp "Quandary" "HQ")
+    (play-from-hand state :corp "Quandary" "HQ")
+    (let [ct (get-in @state [:corp :servers :hq :content 0])
+          q1 (get-in @state [:corp :servers :hq :ices 0])
+          q2 (get-in @state [:corp :servers :hq :ices 1])]
+      (core/rez state :corp q1)
+      (is (= 8 (:credit (get-corp))))
+      (core/rez state :corp ct)
+      (card-ability state :corp ct 0)
+      (prompt-choice :corp 5)
+      (prompt-select :corp q2)
+      (is (nil? (:current-strength (refresh q2))) "Outer Quandary unrezzed; can't be targeted")
+      (prompt-select :corp q1)
+      (is (= 5 (:current-strength (refresh q1))) "Inner Quandary boosted to 5 strength")
+      (is (empty? (get-in @state [:corp :servers :hq :content])) "Corporate Troubleshooter trashed from root of HQ")
+      (take-credits state :corp)
+      (is (= 0 (:current-strength (refresh q1))) "Inner Quandary back to default 0 strength after turn ends"))))
+
 (deftest cyberdex-virus-suite-purge
   "Cyberdex Virus Suite - Purge ability"
   (do-game

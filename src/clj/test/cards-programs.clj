@@ -188,6 +188,29 @@
     (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
 
+(deftest parasite-architect
+  "Parasite - Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
+  (do-game
+    (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+    (play-from-hand state :corp "Architect" "HQ")
+    (let [arch (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp arch)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grimoire")
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner arch)
+      (let [psite (first (:hosted (refresh arch)))]
+        (is (= 1 (:counter (refresh psite))) "Parasite has 1 counter")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 4 (:counter (refresh psite))) "Parasite has 4 counters")
+        (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
+
 (deftest parasite-gain-counter
   "Parasite - Gain 1 counter every Runner turn"
   (do-game
@@ -206,6 +229,46 @@
         (take-credits state :corp)
         (is (= 1 (:counter (refresh psite))) "Parasite gained 1 virus counter at start of Runner turn")
         (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
+
+(deftest parasite-hivemind-instant-ice-trash
+  "Parasite - Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Parasite" 1) (qty "Grimoire" 1) (qty "Hivemind" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (let [enig (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp enig)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Grimoire")
+      (play-from-hand state :runner "Hivemind")
+      (let [hive (get-in @state [:runner :rig :program 0])]
+        (is (= 2 (:counter (refresh hive))) "Hivemind has 2 counters")
+        (play-from-hand state :runner "Parasite")
+        (prompt-select :runner enig)
+        (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
+        (is (= 4 (:memory (get-runner))))
+        (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+
+(deftest parasite-ice-trashed
+  "Parasite - Trashed along with host ICE when its strength has been reduced to 0"
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (let [enig (get-in @state [:corp :servers :hq :ices 0])]
+      (core/rez state :corp enig)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Grimoire")
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner enig)
+      (let [psite (first (:hosted (refresh enig)))]
+        (is (= 1 (:counter (refresh psite))) "Parasite has 1 counter")
+        (is (= 1 (:current-strength (refresh enig))) "Enigma reduced to 1 strength")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
+        (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
 (deftest progenitor-host-hivemind
   "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"

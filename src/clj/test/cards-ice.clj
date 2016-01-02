@@ -47,6 +47,28 @@
       (core/rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
+(deftest bandwidth
+  "Bandwidth - Give the Runner 1 tag; remove 1 tag if the run is successful"
+  (do-game
+    (new-game (default-corp [(qty "Bandwidth" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Bandwidth" "Archives")
+    (let [bw (get-in @state [:corp :servers :archives :ices 0])]
+      (take-credits state :corp)
+      (core/click-run state :runner {:server "Archives"})
+      (core/rez state :corp bw)
+      (card-ability state :corp bw 0)
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= 0 (:tag (get-runner))) "Run successful; Runner lost 1 tag")
+      (core/click-run state :runner {:server "Archives"})
+      (card-ability state :corp bw 0)
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (core/no-action state :corp nil)
+      (core/jack-out state :runner nil)
+      (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
+
 (deftest cortex-lock
   "Cortex Lock - Do net damage equal to Runner's unused memory"
   (do-game
@@ -77,6 +99,25 @@
         (core/rez state :corp paper)
         (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
+(deftest draco
+  "Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run"
+  (do-game
+    (new-game (default-corp [(qty "Dracō" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Dracō" "HQ")
+    (take-credits state :corp)
+    (let [drac (get-in @state [:corp :servers :hq :ices 0])]
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp drac)
+      (prompt-choice :corp 4)
+      (is (= 4 (:counter (refresh drac))) "Dracō has 4 power counters")
+      (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
+      (card-ability state :corp drac 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (is (nil? (get-in @state [:run])) "Run was ended"))))
+
 (deftest enigma
   "Enigma - Force Runner to lose 1 click if able"
   (do-game
@@ -90,6 +131,43 @@
       (core/rez state :corp enig)
       (card-ability state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
+
+(deftest fenris
+  "Fenris - Illicit ICE give Corp 1 bad publicity when rezzed"
+  (do-game
+    (new-game (default-corp [(qty "Fenris" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Fenris" "HQ")
+    (take-credits state :corp)
+    (let [fen (get-in @state [:corp :servers :hq :ices 0])]
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp fen)
+      (is (= 1 (:bad-publicity (get-corp))) "Gained 1 bad pub")
+      (card-ability state :corp fen 0)
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 4 (:max-hand-size (get-runner)))))))
+
+(deftest gemini-kicker
+  "Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success"
+  (do-game
+    (new-game (default-corp [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Dirty Laundry" 2)]))
+    (play-from-hand state :corp "Gemini" "HQ")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (let [gem (get-in @state [:corp :servers :hq :ices 0])]
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp gem)
+      (card-ability state :corp gem 0)
+      (prompt-choice :corp 3) ; boost to trace strength 5
+      (prompt-choice :runner 0)
+      (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
+      (card-ability state :corp gem 0)
+      (prompt-choice :corp 3) ; boost to trace strength 5
+      (prompt-choice :runner 5) ; match trace
+      (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
 
 (deftest lockdown
   "Lockdown - Prevent Runner from drawing cards for the rest of the turn"
@@ -225,6 +303,20 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (not (get-in (refresh tmi) [:rezzed]))))))
+
+(deftest turing-positional-strength
+  "Turing - Strength boosted when protecting a remote server"
+  (do-game
+    (new-game (default-corp [(qty "Turing" 2) (qty "Hedge Fund" 1)]) (default-runner))
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Turing" "HQ")
+    (play-from-hand state :corp "Turing" "New remote")
+    (let [t1 (get-in @state [:corp :servers :hq :ices 0])
+          t2 (get-in @state [:corp :servers :remote1 :ices 0])]
+      (core/rez state :corp t1)
+      (is (= 2 (:current-strength (refresh t1))) "Turing default 2 strength over a central server")
+      (core/rez state :corp t2)
+      (is (= 5 (:current-strength (refresh t2))) "Turing increased to 5 strength over a remote server"))))
 
 (deftest wraparound
   "Wraparound - Strength boosted when no fracter is installed"
