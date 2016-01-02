@@ -634,7 +634,8 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (:max-hand-size me) 0)]
     (if (> (count (:hand me)) max-size)
-      (om/set-state! owner :warning (str "Discard to " max-size " cards"))
+      (do (om/set-state! owner :warning (str "Discard to " max-size " cards"))
+          (.warning js/toastr (str "Discard to " max-size " cards")))
       (do (om/set-state! owner :warning nil)
           (send-command "end-turn")))))
 
