@@ -1,5 +1,40 @@
 (in-ns 'test.core)
 
+(deftest adjusted-chronotype
+  "Ensure adjusted chronotype gains only 1 click when 2 clicks are lost"
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Adjusted Chronotype" 1) (qty "Beach Party" 2)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Adjusted Chronotype")
+   (play-from-hand state :runner "Beach Party")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (= 4 (:click (get-runner))) "Should have lost 1 click and gained 1 click")
+   (play-from-hand state :runner "Beach Party")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
+
+(deftest adjusted-chronotype-gcs
+  "Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed"
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Adjusted Chronotype" 1) (qty "Beach Party" 3) (qty "Gene Conditioning Shoppe" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Adjusted Chronotype")
+   (play-from-hand state :runner "Beach Party")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (= 4 (:click (get-runner))) "Should have lost 1 click and gained 1 click")
+   (play-from-hand state :runner "Beach Party")
+   (play-from-hand state :runner "Gene Conditioning Shoppe")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (= 4 (:click (get-runner))) "Should have lost 2 clicks and gained 2 clicks")
+   (play-from-hand state :runner "Beach Party")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks")))
+
 (deftest daily-casts
   "Play and tick through all turns of daily casts"
   (do-game
@@ -72,6 +107,41 @@
       (card-ability state :runner fc 1)
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
+
+(deftest gene-conditioning-shoppe
+  "Gene Conditioning Shoppe - set :genetics-trigger-twice flag"
+  (do-game
+   (new-game (default-corp [(qty "Hedge Fund" 3)])
+             (default-runner [(qty "Gene Conditioning Shoppe" 1) (qty "Adjusted Chronotype" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Adjusted Chronotype")
+   (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
+     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
+     (play-from-hand state :runner "Gene Conditioning Shoppe")
+     (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+     (core/trash state :runner (get-in @state [:runner :rig :resource 1]))
+     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))))))
+
+(deftest gene-conditioning-shoppe-redundancy
+  "Gene Conditioning Shoppe - set :genetics-trigger-twice flag - ensure redundant copies work"
+  (do-game
+   (new-game (default-corp [(qty "Hedge Fund" 3)])
+             (default-runner [(qty "Gene Conditioning Shoppe" 2) (qty "Adjusted Chronotype" 1)]))
+   (take-credits state :corp)
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (play-from-hand state :runner "Adjusted Chronotype")
+   (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
+     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
+     (play-from-hand state :runner "Gene Conditioning Shoppe")
+     (play-from-hand state :runner "Gene Conditioning Shoppe")
+     (let [gcs1 (get-in @state [:runner :rig :resource 1])
+           gcs2 (get-in @state [:runner :rig :resource 2])]
+       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (core/trash state :runner gcs1)
+       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (core/trash state :runner gcs2)
+       (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))))))
 
 (deftest ice-carver
   "Ice Carver - lower ice strength on encounter"
@@ -350,6 +420,68 @@
     (is (= 4 (:credit (get-runner))) "Gained 1 credit from first click spent to draw")
     (core/click-draw state :runner nil)
     (is (= 4 (:credit (get-runner))) "No credit gained from second click spent to draw")))
+
+(deftest symmetrical-visage-gcs
+  "Symmetrical Visage - Gain 1 credit the first and second time you click to draw each turn when GCS is installed"
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Symmetrical Visage" 3) (qty "Gene Conditioning Shoppe" 3) (qty "Fall Guy" 1)]))
+   (take-credits state :corp)
+   (core/gain state :runner :click 1)
+   (play-from-hand state :runner "Symmetrical Visage")
+   (is (= 3 (:credit (get-runner))))
+   (play-from-hand state :runner "Gene Conditioning Shoppe")
+   (is (= 1 (:credit (get-runner))))
+   (core/click-draw state :runner nil)
+   (is (= 2 (:credit (get-runner))) "Gained 1 credit from first click spent to draw")
+   (core/click-draw state :runner nil)
+   (is (= 3 (:credit (get-runner))) "Gained 1 credit from second click spent to draw with Gene Conditioning Shoppe")
+   ; Move Fall Guy back to deck
+   (core/move state :runner (find-card "Fall Guy" (:hand (get-runner))) :deck)
+   (core/click-draw state :runner nil)
+   (is (= 3 (:credit (get-runner))) "No credit gained from third click spent to draw with Gene Conditioning Shoppe")))
+
+(deftest synthetic-blood
+  "Synthetic Blood - The first time you take damage each turn, draw one card"
+  (do-game
+   (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
+             (default-runner [(qty "Synthetic Blood" 3) (qty "Sure Gamble" 3) (qty "Fall Guy" 1)]))
+   (play-from-hand state :corp "Data Mine" "HQ")
+   (play-from-hand state :corp "Data Mine" "HQ")
+   (take-credits state :corp)
+   (let [first-dm (get-in @state [:corp :servers :hq :ices 1])
+         second-dm (get-in @state [:corp :servers :hq :ices 0])]
+     (play-from-hand state :runner "Synthetic Blood")
+     (core/click-run state :runner {:server "HQ"})
+     (core/rez state :corp first-dm)
+     (card-ability state :corp first-dm 0)
+     (is (= 4 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
+     (core/no-action state :corp nil)
+     (core/continue state :runner nil)
+     (core/rez state :corp second-dm)
+     (card-ability state :corp second-dm 0)
+     (is (= 3 (count (:hand (get-runner)))) "no card drawn when receiving damage (2nd time)"))))
+
+(deftest synthetic-blood-gcs
+  "Synthetic Blood - The first and second time you take damage each turn (with GCS installed), draw one card"
+  (do-game
+   (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
+             (default-runner [(qty "Synthetic Blood" 3) (qty "Sure Gamble" 1) (qty "Gene Conditioning Shoppe" 3)]))
+   (play-from-hand state :corp "Data Mine" "HQ")
+   (play-from-hand state :corp "Data Mine" "HQ")
+   (take-credits state :corp)
+   (let [first-dm (get-in @state [:corp :servers :hq :ices 1])
+         second-dm (get-in @state [:corp :servers :hq :ices 0])]
+     (play-from-hand state :runner "Synthetic Blood")
+     (play-from-hand state :runner "Gene Conditioning Shoppe")
+     (core/click-run state :runner {:server "HQ"})
+     (core/rez state :corp first-dm)
+     (card-ability state :corp first-dm 0)
+     (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
+     (core/no-action state :corp nil)
+     (core/continue state :runner nil)
+     (core/rez state :corp second-dm)
+     (card-ability state :corp second-dm 0)
+     (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (2nd time)"))))
 
 (deftest the-supplier-ability
   "The Supplier - Ability"
