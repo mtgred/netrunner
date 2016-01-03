@@ -14,6 +14,23 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
+(def toastr-setting (js-obj
+                     "closeButton" false
+                     "debug" false
+                     "newestOnTop" false
+                     "progressBar" false
+                     "positionClass" "toast-left-center"
+                     "preventDuplicates" false
+                     "onclick" nil
+                     "showDuration" 300
+                     "hideDuration" 1000
+                     "timeOut" 3000
+                     "extendedTimeOut" 1000
+                     "showEasing" "swing"
+                     "hideEasing" "linear"
+                     "showMethod" "fadeIn"
+                     "hideMethod" "fadeOut"))
+
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
