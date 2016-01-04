@@ -398,18 +398,21 @@
                                             :type "button"} "-"]]))
                        (:qty line) " "
                        (if-let [name (get-in line [:card :title])]
-                         (let [card (:card line)]
+                         (let [card (:card line)
+                               infaction (or (= (:faction card) (:faction identity))
+                                            (zero? (:factioncost card)) (= INFINITY (influencelimit identity)))
+                               wanted (mostwanted? card)]
                            [:span
                             [:span {:class (if (allowed? card identity) "fake-link" "invalid")
                                     :on-mouse-enter #(put! zoom-channel card)
                                     :on-mouse-leave #(put! zoom-channel false)} name]
-                            (when-not (or (= (:faction card) (:faction identity))
-                                          (zero? (:factioncost card)))
+                            (when (or wanted (not infaction))
                               (let [influence (* (:factioncost card) (:qty line))]
                                 [:span.influence
                                  {:class (-> card :faction .toLowerCase (.replace " " "-"))
                                   :dangerouslySetInnerHTML
-                                  #js {:__html (apply str (for [i (range influence)] "&#8226;"))}}]))])
+                                  #js {:__html (str (if-not infaction (apply str (for [_ (range influence)] "&#8226;")))
+                                                    (if wanted (apply str (for [_ (range (:qty line))] "&#9702;"))))}}]))])
                          (:card line))])])]]))]
 
           [:div.deckedit
