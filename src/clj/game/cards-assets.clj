@@ -155,14 +155,20 @@
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
 
    "Edge of World"
-   {:access {:optional
-             {:req (req installed)
-              :prompt "Pay 3 [Credits] to use Edge of World ability?"
-              :yes-ability {:cost [:credit 3]
-                            :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
-                                      " brain damage")
-                            :effect (req (damage state side :brain
-                                        (count (get-in corp [:servers (last (:server run)) :ices])) {:card card}))}}}}
+   {:access {:req (req installed)
+             :effect (effect (show-wait-prompt :runner "Corp to use Edge of World")
+                             (resolve-ability
+                               {:optional
+                                {:prompt "Pay 3 [Credits] to use Edge of World ability?"
+                                 :yes-ability {:cost [:credit 3]
+                                               :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
+                                                         " brain damage")
+                                               :effect (effect (clear-wait-prompt :runner)
+                                                               (damage :brain
+                                                                       (count (get-in corp [:servers (last (:server (:run @state))) :ices]))
+                                                                       {:card card}))}
+                                 :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}}
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"

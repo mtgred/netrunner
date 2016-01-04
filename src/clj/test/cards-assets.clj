@@ -93,6 +93,31 @@
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
 
+(deftest edge-of-world
+  "Edge of World - ability"
+  (do-game
+    (new-game (default-corp [(qty "Edge of World" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (core/gain state :corp :credit 6 :click 1)
+    (play-from-hand state :corp "Edge of World" "New remote")
+    (play-from-hand state :corp "Edge of World" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (take-credits state :corp)
+    (core/click-run state :runner {:server "Server 1"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner waiting for Corp to act")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+    (core/click-run state :runner {:server "Server 2"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
+
 (deftest elizabeth-mills
   "Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location"
   (do-game
