@@ -20,6 +20,13 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
+(defn mostwanted? [card]
+  "Returns true if card is on Most Wanted NAPD list."
+  (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD"
+                   "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
+    (some #(= (:title card) %) napdmwl))
+  )
+
 (defn influencelimit [identity]
   "Returns influence limit of an identity or INFINITY in case of draft IDs."
   (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
