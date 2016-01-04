@@ -20,16 +20,19 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
+(defn influencelimit [identity]
+  "Returns influence limit of an identity or INFINITY in case of draft IDs."
+  (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
+
 (defn mostwanted? [card]
   "Returns true if card is on Most Wanted NAPD list."
   (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD"
                    "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
-    (some #(= (:title card) %) napdmwl))
-  )
+    (some #(= (:title card) %) napdmwl)))
 
-(defn influencelimit [identity]
-  "Returns influence limit of an identity or INFINITY in case of draft IDs."
-  (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
+(defn noinfcost? [identity card]
+  (or (= (:faction card) (:faction identity))
+      (zero? (:factioncost card)) (= INFINITY (influencelimit identity))))
 
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
@@ -61,6 +64,10 @@
 
 (defn parse-deck [side deck]
   (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
+
+(defn faction-label [card]
+  "Returns faction of a card as a keyword"
+  (-> card :faction .toLowerCase (.replace " " "-")))
 
 (defn allowed? [card {:keys [side faction title] :as identity}]
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
@@ -113,20 +120,28 @@
     (om/set-state! owner :deck-edit str)))
 
 (defn influence [deck]
+  "Returns a map of faction keywords to influence values from the faction's cards."
   (let [identity (:identity deck)
         cards (:cards deck)
-        inf (reduce #(let [card (:card %2)]
-                       (if (= (:faction card) (:faction identity))
-                         %1
-                         (+ %1 (* (:qty %2) (:factioncost card)))))
-                    0 (:cards deck))]
+        infhelper (fn [currmap line]
+                    (let [card (:card line)]
+                      (if (= (:faction card) (:faction identity))
+                        currmap
+                        (update-in currmap [(keyword (faction-label card))]
+                                   (fnil (fn [curinf] (+ curinf (* (:qty line) (:factioncost card))))
+                                         0)))))
+        infmap (reduce infhelper {} cards)]
     (if (= (:title identity) "The Professor: Keeper of Knowledge")
-      (- inf (reduce #(+ %1 (get-in %2 [:card :factioncost])) 0
-                     (filter #(let [card (:card %)]
-                                (and (= (:type card) "Program")
-                                     (not= (:faction card) (:faction identity))))
-                             cards)))
-      inf)))
+      (let [progs (filter #(= "Program" (:type (:card %))) cards)
+            ;importedprogs (filter #((complement noinfcost?) identity (:card %)) progs)
+            singledprogs (reduce #(conj %1 (assoc-in %2 [:qty] 1)) '() progs)
+            singledinfmap (reduce infhelper {} singledprogs)]
+      (merge-with - infmap singledinfmap))
+      infmap)))
+
+(defn influence-count [deck]
+  "Returns sum of influence count used by a deck"
+  (apply + (vals (influence deck))))
 
 (defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))
@@ -141,7 +156,7 @@
 
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (:minimumdecksize identity))
-       (<= (influence deck) (influencelimit identity))
+       (<= (influence-count deck) (influencelimit identity))
        (every? #(and (allowed? (:card %) identity)
                      (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
        (or (= (:side identity) "Runner")
@@ -370,7 +385,7 @@
                    [:div count " cards"
                     (when (< count min-count)
                       [:span.invalid (str "(minimum " min-count ")")])])
-                 (let [inf (influence deck)
+                 (let [inf (influence-count deck)
                        limit (influencelimit identity)]
                    [:div "Influence: "
                     [:span {:class (when (> inf limit) "invalid")} inf]
@@ -399,8 +414,7 @@
                        (:qty line) " "
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)
-                               infaction (or (= (:faction card) (:faction identity))
-                                            (zero? (:factioncost card)) (= INFINITY (influencelimit identity)))
+                               infaction (noinfcost? identity card)
                                wanted (mostwanted? card)]
                            [:span
                             [:span {:class (if (allowed? card identity) "fake-link" "invalid")
@@ -409,7 +423,7 @@
                             (when (or wanted (not infaction))
                               (let [influence (* (:factioncost card) (:qty line))]
                                 [:span.influence
-                                 {:class (-> card :faction .toLowerCase (.replace " " "-"))
+                                 {:class (faction-label card)
                                   :dangerouslySetInnerHTML
                                   #js {:__html (str (if-not infaction (apply str (for [_ (range influence)] "&#9679;")))
                                                     (if wanted (apply str (for [_ (range (:qty line))] "&#9675;"))))}}]))])
