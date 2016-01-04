@@ -411,8 +411,8 @@
                                 [:span.influence
                                  {:class (-> card :faction .toLowerCase (.replace " " "-"))
                                   :dangerouslySetInnerHTML
-                                  #js {:__html (str (if-not infaction (apply str (for [_ (range influence)] "&#8226;")))
-                                                    (if wanted (apply str (for [_ (range (:qty line))] "&#9702;"))))}}]))])
+                                  #js {:__html (str (if-not infaction (apply str (for [_ (range influence)] "&#9679;")))
+                                                    (if wanted (apply str (for [_ (range (:qty line))] "&#9675;"))))}}]))])
                          (:card line))])])]]))]
 
           [:div.deckedit
