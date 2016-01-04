@@ -14,12 +14,12 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-(def toastr-setting (js-obj
+(def toastr-options (js-obj
                      "closeButton" false
                      "debug" false
                      "newestOnTop" false
                      "progressBar" false
-                     "positionClass" "toast-left-center"
+                     "positionClass" "toast-card"
                      "preventDuplicates" false
                      "onclick" nil
                      "showDuration" 300
@@ -104,6 +104,14 @@
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
+
+(defn toast
+  "Display a toast warning with the specified message.
+  Sends a command to clear any server side toasts."
+  [msg]
+  (set! (.-options js/toastr) toastr-options)
+  (.warning js/toastr msg)
+  (send-command "toast"))
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
@@ -651,10 +659,8 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (:max-hand-size me) 0)]
     (if (> (count (:hand me)) max-size)
-      (do (om/set-state! owner :warning (str "Discard to " max-size " cards"))
-          (.warning js/toastr (str "Discard to " max-size " cards")))
-      (do (om/set-state! owner :warning nil)
-          (send-command "end-turn")))))
+      (toast (str "Discard to " max-size " cards"))
+      (send-command "end-turn"))))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
   (reify
@@ -670,7 +676,9 @@
         (-> ".me .discard .popup" js/$ .fadeIn))
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
-        (set! (.-cursor (.-style (.-body js/document))) "default")))
+        (set! (.-cursor (.-style (.-body js/document))) "default"))
+      (when-let [msg (get-in cursor [side :warning])]
+        (toast msg)))
 
     om/IRenderState
     (render-state [this state]
@@ -751,7 +759,6 @@
                            (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))
                       [:div.panel.blue-shade
-                       (when-let [warning (:warning state)] [:h4 warning])
                        (if (= (keyword active-player) side)
                          (when (and (zero? (:click me)) (not end-turn))
                            [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])

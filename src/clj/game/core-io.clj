@@ -26,6 +26,10 @@
   [state card text]
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
 
+(defn toast
+  "Sets a message to toast (as a warning)"
+  [state side msg]
+  (swap! state assoc-in [side :warning] msg))
 
 ; "ToString"-like methods
 (defn card-str

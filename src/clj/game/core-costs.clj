@@ -11,6 +11,8 @@
   (when-let [cost-name (cost-names value attr)]
     cost-name))
 
+(declare toast)
+
 (defn can-pay?
   "Returns nil if the player cannot pay the cost args, or a truthy map otherwise."
   [state side & args]
@@ -21,7 +23,8 @@
                           (= (first %) :memory)) ;; memoryunits may be negative
                      costs)
              (or (not forfeit-cost) (not (empty? scored))))
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
+      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
+      (do (toast state side (str "Unable to pay " costs)) false))))
 
 (defn pay
   "Deducts each cost from the player."
