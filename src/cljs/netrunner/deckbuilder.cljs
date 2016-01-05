@@ -482,11 +482,11 @@
                                     :on-mouse-leave #(put! zoom-channel false)} name]
                             (when (or wanted (not infaction))
                               (let [influence (* (:factioncost card) (:qty line))]
-                                [:span.influence
+                                (list " " [:span.influence
                                  {:class (faction-label card)
                                   :dangerouslySetInnerHTML
                                   #js {:__html (str (if-not infaction (influence-dots influence))
-                                                    (if wanted (restricted-dots (:qty line))))}}]))])
+                                                    (if wanted (restricted-dots (:qty line))))}}])))])
                          (:card line))])])]]))]
 
           [:div.deckedit
