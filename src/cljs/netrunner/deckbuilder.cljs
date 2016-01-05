@@ -20,7 +20,7 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
-(defn influencelimit [identity]
+(defn id-inf-limit [identity]
   "Returns influence limit of an identity or INFINITY in case of draft IDs."
   (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
 
@@ -32,7 +32,7 @@
 
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
-      (zero? (:factioncost card)) (= INFINITY (influencelimit identity))))
+      (zero? (:factioncost card)) (= INFINITY (id-inf-limit identity))))
 
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
@@ -119,8 +119,21 @@
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
 
-(defn influence [deck]
+(defn mostwanted
+  "Returns a map of faction keywords to number of MWL restricted cards from the faction's cards."
+  [deck]
+  (let [cards (:cards deck)
+        mwlhelper (fn [currmap line]
+                    (let [card (:card line)]
+                      (if (mostwanted? card)
+                        (update-in currmap [(keyword (faction-label card))]
+                                   (fnil (fn [curmwl] (+ curmwl (:qty line))) 0))
+                        currmap)))]
+    (reduce mwlhelper {} cards)))
+
+(defn influence
   "Returns a map of faction keywords to influence values from the faction's cards."
+  [deck]
   (let [identity (:identity deck)
         cards (:cards deck)
         infhelper (fn [currmap line]
@@ -139,9 +152,21 @@
       (merge-with - infmap singledinfmap))
       infmap)))
 
-(defn influence-count [deck]
-  "Returns sum of influence count used by a deck"
+(defn mostwanted-count
+  "Returns total number of MWL restricted cards in a deck."
+  [deck]
+  (apply + (vals (mostwanted deck))))
+
+(defn influence-count
+  "Returns sum of influence count used by a deck."
+  [deck]
   (apply + (vals (influence deck))))
+
+(defn deck-inf-limit [deck]
+  (let [originf (id-inf-limit (:identity deck))
+        postmwlinf (- originf (mostwanted-count deck))]
+    (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
+      INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
 
 (defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))
@@ -156,7 +181,7 @@
 
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (:minimumdecksize identity))
-       (<= (influence-count deck) (influencelimit identity))
+       (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
                      (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
        (or (= (:side identity) "Runner")
@@ -386,7 +411,7 @@
                     (when (< count min-count)
                       [:span.invalid (str "(minimum " min-count ")")])])
                  (let [inf (influence-count deck)
-                       limit (influencelimit identity)]
+                       limit (deck-inf-limit deck)]
                    [:div "Influence: "
                     [:span {:class (when (> inf limit) "invalid")} inf]
                     "/" (if (= INFINITY limit) "∞" limit)])
