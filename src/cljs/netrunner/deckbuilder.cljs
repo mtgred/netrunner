@@ -34,7 +34,7 @@
 
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
-      (zero? (:factioncost card)) (= INFINITY (id-inf-limit identity))))
+      (= 0 (:factioncost card)) (= INFINITY (id-inf-limit identity))))
 
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
@@ -419,7 +419,7 @@
                    [:div.float-right.legal "Tournament valid"]
                    (if (valid? deck)
                      [:div.float-right.casual "Casual play only"]
-                     [:div.float-right.invalid "Invalid deck"]))
+                     [:div.float-right.invalid "Invalid"]))
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
                  [:p (get-in deck [:identity :title])]]))]
@@ -449,10 +449,10 @@
                        min-count (:minimumdecksize identity)]
                    [:div count " cards"
                     (when (< count min-count)
-                      [:span.invalid (str "(minimum " min-count ")")])])
+                      [:span.invalid (str " (minimum " min-count ")")])])
                  (let [inf (influence-count deck)
                        limit (deck-inf-limit deck)
-                       id-limit (id-inf-limit deck)
+                       id-limit (id-inf-limit identity)
                        mwl (mostwanted-count deck)]
                    [:div "Influence: "
                     ; we don't use valid? and mwl-legal? functions here, since it concerns influence only
@@ -465,9 +465,9 @@
                          points (agenda-points deck)]
                      [:div "Agenda points: " points
                       (when (< points min-point)
-                        [:span.invalid "(minimum " min-point ")"])
+                        [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
-                        [:span.invalid "(maximum" (inc min-point) ")"])]))]
+                        [:span.invalid " (maximum" (inc min-point) ")"])]))]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group
