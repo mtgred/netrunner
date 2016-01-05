@@ -37,7 +37,7 @@
         cost-msg (or (some #(toast-msg-helper state side %) costs)
                      (when (and forfeit-cost (empty? scored)) "Unable to forfeit an Agenda"))]
     ; no cost message - hence can pay
-    (if (not cost-msg)
+    (if-not cost-msg
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
       ; only toast if title is specified
       (when title (toast state side (str cost-msg " for " title)) false))))
