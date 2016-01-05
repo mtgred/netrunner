@@ -141,7 +141,7 @@
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
     (when (or (nil? cost)
-              (apply can-pay? state side cost))
+              (apply can-pay? state side (:title card) cost))
       (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
       (resolve-ability state side ab card targets))))
 
@@ -243,7 +243,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner nil :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner "a run" :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)
     (pay state :runner nil :click 1)))

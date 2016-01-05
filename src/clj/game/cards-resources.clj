@@ -602,11 +602,11 @@
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable (filter #(and (not= (:type %) "Event")
-                                                          (can-pay? state side (modified-install-cost state side % [:credit -1])))
+                                                          (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (req
-                           (when (can-pay? state side (modified-install-cost state side target [:credit -1]))
+                           (when (can-pay? state side nil (modified-install-cost state side target [:credit -1]))
                              (install-cost-bonus state side [:credit -1])
                              (runner-install state side (dissoc target :facedown))
                              (trash state side (update-in card [:hosted]
@@ -664,7 +664,7 @@
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
-              :choices (req (let [hosted (filter #(can-pay? state side (modified-install-cost state side % [:credit -2]))
+              :choices (req (let [hosted (filter #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
                                                  (:hosted card))]
                               (if (empty? hosted)
                                 hosted (conj hosted "No install"))))
