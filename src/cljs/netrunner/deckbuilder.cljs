@@ -192,6 +192,11 @@
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
 
+(defn mwl-legal?
+  "Returns true if a deck is valid and the influence limit fits within NAPD MWL restrictions."
+  [deck]
+  (and (valid? deck) (<= (influence-count deck) (deck-inf-limit deck))))
+
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
   (deck->str owner)
@@ -410,8 +415,11 @@
                 [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
                                 :on-click #(put! select-channel deck)}
                  [:img {:src (image-url (:identity deck))}]
-                 (when-not (valid? deck)
-                   [:div.float-right.invalid "Invalid deck"])
+                 (if (mwl-legal? deck)
+                   [:div.float-right.legal "Tournament valid"]
+                   (if (valid? deck)
+                     [:div.float-right.casual "Casual play only"]
+                     [:div.float-right.invalid "Invalid deck"]))
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
                  [:p (get-in deck [:identity :title])]]))]
@@ -444,10 +452,12 @@
                       [:span.invalid (str "(minimum " min-count ")")])])
                  (let [inf (influence-count deck)
                        limit (deck-inf-limit deck)
+                       id-limit (id-inf-limit deck)
                        mwl (mostwanted-count deck)]
                    [:div "Influence: "
-                    [:span {:class (when (> inf limit) "invalid")} inf]
-                    "/" (if (= INFINITY limit) "∞" limit)
+                    ; we don't use valid? and mwl-legal? functions here, since it concerns influence only
+                    [:span {:class (if (> inf limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
+                    "/" (if (= INFINITY id-limit) "∞" limit)
                     (if (< 0 (+ inf mwl))
                       (list " " (influence-html deck) (restricted-html deck)))])
                  (when (= (:side identity) "Corp")
