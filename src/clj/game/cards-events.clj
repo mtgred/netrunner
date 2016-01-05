@@ -37,7 +37,7 @@
                           card
                           :can-rez
                                    (fn [state side card]
-                                     (if (has? card :type "ICE")
+                                     (if (ice? card)
                                        ( (constantly false) (system-msg state side (str "is prevented from rezzing ICE on this run by Blackmail")))
                                        true
                                        )
@@ -157,7 +157,7 @@
 
    "Escher"
    (let [eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
-                           :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
+                           :choices {:req #(and (= (first (:zone %)) :servers) (ice? %)) :max 2}
                            :effect (req (if (= (count targets) 2)
                                           (let [fndx (ice-index state (first targets))
                                                 sndx (ice-index state (second targets))
@@ -255,7 +255,7 @@
     :effect (effect (draw (- (:max-hand-size runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (not= (:type target) "ICE"))
+   {:events {:rez {:req (req (not (ice? target)))
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
 
@@ -288,13 +288,13 @@
              {:req (req (= target :archives))
               :effect (effect (resolve-ability
                                 {:prompt "Choose a piece of ICE in Archives"
-                                 :choices (req (filter #(= (:type %) "ICE") (:discard corp)))
+                                 :choices (req (filter ice? (:discard corp)))
                                  :effect (req (let [icename (:title target)]
                                                 (resolve-ability
                                                   state side
                                                   {:prompt (msg "Choose a rezzed copy of " icename " to trash")
-                                                   :choices {:req #(and (= (:type %) "ICE")
-                                                                        (:rezzed %)
+                                                   :choices {:req #(and (ice? %)
+                                                                        (rezzed? %)
                                                                         (= (:title %) icename))}
                                                    :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
                                                    :effect (req (trash state :corp target))} card nil)))}
@@ -506,7 +506,7 @@
    {:prompt "Choose a server" :choices (req servers)
     :effect (effect (run target nil card)
                     (register-events {:pre-rez
-                                      {:req (req (= (:type target) "ICE"))
+                                      {:req (req (ice? target))
                                        :effect (effect (rez-cost-bonus (:cost target)))}
                                       :run-ends
                                       {:effect (effect (unregister-events card))}}
@@ -564,7 +564,7 @@
 
    "Social Engineering"
    {:prompt "Choose an unrezzed piece of ICE"
-    :choices {:req #(and (= (last (:zone %)) :ices) (not (:rezzed %)) (= (:type %) "ICE"))}
+    :choices {:req #(and (= (last (:zone %)) :ices) (not (rezzed? %)) (ice? %))}
     :effect (req (let [ice target
                        serv (zone->name (second (:zone ice)))]
               (resolve-ability
@@ -635,7 +635,7 @@
 
    "Tinkering"
    {:prompt "Choose a piece of ICE"
-    :choices {:req #(and (= (last (:zone %)) :ices) (= (:type %) "ICE"))}
+    :choices {:req #(and (= (last (:zone %)) :ices) (ice? %))}
     :effect (req (let [ice target
                        serv (zone->name (second (:zone ice)))
                        stypes (:subtype ice)]

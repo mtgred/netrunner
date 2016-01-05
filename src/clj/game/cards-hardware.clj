@@ -127,7 +127,8 @@
                                  (update! (dissoc (get-card state card) :comet-event)))}]}
 
    "Cortez Chip"
-   {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
+   {:abilities [{:prompt "Choose a piece of ICE"
+                 :choices {:req #(and (not (rezzed? %)) (ice? %))}
                  :effect (req (let [ice target
                                     serv (zone->name (second (:zone ice)))]
                                 (update! state side (assoc card :cortez-target ice))

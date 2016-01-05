@@ -77,7 +77,8 @@
 
    "Compromised Employee"
    {:recurring 1
-    :events {:rez {:req (req (= (:type target) "ICE")) :msg "gain 1 [Credits]"
+    :events {:rez {:req (req (ice? target))
+                   :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Crash Space"
@@ -113,7 +114,7 @@
                            (register-turn-flag!
                              card :can-rez
                              (fn [state side card]
-                               (if (and (has? card :type "ICE")
+                               (if (and (ice? card)
                                         (= (count (get-in @state [:run :ices])) (get-in @state [:run :position])))
                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
                                  true)))
@@ -153,9 +154,9 @@
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (= 0 (:position run)))
+    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:rd]) (= 0 (:position run)))
+    :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
                    (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
@@ -270,7 +271,8 @@
                                   (runner-install state side c {:facedown true})))}]}
 
    "Ice Analyzer"
-   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "place 1 [Credits] on Ice Analyzer"
+   {:events {:rez {:req (req (ice? target))
+                   :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-prop :runner card :counter 1))}}
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
@@ -723,9 +725,9 @@
    {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (= 0 (:position run)))
+    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:hq]) (= 0 (:position run)))
+    :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
                    (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
@@ -736,7 +738,7 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "move 1 virus counter to " (:title target))
                  :req (req (pos? (get card :counter 0)))
-                 :choices {:req #(and (has? % :subtype "Virus") (>= (get % :counter 0) 1))}
+                 :choices {:req #(and (has? % :subtype "Virus") (pos? (get % :counter 0)))}
                  :effect (req (when (pos? (get-virus-counters state side target))
                                 (add-prop state side card :counter -1)
                                 (add-prop state side target :counter 1)))}]}
@@ -764,7 +766,7 @@
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
    "Xanadu"
-   {:events {:pre-rez-cost {:req (req (= (:type target) "ICE"))
+   {:events {:pre-rez-cost {:req (req (ice? target))
                             :effect (effect (rez-cost-bonus 1))}}}
 
    "Zona Sul Shipping"

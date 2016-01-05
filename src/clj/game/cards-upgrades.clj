@@ -2,13 +2,13 @@
 
 (def cards-upgrades
   {"Akitaro Watanabe"
-   {:events {:pre-rez-cost {:req (req (and (= (:type target) "ICE")
+   {:events {:pre-rez-cost {:req (req (and (ice? target)
                                            (= (card->server state card) (card->server state target))))
                             :effect (effect (rez-cost-bonus -2))}}}
 
    "Amazon Industrial Zone"
    {:events
-     {:corp-install  {:optional {:req (req (and (= (:type target) "ICE")
+     {:corp-install  {:optional {:req (req (and (ice? target)
                                                 (= (card->server state card) (card->server state target))))
                                  :prompt "Rez ICE with rez cost lowered by 3?"
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
@@ -26,7 +26,7 @@
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
                  :cost [:click 1] :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (has? % :subtype "Bioroid")
                                       (= (:zone %) [:hand]))}
                  :msg "host a piece of bioroid ICE"
@@ -151,7 +151,7 @@
     [{:req (req this-server)
       :label "Swap the ICE being approached with a piece of ICE from HQ"
       :prompt "Choose a piece of ICE"
-      :choices {:req #(and (= (:type %) "ICE")
+      :choices {:req #(and (ice? %)
                            (= (:zone %) [:hand]))}
       :once :per-run
       :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
@@ -286,7 +286,7 @@
                                   state side
                                   {:prompt "Choose a copy of the ICE just passed"
                                    :choices {:req #(and (= (:zone %) [:hand])
-                                                        (= (:type %) "ICE")
+                                                        (ice? %)
                                                         (= (:title %) icename))}
                                    :effect (req (trash state side (assoc target :seen true))
                                                 (swap! state update-in [:run]

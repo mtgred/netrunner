@@ -324,7 +324,7 @@
       :effect (req (let [fr target]
                      (resolve-ability state side
                        {:prompt "Choose a Bioroid ICE to install"
-                        :choices (req (filter #(and (= (:type %) "ICE") (has? % :subtype "Bioroid"))
+                        :choices (req (filter #(and (ice? %) (has? % :subtype "Bioroid"))
                                               ((if (= fr "HQ") :hand :discard) corp)))
                         :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
                                            hndx (ice-index state card)
@@ -483,12 +483,12 @@
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
-                 :choices {:req #(and (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                 :choices {:req #(and (ice? %) (= (:zone %) [:hand]))}
                  :prompt "Choose an ICE to install from HQ"
                  :effect (req (corp-install state side target (:server run) {:no-install-cost true}))}]}
 
    "Mother Goddess"
-   (let [ab {:req (req (= (:type target) "ICE"))
+   (let [ab {:req (req (ice? target))
              :effect (effect (update! (assoc card :subtype
                                                   (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                        (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
@@ -734,8 +734,8 @@
    {:advanceable :while-rezzed :abilities [end-the-run]}
 
    "Universal Connectivity Fee"
-   {:abilities [{:msg (msg "force the Runner to lose " (if (> (:tag runner) 0) "all credits" "1 [Credits]"))
-                 :effect (req (if (> (get-in @state [:runner :tag]) 0)
+   {:abilities [{:msg (msg "force the Runner to lose " (if (pos? (:tag runner)) "all credits" "1 [Credits]"))
+                 :effect (req (if (pos? (get-in @state [:runner :tag]))
                                 (do (lose state :runner :credit :all) (trash state side card))
                                 (lose state :runner :credit 1)))}]}
 

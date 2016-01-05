@@ -276,7 +276,7 @@
    "NEXT Design: Guarding the Net"
    (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
                                            "Choose a piece of ICE in HQ to install:")
-                              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                              :choices {:req #(and (:side % "Corp") (ice? %) (= (:zone %) [:hand]))}
                               :effect (req (corp-install state side target nil)
                                            (when (< n 3)
                                              (resolve-ability state side (nd (inc n)) card nil)))})]
@@ -381,10 +381,10 @@
 
    "The Foundry: Refining the Process"
    {:events
-    {:rez {:req (req (and (= (:type target) "ICE") ;; Did you rez and ice just now
+    {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now
                           (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
                           (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
-                                    (filter #(has? % :type "ICE") rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
+                                    (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
            {:prompt "Add another copy to HQ?"
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")

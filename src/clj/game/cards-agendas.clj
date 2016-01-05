@@ -14,10 +14,10 @@
 
    "Accelerated Beta Test"
    (letfn [(abt [n i]
-             {:req (req (> i 0))
+             {:req (req (pos? i))
               :prompt "Select a piece of ICE from the Temporary Zone to install"
               :choices {:req #(and (:side % "Corp")
-                                   (= (:type %) "ICE")
+                                   (ice? %)
                                    (= (:zone %) [:play-area]))}
               :effect (req (corp-install state side target nil
                                          {:no-install-cost true :install-state :rezzed-no-cost})
@@ -25,7 +25,7 @@
                            (when (< n i)
                              (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
-                 :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
+                 :yes-ability {:effect (req (let [n (count (filter ice? (take 3 (:deck corp))))]
                                               (resolve-ability state side
                                                                {:msg "look at the top 3 cards of R&D"
                                                                 :effect (req (doseq [c (take 3 (:deck corp))]
@@ -62,7 +62,7 @@
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
-    :events {:pre-rez-cost {:req (req (= (:type target) "ICE"))
+    :events {:pre-rez-cost {:req (req (ice? target))
                             :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaking News"
@@ -306,7 +306,7 @@
                              :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1) (forfeit card))}}}
 
    "Priority Requisition"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))}
+   {:choices {:req #(and (ice? %) (not (rezzed? %)))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs}))}
 

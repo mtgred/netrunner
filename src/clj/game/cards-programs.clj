@@ -6,8 +6,8 @@
                  :effect (effect (run :rd {:req (req (= target :rd))
                                            :replace-access
                                            {:prompt "Choose a card to shuffle into R&D"
-                                            :choices {:req #(and (not (= (:type %) "ICE"))
-                                                                 (not (:rezzed %))
+                                            :choices {:req #(and (not (ice? %))
+                                                                 (not (rezzed? %))
                                                                  (not (:advance-counter %)))}
                                             :effect (req (move state :corp target :deck)
                                                          (shuffle! state :corp :deck)
@@ -21,7 +21,7 @@
    "Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
-                                    hosted? (= (:type (:host b)) "ICE")
+                                    hosted? (ice? (:host b))
                                     remote? (is-remote? (second (:zone (:host b))))]
                                 (resolve-ability state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "
@@ -30,10 +30,10 @@
                                                     (and (if remote?
                                                            (is-central? (second (:zone %)))
                                                            (is-remote? (second (:zone %))))
-                                                         (= (:type %) "ICE")
+                                                         (ice? %)
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
-                                                    (and (= (:type %) "ICE")
+                                                    (and (ice? %)
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
                                   :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
@@ -76,7 +76,7 @@
     :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
    "Collective Consciousness"
-   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
+   {:events {:rez {:req (req (ice? target)) :msg "draw 1 card"
                    :effect (effect (draw :runner))}}}
 
    "Copycat"
@@ -86,7 +86,9 @@
                                 (resolve-ability
                                   state side
                                   {:prompt (msg "Choose a rezzed copy of " icename)
-                                   :choices {:req #(and (:rezzed %) (= (:type %) "ICE") (= (:title %) icename))}
+                                   :choices {:req #(and (rezzed? %)
+                                                        (ice? %)
+                                                        (= (:title %) icename))}
                                    :msg "redirect the run"
                                    :effect (req (let [dest (second (:zone target))
                                                       tgtndx (ice-index state target)]
@@ -417,7 +419,7 @@
     :events {:run-ends nil}}
 
    "Parasite"
-   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:hosting {:req #(and (ice? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
                    (update-ice-strength state side h)
@@ -448,13 +450,13 @@
 
    "Pawn"
    {:abilities [{:prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
                                       (some #{:hq :rd :archives} (rest (butlast (:zone %)))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:successful-run
-             {:req (req (= (:type (:host card)) "ICE"))
+             {:req (req (ice? card))
               :effect (req (let [i (ice-index state (:host card))
                                  nextice (when (> i 0) (nth (get-in @state
                                                             (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
@@ -498,7 +500,7 @@
 
    "Rook"
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
@@ -564,7 +566,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt (msg "Choose an ICE before or after " (:title cice))
-                                   :choices {:req #(and (= (:type %) "ICE")
+                                   :choices {:req #(and (ice? %)
                                                         (= (:zone %) (:zone cice))
                                                         (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
                                    :msg "swap a piece of barrier ICE"

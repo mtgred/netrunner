@@ -44,12 +44,12 @@
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
   (let [kw (to-keyword key)]
-    (if (< delta 0)
+    (if (neg? delta)
       (deduce state side [kw (- delta)])
       (swap! state update-in [side kw] (partial + delta)))
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
-                     " (" (if (> delta 0) (str "+" delta) delta) ")"))))
+                     " (" (if (pos? delta) (str "+" delta) delta) ")"))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."

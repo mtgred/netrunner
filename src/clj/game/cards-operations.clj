@@ -103,7 +103,7 @@
    {:req (req tagged) :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
-   {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
+   {:choices {:req #(and (ice? %) (has? % :subtype "Bioroid") (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
@@ -279,13 +279,13 @@
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
    "Oversight AI"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)) (= (last (:zone %)) :ices))}
+   {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Patch"
-   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:choices {:req #(and (ice? %) (rezzed? %))}
     :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
@@ -359,7 +359,7 @@
 
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
-                  (if (> left 0)
+                  (if (pos? left)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
                      :choices (req (cancellable (filter #(and (has? % :subtype "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
@@ -377,7 +377,7 @@
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
-    :choices {:req #(and (:rezzed %)
+    :choices {:req #(and (rezzed? %)
                          (or (has? % :subtype "Clone") (has? % :subtype "Executive")
                              (has? % :subtype "Sysop")))}
     :effect (effect (lose :bad-publicity 2) (trash target))}
@@ -425,7 +425,7 @@
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
+   {:choices {:req #(and (ice? %) (not (rezzed? %)))
               :max (req (min (:tag runner)
                              (reduce (fn [c server]
                                        (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
@@ -450,7 +450,7 @@
                              card nil)))}}
 
    "Sub Boost"
-   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:choices {:req #(and (ice? %) (rezzed? %))}
     :effect (effect (update! (assoc target :subtype
                                            (->> (vec (.split (:subtype target) " - "))
                                                 (concat ["Barrier"])
@@ -469,7 +469,7 @@
    "Sunset"
    (let [sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
                                  :choices {:req #(and (= serv (rest (butlast (:zone %))))
-                                                      (= (:type %) "ICE")) :max 2}
+                                                      (ice? %)) :max 2}
                                  :effect (req (if (= (count targets) 2)
                                                 (let [fndx (ice-index state (first targets))
                                                       sndx (ice-index state (second targets))

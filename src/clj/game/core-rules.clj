@@ -205,7 +205,7 @@
            (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
          (let [prevent (get-in @state [:prevent :trash ktype])]
            ; Check for prevention effects
-           (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
+           (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-prompt state :runner nil
                               (str "Prevent the trashing of " (:title card) "?") ["Done"]

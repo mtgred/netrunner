@@ -201,7 +201,7 @@
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
-                    {:prompt "Choose a piece of ICE to target for bypassing" :choices {:req #(= (:type %) "ICE")}
+                    {:prompt "Choose a piece of ICE to target for bypassing" :choices {:req ice?}
                      :effect (req (let [ice target
                                         serv (zone->name (second (:zone ice)))]
                                     (system-msg state side
@@ -257,7 +257,7 @@
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))

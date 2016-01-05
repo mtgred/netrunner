@@ -36,7 +36,7 @@
 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
-             {:req (req (and (= (:type target) "ICE") (has? target :subtype "Bioroid")))
+             {:req (req (and (ice? target) (has? target :subtype "Bioroid")))
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
@@ -254,10 +254,10 @@
 
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
-                 :choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+                 :choices {:req #(and (ice? %) (:rezzed %))}
                  :msg (msg "add strength to a rezzed ICE")
                  :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
-                                                             (fnil #(+ % 1) 0)))
+                                                             (fnil inc 0)))
                               (update-ice-strength state side target))}
                 {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]
     :events (let [it {:req (req (:it-targets card))
@@ -477,7 +477,7 @@
                  :effect (effect (gain :credit target) (trash card))}]}
 
    "Security Subcontract"
-   {:abilities [{:choices {:req #(and (= (:type %) "ICE") (:rezzed %))} :cost [:click 1]
+   {:abilities [{:choices {:req #(and (ice? %) (rezzed? %))} :cost [:click 1]
                  :msg (msg "trash " (:title target) " to gain 4 [Credits]")
                  :label "Trash a rezzed ICE to gain 4 [Credits]"
                  :effect (effect (trash target) (gain :credit 4))}]}
@@ -583,7 +583,7 @@
    {:abilities [{:label "Swap 2 pieces of installed ICE"
                  :cost [:click 1]
                  :prompt "Select two pieces of ICE to swap positions"
-                 :choices {:req #(and (= (first (:zone %)) :servers) (= (:type %) "ICE")) :max 2}
+                 :choices {:req #(and (= (first (:zone %)) :servers) (ice? %)) :max 2}
                  :effect (req (if (= (count targets) 2)
                                 (let [fndx (ice-index state (first targets))
                                       sndx (ice-index state (second targets))
