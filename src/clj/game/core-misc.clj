@@ -25,17 +25,17 @@
 ; think Mandatory Upgrades vs. Improved Tracers
 (defn copy-leave-play-effects [state side dest source]
   (let [source-def (card-def source)]
-    (if-let [source-leave-play (:leave-play source-def)]
+    (when-let [source-leave-play (:leave-play source-def)]
       (let [source-effect (:effect source-def)
             dest-card (merge dest {:source-leave-play source})]
-        (if (not (nil? source-effect)) (source-effect state side source nil))
+        (when-not (nil? source-effect) (source-effect state side source nil))
         (update! state side dest-card)))))
 
 (defn fire-leave-play-effects [state side card]
-  (if-let [source-leave-play (:source-leave-play card)]
+  (when-let [source-leave-play (:source-leave-play card)]
     (let [source-def (card-def source-leave-play)
           leave-effect (:leave-play source-def)]
-      (if (not (nil? leave-effect)) (leave-effect state side card nil)))))
+      (when-not (nil? leave-effect) (leave-effect state side card nil)))))
 
 
 (defn get-remotes [state]

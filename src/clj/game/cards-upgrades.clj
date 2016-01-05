@@ -184,7 +184,7 @@
 
    "Old Hollywood Grid"
    (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
-             :effect (req (if (not (some #(= (:title %) (:title target)) (:scored runner)))
+             :effect (req (if-not (some #(= (:title %) (:title target)) (:scored runner))
                             (prevent-steal state side)
                             (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
          un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]

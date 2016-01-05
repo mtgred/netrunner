@@ -105,7 +105,7 @@
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
        (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
-           (if (not placed)
+           (if-not placed
              (trigger-event state side :advance (get-card state updated-card))
              (trigger-event state side :advancement-placed (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card))))))

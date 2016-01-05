@@ -514,7 +514,7 @@
        {:req (req tagged)
         :effect (effect
                  (resolve-ability
-                  (if (not (zero? (:bad-publicity corp))) ;; If corp's bad-pub is 0
+                  (if-not (zero? (:bad-publicity corp)) ;; If corp's bad-pub is 0
                     {:optional {:player :runner
                                 :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
                                 :yes-ability {:effect (effect (lose :corp :bad-publicity 1))

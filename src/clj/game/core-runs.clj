@@ -116,7 +116,7 @@
                     ; The runner can potentially steal this agenda.
                     (let [cost (steal-cost state side c)]
                       ; Steal costs are additional costs and can be denied by the runner.
-                      (if (not (empty? cost))
+                      (if-not (empty? cost)
                         ; Ask if the runner will pay the additional cost to steal.
                         (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                                           {:yes-ability
