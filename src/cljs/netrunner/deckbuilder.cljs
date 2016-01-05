@@ -20,12 +20,14 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
-(defn id-inf-limit [identity]
+(defn id-inf-limit
   "Returns influence limit of an identity or INFINITY in case of draft IDs."
+  [identity]
   (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
 
-(defn mostwanted? [card]
+(defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
+  [card]
   (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD"
                    "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
     (some #(= (:title card) %) napdmwl)))
@@ -65,12 +67,14 @@
 (defn parse-deck [side deck]
   (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
 
-(defn faction-label [card]
+(defn faction-label
   "Returns faction of a card as a keyword"
+  [card]
   (-> card :faction .toLowerCase (.replace " " "-")))
 
-(defn allowed? [card {:keys [side faction title] :as identity}]
+(defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
+  [card {:keys [side faction title] :as identity}]
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
@@ -254,6 +258,16 @@
           (:cards @app-state))
     card))
 
+(defn influence-dots
+  "Returns a string with UTF-8 full circles representing influence."
+  [num]
+  (apply str (conj (for [_ (range num)] "&#9679;") "")))
+
+(defn restricted-dots
+  "Returns a string with UTF-8 empty circles representing MWL restricted cards."
+  [num]
+  (apply str (conj (for [_ (range num)] "&#9675;") "")))
+
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
         identity (not-alternate (:identity deck))
@@ -411,10 +425,16 @@
                     (when (< count min-count)
                       [:span.invalid (str "(minimum " min-count ")")])])
                  (let [inf (influence-count deck)
-                       limit (deck-inf-limit deck)]
+                       limit (deck-inf-limit deck)
+                       mwl (mostwanted-count deck)]
                    [:div "Influence: "
                     [:span {:class (when (> inf limit) "invalid")} inf]
-                    "/" (if (= INFINITY limit) "∞" limit)])
+                    "/" (if (= INFINITY limit) "∞" limit)
+                    (if (< 0 (+ inf mwl))
+                      (list " " [:span.influence
+                       {:class (name :neutral)
+                        :dangerouslySetInnerHTML
+                        #js {:__html (str (influence-dots inf) (restricted-dots mwl))}}]))])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
                          points (agenda-points deck)]
@@ -450,8 +470,8 @@
                                 [:span.influence
                                  {:class (faction-label card)
                                   :dangerouslySetInnerHTML
-                                  #js {:__html (str (if-not infaction (apply str (for [_ (range influence)] "&#9679;")))
-                                                    (if wanted (apply str (for [_ (range (:qty line))] "&#9675;"))))}}]))])
+                                  #js {:__html (str (if-not infaction (influence-dots influence))
+                                                    (if wanted (restricted-dots (:qty line))))}}]))])
                          (:card line))])])]]))]
 
           [:div.deckedit
