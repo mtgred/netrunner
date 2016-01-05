@@ -268,6 +268,24 @@
   [num]
   (apply str (conj (for [_ (range num)] "&#9675;") "")))
 
+(defn influence-html
+  "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
+  [deck]
+  (let [infmap (influence deck)]
+    (for [factionkey (sort (keys infmap))] [:span.influence
+                                            {:class (name factionkey)
+                                             :dangerouslySetInnerHTML
+                                                    #js {:__html (influence-dots (factionkey infmap))}}])))
+
+(defn restricted-html
+  "Returns hiccup-ready vector with dots colored appropriately to deck's MWL restricted cards."
+  [deck]
+  (let [mwlmap (mostwanted deck)]
+    (for [factionkey (sort (keys mwlmap))] [:span.influence
+                                         {:class (name factionkey)
+                                          :dangerouslySetInnerHTML
+                                          #js {:__html (restricted-dots (factionkey mwlmap))}}])))
+
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
         identity (not-alternate (:identity deck))
@@ -431,10 +449,7 @@
                     [:span {:class (when (> inf limit) "invalid")} inf]
                     "/" (if (= INFINITY limit) "∞" limit)
                     (if (< 0 (+ inf mwl))
-                      (list " " [:span.influence
-                       {:class (name :neutral)
-                        :dangerouslySetInnerHTML
-                        #js {:__html (str (influence-dots inf) (restricted-dots mwl))}}]))])
+                      (list " " (influence-html deck) (restricted-html deck)))])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
                          points (agenda-points deck)]
