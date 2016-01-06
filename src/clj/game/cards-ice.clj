@@ -138,7 +138,7 @@
                                    :prompt "Choose a target for Clairvoyant Monitor"
                                    :msg (msg "place 1 advancement token on "
                                              (if (:rezzed target) (:title target) "a card") " and end the run")
-                                   :choices {:req #(= (first (:zone %)) :servers)}
+                                   :choices {:req installed?}
                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
    "Chum"

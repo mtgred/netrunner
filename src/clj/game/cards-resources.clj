@@ -528,7 +528,7 @@
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:label "Expose 1 card"
                  :effect (effect (resolve-ability
-                                   {:choices {:req #(= (first (:zone %)) :servers)}
+                                   {:choices {:req installed?}
                                     :effect (effect (expose target) (trash card {:cause :ability-cost}))
                                     :msg (msg "expose " (:title target))} card nil))}]}
 

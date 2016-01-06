@@ -123,4 +123,4 @@
       (and (card-is? card :advanceable :while-rezzed)
            (rezzed? card))
       (and (card-is? card :type "Agenda")
-           (= (first (:zone card)) :servers))))
+           (installed? card))))

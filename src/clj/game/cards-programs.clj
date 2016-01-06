@@ -213,7 +213,7 @@
    {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Gravedigger"
-   {:events (let [e {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
+   {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                                :effect (effect (add-prop :runner card :counter 1))}]
               {:runner-trash e :corp-trash e})
     :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
@@ -397,7 +397,7 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
-                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}
+                 :choices {:req #(and (installed? %) (ice? %) (rezzed? %))}
                  :effect (req (let [ice target
                                     stypes (:subtype ice)]
                            (resolve-ability

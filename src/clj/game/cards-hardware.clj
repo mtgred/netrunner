@@ -267,7 +267,7 @@
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
-                 :choices {:req #(= (first (:zone %)) :servers)} :effect (effect (expose target))
+                 :choices {:req installed?} :effect (effect (expose target))
                  :msg "expose 1 card"}]}
 
    "LLDS Processor"

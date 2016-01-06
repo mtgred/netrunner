@@ -157,7 +157,7 @@
 
    "Escher"
    (let [eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
-                           :choices {:req #(and (= (first (:zone %)) :servers) (ice? %)) :max 2}
+                           :choices {:req #(and (installed? %) (ice? %)) :max 2}
                            :effect (req (if (= (count targets) 2)
                                           (let [fndx (ice-index state (first targets))
                                                 sndx (ice-index state (second targets))
@@ -318,7 +318,7 @@
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (resolve-ability (if (= target "Expose a card")
-                                       {:choices {:req #(= (first (:zone %)) :servers)}
+                                       {:choices {:req installed?}
                                         :effect (effect (expose target))
                                         :msg (msg "expose " (:title target))}
                                        {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
@@ -488,7 +488,7 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :choices {:req #(= (first (:zone %)) :servers)} :msg (msg "access " (:title target))
+    :choices {:req installed?} :msg (msg "access " (:title target))
     :effect (effect (handle-access targets))}
 
    "Recon"
@@ -515,7 +515,7 @@
 
    "Satellite Uplink"
    {:msg (msg "expose " (join ", " (map :title targets)))
-    :choices {:max 2 :req #(= (first (:zone %)) :servers)}
+    :choices {:max 2 :req installed?}
     :effect (req (doseq [c targets] (expose state side c)))}
 
    "Scavenge"

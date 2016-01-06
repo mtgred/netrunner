@@ -151,7 +151,7 @@
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced in a server"
                  :choices {:req #(and (can-be-advanced? %)
-                                      (= (first (:zone %)) :servers)
+                                      (installed? %)
                                       (= (last (:zone %)) :content))} ; should be *in* a server
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
@@ -185,7 +185,7 @@
                  :effect (effect (rez target {:ignore-cost :all-costs}))}]}
 
    "Encryption Protocol"
-   {:events {:pre-trash {:req (req (= (first (:zone target)) :servers))
+   {:events {:pre-trash {:req (req (installed? target))
                          :effect (effect (trash-cost-bonus 1))}}}
 
    "Eve Campaign"
@@ -248,7 +248,7 @@
 
    "Isabel McGuire"
    {:abilities [{:cost [:click 1] :label "Add an installed card to HQ"
-                 :choices {:req #(= (first (:zone %)) :servers)}
+                 :choices {:req installed?}
                  :msg (msg "move " (if (:rezzed target) (:title target) "a card") " to HQ")
                  :effect (effect (move target :hand))}]}
 
@@ -583,7 +583,7 @@
    {:abilities [{:label "Swap 2 pieces of installed ICE"
                  :cost [:click 1]
                  :prompt "Select two pieces of ICE to swap positions"
-                 :choices {:req #(and (= (first (:zone %)) :servers) (ice? %)) :max 2}
+                 :choices {:req #(and (installed? %) (ice? %)) :max 2}
                  :effect (req (if (= (count targets) 2)
                                 (let [fndx (ice-index state (first targets))
                                       sndx (ice-index state (second targets))

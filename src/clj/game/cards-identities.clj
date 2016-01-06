@@ -328,7 +328,7 @@
    "Silhouette: Stealth Operative"
    {:events {:successful-run
              {:req (req (= target :hq)) :once :per-turn
-              :effect (effect (resolve-ability {:choices {:req #(= (first (:zone %)) :servers)}
+              :effect (effect (resolve-ability {:choices {:req installed?}
                                                 :effect (effect (expose target)) :msg "expose 1 card"}
                                                card nil))}}}
 
@@ -374,7 +374,7 @@
    {:events {:runner-turn-ends {:req (req (not (:successful-run runner-reg)))
                                 :effect (req (toast state :corp "Reminder: you may click Tennin Institute: The Secrets Within to place 1 advancement token on a card." "info"))}}
     :abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
-                 :choices {:req #(= (first (:zone %)) :servers)}
+                 :choices {:req installed?}
                  :req (req (not (:successful-run runner-reg)))
                  :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
