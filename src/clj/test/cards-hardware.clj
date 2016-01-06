@@ -64,7 +64,7 @@
       (play-from-hand state :runner "Easy Mark")
       (is (= true (:comet-event (core/get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
-      (is (= (:cid comet) (get-in @state [:runner :prompt 0 :card :cid])))
+      (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
       (core/select state :runner {:card (find-card "Easy Mark" (:hand (get-runner)))})
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
@@ -195,7 +195,7 @@
         (is (= true (:swap (core/get-card state tt)))) ; Turntable ability enabled by steal
         (card-ability state :runner tt 0)
         ; Turntable prompt should be active
-        (is (= (:cid tt) (get-in @state [:runner :prompt 0 :card :cid])))
+        (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
         (prompt-choice :runner "Yes")
         (core/select state :runner {:card (find-card "Project Vitruvius" (:scored (get-corp)))})
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")

@@ -3,7 +3,7 @@
                                 costs-to-symbol vdissoc distinct-by abs string->num safe-split
                                 dissoc-in cancellable card-is? side-str
                                 build-spend-msg cost-names remote->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type]]
+                                is-remote? is-central? get-server-type other-side]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [clojure.core.match :refer [match]]))

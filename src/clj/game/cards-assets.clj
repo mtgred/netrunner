@@ -155,14 +155,20 @@
                  :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
 
    "Edge of World"
-   {:access {:optional
-             {:req (req installed)
-              :prompt "Pay 3 [Credits] to use Edge of World ability?"
-              :yes-ability {:cost [:credit 3]
-                            :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
-                                      " brain damage")
-                            :effect (req (damage state side :brain
-                                        (count (get-in corp [:servers (last (:server run)) :ices])) {:card card}))}}}}
+   {:access {:req (req installed)
+             :effect (effect (show-wait-prompt :runner "Corp to use Edge of World")
+                             (resolve-ability
+                               {:optional
+                                {:prompt "Pay 3 [Credits] to use Edge of World ability?"
+                                 :yes-ability {:cost [:credit 3]
+                                               :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
+                                                         " brain damage")
+                                               :effect (effect (clear-wait-prompt :runner)
+                                                               (damage :brain
+                                                                       (count (get-in corp [:servers (last (:server (:run @state))) :ices]))
+                                                                       {:card card}))}
+                                 :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}}
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -209,10 +215,16 @@
 
    "Ghost Branch"
    {:advanceable :always
-    :access {:optional {:req (req installed) :prompt "Use Ghost Branch ability?"
-                        :yes-ability {:msg (msg "give the Runner " (:advance-counter card) " tag"
-                                                (when (> (:advance-counter card) 1) "s"))
-                                      :effect (effect (tag-runner :runner (:advance-counter card)))}}}}
+    :access {:req (req installed)
+             :effect (effect (show-wait-prompt :runner "Corp to use Ghost Branch")
+                             (resolve-ability
+                               {:optional {:prompt "Use Ghost Branch ability?"
+                                           :yes-ability {:msg (msg "give the Runner " (:advance-counter card) " tag"
+                                                                   (when (> (:advance-counter card) 1) "s"))
+                                                         :effect (effect (clear-wait-prompt :runner)
+                                                                         (tag-runner :runner (:advance-counter card)))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}}
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -515,11 +527,16 @@
    {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
 
    "Snare!"
-   {:access {:optional {:req (req (not= (first (:zone card)) :discard))
-                        :prompt "Pay 4 [Credits] to use Snare! ability?"
-                        :yes-ability {:cost [:credit 4]
-                                      :msg "do 3 net damage and give the Runner 1 tag"
-                                      :effect (effect (damage :net 3 {:card card}) (tag-runner :runner 1))}}}}
+   {:access {:req (req (not= (first (:zone card)) :discard))
+             :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
+                             (resolve-ability
+                               {:optional {:prompt "Pay 4 [Credits] to use Snare! ability?"
+                                           :yes-ability {:cost [:credit 4]
+                                                         :msg "do 3 net damage and give the Runner 1 tag"
+                                                         :effect (effect (clear-wait-prompt :runner)
+                                                                         (damage :net 3 {:card card})
+                                                                         (tag-runner :runner 1))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}} card nil))}}
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))

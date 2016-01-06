@@ -93,6 +93,31 @@
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
 
+(deftest edge-of-world
+  "Edge of World - ability"
+  (do-game
+    (new-game (default-corp [(qty "Edge of World" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (core/gain state :corp :credit 6 :click 1)
+    (play-from-hand state :corp "Edge of World" "New remote")
+    (play-from-hand state :corp "Edge of World" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (take-credits state :corp)
+    (core/click-run state :runner {:server "Server 1"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner waiting for Corp to act")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+    (core/click-run state :runner {:server "Server 2"})
+    (core/no-action state :corp nil)
+    (core/successful-run state :runner nil)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
+
 (deftest elizabeth-mills
   "Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location"
   (do-game
@@ -343,6 +368,44 @@
       (card-ability state :corp ron 0)
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
+
+(deftest snare-cant-afford
+  "Snare! - Can't afford"
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (let [drt (first (get-in @state [:corp :servers :remote2 :content]))]
+      (take-credits state :corp)
+      (core/lose state :corp :credit 7)
+      (core/click-run state :corp {:server "Server 1"})
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (prompt-choice :runner "Yes")
+      (is (= 0 (count (:discard (get-runner)))) "Runner took no damage"))))
+
+(deftest snare-dedicated-response-team
+  "Snare! - with Dedicated Response Team"
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1) (qty "Dedicated Response Team" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (core/gain state :corp :click 1 :credit 4)
+    (let [drt (first (get-in @state [:corp :servers :remote2 :content]))]
+      (take-credits state :corp)
+      (core/click-run state :corp {:server "Server 1"})
+      (core/rez state :corp drt)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+      (prompt-choice :runner "Yes")
+      (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
 
 (deftest sundew
   "Sundew"

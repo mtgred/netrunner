@@ -116,6 +116,8 @@
       :click  (->> "[Click]" repeat (take value) (apply str))
       nil)))
 
+(defn other-side [side]
+  (if (= side :corp) :runner :corp))
 
 ; Functions for working with zones.
 (defn remote->name [zone]

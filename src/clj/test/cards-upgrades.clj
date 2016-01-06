@@ -117,6 +117,30 @@
     (is (zero? (core/get-virus-counters state :runner (find-card "Medium" (get-in @state [:runner :rig :program]))))
         "Medium has no counters")))
 
+(deftest ghost-branch-dedicated-response-team
+  "Ghost Branch - with Dedicated Response Team"
+  (do-game
+    (new-game (default-corp [(qty "Ghost Branch" 1) (qty "Dedicated Response Team" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ghost Branch" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (core/gain state :corp :click 1)
+    (let [gb (first (get-in @state [:corp :servers :remote1 :content]))
+          drt (first (get-in @state [:corp :servers :remote2 :content]))]
+      (core/advance state :corp {:card gb})
+      (core/advance state :corp {:card (refresh gb)})
+      (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
+      (take-credits state :corp)
+      (core/click-run state :corp {:server "Server 1"})
+      (core/rez state :corp drt)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Ghost Branch")
+      (prompt-choice :corp "Yes")
+      (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+      (prompt-choice :runner "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
+
 (deftest old-hollywood-grid
   "Old Hollywood Grid - Ability"
   (do-game
