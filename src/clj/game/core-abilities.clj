@@ -1,8 +1,7 @@
 (in-ns 'game.core)
 (declare corp-trace-prompt optional-ability
          check-optional check-psi check-trace
-         can-trigger? do-choices do-ability do-effect
-         print-msg register-end-turn register-once
+         can-trigger? do-choices do-ability
          psi-game resolve-psi resolve-trace show-select)
 
 ; Functions for implementing card abilities and prompts
@@ -92,24 +91,25 @@
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
-  [state side {:keys [optional] :as ability} {:keys [cid] :as card} targets]
-  (when (and optional
-             (not (get-in @state [(:once optional) (or (:once-key optional) cid)]))
-             (check-req state side card targets optional))
-    (optional-ability state (or (:player optional) side) card
-                      (:prompt optional) optional targets)))
+  [state side ability card targets]
+  (when-let [optional (:optional ability)]
+    (when (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
+               (check-req state side card targets optional))
+      (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
-  [state side {:keys [psi] :as ability} card targets]
-  (when (and psi (check-req state side card targets psi))
-    (psi-game state side card psi)))
+  [state side ability card targets]
+  (when-let [psi (:psi ability)]
+    (when (check-req state side card targets psi)
+      (psi-game state side card psi))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
-  [state side {:keys [trace] :as ability} card targets]
-  (when (and trace (check-req state side card targets trace))
-    (corp-trace-prompt state card trace)))
+  [state side ability card targets]
+  (when-let [trace (:trace ability)]
+    (when (check-req state side card targets trace)
+      (corp-trace-prompt state card trace))))
 
 (defn- can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -139,6 +139,8 @@
                 (let [cards (choices state side card targets)] ; a vector of cards or strings
                   (if not-distinct cards (distinct-by :title cards))))]
        (prompt! state s card prompt cs ab args)))))
+
+(declare print-msg do-effect register-end-turn register-once)
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
