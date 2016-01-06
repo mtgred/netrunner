@@ -492,6 +492,22 @@
                          [:div (om/build card-view card)]])
                       cards)])))))
 
+(defn play-area-view [{:keys [name player] :as cursor}]
+  (om/component
+   (sab/html
+    (let [cards (:play-area player)
+          size (count cards)
+          side (get-in player [:identity :side])]
+      (when-not (empty? cards)
+        [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
+         (om/build label cards {:opts {:name name}})
+         (map-indexed (fn [i card]
+                        [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
+                         (if (= (:user player) (:user @app-state))
+                           (om/build card-view card)
+                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
+                      cards)])))))
+
 (defn scored-view [{:keys [scored] :as cursor}]
   (om/component
    (sab/html
@@ -660,7 +676,8 @@
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
-                (when (not-spectator? game-state app-state) (om/build rfg-view {:cards (:play-area me)}))
+                (om/build play-area-view {:player opponent :name "Temporary Zone"})
+                (om/build play-area-view {:player me :name "Temporary Zone"})
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
                (when-not (= side :spectator)

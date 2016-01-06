@@ -17,20 +17,21 @@
    "Accelerated Beta Test"
    (letfn [(abt [n i]
              {:req (req (> i 0))
-              :prompt "Select a piece of ICE from the top of the play area to install"
-              :choices {:req #(and (:side % "Corp") (= (:type %) "ICE") (= (:zone %) [:play-area]))}
-              :effect (req (corp-install state side target nil {:no-install-cost true :install-state :rezzed-no-cost})
+              :prompt "Select a piece of ICE from the Temporary Zone to install"
+              :choices {:req #(and (:side % "Corp")
+                                   (= (:type %) "ICE")
+                                   (= (:zone %) [:play-area]))}
+              :effect (req (corp-install state side target nil
+                                         {:no-install-cost true :install-state :rezzed-no-cost})
                            (trigger-event state side :rez target)
                            (when (< n i)
                              (resolve-ability state side (abt (inc n) i) card nil)))})]
      {:optional {:prompt "Look at the top 3 cards of R&D?"
                  :yes-ability {:effect (req (let [n (count (filter #(= (:type %) "ICE") (take 3 (:deck corp))))]
                                               (resolve-ability state side
-                                                               {:msg (msg "install " n " ICE and trash " (- 3 n) " card" (when (< n 2) "s"))
+                                                               {:msg "look at the top 3 cards of R&D"
                                                                 :effect (req (doseq [c (take 3 (:deck corp))]
-                                                                               (if (= (:type c) "ICE")
-                                                                                 (move state side c :play-area)
-                                                                                 (trash state side c)))
+                                                                               (move state side c :play-area))
                                                                              (resolve-ability state side (abt 1 n) card nil))}
                                                                card nil)))}}})
 
