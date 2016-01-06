@@ -120,7 +120,11 @@
   "Returns true if the card can be advanced"
   [card]
   (or (card-is? card :advanceable :always)
+      ;; e.g. Tyrant, Woodcutter
       (and (card-is? card :advanceable :while-rezzed)
            (rezzed? card))
+      ;; e.g. Haas Arcology AI
+      (and (card-is? card :advanceable :while-unrezzed)
+           (not (rezzed? card)))
       (and (card-is? card :type "Agenda")
            (installed? card))))
