@@ -57,27 +57,31 @@
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
-        from-str (if (nil? src) nil (str " from their " src))
-        label (if (and (not (= last-zone :play-area))
-                       (not (and (= (:side c)  "Runner") (= last-zone :hand) (= server "Grip")))
-                       (or (and (= (:side c)  "Runner") (not (:facedown c)))
-                           (:rezzed c)
+        from-str (when-not (nil? src) (str " from their " src))
+        label (if (and (not= last-zone :play-area)
+                       (not (and (= (:side c)  "Runner")
+                                 (= last-zone :hand)
+                                 (= server "Grip")))
+                       (or (and (= (:side c)  "Runner")
+                                (not (:facedown c)))
+                           (rezzed? c)
                            (:seen c)
                            (= last-zone :deck)))
-                (:title c) "a card")
+                (:title c)
+                "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
-    (if (= src server) nil
-                       (case server
-                         ("Heap" "Archives")
-                         (do (trash state s c {:unpreventable true})
-                             (system-msg state side (str "trashes " label from-str)))
-                         ("HQ" "Grip")
-                         (do (move state s (dissoc c :seen :rezzed) :hand)
-                             (system-msg state side (str "moves " label from-str " to " server)))
-                         ("Stack" "R&D")
-                         (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
-                             (system-msg state side (str "moves " label from-str " to the top of " server)))
-                         nil))))
+    (when-not (= src server)
+      (case server
+        ("Heap" "Archives")
+        (do (trash state s c {:unpreventable true})
+            (system-msg state side (str "trashes " label from-str)))
+        ("HQ" "Grip")
+        (do (move state s (dissoc c :seen :rezzed) :hand)
+            (system-msg state side (str "moves " label from-str " to " server)))
+        ("Stack" "R&D")
+        (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
+            (system-msg state side (str "moves " label from-str " to the top of " server)))
+        nil))))
 
 (defn concede [state side args]
   (system-msg state side "concedes")
@@ -118,7 +122,7 @@
   [state side {:keys [card] :as args}]
   (let [r (get-in @state [side :selected 0 :req])]
     (when (or (not r) (r card))
-      (let [c (assoc card :selected (not (:selected card)))]
+      (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))

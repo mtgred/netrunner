@@ -2,21 +2,21 @@
 
 (declare card-flag?)
 
-; Ice strength functions
+;;; Ice strength functions
 (defn ice-strength-bonus
   "Increase the strength of the given ice by n. Negative values cause a decrease."
   [state side n ice]
-  ; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
+  ;; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
   (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
     (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0))))
 
 (defn ice-strength
   "Gets the modified strength of the given ice."
   [state side {:keys [strength] :as card}]
-  (-> (if-let [strfun (:strength-bonus (card-def card))]
-        (+ strength (strfun state side card nil))
-        strength)
-      (+ (or (get-in @state [:bonus :ice-strength]) 0))))
+  (+ (if-let [strfun (:strength-bonus (card-def card))]
+       (+ strength (strfun state side card nil))
+       strength)
+     (or (get-in @state [:bonus :ice-strength]) 0)))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
@@ -54,7 +54,8 @@
   (when-let [run (:run @state)]
     (swap! state update-in [:run :position] dec)))
 
-; Icebreaker functions.
+
+;;; Icebreaker functions.
 (defn breaker-strength-bonus
   "Increase the strength of the breaker by n. Negative values cause a decrease."
   [state side n]
@@ -63,18 +64,17 @@
 (defn breaker-strength
   "Gets the modified strength of the given breaker."
   [state side {:keys [strength] :as card}]
-  (if (nil? strength)
-    nil
-    ; A breaker's current strength is the sum of its native strength,
-    ; the bonus reported by its :strength-bonus function,
-    ; the effects of per-encounter and per-run strength pumps,
-    ; and miscellaneous increases registered by third parties (Dinosaurus, others).
-    (-> (if-let [strfun (:strength-bonus (card-def card))]
-          (+ strength (strfun state side card nil))
-          strength)
-        (+ (get-in card [:pump :encounter] 0)
-           (get-in card [:pump :all-run] 0)
-           (get-in @state [:bonus :breaker-strength] 0)))))
+  (when-not (nil? strength)
+    ;; A breaker's current strength is the sum of its native strength,
+    ;; the bonus reported by its :strength-bonus function,
+    ;; the effects of per-encounter and per-run strength pumps,
+    ;; and miscellaneous increases registered by third parties (Dinosaurus, others).
+    (+ (if-let [strfun (:strength-bonus (card-def card))]
+         (+ strength (strfun state side card nil))
+         strength)
+       (get-in card [:pump :encounter] 0)
+       (get-in card [:pump :all-run] 0)
+       (get-in @state [:bonus :breaker-strength] 0))))
 
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
@@ -92,7 +92,8 @@
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
    (update-breaker-strength state side (get-card state card))))
 
-; Others
+
+;;; Others
 (defn ice-index
   "Get the zero-based index of the given ice in its server's list of ice, where index 0
   is the innermost ice."

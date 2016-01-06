@@ -237,9 +237,12 @@
          priority-comp #(case % true 1 nil 0 %)
          newitem {:msg prompt :choices choices :effect f :card card :prompt-type prompt-type :show-discard show-discard
                   :priority priority :cancel-effect cancel-effect}]
-     (when (or (= prompt-type :waiting) (:number choices) (#{:credit :counter} choices) (> (count choices) 0))
+     (when (or (= prompt-type :waiting)
+               (:number choices)
+               (#{:credit :counter} choices)
+               (pos? (count choices)))
        (swap! state update-in [side :prompt]
-              ; insert the new prompt into the already-sorted queue based on its priority.
+              ;; insert the new prompt into the already-sorted queue based on its priority.
               #(let [[head tail] (split-with (fn [p] (>= (priority-comp (:priority p)) (priority-comp priority))) %)]
                 (concat head (cons newitem tail))))))))
 
@@ -337,7 +340,7 @@
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total
                                  " (" base
-                                 (when (> bonus 0) (str " + " bonus " bonus"))
+                                 (when (pos? bonus) (str " + " bonus " bonus"))
                                  " + " boost " [Credits]) (" (:msg ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %) {:priority 2})

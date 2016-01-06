@@ -5,14 +5,14 @@
 ; No idea what these are for. @justinliew?
 (defn copy-events [state side dest source]
   (let [source-def (card-def source)
-        source-events (if (:events source-def) (:events source-def) {})
+        source-events (or (:events source-def) {})
         dest-card (merge dest {:events source-events})]
     (update! state side dest-card)
     (register-events state side (:events dest-card) dest-card)))
 
 (defn copy-abilities [state side dest source]
   (let [source-def (card-def source)
-        source-abilities (if (:abilities source-def) (:abilities source-def) ())
+        source-abilities (or (:abilities source-def) ())
         ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
         source-abilities (for [ab source-abilities]
                            (assoc (select-keys ab [:cost :pump :breaks])

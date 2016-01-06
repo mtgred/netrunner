@@ -9,8 +9,8 @@
   (let [author (or user (get-in @state [side :user]))]
     (if-let [command (parse-command text)]
       (when (and (not= side nil) (not= side :spectator))
-        (do (command state side)
-            (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
+        (command state side)
+        (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
       (swap! state update-in [:log] #(conj % {:user author :text text})))))
 
 (defn system-msg
@@ -60,7 +60,7 @@
 (defn name-zone
   "Gets a string representation for the given zone."
   [side zone]
-  (match (into [] zone)
+  (match (vec zone)
          [:hand] (if (= side "Runner") "Grip" "HQ")
          [:discard] (if (= side "Runner") "Heap" "Archives")
          [:deck] (if (= side "Runner") "Stack" "R&D")

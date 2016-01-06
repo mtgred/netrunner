@@ -2,7 +2,7 @@
 
 (declare clear-turn-register! clear-wait-prompt create-deck keep-hand mulligan show-wait-prompt turn-message)
 
-; Functions for the creation of games and the progression of turns.
+;;; Functions for the creation of games and the progression of turns.
 (defn init-game
   "Initializes a new game with the given players vector."
   [{:keys [players gameid] :as game}]
@@ -58,7 +58,7 @@
   [state]
   (get-in (swap! state update-in [:rid] inc) [:rid]))
 
-; Appears to be unused???
+;; Appears to be unused???
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
    :runner {:credit 5 :run-credit 0 :link 0 :memory 4 :max-hand-size 5}})
@@ -95,7 +95,7 @@
 
 (defn start-turn
   "Start turn."
-  ; TODO: distinguish between corp start of turn and corp draw when necessary.
+  ;; TODO: distinguish between corp start of turn and corp draw when necessary.
   [state side args]
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
@@ -105,15 +105,15 @@
   (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
   (when (= side :corp)
-    (do (draw state :corp)
-        (update-all-advancement-costs state side))))
+    (draw state :corp)
+    (update-all-advancement-costs state side)))
 
 (defn end-turn [state side args]
   (let [max-hand-size (max (get-in @state [side :max-hand-size]) 0)]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (turn-message state side false)
       (if (= side :runner)
-        (do (when (< (get-in @state [:runner :max-hand-size]) 0)
+        (do (when (neg? (get-in @state [:runner :max-hand-size]))
               (flatline state))
             (trigger-event state side :runner-turn-ends))
         (trigger-event state side :corp-turn-ends))
@@ -123,8 +123,8 @@
             hosted-cards (filter :installed (mapcat :hosted rig-cards))
             hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
         (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-          ;Clear the added-virus-counter flag for each virus in play.
-          ;We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+          ;; Clear the added-virus-counter flag for each virus in play.
+          ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
           (when (has? card :subtype "Virus")
             (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)

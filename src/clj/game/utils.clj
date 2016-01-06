@@ -104,7 +104,7 @@
      (str "spends " cost-str " to " verb " "))))
 
 (defn cost-names [value attr]
-  (when (> value 0)
+  (when (pos? value)
     (case attr
       :credit (str value " [$]")
       :click  (->> "[Click]" repeat (take value) (apply str))
