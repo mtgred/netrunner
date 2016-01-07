@@ -60,7 +60,7 @@
    "Career Fair"
    {:prompt "Choose a resource to install from your Grip"
     :choices {:req #(and (is-type? % "Resource")
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
@@ -255,7 +255,7 @@
    "Freelance Coding Contract"
    {:choices {:max 5
               :req #(and (is-type? % "Program")
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :msg (msg "trash " (join ", " (map :title targets)) " and gain "
               (* 2 (count targets)) " [Credits]")
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
@@ -412,7 +412,7 @@
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
                              :choices {:req #(and (is-type? % "Program")
-                                                  (= (:zone %) [:hand]))}
+                                                  (in-hand? %))}
                              :effect (req (runner-install state side target)
                                             (when (< n 3)
                                               (resolve-ability state side (mi (inc n)) card nil)))})]
@@ -422,7 +422,7 @@
    {:prompt "Choose a program or piece of hardware to install from your Grip"
     :choices {:req #(and (or (is-type? % "Hardware")
                              (is-type? % "Program"))
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"

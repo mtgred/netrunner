@@ -259,14 +259,14 @@
    {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
                 {:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp")
-                                             (= (:zone %) [:hand])
+                                             (in-hand? %)
                                              (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
                  :choices {:req #(and (:side % "Corp")
-                                      (= (:zone %) [:hand])
+                                      (in-hand? %)
                                       (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
@@ -403,7 +403,7 @@
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ to force access"
-                 :choices {:req #(= (:zone %) [:hand])}
+                 :choices {:req in-hand?}
                  :label "Force the Runner to access a card in HQ"
                  :msg (msg "force the Runner to access " (:title target))
                  :effect (effect (handle-access targets) (trash card))}]}
@@ -423,14 +423,14 @@
    {:abilities [trash-program
                 {:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp")
-                                             (= (:zone %) [:hand])
+                                             (in-hand? %)
                                              (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
                  :choices {:req #(and (:side % "Corp")
-                                      (= (:zone %) [:hand])
+                                      (in-hand? %)
                                       (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
@@ -484,14 +484,14 @@
                  :effect (effect (damage :net 2 {:card card}))}
                 {:label "Reveal up to 2 Grail ICE from HQ"
                  :choices {:max 2 :req #(and (:side % "Corp")
-                                             (= (:zone %) [:hand])
+                                             (in-hand? %)
                                              (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
                  :choices {:req #(and (:side % "Corp")
-                                      (= (:zone %) [:hand])
+                                      (in-hand? %)
                                       (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
@@ -502,7 +502,8 @@
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
-                 :choices {:req #(and (ice? %) (= (:zone %) [:hand]))}
+                 :choices {:req #(and (ice? %)
+                                      (in-hand? %))}
                  :prompt "Choose an ICE to install from HQ"
                  :effect (req (corp-install state side target (:server run) {:no-install-cost true}))}]}
 

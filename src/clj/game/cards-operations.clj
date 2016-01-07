@@ -38,7 +38,8 @@
                   {:prompt "Select an advertisement to install and rez" :show-discard true
                    :choices {:req #(and (= (:side %) "Corp")
                                         (has-subtype? % "Advertisement")
-                                        (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                                        (or (in-hand? %)
+                                            (= (:zone %) [:discard])))}
                    :effect (req (corp-install state side target nil {:install-state :rezzed})
                                 (when (< n total)
                                   (resolve-ability state side (ab (inc n) total) card nil)))})]
@@ -120,7 +121,7 @@
 
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :effect (req (let [agenda target]
                    (resolve-ability
                      state side {:prompt (str "Choose a server to install " (:title agenda))
@@ -140,7 +141,8 @@
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
-   {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+   {:choices {:max 5 :req #(and (:side % "Corp")
+                                (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (gain :credit (* 2 (count targets))))}
 
@@ -224,7 +226,8 @@
 
    "Housekeeping"
    {:events {:runner-install {:req (req (= side :runner))
-                              :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Runner"))}
+                              :choices {:req #(and (in-hand? %)
+                                                   (= (:side %) "Runner"))}
                               :prompt "Choose a card from your grip to trash for Housekeeping" :once :per-turn
                               :msg (msg "to force the Runner to trash " (:title target) " from Grip")
                               :effect (effect (trash target))}}}
@@ -269,7 +272,7 @@
    {:prompt "Choose a card to install from HQ"
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "Mutate"
@@ -409,13 +412,15 @@
    {:effect (effect (gain :credit 15))}
 
    "Reuse"
-   {:choices {:max 100 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+   {:choices {:max 100 :req #(and (:side % "Corp")
+                                  (in-hand? %))}
     :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s") " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Rework"
    {:prompt "Choose a card from HQ to shuffle into R&D"
-    :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Corp"))}
+    :choices {:req #(and (in-hand? %)
+                         (= (:side %) "Corp"))}
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Scorched Earth"
@@ -434,7 +439,7 @@
    (let [shelper (fn sh [n] {:prompt "Select a card to install"
                              :choices {:req #(and (:side % "Corp")
                                                   (not (is-type? % "Operation"))
-                                                  (= (:zone %) [:hand]))}
+                                                  (in-hand? %))}
                              :effect (req (corp-install state side target nil)
                                           (when (< n 3)
                                             (resolve-ability state side (sh (inc n)) card nil)))})]

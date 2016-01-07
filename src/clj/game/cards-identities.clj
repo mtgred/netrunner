@@ -9,7 +9,7 @@
                    (doseq [c directives]
                      (runner-install state side c {:no-cost true
                                                    :custom-message (str "starts with " (:title c) " in play")}))
-                   (draw state :runner (count (filter #(= (:zone %) [:hand]) directives)))))})
+                   (draw state :runner (count (filter in-hand? directives)))))})
 
    "Andromeda: Dispossessed Ristie"
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
@@ -17,7 +17,8 @@
    "Apex: Invasive Predator"
    {:events {:runner-turn-begins
               {:prompt "Select a card to install facedown"
-               :choices {:max 1 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+               :choices {:max 1 :req #(and (:side % "Runner")
+                                           (in-hand? %))}
                :req (req (> (count (:hand runner)) 0))
                :effect (req (runner-install state side target {:facedown true}))}}}
 
@@ -139,7 +140,7 @@
                                                state side
                                                {:prompt (msg "Choose another " type " to install from your grip")
                                                 :choices {:req #(and (is-type? % type)
-                                                                     (= (:zone %) [:hand]))}
+                                                                     (in-hand? %))}
                                                 :msg (msg "install " (:title target))
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
 
@@ -280,7 +281,9 @@
    "NEXT Design: Guarding the Net"
    (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
                                            "Choose a piece of ICE in HQ to install:")
-                              :choices {:req #(and (:side % "Corp") (ice? %) (= (:zone %) [:hand]))}
+                              :choices {:req #(and (:side % "Corp")
+                                                   (ice? %)
+                                                   (in-hand? %))}
                               :effect (req (corp-install state side target nil)
                                            (when (< n 3)
                                              (resolve-ability state side (nd (inc n)) card nil)))})]

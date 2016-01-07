@@ -110,7 +110,9 @@
 
    "Daily Business Show"
    {:events {:corp-draw
-             {:msg "draw additional cards" :once :per-turn :once-key :daily-business-show
+             {:msg "draw additional cards"
+              :once :per-turn
+              :once-key :daily-business-show
               :req (req (first-event state side :corp-draw))
               :effect (req
                         (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
@@ -122,7 +124,8 @@
                             state side
                             {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
                              :choices {:max dbs
-                                       :req #(and (= (:zone %) [:hand]) (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                       :req #(and (in-hand? %)
+                                                  (some (fn [c] (= (:cid c) (:cid %))) drawn))}
                              :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
                              :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
 
@@ -395,7 +398,7 @@
                                              {:prompt "Choose an Agenda in HQ to score"
                                               :choices {:req #(and (is-type? % "Agenda")
                                                                    (<= (:advancementcost %) (:advance-counter c))
-                                                                   (= (:zone %) [:hand]))}
+                                                                   (in-hand? %))}
                                               :msg (msg "score " (:title target))
                                               :effect (effect (score (assoc target :advance-counter
                                                                                    (:advancementcost target))))} c nil)))}}}}
@@ -661,7 +664,7 @@
                  :cost [:click 1]
                  :prompt "Choose an asset to install on Worlds Plaza"
                  :choices {:req #(and (is-type? % "Asset")
-                                      (= [:hand] (:zone %))
+                                      (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
                  :effect (req (trigger-event state side :corp-install target)

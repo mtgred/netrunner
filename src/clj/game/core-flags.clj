@@ -98,6 +98,11 @@
 
 
 ;;; Small utilities for card properties.
+(defn in-hand?
+  "Checks if the specified card is in the hand."
+  [card]
+  (= (:zone card) [:hand]))
+
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
   [card type]

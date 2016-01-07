@@ -46,7 +46,8 @@
    "Bookmark"
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
-                 :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+                 :choices {:max 3 :req #(and (:side % "Runner")
+                                             (in-hand? %))}
                  :effect (req (doseq [c targets]
                                  (host state side (get-card state card) c {:facedown true})))}
                 {:label "Add all hosted cards to Grip" :cost [:click 1] :msg "add all hosted cards to their Grip"
@@ -83,7 +84,8 @@
                  :effect (req (let [handsize (count (:hand runner))]
                                 (resolve-ability state side
                                   {:prompt "Choose any number of cards to trash from your Grip"
-                                   :choices {:max handsize :req #(and (= (:side %) "Runner") (= (:zone %) [:hand]))}
+                                   :choices {:max handsize :req #(and (= (:side %) "Runner")
+                                                                      (in-hand? %))}
                                    :effect (req (let [trashed (count targets)
                                                       remaining (- handsize trashed)]
                                                   (doseq [c targets]
@@ -126,7 +128,7 @@
     :abilities [{:req (req (:comet-event card))
                  :prompt "Choose an Event in your Grip to play"
                  :choices {:req #(and (is-type? % "Event")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg (msg "play " (:title target))
                  :effect (effect (play-instant target)
                                  (update! (dissoc (get-card state card) :comet-event)))}]}
@@ -170,7 +172,7 @@
                  :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
                                  (update! (assoc (get-card state card) :dino-breaker (:cid target)))
@@ -304,7 +306,7 @@
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
                              :choices {:req #(and (is-type? % "Program")
-                                                  (= (:zone %) [:hand]))}
+                                                  (in-hand? %))}
                              :effect (req (install-cost-bonus state side [:credit -4])
                                           (runner-install state side target nil)
                                             (when (< n 3)
@@ -316,7 +318,7 @@
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority true
                    :choices {:req #(and (is-type? % "Program")
-                                        (= [:hand] (:zone %)))}
+                                        (in-hand? %))}
                    :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
                                                                        (damage-prevent :brain 1)
                                                                        (damage-prevent :net 1))}]})
@@ -342,7 +344,7 @@
                  :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive from your grip"
                  :choices {:req #(and (is-type? % "Program")
                                       (<= (:memoryunits %) 1)
-                                      (= [:hand] (:zone %)))}
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}

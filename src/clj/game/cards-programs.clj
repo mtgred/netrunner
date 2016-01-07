@@ -115,7 +115,7 @@
                                          {:prompt "Choose a card to install from your Grip"
                                           :choices {:req #(and (<= (:cost %) (get c :counter 0))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
-                                                               (= (:zone %) [:hand]))}
+                                                               (in-hand? %))}
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
                                                           (runner-install target {:no-cost true}))}
@@ -155,7 +155,7 @@
                  :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
                  :choices {:req #(and (is-type? % "Program")
                                       (not (has-subtype? % "Icebreaker"))
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg (msg "install and host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
@@ -308,7 +308,7 @@
                  :cost [:click 1]
                  :prompt "Choose a program in your Grip to install on Leprechaun"
                  :choices {:req #(and (is-type? % "Program")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
@@ -490,7 +490,7 @@
                  :prompt "Choose a Virus program to install on Progenitor"
                  :choices {:req #(and (is-type? % "Program")
                                       (has-subtype? % "Virus")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
@@ -529,7 +529,7 @@
                  :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (is-type? % "Program")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :effect (effect (runner-install target))}]}
 
    "Scheherazade"
@@ -537,7 +537,7 @@
                  :cost [:click 1]
                  :prompt "Choose a program to install on Scheherazade from your grip"
                  :choices {:req #(and (is-type? % "Program")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
                 {:label "Host an installed program"

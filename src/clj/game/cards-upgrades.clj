@@ -29,7 +29,7 @@
                  :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
                                       (has-subtype? % "Bioroid")
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :msg "host a piece of bioroid ICE"
                  :effect (effect (trigger-event :corp-install target)
                                  (host card target {:facedown true}))}
@@ -158,7 +158,7 @@
       :label "Swap the ICE being approached with a piece of ICE from HQ"
       :prompt "Choose a piece of ICE"
       :choices {:req #(and (ice? %)
-                           (= (:zone %) [:hand]))}
+                           (in-hand? %))}
       :once :per-run
       :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
       :effect (req (let [hqice target
@@ -293,7 +293,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose a copy of the ICE just passed"
-                                   :choices {:req #(and (= (:zone %) [:hand])
+                                   :choices {:req #(and (in-hand? %)
                                                         (ice? %)
                                                         (= (:title %) icename))}
                                    :effect (req (trash state side (assoc target :seen true))
