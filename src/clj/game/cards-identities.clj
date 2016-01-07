@@ -74,7 +74,7 @@
                                                                 (- (get-defer-damage state side :net nil) 1)
                                                                 " more net damage")))
                                                   :effect (effect (clear-wait-prompt :runner)
-                                                                  (trash target {:cause :net})
+                                                                  (trash target {:cause :net :unpreventable true})
                                                                   (damage :net (- (get-defer-damage state side :net nil) 1)
                                                                           {:unpreventable true :card card}))}
                                     :no-ability {:effect (effect (clear-wait-prompt :runner)
