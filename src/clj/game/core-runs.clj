@@ -432,7 +432,7 @@
             (trigger-event state side :successful-run-ends (first server)))
           (when (get-in @state [:run :unsuccessful])
             (trigger-event state side :unsuccessful-run-ends (first server)))
-          (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
             (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
             (update-breaker-strength state side p))

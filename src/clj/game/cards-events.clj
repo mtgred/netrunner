@@ -52,9 +52,9 @@
                                       :effect (effect (run target nil card))} card nil))}
 
    "Calling in Favors"
-   {:msg (msg "gain " (count (filter #(has? % :subtype "Connection") (all-installed state :runner)))
+   {:msg (msg "gain " (count (filter #(has-subtype? % "Connection") (all-installed state :runner)))
               " [Credits]")
-    :effect (effect (gain :credit (count (filter #(has? % :subtype "Connection")
+    :effect (effect (gain :credit (count (filter #(has-subtype? % "Connection")
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
@@ -100,12 +100,12 @@
    {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "add " (:title target) " to their Grip")
     :effect (req (move state side target :hand)
-                 (when (has? target :subtype "Virus")
+                 (when (has-subtype? target "Virus")
                    (resolve-ability state side
                                     {:prompt "Choose a virus to add to Grip"
                                      :msg (msg "add " (:title target) " to their Grip")
                                      :choices (req (cancellable
-                                                     (filter #(has? % :subtype "Virus") (:discard runner)) :sorted))
+                                                     (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
 
    "Demolition Run"
@@ -261,7 +261,7 @@
 
    "Hostage"
    {:prompt "Choose a Connection"
-    :choices (req (cancellable (filter #(has? % :subtype "Connection") (:deck runner)) :sorted))
+    :choices (req (cancellable (filter #(has-subtype? % "Connection") (:deck runner)) :sorted))
     :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack")
     :effect (req (let [connection target]
                    (resolve-ability
@@ -302,7 +302,7 @@
                               (unregister-events card))}}}
 
    "Independent Thinking"
-   (let [cards-to-draw (fn [ts] (* (count ts) (if (not-any? #(has? % :subtype "Directive") ts) 1 2)))]
+   (let [cards-to-draw (fn [ts] (* (count ts) (if (not-any? #(has-subtype? % "Directive") ts) 1 2)))]
      {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
       :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
       :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
@@ -435,14 +435,14 @@
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
-    :choices (req (cancellable (filter #(and (has? % :subtype "Run")
+    :choices (req (cancellable (filter #(and (has-subtype? % "Run")
                                              (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
 
    "Power Nap"
-   {:effect (effect (gain :credit (+ 2 (count (filter (fn [c] (has? c :subtype "Double"))
+   {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
                                                       (:discard runner))))))
-    :msg (msg "gain " (+ 2 (count (filter (fn [c] (has? c :subtype "Double")) (:discard runner)))) " [Credits]")}
+    :msg (msg "gain " (+ 2 (count (filter #(has-subtype? % "Double") (:discard runner)))) " [Credits]")}
 
    "Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
@@ -584,7 +584,7 @@
    {:prompt "Choose an Icebreaker"
     :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
                     (move target :hand) (shuffle! :deck))
-    :choices (req (cancellable (filter #(has? % :subtype "Icebreaker") (:deck runner)) :sorted))}
+    :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
@@ -602,9 +602,8 @@
 
    "Surge"
    {:msg (msg "place 2 virus tokens on " (:title target))
-    :choices {:req #(and (has? % :subtype "Virus") (% :added-virus-counter))}
-    :effect (req (add-prop state :runner target :counter 2))
-    }
+    :choices {:req #(and (has-subtype? % "Virus") (:added-virus-counter %))}
+    :effect (req (add-prop state :runner target :counter 2))}
 
    "Test Run"
    {:prompt "Install a program from Stack or Heap?" :choices (cancellable ["Stack" "Heap"])

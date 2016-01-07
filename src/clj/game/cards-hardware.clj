@@ -163,8 +163,8 @@
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
                  :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "AI"))
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI"))
                                       (= (:zone %) [:hand]))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
@@ -173,9 +173,9 @@
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "AI"))
-                                      (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI"))
+                                      (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (update! (assoc (get-card state card) :dino-breaker (:cid target)))
@@ -248,7 +248,7 @@
 
    "Grimoire"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
-    :events {:runner-install {:req (req (has? target :subtype "Virus"))
+    :events {:runner-install {:req (req (has-subtype? target "Virus"))
                               :effect (effect (add-prop target :counter 1))}}}
 
    "Heartbeat"
@@ -277,7 +277,7 @@
                                            (doseq [c cards]
                                              (update-breaker-strength state side c))))}]
                {:runner-turn-ends llds :corp-turn-ends llds
-                :runner-install {:req (req (has? target :subtype "Icebreaker"))
+                :runner-install {:req (req (has-subtype? target "Icebreaker"))
                                  :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                                  (update-breaker-strength target))}
                 :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
@@ -322,7 +322,8 @@
 
    "Net-Ready Eyes"
    {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
-    :events {:run {:choices {:req #(and (:installed %) (has? % :subtype "Icebreaker"))}
+    :events {:run {:choices {:req #(and (installed? %)
+                                        (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
 
@@ -414,18 +415,18 @@
                  :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
                  :req (req (:run @state))
                  :prompt "Choose one non-Cloud icebreaker"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "Cloud"))
-                                      (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "Cloud"))
+                                      (installed? %))}
                  :effect (effect (pump target (:link runner) :all-run)
                                  (trash (get-card state card) {:cause :ability-cost}))}
                 {:label "[Trash]: Add [Link] strength to any Cloud icebreakers until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
                  :req (req (:run @state))
                  :prompt "Choose any number of Cloud icebreakers"
-                 :choices {:max 50 :req #(and (has? % :subtype "Icebreaker")
-                                              (has? % :subtype "Cloud")
-                                              (:installed %))}
+                 :choices {:max 50 :req #(and (has-subtype? % "Icebreaker")
+                                              (has-subtype? % "Cloud")
+                                              (installed? %))}
                  :effect (req (doseq [t targets]
                                 (pump state side t (:link runner) :all-run)
                                 (update-breaker-strength state side t))
@@ -453,7 +454,8 @@
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
 
    "The Personal Touch"
-   {:hosting {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+   {:hosting {:req #(and (has-subtype? % "Icebreaker")
+                         (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (:host card))))
                                     :effect (effect (breaker-strength-bonus 1))}}}
@@ -509,9 +511,11 @@
    {:abilities
     [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
       :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
-      :choices {:req #(and (:rezzed %)
-                           (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
-                               (has? % :subtype "Executive") (has? % :subtype "Sysop"))
+      :choices {:req #(and (rezzed? %)
+                           (or (has-subtype? % "Bioroid")
+                               (has-subtype? % "Clone")
+                               (has-subtype? % "Executive")
+                               (has-subtype? % "Sysop"))
                            (or (= (last (:zone %)) :content) (= (last (:zone %)) :onhost)))}
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 

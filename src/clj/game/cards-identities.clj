@@ -122,7 +122,7 @@
                             :effect (effect (gain :credit 1))}}}
 
    "Haas-Bioroid: Stronger Together"
-   {:events {:pre-ice-strength {:req (req (and (ice? target) (has? target :subtype "Bioroid")))
+   {:events {:pre-ice-strength {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Harmony Medtech: Biomedical Pioneer"
@@ -194,7 +194,7 @@
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Ken \"Express\" Tenma: Disappeared Clone"
-   {:events {:play-event {:req (req (has? target :subtype "Run")) :once :per-turn
+   {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
@@ -264,9 +264,11 @@
    "New Angeles Sol: Your News"
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp
-                 :req (req (not (empty? (filter #(has? % :subtype "Current") (concat (:hand corp) (:discard corp))))))
-                 :yes-ability {:prompt "Choose a Current to play from HQ or Archives"  :show-discard true
-                               :choices {:req #(and (has? % :subtype "Current")
+                 :req (req (not (empty? (filter #(has-subtype? % "Current")
+                                                (concat (:hand corp) (:discard corp))))))
+                 :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
+                               :show-discard true
+                               :choices {:req #(and (has-subtype? % "Current")
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}
                                :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
@@ -293,8 +295,9 @@
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
 
    "Noise: Hacker Extraordinaire"
-   {:events {:runner-install {:msg "force the Corp to trash the top card of R&D" :effect (effect (mill :corp))
-                              :req (req (has? target :subtype "Virus"))}}}
+   {:events {:runner-install {:msg "force the Corp to trash the top card of R&D"
+                              :effect (effect (mill :corp))
+                              :req (req (has-subtype? target "Virus"))}}}
 
    "Quetzal: Free Spirit"
    {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
@@ -334,7 +337,7 @@
 
    "Spark Agency: Worldswide Reach"
    {:events
-    {:rez {:req (req (has? target :subtype "Advertisement"))
+    {:rez {:req (req (has-subtype? target "Advertisement"))
            :once :per-turn
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
@@ -403,8 +406,9 @@
    {:recurring 1}
 
    "Weyland Consortium: Building a Better World"
-   {:events {:play-operation {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))
-                              :req (req (has? target :subtype "Transaction"))}}}
+   {:events {:play-operation {:msg "gain 1 [Credits]"
+                              :effect (effect (gain :credit 1))
+                              :req (req (has-subtype? target "Transaction"))}}}
 
    "Whizzard: Master Gamer"
    {:recurring 3}

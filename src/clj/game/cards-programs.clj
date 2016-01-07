@@ -32,10 +32,12 @@
                                                            (is-remote? (second (:zone %))))
                                                          (ice? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
+                                                                    (:hosted %))))
                                                     (and (ice? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                                         (not (some (fn [c] (has-subtype? c :subtype "Caïssa"))
+                                                                    (:hosted %)))))}
                                   :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
@@ -143,13 +145,13 @@
    {:abilities [{:label "Add a virus program to your Grip from your Stack"
                  :prompt "Choose a Virus" :msg (msg "adds " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(and (= (:type %) "Program")
-                                                          (has? % :subtype "Virus"))
+                                                          (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
                 {:label "Install a non-Icebreaker program on Djinn" :cost [:click 1]
                  :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
                  :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Icebreaker"))
+                                      (not (has-subtype? % "Icebreaker"))
                                       (= (:zone %) [:hand]))}
                  :msg (msg "install and host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
@@ -159,7 +161,7 @@
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
                  :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Icebreaker"))
+                                      (not (has-subtype? % "Icebreaker"))
                                       (:installed %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
@@ -238,7 +240,7 @@
    {:data {:counter 1 :counter-type "Virus"}
     :abilities [{:req (req (> (:counter card) 0)) :priority true
                  :prompt "Move a virus counter to which card?"
-                 :choices {:req #(has? % :subtype "Virus")}
+                 :choices {:req #(has-subtype? % "Virus")}
                  :effect (req (let [abilities (:abilities (card-def target))
                                     virus target]
                                 (add-prop state :runner virus :counter 1)
@@ -272,7 +274,8 @@
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1]
                  :msg (msg "move " (:counter card) " virus counter to " (:title target))
-                 :choices {:req #(and (:installed %) (has? % :subtype "Virus"))}
+                 :choices {:req #(and (installed? %)
+                                      (has-subtype? % "Virus"))}
                  :effect (effect (trash card {:cause :ability-cost}) (add-prop target :counter (:counter card)))}]}
 
    "Ixodidae"
@@ -465,7 +468,7 @@
                                (do (resolve-ability state side
                                      {:prompt "Choose a Caïssa program to install from your Grip or Heap"
                                       :show-discard true
-                                      :choices {:req #(and (has? % :subtype "Caïssa")
+                                      :choices {:req #(and (has-subtype? % "Caïssa")
                                                            (#{[:hand] [:discard]} (:zone %)))}
                                       :effect (effect (runner-install target {:no-cost true}))} card nil)
                                     (trash state side card)))))}}}
@@ -480,7 +483,7 @@
                  :cost [:click 1] :req (req (empty? (:hosted card)))
                  :prompt "Choose a Virus program to install on Progenitor"
                  :choices {:req #(and (= (:type %) "Program")
-                                      (has? % :subtype "Virus")
+                                      (has-subtype? % "Virus")
                                       (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
@@ -488,7 +491,7 @@
                 {:label "Host an installed virus on Progenitor" :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed virus program to host on Progenitor"
                  :choices {:req #(and (= (:type %) "Program")
-                                      (has? % :subtype "Virus")
+                                      (has-subtype? % "Virus")
                                       (:installed %))}
                  :msg (msg "host " (:title target)) :effect (effect (host card target))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
@@ -502,7 +505,8 @@
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
                  :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                      (not (some (fn [c] (has-subtype? c "Caïssa"))
+                                                 (:hosted %))))}
                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
                  :effect (effect (host target card))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
@@ -560,7 +564,9 @@
 
    "Surfer"
    {:abilities [{:cost [:credit 2]
-                 :req (req (and (:run @state) (:rezzed current-ice) (has? current-ice :subtype "Barrier")))
+                 :req (req (and (:run @state)
+                                (:rezzed current-ice)
+                                (has-subtype? current-ice "Barrier")))
                  :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                  :effect (req (let [cice current-ice]
                                 (resolve-ability

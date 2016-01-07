@@ -72,7 +72,7 @@
 
    "Chrome Parlor"
    {:events
-    {:pre-damage {:req (req (has? (second targets) :subtype "Cybernetic"))
+    {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
    "Compromised Employee"
@@ -333,7 +333,7 @@
    {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
                  :prompt "Choose a non-virus program to install on London Library from your grip"
                  :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Virus"))
+                                      (not (has-subtype? % "Virus"))
                                       (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
@@ -390,12 +390,14 @@
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
                  :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
-                 :choices {:req #(and (has? % :subtype "Connection") (= (:zone %) [:hand]))}
+                 :choices {:req #(and (has-subtype? % "Connection")
+                                      (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"
                  :prompt "Choose a connection to host on Off-Campus Apartment"
-                 :choices {:req #(and (has? % :subtype "Connection") (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Connection")
+                                      (installed? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (host card target) (draw))}]}
 
@@ -541,7 +543,7 @@
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
-                                                (filter #(not (has? % :subtype "Virtual"))
+                                                (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
@@ -647,8 +649,8 @@
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
                               :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1))
-                              :req (req (or (has? target :subtype "Black Ops")
-                                            (has? target :subtype "Gray Ops")))}}}
+                              :req (req (or (has-subtype? target "Black Ops")
+                                            (has-subtype? target "Gray Ops")))}}}
 
    "Technical Writer"
    {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
@@ -660,7 +662,8 @@
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
     :abilities [{:msg (msg "give +2 strength to " (:title target))
-                 :choices {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (installed? %))}
                  :effect (effect (update! (assoc card :hai-target target))
                                  (trash (get-card state card) {:cause :ability-cost})
                                  (update-breaker-strength target))}]
@@ -738,7 +741,8 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "move 1 virus counter to " (:title target))
                  :req (req (pos? (get card :counter 0)))
-                 :choices {:req #(and (has? % :subtype "Virus") (pos? (get % :counter 0)))}
+                 :choices {:req #(and (has-subtype? % "Virus")
+                                      (pos? (get % :counter 0)))}
                  :effect (req (when (pos? (get-virus-counters state side target))
                                 (add-prop state side card :counter -1)
                                 (add-prop state side target :counter 1)))}]}

@@ -1,12 +1,12 @@
 (in-ns 'game.core)
 
-; These functions are called by main.clj in response to commands sent by users.
+;; These functions are called by main.clj in response to commands sent by users.
 
 (declare card-str can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
-         jack-out move name-zone play-instant purge resolve-select run
+         jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win)
 
-; Neutral actions
+;;; Neutral actions
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
@@ -96,20 +96,20 @@
                  (min choice (get-in @state [side :credit]))
                  choice)]
     (if (not= choice "Cancel")
-      ; The user did not choose "cancel"
+      ;; The user did not choose "cancel"
       (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
             (pay state side card :credit choice))
           (when (= (:choices prompt) :counter) ; :counter prompts deduct counters from the card
             (add-prop state side (:card prompt) :counter (- choice)))
-          ; trigger the prompt's effect function
+          ;; trigger the prompt's effect function
           ((:effect prompt) (or choice card)))
       (when (:cancel-effect prompt)
-        ; the user chose "cancel" -- trigger the cancel effect.
+        ;; the user chose "cancel" -- trigger the cancel effect.
         ((:cancel-effect prompt) choice)))
 
-    ; remove the prompt from the queue
+    ;; remove the prompt from the queue
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
-    ; This is a dirty hack to end the run when the last access prompt is resolved.
+    ;; This is a dirty hack to end the run when the last access prompt is resolved.
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
         (when (:ended run)
@@ -139,7 +139,7 @@
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
-             ; recurring credit abilities are not in the :abilities map and are implicit
+             ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))
@@ -150,7 +150,7 @@
       (resolve-ability state side ab card targets))))
 
 
-; Corp actions
+;;; Corp actions
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
@@ -253,7 +253,7 @@
         (update-ice-strength state side ice)))))
 
 
-; Runner actions
+;;; Runner actions
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
@@ -302,6 +302,6 @@
       (when (> pos 0)
         (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
           (trigger-event state side :approach-ice ice))))
-    (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
       (update-breaker-strength state side p))))

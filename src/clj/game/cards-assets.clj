@@ -36,7 +36,7 @@
 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
-             {:req (req (and (ice? target) (has? target :subtype "Bioroid")))
+             {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
@@ -91,7 +91,7 @@
    "Contract Killer"
    {:advanceable :always
     :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :choices {:req #(has? % :subtype "Connection")}
+                 :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
                  :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
@@ -176,7 +176,7 @@
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1] :label "Trash a location"
                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
-                 :choices {:req #(has? % :subtype "Location")}
+                 :choices {:req #(has-subtype? % "Location")}
                  :effect (effect (trash card) (trash target) (gain :bad-publicity 1))}]}
 
    "Elizas Toybox"

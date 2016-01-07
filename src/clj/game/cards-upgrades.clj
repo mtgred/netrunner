@@ -25,9 +25,10 @@
 
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
-                 :cost [:click 1] :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
+                 :cost [:click 1]
+                 :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
-                                      (has? % :subtype "Bioroid")
+                                      (has-subtype? % "Bioroid")
                                       (= (:zone %) [:hand]))}
                  :msg "host a piece of bioroid ICE"
                  :effect (effect (trigger-event :corp-install target)
@@ -297,7 +298,8 @@
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
-                                (has? current-ice :subtype "Bioroid"))) :effect (effect (trash card))
+                                (has-subtype? current-ice "Bioroid")))
+                 :effect (effect (trash card))
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
 
    "Valley Grid"
@@ -322,6 +324,6 @@
 
    "Will-o-the-Wisp"
    {:abilities [{:label "[Trash]: Add an icebreaker to the bottom of Stack"
-                 :choices {:req #(has? % :subtype "Icebreaker")}
+                 :choices {:req #(has-subtype? % "Icebreaker")}
                  :msg (msg "add " (:title target) " to the bottom of Stack")
                  :effect (effect (trash card) (move :runner target :deck))}]}})

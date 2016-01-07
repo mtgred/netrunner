@@ -35,7 +35,7 @@
    (let [abhelp (fn ab [n total]
                   {:prompt "Select an advertisement to install and rez" :show-discard true
                    :choices {:req #(and (= (:side %) "Corp")
-                                        (has? % :subtype "Advertisement")
+                                        (has-subtype? % "Advertisement")
                                         (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
                    :effect (req (corp-install state side target nil {:install-state :rezzed})
                                 (when (< n total)
@@ -103,7 +103,9 @@
    {:req (req tagged) :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
-   {:choices {:req #(and (ice? %) (has? % :subtype "Bioroid") (not (rezzed? %)))}
+   {:choices {:req #(and (ice? %)
+                         (has-subtype? % "Bioroid")
+                         (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
@@ -181,10 +183,14 @@
                     (move target :hand) (shuffle! :deck))}
 
    "Foxfire"
-   {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
-            :choices {:req #(and (:installed %)
-                                 (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
-            :msg "trash 1 virtual resource or link" :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
+   {:trace {:base 7
+            :prompt "Choose 1 card to trash"
+            :not-distinct true
+            :choices {:req #(and (installed? %)
+                                 (or (has-subtype? % "Virtual")
+                                     (has-subtype? % "Link")))}
+            :msg "trash 1 virtual resource or link"
+            :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
 
    "Freelancer"
    {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
@@ -361,7 +367,7 @@
    (let [rthelp (fn rt [total left selected]
                   (if (pos? left)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
-                     :choices (req (cancellable (filter #(and (has? % :subtype "Sysop")
+                     :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
                      :effect (req (move state side target :hand)
@@ -378,8 +384,9 @@
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
     :choices {:req #(and (rezzed? %)
-                         (or (has? % :subtype "Clone") (has? % :subtype "Executive")
-                             (has? % :subtype "Sysop")))}
+                         (or (has-subtype? % "Clone")
+                             (has-subtype? % "Executive")
+                             (has-subtype? % "Sysop")))}
     :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
@@ -434,7 +441,9 @@
     :effect (req (doseq [t targets] (rez state side t {:ignore-cost :all-costs})))}
 
    "Snatch and Grab"
-   {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}
+   {:trace {:msg "trash a connection"
+            :base 3
+            :choices {:req #(has-subtype? % "Connection")}
             :effect (req (let [c target]
                            (resolve-ability
                              state side

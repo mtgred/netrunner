@@ -12,22 +12,22 @@
   ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
-           additional-cost (if (and (has? card :subtype "Double")
+           additional-cost (if (and (has-subtype? card "Double")
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
                     (req state side card targets) true)
-                  (not (and (has? card :subtype "Current")
+                  (not (and (has-subtype? card "Current")
                             (get-in @state [side :register :cannot-play-current])))
-                  (not (and (has? card :subtype "Priority")
+                  (not (and (has-subtype? card "Priority")
                             (get-in @state [side :register :spent-click]))))
          (when-let [cost-str (pay state side card :credit (:cost card) extra-cost
                                   (when-not no-additional-cost additional-cost))]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
-             (if (has? c :subtype "Current")
+             (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
                      (when-let [current (first (get-in @state [s :current]))]
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
@@ -305,7 +305,8 @@
         hosted-cards (filter :installed (mapcat :hosted rig-cards))
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
     (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-      (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
+      (when (or (has-subtype? card "Virus")
+                (= (:counter-type card) "Virus"))
         (set-prop state :runner card :counter 0)))
     (update-all-ice state side))
   (trigger-event state side :purge))

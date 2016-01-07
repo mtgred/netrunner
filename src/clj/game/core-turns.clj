@@ -125,7 +125,7 @@
         (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
           ;; Clear the added-virus-counter flag for each virus in play.
           ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-          (when (has? card :subtype "Virus")
+          (when (has-subtype? card "Virus")
             (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
       (clear-turn-register! state)
