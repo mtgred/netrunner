@@ -9,9 +9,7 @@
                                   (gain-agenda-point state agenda-owner (- (:agendapoints card))))
                                 ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
                                 (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
-                                (shuffle! state :corp :deck)
-                                )
-                   }]
+                                (shuffle! state :corp :deck))}]
       :flags {:has-abilities-when-stolen true}}
 
    "Accelerated Beta Test"
@@ -120,7 +118,8 @@
                                :msg "create a new remote server, installing cards at no cost"}}})
 
    "Domestic Sleepers"
-   {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
+   {:agendapoints-runner (req (do 0))
+    :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect (req (when (zero? (:counter card))
                                 (gain-agenda-point state side 1))
                               (set-prop state side card :counter 1 :agendapoints 1))}]}
@@ -341,7 +340,8 @@
                  :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Beale"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
+   {:agendapoints-runner (req (do 2))
+    :effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
                               :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
    "Project Vitruvius"
