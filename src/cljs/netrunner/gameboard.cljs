@@ -37,16 +37,22 @@
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
 
-(defn notify [text]
-  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text})))
+(declare toast)
+
+(defn notify
+  "Send a notification to the chat, and a toast to the current player of the specified severity"
+  [text severity]
+  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
+  (toast text severity))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
-(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."))
+(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."
+                                  "error"))
 (.on socket "reconnect" #(when (.-onbeforeunload js/window)
-                           (notify "Reconnected to the server.")
+                           (notify "Reconnected to the server." "success")
                            (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
 (def anr-icons {"[Credits]" "credit"
