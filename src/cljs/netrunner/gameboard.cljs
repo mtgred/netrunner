@@ -20,10 +20,10 @@
                      "newestOnTop" false
                      "progressBar" false
                      "positionClass" "toast-card"
-                     "preventDuplicates" false
+                     "preventDuplicates" true
                      "onclick" nil
                      "showDuration" 300
-                     "hideDuration" 1000
+                     "hideDuration" 3000
                      "timeOut" 3000
                      "extendedTimeOut" 1000
                      "showEasing" "swing"
@@ -108,9 +108,10 @@
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
-  [msg]
+  [msg type]
   (set! (.-options js/toastr) toastr-options)
-  (.warning js/toastr msg)
+  (let [f (aget js/toastr type)] 
+    (f msg))
   (send-command "toast"))
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
@@ -659,7 +660,7 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (:max-hand-size me) 0)]
     (if (> (count (:hand me)) max-size)
-      (toast (str "Discard to " max-size " cards"))
+      (toast (str "Discard to " max-size " cards") "warning")
       (send-command "end-turn"))))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
@@ -677,8 +678,8 @@
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default"))
-      (when-let [msg (get-in cursor [side :warning])]
-        (toast msg)))
+      (doseq [{:keys [msg type]} (get-in cursor [side :toast])]
+        (toast msg type)))
 
     om/IRenderState
     (render-state [this state]

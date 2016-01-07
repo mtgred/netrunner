@@ -198,7 +198,7 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:no-action {:effect (effect (system-msg "can be forced to draw by clicking on Laramy Fisk: Savvy Investor"))
+   {:events {:no-action {:effect (req (toast state :runner "Click Laramy Fisk: Savvy Investor to force the corp to draw a card." "info"))
                          :req (req (and run
                                         (is-central? (:server run))
                                         (not current-ice)
@@ -217,12 +217,12 @@
 
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored
-             {:effect (req (system-msg state :runner
-                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+             {:effect (req (toast state :runner
+                                  (str "Click on Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
                            (update! state :runner (assoc card :bounce-hq true)))}
              :agenda-stolen
-             {:effect (req (system-msg state :runner
-                                       (str "can add 1 unrezzed card to HQ by clicking on Leela Patel: Trained Pragmatist"))
+             {:effect (req (toast state :runner
+                                  (str "Click on Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
                            (update! state side (assoc card :bounce-hq true)))}}
     :abilities [{:req (req (:bounce-hq card))
                  :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner

@@ -548,8 +548,9 @@
                                   :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
 
    "Team Sponsorship"
-   {:events {:agenda-scored {:effect (req (system-msg state :corp (str "can install a card from Archives or HQ"
-                                                                       " by clicking on Team Sponsorship"))
+   {:events {:agenda-scored {:effect (req (toast state :corp (str "Click on Team Sponsorship "
+                                                                  "to install a card from "
+                                                                  "Archives or HQ.") "info")
                                           (update! state side (assoc card :ts-active true)))}}
     :abilities [{:label "Install a card from Archives or HQ"
                  :req (req (:ts-active card))

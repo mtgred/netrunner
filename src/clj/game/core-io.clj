@@ -27,9 +27,15 @@
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
 
 (defn toast
-  "Sets a message to toast (as a warning)"
-  [state side msg]
-  (swap! state assoc-in [side :warning] msg))
+  "Adds a message to toast with specified severity (default as a warning) to the toast msg list.
+  If message is nil, removes first toast in the list."
+  ([state side msg] (toast state side msg "warning"))
+  ([state side msg type]
+   (if msg
+     ;; normal toast - add to list
+     (swap! state update-in [side :toast] #(conj % {:type type :msg msg}))
+     ;; no msg - remove top toast from list
+     (swap! state update-in [side :toast] #(rest %)))))
 
 ; "ToString"-like methods
 (defn card-str

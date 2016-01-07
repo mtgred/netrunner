@@ -5,8 +5,7 @@
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
 
    "Archives Interface"
-   {:events {:no-action {:effect (req (system-msg state :runner (str "may remove 1 card in Archives from the game instead of"
-                                                                     " accessing it by clicking on Archives Interface"))
+   {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
                                       (update! state side (assoc card :ai-active true)))
                          :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
     :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
@@ -466,8 +465,9 @@
    {:effect (effect (damage :meat 2 {:card card}))}
 
    "Turntable"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:agenda-stolen {:effect (req (system-msg state :runner (str "can swap for a scored Corp agenda by clicking on Turntable"))
+   {:effect (effect (gain :memory 1))
+    :leave-play (effect (lose :memory 1))
+    :events {:agenda-stolen {:effect (req (toast state :runner "Click Turntable to swap for a scored Corp agenda." "info")
                                           (update! state side (assoc card :swap true)))}}
     :abilities [{:optional
                   {:req (req (:swap card))

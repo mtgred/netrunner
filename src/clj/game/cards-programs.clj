@@ -331,8 +331,7 @@
                                         (= (first (get-in @state [:run :server])) :rd)
                                         (not current-ice)
                                         (> (get-virus-counters state side card) 0)))
-                         :effect (req (system-msg state :runner (str "may choose fewer than all additional R&D accesses"
-                                                                     " by clicking on Medium"))
+                         :effect (req (toast state :runner "Click on Medium to choose fewer than all additional R&D accesses." "info")
                                       (update! state side (assoc card :medium-active true)))}
              :successful-run {:req (req (and (= target :rd)
                                              (or (:medium-active card) (nil? (:counter card)) (= 0 (:counter card)))))
@@ -360,8 +359,7 @@
                                         (= (first (get-in @state [:run :server])) :hq)
                                         (not current-ice)
                                         (> (get-virus-counters state side card) 0)))
-                         :effect (req (system-msg state :runner (str "may choose fewer than all additional HQ accesses"
-                                                                     " by clicking on Nerve Agent"))
+                         :effect (req (toast state :runner "Click on Nerve Agent to choose fewer than all additional HQ accesses." "info")
                                       (update! state side (assoc card :nerve-active true)))}
              :successful-run {:req (req (and (= target :hq)
                                              (or (:nerve-active card) (nil? (:counter card)) (= 0 (:counter card)))))

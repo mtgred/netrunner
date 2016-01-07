@@ -20,11 +20,7 @@
         amount (last cost)]
     (when-not (or (>= (- (get-in @state [side type]) amount) 0)
                   (= type :memory))
-      (let [cost-str (case type
-                       :credit (str amount "[credit]")
-                       :click (apply str (repeat amount "[click]")))]
-        (prn "unable" cost-str)
-        (str "Unable to pay " cost-str)))))
+      "Unable to pay")))
 
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
@@ -36,11 +32,11 @@
         scored (get-in @state [side :scored])
         cost-msg (or (some #(toast-msg-helper state side %) costs)
                      (when (and forfeit-cost (empty? scored)) "Unable to forfeit an Agenda"))]
-    ; no cost message - hence can pay
+    ;; no cost message - hence can pay
     (if-not cost-msg
       {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
-      ; only toast if title is specified
-      (when title (toast state side (str cost-msg " for " title)) false))))
+      ;; only toast if title is specified
+      (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay
   "Deducts each cost from the player."
