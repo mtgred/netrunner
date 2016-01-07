@@ -70,7 +70,8 @@
                  :effect (req (let [boost target]
                                 (resolve-ability
                                   state side
-                                  {:choices {:req #(and (has? % :type "ICE") (:rezzed %))}
+                                  {:choices {:req #(and (ice? %)
+                                                        (rezzed? %))}
                                    :msg (msg "add " boost " strength to " (:title target))
                                    :effect (req (update! state side (assoc card :troubleshooter-target target
                                                                                 :troubleshooter-amount boost))
@@ -114,9 +115,11 @@
 
    "Expo Grid"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:req (req (not (empty? (filter #(and (= (:type %) "Asset") (:rezzed %))
+    :events {:corp-turn-begins {:req (req (not (empty? (filter #(and (is-type? % "Asset")
+                                                                     (rezzed? %))
                                                                (get-in corp (:zone card))))))
-                                :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+                                :msg "gain 1 [Credits]"
+                                :effect (effect (gain :credit 1))}}}
 
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
@@ -131,8 +134,9 @@
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server
-                                (> (get-in @state [:runner :tag]) 0)
-                                (not (empty? (filter #(has? % :type "Program") (all-installed state :runner))))))
+                                (pos? (get-in @state [:runner :tag]))
+                                (not (empty? (filter #(is-type? % "Program")
+                                                     (all-installed state :runner))))))
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
@@ -140,10 +144,11 @@
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
-                 :label "[Trash]: Start a Psi game" :msg "start a Psi game"
+                 :label "[Trash]: Start a Psi game"
+                 :msg "start a Psi game"
                  :psi {:not-equal {:prompt "Choose a rezzed piece of ICE to resolve one of its subroutines"
-                                   :choices {:req #(and (has? % :type "ICE")
-                                                        (:rezzed %))}
+                                   :choices {:req #(and (ice? %)
+                                                        (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
                  :effect (effect (trash card))}]}
 
@@ -234,9 +239,11 @@
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
-   {:effect (req (when-let [agenda (some #(when (= (:type %) "Agenda") %) (:content (card->server state card)))]
+   {:effect (req (when-let [agenda (some #(when (is-type? % "Agenda") %)
+                                         (:content (card->server state card)))]
                    (update-advancement-cost state side agenda)))
-    :events {:corp-install {:req (req (and (= (:type target) "Agenda") (= (:zone card) (:zone target))))
+    :events {:corp-install {:req (req (and (is-type? target "Agenda")
+                                           (= (:zone card) (:zone target))))
                             :effect (effect (update-advancement-cost target))}
              :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
                                     :effect (effect (advancement-cost-bonus -1))}}}

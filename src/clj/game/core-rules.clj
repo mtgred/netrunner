@@ -1,7 +1,8 @@
 (in-ns 'game.core)
 
-(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points handle-end-run
-         resolve-steal-events show-prompt untrashable-while-rezzed? update-all-ice win)
+(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
+         handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
+         update-all-ice win)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -225,7 +226,7 @@
   "Trashes a card at no cost while it is being accessed. (Imp.)"
   [state side]
   (when-let [card (:card (first (get-in @state [side :prompt])))]
-    (when (= (:type card) "Agenda") ; trashing before the :access events actually fire; fire them manually
+    (when (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
       (resolve-steal-events state side card))
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
@@ -271,7 +272,7 @@
 
 (defn update-all-advancement-costs [state side]
   (doseq [ag (->> (mapcat :content (flatten (seq (get-in @state [:corp :servers]))))
-                  (filter #(= (:type %) "Agenda")))]
+                  (filter #(is-type? % "Agenda")))]
     (update-advancement-cost state side ag)))
 
 (defn as-agenda

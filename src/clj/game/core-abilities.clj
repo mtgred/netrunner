@@ -159,7 +159,7 @@
         ;; Remove any counters.
         (when (or counter-cost advance-counter-cost)
           (update! state side c)
-          (when (has? card :type "Agenda")
+          (when (is-type? card "Agenda")
             (trigger-event state side :agenda-counter-spent card)))
         ;; Print the message.
         (print-msg state side ability card targets cost-str)

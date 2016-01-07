@@ -183,7 +183,7 @@
 
    "Film Critic"
    {:abilities [{:req (req (and (empty? (:hosted card))
-                                (= "Agenda" (:type (:card (first (get-in @state [side :prompt])))))))
+                                (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
@@ -330,15 +330,18 @@
                               (when (<= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
 
    "London Library"
-   {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
+   {:abilities [{:label "Install a non-virus program on London Library"
+                 :cost [:click 1]
                  :prompt "Choose a non-virus program to install on London Library from your grip"
-                 :choices {:req #(and (= (:type %) "Program")
+                 :choices {:req #(and (is-type? % "Program")
                                       (not (has-subtype? % "Virus"))
                                       (= (:zone %) [:hand]))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
-                {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
-                 :choices {:req #(:host %)} :msg (msg "add " (:title target) "to their Grip")
+                {:label "Add a program hosted on London Library to your Grip"
+                 :cost [:click 1]
+                 :choices {:req #(:host %)}
+                 :msg (msg "add " (:title target) "to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
                                                (trash state side c)))}}}
@@ -402,12 +405,14 @@
                  :effect (effect (host card target) (draw))}]}
 
    "Oracle May"
-   {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]
                                 (system-msg state side (str "uses Oracle May, names " target
                                                             " and reveals " (:title c)))
-                                (if (= (:type c) target)
+                                (if (is-type? c target)
                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
                                       (gain state side :credit 2) (draw state side))
                                   (do (system-msg state side (str "trashes " (:title c))) (mill state side)))))}]}
@@ -567,8 +572,10 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :prompt "Choose an event to play" :msg (msg "play " (:title target)) :show-discard true
-                 :choices {:req #(and (= (:type %) "Event")
+                 :prompt "Choose an event to play"
+                 :msg (msg "play " (:title target))
+                 :show-discard true
+                 :choices {:req #(and (is-type? % "Event")
                                       (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
@@ -616,7 +623,7 @@
    {:effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
-                 :choices (req (cancellable (filter #(and (not= (:type %) "Event")
+                 :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
                                                           (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
@@ -717,7 +724,7 @@
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
-                 :choices (req (cancellable (filter #(has? % :type "Hardware") (:deck runner)) :sorted))
+                 :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"

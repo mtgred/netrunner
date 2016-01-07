@@ -137,5 +137,5 @@
       ;; e.g. Haas Arcology AI
       (and (card-is? card :advanceable :while-unrezzed)
            (not (rezzed? card)))
-      (and (card-is? card :type "Agenda")
+      (and (is-type? card "Agenda")
            (installed? card))))

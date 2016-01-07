@@ -66,13 +66,17 @@
                             :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
 
    "Breaking News"
-   {:effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"
-    :end-turn {:effect (effect (lose :runner :tag 2)) :msg "make the Runner lose 2 tags"}}
+   {:effect (effect (tag-runner :runner 2))
+    :msg "give the Runner 2 tags"
+    :end-turn {:effect (effect (lose :runner :tag 2))
+               :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
    {:prompt "Choose a resource to trash"
-    :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
-    :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+    :choices {:req #(and (installed? %)
+                         (is-type? % "Resource"))}
+    :msg (msg "trash " (:title target))
+    :effect (effect (trash target))}
 
    "Chronos Project"
    {:msg "remove all cards in the Runner's Heap from the game"
@@ -101,20 +105,23 @@
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
                               :show-discard true
                               :choices {:req #(and (= (:side %) "Corp")
-                                                   (not= (:type %) "Operation")
+                                                   (not (is-type? % "Operation"))
                                                    (#{[:hand] [:discard]} (:zone %)))}
                               :effect (req (corp-install state side target
-                                            (last (get-remote-names @state)) {:no-install-cost true})
+                                                         (last (get-remote-names @state))
+                                                         {:no-install-cost true})
                                            (when (< n 2)
-                                             (resolve-ability state side (dpp (inc n)) card nil)))
+                                             (resolve-ability state side
+                                                              (dpp (inc n)) card nil)))
                               :msg (msg (corp-install-msg target))})]
      {:optional {:prompt "Create a new remote server?"
                  :yes-ability {:prompt "Select a card to install"
                                :show-discard true
                                :choices {:req #(and (:side % "Corp")
-                                                    (not= (:type %) "Operation")
+                                                    (not (is-type? % "Operation"))
                                                     (#{[:hand] [:discard]} (:zone %)))}
-                               :effect (req (corp-install state side target "New remote" {:no-install-cost true})
+                               :effect (req (corp-install state side target "New remote"
+                                                          {:no-install-cost true})
                                             (resolve-ability state side (dhelper 1) card nil))
                                :msg "create a new remote server, installing cards at no cost"}}})
 
@@ -364,15 +371,16 @@
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
-   {:effect (req (doseq [c (filter #(= (:type %) "Asset") (concat (all-installed state :corp)
-                                                                  (:deck corp)
-                                                                  (:hand corp)
-                                                                  (:discard corp)))]
+   {:effect (req (doseq [c (filter #(is-type? % "Asset")
+                                   (concat (all-installed state :corp)
+                                           (:deck corp)
+                                           (:hand corp)
+                                           (:discard corp)))]
                    (update! state side (assoc c :subtype
-                                                (->> (vec (.split (or (:subtype c) "") " - "))
-                                                     (cons "Advertisement")
-                                                     distinct
-                                                     (join " - "))))))
+                                              (->> (vec (.split (or (:subtype c) "") " - "))
+                                                   (cons "Advertisement")
+                                                   distinct
+                                                   (join " - "))))))
     :msg "make all assets gain Advertisement"}
 
    "Research Grant"

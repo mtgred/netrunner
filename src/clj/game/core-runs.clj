@@ -105,7 +105,7 @@
         (let [cdef (card-def c)
               c (assoc c :seen true)]
           (when-let [name (:title c)]
-            (if (= (:type c) "Agenda") ; accessing an agenda
+            (if (is-type? c "Agenda") ; accessing an agenda
               (do (trigger-event state side :pre-steal-cost c)
                   (if (get-in @state [:runner :register :cannot-steal])
                     ;; The runner cannot steal this agenda.
@@ -316,8 +316,10 @@
   {:effect (req (let [; only include agendas and cards with an :access ability whose :req is true
                       ; (or don't have a :req, or have an :optional with no :req, or :optional with a true :req.)
                       cards (filter #(let [cdef (card-def %)]
-                                      (or (= (:type %) "Agenda") (= (last (:zone %)) :content)
-                                          (and (:access cdef) (not (get-in cdef [:access :optional]))
+                                      (or (is-type? % "Agenda")
+                                          (= (last (:zone %)) :content)
+                                          (and (:access cdef)
+                                               (not (get-in cdef [:access :optional]))
                                                (or (not (get-in cdef [:access :req]))
                                                    ((get-in cdef [:access :req]) state side % nil)))
                                           (and (get-in cdef [:access :optional])

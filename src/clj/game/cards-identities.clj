@@ -87,15 +87,16 @@
    "Edward Kim: Humanitys Hammer"
    {:effect (effect (gain :link 1))
     :events {:access {:once :per-turn
-                      :req (req (= (:type target) "Operation"))
+                      :req (req (is-type? target "Operation"))
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target) (if (some #{:discard} (:zone target)) ", but it is already trashed."))}}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))
-    :events {:runner-install {:req (req (and (has? target :type "Program")
+    :events {:runner-install {:req (req (and (is-type? target "Program")
                                              (some #{:discard} (:previous-zone target))))
-                              :msg (msg "draw a card") :effect (effect (draw 1))}}}
+                              :msg (msg "draw a card")
+                              :effect (effect (draw 1))}}}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
@@ -132,12 +133,13 @@
    {:events {:runner-install
              {:optional {:prompt (msg "Install another " (:type target) " from your Grip?")
                          :req (req (and (first-event state side :runner-install)
-                                        (some #(= (:type %) (:type target)) (:hand runner))))
+                                        (some #(is-type? % (:type target)) (:hand runner))))
                          :yes-ability {:effect (req (let [type (:type target)]
                                               (resolve-ability
                                                state side
                                                {:prompt (msg "Choose another " type " to install from your grip")
-                                                :choices {:req #(and (= (:type %) type) (= (:zone %) [:hand]))}
+                                                :choices {:req #(and (is-type? % type)
+                                                                     (= (:zone %) [:hand]))}
                                                 :msg (msg "install " (:title target))
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
 

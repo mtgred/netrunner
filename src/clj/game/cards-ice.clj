@@ -26,16 +26,19 @@
             :untrashable-while-rezzed true
             }
     :abilities [{:msg "look at the top 5 cards of R&D"
-                 :prompt "Choose a card to install" :priority true
+                 :prompt "Choose a card to install"
+                 :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
-                                (not= (:type target) "Operation"))) :not-distinct true
+                                (not (is-type? target "Operation"))))
+                 :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
                 {:label "Install a card from HQ or Archives"
                  :prompt "Choose a card to install from Archives or HQ"
-                 :show-discard true :priority true
-                 :choices {:req #(and (not= (:type %) "Operation")
+                 :show-discard true
+                 :priority true
+                 :choices {:req #(and (not (is-type? % "Operation"))
                                       (#{[:hand] [:discard]} (:zone %))
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))
@@ -154,7 +157,7 @@
                  :msg (msg (corp-install-msg target))
                  :prompt "Choose a card to install from Archives"
                  :show-discard true :priority true
-                 :choices {:req #(and (not= (:type %) "Operation")
+                 :choices {:req #(and (not (is-type? % "Operation"))
                                       (= (:zone %) [:discard])
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))}]
@@ -241,12 +244,13 @@
 
    "Flare"
    {:abilities [{:label "Trace 6 - Trash 1 hardware, do 2 meat damage, and end the run"
-                 :trace {:base 6 :msg "trash 1 hardware, do 2 meat damage, and end the run"
+                 :trace {:base 6
+                         :msg "trash 1 hardware, do 2 meat damage, and end the run"
                          :effect (effect (resolve-ability
                                            {:prompt "Choose a piece of hardware to trash"
                                             :label "Trash a piece of hardware"
                                             :msg (msg "trash " (:title target))
-                                            :choices {:req #(= (:type %) "Hardware")}
+                                            :choices {:req #(is-type? % "Hardware")}
                                             :effect (effect (trash target {:cause :subroutine}))} card nil)
                                          (damage :meat 2 {:unpreventable true :card card})
                                          (end-run))}}]}
@@ -642,7 +646,9 @@
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
-                 :trace {:base 4 :choices {:req #(and (:installed %) (= (:type %) "Program"))}
+                 :trace {:base 4
+                         :choices {:req #(and (installed? %)
+                                              (is-type? % "Program"))}
                          :msg (msg "add " (:title target) " to the top of Stack")
                          :effect (effect (move :runner target :deck {:front true}))}}]}
 
@@ -704,11 +710,14 @@
     :abilities [trash-program]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
-                {:prompt "Choose an AI program to trash" :msg (msg "trashes " (:title target))
-                 :label "Trash an AI program" :effect (effect (trash target))
+   {:abilities [{:msg "do 1 net damage"
+                 :effect (effect (damage :net 1 {:card card}))}
+                {:prompt "Choose an AI program to trash"
+                 :msg (msg "trashes " (:title target))
+                 :label "Trash an AI program"
+                 :effect (effect (trash target))
                  :choices {:req #(and (installed? %)
-                                      (= (:type %) "Program")
+                                      (is-type? % "Program")
                                       (has-subtype? % "AI"))}}]}
 
    "Taurus"

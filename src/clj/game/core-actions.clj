@@ -158,7 +158,7 @@
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost)]
       (resolve-ability state side
                        {:prompt "Choose a resource to trash"
-                        :choices {:req #(= (:type %) "Resource")}
+                        :choices {:req #(is-type? % "Resource")}
                         :effect (effect (trash target)
                                         (system-msg (str (build-spend-msg cost-str "trash")
                                                          (:title target))))} nil nil))))
@@ -195,7 +195,7 @@
                                        (update-in [:host :zone] #(map to-keyword %)))))
              (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                          (:title card) (when ignore-cost " at no cost")))
-             (when (#{"ICE"} (:type card))
+             (when (ice? card)
                (update-ice-strength state side card)
                (update-run-ice state side))
              (trigger-event state side :rez card))))

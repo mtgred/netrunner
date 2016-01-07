@@ -59,7 +59,8 @@
 
    "Career Fair"
    {:prompt "Choose a resource to install from your Grip"
-    :choices {:req #(and (= (:type %) "Resource") (= (:zone %) [:hand]))}
+    :choices {:req #(and (is-type? % "Resource")
+                         (= (:zone %) [:hand]))}
     :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
@@ -67,7 +68,7 @@
                          {:replace-access
                           {:prompt "Choose a program to install"
                            :msg (msg "install " (:title target) " and take 1 tag")
-                           :choices (req (filter #(has? % :type "Program") (:deck runner)))
+                           :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
@@ -140,14 +141,19 @@
                    (trash state side (assoc target :seen true))))}
 
    "Early Bird"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (gain :click 1) (run target nil card))}
+   {:prompt "Choose a server"
+    :choices (req servers)
+    :effect (effect (gain :click 1) (run target nil card))}
 
    "Easy Mark"
    {:effect (effect (gain :credit 3))}
 
    "Emergency Shutdown"
-   {:req (req (some #{:hq} (:successful-run runner-reg))) :msg (msg "derez " (:title target))
-    :choices {:req #(and (has? % :type "ICE") (:rezzed %))} :effect (effect (derez target))}
+   {:req (req (some #{:hq} (:successful-run runner-reg)))
+    :msg (msg "derez " (:title target))
+    :choices {:req #(and (ice? %)
+                         (rezzed? %))}
+    :effect (effect (derez target))}
 
    "Employee Strike"
    {:msg "disable the Corp's identity"
@@ -219,7 +225,8 @@
    {:effect (effect (draw 3) (draw :corp 3))}
 
    "Forged Activation Orders"
-   {:choices {:req #(and (has? % :type "ICE") (not (:rezzed %)))}
+   {:choices {:req #(and (ice? %)
+                         (not (rezzed? %)))}
     :effect (req (let [ice target
                        serv (zone->name (second (:zone ice)))
                        icepos (ice-index state ice)]
@@ -246,8 +253,11 @@
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
    "Freelance Coding Contract"
-   {:choices {:max 5 :req #(and (has? % :type "Program") (= (:zone %) [:hand]))}
-    :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+   {:choices {:max 5
+              :req #(and (is-type? % "Program")
+                         (= (:zone %) [:hand]))}
+    :msg (msg "trash " (join ", " (map :title targets)) " and gain "
+              (* 2 (count targets)) " [Credits]")
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Game Day"
@@ -326,7 +336,7 @@
 
    "Inject"
    {:effect (req (doseq [c (take 4 (get-in @state [:runner :deck]))]
-                   (if (= (:type c) "Program")
+                   (if (is-type? c "Program")
                      (do (trash state side c) (gain state side :credit 1)
                          (system-msg state side (str "trashes " (:title c) " and gains 1 [Credits]")))
                      (do (move state side c :hand)
@@ -401,7 +411,8 @@
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
-                             :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
+                             :choices {:req #(and (is-type? % "Program")
+                                                  (= (:zone %) [:hand]))}
                              :effect (req (runner-install state side target)
                                             (when (< n 3)
                                               (resolve-ability state side (mi (inc n)) card nil)))})]
@@ -409,7 +420,8 @@
 
    "Modded"
    {:prompt "Choose a program or piece of hardware to install from your Grip"
-    :choices {:req #(and (or (= (:type %) "Hardware") (= (:type %) "Program"))
+    :choices {:req #(and (or (is-type? % "Hardware")
+                             (is-type? % "Program"))
                          (= (:zone %) [:hand]))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
@@ -498,8 +510,9 @@
    {:effect (effect (run :archives
                       {:req (req (= target :archives))
                        :replace-access
-                       {:prompt "Choose a program to install" :msg (msg "install " (:title target))
-                        :choices (req (filter #(= (:type %) "Program") (:discard runner)))
+                       {:prompt "Choose a program to install"
+                        :msg (msg "install " (:title target))
+                        :choices (req (filter #(is-type? % "Program") (:discard runner)))
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
 
    "Running Interference"
@@ -519,15 +532,17 @@
     :effect (req (doseq [c targets] (expose state side c)))}
 
    "Scavenge"
-   {:req (req (> (count (filter #(= (:type %) "Program") (all-installed state :runner))) 0))
+   {:req (req (pos? (count (filter #(is-type? % "Program") (all-installed state :runner)))))
     :prompt "Choose an installed program to trash"
-    :choices {:req #(and (= (:type %) "Program") (:installed %))}
+    :choices {:req #(and (is-type? % "Program")
+                         (installed? %))}
     :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
                    (trash state side trashed)
                    (resolve-ability
                      state side
-                     {:prompt "Choose a program to install from your grip or heap" :show-discard true
-                      :choices {:req #(and (= (:type %) "Program")
+                     {:prompt "Choose a program to install from your grip or heap"
+                      :show-discard true
+                      :choices {:req #(and (is-type? % "Program")
                                            (#{[:hand] [:discard]} (:zone %))
                                            (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
                       :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
@@ -606,21 +621,24 @@
     :effect (req (add-prop state :runner target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a program from Stack or Heap?" :choices (cancellable ["Stack" "Heap"])
-    :msg (msg "install a program from " target) :effect
-    (effect (resolve-ability
-             {:prompt "Choose a program to install"
-              :choices (req (cancellable (filter #(= (:type %) "Program")
-                                                 ((if (= target "Heap") :discard :deck) runner))))
-              :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
-              :end-turn
-              {:req (req (some #(when (and (= (:cid target) (:cid %)) (get-in % [:special :test-run])) %)
-                               (get-in runner [:rig :program])))
-               :msg (msg "move " (:title target) " on top of their Stack")
-               :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
-                                                   (get-in runner [:rig :program]))
-                                  :deck {:front true}))}}
-             card targets))}
+   {:prompt "Install a program from Stack or Heap?"
+    :choices (cancellable ["Stack" "Heap"])
+    :msg (msg "install a program from " target)
+    :effect (effect (resolve-ability
+                     {:prompt "Choose a program to install"
+                      :choices (req (cancellable
+                                     (filter #(is-type? % "Program")
+                                             ((if (= target "Heap") :discard :deck) runner))))
+                      :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
+                      :end-turn
+                      {:req (req (some #(when (and (= (:cid target) (:cid %))
+                                                   (get-in % [:special :test-run])) %)
+                                       (get-in runner [:rig :program])))
+                       :msg (msg "move " (:title target) " on top of their Stack")
+                       :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
+                                                           (get-in runner [:rig :program]))
+                                          :deck {:front true}))}}
+                     card targets))}
 
    "The Makers Eye"
    {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
@@ -654,11 +672,14 @@
     :events {:runner-turn-ends nil}}
 
    "Trade-In"
-   {:prompt "Choose a hardware to trash" :choices {:req #(and (:installed %) (= (:type %) "Hardware"))}
+   {:prompt "Choose a hardware to trash"
+    :choices {:req #(and (installed? %)
+                         (is-type? % "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
     :effect (effect (trash target) (gain [:credit (quot (:cost target) 2)])
                     (resolve-ability {:prompt "Choose a Hardware to add to Grip from Stack"
-                                      :choices (req (filter #(= (:type %) "Hardware") (:deck runner)))
+                                      :choices (req (filter #(is-type? % "Hardware")
+                                                            (:deck runner)))
                                       :msg (msg "adds " (:title target) " to their Grip")
                                       :effect (effect (move target :hand))} card nil))}
 
@@ -670,7 +691,8 @@
                              state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}}}
 
    "Uninstall"
-   {:choices {:req #(and (:installed %) (#{"Program" "Hardware"} (:type %)))}
+   {:choices {:req #(and (installed? %)
+                         (#{"Program" "Hardware"} (:type %)))}
     :msg (msg "move " (:title target) " to their Grip")
     :effect (effect (move target :hand))}
 
@@ -695,7 +717,7 @@
    {:effect (req (shuffle! state :runner :deck)
                  (let [topcard (first (:deck runner))
                        cost (:cost topcard)]
-                   (if (= (:type topcard) "Event")
+                   (if (is-type? topcard "Event")
                      (do (trash state side topcard)
                          (system-msg state side (str "shuffles their Stack and trashes "
                           (:title topcard) " to gain 0 [Credits]")))

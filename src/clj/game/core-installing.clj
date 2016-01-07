@@ -91,7 +91,7 @@
                                              card-name (if (ice? c) " protecting " " in ") server)))
                (let [moved-card (move state side c slot)]
                  (trigger-event state side :corp-install moved-card)
-                 (when (= (:type c) "Agenda")
+                 (when (is-type? c "Agenda")
                    (update-advancement-cost state side moved-card))
                  (when (= install-state :rezzed-no-cost)
                    (rez state side moved-card {:ignore-cost :all-costs}))
@@ -142,6 +142,6 @@
                    (update! state side (assoc installed-card :added-virus-counter true)))
                  (trigger-event state side :runner-install installed-card)
                  (when (has-subtype? c "Icebreaker") (update-breaker-strength state side c))))))
-         (when (has? card :type "Resource")
+         (when (is-type? card "Resource")
            (swap! state assoc-in [:runner :register :installed-resource] true))
          (swap! state update-in [:bonus] dissoc :install-cost))))))
