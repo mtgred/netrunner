@@ -112,7 +112,8 @@
     :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Expo Grid"
-   {:events {:corp-turn-begins {:req (req (not (empty? (filter #(and (= (:type %) "Asset") (:rezzed %))
+   {:derezzed-events {:runner-turn-ends corp-rezz-toast}
+    :events {:corp-turn-begins {:req (req (not (empty? (filter #(and (= (:type %) "Asset") (:rezzed %))
                                                                (get-in corp (:zone card))))))
                                 :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 

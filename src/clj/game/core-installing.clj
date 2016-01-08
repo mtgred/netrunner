@@ -70,7 +70,9 @@
      (do (when (= server "New remote")
            (trigger-event state side :server-created card))
          (let [cdef (card-def card)
-               c (dissoc (assoc card :advanceable (:advanceable cdef)) :seen)
+               c (-> card
+                     (assoc :advanceable (:advanceable cdef))
+                     (dissoc :seen))
                slot (conj (server->zone state server) (if (ice? c) :ices :content))
                dest-zone (get-in @state (cons :corp slot))
                install-cost (if (and (ice? c) (not no-install-cost))
@@ -96,7 +98,10 @@
                  (when (= install-state :rezzed)
                    (rez state side moved-card))
                  (when (= install-state :face-up)
-                   (card-init state side (assoc (get-card state moved-card) :rezzed true :seen true) false))))))))))
+                   (card-init state side
+                              (assoc (get-card state moved-card) :rezzed true :seen true) false))
+                 (when-let [dre (:derezzed-events cdef)]
+                   (register-events state side dre moved-card))))))))))
 
 (defn runner-install
   ([state side card] (runner-install state side card nil))
