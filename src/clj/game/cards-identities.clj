@@ -218,11 +218,11 @@
    "Leela Patel: Trained Pragmatist"
    {:events {:agenda-scored
              {:effect (req (toast state :runner
-                                  (str "Click on Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
+                                  (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
                            (update! state :runner (assoc card :bounce-hq true)))}
              :agenda-stolen
              {:effect (req (toast state :runner
-                                  (str "Click on Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
+                                  (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
                            (update! state side (assoc card :bounce-hq true)))}}
     :abilities [{:req (req (:bounce-hq card))
                  :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
