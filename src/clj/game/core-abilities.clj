@@ -291,4 +291,4 @@
   [state card trace]
   (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
   (show-prompt state :corp card "Boost trace strength?" :credit
-               #(init-trace state :corp card trace %)))
+               #(init-trace state :corp card trace %) {:priority 2}))
