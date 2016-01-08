@@ -198,7 +198,7 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:no-action {:effect (req (toast state :runner "Click Laramy Fisk: Savvy Investor to force the corp to draw a card." "info"))
+   {:events {:no-action {:effect (req (toast state :runner "Click Laramy Fisk: Savvy Investor to force the Corp to draw a card." "info"))
                          :req (req (and run
                                         (is-central? (:server run))
                                         (not current-ice)

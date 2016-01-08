@@ -113,7 +113,7 @@
                              (fn [state side card]
                                (if (and (has? card :type "ICE")
                                         (= (count (get-in @state [:run :ices])) (get-in @state [:run :position])))
-                                 ((constantly false) (toast state :corp "Cannot rezz any outermost ICE due to DDoS." "warning"))
+                                 ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
 

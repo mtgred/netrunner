@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare toast)
+
 (defn deduce
   "Deduct the value from the player's attribute."
   [state side [attr value]]
@@ -10,8 +12,6 @@
     (swap! state update-in [:runner :run-credit] #(max 0 (- % value))))
   (when-let [cost-name (cost-names value attr)]
     cost-name))
-
-(declare toast)
 
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
