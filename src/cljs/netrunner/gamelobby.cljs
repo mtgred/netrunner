@@ -8,7 +8,7 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [valid? mwl-legal?]]))
+            [netrunner.deckbuilder :refer [deck-status-span]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -127,11 +127,7 @@
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
              [:img {:src (image-url (:identity deck))}]
-             (if (mwl-legal? deck)
-               [:div.float-right.legal "Tournament valid"]
-               (if (valid? deck)
-                 [:div.float-right.casual "Casual play only"]
-                 [:div.float-right.invalid "Invalid"]))
+             [:div.float-right (deck-status-span deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
              [:p (get-in deck [:identity :title])]])])]]])))
@@ -249,11 +245,7 @@
                           (:name deck)
                           "Deck selected")])
                      (when-let [deck (:deck player)]
-                       (list " " (if (mwl-legal? deck)
-                                   [:span.legal "Tournament valid"]
-                                   (if (valid? deck)
-                                     [:span.casual "Casual play only"]
-                                     [:span.invalid "Invalid"]))))
+                       (list " " (deck-status-span deck)))
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]

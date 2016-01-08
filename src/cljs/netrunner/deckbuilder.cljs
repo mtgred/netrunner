@@ -68,9 +68,11 @@
   (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
 
 (defn faction-label
-  "Returns faction of a card as a keyword"
+  "Returns faction of a card as a lowercase label"
   [card]
-  (-> card :faction .toLowerCase (.replace " " "-")))
+  (if (nil? (:faction card))
+    "neutral"
+    (-> card :faction .toLowerCase (.replace " " "-"))))
 
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
@@ -266,12 +268,12 @@
 (defn influence-dots
   "Returns a string with UTF-8 full circles representing influence."
   [num]
-  (apply str (conj (for [_ (range num)] "&#9679;") "")))
+  (apply str (conj (for [_ (range num)] "&#9679;&#8203;") ""))) ; &#8203; is a zero-width space to allow wrapping
 
 (defn restricted-dots
   "Returns a string with UTF-8 empty circles representing MWL restricted cards."
   [num]
-  (apply str (conj (for [_ (range num)] "&#9675;") "")))
+  (apply str (conj (for [_ (range num)] "&#9675;&#8203;") "")))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
@@ -290,6 +292,22 @@
                                          {:class (name factionkey)
                                           :dangerouslySetInnerHTML
                                           #js {:__html (restricted-dots (factionkey mwlmap))}}])))
+
+(defn deck-status-label
+  [deck]
+  (if (mwl-legal? deck)
+    "legal"
+    (if (valid? deck) "casual" "invalid")))
+
+(defn deck-status-span
+  "Returns a [:span] with standardized message and colors depending on the deck validity."
+  [deck]
+  (let [status (deck-status-label deck)
+        message (case status
+                  "legal" "Tournament valid"
+                  "casual" "Casual play only"
+                  "invalid" "Invalid")]
+  [:span {:class status} message]))
 
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
@@ -415,11 +433,7 @@
                 [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
                                 :on-click #(put! select-channel deck)}
                  [:img {:src (image-url (:identity deck))}]
-                 (if (mwl-legal? deck)
-                   [:div.float-right.legal "Tournament valid"]
-                   (if (valid? deck)
-                     [:div.float-right.casual "Casual play only"]
-                     [:div.float-right.invalid "Invalid"]))
+                 [:div.float-right (deck-status-span deck)]
                  [:h4 (:name deck)]
                  [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
                  [:p (get-in deck [:identity :title])]]))]
@@ -467,7 +481,8 @@
                       (when (< points min-point)
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
-                        [:span.invalid " (maximum" (inc min-point) ")"])]))]
+                        [:span.invalid " (maximum" (inc min-point) ")"])]))
+                 [:div (deck-status-span [deck])]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group
