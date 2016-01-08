@@ -8,7 +8,7 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-status-span]]))
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -240,12 +240,13 @@
                     [:div
                      (om/build player-view player)
                      (when-let [deck (:deck player)]
-                       [:span.label
-                        (if (= (:user player) user)
-                          (:name deck)
-                          "Deck selected")])
+                       [:span {:class (deck-status-label deck)}
+                        [:span.label
+                         (if (= (:user player) user)
+                           (:name deck)
+                           "Deck selected")]])
                      (when-let [deck (:deck player)]
-                       (list " " (deck-status-span deck)))
+                       [:div.float-right (deck-status-span deck)])
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]

@@ -28,7 +28,7 @@
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
   [card]
-  (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD"
+  (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD" "Yog.0"
                    "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
     (some #(= (:title card) %) napdmwl)))
 
@@ -482,7 +482,7 @@
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
                         [:span.invalid " (maximum" (inc min-point) ")"])]))
-                 [:div (deck-status-span [deck])]]
+                 [:div (deck-status-span deck)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group
