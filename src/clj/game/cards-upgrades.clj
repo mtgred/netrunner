@@ -160,7 +160,7 @@
       :choices {:req #(and (ice? %)
                            (in-hand? %))}
       :once :per-run
-      :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
+      :msg (msg "swap " (card-name current-ice "the approached ICE") " with a piece of ICE from HQ")
       :effect (req (let [hqice target
                          c current-ice]
                      (resolve-ability state side

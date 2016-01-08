@@ -215,7 +215,7 @@
                      :effect (req (let [ice target
                                         serv (zone->name (second (:zone ice)))]
                                     (system-msg state side
-                                      (str "chooses " (if (:rezzed ice) (:title ice) "the ICE") " at position "
+                                      (str "chooses " (card-name ice "the ICE") " at position "
                                         (ice-index state ice) " of " serv " for Femme Fatale's bypass ability"))))
                      :abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
                                  {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
@@ -271,7 +271,7 @@
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has-subtype? c "Caïssa"))
                                                  (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                 :msg (msg "host it on " (card-name target))
                  :effect (effect (host target card))}
                 {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 

@@ -37,7 +37,20 @@
      ;; no msg - remove top toast from list
      (swap! state update-in [side :toast] #(rest %)))))
 
-; "ToString"-like methods
+;;; "ToString"-like methods
+(defn card-name
+  "Get the name of the card, returns title if rezzed or visible, otherwise specified description
+  Default description is 'a piece of ICE' for ice and 'a card' otherwise."
+  ([card]
+   (card-name card (cond (ice? card) "a piece of ICE"
+                         (card-is? card :side :runner) "a facedown card"
+                         :else "a card")))
+  ([card name]
+   (if (and (not (:facedown card)) 
+            (or (rezzed? card)))
+     (:title card)
+     name)))
+
 (defn card-str
   "Gets a string description of an installed card, reflecting whether it is rezzed,
   in/protecting a server, facedown, or hosted."
@@ -55,7 +68,6 @@
          ; Runner card messages
          (if (or (:facedown card) visible) "a facedown card" (:title card)))
        (if (:host card) (str " hosted on " (card-str state (:host card)))))))
-
 
 (defn name-zone
   "Gets a string representation for the given zone."

@@ -381,7 +381,7 @@
    "Tennin Institute: The Secrets Within"
    {:events {:runner-turn-ends {:req (req (not (:successful-run runner-reg)))
                                 :effect (req (toast state :corp "Reminder: you may click Tennin Institute: The Secrets Within to place 1 advancement token on a card." "info"))}}
-    :abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+    :abilities [{:msg (msg "place 1 advancement token on " (card-name target))
                  :choices {:req installed?}
                  :req (req (not (:successful-run runner-reg)))
                  :once :per-turn

@@ -85,8 +85,11 @@
                  (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
                    (system-msg state side (str "trashes " (card-str state prev-card)))
                    (trash state side prev-card {:keep-server-alive true})))
-               (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                 (:title card) (if (ice? c) "ICE" "a card"))]
+               (let [card-name (if (or (= :rezzed-no-cost install-state)
+                                       (= :face-up install-state)
+                                       (:rezzed c))
+                                 (:title card)
+                                 (if (ice? c) "ICE" "a card"))]
                  (system-msg state side (str (build-spend-msg cost-str "install")
                                              card-name (if (ice? c) " protecting " " in ") server)))
                (let [moved-card (move state side c slot)]

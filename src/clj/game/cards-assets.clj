@@ -157,7 +157,7 @@
                                       (installed? %)
                                       (= (last (:zone %)) :content))} ; should be *in* a server
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card") " in a server")}]}
+                 :msg (msg "place 1 advancement token on " (card-name target) " in a server")}]}
 
    "Edge of World"
    {:access {:req (req installed)
@@ -257,7 +257,7 @@
    "Isabel McGuire"
    {:abilities [{:cost [:click 1] :label "Add an installed card to HQ"
                  :choices {:req installed?}
-                 :msg (msg "move " (if (:rezzed target) (:title target) "a card") " to HQ")
+                 :msg (msg "move " (card-name target) " to HQ")
                  :effect (effect (move target :hand))}]}
 
    "IT Department"
@@ -565,7 +565,7 @@
                                            :no-ability {:effect (effect (clear-wait-prompt :runner))}}} card nil))}}
 
    "Space Camp"
-   {:access {:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+   {:access {:msg (msg "place 1 advancement token on " (card-name target))
              :choices {:req can-be-advanced?}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
