@@ -351,9 +351,12 @@
                  :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
-   {:abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+   {:events {:runner-turn-ends {:req (req (not (:successful-run runner-reg)))
+                                :effect (req (toast state :corp "Reminder: you may click Tennin Institute: The Secrets Within to place 1 advancement token on a card." "info"))}}
+    :abilities [{:msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
                  :choices {:req #(= (first (:zone %)) :servers)}
-                 :req (req (not (:successful-run runner-reg))) :once :per-turn
+                 :req (req (not (:successful-run runner-reg)))
+                 :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "The Foundry: Refining the Process"
