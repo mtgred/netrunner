@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare set-prop)
+
 ; Stuff that doesn't go in other files.
 
 ; No idea what these are for. @justinliew?
@@ -87,3 +89,18 @@
         base (get side' :hand-size-base 0)
         mod (get side' :hand-size-modification 0)]
     (+ base mod)))
+
+(defn add-icon
+  "Adds an icon to a card. E.g. a Femme Fatal token"
+  [state side card target char color]
+  ;; add icon
+  (set-prop state side target :icon {:char char :color color})
+  ;; specify icon target on card
+  (set-prop state side card :icon-target target))
+
+(defn remove-icon
+  "Remove the icon associated with the card."
+  [state side card]
+  (when-let [target (get-card state (:icon-target card))]
+    (set-prop state side target :icon nil)
+    (set-prop state side card :icon-target nil)))
