@@ -204,6 +204,13 @@
                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)
                                 (update! state side (dissoc (get-card state card) :access-hq))))}]}
 
+   "Gene Conditioning Shoppe"
+   {:msg "make Genetics trigger a second time each turn"
+    :effect (effect (register-persistent-flag! card :triggers-twice
+                                               (fn [state side card]
+                                                 (has? card :subtype "Genetics"))))
+    :leave-play (effect (clear-persistent-flag! card :triggers-twice))}
+
    "Ghost Runner"
    {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "gain 1 [Credits]" :req (req (:run @state))
