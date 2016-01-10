@@ -385,6 +385,7 @@
       (prompt-choice :corp "Yes")
       (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
       (prompt-choice :runner "Yes")
+      (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (= 0 (count (:discard (get-runner)))) "Runner took no damage"))))
 
 (deftest snare-dedicated-response-team

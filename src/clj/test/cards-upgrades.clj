@@ -141,6 +141,32 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
+(deftest marcus-batty-security-nexus
+  "Marcus Batty - Simultaneous Interaction with Security Nexus"
+  (do-game
+    (new-game (default-corp [(qty "Marcus Batty" 1) (qty "Enigma" 1)])
+              (default-runner [(qty "Security Nexus" 1)]))
+    (play-from-hand state :corp "Marcus Batty" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 8)
+    (play-from-hand state :runner "Security Nexus")
+    (let [mb (-> @state :corp :servers :hq :content first)
+          en (-> @state :corp :servers :hq :ices first)
+          sn (-> @state :runner :rig :hardware first)]
+      (core/click-run state :runner {:server "HQ"})
+      (core/rez state :corp mb)
+      (core/rez state :corp en)
+      (card-ability state :corp mb 0)
+      (card-ability state :runner sn 0)
+      ; both prompts should be on Batty
+      (is (= (:cid mb) (-> @state :corp :prompt first :card :cid)) "Corp prompt is on Marcus Batty")
+      (is (= (:cid mb) (-> @state :runner :prompt first :card :cid)) "Runner prompt is on Marcus Batty")
+      (prompt-choice :corp "0")
+      (prompt-choice :runner "0")
+      (is (= (:cid sn) (-> @state :corp :prompt first :card :cid)) "Corp prompt is on Security Nexus")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner prompt is waiting for Corp"))))
+
 (deftest old-hollywood-grid
   "Old Hollywood Grid - Ability"
   (do-game
