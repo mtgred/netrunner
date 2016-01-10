@@ -62,10 +62,20 @@
         qty (js/parseInt (first tokens))
         cardname (join " " (rest tokens))]
     (when-not (js/isNaN qty)
-      {:qty (min qty 3) :card (lookup side cardname)})))
+      {:qty (min qty 6) :card (lookup side cardname)})))
 
-(defn parse-deck [side deck]
-  (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck)))
+(defn parse-deck
+  "Parses a string containing cardlist and returns a list of line card maps {:qty num :card cardmap}"
+  [side deck]
+  (let [base-list (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck))
+        ;; in case there were e.g. 2 lines with Sure Gambles, we need to sum them up in deduplicate
+        duphelper (fn [currmap line]
+                    (let [title (:title :card line)
+                          qty (:qty line)]
+                      (if (contains? currmap title)
+                        (assoc-in currmap [title :qty] (+ (get-in currmap [title :qty]) qty))
+                        (assoc currmap title line))))]
+    (vals (reduce duphelper {} base-list))))
 
 (defn faction-label
   "Returns faction of a card as a lowercase label"
@@ -185,11 +195,16 @@
   (reduce #(if-let [point (get-in %2 [:card :agendapoints])]
              (+ (* point (:qty %2)) %1) %1) 0 cards))
 
+(defn legal-num-copies?
+  "Returns true if there is a legal number of copies of a particular card."
+  [{:keys [qty card] :as line}]
+  (<= qty (or (:limited card) 3)))
+
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (:minimumdecksize identity))
        (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
-                     (<= (:qty %) (or (get-in % [:card :limited]) 3))) cards)
+                     (legal-num-copies? %)) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
@@ -503,7 +518,9 @@
                                infaction (noinfcost? identity card)
                                wanted (mostwanted? card)]
                            [:span
-                            [:span {:class (if (allowed? card identity) "fake-link" "invalid")
+                            [:span {:class (if (and (allowed? card identity)
+                                                    (legal-num-copies? line))
+                                             "fake-link" "invalid")
                                     :on-mouse-enter #(put! zoom-channel card)
                                     :on-mouse-leave #(put! zoom-channel false)} name]
                             (when (or wanted (not infaction))
