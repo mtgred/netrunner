@@ -14,11 +14,11 @@
         _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
     (go (let [response (<! (POST url params))]
           (if (= (:status response) 200))
-            (om/set-state! owner :flash-message "Profile updated")
+            (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")
             (case (:status response)
                 401 (om/set-state! owner :flash-message "Invalid login or password")
                 421 (om/set-state! owner :flash-message "No account with that email address exists")
-                (om/set-state! owner :flash-message "Profile updated")
+                (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")
                 )))))
 
 (defn update-profile [event owner]
@@ -40,27 +40,36 @@
     om/IRenderState
     (render-state [this state]
      (sab/html
-      [:div.account.panel.blue-shade#profile-form {:ref "profile-form"}
-       [:h3 "My Account"]
-       [:hr]
-       [:p.flash-message (:flash-message state)]
-       [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
-        [:h4 "Avatar"]
+      [:div.account
+       [:div.account-bg {:class (:background (:user @app-state))}]
+       [:div.panel.blue-shade#profile-form {:ref "profile-form"}
+        [:h3 "My Account"]
+        [:hr]
+        [:p.flash-message (:flash-message state)]
+        [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
+         [:h4 "Avatar"]
          (om/build avatar user {:opts {:size 38}})
-        [:hr]
-        [:h4 "Username"]
+         [:hr]
+         [:h4 "Username"]
          (:username user)
-        [:hr]
-        [:h4 "Background"]
-          (for [option [{:name "Beanstalk", :ref "home-bg"} {:name "The Root", :ref "root-bg"} {:name "Project Atlas", :ref "deckbuilder-bg"} {:name "Dyson Mem Chip", :ref "cardbrowser-bg"} {:name "Fast Track", :ref "about-bg"} {:name "Logos", :ref "reset-bg"}]] [:label [:input {:type "radio"
-                                     :name "background"
-                                     :value (:ref option)
-                                     :on-change #(om/set-state! owner :background (.. % -target -value))
-                                     :checked (= (om/get-state owner :background) (:ref option))}] (:name option)])
-        [:hr]
-        [:div.button-bar
-         [:button "Update Profile"]]]
-     ]))))
+         [:hr]
+         [:h4 "Background"]
+         (for [option [{:name "Beanstalk"      :ref "home-bg"}
+                       {:name "The Root"       :ref "root-bg"}
+                       {:name "Project Atlas"  :ref "deckbuilder-bg"}
+                       {:name "Dyson Mem Chip" :ref "cardbrowser-bg"}
+                       {:name "Fast Track"     :ref "about-bg"}
+                       {:name "Logos"          :ref "reset-bg"}]] 
+           [:label [:input {:type "radio"
+                            :name "background"
+                            :value (:ref option)
+                            :on-change #(om/set-state! owner :background (.. % -target -value))
+                            :checked (= (om/get-state owner :background) (:ref option))}]
+            (:name option)])
+         [:hr]
+         [:div.button-bar
+          [:button "Update Profile"]]]]]
+     ))))
 
 (defn unlogged-view [user owner]
   (om/component
