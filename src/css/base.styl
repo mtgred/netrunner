@@ -160,7 +160,15 @@ button.small
 
 .invalid
   color: orangered
-  margin-left: 5px
+  border-color: orangered
+
+.casual
+  color: yellow
+  border-color: yellow
+
+.legal
+  color: lawngreen
+  border-color: lawngreen
 
 .smallwarning
     position: relative
@@ -424,28 +432,12 @@ nav ul
   background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
 
-.influence
-  font-size: 18px
-  font-family: sans-serif
-  line-height: 0
-  position: relative
-  top: 2px
+// Influence dots
 
-.decklist .influence
-  margin-left: 3px
+.influence.neutral
+  color: white
 
-.influence.anarch
-  color: red
-
-.influence.shaper
-  color: limegreen
-
-.influence.criminal
-  color: royalblue
-
-.influence.weyland-consortium
-  color: darkgreen
-
+// Corps
 .influence.haas-bioroid
   color: blueviolet
 
@@ -455,8 +447,27 @@ nav ul
 .influence.nbn
   color: yellow
 
-.influence.neutral
-  color: white
+.influence.weyland-consortium
+  color: darkgreen
+
+// Runners
+.influence.adam
+  color: olive
+
+.influence.anarch
+  color: orangered
+
+.influence.apex
+  color: maroon
+
+.influence.criminal
+  color: royalblue
+
+.influence.shaper
+  color: limegreen
+
+.influence.sunny-lebeau
+  color: lightslategray
 
 // Top nav
 #left-menu
@@ -814,7 +825,7 @@ nav ul
           min-width: 75px
 
       .header
-        height: 76px
+        height: 106px
         clear: both
 
         > img
@@ -989,8 +1000,8 @@ nav ul
       .label
         display: inline-block
         text-align: center
-        color: limegreen
-        border-color: limegreen
+        color: inherit
+        border-color: inherit
         margin-right: 0
 
       .fake-link
