@@ -268,12 +268,12 @@
 (defn influence-dots
   "Returns a string with UTF-8 full circles representing influence."
   [num]
-  (apply str (conj (for [_ (range num)] "&#9679;&#8203;") ""))) ; &#8203; is a zero-width space to allow wrapping
+  (join (conj (repeat num "&#9679;&#8203;") ""))) ; &#8203; is a zero-width space to allow wrapping
 
 (defn restricted-dots
   "Returns a string with UTF-8 empty circles representing MWL restricted cards."
   [num]
-  (apply str (conj (for [_ (range num)] "&#9675;&#8203;") "")))
+  (join (conj (repeat num "&#9675;&#8203;") "")))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
@@ -295,9 +295,10 @@
 
 (defn deck-status-label
   [deck]
-  (if (mwl-legal? deck)
-    "legal"
-    (if (valid? deck) "casual" "invalid")))
+  (cond
+    (mwl-legal? deck) "legal"
+    (valid? deck) "casual"
+    :else "invalid"))
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
@@ -317,9 +318,9 @@
              "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
              id (:code identity) "\">" (:title identity) "</card></section>"
              "<section name=\"R&amp;D / Stack\">"
-             (apply str (for [c (:cards deck) :when (get-in c [:card :title])]
-                          (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
-                               (html-escape (get-in c [:card :title])) "</card>")))
+             (join (for [c (:cards deck) :when (get-in c [:card :title])]
+                     (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
+                          (html-escape (get-in c [:card :title])) "</card>")))
              "</section></deck>")
         blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
     (.createObjectURL js/URL blob)))
