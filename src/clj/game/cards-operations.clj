@@ -367,7 +367,7 @@
     :effect (req (let [c (min target (:tag runner))]
                    (resolve-ability state side
                                     {:msg (msg "place " c " advancement tokens on "
-                                               (card-name target))
+                                               (card-str state target))
                                      :choices {:req can-be-advanced?}
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 

@@ -39,7 +39,7 @@
    "AstroScript Pilot Program"
    {:data {:counter 1}
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
-                                           (card-name target))
+                                           (card-str state target))
                  :choices {:req can-be-advanced?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
@@ -49,7 +49,7 @@
                             (resolve-ability
                              state side
                              {:choices {:req can-be-advanced?}
-                              :msg (msg "place " c " advancement tokens on " (card-name target))
+                              :msg (msg "place " c " advancement tokens on " (card-str state target))
                               :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
 
    "Bifrost Array"
@@ -173,7 +173,7 @@
    "Firmware Updates"
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :choices {:req #(and (ice? %) (can-be-advanced? %))}
-                 :msg (msg "place 1 advancement token on " (card-name target))
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :once :per-turn :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Genetic Resequencing"
@@ -244,7 +244,7 @@
                               {:choices {:req #(and (not= (:cid %) (:cid card))
                                                     (can-be-advanced? %))}
                                :msg (msg "place " n " advancement tokens on "
-                                         (card-name target))
+                                         (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"

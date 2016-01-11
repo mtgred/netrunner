@@ -195,7 +195,7 @@
 (defn access-helper-hq [cards]
   {:prompt "Select a card to access."
    :choices (concat (when (some #(= (first (:zone %)) :hand) cards) ["Card from hand"])
-                    (map #(card-name % "Unrezzed upgrade in HQ")
+                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in HQ")
                          (filter #(= (last (:zone %)) :content) cards)))
    :effect (req (case target
                   "Unrezzed upgrade in HQ"
@@ -241,7 +241,7 @@
 (defn access-helper-rd [cards]
   {:prompt "Select a card to access."
    :choices (concat (when (some #(= (first (:zone %)) :deck) cards) ["Card from deck"])
-                    (map #(card-name % "Unrezzed upgrade in R&D")
+                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in R&D")
                          (filter #(= (last (:zone %)) :content) cards)))
    :effect (req (case target
                   "Unrezzed upgrade in R&D"
@@ -282,7 +282,7 @@
 (defn access-helper-archives [cards]
   {:prompt "Select a card to access. You must access all cards."
    :choices (map #(if (= (last (:zone %)) :content)
-                   (card-name % "Unrezzed upgrade in Archives")
+                   (if (rezzed? %) (:title %) "Unrezzed upgrade in Archives")
                    (:title %)) cards)
    :effect (req (case target
                   "Unrezzed upgrade in Archives"

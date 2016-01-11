@@ -208,7 +208,7 @@
                                           {:choices {:req #(and (contains? % :advance-counter)
                                                                 (= (:server run) (vec (rest (butlast (:zone %))))))}
                                           :msg (msg "remove " c " advancements from "
-                                                (card-name target))
+                                                (card-str state target))
                                           :effect (req (add-prop state :corp target :advance-counter (- c))
                                                        (swap! state update-in [:runner :prompt] rest)
                                                        (handle-end-run state side))}
@@ -373,7 +373,7 @@
                                            (= serv (rest (butlast (:zone %)))))}
                       :effect (req (trash state :corp target)
                                    (system-msg state side (str "trashes "
-                                    (card-name target) " protecting " servname)))}
+                                    (card-str state target))))}
                     card nil)))}
 
    "Lawyer Up"

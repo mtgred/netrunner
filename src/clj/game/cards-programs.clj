@@ -38,7 +38,7 @@
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has-subtype? c :subtype "Caïssa"))
                                                                     (:hosted %)))))}
-                                  :msg (msg "host it on " (card-name target))
+                                  :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
@@ -461,7 +461,7 @@
                  :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
                                       (some #{:hq :rd :archives} (rest (butlast (:zone %)))))}
-                 :msg (msg "host it on " (card-name target))
+                 :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}]
     :events {:successful-run
              {:req (req (ice? card))
@@ -515,7 +515,7 @@
                                       (= (last (:zone %)) :ices)
                                       (not (some (fn [c] (has-subtype? c "Caïssa"))
                                                  (:hosted %))))}
-                 :msg (msg "host it on " (card-name target))
+                 :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
                             :effect (effect (rez-cost-bonus 2))}}}

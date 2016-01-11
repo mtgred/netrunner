@@ -76,7 +76,7 @@
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
                 {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
-                 :msg (msg "place 1 advancement token on " (card-name target))
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req #(and (ice? %)
                                       (can-be-advanced? %))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
@@ -140,7 +140,7 @@
                  :psi {:not-equal {:player :corp
                                    :prompt "Choose a target for Clairvoyant Monitor"
                                    :msg (msg "place 1 advancement token on "
-                                             (card-name target) " and end the run")
+                                             (card-str state target) " and end the run")
                                    :choices {:req installed?}
                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
@@ -472,7 +472,7 @@
 
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
-                 :msg (msg "place 1 advancement token on " (card-name target))
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req can-be-advanced?}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
                 {:label "Trace 2 - Give the Runner 1 tag"
