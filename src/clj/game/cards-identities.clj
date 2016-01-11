@@ -43,7 +43,7 @@
                               (let [cost (rez-cost state side target)]
                                 (gain state side :credit cost)
                                 (move state side target :hand)
-                                (system-msg state side (str "add " (:title target) " to HQ and gain " cost " [Credits]"))
+                                (system-msg state side (str "adds " (:title target) " to HQ and gains " cost " [Credits]"))
                                 (swap! state update-in [:bonus] dissoc :cost)))}]}
 
    "Cerebral Imaging: Infinite Frontiers"
