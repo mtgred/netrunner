@@ -60,7 +60,7 @@
    {:events
     {:pre-resolve-damage
      {:once :per-turn
-      :req (req (= target :net))
+      :req (req (and (= target :net) (> (last targets) 0)))
       :effect (effect (damage-defer :net (last targets))
                       (show-wait-prompt :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                       (resolve-ability
