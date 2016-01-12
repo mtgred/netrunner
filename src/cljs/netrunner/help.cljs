@@ -14,7 +14,7 @@
          [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"}
           "Jinteki.net Guide"] " on the GitHub wiki."]
 
-        [:h3#site "Jinteki.net site"]
+        [:h3#site "Website"]
 
         [:h4#avatar "How can I change my avatar?"]
         [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
@@ -24,7 +24,7 @@
         [:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too. "
          "Touchscreen devices (smartphones, tablets etc.) are currently not supported."]
 
-        [:h3#cards "Cards and rules"]
+        [:h3#cards "Cards and Rules"]
 
         [:h3#troubleshooting "Troubleshooting"]
 
@@ -41,7 +41,7 @@
         [:p "This is most likely a websocket issue. Check if your network filters let through traffic from ws.jinteki.net. "
          "Whitelisting *.jinteki.net should solve the problem."]
 
-        [:h3#getinv "Getting involved"]
+        [:h3#getinv "Getting Involved"]
 
         [:h4#bugs "How can I report a bug?"]
         [:p "The best place to report bugs is the " [:a {:href "https://github.com/mtgred/netrunner/issues"} "GitHub issue tracker"]
