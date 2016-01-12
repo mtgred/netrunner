@@ -1551,6 +1551,17 @@ nav ul
   width: 650px
   margin: 40px auto 10px
 
+  > h3:target
+    animation: highlight 1s ease
+
+  > h4:target
+    animation: highlight 1s ease
+
+@keyframes highlight
+  from
+    background: darkolivegreen
+  to
+    background: none
 
 #about
   position: absolute
