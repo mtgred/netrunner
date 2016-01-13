@@ -5,7 +5,7 @@
 
 (def app-state (atom {}))
 
-(def help-contents
+(def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."
   (list
     {:id "general"
@@ -131,18 +131,27 @@
             )}))
 
 (def help-toc
-  "Generates list serving as help's table of contents. Parses help-contents and looks for :h3 and :h4 tags."
+  "Generates list serving as help's table of contents. Parses help-data."
   [:nav {:role "navigation" :class "table-of-contents"}
-    [:ul (for [{:keys [id title sub] :as section} help-contents]
+    [:ul (for [{:keys [id title sub] :as section} help-data]
       [:li [:a (when id {:href (str "#" id)}) title]
        [:ul (for [{:keys [id title] :as question} sub]
               [:li [:a (when id {:href (str "#" id)}) title]])]])]])
+
+(def help-contents
+  "Takes help-data and translates it to HTML tags."
+  (for [{:keys [id title sub] :as section} help-data]
+    (list [:h3 {:id id} title]
+          (for [{:keys [id title content] :as question} sub]
+            (list [:h4 {:id id} title]
+                  content)))))
 
 (defn help [cursor owner]
   (om/component
     (sab/html
       [:div.help.panel.blue-shade
        [:h3 "Table of contents"]
-       help-toc])))
+       help-toc
+       help-contents])))
 
 (om/root help app-state {:target (. js/document (getElementById "help"))})
