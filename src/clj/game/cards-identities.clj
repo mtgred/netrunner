@@ -339,6 +339,21 @@
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
+   "Strategic Innovations: Future Forward"
+   {:events {:runner-turn-ends
+                      {:req (req (let [facs (frequencies (map :faction (filter :rezzed (all-installed state :corp))))
+                                       hb (get facs "Haas-Bioroid" 0)
+                                       ji (get facs "Jinteki" 0)
+                                       nb (get facs "NBN" 0)
+                                       we (get facs "Weyland" 0)]
+                                   (and (> hb ji) (> hb nb) (> hb we) (pos? (count (:discard corp))))))
+                       :prompt "Choose a card in Archives to shuffle into R&D"
+                       :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
+                       :player :corp :show-discard true :priority true
+                       :msg (msg "to shuffle " (:title target) " into R&D")
+                       :effect (effect (move :corp target :deck)
+                                       (shuffle! :corp :deck))}}}
+
    "Sunny Lebeau: Security Specialist"
    {:effect (effect (gain :link 2))}
 
@@ -392,4 +407,16 @@
                               :req (req (has? target :subtype "Transaction"))}}}
 
    "Whizzard: Master Gamer"
-   {:recurring 3}})
+   {:recurring 3}
+
+   "Wyvern: Chemically Enhanced"
+   {:events (let [wyv {:req (req (let [facs (frequencies (map :faction (all-installed state :runner)))
+                                       an (get facs "Anarch" 0)
+                                       sh (get facs "Shaper" 0)
+                                       cr (get facs "Criminal" 0)]
+                                   (and (card-is? target :side :corp) (> an sh) (> an cr)
+                                        (pos? (count (:discard runner))))))
+                       :msg (msg "shuffle " (:title (last (:discard runner))) " into their stack")
+                       :effect (effect (move :runner (last (:discard runner)) :deck)
+                                       (shuffle! :runner :deck))}]
+              {:runner-trash wyv})}})
