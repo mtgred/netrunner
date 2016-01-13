@@ -320,7 +320,7 @@
   [deck]
   (let [status (deck-status-label deck)
         message (case status
-                  "legal" "Tournament valid"
+                  "legal" "Tournament legal"
                   "casual" "Casual play only"
                   "invalid" "Invalid")]
   [:span {:class status} message]))

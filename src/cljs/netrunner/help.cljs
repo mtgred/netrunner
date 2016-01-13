@@ -79,16 +79,26 @@
                              ". If you prefer video form, FFG has prepared " [:a {:href "https://www.youtube.com/watch?v=VAslVfZ9p-Y" :target "_blank"} "a video tutorial"]
                              ", too."]
                             [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
-                             [:a {:href "https://www.fantasyflightgames.com/ffg_content/android-netrunner/support/FAQ/Android-Netrunner%20FAQ.pdf"} "the official FFG FAQ"] "."])}
+                             "the official FAQ on "
+                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] "."])}
             {:id "firstgame"
              :title "Can I play my first game on jinteki.net even though I'm a total beginner and never played in meatspace?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Sure! Many players will be happy to play/teach a beginner if they know what they're getting into beforehand. "
+                       "So just create a new game with name such as \"beginner here\" or \"core set only please\", someone "
+                       "happy to play with a beginner should join after a while."]}
             {:id "finddecks"
              :title "Where can I find some good starting decks?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
+                       "For finding decks consisting of core set only try setting some filters in "
+                       [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]}
             {:id "communities"
              :title "Where can I find other Netrunner players to talk to?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Apart from the chatrooms here on Jinteki.net, here are a few links to online Netrunner communities:"
+                       [:ul
+                        [:li [:a {:href "http://forum.stimhack.com/"} "Stimhack forums"]]
+                        [:li [:a {:href "http://reddit.com/r/netrunner/"} "/r/netrunner subreddit"]]
+                        [:li "multiple Facebook groups, such as "
+                         [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]}
             )}
     {:id "site"
      :title "Website"
@@ -101,32 +111,62 @@
              :title "What is the best supported browser?"
              :content [:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too. "
                        "Touchscreen devices (smartphones, tablets etc.) are currently not supported."]}
-            {:id "privatemsg"
+            {:id "privatemsgs"
              :title "How do I send a private message / add someone to friendlist?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "The community management issues such as private messages or friendlist are currently not implemented. "
+                       "They are planned, but no specific date is set, as all of our code is written by volunteers."]}
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"
      :sub (list
             {:id "shards"
              :title "How do I install Eden/Hades/Utopia Shard during a run?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "At the last run step on the relevant server, instead of pressing \"Successful Run\" button, "
+                       "click the shard card you want to install in hand. You should end the run with the shard installed "
+                       "at no cost."]}
             {:id "nasir"
              :title "How do I use Nasir's ability?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Nasir's ability is currently triggered manually - when encountering a piece of ICE, click Nasir's "
+                       "identity card to trigger the ability."]}
             {:id "adam"
              :title "How do I install Adam's directives?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Adam's directives are installed automatically at the game start. However, every Adam deck needs to "
+                       "put one copy of each directive in the deck in addition to your normal deck. Yes, that means that "
+                       "minimal Adam decksize on Jinteki.net is 48."]}
             {:id "napdmwl"
              :title "What is MWL? Why is my deck marked as \"Casual play only\"?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content (list
+                        [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
+                         "of restricted cards introduced by FFG to tournament play. Each of the cards on the list reduces "
+                         "the influence printed on the ID by 1, with a minimum of 1 (so Professor is unaffected). For "
+                         "more information about the MWL read Tournament Rules from "
+                         [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
+                        [:p "Decks that are valid and fit within tournament restrictions are marked \"Tournament legal\". "
+                         "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
+                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."])}
             {:id "rezaccess"
              :title "How do I rez cards as Corp in the 4.3 run timing window?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "
+                       "See " [:a {:href "https://github.com/mtgred/netrunner/issues/334"} "the discussion on GitHub"]
+                       " about this issue."]}
              )}
     {:id "troubleshooting"
      :title "Troubleshooting"
      :sub (list
+            {:id "weird"
+             :title "The site is behaving weird."
+             :content [:p "The server code may have been freshly updated and you don't have the latest Javascript code. "
+                       "First step in every troubleshooting should be a forced refresh of your browser by pressing "
+                       [:code "Ctrl + F5"] ". Also read the announcements on the main page, something about server problems "
+                       "may be written there."]}
+            {:id "laggy"
+             :title "The site is laggy."
+             :content (list
+                        [:p "Check the number of games being played in upper right corner. Currently the server can handle "
+                         "about 60-70 simultaneous games without slowing down - above that number the lag is expected, sadly. "
+                         "Try to come back later."]
+                        [:p "If the game number is low and the site is laggy despite that, the server may be in a need of restart. "
+                         "Try to come back later."])}
             {:id "touchproblems"
              :title "The website doesn't work well on my touchscreen device."
              :content [:p "Touchscreen devices are currently not supported. See answer to " [:a {:href "#bestbrowser"} "this question"]
@@ -191,7 +231,7 @@
   (om/component
     (sab/html
       [:div.help.panel.blue-shade
-       [:h3 "Table of contents"]
+       [:h3 "Help Topics"]
        help-toc
        help-contents])))
 
