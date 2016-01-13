@@ -355,8 +355,7 @@
                        state :corp
                        {:prompt "Choose a card to rez, ignoring the rez cost"
                         :choices {:req #(not (:rezzed %))}
-                        :effect (req (gain state :corp :credit (rez-cost state side target))
-                                     (rez state side target)
+                        :effect (req (rez state side target {:ignore-cost :rez-cost})
                                      (system-msg state side (str "rezzes " (:title target) " at no cost")))}
                       card nil))
     :abilities [{:msg "draw 1 card"

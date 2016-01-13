@@ -182,7 +182,7 @@
    "Elizas Toybox"
    {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
                  :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
-                 :effect (effect (rez target {:no-cost true}))}]}
+                 :effect (effect (rez target {:ignore-cost :all-costs}))}]}
 
    "Encryption Protocol"
    {:events {:pre-trash {:req (req (= (first (:zone target)) :servers))
