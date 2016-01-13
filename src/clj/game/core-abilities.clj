@@ -129,7 +129,7 @@
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
   [state side card msg ability targets]
   (show-prompt state side card msg ["Yes" "No"] #(let [yes-ability (:yes-ability ability)]
-                                                  (if (and (= % "Yes") yes-ability (can-pay? state side (:cost yes-ability)))
+                                                  (if (and (= % "Yes") yes-ability (can-pay? state side (:title card) (:cost yes-ability)))
                                                     (resolve-ability state side yes-ability card targets)
                                                     (when-let [no-ability (:no-ability ability)]
                                                       (resolve-ability state side no-ability card targets))))))
