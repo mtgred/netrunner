@@ -9,9 +9,7 @@
                                   (gain-agenda-point state agenda-owner (- (:agendapoints card))))
                                 ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
                                 (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
-                                (shuffle! state :corp :deck)
-                                )
-                   }]
+                                (shuffle! state :corp :deck))}]
       :flags {:has-abilities-when-stolen true}}
 
    "Accelerated Beta Test"
@@ -77,7 +75,8 @@
     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
 
    "Chronos Project"
-   {:effect (effect (move-zone :runner :discard :rfg))}
+   {:msg "remove all cards in the Runner's Heap from the game"
+    :effect (effect (move-zone :runner :discard :rfg))}
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -120,7 +119,8 @@
                                :msg "create a new remote server, installing cards at no cost"}}})
 
    "Domestic Sleepers"
-   {:abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
+   {:agendapoints-runner (req (do 0))
+    :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :effect (req (when (zero? (:counter card))
                                 (gain-agenda-point state side 1))
                               (set-prop state side card :counter 1 :agendapoints 1))}]}
@@ -150,7 +150,7 @@
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-Palooza ability?"
+   {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
                        :yes-ability {:msg "gain 5 [Credits]"
                                      :effect (effect (gain :corp :credit 5))}}}}
 
@@ -183,7 +183,6 @@
 
    "Global Food Initiative"
    {:agendapoints-runner (req (do 2))}
-
 
    "Glenn Station"
    {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
@@ -225,7 +224,8 @@
                  :effect (effect (gain :credit (:credit runner)))}]}
 
    "Hostile Takeover"
-   {:effect (effect (gain :credit 7 :bad-publicity 1))}
+   {:msg "gain 7 [Credits] and take 1 bad publicity"
+    :effect (effect (gain :credit 7 :bad-publicity 1))}
 
    "Hollywood Renovation"
    {:install-state :face-up
@@ -266,7 +266,8 @@
     :effect (effect (corp-install target nil {:install-state :rezzed-no-cost}))}
 
    "Mandatory Upgrades"
-   {:effect (effect (gain :click 1 :click-per-turn 1))
+   {:msg "gain an additional [Click] per turn"
+    :effect (effect (gain :click 1 :click-per-turn 1))
     :leave-play (req (lose state :corp :click 1 :click-per-turn 1))}
 
    "Market Research"
@@ -341,7 +342,8 @@
                  :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Project Beale"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
+   {:agendapoints-runner (req (do 2))
+    :effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
                               :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
    "Project Vitruvius"
@@ -439,7 +441,8 @@
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
    "Veterans Program"
-   {:effect (effect (lose :bad-publicity 2))}
+   {:msg "lose 2 bad publicity"
+    :effect (effect (lose :bad-publicity 2))}
 
    "Vulcan Coverup"
    {:msg "do 2 meat damage" :effect (effect (damage :meat 2 {:card card}))

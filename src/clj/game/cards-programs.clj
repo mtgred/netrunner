@@ -107,12 +107,13 @@
     :abilities [{:effect
                  (req (let [c card]
                         (resolve-ability state side
-                                         {:prompt "Choose a card to install from your grip"
+                                         {:prompt "Choose a card to install from your Grip"
                                           :choices {:req #(and (<= (:cost %) (get c :counter 0))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
                                                                (= (:zone %) [:hand]))}
                                           :msg (msg "install " (:title target) " at no cost")
-                                          :effect (effect (trash card) (runner-install target {:no-cost true}))}
+                                          :effect (effect (trash card {:cause :ability-cost})
+                                                          (runner-install target {:no-cost true}))}
                                          card nil)))}]}
 
    "Datasucker"
@@ -438,7 +439,8 @@
                            (when (get-in card [:special :installing])
                              (update! state side (update-in card [:special] dissoc :installing))
                              (trigger-event state side :runner-install card))
-                           (trash state side target))
+                           (trash state side target)
+                           (trash-ice-in-run state))
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
