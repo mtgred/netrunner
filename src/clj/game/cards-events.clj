@@ -529,7 +529,7 @@
                      {:prompt "Choose a program to install from your grip or heap" :show-discard true
                       :choices {:req #(and (= (:type %) "Program")
                                            (#{[:hand] [:discard]} (:zone %))
-                                           (can-pay? st si (modified-install-cost st si % [:credit tcost])))}
+                                           (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
                       :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
                                       (runner-install target))
                       :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}

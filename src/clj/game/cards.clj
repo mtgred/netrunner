@@ -22,7 +22,12 @@
                       :choices {:req #(and (:installed %) (= (:side %) "Runner"))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
-; Load all card definitions into the current namespace.
+(def corp-rez-toast
+  "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'
+  triggers"
+  {:effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
+
+;; Load all card definitions into the current namespace.
 (load "cards-agendas")
 (load "cards-assets")
 (load "cards-events")

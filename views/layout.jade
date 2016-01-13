@@ -6,6 +6,7 @@ html
     // meta(name="viewport", content="width=device-width, initial-scale=1.0")
     link(rel='stylesheet', href='/css/carousel.css')
     link(rel='stylesheet', href='/css/netrunner.css')
+    link(rel='stylesheet', href='/lib/toastr/toastr.min.css')
   body
     block content
 
@@ -13,6 +14,7 @@ html
     script(src='/lib/bootstrap/dist/js/bootstrap.js')
     script(src='/lib/moment/min/moment.min.js')
     script(src='/lib/marked/marked.min.js')
+    script(src='/lib/toastr/toastr.min.js')
     script(src='/socket.io/socket.io.js')
     script(type="text/javascript")!= "var user = " + JSON.stringify(user) + ";"
 

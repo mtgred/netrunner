@@ -120,16 +120,16 @@
                         ; Ask if the runner will pay the additional cost to steal.
                         (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
                                           {:yes-ability
-                                                       {:effect (req (if (can-pay? state side cost)
-                                                                       (do (pay state side nil cost)
-                                                                           (system-msg state side (str "pays " (costs-to-symbol cost)
-                                                                                                       " to steal " (:title c)))
-                                                                           (resolve-steal state side c))
-                                                                       (resolve-steal-events state side c)))}
+                                           {:effect (req (if (can-pay? state side name cost)
+                                                           (do (pay state side nil cost)
+                                                               (system-msg state side (str "pays " (costs-to-symbol cost)
+                                                                                           " to steal " name))
+                                                               (resolve-steal state side c))
+                                                           (resolve-steal-events state side c)))}
                                            :no-ability {:effect (effect (resolve-steal-events c))}} nil)
                         ; Otherwise, show the "You access" prompt with the single option to Steal.
                         (resolve-ability state :runner
-                                         {:prompt (str "You access " (:title c)) :choices ["Steal"]
+                                         {:prompt (str "You access " name) :choices ["Steal"]
                                           :effect (req (resolve-steal state :runner c))} c nil)))))
               ; Accessing a non-agenda
               (do (when-let [access-effect (:access cdef)]
@@ -141,7 +141,7 @@
                       ; The card has a trash cost (Asset, Upgrade)
                       (let [card (assoc c :seen true)]
                         (if (and (get-in @state [:runner :register :force-trash])
-                                 (can-pay? state :runner :credit trash-cost))
+                                 (can-pay? state :runner name :credit trash-cost))
                           ; If the runner is forced to trash this card (Neutralize All Threats)
                           (resolve-ability state :runner {:cost [:credit trash-cost]
                                                           :effect (effect (trash card)

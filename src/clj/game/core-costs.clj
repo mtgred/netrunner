@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare toast)
+
 (defn deduce
   "Deduct the value from the player's attribute."
   [state side [attr value]]
@@ -11,22 +13,35 @@
   (when-let [cost-name (cost-names value attr)]
     cost-name))
 
+(defn toast-msg-helper
+  "Creates a toast message for given cost and title if applicable"
+  [state side cost]
+  (let [type (first cost)
+        amount (last cost)]
+    (when-not (or (>= (- (get-in @state [side type]) amount) 0)
+                  (= type :memory))
+      "Unable to pay")))
+
 (defn can-pay?
-  "Returns nil if the player cannot pay the cost args, or a truthy map otherwise."
-  [state side & args]
+  "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
+  If title is specified a toast will be generated if the player is unable to pay
+  explaining which cost they were unable to pay."
+  [state side title & args]
   (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
-        scored (get-in @state [side :scored])]
-    (if (and (every? #(or (>= (- (get-in @state [side (first %)]) (last %)) 0)
-                          (= (first %) :memory)) ;; memoryunits may be negative
-                     costs)
-             (or (not forfeit-cost) (not (empty? scored))))
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored})))
+        scored (get-in @state [side :scored])
+        cost-msg (or (some #(toast-msg-helper state side %) costs)
+                     (when (and forfeit-cost (empty? scored)) "Unable to forfeit an Agenda"))]
+    ;; no cost message - hence can pay
+    (if-not cost-msg
+      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
+      ;; only toast if title is specified
+      (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay
   "Deducts each cost from the player."
   [state side card & args]
-  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side args)]
+  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side (:title card) args)]
     (when forfeit-cost
       (if (= (count scored) 1)
         (forfeit state side (first scored))

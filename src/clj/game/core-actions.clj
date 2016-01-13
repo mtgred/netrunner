@@ -141,7 +141,7 @@
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
     (when (or (nil? cost)
-              (apply can-pay? state side cost))
+              (apply can-pay? state side (:title card) cost))
       (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
       (resolve-ability state side ab card targets))))
 
@@ -173,10 +173,16 @@
    (if (can-rez? state side card)
      (do
        (trigger-event state side :pre-rez card)
-       (when (or (#{"Asset" "ICE" "Upgrade"} (:type card)) (:install-rezzed (card-def card)))
+       (when (or (#{"Asset" "ICE" "Upgrade"} (:type card))
+                 (:install-rezzed (card-def card)))
          (trigger-event state side :pre-rez-cost card)
-         (let [cdef (card-def card) cost (rez-cost state side card)]
-           (when-let [cost-str (or no-cost (pay state side card :credit cost (:additional-cost cdef)))]
+         (let [cdef (card-def card)
+               cost (rez-cost state side card)]
+           (when-let [cost-str (or no-cost
+                                   (pay state side card :credit cost (:additional-cost cdef)))]
+             ;; Deregister the derezzed-events before rezzing card
+             (when (:derezzed-events cdef)
+               (unregister-events state side card))
              (card-init state side (assoc card :rezzed true))
              (doseq [h (:hosted card)]
                (update! state side (-> h
@@ -195,8 +201,11 @@
   [state side card]
   (system-msg state side (str "derezzes " (:title card)))
   (update! state :corp (deactivate state :corp card true))
-  (when-let [derez-effect (:derez-effect (card-def card))]
-    (resolve-ability state side derez-effect (get-card state card) nil))
+  (let [cdef (card-def card)]
+    (when-let [derez-effect (:derez-effect cdef)]
+      (resolve-ability state side derez-effect (get-card state card) nil))
+    (when-let [dre (:derezzed-events cdef)]
+      (register-events state side dre card)))
   (trigger-event state side :derez card))
 
 (defn advance
@@ -243,7 +252,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner nil :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner "a run" :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)
     (pay state :runner nil :click 1)))

@@ -14,22 +14,45 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
+(def toastr-options (js-obj
+                     "closeButton" false
+                     "debug" false
+                     "newestOnTop" false
+                     "progressBar" false
+                     "positionClass" "toast-card"
+                     "preventDuplicates" true
+                     "onclick" nil
+                     "showDuration" 300
+                     "hideDuration" 3000
+                     "timeOut" 3000
+                     "extendedTimeOut" 1000
+                     "showEasing" "swing"
+                     "hideEasing" "linear"
+                     "showMethod" "fadeIn"
+                     "hideMethod" "fadeOut"))
+
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
 
-(defn notify [text]
-  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text})))
+(declare toast)
+
+(defn notify
+  "Send a notification to the chat, and a toast to the current player of the specified severity"
+  [text severity]
+  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
+  (toast text severity))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
-(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."))
+(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."
+                                  "error"))
 (.on socket "reconnect" #(when (.-onbeforeunload js/window)
-                           (notify "Reconnected to the server.")
+                           (notify "Reconnected to the server." "success")
                            (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
 (def anr-icons {"[Credits]" "credit"
@@ -87,6 +110,15 @@
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
+
+(defn toast
+  "Display a toast warning with the specified message.
+  Sends a command to clear any server side toasts."
+  [msg type]
+  (set! (.-options js/toastr) toastr-options)
+  (let [f (aget js/toastr type)] 
+    (f msg))
+  (send-command "toast"))
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
@@ -634,9 +666,8 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (:max-hand-size me) 0)]
     (if (> (count (:hand me)) max-size)
-      (om/set-state! owner :warning (str "Discard to " max-size " cards"))
-      (do (om/set-state! owner :warning nil)
-          (send-command "end-turn")))))
+      (toast (str "Discard to " max-size " cards") "warning")
+      (send-command "end-turn"))))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
   (reify
@@ -652,7 +683,9 @@
         (-> ".me .discard .popup" js/$ .fadeIn))
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
-        (set! (.-cursor (.-style (.-body js/document))) "default")))
+        (set! (.-cursor (.-style (.-body js/document))) "default"))
+      (doseq [{:keys [msg type]} (get-in cursor [side :toast])]
+        (toast msg type)))
 
     om/IRenderState
     (render-state [this state]
@@ -733,7 +766,6 @@
                            (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))
                       [:div.panel.blue-shade
-                       (when-let [warning (:warning state)] [:h4 warning])
                        (if (= (keyword active-player) side)
                          (when (and (zero? (:click me)) (not end-turn))
                            [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
