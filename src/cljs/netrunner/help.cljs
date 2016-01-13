@@ -12,17 +12,58 @@
      :title "General"
      :sub (list
             {:id "dostuff"
-             :title "How do I do stuff in game?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :title "How do I do I perform actions in a game?"
+             :content (list
+                        [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
+                         "Either something will happen or a menu should appear."]
+                        [:p "Cards can be moved by clicking them and dragging. Clicking and dragging excessive cards from one's "
+                         "hand to discard pile is normally done after one's turn ends and they are over their hand size limit."]
+                        [:p "A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
+                         "to their numbers in the panel on the left."])}
             {:id "undo"
              :title "How do I undo an action?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "There is no \"general purpose undo button\". Surplus/missing credits, clicks can be manipulated with "
+                       "the panel on the left. Trashed/played cards can be dragged back to hand and reinstalled if needed. If there
+                       are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as last resort."]}
+            {:id "breakice"
+             :title "How do I break ICE and fire ICE subroutines?"
+             :content (list
+                        [:p "Breaking ICE during a run and subroutines firing is currently not automated. Runner signals using their "
+                         "icebreakers by clicking them and using their abilities. When some subroutines are left unbroken and fire, "
+                         "Corp clicks the piece of ICE with subroutines firing and uses them."]
+                        [:p "It's considered common courtesy to wait as Corp for the runner to say \"fire\" before firing the "
+                         "subroutines, since Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
+                         "and the effects of a fired subroutine may be hard to undo."])}
             {:id "closemenu"
              :title "How do I close a card's menu?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :content [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
+                       "try using " [:code "/close-prompt"]]}
             {:id "commands"
-             :title "What are the commands available during a game?"
-             :content [:p "Lorem Ipsum"]} ;; TODO
+             :title "How do I use commands during a game?"
+             :content [:p "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
+                       "requiring you to select something. List of available commands:"
+                       [:ul
+                        [:li [:code "/draw n"] " - Draw n cards"]
+                        [:li [:code "/credit n"] " - Set your credits to n"]
+                        [:li [:code "/click n"] " - Set your clicks to n"]
+                        [:li [:code "/memory n"] " - Set your memory to n"]
+                        [:li [:code "/tag n"] " - Set your tags to n"]
+                        [:li [:code "/bp n"] " - Set your bad publicity to n"]
+                        [:li [:code "/link n"] " - Set your link to n"]
+                        [:li [:code "/handsize n"] " - Set your handsize to n"]
+                        [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
+                        [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
+                        [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
+                        [:li [:code "/discard #n"] " - Discard card number n from your hand"]
+                        [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
+                        [:li [:code "/end-run"] " - End the run (Corp only)"]
+                        [:li [:code "/jack-out"] " - Jack out (Runner only)"]
+                        [:li [:code "/trace n"] " - Start trace with base strength n (Corp only)"]
+                        [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
+                        [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
+                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only)"]
+                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only)"]
+                        [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:p "Read the "
