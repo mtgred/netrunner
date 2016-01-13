@@ -303,7 +303,21 @@
 
 (defn remote-list [remotes]
   (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
-  
+
+(defn card-img
+  "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
+  [{:keys [code title] :as cursor}]
+  (om/component
+   (when code
+     (sab/html
+      [:div.card-frame
+       [:div.blud-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+                              :on-mouse-leave #(put! zoom-channel false)}
+        (when-let [url (image-url cursor)]
+          [:div
+           [:span.cardname title]
+           [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
+
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
                          side rec-counter facedown named-target]
@@ -606,9 +620,7 @@
           (for [ice ices]
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))
           (when-let [run-card (:card (:run-effect run))]
-            [:div.run-card {:on-mouse-over card-preview-mouse-over
-                            :on-mouse-out  card-preview-mouse-out}
-             (om/build card-view run-card)])])
+            [:div.run-card (om/build card-img run-card)])])
        (when content
          [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
           (for [card content]
