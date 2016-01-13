@@ -105,7 +105,7 @@
    "Bioroid Efficiency Research"
    {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
-    :effect (effect (rez target {:no-cost true})
+    :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Biotic Labor"
@@ -281,7 +281,7 @@
    "Oversight AI"
    {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:no-cost true})
+    :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Patch"
@@ -431,7 +431,7 @@
                                        (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
                                      0 (flatten (seq (:servers corp))))))}
     :req (req tagged)
-    :effect (req (doseq [t targets] (rez state side t {:no-cost true})))}
+    :effect (req (doseq [t targets] (rez state side t {:ignore-cost :all-costs})))}
 
    "Snatch and Grab"
    {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}

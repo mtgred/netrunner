@@ -150,6 +150,54 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
 
+(deftest muertos-trashed
+  "Muertos Gang Member - Install and Trash"
+  (do-game
+    (new-game (default-corp [(qty "Tollbooth" 1) (qty "Ice Wall" 1)])
+              (default-runner [(qty "Hedge Fund" 3) (qty "Muertos Gang Member" 1)]))
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :corp)
+    (let [toll (get-in @state [:corp :servers :hq :ices 0])
+          iw (get-in @state [:corp :servers :archives :ices 0])]
+      (core/rez state :corp iw)
+      (core/move state :runner (find-card "Hedge Fund" (:hand (get-runner))) :deck)
+
+      (play-from-hand state :runner "Muertos Gang Member")
+      (prompt-select :corp (refresh iw))
+      (is (not (:rezzed (refresh iw))) "Ice Wall derezzed")
+      (is (= 2 (count (:hand (get-runner)))) "2 cards in Runner's hand")
+      (let [muer (get-in @state [:runner :rig :resource 0])]
+        (card-ability state :runner muer 0)
+        (is (= 3 (count (:hand (get-runner)))) "Runner drew a card from Muertos")
+        (prompt-select :corp toll)
+        (is (:rezzed (refresh toll)) "Tollbooth was rezzed")))))
+
+(deftest muertos-reina
+  "Muertos Gang Member - Account for Reina interaction, #1098."
+  (do-game
+    (new-game (default-corp [(qty "Tollbooth" 1) (qty "Ice Wall" 1)])
+              (make-deck "Reina Roja: Freedom Fighter" [(qty "Hedge Fund" 3) (qty "Muertos Gang Member" 1)]))
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (let [toll (get-in @state [:corp :servers :hq :ices 0])
+          iw (get-in @state [:corp :servers :archives :ices 0])]
+      (core/rez state :corp iw)
+      (take-credits state :corp)
+      (core/lose state :corp :credit 100)
+      (core/move state :runner (find-card "Hedge Fund" (:hand (get-runner))) :deck)
+
+      (play-from-hand state :runner "Muertos Gang Member")
+      (prompt-select :corp (refresh iw))
+      (is (not (:rezzed (refresh iw))) "Ice Wall derezzed")
+      (is (= 2 (count (:hand (get-runner)))) "2 cards in Runner's hand")
+      (let [muer (get-in @state [:runner :rig :resource 0])]
+        (card-ability state :runner muer 0)
+        (is (= 3 (count (:hand (get-runner)))) "Runner drew a card from Muertos")
+        (prompt-select :corp toll)
+        (is (:rezzed (refresh toll)) "Tollbooth was rezzed")
+        (is (= 0 (:credit (get-corp))) "Corp has 0 credits")))))
+
 (deftest new-angeles-city-hall
   "New Angeles City Hall - Avoid tags; trash when agenda is stolen"
   (do-game
