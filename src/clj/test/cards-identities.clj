@@ -245,6 +245,30 @@
       (core/rez state :corp lc2)
       (is (= 3 (:credit (get-runner))) "Runner lost 1 credit from rez of advertisement (Runner turn)"))))
 
+(deftest strategic-innovations-future-forward
+  "Strategic Innovations: Future Forward - Ability"
+  (do-game
+    (new-game
+      (make-deck "Strategic Innovations: Future Forward" [(qty "Hedge Fund" 2) (qty "Eli 1.0" 3) (qty "Crick" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Crick" "New remote")
+    (let [i1 (get-in @state [:corp :servers :remote1 :ices 0])
+          i2 (get-in @state [:corp :servers :remote2 :ices 0])]
+      (take-credits state :corp 0)
+      (take-credits state :runner)
+      (core/rez state :corp i1)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (count (:prompt (get-corp)))) "Corp prompted to trigger Strategic Innovations")
+      (prompt-select :corp (first (:discard (get-corp))))
+      (is (empty? (:discard (get-corp))) "Hedge Fund moved back to R&D")
+      (take-credits state :corp)
+      (core/rez state :corp i2)
+      (take-credits state :runner)
+      (is (= 0 (count (:prompt (get-corp)))) "Corp not prompted to trigger Strategic Innovations"))))
+
 (deftest titan-agenda-counter
   "Titan Transnational - Add a counter to a scored agenda"
   (do-game
@@ -260,3 +284,28 @@
       (core/score state :corp {:card (refresh atl)})
       (let [scored (get-in @state [:corp :scored 0])]
         (is (= 1 (:counter scored)) "1 counter added by Titan")))))
+
+(deftest wyvern-chemically-enhanced
+  "Wyvern: Chemically Enhanced - Ability"
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 3)])
+              (make-deck "Wyvern: Chemically Enhanced" [(qty "Sure Gamble" 2) (qty "Corroder" 1)
+                                                        (qty "Clone Chip" 1) (qty "Easy Mark" 1)]))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Easy Mark")
+    (play-from-hand state :runner "Corroder")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+     ; trash Launch Campaign, should trigger wyvern
+    (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")
+    (is (some #(= "Easy Mark" (:title %)) (:deck (get-runner))) "Easy Mark moved to deck")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Yes")
+    (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")))

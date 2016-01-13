@@ -40,7 +40,7 @@
   (shuffle (mapcat #(map (fn [card]
                            (let [c (assoc card :cid (make-cid))
                                  c (dissoc c :setname :text :_id :influence :number :influencelimit
-                                           :faction :factioncost)]
+                                           :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))

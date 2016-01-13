@@ -90,5 +90,11 @@
   ([state side title]
    (core/trash state side (find-card title (get-in @state [side :hand])))))
 
+(defn run-empty-server
+  [state server]
+  (core/click-run state :runner {:server server})
+  (core/no-action state :corp nil)
+  (core/successful-run state :runner nil))
+
 (load "core-game")
 (load "cards")
