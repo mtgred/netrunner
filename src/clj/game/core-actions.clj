@@ -169,7 +169,7 @@
 (defn rez
   "Rez a corp card."
   ([state side card] (rez state side card nil))
-  ([state side card {:keys [no-cost] :as args}]
+  ([state side card {:keys [ignore-cost] :as args}]
    (if (can-rez? state side card)
      (do
        (trigger-event state side :pre-rez card)
@@ -177,9 +177,10 @@
                  (:install-rezzed (card-def card)))
          (trigger-event state side :pre-rez-cost card)
          (let [cdef (card-def card)
-               cost (rez-cost state side card)]
-           (when-let [cost-str (or no-cost
-                                   (pay state side card :credit cost (:additional-cost cdef)))]
+               cost (rez-cost state side card)
+               costs (concat (when-not ignore-cost [:credit cost])
+                             (when (not= ignore-cost :all-costs) (:additional-cost cdef)))]
+           (when-let [cost-str (apply pay state side card costs)]
              ;; Deregister the derezzed-events before rezzing card
              (when (:derezzed-events cdef)
                (unregister-events state side card))
@@ -189,7 +190,7 @@
                                        (update-in [:zone] #(map to-keyword %))
                                        (update-in [:host :zone] #(map to-keyword %)))))
              (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                         (:title card) (when no-cost " at no cost")))
+                                         (:title card) (when ignore-cost " at no cost")))
              (when (#{"ICE"} (:type card))
                (update-ice-strength state side card)
                (update-run-ice state side))

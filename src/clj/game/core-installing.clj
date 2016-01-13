@@ -94,7 +94,7 @@
                  (when (= (:type c) "Agenda")
                    (update-advancement-cost state side moved-card))
                  (when (= install-state :rezzed-no-cost)
-                   (rez state side moved-card {:no-cost true}))
+                   (rez state side moved-card {:ignore-cost :all-costs}))
                  (when (= install-state :rezzed)
                    (rez state side moved-card))
                  (when (= install-state :face-up)
