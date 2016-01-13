@@ -24,7 +24,7 @@
              :title "How do I undo an action?"
              :content [:p "There is no \"general purpose undo button\". Surplus/missing credits, clicks can be manipulated with "
                        "the panel on the left. Trashed/played cards can be dragged back to hand and reinstalled if needed. If there
-                       are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as last resort."]}
+                       are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]}
             {:id "breakice"
              :title "How do I break ICE and fire ICE subroutines?"
              :content (list
@@ -156,8 +156,8 @@
             {:id "weird"
              :title "The site is behaving weird."
              :content [:p "The server code may have been freshly updated and you don't have the latest Javascript code. "
-                       "First step in every troubleshooting should be a forced refresh of your browser by pressing "
-                       [:code "Ctrl + F5"] ". Also read the announcements on the main page, something about server problems "
+                       "First step in every troubleshooting should be a forced refresh of your browser by doing a force refresh ("
+                       [:code "Ctrl + F5"] " on Windows). Also read the announcements on the main page, something about server problems "
                        "may be written there."]}
             {:id "laggy"
              :title "The site is laggy."
