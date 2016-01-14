@@ -14,9 +14,10 @@
 (defn unregister-events
   "Removes all event handlers defined for the given card."
   [state side card]
-  (doseq [e (:events (card-def card))]
-    (swap! state update-in [:events (first e)]
-           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %)))
+  (let [cdef (card-def card)]
+    (doseq [e (merge (:events cdef) (:derezzed-events cdef))]
+      (swap! state update-in [:events (first e)]
+             #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
   (unregister-suppress state side card))
 
 (defn trigger-event
