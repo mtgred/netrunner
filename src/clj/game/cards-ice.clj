@@ -2,8 +2,50 @@
 
 (declare trash-program trash-hardware trash-installed)
 
-(def end-the-run {:msg "end the run" :effect (effect (end-run))})
+;;;; Helper functions specific for ICE
 
+;;; General subroutines
+(def end-the-run
+  "Basic ETR subroutine"
+  {:label "End the run"
+   :msg "end the run"
+   :effect (effect (end-run))})
+
+(defn do-net-damage
+  "Do specified amount of net-damage."
+  [dmg]
+  {:label (str "Do " dmg " net damage")
+   :msg (str "do " dmg " net damage")
+   :effect (effect (damage :net dmg {:card card}))})
+
+;;; For Grail ICE
+(def reveal-grail
+  "Ability for revealing Grail ICE from HQ."
+  {:label "Reveal up to 2 Grail ICE from HQ"
+   :choices {:max 2
+             :req #(and (:side % "Corp")
+                        (in-hand? %)
+                        (has-subtype? % "Grail"))}
+   :msg (let [sub-label #(:label (first (:abilities (card-def %))))]
+         (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+
+(def resolve-grail
+  "Ability for resolving a subroutine on a Grail ICE in HQ."
+  {:label "Resolve a Grail ICE subroutine from HQ"
+   :choices {:req #(and (:side % "Corp")
+                        (in-hand? %)
+                        (has-subtype? % "Grail"))}
+   :effect (req (doseq [ice targets]
+                  (let [subroutine (first (:abilities (card-def ice)))]
+                    (resolve-ability state side subroutine card nil))))})
+
+(defn grail-ice
+  "Creates data for grail ICE"
+  [ability]
+  {:abilities [ability reveal-grail resolve-grail]})
+
+
+;;;; Card definitions
 (def cards-ice
   {"Archangel"
    {:access {:optional
@@ -264,20 +306,7 @@
                                          (end-run))}}]}
 
    "Galahad"
-   {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice end-the-run)
 
    "Gemini"
    {:abilities [{:label "Trace 2 - Do 1 net damage"
@@ -430,20 +459,7 @@
                                                    (trash state side card)))]}
 
    "Lancelot"
-   {:abilities [trash-program
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice trash-program)
 
    "Little Engine"
    {:abilities [end-the-run
@@ -489,22 +505,7 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Merlin"
-   {:abilities [{:label "Do 2 net damage"
-                 :msg "do 2 net damage"
-                 :effect (effect (damage :net 2 {:card card}))}
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice (do-net-damage 2))
 
    "Meru Mati"
    {:abilities [end-the-run]
