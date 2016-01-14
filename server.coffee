@@ -28,12 +28,17 @@ db = mongoskin.db(mongoUrl)
 # Game lobby
 games = {}
 lobbyUpdate = false
+lobbyUpdates = {"create" : {}, "update" : {}, "delete" : {}}
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
 
-refreshLobby = () ->
+refreshLobby = (type, gameid) ->
   lobbyUpdate = true
+  if type is "delete"
+    lobbyUpdates[type][gameid] = "0"
+  else
+    lobbyUpdates[type][gameid] = games[gameid]
 
 removePlayer = (socket) ->
   game = games[socket.gameid]
@@ -49,11 +54,17 @@ removePlayer = (socket) ->
     if game.players.length is 0 and game.spectators.length is 0
       delete games[socket.gameid]
       requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
+      refreshLobby("delete", socket.gameid)
+    else
+      refreshLobby("update", socket.gameid)
     socket.leave(socket.gameid)
     socket.gameid = false
-    refreshLobby()
+
   for k, v of games
-    delete games[k] if (not v.started or v.players.length < 2) and (new Date() - v.date) > 3600000
+    if (not v.started or v.players.length < 2) and (new Date() - v.date) > 3600000
+
+      delete games[k]
+      refreshLobby("delete", v.gameid)
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -63,7 +74,7 @@ joinGame = (socket, gameid) ->
     socket.join(gameid)
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
-    refreshLobby()
+    refreshLobby("update", gameid)
 
 getUsername = (socket) ->
   ((socket.request || {}).user || {}).username
@@ -95,7 +106,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
     db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
-  refreshLobby()
+  socket.emit("netrunner", {type: "games", games: games})
 
   socket.on 'disconnect', () ->
     gid = socket.gameid
@@ -115,7 +126,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         socket.join(gameid)
         socket.gameid = gameid
         socket.emit("netrunner", {type: "game", gameid: gameid})
-        refreshLobby()
+        refreshLobby("create", gameid)
 
       when "leave-lobby"
         gid = socket.gameid
@@ -149,7 +160,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           socket.join(msg.gameid)
           socket.gameid = msg.gameid
           socket.emit("netrunner", {type: "game", gameid: msg.gameid, started: game.started})
-          refreshLobby()
+          refreshLobby("update", msg.gameid)
           if game.started
             requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
           else
@@ -171,15 +182,20 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         for player in games[socket.gameid].players
           player.side = swapSide(player.side)
           player.deck = null
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
+        updateMsg = {"update" : {}}
+        updateMsg["update"][socket.gameid] = games[socket.gameid]
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
+        refreshLobby("update", msg.gameid)
 
       when "deck"
         for player in games[socket.gameid].players
           if player.user.username is getUsername(socket)
             player.deck = msg.deck
             break
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
-
+        updateMsg = {"update" : {}}
+        updateMsg["update"][socket.gameid] = games[socket.gameid]
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
+        
       when "start"
         game = games[socket.gameid]
         if game
@@ -190,7 +206,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           requester.send(JSON.stringify(msg))
           for player in game.players
             delete player["deck"]
-          refreshLobby()
+          refreshLobby("update", msg.gameid)
 
       when "do"
         try
@@ -200,8 +216,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
 sendLobby = () ->
   if lobby and lobbyUpdate
-    lobby.emit('netrunner', {type: "games", games: games})
+    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates})
     lobbyUpdate = false
+    lobbyUpdates["create"] = {}
+    lobbyUpdates["update"] = {}
+    lobbyUpdates["delete"] = {}
 
 setInterval(sendLobby, 1000)
 

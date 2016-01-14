@@ -27,15 +27,26 @@
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
 
+(defn sort-games-list [games]
+  (sort-by #(vec (map (assoc % :started (not (:started %)))
+                      [:started :date]))
+           > games))
+
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "game" (do (swap! app-state assoc :gameid (:gameid msg))
                      (when (:started msg) (launch-game nil)))
-          "games" (do (swap! app-state assoc :games
-                             (sort-by #(vec (map (assoc % :started (not (:started %)))
-                                                 [:started :date]))
-                                      > (vals (:games msg))))
+          "games" (do (when (:gamesdiff msg)
+                        (swap! app-state update-in [:games]
+                               (fn [games]
+                                 (let [gamemap (into {} (map #(assoc {} (keyword (:gameid %)) %) games))
+                                       create (merge gamemap (get-in msg [:gamesdiff :create]))
+                                       update (merge create (get-in msg [:gamesdiff :update]))
+                                       delete (apply dissoc update (map keyword (keys (get-in msg [:gamesdiff :delete]))))]
+                                   (sort-games-list (vals delete))))))
+                      (when (:games msg)
+                        (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
                           (.play (.getElementById js/document sound)))))
