@@ -628,28 +628,36 @@
 (defmethod discard-view "Corp" [{:keys [discard servers] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
-     (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                  :on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
-     (om/build label discard {:opts {:name "Archives"}})
+    (let [faceup? #(or (:seen %) (:rezzed %))]
+     [:div.panel.blue-shade.discard
+      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
+                                   :on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+      (om/build label discard {:opts {:name "Archives"
+                                      :fn (fn [cursor] (let [total (count cursor)
+                                                             face-up (count (filter faceup? cursor))]
+                                                         ;; use non-breaking space to keep counts on same line.
+                                                         (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
-     [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
-      [:div
-       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
-      (for [c discard]
-        (if (or (:seen c) (:rezzed c))
-          (om/build card-view c)
-          (if (not= (:side @game-state) :corp)
-            [:img.card {:src "/img/corp.png"}]
-            [:div.unseen (om/build card-view c)])))]
-
-     (when-not (empty? discard)
-       (let [c (last discard)]
-         (if (= (:side @game-state) :corp)
+      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
+       [:div
+        [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]
+        [:label (let [total (count discard)
+                      face-up (count (filter faceup? discard))]
+                  (str total " cards, " (- total face-up) " face-down."))]]
+       (for [c discard]
+         (if (faceup? c)
            (om/build card-view c)
-           (if (or (:seen c) (:rezzed c))
-             (om/build card-view c)
-             [:img.card {:src "/img/corp.png"}]))))])))
+           (if (not= (:side @game-state) :corp)
+             [:img.card {:src "/img/corp.png"}]
+             [:div.unseen (om/build card-view c)])))]
+
+      (when-not (empty? discard)
+        (let [c (last discard)]
+          (if (= (:side @game-state) :corp)
+            (om/build card-view c)
+            (if (faceup? c)
+              (om/build card-view c)
+              [:img.card {:src "/img/corp.png"}]))))]))))
 
 (defn rfg-view [{:keys [cards name] :as cursor}]
   (om/component
