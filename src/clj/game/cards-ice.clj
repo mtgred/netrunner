@@ -202,7 +202,7 @@
                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
    "Chum"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
+   {:abilities [(do-net-damage 3)]}
 
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
@@ -452,7 +452,7 @@
                  :effect (effect (handle-access targets) (trash card))}]}
 
    "Komainu"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [(do-net-damage 1)]}
 
    "Lab Dog"
    {:abilities [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
@@ -491,7 +491,7 @@
       :events {:advance ab :advancement-placed ab}})
 
    "Mamba"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(do-net-damage 1)
                 {:msg "do 1 net damage using 1 power counter"
                  :counter-cost 1 :effect (effect (damage :net 1 {:card card}))}
                 {:msg "start a Psi game"
@@ -551,7 +551,7 @@
    {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))} trash-program]}
 
    "Neural Katana"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
+   {:abilities [(do-net-damage 3)]}
 
    "News Hound"
    {:abilities [(tag-trace 3)
@@ -605,7 +605,7 @@
    {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))} end-the-run]}
 
    "Pup"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [(do-net-damage 1)]}
 
    "Quandary"
    {:abilities [end-the-run]}
@@ -722,8 +722,7 @@
     :abilities [trash-program]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage"
-                 :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(do-net-damage 1)
                 {:prompt "Choose an AI program to trash"
                  :msg (msg "trashes " (:title target))
                  :label "Trash an AI program"
@@ -758,7 +757,8 @@
                                         (system-msg state side "loses [Click]")))}}]}
 
    "Tsurugi"
-   {:abilities [end-the-run {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [end-the-run
+                (do-net-damage 1)]}
 
    "Turing"
    {:abilities [end-the-run]
@@ -812,7 +812,8 @@
    {:abilities [end-the-run]}
 
    "Wall of Thorns"
-   {:abilities [end-the-run {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
+   {:abilities [end-the-run
+                (do-net-damage 2)]}
 
    "Wendigo"
    (let [ab {:req (req (= (:cid card) (:cid target)))
@@ -838,7 +839,7 @@
 
    "Woodcutter"
    {:advanceable :while-rezzed
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+    :abilities [(do-net-damage 1)]}
 
    "Wormhole"
    {:advanceable :always
@@ -857,7 +858,7 @@
               {:runner-install wr :trash wr :card-moved wr})}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(do-net-damage 1)
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
