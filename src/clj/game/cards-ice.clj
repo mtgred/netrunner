@@ -53,6 +53,15 @@
   {:abilities [ability reveal-grail resolve-grail]})
 
 
+;;; For NEXT ICE
+(defn next-ice-count
+  "Counts number of rezzed NEXT ICE - for use with NEXT Bronze and NEXT Gold"
+  [corp]
+  (let [servers (flatten (seq (:servers corp)))
+        rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
+    (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
+
+
 ;;;; Card definitions
 (def cards-ice
   {"Archangel"
@@ -562,11 +571,7 @@
 
    "NEXT Bronze"
    {:abilities [end-the-run]
-    :strength-bonus (req (reduce (fn [c server]
-                                   (+ c (count (filter #(and (rezzed? %)
-                                                             (has-subtype? % "NEXT"))
-                                                       (:ices server)))))
-                                 0 (flatten (seq (:servers corp)))))
+    :strength-bonus (req (next-ice-count corp))
     :events (let [nb {:req (req (and (not= (:cid target) (:cid card))
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
@@ -574,17 +579,8 @@
 
    "NEXT Gold"
    {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
-                 :msg (msg "do "
-                           (reduce (fn [c server]
-                                     (+ c (count (filter #(and (rezzed? %)
-                                                               (has-subtype? % "NEXT"))
-                                                         (:ices server)))))
-                                   0 (flatten (seq (:servers corp)))) " net damage")
-                 :effect (effect (damage :net (reduce (fn [c server]
-                                                        (+ c (count (filter #(and (rezzed? %)
-                                                                                  (has-subtype? % "NEXT"))
-                                                                            (:ices server)))))
-                                                      0 (flatten (seq (:servers corp)))) {:card card}))}
+                 :msg (msg "do " (next-ice-count corp) " net damage")
+                 :effect (effect (damage :net (next-ice-count corp) {:card card}))}
                 trash-program]}
 
    "NEXT Silver"
