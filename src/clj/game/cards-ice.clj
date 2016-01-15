@@ -100,6 +100,24 @@
     (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
 
 
+;;; For Morph ICE
+(defn morph-effect
+  "Creates morph effect for ICE. Morphs from base type to other type"
+  [base other]
+  (req (if (odd? (get (get-card state card) :advance-counter 0))
+         (morph state side card other base)
+         (morph state side card base other))))
+
+(defn morph-ice
+  "Creates the data for morph ICE with specified types and ability."
+  [base other ability]
+  (let [ab {:req (req (= (:cid card) (:cid target)))
+            :effect (morph-effect base other)}]
+    {:advanceable :always
+     :effect (morph-effect base other)
+     :abilities [ability]
+     :events {:advance ab :advancement-placed ab}}))
+
 ;;;; Card definitions
 (def cards-ice
   {"Archangel"
@@ -204,17 +222,8 @@
                  :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
 
    "Changeling"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Sentry" "Barrier")
-                            (morph state side card "Barrier" "Sentry")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Sentry" "Barrier")
-                     (morph state side card "Barrier" "Sentry")))
-      :abilities [end-the-run]
-      :events {:advance ab :advancement-placed ab}})
-
+   (morph-ice "Barrier" "Sentry" end-the-run)
+   
    "Checkpoint"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :abilities [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
@@ -544,16 +553,7 @@
     :flags {:cannot-lower-strength true}}
 
    "Lycan"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Code Gate" "Sentry")
-                            (morph state side card "Sentry" "Code Gate")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Code Gate" "Sentry")
-                     (morph state side card "Sentry" "Code Gate")))
-      :abilities [trash-program]
-      :events {:advance ab :advancement-placed ab}})
+   (morph-ice "Sentry" "Code Gate" trash-program)
 
    "Mamba"
    {:abilities [(do-net-damage 1)
@@ -880,16 +880,7 @@
                 (do-net-damage 2)]}
 
    "Wendigo"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Barrier" "Code Gate")
-                            (morph state side card "Code Gate" "Barrier")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Barrier" "Code Gate")
-                     (morph state side card "Code Gate" "Barrier")))
-      :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]
-      :events {:advance ab :advancement-placed ab}})
+   (morph-ice "Code Gate" "Barrier" {:msg "prevent the Runner from using a chosen program for the remainder of this run"})
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"
