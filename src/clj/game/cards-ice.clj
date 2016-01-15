@@ -33,6 +33,23 @@
    :msg (str "gain " credits " [Credits]")
    :effect (effect (gain :credit credits))})
 
+;;; For Advanceable ICE
+(def advance-counters
+  "Number of advancement counters - for advanceable ICE."
+  (req (or (:advance-counter card) 0)))
+
+(def space-ice-rez-bonus
+  "Amount of rez reduction for the Space ICE."
+  (req (* -3 (or (:advance-counter card) 0))))
+
+(defn space-ice
+  "Creates data for Space ICE with specified abilities."
+  [& abilities]
+  {:advanceable :always
+   :abilities (vec abilities)
+   :rez-cost-bonus space-ice-rez-bonus})
+
+
 ;;; For Grail ICE
 (def reveal-grail
   "Ability for revealing Grail ICE from HQ."
@@ -118,9 +135,8 @@
                  :trace (assoc trash-program :base 4 :msg "trash a program")}]}
 
    "Asteroid Belt"
-   {:advanceable :always :abilities [end-the-run]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   (space-ice end-the-run)
+   
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
@@ -316,7 +332,7 @@
    "Fire Wall"
    {:advanceable :always
     :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Flare"
    {:abilities [{:label "Trace 6 - Trash 1 hardware, do 2 meat damage, and end the run"
@@ -364,7 +380,7 @@
    "Hadrians Wall"
    {:advanceable :always
     :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Himitsu-Bako"
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
@@ -419,7 +435,7 @@
 
    "Ice Wall"
    {:advanceable :always :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Ichi 1.0"
    {:abilities [trash-program
@@ -561,9 +577,7 @@
                  :effect (effect (end-run))}]}
 
    "Nebula"
-   {:advanceable :always
-    :abilities [trash-program]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
+   (space-ice trash-program)
 
    "Negotiator"
    {:abilities [(gain-credits 2)
@@ -597,9 +611,9 @@
    {:abilities [end-the-run]}
 
    "Orion"
-   {:advanceable :always :abilities [trash-program end-the-run]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   ;; TODO: wormhole subroutine
+   (space-ice trash-program end-the-run)
+   
    "Pachinko"
    {:abilities [{:label "End the run if the Runner is tagged"
                  :req (req tagged) :msg "end the run" :effect (effect (end-run))}]}
@@ -647,8 +661,9 @@
 
    "Searchlight"
    {:advanceable :always
+    ;; Could replace this with (tag-trace advance-counters).
     :abilities [{:label "Trace X - Give the Runner 1 tag"
-                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (tag-runner :runner 1))
+                 :trace {:base advance-counters :effect (effect (tag-runner :runner 1))
                          :msg "give the Runner 1 tag"}}]}
 
    "Sensei"
@@ -659,7 +674,7 @@
    {:advanceable :always
     :abilities [(gain-credits 2)
                 (tag-trace 3)]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
@@ -849,9 +864,9 @@
     :abilities [(do-net-damage 1)]}
 
    "Wormhole"
-   {:advanceable :always
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   ;; TODO: create an ability for wormhole
+   (space-ice)
+   
    "Wotan"
    {:abilities [end-the-run]}
 
