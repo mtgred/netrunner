@@ -26,6 +26,13 @@
    :msg (str "do " dmg " net damage")
    :effect (effect (damage :net dmg {:card card}))})
 
+(defn do-brain-damage
+  "Do specified amount of brain damage."
+  [dmg]
+  {:label (str "Do " dmg " brain damage")
+   :msg (str "do " dmg " brain damage")
+   :effect (effect (damage :brain dmg {:card card}))})
+
 (defn gain-credits
   "Gain specified amount of credits"
   [credits]
@@ -304,7 +311,7 @@
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
     :abilities [trash-program
-                {:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+                (do-brain-damage 1)
                 {:label "Trash a console" :effect (effect (trash target))
                  :prompt "Choose a console to trash" :msg (msg "trash " (:title target))
                  :choices {:req #(has-subtype? % "Console")}}
@@ -327,7 +334,8 @@
 
    "Fenris"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+    :abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Fire Wall"
    {:advanceable :always
@@ -389,10 +397,11 @@
    {:abilities [end-the-run]}
 
    "Heimdall 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+   {:abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Heimdall 2.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+   {:abilities [(do-brain-damage 1)
                 {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1 {:card card}) (end-run))}
                 end-the-run]}
 
@@ -476,7 +485,7 @@
                                                     (trash state side card)))]}
 
    "Janus 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
+   {:abilities [(do-brain-damage 1)]}
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ to force access"
@@ -808,13 +817,17 @@
                  :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
 
    "Viktor 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+   {:abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Viktor 2.0"
-   {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
+   {:abilities [{:msg "do 1 brain damage using 1 power counter"
+                 :counter-cost 1
                  :effect (effect (damage :brain 1 {:card card}))}
                 {:label "Trace 2 - Add 1 power counter"
-                 :trace {:base 2 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}
+                 :trace {:base 2
+                         :msg "add 1 power counter"
+                         :effect (effect (add-prop card :counter 1))}}
                 end-the-run]}
 
    "Viper"
@@ -887,4 +900,4 @@
                             :yes-ability {:effect (effect (move (first (:deck corp)) :deck))}}}]}
 
    "Zed 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}})
+   {:abilities [(do-brain-damage 1)]}})
