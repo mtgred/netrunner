@@ -26,6 +26,13 @@
    :msg (str "do " dmg " net damage")
    :effect (effect (damage :net dmg {:card card}))})
 
+(defn gain-credits
+  "Gain specified amount of credits"
+  [credits]
+  {:label (str "Gain " credits " [Credits]")
+   :msg (str "gain " credits " [Credits]")
+   :effect (effect (gain :credit credits))})
+
 ;;; For Grail ICE
 (def reveal-grail
   "Ability for revealing Grail ICE from HQ."
@@ -106,7 +113,7 @@
 
    "Assassin"
    {:abilities [{:label "Trace 5 - Do 3 net damage"
-                 :trace {:base 5 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}
+                 :trace (assoc (do-net-damage 3) :base 5)}
                 {:label "Trace 4 - Trash a program"
                  :trace (assoc trash-program :base 4 :msg "trash a program")}]}
 
@@ -158,9 +165,9 @@
 
    "Caduceus"
    {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
-                 :trace {:base 3 :msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}}
+                 :trace (assoc (gain-credits 3) :base 3)}
                 {:label "Trace 2 - End the run"
-                 :trace {:base 2 :msg "end the run" :effect (effect (end-run))}}]}
+                 :trace (assoc end-the-run :base 2)}]}
 
    "Cell Portal"
    {:abilities [{:msg "make the Runner approach the outermost ICE"
@@ -188,19 +195,20 @@
                                       (swap! state assoc-in [:run :run-effect :card] card))}}]}
 
    "Chimera"
-   {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
-    :msg (msg "make it gain " target " until the end of the turn")
-    :effect (effect (update! (assoc card :subtype
-                                         (->> (vec (.split (:subtype card) " - "))
-                                              (concat [target])
-                                              (join " - "))))
-                    (update-ice-strength card))
-    :events {:runner-turn-ends {:effect (effect (derez :corp card)
-                                                (update! (assoc (get-card state card) :subtype "Mythic")))}
-             :corp-turn-ends {:effect (effect (derez :corp card)
-                                              (update! (assoc (get-card state card) :subtype "Mythic")))}}
-    :abilities [end-the-run]}
-
+   (let [ab {:effect (effect (derez :corp card)
+                             (update! (assoc (get-card state card) :subtype "Mythic")))}]
+     {:prompt "Choose one subtype"
+      :choices ["Barrier" "Code Gate" "Sentry"]
+      :msg (msg "make it gain " target " until the end of the turn")
+      :effect (effect (update! (assoc card :subtype
+                                      (->> (vec (.split (:subtype card) " - "))
+                                           (concat [target])
+                                           (join " - "))))
+                      (update-ice-strength card))
+      :events {:runner-turn-ends ab
+               :corp-turn-ends ab}
+      :abilities [end-the-run]})
+   
    "Clairvoyant Monitor"
    {:abilities [{:msg "start a Psi game"
                  :psi {:not-equal {:player :corp
@@ -294,7 +302,7 @@
                 end-the-run]}
 
    "Errand Boy"
-   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
+   {:abilities [(gain-credits 1)
                 {:msg "draw 1 card" :effect (effect (draw))}]}
 
    "Excalibur"
@@ -306,7 +314,8 @@
     :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
 
    "Fire Wall"
-   {:advanceable :always :abilities [end-the-run]
+   {:advanceable :always
+    :abilities [end-the-run]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
    "Flare"
@@ -557,7 +566,8 @@
     :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
 
    "Negotiator"
-   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))} trash-program]}
+   {:abilities [(gain-credits 2)
+                trash-program]}
 
    "Neural Katana"
    {:abilities [(do-net-damage 3)]}
@@ -598,7 +608,8 @@
    {:abilities [end-the-run]}
 
    "Pop-up Window"
-   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))} end-the-run]}
+   {:abilities [(gain-credits 1)
+                end-the-run]}
 
    "Pup"
    {:abilities [(do-net-damage 1)]}
@@ -646,7 +657,7 @@
 
    "Shadow"
    {:advanceable :always
-    :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
+    :abilities [(gain-credits 2)
                 (tag-trace 3)]
     :strength-bonus (req (or (:advance-counter card) 0))}
 
