@@ -18,6 +18,12 @@
    :msg "give the Runner 1 tag"
    :effect (effect (tag-runner :runner 1))}) 
 
+(def add-power-counter
+  "Adds 1 power counter to the card."
+  {:label "Add 1 power counter"
+   :msg "add 1 power counter"
+   :effect (effect (add-prop card :counter 1))})
+
 (defn trace-ability
   "Run a trace with specified base strength.
    If successful trigger specified ability"
@@ -50,6 +56,13 @@
   {:label (str "Gain " credits " [Credits]")
    :msg (str "gain " credits " [Credits]")
    :effect (effect (gain :credit credits))})
+
+(defn power-counter-ability
+  "Does specified ability using a power counter."
+  [{:keys [label msg] :as ability}]
+  (assoc ability :label (str "Hosted power counter: " label)
+                 :msg (str msg " using 1 power counter")
+                 :counter-cost 1))
 
 
 ;;; For Advanceable ICE
@@ -326,12 +339,8 @@
 
    "Data Raven"
    {:abilities [give-tag
-                {:msg "give the Runner 1 tag using 1 power counter"
-                 :counter-cost 1
-                 :effect (effect (tag-runner 1))}
-                (trace-ability 3 {:label "Add 1 power counter"
-                                  :msg "add 1 power counter"
-                                  :effect (effect (add-prop card :counter 1))})]}
+                (power-counter-ability give-tag)
+                (trace-ability 3 add-power-counter)]}
 
    "Dracō"
    {:prompt "How many power counters?"
@@ -566,12 +575,10 @@
    (morph-ice "Sentry" "Code Gate" trash-program)
 
    "Mamba"
-   {:abilities [(do-net-damage 1)
-                {:msg "do 1 net damage using 1 power counter"
-                 :counter-cost 1 :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(power-counter-ability (do-net-damage 1))
+                (do-net-damage 1)
                 {:msg "start a Psi game"
-                 :psi {:not-equal {:msg "add 1 power counter"
-                                   :effect (effect (add-prop :runner card :counter 1))}}}]}
+                 :psi {:not-equal add-power-counter}}]}
 
    "Markus 1.0"
    {:abilities [trash-installed end-the-run]}
@@ -746,16 +753,15 @@
    {:abilities [{:req (req (= current-ice card))
                  :label "Reveal all cards in the Runner's Grip"
                  :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
-                (trace-ability 3 {:label "Place 1 power counter on Snoop"
-                                  :msg "place 1 power counter on Snoop"
-                                  :effect (effect (add-prop card :counter 1))})
                 {:req (req (> (:counter card 0) 0))
                  :counter-cost 1
                  :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
-                 :msg (msg "look at all cards in Grip and trash " (:title target))
+                 :msg (msg "look at all cards in Grip and trash " (:title target)
+                           " using 1 power counter")
                  :choices (req (:hand runner))
                  :prompt "Choose a card to trash"
-                 :effect (effect (trash target))}]}
+                 :effect (effect (trash target))}
+                (trace-ability 3 add-power-counter)]}
 
    "Snowflake"
    {:abilities [{:msg "start a Psi game"
@@ -858,12 +864,8 @@
                 end-the-run]}
 
    "Viktor 2.0"
-   {:abilities [{:msg "do 1 brain damage using 1 power counter"
-                 :counter-cost 1
-                 :effect (effect (damage :brain 1 {:card card}))}
-                (trace-ability 2 {:label "Add 1 power counter"
-                                  :msg "add 1 power counter"
-                                  :effect (effect (add-prop card :counter 1))})
+   {:abilities [(power-counter-ability (do-brain-damage 1))
+                (trace-ability 2 add-power-counter)
                 end-the-run]}
 
    "Viper"
