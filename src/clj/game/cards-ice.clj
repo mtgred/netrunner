@@ -118,6 +118,14 @@
      :abilities [ability]
      :events {:advance ab :advancement-placed ab}}))
 
+
+;;; For Constellation ICE
+(defn constellation-ice
+  "Generates map for Constellation ICE with specified effect."
+  [ability]
+  {:abilities [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
+
+
 ;;;; Card definitions
 (def cards-ice
   {"Archangel"
@@ -166,7 +174,7 @@
 
    "Assassin"
    {:abilities [(trace-ability 5 (do-net-damage 3))
-                (trace-ability 4 (assoc trash-program :msg "trash a program"))]}
+                (trace-ability 4 trash-program)]}
 
    "Asteroid Belt"
    (space-ice end-the-run)
@@ -388,10 +396,8 @@
    (grail-ice end-the-run)
 
    "Gemini"
-   {:abilities [{:label "Trace 2 - Do 1 net damage"
-                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))
-                         :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}]}
-
+   (constellation-ice (do-net-damage 1))
+   
    "Grim"
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :abilities [trash-program]}
@@ -683,9 +689,7 @@
    {:abilities [trash-program end-the-run]}
 
    "Sagittarius"
-   {:abilities [{:label "Trace 2 - Trash a program"
-                 :trace (assoc trash-program :base 2 :not-distinct true :msg "trash 1 program"
-                                             :kicker (assoc trash-program :min 5))}]}
+   (constellation-ice trash-program)
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -788,10 +792,8 @@
                                       (has-subtype? % "AI"))}}]}
 
    "Taurus"
-   {:abilities [{:label "Trace 2 - Trash a piece of hardware"
-                 :trace (assoc trash-hardware :base 2 :not-distinct true :msg "trash 1 hardware"
-                                              :kicker (assoc trash-hardware :min 5))}]}
-
+   (constellation-ice trash-hardware)
+   
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
@@ -867,11 +869,10 @@
                 (trace-ability 3 end-the-run)]}
 
    "Virgo"
-   {:abilities [{:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))
-                         :kicker {:min 5 :msg "give the Runner 1 tag"
-                                  :effect (effect (tag-runner :runner 1))}}}]}
-
+   (constellation-ice {:label "Give the Runner 1 tag"
+                       :msg "give the Runner 1 tag"
+                       :effect (effect (tag-runner :runner 1))})
+   
    "Wall of Static"
    {:abilities [end-the-run]}
 
