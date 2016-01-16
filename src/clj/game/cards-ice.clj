@@ -71,6 +71,11 @@
    :msg (str "start a psi game (" label ")")
    :psi {:not-equal ability}})
 
+(def take-bad-pub
+  "Bad pub on rez effect."
+  (effect (gain :bad-publicity 1)
+          (system-msg (str "takes 1 bad publicity from " (:title card)))))
+
 
 ;;; For Advanceable ICE
 (def advance-counters
@@ -260,7 +265,7 @@
    (morph-ice "Barrier" "Sentry" end-the-run)
    
    "Checkpoint"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect take-bad-pub
     :abilities [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
                                   :msg "do 3 meat damage when this run is successful"
                                   :effect (req (swap! state assoc-in [:run :run-effect :end-run]
@@ -392,7 +397,7 @@
                  :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
 
    "Fenris"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect take-bad-pub
     :abilities [(do-brain-damage 1)
                 end-the-run]}
 
@@ -422,7 +427,7 @@
    (constellation-ice (do-net-damage 1))
    
    "Grim"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect take-bad-pub
     :abilities [trash-program]}
 
    "Guard"
@@ -626,7 +631,7 @@
       :events {:rez ab :trash ab :derez ab}})
 
    "Muckraker"
-   {:effect (effect (gain :bad-publicity 1))
+   {:effect take-bad-pub
     :abilities [(tag-trace 1)
                 (tag-trace 2)
                 (tag-trace 3)
@@ -741,7 +746,7 @@
                          :effect (effect (move :runner target :deck {:front true}))}}]}
 
    "Shinobi"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect take-bad-pub
     :abilities [(trace-ability 1 (do-net-damage 1))
                 (trace-ability 2 (do-net-damage 2))
                 (trace-ability 3 {:label "Do 3 net damage and end the run"
@@ -795,7 +800,7 @@
                               (update-run-ice state side))}]}
 
    "Swarm"
-   {:effect (effect (gain :bad-publicity 1))
+   {:effect take-bad-pub
     :advanceable :always
     :abilities [trash-program]}
 
