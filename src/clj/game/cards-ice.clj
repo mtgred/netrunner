@@ -11,6 +11,13 @@
    :msg "end the run"
    :effect (effect (end-run))})
 
+(def give-tag
+  "Basic give runner 1 tag subroutine
+   Mostly used with tag-trace"
+  {:label "Give the Runner 1 tag"
+   :msg "give the Runner 1 tag"
+   :effect (effect (tag-runner :runner 1))}) 
+
 (defn trace-ability
   "Run a trace with specified base strength.
    If successful trigger specified ability"
@@ -21,9 +28,7 @@
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
   [base]
-  (trace-ability base {:label "Give the Runner 1 tag"
-                       :msg "give the Runner 1 tag"
-                       :effect (effect (tag-runner :runner 1))}))
+  (trace-ability base give-tag))
 
 (defn do-net-damage
   "Do specified amount of net-damage."
@@ -320,8 +325,7 @@
                 end-the-run]}
 
    "Data Raven"
-   {:abilities [{:msg "give the Runner 1 tag"
-                 :effect (effect (tag-runner 1))}
+   {:abilities [give-tag
                 {:msg "give the Runner 1 tag using 1 power counter"
                  :counter-cost 1
                  :effect (effect (tag-runner 1))}
@@ -869,9 +873,7 @@
                 (trace-ability 3 end-the-run)]}
 
    "Virgo"
-   (constellation-ice {:label "Give the Runner 1 tag"
-                       :msg "give the Runner 1 tag"
-                       :effect (effect (tag-runner :runner 1))})
+   (constellation-ice give-tag)
    
    "Wall of Static"
    {:abilities [end-the-run]}
