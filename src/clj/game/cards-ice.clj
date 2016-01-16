@@ -64,6 +64,13 @@
                  :msg (str msg " using 1 power counter")
                  :counter-cost 1))
 
+(defn do-psi
+  "Start a psi game, if not equal do ability"
+  [{:keys [label] :as ability}]
+  {:label (str "Psi Game - " label)
+   :msg (str "start a psi game (" label ")")
+   :psi {:not-equal ability}})
+
 
 ;;; For Advanceable ICE
 (def advance-counters
@@ -222,17 +229,19 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal
-                       {:player :corp :prompt "Choose a server" :choices (req servers)
-                        :msg (msg "move it to the outermost position of " target)
-                        :effect (req (let [dest (server->zone state target)]
-                                       (swap! state update-in [:run]
-                                              #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                        :server (rest dest))))
-                                     (move state side card (conj (server->zone state target) :ices))
-                                     (update-run-ice state side))}}}]}
-
+   {:abilities [(do-psi {:label "Move Bullfrog to another server"
+                         :player :corp
+                         :prompt "Choose a server"
+                         :choices (req servers)
+                         :msg (msg "move it to the outermost position of " target)
+                         :effect (req (let [dest (server->zone state target)]
+                                        (swap! state update-in [:run]
+                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                       :server (rest dest))))
+                                      (move state side card
+                                            (conj (server->zone state target) :ices))
+                                      (update-run-ice state side))})]}
+   
    "Burke Bugs"
    {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
                                         :player :runner
@@ -278,13 +287,14 @@
       :abilities [end-the-run]})
    
    "Clairvoyant Monitor"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:player :corp
-                                   :prompt "Choose a target for Clairvoyant Monitor"
-                                   :msg (msg "place 1 advancement token on "
-                                             (card-str state target) " and end the run")
-                                   :choices {:req installed?}
-                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
+   {:abilities [(do-psi {:label "Place 1 advancement token and end the run"
+                         :player :corp
+                         :prompt "Choose a target for Clairvoyant Monitor"
+                         :msg (msg "place 1 advancement token on "
+                                   (card-str state target) " and end the run")
+                         :choices {:req installed?}
+                         :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                                         (end-run))})]}
 
    "Chum"
    {:abilities [(do-net-damage 3)]}
@@ -577,8 +587,7 @@
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))
                 (do-net-damage 1)
-                {:msg "start a Psi game"
-                 :psi {:not-equal add-power-counter}}]}
+                (do-psi add-power-counter)]}
 
    "Markus 1.0"
    {:abilities [trash-installed end-the-run]}
@@ -764,8 +773,7 @@
                 (trace-ability 3 add-power-counter)]}
 
    "Snowflake"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal end-the-run}}]}
+   {:abilities [(do-psi end-the-run)]}
 
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
