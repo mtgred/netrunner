@@ -78,7 +78,8 @@
       (try
         (case action
           "start" (core/init-game msg)
-          "remove" (swap! game-states dissoc gameid)
+          "remove" (do (swap! game-states dissoc gameid)
+                       (swap! last-states dissoc gameid))
           "do" (handle-do user command state side args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
