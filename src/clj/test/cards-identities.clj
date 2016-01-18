@@ -249,7 +249,7 @@
   "Strategic Innovations: Future Forward - Ability"
   (do-game
     (new-game
-      (make-deck "Strategic Innovations: Future Forward" [(qty "Hedge Fund" 2) (qty "Eli 1.0" 3) (qty "Crick" 3)])
+      (make-deck "Strategic Innovations: Future Forward" [(qty "Hedge Fund" 2) (qty "Eli 1.0" 2) (qty "Crick" 2)])
       (default-runner))
     (play-from-hand state :corp "Eli 1.0" "New remote")
     (play-from-hand state :corp "Hedge Fund")
