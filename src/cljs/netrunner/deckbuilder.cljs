@@ -70,7 +70,7 @@
   (let [base-list (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck))
         ;; in case there were e.g. 2 lines with Sure Gambles, we need to sum them up in deduplicate
         duphelper (fn [currmap line]
-                    (let [title (:title :card line)
+                    (let [title (:title (:card line))
                           qty (:qty line)]
                       (if (contains? currmap title)
                         (assoc-in currmap [title :qty] (+ (get-in currmap [title :qty]) qty))
