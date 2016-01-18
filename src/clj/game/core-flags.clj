@@ -53,6 +53,26 @@
 (defn clear-turn-register! [state]
   (swap! state assoc-in [:stack :current-turn] nil))
 
+(defn register-persistent-flag!
+  "A flag that persists until cleared."
+  [state side card flag condition]
+  (let [stack (get-in @state [:stack :persistent flag])]
+    (swap! state assoc-in [:stack :persistent flag] (conj stack {:card card :condition condition}))))
+
+(defn persistent-flag?
+  "Check if any conditions for the flag evaluate to true for the given card."
+  [state side card flag]
+  (some true?
+        (for [condition (get-in @state [:stack :persistent flag])
+              :let [result ((:condition condition) state side card)]]
+          result)))
+
+(defn clear-persistent-flag!
+  "Remove any entry associated with card for the given flag"
+  [state side card flag]
+  (swap! state update-in [:stack :persistent flag]
+         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+
 ; Functions for preventing specific game actions.
 ; TODO: look into migrating these to turn-flags and run-flags.
 (defn prevent-run [state side]

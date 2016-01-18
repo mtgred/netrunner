@@ -15,8 +15,10 @@
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
-                                           (empty? (filter #(= :click %)
-                                                           (mapcat first (turn-events state side :runner-loss))))))
+                                          (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]
+                                            (or (empty? click-losses)
+                                                (and (= (count click-losses) 1)
+                                                     (persistent-flag? state side card :triggers-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aesops Pawnshop"
@@ -160,7 +162,9 @@
 
    "Enhanced Vision"
    {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
-                              :req (req (first-event state side :successful-run))}}}
+                              :req (req (or (first-event state side :successful-run)
+                                            (and (second-event state side :successful-run)
+                                                 (persistent-flag? state side card :triggers-twice))))}}}
 
    "Fall Guy"
    {:prevent {:trash [:resource]}
@@ -203,6 +207,13 @@
                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)
                                 (update! state side (dissoc (get-card state card) :access-hq))))}]}
+
+   "Gene Conditioning Shoppe"
+   {:msg "make Genetics trigger a second time each turn"
+    :effect (effect (register-persistent-flag! card :triggers-twice
+                                               (fn [state side card]
+                                                 (has? card :subtype "Genetics"))))
+    :leave-play (effect (clear-persistent-flag! card :triggers-twice))}
 
    "Ghost Runner"
    {:data {:counter 3}
@@ -432,7 +443,7 @@
                                                                                  " of " title))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
                                 :effect (effect (resolve-ability
-                                                 (pphelper (:title target) 
+                                                 (pphelper (:title target)
                                                            (->> (:deck runner)
                                                                 (filter #(has? % :title (:title target)))
                                                                 (vec)))
@@ -465,12 +476,12 @@
                   {:label "X[Credit]:Remove counters from a hosted card" :choices {:req #(:host %)}
                    :req (req (not (empty? (:hosted card))))
                    :effect (req (let [paydowntarget target]
-                                  (resolve-ability 
+                                  (resolve-ability
                                     state side
                                     {:prompt "How many counters to remove?"
                                      :choices {:number (req (min (:credit runner) (:counter paydowntarget)))}
                                      :msg (msg "remove " target " counters from " (:title paydowntarget))
-                                     :effect (req (do 
+                                     :effect (req (do
                                                     (lose state side :credit target)
                                                     (if (= (:counter paydowntarget) target)
                                                       (runner-install state side (dissoc paydowntarget :counter) {:no-cost true})
@@ -615,12 +626,17 @@
                                     {:cause :ability-cost})))}]}
 
    "Symmetrical Visage"
-   {:events {:runner-click-draw {:req (req (first-event state side :runner-click-draw))
+   {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
+                                               (and (second-event state side :runner-click-draw)
+                                                    (persistent-flag? state side card :triggers-twice))))
                                  :msg "gain 1 [Credits]"
                                  :effect (effect (gain :credit 1))}}}
 
    "Synthetic Blood"
-   {:events {:damage {:req (req (first-event state side :damage)) :msg "draw 1 card"
+   {:events {:damage {:req (req (or (first-event state side :damage)
+                                    (and (second-event state side :damage)
+                                         (persistent-flag? state side card :triggers-twice))))
+                      :msg "draw 1 card"
                       :effect (effect (draw :runner))}}}
 
    "Tallie Perrault"

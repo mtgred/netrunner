@@ -70,7 +70,12 @@
     (let [servers (->> (:corp @state) :servers seq flatten)]
       (concat (mapcat :content servers) (mapcat :ices servers)))))
 
+(defn installed-byname
+  "Returns a truthy card map if a card matching title is installed"
+  [state side title]
+  (some #(when (= (:title %) title) %) (all-installed state side)))
+
 (defn in-play?
   "Returns a truthy card map if the given card is in play (installed)."
   [state card]
-  (some #(= (:title %) (:title card)) (all-installed state (:side card))))
+  (installed-byname state (to-keyword (:side card)) (:title card)))
