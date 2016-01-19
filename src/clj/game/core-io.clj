@@ -9,8 +9,8 @@
   (let [author (or user (get-in @state [side :user]))]
     (if-let [command (parse-command text)]
       (when (and (not= side nil) (not= side :spectator))
-        (do (command state side)
-            (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))))
+        (command state side)
+        (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
       (swap! state update-in [:log] #(conj % {:user author :text text})))))
 
 (defn system-msg
@@ -37,7 +37,7 @@
      ;; no msg - remove top toast from list
      (swap! state update-in [side :toast] #(rest %)))))
 
-; "ToString"-like methods
+;;; "ToString"-like methods
 (defn card-str
   "Gets a string description of an installed card, reflecting whether it is rezzed,
   in/protecting a server, facedown, or hosted."
@@ -56,11 +56,10 @@
          (if (or (:facedown card) visible) "a facedown card" (:title card)))
        (if (:host card) (str " hosted on " (card-str state (:host card)))))))
 
-
 (defn name-zone
   "Gets a string representation for the given zone."
   [side zone]
-  (match (into [] zone)
+  (match (vec zone)
          [:hand] (if (= side "Runner") "Grip" "HQ")
          [:discard] (if (= side "Runner") "Heap" "Archives")
          [:deck] (if (= side "Runner") "Stack" "R&D")

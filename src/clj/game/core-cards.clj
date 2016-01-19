@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice? remove-from-host rezzed?
+(declare all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
+         has-subtype? remove-from-host rezzed?
          trash update-hosted! update-ice-strength)
 
 ; Functions for loading card information.
@@ -99,13 +100,13 @@
   Example: (add-prop ... card :counter 1) adds one power/virus counter. Triggers events."
   ([state side card key n] (add-prop state side card key n nil))
   ([state side card key n {:keys [placed] :as args}]
-   (let [updated-card (if (has? card :subtype "Virus")
+   (let [updated-card (if (has-subtype? card "Virus")
                         (assoc card :added-virus-counter true)
                         card)]
      (update! state side (update-in updated-card [key] #(+ (or % 0) n)))
      (if (= key :advance-counter)
        (do (when (and (ice? updated-card) (rezzed? updated-card)) (update-ice-strength state side updated-card))
-           (if (not placed)
+           (if-not placed
              (trigger-event state side :advance (get-card state updated-card))
              (trigger-event state side :advancement-placed (get-card state updated-card))))
        (trigger-event state side :counter-added (get-card state updated-card))))))

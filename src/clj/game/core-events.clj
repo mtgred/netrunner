@@ -56,7 +56,7 @@
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
   [state side ev]
-  (mapcat #(rest %) (filter #(= ev (first %)) (:turn-events @state))))
+  (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
 (defn first-event
   "Returns true if the given event has not occurred yet this turn."

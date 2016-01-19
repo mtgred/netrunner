@@ -2,11 +2,12 @@
 
 (def cards-operations
   {"24/7 News Cycle"
-   {:req (req (> (count (:scored corp)) 1)) :additional-cost [:forfeit]
+   {:req (req (> (count (:scored corp)) 1))
+    :additional-cost [:forfeit]
     :effect (req (let [agendas (get-in @state [:corp :scored])]
                    (resolve-ability state side
                      {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
-                      :choices {:req #(and (= (:type %) "Agenda")
+                      :choices {:req #(and (is-type? % "Agenda")
                                            (= (first (:zone %)) :scored)
                                            (:abilities %))}
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
@@ -17,13 +18,14 @@
    (letfn [(ad [i n]
              {:prompt "Select an operation to play"
               :choices {:req #(and (= (:side %) "Corp")
-                                   (= (:type %) "Operation")
+                                   (is-type? % "Operation")
                                    (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
               :effect (req (when (< i n)
                              (resolve-ability state side (ad (inc i) n) card nil))
                            (play-instant state side target {:no-additional-cost true}))})]
-     {:effect (req (let [n (count (filter #(= (:type %) "Operation") (take 3 (:deck corp))))]
+     {:effect (req (let [n (count (filter #(is-type? % "Operation")
+                                          (take 3 (:deck corp))))]
                      (resolve-ability state side
                                       {:msg "look at the top 3 cards of R&D"
                                        :effect (req (doseq [c (take 3 (:deck corp))]
@@ -35,8 +37,9 @@
    (let [abhelp (fn ab [n total]
                   {:prompt "Select an advertisement to install and rez" :show-discard true
                    :choices {:req #(and (= (:side %) "Corp")
-                                        (has? % :subtype "Advertisement")
-                                        (or (= (:zone %) [:hand]) (= (:zone %) [:discard])))}
+                                        (has-subtype? % "Advertisement")
+                                        (or (in-hand? %)
+                                            (= (:zone %) [:discard])))}
                    :effect (req (corp-install state side target nil {:install-state :rezzed})
                                 (when (< n total)
                                   (resolve-ability state side (ab (inc n) total) card nil)))})]
@@ -103,7 +106,9 @@
    {:req (req tagged) :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
-   {:choices {:req #(and (= (:type %) "ICE") (has? % :subtype "Bioroid") (not (:rezzed %)))}
+   {:choices {:req #(and (ice? %)
+                         (has-subtype? % "Bioroid")
+                         (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
@@ -115,7 +120,8 @@
    {:effect (effect (gain :credit 5) (draw 2))}
 
    "Casting Call"
-   {:choices {:req #(and (:type % "Agenda") (= (:zone %) [:hand]))}
+   {:choices {:req #(and (is-type? % "Agenda")
+                         (in-hand? %))}
     :effect (req (let [agenda target]
                    (resolve-ability
                      state side {:prompt (str "Choose a server to install " (:title agenda))
@@ -135,7 +141,8 @@
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
-   {:choices {:max 5 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+   {:choices {:max 5 :req #(and (:side % "Corp")
+                                (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (gain :credit (* 2 (count targets))))}
 
@@ -153,11 +160,13 @@
                        (register-events state side events (:identity runner))))}
 
    "Closed Accounts"
-   {:req (req tagged) :effect (effect (lose :runner :credit :all))}
+   {:req (req tagged)
+    :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
    {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
-    :choices {:req #(has? % :type "ICE")} :effect (effect (gain :credit (or (:advance-counter target) 0)))}
+    :choices {:req ice?}
+    :effect (effect (gain :credit (or (:advance-counter target) 0)))}
 
    "Corporate Shuffle"
    {:effect (effect (shuffle-into-deck :hand) (draw 5))}
@@ -176,19 +185,26 @@
 
    "Fast Track"
    {:prompt "Choose an Agenda"
-    :choices (req (cancellable (filter #(has? % :type "Agenda") (:deck corp)) :sorted))
+    :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (move target :hand) (shuffle! :deck))}
 
    "Foxfire"
-   {:trace {:base 7 :prompt "Choose 1 card to trash" :not-distinct true
-            :choices {:req #(and (:installed %)
-                                 (or (has? % :subtype "Virtual") (has? % :subtype "Link")))}
-            :msg "trash 1 virtual resource or link" :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
+   {:trace {:base 7
+            :prompt "Choose 1 card to trash"
+            :not-distinct true
+            :choices {:req #(and (installed? %)
+                                 (or (has-subtype? % "Virtual")
+                                     (has-subtype? % "Link")))}
+            :msg "trash 1 virtual resource or link"
+            :effect (effect (trash target) (system-msg (str "trashes " (:title target))))}}
 
    "Freelancer"
-   {:req (req tagged) :msg (msg "trash " (join ", " (map :title targets)))
-    :choices {:max 2 :req #(and (:installed %) (= (:type %) "Resource"))}
+   {:req (req tagged)
+    :msg (msg "trash " (join ", " (map :title targets)))
+    :choices {:max 2
+              :req #(and (installed? %)
+                         (is-type? % "Resource"))}
     :effect (effect (trash-cards :runner targets))}
 
    "Green Level Clearance"
@@ -199,22 +215,28 @@
 
    "Hellion Alpha Test"
    {:req (req (:installed-resource runner-reg))
-    :trace {:base 2 :choices {:req #(and (:installed %) (= (:type %) "Resource"))}
+    :trace {:base 2
+            :choices {:req #(and (installed? %)
+                                 (is-type? % "Resource"))}
             :msg "add a Resource to the top of the Stack"
-            :effect (effect (move :runner target :deck {:front true}) (system-msg (str "adds " (:title target) " to the top of the Stack")))
-            :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
+            :effect (effect (move :runner target :deck {:front true})
+                            (system-msg (str "adds " (:title target) " to the top of the Stack")))
+            :unsuccessful {:msg "take 1 bad publicity"
+                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Housekeeping"
    {:events {:runner-install {:req (req (= side :runner))
-                              :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Runner"))}
+                              :choices {:req #(and (in-hand? %)
+                                                   (= (:side %) "Runner"))}
                               :prompt "Choose a card from your grip to trash for Housekeeping" :once :per-turn
                               :msg (msg "to force the Runner to trash " (:title target) " from Grip")
                               :effect (effect (trash target))}}}
 
    "Interns"
-   {:prompt "Choose a card to install from Archives or HQ" :show-discard true
+   {:prompt "Choose a card to install from Archives or HQ"
+    :show-discard true
     :not-distinct true
-    :choices {:req #(and (not= (:type %) "Operation")
+    :choices {:req #(and (not (is-type? % "Operation"))
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install target nil {:no-install-cost true}))
@@ -250,7 +272,7 @@
    {:prompt "Choose a card to install from HQ"
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
-                         (= (:zone %) [:hand]))}
+                         (in-hand? %))}
     :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
 
    "Mutate"
@@ -279,13 +301,13 @@
    {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
 
    "Oversight AI"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)) (= (last (:zone %)) :ices))}
+   {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Patch"
-   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:choices {:req #(and (ice? %) (rezzed? %))}
     :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
@@ -305,10 +327,11 @@
                                   0 (flatten (seq (:servers corp))))))}
 
    "Power Grid Overload"
-   {:trace {:base 2 :msg "trash 1 piece of hardware"
+   {:trace {:base 2
+            :msg "trash 1 piece of hardware"
             :effect (req (let [max-cost (- target (second targets))]
                            (resolve-ability state side
-                                            {:choices {:req #(and (has? % :type "Hardware")
+                                            {:choices {:req #(and (is-type? % "Hardware")
                                                                   (<= (:cost %) max-cost))}
                                              :msg (msg "trash " (:title target))
                                              :effect (effect (trash target))}
@@ -316,7 +339,8 @@
                          (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
    "Power Shutdown"
-   {:req (req (:made-run runner-reg)) :prompt "Trash how many cards from the top R&D?"
+   {:req (req (:made-run runner-reg))
+    :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (count (:deck corp)))}
     :msg (msg "trash " target " cards from the top of R&D")
     :effect (req (mill state :corp target)
@@ -325,7 +349,8 @@
                                     {:prompt "Choose a Program or piece of Hardware to trash"
                                      :choices {:req #(and (#{"Hardware" "Program"} (:type %))
                                                           (<= (:cost %) n))}
-                                     :msg (msg "trash " (:title target)) :effect (effect (trash target))}
+                                     :msg (msg "trash " (:title target))
+                                     :effect (effect (trash target))}
                                     card nil)))}
 
    "Precognition"
@@ -342,7 +367,7 @@
     :effect (req (let [c (min target (:tag runner))]
                    (resolve-ability state side
                                     {:msg (msg "place " c " advancement tokens on "
-                                               (if (:rezzed target) (:title target) "a card"))
+                                               (card-str state target))
                                      :choices {:req can-be-advanced?}
                                      :effect (effect (add-prop target :advance-counter c {:placed true}))} card nil)))}
 
@@ -359,9 +384,9 @@
 
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
-                  (if (> left 0)
+                  (if (pos? left)
                     {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
-                     :choices (req (cancellable (filter #(and (has? % :subtype "Sysop")
+                     :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
                      :effect (req (move state side target :hand)
@@ -377,22 +402,25 @@
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
-    :choices {:req #(and (:rezzed %)
-                         (or (has? % :subtype "Clone") (has? % :subtype "Executive")
-                             (has? % :subtype "Sysop")))}
+    :choices {:req #(and (rezzed? %)
+                         (or (has-subtype? % "Clone")
+                             (has-subtype? % "Executive")
+                             (has-subtype? % "Sysop")))}
     :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
    {:effect (effect (gain :credit 15))}
 
    "Reuse"
-   {:choices {:max 100 :req #(and (:side % "Corp") (= (:zone %) [:hand]))}
+   {:choices {:max 100 :req #(and (:side % "Corp")
+                                  (in-hand? %))}
     :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s") " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Rework"
    {:prompt "Choose a card from HQ to shuffle into R&D"
-    :choices {:req #(and (= (:zone %) [:hand]) (= (:side %) "Corp"))}
+    :choices {:req #(and (in-hand? %)
+                         (= (:side %) "Corp"))}
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Scorched Earth"
@@ -409,7 +437,9 @@
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install"
-                             :choices {:req #(and (:side % "Corp") (not= (:type %) "Operation") (= (:zone %) [:hand]))}
+                             :choices {:req #(and (:side % "Corp")
+                                                  (not (is-type? % "Operation"))
+                                                  (in-hand? %))}
                              :effect (req (corp-install state side target nil)
                                           (when (< n 3)
                                             (resolve-ability state side (sh (inc n)) card nil)))})]
@@ -425,7 +455,7 @@
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}
 
    "Shoot the Moon"
-   {:choices {:req #(and (= (:type %) "ICE") (not (:rezzed %)))
+   {:choices {:req #(and (ice? %) (not (rezzed? %)))
               :max (req (min (:tag runner)
                              (reduce (fn [c server]
                                        (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
@@ -434,7 +464,9 @@
     :effect (req (doseq [t targets] (rez state side t {:ignore-cost :all-costs})))}
 
    "Snatch and Grab"
-   {:trace {:msg "trash a connection" :base 3 :choices {:req #(has? % :subtype "Connection")}
+   {:trace {:msg "trash a connection"
+            :base 3
+            :choices {:req #(has-subtype? % "Connection")}
             :effect (req (let [c target]
                            (resolve-ability
                              state side
@@ -450,7 +482,7 @@
                              card nil)))}}
 
    "Sub Boost"
-   {:choices {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:choices {:req #(and (ice? %) (rezzed? %))}
     :effect (effect (update! (assoc target :subtype
                                            (->> (vec (.split (:subtype target) " - "))
                                                 (concat ["Barrier"])
@@ -469,7 +501,7 @@
    "Sunset"
    (let [sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
                                  :choices {:req #(and (= serv (rest (butlast (:zone %))))
-                                                      (= (:type %) "ICE")) :max 2}
+                                                      (ice? %)) :max 2}
                                  :effect (req (if (= (count targets) 2)
                                                 (let [fndx (ice-index state (first targets))
                                                       sndx (ice-index state (second targets))
@@ -498,10 +530,11 @@
                  :choices {:req #(and (= (:side %) "Runner")
                                       (not (:facedown %))
                                       (not= (first (:zone %)) :discard)
-                                      (not= (:type %) "Identity"))}
+                                      (not (is-type? % "Identity")))}
                  :msg (msg "gain 10 [Credits] from the Runner playing " (:title target))
                  :effect (effect (gain :credit 10))}
-                {:req (req (and (= (:zone card) [:current]) (= (:type (last (:discard runner))) "Event")))
+                {:req (req (and (= (:zone card) [:current])
+                                (is-type? (last (:discard runner)) "Event")))
                  :label "Gain 10 [Credits] because the Runner played the named Event"
                  :msg (msg "gain 10 [Credits] from the Runner playing " (:title (last (:discard runner))))
                  :effect (effect (gain :credit 10))}]}
@@ -514,7 +547,7 @@
        {:req (req tagged)
         :effect (effect
                  (resolve-ability
-                  (if (not (zero? (:bad-publicity corp))) ;; If corp's bad-pub is 0
+                  (if-not (zero? (:bad-publicity corp)) ;; If corp's bad-pub is 0
                     {:optional {:player :runner
                                 :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
                                 :yes-ability {:effect (effect (lose :corp :bad-publicity 1))

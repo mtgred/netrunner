@@ -17,13 +17,16 @@
   (let [[head tail] (split-with pred coll)]
     (vec (concat head (rest tail)))))
 
-(defn has? [card property value]
+(defn has?
   "Checks the string property of the card to see if it contains the given value"
+  [card property value]
   (when-let [p (property card)]
     (> (.indexOf p value) -1)))
 
-(defn card-is? [card property value]
-  "Checks the property of the card to see if it is equal to the given value, as either a string or a keyword"
+(defn card-is?
+  "Checks the property of the card to see if it is equal to the given value,
+  as either a string or a keyword"
+  [card property value]
   (let [cv (property card)]
     (cond
       (or (keyword? cv) (and (string? value) (string? cv))) (= value cv)
@@ -38,15 +41,6 @@
   (if (string? string)
     (keyword (.toLowerCase string))
     string))
-
-(defn side-str [k]
-  "Takes a side key and converts it to a string (Runner/Corp)."
-  (case k
-    "Corp" "Corp"
-    "Runner" "Runner"
-    :corp "Corp"
-    :runner "Runner"
-    nil))
 
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
@@ -110,7 +104,7 @@
      (str "spends " cost-str " to " verb " "))))
 
 (defn cost-names [value attr]
-  (when (> value 0)
+  (when (pos? value)
     (case attr
       :credit (str value " [$]")
       :click  (->> "[Click]" repeat (take value) (apply str))
@@ -159,3 +153,4 @@
 
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
+

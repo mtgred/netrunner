@@ -26,16 +26,19 @@
             :untrashable-while-rezzed true
             }
     :abilities [{:msg "look at the top 5 cards of R&D"
-                 :prompt "Choose a card to install" :priority true
+                 :prompt "Choose a card to install"
+                 :priority true
                  :activatemsg "uses Architect to look at the top 5 cards of R&D"
                  :req (req (and (not (string? target))
-                                (not= (:type target) "Operation"))) :not-distinct true
+                                (not (is-type? target "Operation"))))
+                 :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
                  :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
                 {:label "Install a card from HQ or Archives"
                  :prompt "Choose a card to install from Archives or HQ"
-                 :show-discard true :priority true
-                 :choices {:req #(and (not= (:type %) "Operation")
+                 :show-discard true
+                 :priority true
+                 :choices {:req #(and (not (is-type? % "Operation"))
                                       (#{[:hand] [:discard]} (:zone %))
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))
@@ -73,7 +76,7 @@
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}
                 {:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req #(and (ice? %)
                                       (can-be-advanced? %))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
@@ -137,8 +140,8 @@
                  :psi {:not-equal {:player :corp
                                    :prompt "Choose a target for Clairvoyant Monitor"
                                    :msg (msg "place 1 advancement token on "
-                                             (if (:rezzed target) (:title target) "a card") " and end the run")
-                                   :choices {:req #(= (first (:zone %)) :servers)}
+                                             (card-str state target) " and end the run")
+                                   :choices {:req installed?}
                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
 
    "Chum"
@@ -154,7 +157,7 @@
                  :msg (msg (corp-install-msg target))
                  :prompt "Choose a card to install from Archives"
                  :show-discard true :priority true
-                 :choices {:req #(and (not= (:type %) "Operation")
+                 :choices {:req #(and (not (is-type? % "Operation"))
                                       (= (:zone %) [:discard])
                                       (= (:side %) "Corp"))}
                  :effect (effect (corp-install target nil))}]
@@ -213,9 +216,9 @@
                 {:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
                 {:label "Trash a console" :effect (effect (trash target))
                  :prompt "Choose a console to trash" :msg (msg "trash " (:title target))
-                 :choices {:req #(has? % :subtype "Console")}}
+                 :choices {:req #(has-subtype? % "Console")}}
                 {:msg "trash all virtual resources"
-                 :effect (req (doseq [c (filter #(has? % :subtype "Virtual") (all-installed state :runner))]
+                 :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-installed state :runner))]
                                 (trash state side c)))}]}
 
    "Enigma"
@@ -241,12 +244,13 @@
 
    "Flare"
    {:abilities [{:label "Trace 6 - Trash 1 hardware, do 2 meat damage, and end the run"
-                 :trace {:base 6 :msg "trash 1 hardware, do 2 meat damage, and end the run"
+                 :trace {:base 6
+                         :msg "trash 1 hardware, do 2 meat damage, and end the run"
                          :effect (effect (resolve-ability
                                            {:prompt "Choose a piece of hardware to trash"
                                             :label "Trash a piece of hardware"
                                             :msg (msg "trash " (:title target))
-                                            :choices {:req #(= (:type %) "Hardware")}
+                                            :choices {:req #(is-type? % "Hardware")}
                                             :effect (effect (trash target {:cause :subroutine}))} card nil)
                                          (damage :meat 2 {:unpreventable true :card card})
                                          (end-run))}}]}
@@ -254,12 +258,16 @@
    "Galahad"
    {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
                 {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:max 2 :req #(and (:side % "Corp")
+                                             (in-hand? %)
+                                             (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:req #(and (:side % "Corp")
+                                      (in-hand? %)
+                                      (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -324,7 +332,8 @@
       :effect (req (let [fr target]
                      (resolve-ability state side
                        {:prompt "Choose a Bioroid ICE to install"
-                        :choices (req (filter #(and (= (:type %) "ICE") (has? % :subtype "Bioroid"))
+                        :choices (req (filter #(and (ice? %)
+                                                    (has-subtype? % "Bioroid"))
                                               ((if (= fr "HQ") :hand :discard) corp)))
                         :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
                                            hndx (ice-index state card)
@@ -394,7 +403,7 @@
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ to force access"
-                 :choices {:req #(= (:zone %) [:hand])}
+                 :choices {:req in-hand?}
                  :label "Force the Runner to access a card in HQ"
                  :msg (msg "force the Runner to access " (:title target))
                  :effect (effect (handle-access targets) (trash card))}]}
@@ -413,12 +422,16 @@
    "Lancelot"
    {:abilities [trash-program
                 {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:max 2 :req #(and (:side % "Corp")
+                                             (in-hand? %)
+                                             (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:req #(and (:side % "Corp")
+                                      (in-hand? %)
+                                      (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -459,21 +472,27 @@
 
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
-                 :msg (msg "place 1 advancement token on " (if (:rezzed target) (:title target) "a card"))
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req can-be-advanced?}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
                 {:label "Trace 2 - Give the Runner 1 tag"
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Merlin"
-   {:abilities [{:label "Do 2 net damage" :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
+   {:abilities [{:label "Do 2 net damage"
+                 :msg "do 2 net damage"
+                 :effect (effect (damage :net 2 {:card card}))}
                 {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:max 2 :req #(and (:side % "Corp")
+                                             (in-hand? %)
+                                             (has-subtype? % "Grail"))}
                  :msg (msg "reveal "
                            (join ", " (map #(str (:title %) " ("
                                                  (:label (first (:abilities (card-def %)))) ")") targets)))}
                 {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp") (= (:zone %) [:hand]) (has? % :subtype "Grail"))}
+                 :choices {:req #(and (:side % "Corp")
+                                      (in-hand? %)
+                                      (has-subtype? % "Grail"))}
                  :effect (req (doseq [ice targets]
                                 (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
 
@@ -483,12 +502,13 @@
 
    "Minelayer"
    {:abilities [{:msg "install an ICE from HQ"
-                 :choices {:req #(and (= (:type %) "ICE") (= (:zone %) [:hand]))}
+                 :choices {:req #(and (ice? %)
+                                      (in-hand? %))}
                  :prompt "Choose an ICE to install from HQ"
                  :effect (req (corp-install state side target (:server run) {:no-install-cost true}))}]}
 
    "Mother Goddess"
-   (let [ab {:req (req (= (:type target) "ICE"))
+   (let [ab {:req (req (ice? target))
              :effect (effect (update! (assoc card :subtype
                                                   (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                        (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
@@ -532,10 +552,12 @@
    "NEXT Bronze"
    {:abilities [end-the-run]
     :strength-bonus (req (reduce (fn [c server]
-                                   (+ c (count (filter (fn [ice] (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                   (+ c (count (filter #(and (rezzed? %)
+                                                             (has-subtype? % "NEXT"))
                                                        (:ices server)))))
                                  0 (flatten (seq (:servers corp)))))
-    :events (let [nb {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "NEXT")))
+    :events (let [nb {:req (req (and (not= (:cid target) (:cid card))
+                                     (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
               {:rez nb :derez nb :trash nb :card-moved nb})}
 
@@ -543,13 +565,13 @@
    {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
                  :msg (msg "do "
                            (reduce (fn [c server]
-                                     (+ c (count (filter (fn [ice]
-                                                           (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                     (+ c (count (filter #(and (rezzed? %)
+                                                               (has-subtype? % "NEXT"))
                                                          (:ices server)))))
                                    0 (flatten (seq (:servers corp)))) " net damage")
                  :effect (effect (damage :net (reduce (fn [c server]
-                                                        (+ c (count (filter (fn [ice]
-                                                                              (and (:rezzed ice) (has? ice :subtype "NEXT")))
+                                                        (+ c (count (filter #(and (rezzed? %)
+                                                                                  (has-subtype? % "NEXT"))
                                                                             (:ices server)))))
                                                       0 (flatten (seq (:servers corp)))) {:card card}))}
                 trash-program]}
@@ -625,7 +647,9 @@
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
-                 :trace {:base 4 :choices {:req #(and (:installed %) (= (:type %) "Program"))}
+                 :trace {:base 4
+                         :choices {:req #(and (installed? %)
+                                              (is-type? % "Program"))}
                          :msg (msg "add " (:title target) " to the top of Stack")
                          :effect (effect (move :runner target :deck {:front true}))}}]}
 
@@ -687,10 +711,15 @@
     :abilities [trash-program]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
-                {:prompt "Choose an AI program to trash" :msg (msg "trashes " (:title target))
-                 :label "Trash an AI program" :effect (effect (trash target))
-                 :choices {:req #(and (:installed %) (= (:type %) "Program") (has? % :subtype "AI"))}}]}
+   {:abilities [{:msg "do 1 net damage"
+                 :effect (effect (damage :net 1 {:card card}))}
+                {:prompt "Choose an AI program to trash"
+                 :msg (msg "trashes " (:title target))
+                 :label "Trash an AI program"
+                 :effect (effect (trash target))
+                 :choices {:req #(and (installed? %)
+                                      (is-type? % "Program")
+                                      (has-subtype? % "AI"))}}]}
 
    "Taurus"
    {:abilities [{:label "Trace 2 - Trash a piece of hardware"
@@ -734,8 +763,8 @@
    {:advanceable :while-rezzed :abilities [end-the-run]}
 
    "Universal Connectivity Fee"
-   {:abilities [{:msg (msg "force the Runner to lose " (if (> (:tag runner) 0) "all credits" "1 [Credits]"))
-                 :effect (req (if (> (get-in @state [:runner :tag]) 0)
+   {:abilities [{:msg (msg "force the Runner to lose " (if (pos? (:tag runner)) "all credits" "1 [Credits]"))
+                 :effect (req (if (pos? (get-in @state [:runner :tag]))
                                 (do (lose state :runner :credit :all) (trash state side card))
                                 (lose state :runner :credit 1)))}]}
 
@@ -809,9 +838,10 @@
 
    "Wraparound"
    {:abilities [end-the-run]
-    :strength-bonus (req (if (some #(has? % :subtype "Fracter") (all-installed state :runner))
+    :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-installed state :runner))
                            0 7))
-    :events (let [wr {:req (req (and (not= (:cid target) (:cid card)) (has? target :subtype "Fracter")))
+    :events (let [wr {:req (req (and (not= (:cid target) (:cid card))
+                                     (has-subtype? target "Fracter")))
                       :effect (effect (update-ice-strength card))}]
               {:runner-install wr :trash wr :card-moved wr})}
 

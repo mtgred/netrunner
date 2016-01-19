@@ -5,14 +5,14 @@
 ; No idea what these are for. @justinliew?
 (defn copy-events [state side dest source]
   (let [source-def (card-def source)
-        source-events (if (:events source-def) (:events source-def) {})
+        source-events (or (:events source-def) {})
         dest-card (merge dest {:events source-events})]
     (update! state side dest-card)
     (register-events state side (:events dest-card) dest-card)))
 
 (defn copy-abilities [state side dest source]
   (let [source-def (card-def source)
-        source-abilities (if (:abilities source-def) (:abilities source-def) ())
+        source-abilities (or (:abilities source-def) ())
         ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
         source-abilities (for [ab source-abilities]
                            (assoc (select-keys ab [:cost :pump :breaks])
@@ -25,17 +25,17 @@
 ; think Mandatory Upgrades vs. Improved Tracers
 (defn copy-leave-play-effects [state side dest source]
   (let [source-def (card-def source)]
-    (if-let [source-leave-play (:leave-play source-def)]
+    (when-let [source-leave-play (:leave-play source-def)]
       (let [source-effect (:effect source-def)
             dest-card (merge dest {:source-leave-play source})]
-        (if (not (nil? source-effect)) (source-effect state side source nil))
+        (when-not (nil? source-effect) (source-effect state side source nil))
         (update! state side dest-card)))))
 
 (defn fire-leave-play-effects [state side card]
-  (if-let [source-leave-play (:source-leave-play card)]
+  (when-let [source-leave-play (:source-leave-play card)]
     (let [source-def (card-def source-leave-play)
           leave-effect (:leave-play source-def)]
-      (if (not (nil? leave-effect)) (leave-effect state side card nil)))))
+      (when-not (nil? leave-effect) (leave-effect state side card nil)))))
 
 
 (defn get-remotes [state]

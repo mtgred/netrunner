@@ -26,8 +26,7 @@
   [state {:keys [cid zone side host] :as card}]
   (let [root-host (get-card state (get-nested-host state card))
         helper (fn search [card target]
-                 (if (nil? card)
-                   nil
+                 (when-not (nil? card)
                    (if-let [c (some #(when (= (:cid %) (:cid target)) %) (:hosted card))]
                      c
                      (some #(when-let [s (search % target)] s) (:hosted card)))))]
@@ -38,7 +37,7 @@
   [card]
   (let [card (update-in card [:zone] #(map to-keyword %))]
     (if (:host card)
-      (assoc card :host (assoc-host-zones (:host card)))
+      (update-in card [:host] assoc-host-zones)
       card)))
 
 (defn host

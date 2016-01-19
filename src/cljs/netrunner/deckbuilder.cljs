@@ -344,7 +344,7 @@
   (let [selected (om/get-state owner :selected)
         matches (om/get-state owner :matches)]
     (case (.-keyCode event)
-      38 (when (> selected 0)
+      38 (when (pos? selected)
            (om/update-state! owner :selected dec))
       40 (when (< selected (dec (count matches)))
            (om/update-state! owner :selected inc))

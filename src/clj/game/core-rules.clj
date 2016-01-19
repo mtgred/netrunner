@@ -1,33 +1,34 @@
 (in-ns 'game.core)
 
-(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points handle-end-run
-         resolve-steal-events show-prompt untrashable-while-rezzed? update-all-ice win)
+(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
+         handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
+         update-all-ice win)
 
-; Functions for applying core Netrunner game rules.
+;;;; Functions for applying core Netrunner game rules.
 
-; Playing cards.
+;;; Playing cards.
 (defn play-instant
   "Plays an Event or Operation."
   ([state side card] (play-instant state side card nil))
   ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
-   (when (not (seq (get-in @state [side :locked (-> card :zone first)])))
+   (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
-           additional-cost (if (and (has? card :subtype "Double")
+           additional-cost (if (and (has-subtype? card "Double")
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
        (when (and (if-let [req (:req cdef)]
                     (req state side card targets) true)
-                  (not (and (has? card :subtype "Current")
+                  (not (and (has-subtype? card "Current")
                             (get-in @state [side :register :cannot-play-current])))
-                  (not (and (has? card :subtype "Priority")
+                  (not (and (has-subtype? card "Priority")
                             (get-in @state [side :register :spent-click]))))
          (when-let [cost-str (pay state side card :credit (:cost card) extra-cost
                                   (when-not no-additional-cost additional-cost))]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
-             (if (has? c :subtype "Current")
+             (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
                      (when-let [current (first (get-in @state [s :current]))]
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
@@ -53,7 +54,7 @@
        (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)))))
 
 
-; Damage
+;;; Damage
 (defn flatline [state]
   (when-not (:winner state)
     (system-msg state :runner "is flatlined")
@@ -63,8 +64,8 @@
   "Calculates the amount of damage to do, taking into account prevention and boosting effects."
   [state side dtype n {:keys [unpreventable unboostable] :as args}]
   (-> n
-      (+ (or (when (not unboostable) (get-in @state [:damage :damage-bonus dtype])) 0))
-      (- (or (when (not unpreventable) (get-in @state [:damage :damage-prevent dtype])) 0))
+      (+ (or (when-not unboostable (get-in @state [:damage :damage-bonus dtype])) 0))
+      (- (or (when-not unpreventable (get-in @state [:damage :damage-prevent dtype])) 0))
       (max 0)))
 
 (defn damage-bonus
@@ -83,7 +84,7 @@
   (swap! state assoc-in [:damage :defer-damage dtype] n ))
 
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
-  (when (not unpreventable) (get-in @state [:damage :defer-damage dtype])))
+  (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
 
 (defn resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
@@ -109,12 +110,12 @@
   ([state side type n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
-   ; alert listeners that damage is about to be calculated.
+   ;; alert listeners that damage is about to be calculated.
    (trigger-event state side :pre-damage type card)
    (let [n (damage-count state side type n args)]
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
-         ; runner can prevent the damage.
+         ;; runner can prevent the damage.
          (do (system-msg state :runner "has the option to prevent damage")
              (show-prompt
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
@@ -129,13 +130,13 @@
          (resolve-damage state side type n args))))))
 
 
-; Tagging
+;;; Tagging
 (defn tag-count
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
   [state side n {:keys [unpreventable unboostable] :as args}]
   (-> n
-      (+ (or (when (not unboostable) (get-in @state [:tag :tag-bonus])) 0))
-      (- (or (when (not unpreventable) (get-in @state [:tag :tag-prevent])) 0))
+      (+ (or (when-not unboostable (get-in @state [:tag :tag-bonus])) 0))
+      (- (or (when-not unpreventable (get-in @state [:tag :tag-prevent])) 0))
       (max 0)))
 
 (defn tag-prevent [state side n]
@@ -174,7 +175,7 @@
          (resolve-tag state side n args))))))
 
 
-; Trashing
+;;; Trashing
 (defn trash-resource-bonus
   "Applies a cost increase of n to trashing a resource with the click action. (SYNC.)"
   [state side n]
@@ -197,15 +198,15 @@
    (when (not (some #{:discard} zone))
      (if (untrashable-while-rezzed? card)
        (enforce-msg state card "cannot be trashed while installed")
-       ; Card is not enforced untrashable
+       ;; Card is not enforced untrashable
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
          (when (not= (last zone) :current) ; Trashing a current does not trigger a trash event.
            (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
          (let [prevent (get-in @state [:prevent :trash ktype])]
-           ; Check for prevention effects
-           (if (and (not unpreventable) (not= cause :ability-cost) (> (count prevent) 0))
+           ;; Check for prevention effects
+           (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-prompt state :runner nil
                               (str "Prevent the trashing of " (:title card) "?") ["Done"]
@@ -215,7 +216,7 @@
                                       (swap! state update-in [:trash :trash-prevent] dissoc ktype))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
                                       (apply resolve-trash state side card args targets))))))
-             ; No prevention effects; resolve the trash.
+             ;; No prevention effects; resolve the trash.
              (apply resolve-trash state side card args targets))))))))
 
 (defn trash-cards [state side cards]
@@ -225,7 +226,7 @@
   "Trashes a card at no cost while it is being accessed. (Imp.)"
   [state side]
   (when-let [card (:card (first (get-in @state [side :prompt])))]
-    (when (= (:type card) "Agenda") ; trashing before the :access events actually fire; fire them manually
+    (when (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
       (resolve-steal-events state side card))
     (trash state side card)
     (swap! state update-in [side :prompt] rest)
@@ -233,7 +234,7 @@
       (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
         (handle-end-run state :runner)))))
 
-; Agendas
+;;; Agendas
 (defn get-agenda-points
   "Apply agenda-point modifications to calculate the number of points this card is worth
   to the given player."
@@ -271,7 +272,7 @@
 
 (defn update-all-advancement-costs [state side]
   (doseq [ag (->> (mapcat :content (flatten (seq (get-in @state [:corp :servers]))))
-                  (filter #(= (:type %) "Agenda")))]
+                  (filter #(is-type? % "Agenda")))]
     (update-advancement-cost state side ag)))
 
 (defn as-agenda
@@ -296,7 +297,7 @@
     (win state side "Agenda")))
 
 
-; Miscellaneous
+;;; Miscellaneous
 (defn purge
   "Purges viruses."
   [state side]
@@ -305,7 +306,8 @@
         hosted-cards (filter :installed (mapcat :hosted rig-cards))
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
     (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-      (when (or (has? card :subtype "Virus") (= (:counter-type card) "Virus"))
+      (when (or (has-subtype? card "Virus")
+                (= (:counter-type card) "Virus"))
         (set-prop state :runner card :counter 0)))
     (update-all-ice state side))
   (trigger-event state side :purge))

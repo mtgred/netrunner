@@ -78,20 +78,23 @@
                install-cost (if (and (ice? c) (not no-install-cost))
                               (count dest-zone) 0)
                install-state (or install-state (:install-state cdef))]
-           (when (not (and (has? c :subtype "Region")
-                           (some #(has? % :subtype "Region") dest-zone)))
+           (when (not (and (has-subtype? c "Region")
+                           (some #(has-subtype? % "Region") dest-zone)))
              (when-let [cost-str (pay state side card extra-cost :credit install-cost)]
                (when (#{"Asset" "Agenda"} (:type c))
                  (when-let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
                    (system-msg state side (str "trashes " (card-str state prev-card)))
                    (trash state side prev-card {:keep-server-alive true})))
-               (let [card-name (if (or (= :rezzed-no-cost install-state) (= :face-up install-state) (:rezzed c))
-                                 (:title card) (if (ice? c) "ICE" "a card"))]
+               (let [card-name (if (or (= :rezzed-no-cost install-state)
+                                       (= :face-up install-state)
+                                       (:rezzed c))
+                                 (:title card)
+                                 (if (ice? c) "ICE" "a card"))]
                  (system-msg state side (str (build-spend-msg cost-str "install")
                                              card-name (if (ice? c) " protecting " " in ") server)))
                (let [moved-card (move state side c slot)]
                  (trigger-event state side :corp-install moved-card)
-                 (when (= (:type c) "Agenda")
+                 (when (is-type? c "Agenda")
                    (update-advancement-cost state side moved-card))
                  (when (= install-state :rezzed-no-cost)
                    (rez state side moved-card {:ignore-cost :all-costs}))
@@ -135,14 +138,13 @@
                                                  (when host-card (str " on " (:title host-card)))
                                                  (when no-cost " at no cost")))))
                  ;Apply added-virus-counter flag for this turn if the card enters play with a counter
-                 (if (and
-                       (contains? installed-card :counter)
-                       (contains? installed-card :subtype)
-                       (has? card :subtype "Virus")
-                       (> (:counter installed-card) 0))
-                   (update! state side (assoc installed-card :added-virus-counter true))
-                   )
+                 (if (and (contains? installed-card :counter)
+                          (contains? installed-card :subtype)
+                          (has-subtype? card "Virus")
+                          (pos? (:counter installed-card)))
+                   (update! state side (assoc installed-card :added-virus-counter true)))
                  (trigger-event state side :runner-install installed-card)
-                 (when (has? c :subtype "Icebreaker") (update-breaker-strength state side c))))))
-         (when (has? card :type "Resource") (swap! state assoc-in [:runner :register :installed-resource] true))
+                 (when (has-subtype? c "Icebreaker") (update-breaker-strength state side c))))))
+         (when (is-type? card "Resource")
+           (swap! state assoc-in [:runner :register :installed-resource] true))
          (swap! state update-in [:bonus] dissoc :install-cost))))))

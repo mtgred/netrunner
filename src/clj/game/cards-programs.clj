@@ -6,8 +6,8 @@
                  :effect (effect (run :rd {:req (req (= target :rd))
                                            :replace-access
                                            {:prompt "Choose a card to shuffle into R&D"
-                                            :choices {:req #(and (not (= (:type %) "ICE"))
-                                                                 (not (:rezzed %))
+                                            :choices {:req #(and (not (ice? %))
+                                                                 (not (rezzed? %))
                                                                  (not (:advance-counter %)))}
                                             :effect (req (move state :corp target :deck)
                                                          (shuffle! state :corp :deck)
@@ -21,7 +21,7 @@
    "Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
-                                    hosted? (= (:type (:host b)) "ICE")
+                                    hosted? (ice? (:host b))
                                     remote? (is-remote? (second (:zone (:host b))))]
                                 (resolve-ability state side
                                  {:prompt (msg "Host Bishop on a piece of ICE protecting "
@@ -30,13 +30,15 @@
                                                     (and (if remote?
                                                            (is-central? (second (:zone %)))
                                                            (is-remote? (second (:zone %))))
-                                                         (= (:type %) "ICE")
+                                                         (ice? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
-                                                    (and (= (:type %) "ICE")
+                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
+                                                                    (:hosted %))))
+                                                    (and (ice? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
-                                  :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                                                         (not (some (fn [c] (has-subtype? c :subtype "Caïssa"))
+                                                                    (:hosted %)))))}
+                                  :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
              {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
@@ -67,16 +69,17 @@
    {:recurring 1}
 
    "Clot"
-   {:effect (req (let [agendas (map first (filter #(= (:type (first %) "Agenda")) (turn-events state :corp :corp-install)))]
+   {:effect (req (let [agendas (map first (filter #(is-type? (first %) "Agenda")
+                                                  (turn-events state :corp :corp-install)))]
                    (swap! state assoc-in [:corp :register :cannot-score] agendas)))
     :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                                   (trash state side card))}
-             :corp-install {:req (req (= (:type target) "Agenda"))
+             :corp-install {:req (req (is-type? target "Agenda"))
                             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}
     :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
    "Collective Consciousness"
-   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "draw 1 card"
+   {:events {:rez {:req (req (ice? target)) :msg "draw 1 card"
                    :effect (effect (draw :runner))}}}
 
    "Copycat"
@@ -86,7 +89,9 @@
                                 (resolve-ability
                                   state side
                                   {:prompt (msg "Choose a rezzed copy of " icename)
-                                   :choices {:req #(and (:rezzed %) (= (:type %) "ICE") (= (:title %) icename))}
+                                   :choices {:req #(and (rezzed? %)
+                                                        (ice? %)
+                                                        (= (:title %) icename))}
                                    :msg "redirect the run"
                                    :effect (req (let [dest (second (:zone target))
                                                       tgtndx (ice-index state target)]
@@ -110,7 +115,7 @@
                                          {:prompt "Choose a card to install from your Grip"
                                           :choices {:req #(and (<= (:cost %) (get c :counter 0))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
-                                                               (= (:zone %) [:hand]))}
+                                                               (in-hand? %))}
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
                                                           (runner-install target {:no-cost true}))}
@@ -139,16 +144,18 @@
 
    "Djinn"
    {:abilities [{:label "Add a virus program to your Grip from your Stack"
-                 :prompt "Choose a Virus" :msg (msg "adds " (:title target) " to their Grip")
-                 :choices (req (cancellable (filter #(and (= (:type %) "Program")
-                                                          (has? % :subtype "Virus"))
+                 :prompt "Choose a Virus"
+                 :msg (msg "adds " (:title target) " to their Grip")
+                 :choices (req (cancellable (filter #(and (is-type? % "Program")
+                                                          (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
-                {:label "Install a non-Icebreaker program on Djinn" :cost [:click 1]
+                {:label "Install a non-Icebreaker program on Djinn"
+                 :cost [:click 1]
                  :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Icebreaker"))
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (not (has-subtype? % "Icebreaker"))
+                                      (in-hand? %))}
                  :msg (msg "install and host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
@@ -156,9 +163,9 @@
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Icebreaker"))
-                                      (:installed %))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (not (has-subtype? % "Icebreaker"))
+                                      (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (gain :memory (:memoryunits target))
@@ -211,7 +218,7 @@
    {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Gravedigger"
-   {:events (let [e {:req (req (and (= (first (:zone target)) :servers) (= (:side target) "Corp")))
+   {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                                :effect (effect (add-prop :runner card :counter 1))}]
               {:runner-trash e :corp-trash e})
     :abilities [{:counter-cost 1 :cost [:click 1] :msg "force the Corp to trash the top card of R&D"
@@ -236,7 +243,7 @@
    {:data {:counter 1 :counter-type "Virus"}
     :abilities [{:req (req (> (:counter card) 0)) :priority true
                  :prompt "Move a virus counter to which card?"
-                 :choices {:req #(has? % :subtype "Virus")}
+                 :choices {:req #(has-subtype? % "Virus")}
                  :effect (req (let [abilities (:abilities (card-def target))
                                     virus target]
                                 (add-prop state :runner virus :counter 1)
@@ -270,7 +277,8 @@
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1]
                  :msg (msg "move " (:counter card) " virus counter to " (:title target))
-                 :choices {:req #(and (:installed %) (has? % :subtype "Virus"))}
+                 :choices {:req #(and (installed? %)
+                                      (has-subtype? % "Virus"))}
                  :effect (effect (trash card {:cause :ability-cost}) (add-prop target :counter (:counter card)))}]}
 
    "Ixodidae"
@@ -296,10 +304,11 @@
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
-                 :req (req (<= (count (:hosted card)) 2)) :cost [:click 1]
+                 :req (req (<= (count (:hosted card)) 2))
+                 :cost [:click 1]
                  :prompt "Choose a program in your Grip to install on Leprechaun"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
@@ -308,7 +317,8 @@
                 {:label "Host an installed program on Leprechaun"
                  :req (req (<= (count (:hosted card)) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
-                 :choices {:req #(and (= (:type %) "Program") (:installed %))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (gain :memory (:memoryunits target))
@@ -395,7 +405,7 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
-                 :choices {:req #(and (= (first (:zone %)) :servers) (has? % :type "ICE") (:rezzed %))}
+                 :choices {:req #(and (installed? %) (ice? %) (rezzed? %))}
                  :effect (req (let [ice target
                                     stypes (:subtype ice)]
                            (resolve-ability
@@ -417,7 +427,7 @@
     :events {:run-ends nil}}
 
    "Parasite"
-   {:hosting {:req #(and (= (:type %) "ICE") (:rezzed %))}
+   {:hosting {:req #(and (ice? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
                    (update-ice-strength state side h)
@@ -448,13 +458,13 @@
 
    "Pawn"
    {:abilities [{:prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
                                       (some #{:hq :rd :archives} (rest (butlast (:zone %)))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                 :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}]
     :events {:successful-run
-             {:req (req (= (:type (:host card)) "ICE"))
+             {:req (req (ice? card))
               :effect (req (let [i (ice-index state (:host card))
                                  nextice (when (> i 0) (nth (get-in @state
                                                             (vec (concat [:corp] (:zone (:host card))))) (dec i)))]
@@ -463,7 +473,7 @@
                                (do (resolve-ability state side
                                      {:prompt "Choose a Caïssa program to install from your Grip or Heap"
                                       :show-discard true
-                                      :choices {:req #(and (has? % :subtype "Caïssa")
+                                      :choices {:req #(and (has-subtype? % "Caïssa")
                                                            (#{[:hand] [:discard]} (:zone %)))}
                                       :effect (effect (runner-install target {:no-cost true}))} card nil)
                                     (trash state side card)))))}}}
@@ -475,20 +485,23 @@
 
    "Progenitor"
    {:abilities [{:label "Install a virus program on Progenitor"
-                 :cost [:click 1] :req (req (empty? (:hosted card)))
+                 :cost [:click 1]
+                 :req (req (empty? (:hosted card)))
                  :prompt "Choose a Virus program to install on Progenitor"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (has? % :subtype "Virus")
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (has-subtype? % "Virus")
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
-                {:label "Host an installed virus on Progenitor" :req (req (empty? (:hosted card)))
+                {:label "Host an installed virus on Progenitor"
+                 :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed virus program to host on Progenitor"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (has? % :subtype "Virus")
-                                      (:installed %))}
-                 :msg (msg "host " (:title target)) :effect (effect (host card target))}]
+                 :choices {:req #(and (is-type? % "Program")
+                                      (has-subtype? % "Virus")
+                                      (installed? %))}
+                 :msg (msg "host " (:title target))
+                 :effect (effect (host card target))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (:counter c)))))}
              :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
@@ -498,10 +511,11 @@
 
    "Rook"
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                                      (not (some (fn [c] (has-subtype? c "Caïssa"))
+                                                 (:hosted %))))}
+                 :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
                             :effect (effect (rez-cost-bonus 2))}}}
@@ -510,22 +524,26 @@
    {:recurring 2}
 
    "Savoir-faire"
-   {:abilities [{:cost [:credit 2] :once :per-turn :msg (msg "install " (:title target))
+   {:abilities [{:cost [:credit 2]
+                 :once :per-turn
+                 :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (in-hand? %))}
                  :effect (effect (runner-install target))}]}
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
-                 :cost [:click 1] :prompt "Choose a program to install on Scheherazade from your grip"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (= (:zone %) [:hand]))}
+                 :cost [:click 1]
+                 :prompt "Choose a program to install on Scheherazade from your grip"
+                 :choices {:req #(and (is-type? % "Program")
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade"
-                 :choices {:req #(and (= (:type %) "Program") (:installed %))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (req (when (host state side card target)
                                 (gain state side :credit 1)))}]}
@@ -533,7 +551,7 @@
    "Self-modifying Code"
    {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
                  :priority true
-                 :choices (req (cancellable (filter #(has? % :type "Program") (:deck runner)) :sorted))
+                 :choices (req (cancellable (filter #(is-type? % "Program") (:deck runner)) :sorted))
                  :cost [:credit 2]
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target) (shuffle! :deck))}]}
 
@@ -558,13 +576,15 @@
 
    "Surfer"
    {:abilities [{:cost [:credit 2]
-                 :req (req (and (:run @state) (:rezzed current-ice) (has? current-ice :subtype "Barrier")))
+                 :req (req (and (:run @state)
+                                (:rezzed current-ice)
+                                (has-subtype? current-ice "Barrier")))
                  :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                  :effect (req (let [cice current-ice]
                                 (resolve-ability
                                   state side
                                   {:prompt (msg "Choose an ICE before or after " (:title cice))
-                                   :choices {:req #(and (= (:type %) "ICE")
+                                   :choices {:req #(and (ice? %)
                                                         (= (:zone %) (:zone cice))
                                                         (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
                                    :msg "swap a piece of barrier ICE"

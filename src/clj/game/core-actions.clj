@@ -1,12 +1,12 @@
 (in-ns 'game.core)
 
-; These functions are called by main.clj in response to commands sent by users.
+;; These functions are called by main.clj in response to commands sent by users.
 
 (declare card-str can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
-         jack-out move name-zone play-instant purge resolve-select run
+         jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win)
 
-; Neutral actions
+;;; Neutral actions
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
@@ -44,12 +44,12 @@
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
   (let [kw (to-keyword key)]
-    (if (< delta 0)
+    (if (neg? delta)
       (deduce state side [kw (- delta)])
       (swap! state update-in [side kw] (partial + delta)))
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
-                     " (" (if (> delta 0) (str "+" delta) delta) ")"))))
+                     " (" (if (pos? delta) (str "+" delta) delta) ")"))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -57,27 +57,31 @@
   (let [c (update-in card [:zone] #(map to-keyword %))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
-        from-str (if (nil? src) nil (str " from their " src))
-        label (if (and (not (= last-zone :play-area))
-                       (not (and (= (:side c)  "Runner") (= last-zone :hand) (= server "Grip")))
-                       (or (and (= (:side c)  "Runner") (not (:facedown c)))
-                           (:rezzed c)
+        from-str (when-not (nil? src) (str " from their " src))
+        label (if (and (not= last-zone :play-area)
+                       (not (and (= (:side c)  "Runner")
+                                 (= last-zone :hand)
+                                 (= server "Grip")))
+                       (or (and (= (:side c)  "Runner")
+                                (not (:facedown c)))
+                           (rezzed? c)
                            (:seen c)
                            (= last-zone :deck)))
-                (:title c) "a card")
+                (:title c)
+                "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
-    (if (= src server) nil
-                       (case server
-                         ("Heap" "Archives")
-                         (do (trash state s c {:unpreventable true})
-                             (system-msg state side (str "trashes " label from-str)))
-                         ("HQ" "Grip")
-                         (do (move state s (dissoc c :seen :rezzed) :hand)
-                             (system-msg state side (str "moves " label from-str " to " server)))
-                         ("Stack" "R&D")
-                         (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
-                             (system-msg state side (str "moves " label from-str " to the top of " server)))
-                         nil))))
+    (when-not (= src server)
+      (case server
+        ("Heap" "Archives")
+        (do (trash state s c {:unpreventable true})
+            (system-msg state side (str "trashes " label from-str)))
+        ("HQ" "Grip")
+        (do (move state s (dissoc c :seen :rezzed) :hand)
+            (system-msg state side (str "moves " label from-str " to " server)))
+        ("Stack" "R&D")
+        (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
+            (system-msg state side (str "moves " label from-str " to the top of " server)))
+        nil))))
 
 (defn concede [state side args]
   (system-msg state side "concedes")
@@ -92,20 +96,20 @@
                  (min choice (get-in @state [side :credit]))
                  choice)]
     (if (not= choice "Cancel")
-      ; The user did not choose "cancel"
+      ;; The user did not choose "cancel"
       (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
             (pay state side card :credit choice))
           (when (= (:choices prompt) :counter) ; :counter prompts deduct counters from the card
             (add-prop state side (:card prompt) :counter (- choice)))
-          ; trigger the prompt's effect function
+          ;; trigger the prompt's effect function
           ((:effect prompt) (or choice card)))
       (when (:cancel-effect prompt)
-        ; the user chose "cancel" -- trigger the cancel effect.
+        ;; the user chose "cancel" -- trigger the cancel effect.
         ((:cancel-effect prompt) choice)))
 
-    ; remove the prompt from the queue
+    ;; remove the prompt from the queue
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
-    ; This is a dirty hack to end the run when the last access prompt is resolved.
+    ;; This is a dirty hack to end the run when the last access prompt is resolved.
     (when (empty? (get-in @state [:runner :prompt]))
       (when-let [run (:run @state)]
         (when (:ended run)
@@ -118,7 +122,7 @@
   [state side {:keys [card] :as args}]
   (let [r (get-in @state [side :selected 0 :req])]
     (when (or (not r) (r card))
-      (let [c (assoc card :selected (not (:selected card)))]
+      (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
@@ -135,7 +139,7 @@
   (let [cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
-             ; recurring credit abilities are not in the :abilities map and are implicit
+             ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))
@@ -146,7 +150,7 @@
       (resolve-ability state side ab card targets))))
 
 
-; Corp actions
+;;; Corp actions
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
@@ -154,7 +158,7 @@
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost)]
       (resolve-ability state side
                        {:prompt "Choose a resource to trash"
-                        :choices {:req #(= (:type %) "Resource")}
+                        :choices {:req #(is-type? % "Resource")}
                         :effect (effect (trash target)
                                         (system-msg (str (build-spend-msg cost-str "trash")
                                                          (:title target))))} nil nil))))
@@ -191,7 +195,7 @@
                                        (update-in [:host :zone] #(map to-keyword %)))))
              (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                          (:title card) (when ignore-cost " at no cost")))
-             (when (#{"ICE"} (:type card))
+             (when (ice? card)
                (update-ice-strength state side card)
                (update-run-ice state side))
              (trigger-event state side :rez card))))
@@ -249,7 +253,7 @@
         (update-ice-strength state side ice)))))
 
 
-; Runner actions
+;;; Runner actions
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
@@ -298,6 +302,6 @@
       (when (> pos 0)
         (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
           (trigger-event state side :approach-ice ice))))
-    (doseq [p (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))]
+    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
       (update-breaker-strength state side p))))

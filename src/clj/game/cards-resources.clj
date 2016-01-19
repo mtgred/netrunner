@@ -72,12 +72,13 @@
 
    "Chrome Parlor"
    {:events
-    {:pre-damage {:req (req (has? (second targets) :subtype "Cybernetic"))
+    {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
    "Compromised Employee"
    {:recurring 1
-    :events {:rez {:req (req (= (:type target) "ICE")) :msg "gain 1 [Credits]"
+    :events {:rez {:req (req (ice? target))
+                   :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Crash Space"
@@ -113,7 +114,7 @@
                            (register-turn-flag!
                              card :can-rez
                              (fn [state side card]
-                               (if (and (has? card :type "ICE")
+                               (if (and (ice? card)
                                         (= (count (get-in @state [:run :ices])) (get-in @state [:run :position])))
                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
                                  true)))
@@ -153,9 +154,9 @@
    "Eden Shard"
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (= 0 (:position run)))
+    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:rd]) (= 0 (:position run)))
+    :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
                    (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
@@ -182,7 +183,7 @@
 
    "Film Critic"
    {:abilities [{:req (req (and (empty? (:hosted card))
-                                (= "Agenda" (:type (:card (first (get-in @state [side :prompt])))))))
+                                (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
@@ -270,7 +271,8 @@
                                   (runner-install state side c {:facedown true})))}]}
 
    "Ice Analyzer"
-   {:events {:rez {:req (req (= (:type target) "ICE")) :msg "place 1 [Credits] on Ice Analyzer"
+   {:events {:rez {:req (req (ice? target))
+                   :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-prop :runner card :counter 1))}}
     :abilities [{:counter-cost 1 :effect (effect (gain :credit 1))
                  :msg "take 1 [Credits] to install programs"}]}
@@ -328,15 +330,18 @@
                               (when (<= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
 
    "London Library"
-   {:abilities [{:label "Install a non-virus program on London Library" :cost [:click 1]
+   {:abilities [{:label "Install a non-virus program on London Library"
+                 :cost [:click 1]
                  :prompt "Choose a non-virus program to install on London Library from your grip"
-                 :choices {:req #(and (= (:type %) "Program")
-                                      (not (has? % :subtype "Virus"))
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (not (has-subtype? % "Virus"))
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
-                {:label "Add a program hosted on London Library to your Grip" :cost [:click 1]
-                 :choices {:req #(:host %)} :msg (msg "add " (:title target) "to their Grip")
+                {:label "Add a program hosted on London Library to your Grip"
+                 :cost [:click 1]
+                 :choices {:req #(:host %)}
+                 :msg (msg "add " (:title target) "to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
                                                (trash state side c)))}}}
@@ -388,22 +393,26 @@
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
                  :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
-                 :choices {:req #(and (has? % :subtype "Connection") (= (:zone %) [:hand]))}
+                 :choices {:req #(and (has-subtype? % "Connection")
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install target {:host-card card}) (draw))}
                 {:label "Host an installed connection"
                  :prompt "Choose a connection to host on Off-Campus Apartment"
-                 :choices {:req #(and (has? % :subtype "Connection") (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Connection")
+                                      (installed? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (host card target) (draw))}]}
 
    "Oracle May"
-   {:abilities [{:cost [:click 1] :once :per-turn :prompt "Choose card type"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]
                                 (system-msg state side (str "uses Oracle May, names " target
                                                             " and reveals " (:title c)))
-                                (if (= (:type c) target)
+                                (if (is-type? c target)
                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
                                       (gain state side :credit 2) (draw state side))
                                   (do (system-msg state side (str "trashes " (:title c))) (mill state side)))))}]}
@@ -465,7 +474,7 @@
      {:abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
                    :prompt "Choose a card to host on Personal Workshop"
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
-                                        (= (:zone %) [:hand])
+                                        (in-hand? %)
                                         (= (:side %) "Runner"))}
                    :effect (req (if (zero? (:cost target))
                                   (runner-install state side target)
@@ -526,7 +535,7 @@
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:label "Expose 1 card"
                  :effect (effect (resolve-ability
-                                   {:choices {:req #(= (first (:zone %)) :servers)}
+                                   {:choices {:req installed?}
                                     :effect (effect (expose target) (trash card {:cause :ability-cost}))
                                     :msg (msg "expose " (:title target))} card nil))}]}
 
@@ -539,7 +548,7 @@
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
-                                                (filter #(not (has? % :subtype "Virtual"))
+                                                (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
@@ -563,8 +572,10 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :prompt "Choose an event to play" :msg (msg "play " (:title target)) :show-discard true
-                 :choices {:req #(and (= (:type %) "Event")
+                 :prompt "Choose an event to play"
+                 :msg (msg "play " (:title target))
+                 :show-discard true
+                 :choices {:req #(and (is-type? % "Event")
                                       (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
@@ -612,7 +623,7 @@
    {:effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:prompt "Choose a card on Street Peddler to install"
-                 :choices (req (cancellable (filter #(and (not= (:type %) "Event")
+                 :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
                                                           (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
@@ -645,8 +656,8 @@
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
                               :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1))
-                              :req (req (or (has? target :subtype "Black Ops")
-                                            (has? target :subtype "Gray Ops")))}}}
+                              :req (req (or (has-subtype? target "Black Ops")
+                                            (has-subtype? target "Gray Ops")))}}}
 
    "Technical Writer"
    {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
@@ -658,7 +669,8 @@
    "The Helpful AI"
    {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
     :abilities [{:msg (msg "give +2 strength to " (:title target))
-                 :choices {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (installed? %))}
                  :effect (effect (update! (assoc card :hai-target target))
                                  (trash (get-card state card) {:cause :ability-cost})
                                  (update-breaker-strength target))}]
@@ -676,7 +688,7 @@
    {:abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Choose a card to host on The Supplier"
                  :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
-                                      (= (:zone %) [:hand]))}
+                                      (in-hand? %))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}]
     :events {:runner-turn-begins
              {:prompt "Choose a card on The Supplier to install"
@@ -712,7 +724,7 @@
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
-                 :choices (req (cancellable (filter #(has? % :type "Hardware") (:deck runner)) :sorted))
+                 :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"
@@ -723,9 +735,9 @@
    {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (= 0 (:position run)))
+    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:hq]) (= 0 (:position run)))
+    :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
                    (register-successful-run state side (:server run))
                    (swap! state update-in [:runner :prompt] rest)
                    (handle-end-run state side)))}
@@ -736,7 +748,8 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "move 1 virus counter to " (:title target))
                  :req (req (pos? (get card :counter 0)))
-                 :choices {:req #(and (has? % :subtype "Virus") (>= (get % :counter 0) 1))}
+                 :choices {:req #(and (has-subtype? % "Virus")
+                                      (pos? (get % :counter 0)))}
                  :effect (req (when (pos? (get-virus-counters state side target))
                                 (add-prop state side card :counter -1)
                                 (add-prop state side target :counter 1)))}]}
@@ -764,7 +777,7 @@
                                   :effect (effect (lose :click 1) (draw 2))}}}
 
    "Xanadu"
-   {:events {:pre-rez-cost {:req (req (= (:type target) "ICE"))
+   {:events {:pre-rez-cost {:req (req (ice? target))
                             :effect (effect (rez-cost-bonus 1))}}}
 
    "Zona Sul Shipping"

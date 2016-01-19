@@ -124,19 +124,22 @@
   (-> []
       (#(if (and (= type "Agenda") (>= advance-counter current-cost))
           (cons "score" %) %))
-      (#(if (or (and (= type "Agenda") (= (first zone) "servers"))
+      (#(if (or (and (= type "Agenda")
+                     (= (first zone) "servers"))
                 (= advanceable "always")
-                (and rezzed (= advanceable "while-rezzed"))
-                (and (not rezzed) (= advanceable "while-unrezzed")))
+                (and rezzed
+                     (= advanceable "while-rezzed"))
+                (and (not rezzed)
+                     (= advanceable "while-unrezzed")))
           (cons "advance" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
-          (if (not rezzed) (cons "rez" %) (cons "derez" %))
+          (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
 (defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
-    (when (not (and (= side "Runner") facedown))
+    (when-not (and (= side "Runner") facedown)
       (cond (or (> c 1)
                 (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
             (= c 1) (if (= (count abilities) 1)
@@ -183,11 +186,11 @@
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
-              (> (:click me) 0)))))
+              (pos? (:click me))))))
 
 (defn is-card-item [item]
   (and (> (.indexOf item "~") -1)
-          (= 0 (.indexOf item "["))))
+       (= 0 (.indexOf item "["))))
 
 (defn extract-card-info [item]
   (if (is-card-item item)
@@ -233,14 +236,14 @@
 
 (defn get-card-code [e]
   (let [code (str (.. e -target -id))]
-    (if (> (count code) 0)
+    (when (pos? (count code))
       code)))
 
 (defn card-preview-mouse-over [e]
-  (if-let [code (get-card-code e)] (put! zoom-channel {:code code})))
+  (when-let [code (get-card-code e)] (put! zoom-channel {:code code})))
 
 (defn card-preview-mouse-out [e]
-  (if-let [code (get-card-code e)] (put! zoom-channel false)))
+  (when-let [code (get-card-code e)] (put! zoom-channel false)))
 
 (defn log-pane [messages owner]
   (reify
@@ -343,9 +346,9 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (> counter 0) [:div.darkbg.counter counter])
-         (when (> rec-counter 0) [:div.darkbg.recurring.counter rec-counter])
-         (when (> advance-counter 0) [:div.darkbg.advance.counter advance-counter])]
+         (when (pos? counter) [:div.darkbg.counter counter])
+         (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
+         (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
               current-strength [:div.darkbg.strength current-strength])
         (when named-target [:div.darkbg.named-target named-target])
@@ -389,7 +392,7 @@
             [:div.blue-shade.panel.menu.abilities {:ref "advance"}
              [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
-       (when (> (count hosted) 0)
+       (when (pos? (count hosted))
          [:div.hosted
           (om/build-all card-view hosted {:key :cid})])]))))
 
@@ -460,7 +463,7 @@
          [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true)}
           "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
-     (when (> (count deck) 0)
+     (when (pos? (count deck))
        [:img.card.bg {:src "/img/runner.png"}])])))
 
 (defmethod deck-view "Corp" [{:keys [deck servers] :as cursor} owner]
@@ -482,7 +485,7 @@
          [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false)} "Close"]
          [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true)} "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
-     (when (> (count deck) 0)
+     (when (pos? (count deck))
        [:img.card.bg {:src "/img/corp.png"}])])))
 
 (defmulti discard-view #(get-in % [:identity :side]))
@@ -582,14 +585,14 @@
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (> credit 1) "s" "")
-                  (when (> run-credit 0)
+                  (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (< memory 0) [:div.warning "!"]) (when me? (controls :memory))]
+       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
        [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (> tag 0) (> tagged 0)) [:div.warning "!"]) (when me? (controls :tag))]
+       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
        [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
@@ -786,10 +789,12 @@
                        (when (= side :runner)
                          [:div
                           (cond-button "Remove Tag"
-                                       (and (>= (:click me) 1) (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0))) (>= (:tag me) 1))
+                                       (and (pos? (:click me))
+                                            (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0)))
+                                            (pos? (:tag me)))
                                        #(send-command "remove-tag"))
                           [:div.run-button
-                           (cond-button "Run" (and (>= (:click me) 1)
+                           (cond-button "Run" (and (pos? (:click me))
                                                    (not (get-in me [:register :cannot-run])))
                                         #(-> (om/get-node owner "servers") js/$ .toggle))
                            (let [remotes (get-remotes (get-in cursor [:corp :servers]))
@@ -803,12 +808,13 @@
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)
-                         (cond-button "Trash Resource" (and (> (:click me) 0) (>= (:credit me) (- 2 (or (:trash-cost-bonus me) 0)))
-                                                            (or (> (:tagged opponent) 0)
-                                                                (> (:tag opponent) 0)))
+                         (cond-button "Trash Resource" (and (pos? (:click me))
+                                                            (>= (:credit me) (- 2 (or (:trash-cost-bonus me) 0)))
+                                                            (or (pos? (:tagged opponent))
+                                                                (pos? (:tag opponent))))
                                       #(send-command "trash-resource")))
-                       (cond-button "Draw" (>= (:click me) 1) #(send-command "draw"))
-                       (cond-button "Gain Credit" (>= (:click me) 1) #(send-command "credit"))]))])]
+                       (cond-button "Draw" (pos? (:click me)) #(send-command "draw"))
+                       (cond-button "Gain Credit" (pos? (:click me)) #(send-command "credit"))]))])]
 
               [:div.board
                (om/build board-view {:player opponent :run run})

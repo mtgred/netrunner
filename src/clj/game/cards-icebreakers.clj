@@ -1,20 +1,28 @@
 (in-ns 'game.core)
 
-; Updates an icebreaker's abilities with a pseudo-ability to trigger the auto-pump routine in core, IF we are
-; encountering a rezzed ice with a subtype we can break.
 (def breaker-auto-pump
+  "Updates an icebreaker's abilities with a pseudo-ability to trigger the auto-pump routine in
+  core, IF we are encountering a rezzed ice with a subtype we can break."
   {:effect
-   (req (let [abs (filter #(not (:auto-pump %)) (:abilities card)) pumpabi (some #(when (:pump %) %) abs)
-              pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+   (req (let [abs (filter #(not (:auto-pump %)) (:abilities card))
+              pumpabi (some #(when (:pump %) %) abs)
+              pumpcst (when pumpabi (second (drop-while #(and (not= % :credit)
+                                                              (not= % "credit"))
+                                                        (:cost pumpabi))))
               current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
-              strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                                                 (or (:current-strength card) (:strength card)))))
+              strdif (when current-ice (max 0 (- (or (:current-strength current-ice)
+                                                     (:strength current-ice))
+                                                 (or (:current-strength card)
+                                                     (:strength card)))))
               pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side (assoc card :abilities
-                                          (if (and pumpcst pumpnum (:rezzed current-ice)
-                                                   (or (some #(has? current-ice :subtype %) (:breaks card))
+                                          (if (and pumpcst
+                                                   pumpnum
+                                                   (rezzed? current-ice)
+                                                   (or (some #(has-subtype? current-ice %)
+                                                             (:breaks card))
                                                        (= (first (:breaks card)) "All"))
-                                                   (> strdif 0))
+                                                   (pos? strdif))
                                             (vec (cons {:auto-pump true :cost [:credit (* pumpcst pumpnum)]
                                                         :label (str "Match strength of " (:title current-ice))} abs))
                                             abs)))))})
@@ -125,11 +133,13 @@
                                    {:cost [:credit 1] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]}))
 
    "Crowbar"
-   (cloud-icebreaker {:abilities [{:msg "break up to 3 code gate subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+   (cloud-icebreaker {:abilities [{:msg "break up to 3 code gate subroutines"
+                                   :effect (effect (trash card {:cause :ability-cost}))}]
+                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
                                            :effect (effect (update-breaker-strength card))}]
                                 {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
+                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                          (all-installed state :runner))))})
 
    "Crypsis"
    (auto-icebreaker ["All"]
@@ -190,23 +200,22 @@
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
                  :prompt "Choose a card from your grip to trash for Faust"
-                 :choices {:req #(= (:zone %) [:hand])}
+                 :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and break 1 subroutine")
                  :effect (effect (trash target {:unpreventable true}))}
                 {:label "Trash 1 card from Grip to add 2 strength"
                  :prompt "Choose a card from your grip to trash for Faust"
-                 :choices {:req #(= (:zone %) [:hand])}
+                 :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and add 2 strength")
                  :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
-                    {:prompt "Choose a piece of ICE to target for bypassing" :choices {:req #(= (:type %) "ICE")}
+                    {:prompt "Choose a piece of ICE to target for bypassing" :choices {:req ice?}
                      :effect (req (let [ice target
                                         serv (zone->name (second (:zone ice)))]
                                     (system-msg state side
-                                      (str "chooses " (if (:rezzed ice) (:title ice) "the ICE") " at position "
-                                        (ice-index state ice) " of " serv " for Femme Fatale's bypass ability"))))
+                                      (str "chooses " (card-str state ice) " for Femme Fatale's bypass ability"))))
                      :abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
                                  {:cost [:credit 2] :msg "add 1 strength" :effect (effect (pump card 1)) :pump 1}]})
 
@@ -257,10 +266,11 @@
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (= (:type %) "ICE")
+                 :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
-                 :msg (msg "host it on " (if (:rezzed target) (:title target) "a piece of ICE"))
+                                      (not (some (fn [c] (has-subtype? c "Caïssa"))
+                                                 (:hosted %))))}
+                 :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}
                 {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
@@ -315,8 +325,8 @@
                                  {:cost [:credit 1] :msg "add 3 strength" :effect (effect (pump card 3)) :pump 3}]})
 
    "Sage"
-   {:abilities [{:cost [:credit 2] :req (req (or (has? current-ice :subtype "Barrier")
-                                                 (has? current-ice :subtype "Code Gate")))
+   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
+                                                 (has-subtype? current-ice "Code Gate")))
                  :msg "break 1 code gate or barrier subroutine"}]
     :effect (req (add-watch state (keyword (str "sage" (:cid card)))
                             (fn [k ref old new]
@@ -339,17 +349,19 @@
 
    "Shiv"
    (cloud-icebreaker {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
                                            :effect (effect (update-breaker-strength card))}]
                                 {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
+                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                          (all-installed state :runner))))})
 
    "Spike"
    (cloud-icebreaker {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has? target :subtype "Icebreaker"))
+                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
                                            :effect (effect (update-breaker-strength card))}]
                                 {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has? % :subtype "Icebreaker") (all-installed state :runner))))})
+                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                          (all-installed state :runner))))})
 
    "Study Guide"
    {:abilities [{:cost [:credit 1] :msg "break 1 code gate subroutine"}

@@ -20,17 +20,19 @@
                                card nil))}]}
 
    "Astrolabe"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:server-created {:msg "draw 1 card" :effect (effect (draw :runner))}}}
+   {:effect (effect (gain :memory 1))
+    :leave-play (effect (lose :memory 1))
+    :events {:server-created {:msg "draw 1 card"
+                              :effect (effect (draw :runner))}}}
 
    "Autoscripter"
-   {:events {:runner-install {:req (req (and (has? target :type "Program")
+   {:events {:runner-install {:req (req (and (is-type? target "Program")
                                              (= (:active-player @state) :runner)
                                              ;; only trigger when played a programm from grip
                                              (some #{:hand} (:previous-zone target))
                                              ;; check if didn't played a program from the grip this turn
                                              (empty? (let [cards (map first (turn-events state side :runner-install))
-                                                           progs (filter #(has? % :type "Program") cards)]
+                                                           progs (filter #(is-type? % "Program") cards)]
                                                           (filter #(some #{:hand} (:previous-zone %)) progs)))))
                               :msg "gain [Click]" :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
@@ -44,7 +46,8 @@
    "Bookmark"
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
-                 :choices {:max 3 :req #(and (:side % "Runner") (= (:zone %) [:hand]))}
+                 :choices {:max 3 :req #(and (:side % "Runner")
+                                             (in-hand? %))}
                  :effect (req (doseq [c targets]
                                  (host state side (get-card state card) c {:facedown true})))}
                 {:label "Add all hosted cards to Grip" :cost [:click 1] :msg "add all hosted cards to their Grip"
@@ -81,7 +84,8 @@
                  :effect (req (let [handsize (count (:hand runner))]
                                 (resolve-ability state side
                                   {:prompt "Choose any number of cards to trash from your Grip"
-                                   :choices {:max handsize :req #(and (= (:side %) "Runner") (= (:zone %) [:hand]))}
+                                   :choices {:max handsize :req #(and (= (:side %) "Runner")
+                                                                      (in-hand? %))}
                                    :effect (req (let [trashed (count targets)
                                                       remaining (- handsize trashed)]
                                                   (doseq [c targets]
@@ -110,24 +114,28 @@
    {:abilities [{:prompt "Choose a program to install from your Heap" :msg (msg "install " (:title target))
                  :priority true :show-discard true
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
-                 :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:discard]))}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Comet"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:effect (effect (gain :memory 1))
+    :leave-play (effect (lose :memory 1))
     :events {:play-event {:req (req (first-event state side :play-event))
                           :effect (req (system-msg state :runner
                                                    (str "can play another event without spending a [Click] by clicking on Comet"))
                                        (update! state side (assoc card :comet-event true)))}}
     :abilities [{:req (req (:comet-event card))
                  :prompt "Choose an Event in your Grip to play"
-                 :choices {:req #(and (= (:type %) "Event") (= (:zone %) [:hand]))}
+                 :choices {:req #(and (is-type? % "Event")
+                                      (in-hand? %))}
                  :msg (msg "play " (:title target))
                  :effect (effect (play-instant target)
                                  (update! (dissoc (get-card state card) :comet-event)))}]}
 
    "Cortez Chip"
-   {:abilities [{:prompt "Choose a piece of ICE" :choices {:req #(and (not (:rezzed %)) (= (:type %) "ICE"))}
+   {:abilities [{:prompt "Choose a piece of ICE"
+                 :choices {:req #(and (not (rezzed? %)) (ice? %))}
                  :effect (req (let [ice target
                                     serv (zone->name (second (:zone ice)))]
                                 (update! state side (assoc card :cortez-target ice))
@@ -162,9 +170,9 @@
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
                  :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "AI"))
-                                      (= (:zone %) [:hand]))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI"))
+                                      (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
                                  (update! (assoc (get-card state card) :dino-breaker (:cid target)))
@@ -172,9 +180,9 @@
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "AI"))
-                                      (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI"))
+                                      (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (update! (assoc (get-card state card) :dino-breaker (:cid target)))
@@ -247,7 +255,7 @@
 
    "Grimoire"
    {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
-    :events {:runner-install {:req (req (has? target :subtype "Virus"))
+    :events {:runner-install {:req (req (has-subtype? target "Virus"))
                               :effect (effect (add-prop target :counter 1))}}}
 
    "Heartbeat"
@@ -266,7 +274,7 @@
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
-                 :choices {:req #(= (first (:zone %)) :servers)} :effect (effect (expose target))
+                 :choices {:req installed?} :effect (effect (expose target))
                  :msg "expose 1 card"}]}
 
    "LLDS Processor"
@@ -276,7 +284,7 @@
                                            (doseq [c cards]
                                              (update-breaker-strength state side c))))}]
                {:runner-turn-ends llds :corp-turn-ends llds
-                :runner-install {:req (req (has? target :subtype "Icebreaker"))
+                :runner-install {:req (req (has-subtype? target "Icebreaker"))
                                  :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                                  (update-breaker-strength target))}
                 :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
@@ -297,7 +305,8 @@
 
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
-                             :choices {:req #(and (= (:type %) "Program") (= (:zone %) [:hand]))}
+                             :choices {:req #(and (is-type? % "Program")
+                                                  (in-hand? %))}
                              :effect (req (install-cost-bonus state side [:credit -4])
                                           (runner-install state side target nil)
                                             (when (< n 3)
@@ -308,7 +317,8 @@
       :leave-play (effect (lose :memory 3))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority true
-                   :choices {:req #(and (= (:type %) "Program") (= [:hand] (:zone %)))}
+                   :choices {:req #(and (is-type? % "Program")
+                                        (in-hand? %))}
                    :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
                                                                        (damage-prevent :brain 1)
                                                                        (damage-prevent :net 1))}]})
@@ -321,30 +331,35 @@
 
    "Net-Ready Eyes"
    {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
-    :events {:run {:choices {:req #(and (:installed %) (has? % :subtype "Icebreaker"))}
+    :events {:run {:choices {:req #(and (installed? %)
+                                        (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
 
    "Omni-Drive"
    {:recurring 1
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-Drive"
-                 :req (req (empty? (:hosted card))) :cost [:click 1]
+                 :req (req (empty? (:hosted card)))
+                 :cost [:click 1]
                  :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive from your grip"
-                 :choices {:req #(and (= (:type %) "Program")
+                 :choices {:req #(and (is-type? % "Program")
                                       (<= (:memoryunits %) 1)
-                                      (= [:hand] (:zone %)))}
+                                      (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-Drive"
                  :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-Drive"
-                 :choices {:req #(and (= (:type %) "Program") (:installed %))}
-                 :msg (msg "host " (:title target)) :effect (effect (host card target))}]}
+                 :choices {:req #(and (is-type? % "Program")
+                                      (installed? %))}
+                 :msg (msg "host " (:title target))
+                 :effect (effect (host card target))}]}
 
    "Plascrete Carapace"
    {:data [:counter 4]
     :prevent {:damage [:meat]}
-    :abilities [{:counter-cost 1 :msg "prevent 1 meat damage"
+    :abilities [{:counter-cost 1
+                 :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
                               (when (= (:counter card) 0) (trash state side card {:unpreventable true})))}]}
 
@@ -401,7 +416,7 @@
 
    "Replicator"
    {:events {:runner-install
-             {:optional {:req (req (= (:type target) "Hardware"))
+             {:optional {:req (req (is-type? target "Hardware"))
                          :prompt "Use Replicator to add a copy?"
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
                                        :effect (effect (move (some #(when (= (:title %) (:title target)) %)
@@ -413,18 +428,18 @@
                  :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
                  :req (req (:run @state))
                  :prompt "Choose one non-Cloud icebreaker"
-                 :choices {:req #(and (has? % :subtype "Icebreaker")
-                                      (not (has? % :subtype "Cloud"))
-                                      (:installed %))}
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "Cloud"))
+                                      (installed? %))}
                  :effect (effect (pump target (:link runner) :all-run)
                                  (trash (get-card state card) {:cause :ability-cost}))}
                 {:label "[Trash]: Add [Link] strength to any Cloud icebreakers until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
                  :req (req (:run @state))
                  :prompt "Choose any number of Cloud icebreakers"
-                 :choices {:max 50 :req #(and (has? % :subtype "Icebreaker")
-                                              (has? % :subtype "Cloud")
-                                              (:installed %))}
+                 :choices {:max 50 :req #(and (has-subtype? % "Icebreaker")
+                                              (has-subtype? % "Cloud")
+                                              (installed? %))}
                  :effect (req (doseq [t targets]
                                 (pump state side t (:link runner) :all-run)
                                 (update-breaker-strength state side t))
@@ -452,7 +467,8 @@
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
 
    "The Personal Touch"
-   {:hosting {:req #(and (has? % :subtype "Icebreaker") (:installed %))}
+   {:hosting {:req #(and (has-subtype? % "Icebreaker")
+                         (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (:host card))))
                                     :effect (effect (breaker-strength-bonus 1))}}}
@@ -508,9 +524,11 @@
    {:abilities
     [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
       :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
-      :choices {:req #(and (:rezzed %)
-                           (or (has? % :subtype "Bioroid") (has? % :subtype "Clone")
-                               (has? % :subtype "Executive") (has? % :subtype "Sysop"))
+      :choices {:req #(and (rezzed? %)
+                           (or (has-subtype? % "Bioroid")
+                               (has-subtype? % "Clone")
+                               (has-subtype? % "Executive")
+                               (has-subtype? % "Sysop"))
                            (or (= (last (:zone %)) :content) (= (last (:zone %)) :onhost)))}
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 

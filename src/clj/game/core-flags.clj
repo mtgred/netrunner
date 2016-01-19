@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-; Various functions for checking small "flag" values of cards, runs, players, etc.
+;;;; Various functions for checking small "flag" values of cards, runs, players, etc.
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
@@ -73,8 +73,8 @@
   (swap! state update-in [:stack :persistent flag]
          #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
 
-; Functions for preventing specific game actions.
-; TODO: look into migrating these to turn-flags and run-flags.
+;;; Functions for preventing specific game actions.
+;;; TODO: look into migrating these to turn-flags and run-flags.
 (defn prevent-run [state side]
   (swap! state assoc-in [:runner :register :cannot-run] true))
 
@@ -97,9 +97,25 @@
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
 
-; Small utilities for card properties.
+;;; Small utilities for card properties.
+(defn in-hand?
+  "Checks if the specified card is in the hand."
+  [card]
+  (= (:zone card) [:hand]))
+
+(defn is-type?
+  "Checks if the card is of the specified type, where the type is a string."
+  [card type]
+  (card-is? card :type type))
+
+(defn has-subtype?
+  "Checks if the specified subtype is present in the card.
+  Mostly sugar for the has? function."
+  [card subtype]
+  (has? card :subtype subtype))
+
 (defn ice? [card]
-  (= (:type card) "ICE"))
+  (is-type? card "ICE"))
 
 (defn rezzed? [card]
   (:rezzed card))
@@ -120,7 +136,11 @@
   "Returns true if the card can be advanced"
   [card]
   (or (card-is? card :advanceable :always)
+      ;; e.g. Tyrant, Woodcutter
       (and (card-is? card :advanceable :while-rezzed)
            (rezzed? card))
-      (and (card-is? card :type "Agenda")
-           (= (first (:zone card)) :servers))))
+      ;; e.g. Haas Arcology AI
+      (and (card-is? card :advanceable :while-unrezzed)
+           (not (rezzed? card)))
+      (and (is-type? card "Agenda")
+           (installed? card))))
