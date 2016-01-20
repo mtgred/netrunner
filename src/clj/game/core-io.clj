@@ -99,7 +99,8 @@
         "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
         "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
         "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
-        "/handsize"   #(swap! %1 assoc-in [%2 :max-hand-size] (max 0 value))
+        ;; removed until a good implementation has been though of
+        ;; "/handsize"   #(swap! %1 assoc-in [%2 :max-hand-size] (max 0 value))
         "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
         "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
         "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))

@@ -146,7 +146,7 @@
       (card-ability state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (:max-hand-size (get-runner)))))))
+      (is (= 4 (core/hand-size state :runner))))))
 
 (deftest gemini-kicker
   "Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success"

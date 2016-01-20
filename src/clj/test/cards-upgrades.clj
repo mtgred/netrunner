@@ -389,10 +389,10 @@
       (core/rez state :corp vg)
       (card-ability state :corp vg 0)
       (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
-      (is (= 3 (:max-hand-size (get-runner))) "Runner max hand size reduced by 2")
+      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
       (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
       (core/no-action state :corp nil)
       (core/successful-run state :runner nil)
       (prompt-choice :runner "Yes") ; pay to trash
       (take-credits state :runner 3)
-      (is (= 5 (:max-hand-size (get-runner))) "Runner max hand size increased by 2 at start of Corp turn"))))
+      (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))

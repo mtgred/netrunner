@@ -33,7 +33,7 @@
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Hedge Fund")
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
-    (is (= 13 (:max-hand-size (get-corp))) "Max hand size is 13")))
+    (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"

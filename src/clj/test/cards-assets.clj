@@ -64,7 +64,7 @@
     (is (= 0 (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
     (let [hiro (first (get-in @state [:corp :servers :remote1 :content]))]
       (core/rez state :corp hiro)
-      (is (= 3 (:max-hand-size (get-runner))) "Runner max hand size reduced by 2")
+      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
       (take-credits state :corp)
       (take-credits state :runner 3)
       (core/click-run state :runner {:server :remote1})
@@ -72,7 +72,7 @@
       (core/successful-run state :runner nil)
       (prompt-choice :runner "Yes") ; trash Hiro
       (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
-      (is (= 5 (:max-hand-size (get-runner))) "Runner max hand size restored to 5")
+      (is (= 5 (core/hand-size state :runner)) "Runner max hand size restored to 5")
       (is (= 1 (count (get-in @state [:runner :scored]))) "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
@@ -279,7 +279,7 @@
     (play-from-hand state :corp "Mental Health Clinic" "New remote")
     (let [mhc (first (get-in @state [:corp :servers :remote1 :content]))]
       (core/rez state :corp mhc)
-      (is (= 6 (:max-hand-size (get-runner))) "Runner max hand size increased by 1")
+      (is (= 6 (core/hand-size state :runner)) "Runner max hand size increased by 1")
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))

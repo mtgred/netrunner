@@ -395,8 +395,8 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
-   {:effect (effect (lose :runner :max-hand-size 1))
-    :leave-play (effect (gain :runner :max-hand-size 1))}
+   {:effect (effect (lose :runner :hand-size-modification 1))
+    :leave-play (effect (gain :runner :hand-size-modification 1))}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"

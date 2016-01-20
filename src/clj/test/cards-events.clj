@@ -37,7 +37,7 @@
     (is (empty? (:prompt (get-runner))) "Feedback Filter brain damage prevention opportunity not given")
     (is (= 5 (:click (get-runner))))
     (is (= 2 (count (:discard (get-runner)))))
-    (is (= 4 (:max-hand-size (get-runner))))
+    (is (= 4 (core/hand-size state :runner)))
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
 (deftest apocalypse-turn-facedown
@@ -322,7 +322,7 @@
     (is (and (= 0 (count (:hand (get-corp)))) (= 1 (count (:discard (get-corp))))) "Corp hand empty and Eve in Archives")
     (is (= 5 (:credit (get-runner))))
     (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
-    (is (= 4 (:max-hand-size (get-runner))))
+    (is (= 4 (core/hand-size state :runner)))
     (is (= 1 (:brain-damage (get-runner))))))
 
 (deftest sure-gamble

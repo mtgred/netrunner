@@ -148,9 +148,9 @@
               (default-runner [(qty "Origami" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Origami")
-    (is (= 6 (:max-hand-size (get-runner))))
+    (is (= 6 (core/hand-size state :runner)))
     (play-from-hand state :runner "Origami")
-    (is (= 9 (:max-hand-size (get-runner))) "Max hand size increased by 2 for each copy installed")))
+    (is (= 9 (core/hand-size state :runner)) "Max hand size increased by 2 for each copy installed")))
 
 (deftest paintbrush
   "Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run"

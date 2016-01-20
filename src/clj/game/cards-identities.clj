@@ -52,7 +52,7 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (swap! ref assoc-in [:corp :max-hand-size] credit))))))}
+                                  (swap! ref assoc-in [:corp :hand-size-base] credit))))))}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))}
@@ -83,7 +83,8 @@
                                                                          {:unpreventable true :card card}))}}} card nil))}}}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :max-hand-size 1) (lose :runner :max-hand-size 1))}
+   {:effect (effect (lose :hand-size-modification 1)
+                    (lose :runner :hand-size-modification 1))}
 
    "Edward Kim: Humanitys Hammer"
    {:effect (effect (gain :link 1))
@@ -259,7 +260,7 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :max-hand-size 1))}
+   {:effect (effect (gain :hand-size-modification 1))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
