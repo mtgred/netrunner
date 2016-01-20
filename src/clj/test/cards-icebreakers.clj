@@ -1,5 +1,17 @@
 (in-ns 'test.core)
 
+(deftest atman-install-0
+  "Atman - Installing with 0 power counters"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Atman" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Atman")
+    (prompt-choice :runner 0)
+    (is (= 3 (:memory (get-runner))))
+    (let [atman (get-in @state [:runner :rig :program 0])]
+      (is (= 0 (:counter atman)) "0 power counters")
+      (is (= 0 (:current-strength atman)) "0 current strength"))))
+
 (deftest atman-install-2
   "Atman - Installing with 2 power counters"
   (do-game
@@ -12,17 +24,49 @@
       (is (= 2 (:counter atman)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
-(deftest atman-install-0
-  "Atman - Installing with 0 power counters"
+(deftest chameleon-clonechip
+  "Chameleon - Install on corp turn, only returns to hand at end of runner's turn"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Atman" 1)]))
+    (new-game (default-corp) (default-runner [(qty "Chameleon" 1) (qty "Clone Chip" 1)]))
     (take-credits state :corp)
-    (play-from-hand state :runner "Atman")
-    (prompt-choice :runner 0)
-    (is (= 3 (:memory (get-runner))))
-    (let [atman (get-in @state [:runner :rig :program 0])]
-      (is (= 0 (:counter atman)) "0 power counters")
-      (is (= 0 (:current-strength atman)) "0 current strength"))))
+    (play-from-hand state :runner "Clone Chip")
+    (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
+    (take-credits state :runner)
+    (is (= 0 (count (:hand (get-runner)))))
+    ; Install Chameleon on corp turn
+    (take-credits state :corp 1)
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Chameleon" (:discard (get-runner))))
+      (prompt-choice :runner "Sentry"))
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
+    (take-credits state :runner)
+    (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
+
+(deftest chameleon-scheherazade
+  "Chameleon - Returns to hand after hosting. #977"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Chameleon" 2) (qty "Scheherazade" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chameleon")
+    (prompt-choice :runner "Barrier")
+    (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon")
+    ; Host the Chameleon on Scheherazade that was jsut played (as in Personal Workshop/Hayley ability scenarios)
+    (play-from-hand state :runner "Scheherazade")
+    (let [scheherazade (get-in @state [:runner :rig :program 1])]
+      (card-ability state :runner scheherazade 1) ; Host an installed program
+      (prompt-select :runner (find-card "Chameleon" (:program (:rig (get-runner)))))
+      (is (= 4 (:credit (get-runner))) "+1 from hosting onto Scheherazade")
+      ; Install another Chameleon directly onto Scheherazade
+      (card-ability state :runner scheherazade 0) ; Install and host a program from Grip
+      (prompt-select :runner (find-card "Chameleon" (:hand (get-runner))))
+      (prompt-choice :runner "Code Gate")
+      (is (= 2 (count (:hosted (refresh scheherazade)))) "2 Chameleons hosted on Scheherazade")
+      (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
+    (is (= 0 (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
+    (take-credits state :runner)
+    (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
 
 (deftest faust-pump
   "Faust - Pump by discarding"

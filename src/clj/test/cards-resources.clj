@@ -220,6 +220,51 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
 
+(deftest london-library
+  "Install non-virus programs on London library. Includes #325/409"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
+                                              (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "London Library")
+    (let [lib (get-in @state [:runner :rig :resource 0])]
+      (is (= 0 (count (:hosted (refresh lib)))) "0 programs hosted")
+      (card-ability state :runner lib 0) ; Install a non-virus program on London Library
+      (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
+      (prompt-choice :runner "Done") ; Cancel out of Femme's bypass
+      (is (= 1 (count (:hosted (refresh lib)))) "1 program hosted")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
+      (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
+      (let [sg (second (:hosted (refresh lib)))]
+        (is (= 0 (:current-strength (refresh sg))) "Study Guide at 0 strength")
+        (card-ability state :runner sg 1) ; Place 1 power counter
+        (is (= 1 (:current-strength (refresh sg))) "Study Guide at 1 strength"))
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Chameleon" (:hand (get-runner))))
+      (prompt-choice :runner "Sentry")
+      (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
+      (is (= 2 (:click (get-runner))) "At 2 clicks")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Darwin" (:hand (get-runner)))) ; Darwin is a virus
+      (is (= 3 (count (:hosted (refresh lib)))) "Still 3 programs hosted")
+      (is (= 2 (:click (get-runner))) "Failed Darwin didn't use a click")
+      (is (= 1 (count (:hand (get-runner)))))
+      (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
+      (prompt-card :runner nil)
+      (prompt-select :runner (find-card "Study Guide" (:hosted (refresh lib))))
+      (is (= 2 (count (:hand (get-runner)))) "Return Study Guide to hand")
+      (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
+      (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
+      (is (= 0 (count (:discard (get-runner)))) "Nothing in archives yet")
+      (take-credits state :runner)
+      (is (= 0 (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
+      (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
+      (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
+
 (deftest muertos-trashed
   "Muertos Gang Member - Install and Trash"
   (do-game
@@ -576,6 +621,48 @@
       (prompt-card :runner (find-card "Plascrete Carapace" (:hosted (refresh ts))))
       (is (= 0 (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
+
+(deftest utopia-shard
+  "Utopia Shard - Installing multiple ways"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 3) (qty "Quandary" 3)])
+              (default-runner [(qty "Utopia Shard" 1) (qty "Sneakdoor Beta" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (play-from-hand state :corp "Wraparound" "Archives")
+    (take-credits state :corp)
+    ; Play Utopia Shard by running on HQ
+    (core/click-run state :runner {:server "HQ"})
+    (core/no-action state :corp nil)
+    (core/continue state :runner nil)
+    (core/no-action state :corp nil)
+    (play-from-hand state :runner "Utopia Shard")
+    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
+    (is (= 5 (:credit (get-runner))) "Free install")
+    (core/move state :runner (find-card "Utopia Shard" (:resource (:rig (get-runner)))) :hand)
+    (is (= 0 (count (get-in @state [:runner :rig :resource]))))
+    ; Play Utopia Shard regularly by paying 7
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Utopia Shard")
+    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
+    (is (= 0 (:credit (get-runner))) "Paid install cost")
+    (core/move state :runner (find-card "Utopia Shard" (:resource (:rig (get-runner)))) :hand)
+    (is (= 0 (count (get-in @state [:runner :rig :resource]))))
+    ; Play Utopia Shard by running on Archives with Sneakdoor Beta
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (let [sneak (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner sneak 0)) ; Make a run on Archives. If successful treat it as a run on HQ.
+    (core/no-action state :corp nil)
+    (core/continue state :runner nil)
+    (core/no-action state :corp nil)
+    (play-from-hand state :runner "Utopia Shard")
+    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
+    (is (= 0 (:credit (get-runner))) "Free install")
+    (let [utopia (get-in @state [:runner :rig :resource 0])]
+      (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+      (card-ability state :runner utopia 0)) ; Corp discards 2 cards from HQ at random
+    (is (= 1 (count (:discard (get-runner)))) "Utopia Shard trashed")
+    (is (= 2 (count (:discard (get-corp)))) "2 cards trashed")))
 
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"

@@ -556,15 +556,18 @@
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target) (shuffle! :deck))}]}
 
    "Sneakdoor Beta"
-   {:abilities [{:cost [:click 1] :msg "make a run on Archives"
+   {:events {:no-action {:req (req (and run (= (first (get-in @state [:run :server])) :archives)
+                                        (= (get-in @state [:run :run-effect :card :title]) "Sneakdoor Beta")
+                                        (not current-ice)))
+                         :effect (req (swap! state assoc-in [:run :server] [:hq])
+                                      (update-run-ice state side))}}
+    :abilities [{:cost [:click 1] :msg "make a run on Archives"
                  :effect (effect (run :archives
-                                   {:req (req (= target :archives))
-                                    :successful-run
-                                    {:effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                  (update-run-ice state side)
-                                                  (system-msg state side
-                                                              (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
-                                  card))}]}
+                                      {:req (req (= target :archives))
+                                       :successful-run
+                                            {:effect (req (system-msg state side
+                                                                      (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
+                                      card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
