@@ -322,8 +322,8 @@ app.post '/forgot', (req, res) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
-          user: 'jinteki-user',
-          pass: 'jinteki-user1'
+          user: process.env['SENDGRID_USER'] || "",
+          pass: process.env['SENDGRID_PASSWORD'] || ""
         }
       }
       mailOptions = {
@@ -381,8 +381,8 @@ app.post '/reset/:token', (req, res) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
-          user: 'jinteki-user',
-          pass: 'jinteki-user1'
+          user: process.env['SENDGRID_USER'] || "",
+          pass: process.env['SENDGRID_PASSWORD'] || ""
         }
       }
       mailOptions = {
