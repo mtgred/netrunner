@@ -80,11 +80,11 @@
 ;;; For Advanceable ICE
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
-  (req (or (:advance-counter card) 0)))
+  (req (:advance-counter card 0)))
 
 (def space-ice-rez-bonus
   "Amount of rez reduction for the Space ICE."
-  (req (* -3 (or (:advance-counter card) 0))))
+  (req (* -3 (:advance-counter card 0))))
 
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
@@ -95,22 +95,25 @@
 
 
 ;;; For Grail ICE
+(defn grail-in-hand
+  "Req that specified card is a Grail card in the Corp's hand."
+  [card]
+  (and (= (:side card) "Corp")
+       (in-hand? card)
+       (has-subtype? card "Grail")))
+
 (def reveal-grail
   "Ability for revealing Grail ICE from HQ."
   {:label "Reveal up to 2 Grail ICE from HQ"
    :choices {:max 2
-             :req #(and (:side % "Corp")
-                        (in-hand? %)
-                        (has-subtype? % "Grail"))}
+             :req grail-in-hand}
    :msg (let [sub-label #(:label (first (:abilities (card-def %))))]
          (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
   "Ability for resolving a subroutine on a Grail ICE in HQ."
   {:label "Resolve a Grail ICE subroutine from HQ"
-   :choices {:req #(and (:side % "Corp")
-                        (in-hand? %)
-                        (has-subtype? % "Grail"))}
+   :choices {:req grail-in-hand}
    :effect (req (doseq [ice targets]
                   (let [subroutine (first (:abilities (card-def ice)))]
                     (resolve-ability state side subroutine card nil))))})
