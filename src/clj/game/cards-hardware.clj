@@ -401,6 +401,17 @@
                                                      (shuffle! state :runner :deck)))}}} card nil))
     :leave-play (effect (lose :link 1))}
 
+   "Ramujan-reliant 550 BMI"
+   {:prevent {:damage [:net]}
+    :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose how much net damage to prevent" :priority true
+                                   :choices {:number (req n)}
+                                   :msg (msg "prevent " target " net damage")
+                                   :effect (effect (damage-prevent :net target)
+                                                   (mill :runner target)
+                                                   (trash card {:cause :ability-cost}))} card nil)))}]}
+
    "Record Reconstructor"
    {:events
     {:successful-run
