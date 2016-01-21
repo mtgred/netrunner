@@ -70,6 +70,18 @@
    {:effect (effect (gain :link 1 :max-hand-size 1))
     :leave-play (effect (lose :link 1 :max-hand-size 1))}
 
+   "Chatterjee University"
+   {:abilities [{:cost [:click 1] :label "Place 1 power counter"
+                 :msg "place 1 power counter on it"
+                 :effect (effect (add-prop card :counter 1))}
+                {:cost [:click 1] :label "Install a program from your Grip"
+                 :prompt "Choose a program to install from your Grip"
+                 :choices {:req #(and (is-type? % "Program") (in-hand? %))}
+                 :msg (msg "install " (:title target))
+                 :effect (effect (install-cost-bonus [:credit (* -1 (:counter card))])
+                                 (runner-install target)
+                                 (add-prop card :counter -1))}]}
+
    "Chrome Parlor"
    {:events
     {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
