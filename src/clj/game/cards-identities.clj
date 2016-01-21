@@ -6,6 +6,9 @@
          one-of-each   (fn [cards] (->> cards (group-by :title) (map second) (map first)))
          get-directives (fn [source] (filter #(some #{(:title %)} titles) source))]
    {:effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
+                   (when (not= 3 (count directives))
+                     (toast state :runner
+                            "Your deck doesn't contain enough directives for Adam's ability. The deck needs to contain one copy of each directive. They are not counted against the decksize limit." "warning"))
                    (doseq [c directives]
                      (runner-install state side c {:no-cost true
                                                    :custom-message (str "starts with " (:title c) " in play")}))
