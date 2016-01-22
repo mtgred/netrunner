@@ -22,9 +22,7 @@
                 trash-program end-the-run]}
 
    "Architect"
-   {:flags {
-            :untrashable-while-rezzed true
-            }
+   {:flags {:untrashable-while-rezzed true}
     :abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install"
                  :priority true
@@ -132,7 +130,16 @@
 
    "Chimera"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
-    :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
+    :msg (msg "make it gain " target " until the end of the turn")
+    :effect (effect (update! (assoc card :subtype
+                                         (->> (vec (.split (:subtype card) " - "))
+                                              (concat [target])
+                                              (join " - "))))
+                    (update-ice-strength card))
+    :events {:runner-turn-ends {:effect (effect (derez :corp card)
+                                                (update! (assoc (get-card state card) :subtype "Mythic")))}
+             :corp-turn-ends {:effect (effect (derez :corp card)
+                                              (update! (assoc (get-card state card) :subtype "Mythic")))}}
     :abilities [end-the-run]}
 
    "Clairvoyant Monitor"
