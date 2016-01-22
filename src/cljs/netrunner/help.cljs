@@ -88,9 +88,11 @@
                        "happy to play with a beginner should join after a while."]}
             {:id "finddecks"
              :title "Where can I find some good starting decks?"
-             :content [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
+             :content (list [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
                        "For finding decks consisting of core set only try setting some filters in "
-                       [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]}
+                       [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]
+                            [:p "Once you find a deck you like, export it in Jinteki.net's format (or plain text format if the "
+                             "site doesn't offer the former), copy and paste it into the deckbuilder."])}
             {:id "communities"
              :title "Where can I find other Netrunner players to talk to?"
              :content [:p "Apart from the chatrooms here on Jinteki.net, here are a few links to online Netrunner communities:"
