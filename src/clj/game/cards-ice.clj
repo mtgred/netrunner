@@ -685,7 +685,8 @@
                  :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
                 {:label "Trace 3 - Place 1 power counter on Snoop"
                  :trace {:base 3 :msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}}
-                {:counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
+                {:req (req (> (get card :counter 0) 0))
+                 :counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
                  :msg (msg "look at all cards in Grip and trash " (:title target))
                  :choices (req (:hand runner)) :prompt "Choose a card to trash"
                  :effect (effect (trash target))}]}
