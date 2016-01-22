@@ -190,8 +190,9 @@
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
                  :effect (req (damage state :runner :net 1 {:card card})
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when (= current-ice card)
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
@@ -402,8 +403,9 @@
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
-                                                    (trash state side card)
-                                                    (trash-ice-in-run state)))]}
+                                                    (when (= current-ice card)
+                                                      (trash-ice-in-run state))
+                                                    (trash state side card)))]}
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
@@ -423,8 +425,9 @@
                                       :player :runner
                                       :msg (msg "force the Runner to trash " (:title target))
                                       :effect (req (trash state side target)
-                                                   (trash state side card)
-                                                   (trash-ice-in-run state)))]}
+                                                   (when (= current-ice card)
+                                                     (trash-ice-in-run state))
+                                                   (trash state side card)))]}
 
    "Lancelot"
    {:abilities [trash-program
@@ -698,8 +701,9 @@
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
                  :effect (req (gain state :corp :credit 5)
+                              (when (= current-ice card)
+                                (trash-ice-in-run state))
                               (trash state side card)
-                              (trash-ice-in-run state)
                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
    "Spiderweb"
@@ -830,8 +834,9 @@
                                          (> (count (concat (:ices (card->server state card))
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when (= current-ice card)
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed
