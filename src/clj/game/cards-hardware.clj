@@ -160,7 +160,15 @@
    {:recurring 1}
 
    "Deep Red"
-   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
+   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+    :events {:runner-install
+             {:optional
+              {:req (req (has-subtype? target "Caïssa"))
+               :prompt "Use Deep Red to trigger the [Click] ability of the installed Caïssa?"
+               :yes-ability {:effect (req (let [caissa (first (map last (turn-events state :runner :runner-install)))]
+                                            (system-msg state side (str "uses Deep Red to trigger the [Click] ability of " (:title caissa)))
+                                            (gain state :runner :click 1)
+                                            (play-ability state side {:card (get-card state caissa) :ability 0})))}}}}}
 
    "Desperado"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
