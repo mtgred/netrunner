@@ -479,7 +479,8 @@
                                     (trash state side card)))))}}}
 
    "Pheromones"
-   {:recurring (effect (set-prop card :rec-counter (:counter card)))
+   {:recurring (req (when (< (get card :rec-counter 0) (:counter card))
+                      (set-prop state side card :rec-counter (:counter card))))
     :events {:successful-run {:req (req (= target :hq))
                               :effect (effect (add-prop card :counter 1))}}}
 
