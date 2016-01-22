@@ -206,15 +206,13 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Hades Fragment"
-   {:events {:corp-turn-begins
-             {:optional
-              {:prompt "Add 1 card from Archives to bottom of R&D?"
-               :yes-ability {:effect (effect (resolve-ability
-                                              {:prompt "Choose a card"
-                                               :choices (:discard corp)
-                                               :effect (effect (move target :deck))
-                                               :msg (msg "add " (if (:seen target) (:title target) "a card")
-                                                         " to the bottom of R&D")} card target))}}}}}
+   {:events {:runner-turn-ends
+             {:effect (req (toast state :corp
+                                  (str "Click Hades Fragment to add 1 card from Archives to the bottom of R&D.") "info"))}}
+    :abilities [{:prompt "Choose a card to add to the bottom of R&D"
+                 :choices (req (:discard corp))
+                 :effect (effect (move target :deck))
+                 :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
 
    "Helium-3 Deposit"
    {:choices ["0", "1", "2"] :prompt "How many power counters?"
