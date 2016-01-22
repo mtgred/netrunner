@@ -190,7 +190,7 @@
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
                  :effect (req (damage state :runner :net 1 {:card card})
-                              (when (= current-ice card)
+                              (when current-ice
                                 (trash-ice-in-run state))
                               (trash state side card))}]}
 
@@ -403,7 +403,7 @@
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
-                                                    (when (= current-ice card)
+                                                    (when current-ice
                                                       (trash-ice-in-run state))
                                                     (trash state side card)))]}
 
@@ -425,7 +425,7 @@
                                       :player :runner
                                       :msg (msg "force the Runner to trash " (:title target))
                                       :effect (req (trash state side target)
-                                                   (when (= current-ice card)
+                                                   (when current-ice
                                                      (trash-ice-in-run state))
                                                    (trash state side card)))]}
 
@@ -701,7 +701,7 @@
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
                  :effect (req (gain state :corp :credit 5)
-                              (when (= current-ice card)
+                              (when current-ice
                                 (trash-ice-in-run state))
                               (trash state side card)
                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
@@ -834,7 +834,7 @@
                                          (> (count (concat (:ices (card->server state card))
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
-                              (when (= current-ice card)
+                              (when current-ice
                                 (trash-ice-in-run state))
                               (trash state side card))}]}
 
