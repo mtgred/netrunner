@@ -730,8 +730,8 @@
    {:trace {:base 2 :msg "keep TMI rezzed" :unsuccessful {:effect (effect (derez card))}} :abilities [end-the-run]}
 
    "Tollbooth"
-   {:abilities [{:msg "force the Runner to lose 3 [Credits]"
-                 :effect (effect (lose :runner :credit 3))}
+   {:abilities [{:msg "make the Runner pay 3 [Credits], if able"
+                 :effect (effect (pay :runner :credit 3))}
                 end-the-run]}
 
    "Tour Guide"
