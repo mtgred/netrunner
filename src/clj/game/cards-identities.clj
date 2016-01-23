@@ -153,6 +153,12 @@
    {:events {:pre-trash {:effect (effect (trash-cost-bonus
                                            (count (filter #(not (:seen %)) (:discard corp)))))}}}
 
+   "Jesminder Sareen: Girl Behind the Curtain"
+   {:events {:pre-tag {:once :per-run
+                       :req (req (:run @state))
+                       :msg "avoid the first tag during this run"
+                       :effect (effect (tag-prevent 1))}}}
+
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}
