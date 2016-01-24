@@ -10,7 +10,7 @@ dependencies:
     - sudo /etc/init.d/mongodb start
 
   post:
-    - cd data; coffee fetch.coffee
+    - cd data; coffee fetch.coffee dev
 
 test:
   override:
