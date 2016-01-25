@@ -174,14 +174,12 @@
         infmap (if (= (:code identity) "03029") ; The Professor: Keeper of Knowledge
                  (profhelper infmap)
                  infmap)
-        ;; dirty hack in place until the :subtype is figured out below
+        ;; checks card ID against list of currently known alliance cards
         has-alliance-subtype? (fn [card]
                                 (case (:code (:card card))
                                   (list "10013" "10018" "10019" "10067" "10068" "10071" "10072" "10076" "10109")
                                   true
                                   false))
-        ; line below doesn't work, probably because cards don't have :subtype here, figure out why TODO
-        ; has-alliance-subtype? (fn [card] (not= -1 (.indexOf (:subtype (:card card)) "Alliance")))
         ;; alliance helper, subtracts influence of free ally cards from given influence map
         allyhelper (fn [arg-infmap]
                      (let [ally-cards (filter has-alliance-subtype? cards)
