@@ -3,7 +3,8 @@
 (deftest atman-install-2
   "Atman - Installing with 2 power counters"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Atman" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Atman" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 2)
@@ -15,7 +16,8 @@
 (deftest atman-install-0
   "Atman - Installing with 0 power counters"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Atman" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Atman" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 0)
@@ -27,7 +29,8 @@
 (deftest faust-pump
   "Faust - Pump by discarding"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Faust" 1) (qty "Sure Gamble" 3)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Faust" 1) (qty "Sure Gamble" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Faust")
     (let [faust (get-in @state [:runner :rig :program 0])]
@@ -39,9 +42,13 @@
 (deftest faust-pump
   "Faust - Pump does not trigger trash prevention. #760"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Faust" 1) (qty "Sacrificial Construct" 1) (qty "Fall Guy" 1)
-                                              (qty "Astrolabe" 1) (qty "Gordian Blade" 1 )
-                                              (qty "Armitage Codebusting" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Faust" 1)
+                               (qty "Sacrificial Construct" 1)
+                               (qty "Fall Guy" 1)
+                               (qty "Astrolabe" 1)
+                               (qty "Gordian Blade" 1 )
+                               (qty "Armitage Codebusting" 1)]))
     (take-credits state :corp)
     (core/draw state :runner 1)
     (play-from-hand state :runner "Faust")
