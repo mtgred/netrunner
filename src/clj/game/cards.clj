@@ -1,11 +1,5 @@
 (in-ns 'game.core)
 
-(defn morph [state side card new old]
-  (update! state side (assoc card :subtype (->> (remove #(= old %) (.split (:subtype card) " - "))
-                                                vec (concat [new]) distinct (join " - "))))
-  (update-ice-strength state side card)
-  (update-run-ice state side))
-
 (def trash-program {:prompt "Choose a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
