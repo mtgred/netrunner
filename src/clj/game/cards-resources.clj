@@ -52,6 +52,8 @@
 
    "Bank Job"
    {:data {:counter 8}
+    :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
+                         :req (req (and (is-remote? (:server run)) (not current-ice)))}}
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
                  :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
