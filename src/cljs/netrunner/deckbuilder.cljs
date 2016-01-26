@@ -32,6 +32,9 @@
                    "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
     (some #(= (:title card) %) napdmwl)))
 
+(defn card-count [cards]
+  (reduce #(+ %1 (:qty %2)) 0 cards))
+
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
       (= 0 (:factioncost card)) (= INFINITY (id-inf-limit identity))))
@@ -152,6 +155,7 @@
   [deck]
   (let [identity (:identity deck)
         cards (:cards deck)
+        ;; sums up influence of a cardlist by faction to a map
         infhelper (fn [currmap line]
                     (let [card (:card line)]
                       (if (= (:faction card) (:faction identity))
@@ -159,14 +163,58 @@
                         (update-in currmap [(keyword (faction-label card))]
                                    (fnil (fn [curinf] (+ curinf (* (:qty line) (:factioncost card))))
                                          0)))))
-        infmap (reduce infhelper {} cards)]
-    (if (= (:title identity) "The Professor: Keeper of Knowledge")
-      (let [progs (filter #(= "Program" (:type (:card %))) cards)
-            ;importedprogs (filter #((complement noinfcost?) identity (:card %)) progs)
-            singledprogs (reduce #(conj %1 (assoc-in %2 [:qty] 1)) '() progs)
-            singledinfmap (reduce infhelper {} singledprogs)]
-      (merge-with - infmap singledinfmap))
-      infmap)))
+        infmap (reduce infhelper {} cards)
+        ;; sums up influence of one of each imported programs, to resolve Professor's ability
+        profhelper (fn [arg-infmap]
+                     (let [progs (filter #(= "Program" (:type (:card %))) cards)
+                           ;; list with single programs
+                           singled-progs (reduce #(conj %1 (assoc-in %2 [:qty] 1)) '() progs)
+                           singled-infmap (reduce infhelper {} singled-progs)]
+                       (merge-with - arg-infmap singled-infmap)))
+        infmap (if (= (:code identity) "03029") ; The Professor: Keeper of Knowledge
+                 (profhelper infmap)
+                 infmap)
+        ;; checks card ID against list of currently known alliance cards
+        has-alliance-subtype? (fn [card]
+                                (case (:code (:card card))
+                                  (list "10013" "10018" "10019" "10067" "10068" "10071" "10072" "10076" "10109")
+                                  true
+                                  false))
+        ;; alliance helper, subtracts influence of free ally cards from given influence map
+        allyhelper (fn [arg-infmap]
+                     (let [ally-cards (filter has-alliance-subtype? cards)
+                           ;; Implements the standard alliance check, 6 or more non-alliance faction cards
+                           default-alliance-free? (fn [card]
+                                                    (<= 6 (card-count (filter #(and (= (:faction (:card card))
+                                                                                       (:faction (:card %)))
+                                                                                    (not (has-alliance-subtype? %)))
+                                                                              cards))))
+                           ;; checks card for alliance conditions and returns true if they are met
+                           is-ally-free? (fn [card]
+                                           (case (:code (:card card))
+                                             (list
+                                               "10013" ; Heritage Committee
+                                               "10067" ; Jeeves Model Bioroids
+                                               "10068" ; Raman Rai
+                                               "10071" ; Salem's Hospitality
+                                               "10072" ; Executive Search Firm
+                                               "10109") ; Ibrahim Salem
+                                             (default-alliance-free? card)
+                                             "10018" ; Mumba Temple
+                                             (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
+                                             "10019" ; Museum of History
+                                             (<= 50 (card-count cards))
+                                             "10076" ; Mumbad Virtual Tour
+                                             (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
+                                             false))
+                           free-ally-cards (filter is-ally-free? ally-cards)
+                           free-ally-infmap (reduce infhelper {} free-ally-cards)]
+                       (merge-with - arg-infmap free-ally-infmap)))
+        infmap (if (some has-alliance-subtype? cards)
+                 (allyhelper infmap)
+                 infmap)]
+    infmap
+    ))
 
 (defn mostwanted-count
   "Returns total number of MWL restricted cards in a deck."
@@ -183,9 +231,6 @@
         postmwlinf (- originf (mostwanted-count deck))]
     (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
       INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
-
-(defn card-count [cards]
-  (reduce #(+ %1 (:qty %2)) 0 cards))
 
 (defn min-agenda-points [deck]
   (let [size (max (card-count (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
