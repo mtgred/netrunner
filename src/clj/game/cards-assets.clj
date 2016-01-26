@@ -627,24 +627,8 @@
                  :cost [:click 1]
                  :prompt "Select two pieces of ICE to swap positions"
                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
-                 :effect (req (if (= (count targets) 2)
-                                (let [fndx (ice-index state (first targets))
-                                      sndx (ice-index state (second targets))
-                                      fnew (assoc (first targets) :zone (:zone (second targets)))
-                                      snew (assoc (second targets) :zone (:zone (first targets)))]
-                                  (swap! state update-in (cons :corp (:zone (first targets)))
-                                         #(assoc % fndx snew))
-                                  (swap! state update-in (cons :corp (:zone (second targets)))
-                                         #(assoc % sndx fnew))
-                                  (doseq [newcard [fnew snew]]
-                                    (doseq [h (:hosted newcard)]
-                                      (let [newh (-> h (assoc-in [:zone] '(:onhost))
-                                                     (assoc-in [:host :zone] (:zone newcard)))]
-                                        (update! state side newh)
-                                        (unregister-events state side h)
-                                        (register-events state side (:events (card-def newh)) newh))))
-                                  (update-ice-strength state side fnew)
-                                  (update-ice-strength state side snew))))
+                 :effect (req (when (= (count targets) 2)
+                                (swap-ice state side (first targets) (second targets))))
                  :msg "swap the positions of two ICE"}]}
 
    "Test Ground"

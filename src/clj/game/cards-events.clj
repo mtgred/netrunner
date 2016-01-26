@@ -162,23 +162,15 @@
                        (register-events state side events (:identity corp))))}
 
    "Escher"
-   (let [eshelp (fn es [] {:prompt "Select two pieces of ICE to swap positions"
-                           :choices {:req #(and (installed? %) (ice? %)) :max 2}
-                           :effect (req (if (= (count targets) 2)
-                                          (let [fndx (ice-index state (first targets))
-                                                sndx (ice-index state (second targets))
-                                                fnew (assoc (first targets) :zone (:zone (second targets)))
-                                                snew (assoc (second targets) :zone (:zone (first targets)))]
-                                            (swap! state update-in (cons :corp (:zone (first targets)))
-                                                   #(assoc % fndx snew))
-                                            (swap! state update-in (cons :corp (:zone (second targets)))
-                                                   #(assoc % sndx fnew))
-                                            (update-ice-strength state side fnew)
-                                            (update-ice-strength state side snew)
-                                            (resolve-ability state side (es) card nil))
-                                          (system-msg state side "has finished rearranging ICE")))})]
-     {:effect (effect (run :hq {:replace-access {:msg "rearrange installed ICE"
-                                                 :effect (effect (resolve-ability (eshelp) card nil))}} card))})
+   (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
+                   :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                   :effect (req (if (= (count targets) 2)
+                                  (do (swap-ice state side (first targets) (second targets))
+                                      (resolve-ability state side (es) card nil))
+                                  (system-msg state side "has finished rearranging ICE")))})]
+     {:effect (effect (run :hq {:replace-access
+                                {:msg "rearrange installed ICE"
+                                 :effect (effect (resolve-ability (es) card nil))}} card))})
 
    "Eureka!"
    {:effect
