@@ -219,7 +219,11 @@
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "Feint"
-   {:effect (effect (run :hq nil card) (max-access 0))}
+   {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
+                                                        (assoc card :zone '(:discard))))
+    :events {:successful-run {:msg "access 0 cards"
+                              :effect (effect (max-access 0))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
    {:effect (effect (draw 3) (draw :corp 3))}

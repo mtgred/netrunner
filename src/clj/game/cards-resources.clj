@@ -52,6 +52,8 @@
 
    "Bank Job"
    {:data {:counter 8}
+    :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
+                         :req (req (and (is-remote? (:server run)) (not current-ice)))}}
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
                  :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
@@ -768,11 +770,17 @@
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
-              :optional {:player :corp
-                         :prompt (msg "Draw " (:title (first (:deck corp))) "?")
-                         :msg (msg "draw " (:title (first (:deck corp))))
-                         :yes-ability {:effect (effect (draw))}
-                         :no-ability {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
+              :effect (effect (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
+                              (resolve-ability
+                                {:optional
+                                 {:player :corp
+                                  :prompt (msg "Draw " (:title (first (:deck corp))) "?")
+                                  :yes-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                (system-msg (str "draws " (:title (first (:deck corp)))))
+                                                                (draw))}
+                                  :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                               (system-msg "doesn't draw with Woman in the Red Dress"))}}}
+                               card nil))}}}
 
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"

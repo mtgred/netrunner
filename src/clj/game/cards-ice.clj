@@ -22,9 +22,7 @@
                 trash-program end-the-run]}
 
    "Architect"
-   {:flags {
-            :untrashable-while-rezzed true
-            }
+   {:flags {:untrashable-while-rezzed true}
     :abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install"
                  :priority true
@@ -132,7 +130,16 @@
 
    "Chimera"
    {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
-    :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
+    :msg (msg "make it gain " target " until the end of the turn")
+    :effect (effect (update! (assoc card :subtype
+                                         (->> (vec (.split (:subtype card) " - "))
+                                              (concat [target])
+                                              (join " - "))))
+                    (update-ice-strength card))
+    :events {:runner-turn-ends {:effect (effect (derez :corp card)
+                                                (update! (assoc (get-card state card) :subtype "Mythic")))}
+             :corp-turn-ends {:effect (effect (derez :corp card)
+                                              (update! (assoc (get-card state card) :subtype "Mythic")))}}
     :abilities [end-the-run]}
 
    "Clairvoyant Monitor"
@@ -183,8 +190,9 @@
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
                  :effect (req (damage state :runner :net 1 {:card card})
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when current-ice
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
@@ -395,8 +403,9 @@
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
-                                                    (trash state side card)
-                                                    (trash-ice-in-run state)))]}
+                                                    (when current-ice
+                                                      (trash-ice-in-run state))
+                                                    (trash state side card)))]}
 
    "Janus 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
@@ -416,8 +425,9 @@
                                       :player :runner
                                       :msg (msg "force the Runner to trash " (:title target))
                                       :effect (req (trash state side target)
-                                                   (trash state side card)
-                                                   (trash-ice-in-run state)))]}
+                                                   (when current-ice
+                                                     (trash-ice-in-run state))
+                                                   (trash state side card)))]}
 
    "Lancelot"
    {:abilities [trash-program
@@ -678,7 +688,8 @@
                  :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
                 {:label "Trace 3 - Place 1 power counter on Snoop"
                  :trace {:base 3 :msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}}
-                {:counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
+                {:req (req (> (get card :counter 0) 0))
+                 :counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
                  :msg (msg "look at all cards in Grip and trash " (:title target))
                  :choices (req (:hand runner)) :prompt "Choose a card to trash"
                  :effect (effect (trash target))}]}
@@ -690,8 +701,9 @@
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
                  :effect (req (gain state :corp :credit 5)
+                              (when current-ice
+                                (trash-ice-in-run state))
                               (trash state side card)
-                              (trash-ice-in-run state)
                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
    "Spiderweb"
@@ -730,8 +742,8 @@
    {:trace {:base 2 :msg "keep TMI rezzed" :unsuccessful {:effect (effect (derez card))}} :abilities [end-the-run]}
 
    "Tollbooth"
-   {:abilities [{:msg "force the Runner to lose 3 [Credits]"
-                 :effect (effect (lose :runner :credit 3))}
+   {:abilities [{:msg "make the Runner pay 3 [Credits], if able"
+                 :effect (effect (pay :runner card :credit 3))}
                 end-the-run]}
 
    "Tour Guide"
@@ -822,8 +834,9 @@
                                          (> (count (concat (:ices (card->server state card))
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when current-ice
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed
