@@ -88,8 +88,8 @@
   (win state (if (= side :corp) :runner :corp) "Concede"))
 
 (defn resolve-prompt
-  "Resolves a prompt by invoking its effect funtion with the selected target of the prompt. Triggered
-  by a selection of a prompt choice button in the UI."
+  "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
+  Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
   (let [prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
@@ -103,9 +103,12 @@
             (add-prop state side (:card prompt) :counter (- choice)))
           ;; trigger the prompt's effect function
           ((:effect prompt) (or choice card)))
-      (when (:cancel-effect prompt)
+      (when-let [cancel-effect (:cancel-effect prompt)]
         ;; the user chose "cancel" -- trigger the cancel effect.
-        ((:cancel-effect prompt) choice)))
+        (cancel-effect choice)))
+    ;; trigger end-effect if present
+    (when-let [end-effect (:end-effect prompt)]
+      (end-effect state side card nil))
 
     ;; remove the prompt from the queue
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))

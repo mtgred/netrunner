@@ -202,11 +202,15 @@
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
   [state side card msg ability targets]
-  (show-prompt state side card msg ["Yes" "No"] #(let [yes-ability (:yes-ability ability)]
-                                                  (if (and (= % "Yes") yes-ability (can-pay? state side (:title card) (:cost yes-ability)))
-                                                    (resolve-ability state side yes-ability card targets)
-                                                    (when-let [no-ability (:no-ability ability)]
-                                                      (resolve-ability state side no-ability card targets))))))
+  (show-prompt state side card msg ["Yes" "No"]
+               #(let [yes-ability (:yes-ability ability)]
+                  (if (and (= % "Yes")
+                           yes-ability
+                           (can-pay? state side (:title card) (:cost yes-ability)))
+                    (resolve-ability state side yes-ability card targets)
+                    (when-let [no-ability (:no-ability ability)]
+                      (resolve-ability state side no-ability card targets))))
+               ability))
 
 
 ;;; Prompts
@@ -223,20 +227,31 @@
   4. the keyword :counter -- shows a numeric selection box with a max value equal to the :counter of the card.
   5. a map with keyword :number -- shows a numeric selection box with max value equal to the :number of the map."
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
-  ([state side card msg choices ability {:keys [priority prompt-type cancel-effect] :as args}]
-   (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
-                (if cancel-effect (assoc args :cancel-effect #(cancel-effect state side card [%]))
-                                  args))))
+  ([state side card msg choices ability args]
+   (letfn [(wrap-function [args kw]
+             (let [f (kw args)] (if f (assoc args kw #(f state side card [%])) args)))]
+       (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
+                    (-> args
+                        (wrap-function :cancel-effect)
+                        (wrap-function :end-effect))))))
 
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f {:keys [priority prompt-type show-discard cancel-effect] :as args}]
+  ([state side card msg choices f
+    {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
    (let [prompt (if (string? msg) msg (msg state side card nil))
          priority-comp #(case % true 1 nil 0 %)
-         newitem {:msg prompt :choices choices :effect f :card card :prompt-type prompt-type :show-discard show-discard
-                  :priority priority :cancel-effect cancel-effect}]
+         newitem {:msg prompt
+                  :choices choices
+                  :effect f
+                  :card card
+                  :prompt-type prompt-type
+                  :show-discard show-discard
+                  :priority priority
+                  :cancel-effect cancel-effect
+                  :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
                (:number choices)
                (#{:credit :counter} choices)
