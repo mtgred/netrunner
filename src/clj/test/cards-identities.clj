@@ -82,6 +82,31 @@
       (core/successful-run state :runner nil)
       (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
 
+(deftest jesminder-sareen-ability
+  "Jesminder Sareen - avoid tags only during a run"
+  (do-game
+    (new-game (default-corp [(qty "SEA Source" 1) (qty "Data Raven" 1)])
+              (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Data Raven" "Archives")
+    (take-credits state :corp)
+    (let [dr (-> @state :corp :servers :archives :ices first)]
+      (core/rez state :corp dr)
+      (core/click-run state :runner {:server "Archives"})
+      (card-ability state :corp dr 0)
+      (is (= 0 (:tag (get-runner))) "Jesminder avoided first tag during the run")
+      (card-ability state :corp dr 0)
+      (is (= 1 (:tag (get-runner))) "Jesminder did not avoid the second tag during the run")
+      (core/no-action state :corp nil)
+      (core/continue state :runner nil)
+      (core/no-action state :corp nil)
+      (core/successful-run state :runner nil)
+      (run-empty-server state "R&D") ; clear per-run buffer
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
+
 (deftest kate-mac-mccaffrey-discount
   "Kate 'Mac' McCaffrey - Install discount"
   (do-game
