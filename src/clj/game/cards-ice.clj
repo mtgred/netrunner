@@ -877,9 +877,7 @@
 
    "Vikram 1.0"
    {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
-                {:label "Trace 4 - Do 1 brain damage"
-                 :trace {:base 4 :msg "do 1 brain damage"
-                         :effect (effect (damage :brain 1 {:card card}))}}]}
+                (trace-ability 4 (do-brain-damage 1))]}
 
    "Viktor 1.0"
    {:abilities [(do-brain-damage 1)
