@@ -775,6 +775,12 @@
                 {:label "Trace 4 - End the run"
                  :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
 
+   "Vikram 1.0"
+   {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
+                {:label "Trace 4 - Do 1 brain damage"
+                 :trace {:base 4 :msg "do 1 brain damage"
+                         :effect (effect (damage :brain 1 {:card card}))}}]}
+
    "Viktor 1.0"
    {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
 
