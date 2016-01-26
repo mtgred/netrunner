@@ -174,7 +174,7 @@
   "Prints the ability message"
   [state side ability card targets cost-str]
   (when-let [msg (:msg ability)]
-    (let [desc (if (string? msg) msg (msg state side card targets))]
+    (when-let [desc (if (string? msg) msg (msg state side card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
