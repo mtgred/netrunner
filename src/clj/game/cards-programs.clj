@@ -396,10 +396,10 @@
                  :effect (effect (damage-prevent :net 1))}]}
 
    "Origami"
-   {:effect (effect (gain :max-hand-size
+   {:effect (effect (gain :hand-size-modification
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
                                                    (all-installed state :runner)))))))
-    :leave-play (effect (lose :max-hand-size
+    :leave-play (effect (lose :hand-size-modification
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
                                                        (all-installed state :runner)))))))}
 

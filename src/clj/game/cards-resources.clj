@@ -63,12 +63,13 @@
                                 (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
-   {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
+   {:effect (effect (gain :hand-size-modification 5))
+    :leave-play (effect (lose :hand-size-modification 5))
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Borrowed Satellite"
-   {:effect (effect (gain :link 1 :max-hand-size 1))
-    :leave-play (effect (lose :link 1 :max-hand-size 1))}
+   {:effect (effect (gain :link 1 :hand-size-modification 1))
+    :leave-play (effect (lose :link 1 :hand-size-modification 1))}
 
    "Chrome Parlor"
    {:events
@@ -510,7 +511,8 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
+   {:effect (effect (gain :hand-size-modification 2))
+    :leave-play (effect (lose :hand-size-modification 2))}
 
    "Rachel Beckman"
    {:effect (req (gain state :runner :click 1 :click-per-turn 1)
@@ -563,9 +565,9 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:effect (effect (lose :runner :max-hand-size 2))
-    :leave-play (effect (gain :runner :max-hand-size 2))
-    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (:max-hand-size runner)))
+   {:effect (effect (lose :runner :hand-size-modification 2))
+    :leave-play (effect (gain :runner :hand-size-modification 2))
+    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
 
@@ -714,7 +716,7 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
-                                  (swap! ref assoc-in [:runner :max-hand-size] credit))))))
+                                  (swap! ref assoc-in [:runner :hand-size-base] credit))))))
     :leave-play (req (remove-watch state :theophilius-bagbiter))}
 
    "Tri-maf Contact"

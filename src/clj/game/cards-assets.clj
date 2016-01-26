@@ -55,8 +55,8 @@
                                       :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}}
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :max-hand-size 2))
-    :leave-play (effect (gain :runner :max-hand-size 2))
+   {:effect (effect (lose :runner :hand-size-modification 2))
+    :leave-play (effect (gain :runner :hand-size-modification 2))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "City Surveillance"
@@ -106,7 +106,8 @@
               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Cybernetics Court"
-   {:effect (effect (gain :max-hand-size 4)) :leave-play (effect (lose :max-hand-size 4))}
+   {:effect (effect (gain :hand-size-modification 4))
+    :leave-play (effect (lose :hand-size-modification 4))}
 
    "Daily Business Show"
    {:events {:corp-draw
@@ -358,8 +359,8 @@
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"
-   {:effect (effect (gain :runner :max-hand-size 1))
-    :leave-play (effect (lose :runner :max-hand-size 1))
+   {:effect (effect (gain :runner :hand-size-modification 1))
+    :leave-play (effect (lose :runner :hand-size-modification 1))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 

@@ -261,8 +261,8 @@
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Game Day"
-   {:msg (msg "draw " (- (:max-hand-size runner) (count (:hand runner))) " cards")
-    :effect (effect (draw (- (:max-hand-size runner) (count (:hand runner)))))}
+   {:msg (msg "draw " (- (hand-size runner) (count (:hand runner))) " cards")
+    :effect (effect (draw (- (hand-size runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
    {:events {:rez {:req (req (not (ice? target)))
@@ -346,17 +346,17 @@
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
-   {:effect (req (lose state :corp :max-hand-size (:bad-publicity corp))
+   {:effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
                            bpold (get-in old [:corp :bad-publicity])]
                        (when (> bpnew bpold)
-                         (lose state :corp :max-hand-size (- bpnew bpold)))
+                         (lose state :corp :hand-size-modification (- bpnew bpold)))
                        (when (< bpnew bpold)
-                         (gain state :corp :max-hand-size (- bpold bpnew)))))))
+                         (gain state :corp :hand-size-modification (- bpold bpnew)))))))
     :leave-play (req (remove-watch state :itin)
-                     (gain state :corp :max-hand-size (:bad-publicity corp)))}
+                     (gain state :corp :hand-size-modification (:bad-publicity corp)))}
 
    "Knifed"
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}

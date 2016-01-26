@@ -5,8 +5,10 @@
 (defn deduce
   "Deduct the value from the player's attribute."
   [state side [attr value]]
-  (swap! state update-in [side attr] (if (= attr :memory)
-                                       #(- % value) ;; memoryunits may be negative
+  (swap! state update-in [side attr] (if (or (= attr :memory)
+                                             (= attr :hand-size-modification))
+                                       ;; Memory or hand size mod may be negative
+                                       #(- % value)
                                        #(max 0 (- % value))))
   (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))
     (swap! state update-in [:runner :run-credit] #(max 0 (- % value))))

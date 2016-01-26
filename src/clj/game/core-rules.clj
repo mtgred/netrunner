@@ -98,7 +98,7 @@
         (flatline state))
       (when (= type :brain)
         (swap! state update-in [:runner :brain-damage] #(+ % n))
-        (swap! state update-in [:runner :max-hand-size] #(- % n)))
+        (swap! state update-in [:runner :hand-size-modification] #(- % n)))
       (doseq [c (take n (shuffle hand))]
         (trash state side c {:unpreventable true :cause type} type))
       (trigger-event state side :damage type card))))
