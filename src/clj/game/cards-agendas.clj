@@ -33,6 +33,26 @@
                                                                              (resolve-ability state side (abt 1 n) card nil))}
                                                                card nil)))}}})
 
+   "Advanced Concept Hopper"
+   {:events
+    {:run
+     {:req (req (first-event state side :run))
+      :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
+                      (resolve-ability
+                        {:player :corp
+                         :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?" :once :per-turn
+                         :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
+                         :effect (req (case target
+                                        "Gain 1 [Credits]"
+                                        (do (gain state :corp :credit 1)
+                                            (system-msg state :corp (str "uses Advanced Concept Hopper to gain 1 [Credits]")))
+                                        "Draw 1 card"
+                                        (do (draw state :corp)
+                                            (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card")))
+                                        "No action"
+                                        (system-msg state :corp (str "doesn't use Advanced Concept Hopper")))
+                                      (clear-wait-prompt state :runner))} card nil))}}}
+
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 

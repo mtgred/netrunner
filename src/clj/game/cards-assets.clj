@@ -298,6 +298,20 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
 
+   "Kala Ghoda Real TV"
+   {:events
+    {:corp-turn-begins
+     {:optional
+      {:req (req (not= (:title (:card (first (get-in @state [side :prompt])))) (:title card)))
+       :prompt "Use Kala Ghoda Real TV to look at the top card of the Runner's Stack?"
+       :yes-ability {:msg "look at the top card of the Runner's Stack"
+                     :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
+                                                        (:title (first (:deck runner)))) ["OK"] {}))}}}}
+    :abilities [{:label "[Trash]: Trash the top card of the Runner's Stack"
+                 :msg "trash the top card of the Runner's Stack"
+                 :effect (effect (mill :runner)
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Launch Campaign"
    {:effect (effect (add-prop card :counter 6))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
