@@ -285,6 +285,11 @@
    "Mimic"
    {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}]}
 
+   "Mongoose"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [{:cost [:credit 1] :msg "break up to 2 sentry subroutines"}
+                                 {:cost [:credit 2] :msg "add 2 strength" :effect (effect (pump card 2)) :pump 2}]})
+
    "Ninja"
    (auto-icebreaker ["Sentry"]
                     {:abilities [{:cost [:credit 1] :msg "break 1 sentry subroutine"}
