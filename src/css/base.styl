@@ -565,6 +565,9 @@ nav ul
 .cardbrowser-bg
   cover-img: url('/img/bg/DysonMemChip.jpg')
 
+.help-bg
+  cover-img: url('/img/bg/ArmitageCodebust.jpg')
+
 .about-bg
   cover-img: url('/img/bg/FastTrack.jpg')
 
@@ -1535,6 +1538,55 @@ nav ul
 
         input
           width: 100%
+
+#help
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  overflow: auto
+
+#help nav li
+  padding-left: 3px
+  font-weight: bold
+
+#help nav li li
+  padding-left: 8px
+  font-weight: normal
+
+.help
+  padding: 10px 20px
+  width: 650px
+  margin: 40px auto 10px
+
+  > h3
+    margin-top: -35px
+    padding-top: 35px
+    -webkit-background-clip: content-box
+    background-clip: content-box
+
+  > h3:target
+    animation: highlight 1.5s ease
+
+  > h4
+    margin-top: -35px
+    padding-top: 35px
+    -webkit-background-clip: content-box
+    background-clip: content-box
+
+  > h4:target
+    animation: highlight 1.5s ease
+
+  li
+    padding-left: 20px
+    list-style-type: none
+
+@keyframes highlight
+  from
+    background: darkolivegreen
+  to
+    background: none
 
 #about
   position: absolute
