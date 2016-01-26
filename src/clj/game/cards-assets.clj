@@ -378,6 +378,9 @@
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Mumba Temple"
+   {:recurring 2}
+
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}
