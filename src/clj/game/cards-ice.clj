@@ -743,7 +743,7 @@
 
    "Tollbooth"
    {:abilities [{:msg "make the Runner pay 3 [Credits], if able"
-                 :effect (effect (pay :runner :credit 3))}
+                 :effect (effect (pay :runner card :credit 3))}
                 end-the-run]}
 
    "Tour Guide"
