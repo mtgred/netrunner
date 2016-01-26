@@ -10,22 +10,16 @@
     (core/gain state :runner :click 3)
     (play-from-hand state :runner "Datasucker")
     (let [ds (get-in @state [:runner :rig :program 0])
-          fw (get-in @state [:corp :servers :remote1 :ices 0])]
-      (core/click-run state :runner {:server "Archives"})
-      (core/no-action state :corp nil)
-      (core/successful-run state :runner nil)
+          fw (get-ice state :remote1 0)]
+      (run-empty-server state "Archives")
       (is (= 1 (:counter (refresh ds))))
-      (core/click-run state :runner {:server "Archives"})
-      (core/no-action state :corp nil)
-      (core/successful-run state :runner nil)
+      (run-empty-server state "Archives")
       (is (= 2 (:counter (refresh ds))))
-      (core/click-run state :runner {:server "Server 1"})
-      (core/no-action state :corp nil)
-      (core/continue state :runner nil)
-      (core/no-action state :corp nil)
-      (core/successful-run state :runner nil)
+      (run-on state "Server 1")
+      (run-continue state)
+      (run-successful state)
       (is (= 2 (:counter (refresh ds))) "No counter gained, not a central server")
-      (core/click-run state :runner {:server "Server 1"})
+      (run-on state "Server 1")
       (core/rez state :corp fw)
       (is (= 5 (:current-strength (refresh fw))))
       (card-ability state :runner ds 0)
@@ -41,13 +35,14 @@
     (take-credits state :corp 2)
     (play-from-hand state :runner "Djinn")
     (let [djinn (get-in @state [:runner :rig :program 0])
-          agenda (get-in @state [:corp :servers :remote1 :content 0])]
+          agenda (get-content state :remote1 0)]
       (is agenda "Agenda was installed")
       (card-ability state :runner djinn 1)
       (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
       (let [chak (first (:hosted (refresh djinn)))]
         (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
-        (core/add-prop state :runner (first (:hosted (refresh djinn))) :counter 3) ; manually add 3 counters
+        ;; manually add 3 counters
+        (core/add-prop state :runner (first (:hosted (refresh djinn))) :counter 3)
         (take-credits state :runner 2)
         (core/advance state :corp {:card agenda})
         (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
@@ -109,21 +104,23 @@
 (deftest leprechaun-mu-savings
   "Leprechaun - Keep MU the same when hosting or trashing hosted programs"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Leprechaun" 1) (qty "Hyperdriver" 1) (qty "Imp" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Leprechaun" 1) (qty "Hyperdriver" 1) (qty "Imp" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Leprechaun")
     (let [lep (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner lep 0)
-      (core/select state :runner {:card (find-card "Hyperdriver" (:hand (get-runner)))})
+      (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 2 (:credit (get-runner))))
       (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not deducted from available MU")
       (card-ability state :runner lep 0)
-      (core/select state :runner {:card (find-card "Imp" (:hand (get-runner)))})
+      (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
       (is (= 1 (:click (get-runner))))
       (is (= 0 (:credit (get-runner))))
       (is (= 3 (:memory (get-runner))) "Imp 1 MU not deducted from available MU")
-      (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard) ; trash Hyperdriver
+      ;; Trash Hyperdriver
+      (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
       (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not added to available MU")
       (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
       (is (= 3 (:memory (get-runner))) "Imp 1 MU not added to available MU"))))
@@ -161,7 +158,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Paintbrush")
     (is (= 2 (:memory (get-runner))))
-    (let [iwall (get-in @state [:corp :servers :hq :ices 0])
+    (let [iwall (get-ice state :hq 0)
           pb (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner pb 0)
       (prompt-select :runner iwall)
@@ -173,9 +170,7 @@
       (prompt-choice :runner "Code Gate")
       (is (= 2 (:click (get-runner))) "Click charged")
       (is (= true (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall gained Code Gate")
-      (core/click-run state :runner {:server "Archives"})
-      (core/no-action state :corp nil)
-      (core/successful-run state :runner nil)
+      (run-empty-server state "Archives")
       (is (= false (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest parasite-apex
@@ -194,7 +189,7 @@
     (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
     (play-from-hand state :corp "Architect" "HQ")
-    (let [arch (get-in @state [:corp :servers :hq :ices 0])]
+    (let [arch (get-ice state :hq 0)]
       (core/rez state :corp arch)
       (take-credits state :corp)
       (play-from-hand state :runner "Grimoire")
@@ -217,7 +212,7 @@
     (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Wraparound" "HQ")
-    (let [wrap (get-in @state [:corp :servers :hq :ices 0])]
+    (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
       (take-credits state :corp)
       (play-from-hand state :runner "Parasite")
@@ -227,16 +222,20 @@
         (is (= 0 (:counter psite)) "Parasite has no counters yet")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 1 (:counter (refresh psite))) "Parasite gained 1 virus counter at start of Runner turn")
+        (is (= 1 (:counter (refresh psite)))
+            "Parasite gained 1 virus counter at start of Runner turn")
         (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
 
 (deftest parasite-hivemind-instant-ice-trash
   "Parasite - Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
   (do-game
     (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Parasite" 1) (qty "Grimoire" 1) (qty "Hivemind" 1) (qty "Sure Gamble" 1)]))
+              (default-runner [(qty "Parasite" 1)
+                               (qty "Grimoire" 1)
+                               (qty "Hivemind" 1)
+                               (qty "Sure Gamble" 1)]))
     (play-from-hand state :corp "Enigma" "HQ")
-    (let [enig (get-in @state [:corp :servers :hq :ices 0])]
+    (let [enig (get-ice state :hq 0)]
       (core/rez state :corp enig)
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
@@ -256,7 +255,7 @@
     (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
     (play-from-hand state :corp "Enigma" "HQ")
-    (let [enig (get-in @state [:corp :servers :hq :ices 0])]
+    (let [enig (get-ice state :hq 0)]
       (core/rez state :corp enig)
       (take-credits state :corp)
       (play-from-hand state :runner "Grimoire")
