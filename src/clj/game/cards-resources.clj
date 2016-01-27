@@ -50,6 +50,13 @@
                  :effect (req (gain state :runner :credit 2)
                               (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
+   "Artist Colony"
+   {:abilities [{:prompt "Choose a card to install"
+                 :msg (msg "install " (:title target))
+                 :cost [:forfeit]
+                 :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
+                 :effect (effect (runner-install target) (shuffle! :deck))}]}
+
    "Bank Job"
    {:data {:counter 8}
     :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
