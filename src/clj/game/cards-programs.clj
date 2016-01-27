@@ -565,13 +565,13 @@
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make a run on Archives"
                  :effect (effect (run :archives
-                                      {:req (req (= target :archives))
-                                       :successful-run
-                                            {:effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                          (update-run-ice state side)
-                                                          (system-msg state side
-                                                                      (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
-                                      card))}]}
+                                   {:req (req (= target :archives))
+                                    :successful-run
+                                    {:effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                  (update-run-ice state side)
+                                                  (system-msg state side
+                                                              (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
+                                  card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
