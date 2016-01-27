@@ -3,7 +3,8 @@
 (deftest astrolabe-memory
   "Astrolabe - Gain 1 memory"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Astrolabe" 3)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Astrolabe" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
     (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
@@ -11,39 +12,41 @@
 (deftest astrolabe-draw
   "Astrolabe - Draw on new server install"
   (do-game
-    (new-game (default-corp [(qty "Snare!" 3) (qty "Shock!" 3) (qty "Project Junebug" 3)])
+    (new-game (default-corp [(qty "Snare!" 3)])
               (default-runner [(qty "Astrolabe" 3) (qty "Sure Gamble" 3) (qty "Cloak" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
     (take-credits state :runner 3)
-    ; corp's turn. install something from HQ to trigger Astrolabe draw
-    (core/play state :corp {:card (first (:hand (get-corp))) :server "New remote"})
+    ;; corp's turn. install something from HQ to trigger Astrolabe draw
+    (play-from-hand state :corp "Snare!" "New remote")
     (is (= 5 (count (:hand (get-runner)))) "Drew 1 card from server install")
-    ; install over the old server; make sure nothing is drawn
-    (core/play state :corp {:card (first (:hand (get-corp))) :server "Server 0"})
+    ;; install over the old server; make sure nothing is drawn
+    (play-from-hand state :corp "Snare!" "Server 0")
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
 (deftest brain-chip
   "Brain Chip handsize and memory limit"
   (do-game
-   (new-game (default-corp) (default-runner [(qty "Brain Chip" 1)]))
+   (new-game (default-corp)
+             (default-runner [(qty "Brain Chip" 1)]))
    (take-credits state :corp)
    (play-from-hand state :runner "Brain Chip")
    (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
-   (is (= (get-in @state [:runner :max-hand-size]) 5) "Hand size unaffected")
+   (is (= (core/hand-size state :runner) 5) "Hand size unaffected")
    (is (= (get-in @state [:runner :memory]) 4) "Memory limit unaffected")
    (swap! state assoc-in [:runner :agenda-point] 2)
-   (is (= (get-in @state [:runner :max-hand-size]) 7) "Hand size increased by 2")
+   (is (= (core/hand-size state :runner) 7) "Hand size increased by 2")
    (is (= (get-in @state [:runner :memory]) 6) "Memory limit increased by 2")
    (core/move state :runner (get-in @state [:runner :rig :hardware 0]) :discard)
-   (is (= (get-in @state [:runner :max-hand-size]) 5) "Hand size reset")
+   (is (= (core/hand-size state :runner) 5) "Hand size reset")
    (is (= (get-in @state [:runner :memory]) 4) "Memory limit reset")))
 
 (deftest clone-chip
   "Test clone chip usage- outside and during run"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Datasucker" 1) (qty "Clone Chip" 2)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Datasucker" 1) (qty "Clone Chip" 2)]))
     (take-credits state :corp)
     (trash-from-hand state :runner "Datasucker")
     (play-from-hand state :runner "Clone Chip")
@@ -57,7 +60,8 @@
 (deftest comet-event-play
   "Comet - Play event without spending a click after first event played"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Comet" 3) (qty "Easy Mark" 2)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Comet" 3) (qty "Easy Mark" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Comet")
     (let [comet (get-in @state [:runner :rig :hardware 0])]
@@ -65,7 +69,7 @@
       (is (= true (:comet-event (core/get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
       (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
-      (core/select state :runner {:card (find-card "Easy Mark" (:hand (get-runner)))})
+      (prompt-select :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
@@ -73,46 +77,50 @@
 (deftest dinosaurus-strength-boost-mu-savings
   "Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Dinosaurus")
     (let [dino (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner dino 0)
-      (core/select state :runner {:card (find-card "Battering Ram" (:hand (get-runner)))})
+      (prompt-select :runner (find-card "Battering Ram" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 0 (:credit (get-runner))))
       (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not deducted from available MU")
       (let [ram (first (:hosted (refresh dino)))]
-        (is (= 5 (:current-strength (refresh ram))) "Dinosaurus giving +2 strength to Battering Ram")
-        (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard) ; trash Battering Ram
+        (is (= 5 (:current-strength (refresh ram)))
+            "Dinosaurus giving +2 strength to Battering Ram")
+        ;; Trash Battering Ram
+        (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
 
 (deftest feedback-filter
   "Feedback Filter - Prevent net and brain damage"
   (do-game
-    (new-game (default-corp [(qty "Data Mine" 1) (qty "Cerebral Overwriter" 1) (qty "Mushin No Shin" 1)])
+    (new-game (default-corp [(qty "Data Mine" 1)
+                             (qty "Cerebral Overwriter" 1)
+                             (qty "Mushin No Shin" 1)])
               (default-runner [(qty "Feedback Filter" 2) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Mushin No Shin")
     (prompt-select :corp (find-card "Cerebral Overwriter" (:hand (get-corp))))
     (play-from-hand state :corp "Data Mine" "Server 1")
-    (let [co (get-in @state [:corp :servers :remote1 :content 0])
-          dm (get-in @state [:corp :servers :remote1 :ices 0])]
+    (let [co (get-content state :remote1 0)
+          dm (get-ice state :remote1 0)]
       (is (= 3 (:advance-counter (refresh co))) "3 advancements on Overwriter")
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Feedback Filter")
       (is (= 7 (:credit (get-runner))))
       (let [ff (get-in @state [:runner :rig :hardware 0])]
-        (core/click-run state :runner {:server "Server 1"})
+        (run-on state "Server 1")
         (core/rez state :corp dm)
         (card-ability state :corp dm 0)
         (card-ability state :runner ff 0)
         (prompt-choice :runner "Done")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
-        (core/no-action state :corp nil)
-        (core/successful-run state :runner nil)
+        (run-successful state)
         (prompt-choice :corp "Yes") ; pay 3 to fire Overwriter
         (prompt-choice :runner "Yes") ; trash Overwriter for 0 to get to prevention prompt
         (card-ability state :runner ff 1)
@@ -157,7 +165,9 @@
   "The Personal Touch - Give +1 strength to an icebreaker"
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "The Personal Touch" 1) (qty "Paricia" 1) (qty "Faerie" 1)]))
+              (default-runner [(qty "The Personal Touch" 1)
+                               (qty "Paricia" 1)
+                               (qty "Faerie" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Paricia")
     (play-from-hand state :runner "Faerie")
@@ -177,27 +187,21 @@
     (new-game (default-corp [(qty "Domestic Sleepers" 1) (qty "Project Vitruvius" 1)])
               (default-runner [(qty "Turntable" 1)]))
     (play-from-hand state :corp "Project Vitruvius" "New remote")
-    (let [ag1 (get-in @state [:corp :servers :remote1 :content 0])]
-      (core/gain state :corp :click 1)
-      (core/advance state :corp {:card (refresh ag1)})
-      (core/advance state :corp {:card (refresh ag1)})
-      (core/advance state :corp {:card (refresh ag1)})
-      (core/score state :corp {:card (refresh ag1)})
+    (let [ag1 (get-content state :remote1 0)]
+      (score-agenda state :corp ag1)
       (take-credits state :corp)
       (play-from-hand state :runner "Turntable")
       (is (= 3 (:credit (get-runner))))
       (let [tt (get-in @state [:runner :rig :hardware 0])]
-        (core/click-run state :runner {:server "HQ"})
-        (core/no-action state :corp nil)
-        (core/successful-run state :runner nil)
+        (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
         (is (= 0 (:agenda-point (get-runner))) "Stole Domestic Sleepers")
         (is (= true (:swap (core/get-card state tt)))) ; Turntable ability enabled by steal
         (card-ability state :runner tt 0)
-        ; Turntable prompt should be active
+        ;; Turntable prompt should be active
         (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
         (prompt-choice :runner "Yes")
-        (core/select state :runner {:card (find-card "Project Vitruvius" (:scored (get-corp)))})
+        (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
         (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")
         (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))

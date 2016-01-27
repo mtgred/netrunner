@@ -576,8 +576,9 @@
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
-(defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag brain-damage agenda-point
-                                        tagged max-hand-size]} owner]
+(defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag
+                                        brain-damage agenda-point tagged hand-size-base
+                                        hand-size-modification]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
@@ -595,9 +596,11 @@
        [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
         (when me? (controls :brain-damage))]
-       [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
+       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
+        (when me? (controls :hand-size-modification))]]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity max-hand-size]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity
+                                      hand-size-base hand-size-modification]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
@@ -609,7 +612,8 @@
         (when me? (controls :agenda-point))]
        [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))
         (when me? (controls :bad-publicity))]
-       [:div (str max-hand-size " Max hand size") (when me? (controls :max-hand-size))]]))))
+       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
+        (when me? (controls :hand-size-modification))]]))))
 
 (defn server-view [{:keys [server central run] :as cursor} owner opts]
   (om/component
@@ -679,7 +683,7 @@
 
 (defn handle-end-turn [cursor owner]
   (let [me ((:side @game-state) @game-state)
-        max-size (max (:max-hand-size me) 0)]
+        max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
     (if (> (count (:hand me)) max-size)
       (toast (str "Discard to " max-size " cards") "warning")
       (send-command "end-turn"))))

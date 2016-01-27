@@ -147,7 +147,8 @@
     :effect (effect (gain :credit (* 2 (count targets))))}
 
    "Cerebral Cast"
-   {:psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
+   {:req (req (:successful-run runner-reg))
+    :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :effect (req (if (= target "1 tag")
                                      (tag-runner state side 1)
@@ -488,6 +489,7 @@
                                                 (concat ["Barrier"])
                                                 distinct
                                                 (join " - "))))
+                    (update-ice-strength target)
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"

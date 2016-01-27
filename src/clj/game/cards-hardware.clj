@@ -60,23 +60,30 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
-   {:effect (effect (gain :memory 2 :max-hand-size 2))
-    :leave-play (effect (lose :memory 2 :max-hand-size 2))}
+   {:effect (effect (gain :memory 2 :hand-size-modification 2))
+    :leave-play (effect (lose :memory 2 :hand-size-modification 2))}
 
    "Brain Cage"
-   {:effect (effect (damage :brain 1 {:card card}) (gain :max-hand-size 3))
-    :leave-play (effect (lose :max-hand-size 3))}
+   {:effect (effect (damage :brain 1 {:card card})
+                    (gain :hand-size-modification 3))
+    :leave-play (effect (lose :hand-size-modification 3))}
 
    "Brain Chip"
    (let [runner-points (fn [s] (max (or (get-in s [:runner :agenda-point]) 0) 0))]
-     {:effect (req (gain state :runner :memory (runner-points @state) :max-hand-size (runner-points @state))
+     {:effect (req (gain state :runner
+                         :memory (runner-points @state)
+                         :hand-size-modification (runner-points @state))
                    (add-watch state (keyword (str "brainchip" (:cid card)))
                           (fn [k ref old new]
                             (let [bonus (- (runner-points new) (runner-points old))]
                               (when (not= 0 bonus)
-                               (gain state :runner :memory bonus :max-hand-size bonus))))))
+                               (gain state :runner
+                                     :memory bonus
+                                     :hand-size-modification bonus))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
-                       (lose state :runner :memory (runner-points @state) :max-hand-size (runner-points @state)))})
+                       (lose state :runner
+                             :memory (runner-points @state) 
+                             :hand-size-modification (runner-points @state)))})
 
    "Capstone"
    {:abilities [{:req (req (> (count (:hand runner)) 0))
@@ -160,7 +167,15 @@
    {:recurring 1}
 
    "Deep Red"
-   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))}
+   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+    :events {:runner-install
+             {:optional
+              {:req (req (has-subtype? target "Caïssa"))
+               :prompt "Use Deep Red to trigger the [Click] ability of the installed Caïssa?"
+               :yes-ability {:effect (req (let [caissa (first (map last (turn-events state :runner :runner-install)))]
+                                            (system-msg state side (str "uses Deep Red to trigger the [Click] ability of " (:title caissa)))
+                                            (gain state :runner :click 1)
+                                            (play-ability state side {:card (get-card state caissa) :ability 0})))}}}}}
 
    "Desperado"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
@@ -294,8 +309,8 @@
    {:recurring 1}
 
    "Logos"
-   {:effect (effect (gain :memory 1 :max-hand-size 1))
-    :leave-play (effect (lose :memory 1 :max-hand-size 1))
+   {:effect (effect (gain :memory 1 :hand-size-modification 1))
+    :leave-play (effect (lose :memory 1 :hand-size-modification 1))
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
@@ -400,6 +415,18 @@
                                                      (runner-install state side c)
                                                      (shuffle! state :runner :deck)))}}} card nil))
     :leave-play (effect (lose :link 1))}
+
+   "Ramujan-reliant 550 BMI"
+   {:prevent {:damage [:net :brain]}
+    :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose how much damage to prevent" :priority true
+                                   :choices {:number (req (min n (count (:deck runner))))}
+                                   :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
+                                   :effect (effect (damage-prevent :net target)
+                                                   (damage-prevent :brain target)
+                                                   (mill :runner target)
+                                                   (trash card {:cause :ability-cost}))} card nil)))}]}
 
    "Record Reconstructor"
    {:events
@@ -534,7 +561,7 @@
 
    "Vigil"
    {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events {:runner-turn-begins {:req (req (= (count (:hand corp)) (:max-hand-size corp)))
+    :events {:runner-turn-begins {:req (req (= (count (:hand corp)) (hand-size state :corp)))
                                   :msg "draw 1 card" :effect (effect (draw 1))}}}
 
    "Window"

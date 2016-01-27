@@ -79,3 +79,11 @@
   "Returns a truthy card map if the given card is in play (installed)."
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
+
+(defn hand-size
+  "Returns the current maximum handsize of the specified side."
+  [state side]
+  (let [side' (get @state side)
+        base (get side' :hand-size-base 0)
+        mod (get side' :hand-size-modification 0)]
+    (+ base mod)))

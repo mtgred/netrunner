@@ -52,7 +52,8 @@
   "Decreases the position of each ice in the run. For when an ice is trashed mid-run."
   [state]
   (when-let [run (:run @state)]
-    (swap! state update-in [:run :position] dec)))
+    (swap! state update-in [:run :position] dec)
+    (trigger-event state :runner :pass-ice nil)))
 
 
 ;;; Icebreaker functions.

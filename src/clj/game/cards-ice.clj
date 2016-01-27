@@ -2,8 +2,164 @@
 
 (declare trash-program trash-hardware trash-installed)
 
-(def end-the-run {:msg "end the run" :effect (effect (end-run))})
+;;;; Helper functions specific for ICE
 
+;;; General subroutines
+(def end-the-run
+  "Basic ETR subroutine"
+  {:label "End the run"
+   :msg "end the run"
+   :effect (effect (end-run))})
+
+(def give-tag
+  "Basic give runner 1 tag subroutine
+   Mostly used with tag-trace"
+  {:label "Give the Runner 1 tag"
+   :msg "give the Runner 1 tag"
+   :effect (effect (tag-runner :runner 1))}) 
+
+(def add-power-counter
+  "Adds 1 power counter to the card."
+  {:label "Add 1 power counter"
+   :msg "add 1 power counter"
+   :effect (effect (add-prop card :counter 1))})
+
+(defn trace-ability
+  "Run a trace with specified base strength.
+   If successful trigger specified ability"
+  [base ability]
+  {:label (str "Trace " base " - " (:label ability))
+   :trace (assoc ability :base base)})
+
+(defn tag-trace
+  "Trace ability for giving a tag, at specified base strength"
+  [base]
+  (trace-ability base give-tag))
+
+(defn do-net-damage
+  "Do specified amount of net-damage."
+  [dmg]
+  {:label (str "Do " dmg " net damage")
+   :msg (str "do " dmg " net damage")
+   :effect (effect (damage :net dmg {:card card}))})
+
+(defn do-brain-damage
+  "Do specified amount of brain damage."
+  [dmg]
+  {:label (str "Do " dmg " brain damage")
+   :msg (str "do " dmg " brain damage")
+   :effect (effect (damage :brain dmg {:card card}))})
+
+(defn gain-credits
+  "Gain specified amount of credits"
+  [credits]
+  {:label (str "Gain " credits " [Credits]")
+   :msg (str "gain " credits " [Credits]")
+   :effect (effect (gain :credit credits))})
+
+(defn power-counter-ability
+  "Does specified ability using a power counter."
+  [{:keys [label msg] :as ability}]
+  (assoc ability :label (str "Hosted power counter: " label)
+                 :msg (str msg " using 1 power counter")
+                 :counter-cost 1))
+
+(defn do-psi
+  "Start a psi game, if not equal do ability"
+  [{:keys [label] :as ability}]
+  {:label (str "Psi Game - " label)
+   :msg (str "start a psi game (" label ")")
+   :psi {:not-equal ability}})
+
+(def take-bad-pub
+  "Bad pub on rez effect."
+  (effect (gain :bad-publicity 1)
+          (system-msg (str "takes 1 bad publicity from " (:title card)))))
+
+
+;;; For Advanceable ICE
+(def advance-counters
+  "Number of advancement counters - for advanceable ICE."
+  (req (:advance-counter card 0)))
+
+(def space-ice-rez-bonus
+  "Amount of rez reduction for the Space ICE."
+  (req (* -3 (:advance-counter card 0))))
+
+(defn space-ice
+  "Creates data for Space ICE with specified abilities."
+  [& abilities]
+  {:advanceable :always
+   :abilities (vec abilities)
+   :rez-cost-bonus space-ice-rez-bonus})
+
+
+;;; For Grail ICE
+(defn grail-in-hand
+  "Req that specified card is a Grail card in the Corp's hand."
+  [card]
+  (and (= (:side card) "Corp")
+       (in-hand? card)
+       (has-subtype? card "Grail")))
+
+(def reveal-grail
+  "Ability for revealing Grail ICE from HQ."
+  {:label "Reveal up to 2 Grail ICE from HQ"
+   :choices {:max 2
+             :req grail-in-hand}
+   :msg (let [sub-label #(:label (first (:abilities (card-def %))))]
+         (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+
+(def resolve-grail
+  "Ability for resolving a subroutine on a Grail ICE in HQ."
+  {:label "Resolve a Grail ICE subroutine from HQ"
+   :choices {:req grail-in-hand}
+   :effect (req (doseq [ice targets]
+                  (let [subroutine (first (:abilities (card-def ice)))]
+                    (resolve-ability state side subroutine card nil))))})
+
+(defn grail-ice
+  "Creates data for grail ICE"
+  [ability]
+  {:abilities [ability reveal-grail resolve-grail]})
+
+
+;;; For NEXT ICE
+(defn next-ice-count
+  "Counts number of rezzed NEXT ICE - for use with NEXT Bronze and NEXT Gold"
+  [corp]
+  (let [servers (flatten (seq (:servers corp)))
+        rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
+    (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
+
+
+;;; For Morph ICE
+(defn morph-effect
+  "Creates morph effect for ICE. Morphs from base type to other type"
+  [base other]
+  (req (if (odd? (get (get-card state card) :advance-counter 0))
+         (morph state side card other base)
+         (morph state side card base other))))
+
+(defn morph-ice
+  "Creates the data for morph ICE with specified types and ability."
+  [base other ability]
+  (let [ab {:req (req (= (:cid card) (:cid target)))
+            :effect (morph-effect base other)}]
+    {:advanceable :always
+     :effect (morph-effect base other)
+     :abilities [ability]
+     :events {:advance ab :advancement-placed ab}}))
+
+
+;;; For Constellation ICE
+(defn constellation-ice
+  "Generates map for Constellation ICE with specified effect."
+  [ability]
+  {:abilities [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
+
+
+;;;; Card definitions
 (def cards-ice
   {"Archangel"
    {:access {:optional
@@ -11,20 +167,21 @@
               :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
               :yes-ability {:cost [:credit 3]
                             :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
-    :abilities [{:label "Trace 6 - Add 1 installed card to the Runner's Grip"
-                 :trace {:base 6 :choices {:req #(:installed %)}
-                         :msg "add 1 installed card to the Runner's Grip"
-                         :effect (effect (move :runner target :hand true) (system-msg (str "adds " (:title target) " to the Runner's Grip")))}}]}
+    :abilities [(trace-ability 6 {:choices {:req installed?}
+                                  :label "Add 1 installed card to the Runner's Grip"
+                                  :msg "add 1 installed card to the Runner's Grip"
+                                  :effect (effect (move :runner target :hand true)
+                                                  (system-msg (str "adds " (:title target)
+                                                                   " to the Runner's Grip")))})]}
 
    "Archer"
    {:additional-cost [:forfeit]
-    :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                trash-program end-the-run]}
+    :abilities [(gain-credits 2)
+                trash-program
+                end-the-run]}
 
    "Architect"
-   {:flags {
-            :untrashable-while-rezzed true
-            }
+   {:flags {:untrashable-while-rezzed true}
     :abilities [{:msg "look at the top 5 cards of R&D"
                  :prompt "Choose a card to install"
                  :priority true
@@ -33,7 +190,8 @@
                                 (not (is-type? target "Operation"))))
                  :not-distinct true
                  :choices (req (conj (take 5 (:deck corp)) "No install"))
-                 :effect (effect (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
+                 :effect (effect (corp-install (move state side target :play-area)
+                                               nil {:no-install-cost true}))}
                 {:label "Install a card from HQ or Archives"
                  :prompt "Choose a card to install from Archives or HQ"
                  :show-discard true
@@ -48,15 +206,12 @@
    {:abilities [end-the-run]}
 
    "Assassin"
-   {:abilities [{:label "Trace 5 - Do 3 net damage"
-                 :trace {:base 5 :msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}}
-                {:label "Trace 4 - Trash a program"
-                 :trace (assoc trash-program :base 4 :msg "trash a program")}]}
+   {:abilities [(trace-ability 5 (do-net-damage 3))
+                (trace-ability 4 trash-program)]}
 
    "Asteroid Belt"
-   {:advanceable :always :abilities [end-the-run]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   (space-ice end-the-run)
+   
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
@@ -82,70 +237,75 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Bullfrog"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal
-                       {:player :corp :prompt "Choose a server" :choices (req servers)
-                        :msg (msg "move it to the outermost position of " target)
-                        :effect (req (let [dest (server->zone state target)]
-                                       (swap! state update-in [:run]
-                                              #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                        :server (rest dest))))
-                                     (move state side card (conj (server->zone state target) :ices))
-                                     (update-run-ice state side))}}}]}
-
+   {:abilities [(do-psi {:label "Move Bullfrog to another server"
+                         :player :corp
+                         :prompt "Choose a server"
+                         :choices (req servers)
+                         :msg (msg "move it to the outermost position of " target)
+                         :effect (req (let [dest (server->zone state target)]
+                                        (swap! state update-in [:run]
+                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                       :server (rest dest))))
+                                      (move state side card
+                                            (conj (server->zone state target) :ices))
+                                      (update-run-ice state side))})]}
+   
    "Burke Bugs"
-   {:abilities [{:label "Trace 0 - Force the Runner to trash a program"
-                 :trace (assoc trash-program :base 0 :not-distinct true
-                                             :player :runner
-                                             :msg "force the Runner to trash a program")}]}
+   {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
+                                        :player :runner
+                                        :msg "force the Runner to trash a program"
+                                        :label "Force the Runner to trash a program"))]}
 
    "Caduceus"
-   {:abilities [{:label "Trace 3 - Gain 3 [Credits]"
-                 :trace {:base 3 :msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}}
-                {:label "Trace 2 - End the run"
-                 :trace {:base 2 :msg "end the run" :effect (effect (end-run))}}]}
+   {:abilities [(trace-ability 3 (gain-credits 3))
+                (trace-ability 2 end-the-run)]}
 
    "Cell Portal"
    {:abilities [{:msg "make the Runner approach the outermost ICE"
                  :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
 
    "Changeling"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Sentry" "Barrier")
-                            (morph state side card "Barrier" "Sentry")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Sentry" "Barrier")
-                     (morph state side card "Barrier" "Sentry")))
-      :abilities [end-the-run]
-      :events {:advance ab :advancement-placed ab}})
-
+   (morph-ice "Barrier" "Sentry" end-the-run)
+   
    "Checkpoint"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:label "Trace 5 - Do 3 meat damage when this run is successful"
-                 :trace {:base 5 :msg "do 3 meat damage when this run is successful"
-                         :effect (req (swap! state assoc-in [:run :run-effect :end-run]
-                                             {:req (req (:successful run)) :msg "do 3 meat damage"
-                                              :effect (effect (damage :meat 3 {:card card}))})
-                                      (swap! state assoc-in [:run :run-effect :card] card))}}]}
+   {:effect take-bad-pub
+    :abilities [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
+                                  :msg "do 3 meat damage when this run is successful"
+                                  :effect (req (swap! state assoc-in [:run :run-effect :end-run]
+                                                      {:req (req (:successful run))
+                                                       :msg "do 3 meat damage"
+                                                       :effect (effect (damage :meat 3
+                                                                               {:card card}))})
+                                               (swap! state assoc-in [:run :run-effect :card]
+                                                      card))})]}
 
    "Chimera"
-   {:prompt "Choose one subtype" :choices ["Barrier" "Code Gate" "Sentry"]
-    :msg (msg "change its subtype to " target) :end-turn {:effect (effect (derez card))}
-    :abilities [end-the-run]}
-
+   (let [ab {:effect (effect (derez :corp card)
+                             (update! (assoc (get-card state card) :subtype "Mythic")))}]
+     {:prompt "Choose one subtype"
+      :choices ["Barrier" "Code Gate" "Sentry"]
+      :msg (msg "make it gain " target " until the end of the turn")
+      :effect (effect (update! (assoc card :subtype
+                                      (->> (vec (.split (:subtype card) " - "))
+                                           (concat [target])
+                                           (join " - "))))
+                      (update-ice-strength card))
+      :events {:runner-turn-ends ab
+               :corp-turn-ends ab}
+      :abilities [end-the-run]})
+   
    "Clairvoyant Monitor"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:player :corp
-                                   :prompt "Choose a target for Clairvoyant Monitor"
-                                   :msg (msg "place 1 advancement token on "
-                                             (card-str state target) " and end the run")
-                                   :choices {:req installed?}
-                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}) (end-run))}}}]}
+   {:abilities [(do-psi {:label "Place 1 advancement token and end the run"
+                         :player :corp
+                         :prompt "Choose a target for Clairvoyant Monitor"
+                         :msg (msg "place 1 advancement token on "
+                                   (card-str state target) " and end the run")
+                         :choices {:req installed?}
+                         :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                                         (end-run))})]}
 
    "Chum"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
+   {:abilities [(do-net-damage 3)]}
 
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
@@ -173,18 +333,22 @@
               {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
-   {:abilities [{:label "Trace 2 - Look at the top of Stack"
-                 :trace {:base 2 :msg "look at top X cards of Stack"
-                         :effect (req (doseq [c (take (- target (second targets)) (:deck runner))]
-                                        (move state side c :play-area))
-                                      (system-msg state :corp (str "looks at the top " (- target (second targets)) " cards of Stack"))
-                                      )}}]}
+   {:abilities [(trace-ability 2 {:label "Look at the top of Stack"
+                                  :msg "look at top X cards of Stack"
+                                  :effect (req (doseq [c (take (- target (second targets))
+                                                               (:deck runner))]
+                                                 (move state side c :play-area))
+                                               (system-msg state :corp
+                                                           (str "looks at the top "
+                                                                (- target (second targets))
+                                                                " cards of Stack")))})]}
 
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
                  :effect (req (damage state :runner :net 1 {:card card})
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when current-ice
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Datapike"
    {:abilities [{:msg "force the Runner to pay 2 [Credits] if able"
@@ -192,20 +356,21 @@
                 end-the-run]}
 
    "Data Raven"
-   {:abilities [{:msg "give the Runner 1 tag" :effect (effect (tag-runner 1))}
-                {:msg "give the Runner 1 tag using 1 power counter"
-                 :counter-cost 1 :effect (effect (tag-runner 1))}
-                {:label "Trace 3 - Add 1 power counter"
-                 :trace {:base 3 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}]}
+   {:abilities [give-tag
+                (power-counter-ability give-tag)
+                (trace-ability 3 add-power-counter)]}
 
    "Dracō"
-   {:prompt "How many power counters?" :choices :credit :msg (msg "add " target " power counters")
+   {:prompt "How many power counters?"
+    :choices :credit
+    :msg (msg "add " target " power counters")
     :effect (effect (set-prop card :counter target)
                     (update-ice-strength card))
     :strength-bonus (req (or (:counter card) 0))
-    :abilities [{:label "Trace 2 - Give the Runner 1 tag and end the run"
-                 :trace {:base 2 :msg "give the Runner 1 tag and end the run"
-                         :effect (effect (tag-runner :runner 1) (end-run))}}]}
+    :abilities [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
+                                  :msg "give the Runner 1 tag and end the run"
+                                  :effect (effect (tag-runner :runner 1)
+                                                  (end-run))})]}
 
    "Eli 1.0"
    {:abilities [end-the-run]}
@@ -213,7 +378,7 @@
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
     :abilities [trash-program
-                {:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+                (do-brain-damage 1)
                 {:label "Trash a console" :effect (effect (trash target))
                  :prompt "Choose a console to trash" :msg (msg "trash " (:title target))
                  :choices {:req #(has-subtype? % "Console")}}
@@ -227,7 +392,7 @@
                 end-the-run]}
 
    "Errand Boy"
-   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}
+   {:abilities [(gain-credits 1)
                 {:msg "draw 1 card" :effect (effect (draw))}]}
 
    "Excalibur"
@@ -235,74 +400,61 @@
                  :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
 
    "Fenris"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+   {:effect take-bad-pub
+    :abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Fire Wall"
-   {:advanceable :always :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+   {:advanceable :always
+    :abilities [end-the-run]
+    :strength-bonus advance-counters}
 
    "Flare"
-   {:abilities [{:label "Trace 6 - Trash 1 hardware, do 2 meat damage, and end the run"
-                 :trace {:base 6
-                         :msg "trash 1 hardware, do 2 meat damage, and end the run"
-                         :effect (effect (resolve-ability
-                                           {:prompt "Choose a piece of hardware to trash"
-                                            :label "Trash a piece of hardware"
-                                            :msg (msg "trash " (:title target))
-                                            :choices {:req #(is-type? % "Hardware")}
-                                            :effect (effect (trash target {:cause :subroutine}))} card nil)
-                                         (damage :meat 2 {:unpreventable true :card card})
-                                         (end-run))}}]}
+   {:abilities [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
+                                  :msg "trash 1 hardware, do 2 meat damage, and end the run"
+                                  :effect (effect (resolve-ability
+                                                   {:prompt "Choose a piece of hardware to trash"
+                                                    :label "Trash a piece of hardware"
+                                                    :msg (msg "trash " (:title target))
+                                                    :choices {:req #(is-type? % "Hardware")}
+                                                    :effect (effect (trash target {:cause :subroutine}))}
+                                                   card nil)
+                                                  (damage :meat 2 {:unpreventable true
+                                                                   :card card})
+                                                  (end-run))})]}
 
    "Galahad"
-   {:abilities [{:label "End the run" :msg "end the run" :effect (effect (end-run))}
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice end-the-run)
 
    "Gemini"
-   {:abilities [{:label "Trace 2 - Do 1 net damage"
-                 :trace {:base 2 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))
-                         :kicker {:min 5 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}]}
-
+   (constellation-ice (do-net-damage 1))
+   
    "Grim"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect take-bad-pub
     :abilities [trash-program]}
 
    "Guard"
    {:abilities [end-the-run]}
 
    "Gutenberg"
-   {:abilities [{:label "Trace 7 - Give the Runner 1 tag"
-                 :trace {:base 7 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]
+   {:abilities [(tag-trace 7)]
     :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}
 
    "Gyri Labyrinth"
    {:abilities [{:req (req (:run @state))
                  :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                 :effect (effect (lose :runner :max-hand-size 2)
+                 :effect (effect (lose :runner :hand-size-modification 2)
                                  (register-events {:corp-turn-begins
                                                    {:msg "increase the Runner's maximum hand size by 2"
-                                                    :effect (effect (gain :runner :max-hand-size 2)
+                                                    :effect (effect (gain :runner :hand-size-modification 2)
                                                                     (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
    "Hadrians Wall"
    {:advanceable :always
     :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Himitsu-Bako"
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
@@ -311,10 +463,11 @@
    {:abilities [end-the-run]}
 
    "Heimdall 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+   {:abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Heimdall 2.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}
+   {:abilities [(do-brain-damage 1)
                 {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1 {:card card}) (end-run))}
                 end-the-run]}
 
@@ -353,24 +506,25 @@
                  :effect (effect (max-access 1))}]}
 
    "Hunter"
-   {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
+   {:abilities [(tag-trace 3)]}
 
    "Ice Wall"
    {:advanceable :always :abilities [end-the-run]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :strength-bonus advance-counters}
 
    "Ichi 1.0"
    {:abilities [trash-program
-                {:label "Trace 1 - Give the Runner 1 tag and do 1 brain damage"
-                 :trace {:base 1 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1 {:card card}) (tag-runner :runner 1))}}]}
+                (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
+                                  :msg "give the Runner 1 tag and do 1 brain damage"
+                                  :effect (effect (damage :brain 1 {:card card})
+                                                  (tag-runner :runner 1))})]}
 
    "Ichi 2.0"
    {:abilities [trash-program
-                {:label "Trace 3 - Give the Runner 1 tag and do 1 brain damage"
-                 :trace {:base 3 :msg "give the Runner 1 tag and do 1 brain damage"
-                         :effect (effect (damage :brain 1 {:card card}) (tag-runner :runner 1))}}]}
+                (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
+                                  :msg "give the Runner 1 tag and do 1 brain damage"
+                                  :effect (effect (damage :brain 1 {:card card})
+                                                  (tag-runner :runner 1))})]}
 
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
@@ -385,8 +539,7 @@
     :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
 
    "Information Overload"
-   {:abilities [{:label "Trace 1 - Give the Runner 1 tag"
-                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
+   {:abilities [(tag-trace 1)
                 trash-installed]}
 
    "Ireress"
@@ -395,11 +548,12 @@
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
-                                                    (trash state side card)
-                                                    (trash-ice-in-run state)))]}
+                                                    (when current-ice
+                                                      (trash-ice-in-run state))
+                                                    (trash state side card)))]}
 
    "Janus 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}
+   {:abilities [(do-brain-damage 1)]}
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ to force access"
@@ -409,31 +563,19 @@
                  :effect (effect (handle-access targets) (trash card))}]}
 
    "Komainu"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [(do-net-damage 1)]}
 
    "Lab Dog"
    {:abilities [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
                                       :player :runner
                                       :msg (msg "force the Runner to trash " (:title target))
                                       :effect (req (trash state side target)
-                                                   (trash state side card)
-                                                   (trash-ice-in-run state)))]}
+                                                   (when current-ice
+                                                     (trash-ice-in-run state))
+                                                   (trash state side card)))]}
 
    "Lancelot"
-   {:abilities [trash-program
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice trash-program)
 
    "Little Engine"
    {:abilities [end-the-run
@@ -448,24 +590,12 @@
     :flags {:cannot-lower-strength true}}
 
    "Lycan"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Code Gate" "Sentry")
-                            (morph state side card "Sentry" "Code Gate")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Code Gate" "Sentry")
-                     (morph state side card "Sentry" "Code Gate")))
-      :abilities [trash-program]
-      :events {:advance ab :advancement-placed ab}})
+   (morph-ice "Sentry" "Code Gate" trash-program)
 
    "Mamba"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
-                {:msg "do 1 net damage using 1 power counter"
-                 :counter-cost 1 :effect (effect (damage :net 1 {:card card}))}
-                {:msg "start a Psi game"
-                 :psi {:not-equal {:msg "add 1 power counter"
-                                   :effect (effect (add-prop :runner card :counter 1))}}}]}
+   {:abilities [(power-counter-ability (do-net-damage 1))
+                (do-net-damage 1)
+                (do-psi add-power-counter)]}
 
    "Markus 1.0"
    {:abilities [trash-installed end-the-run]}
@@ -475,26 +605,10 @@
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req can-be-advanced?}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}
-                {:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
+                (tag-trace 2)]}
 
    "Merlin"
-   {:abilities [{:label "Do 2 net damage"
-                 :msg "do 2 net damage"
-                 :effect (effect (damage :net 2 {:card card}))}
-                {:label "Reveal up to 2 Grail ICE from HQ"
-                 :choices {:max 2 :req #(and (:side % "Corp")
-                                             (in-hand? %)
-                                             (has-subtype? % "Grail"))}
-                 :msg (msg "reveal "
-                           (join ", " (map #(str (:title %) " ("
-                                                 (:label (first (:abilities (card-def %)))) ")") targets)))}
-                {:label "Resolve a Grail ICE subroutine from HQ"
-                 :choices {:req #(and (:side % "Corp")
-                                      (in-hand? %)
-                                      (has-subtype? % "Grail"))}
-                 :effect (req (doseq [ice targets]
-                                (resolve-ability state side (first (:abilities (card-def ice))) card nil)))}]}
+   (grail-ice (do-net-damage 2))
 
    "Meru Mati"
    {:abilities [end-the-run]
@@ -520,30 +634,25 @@
       :events {:rez ab :trash ab :derez ab}})
 
    "Muckraker"
-   {:effect (effect (gain :bad-publicity 1))
-    :abilities [{:label "Trace 1 - Give the Runner 1 tag"
-                 :trace {:base 1 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
-                {:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
-                {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
+   {:effect take-bad-pub
+    :abilities [(tag-trace 1)
+                (tag-trace 2)
+                (tag-trace 3)
                 {:msg "end the run if the Runner is tagged" :req (req tagged)
                  :effect (effect (end-run))}]}
 
    "Nebula"
-   {:advanceable :always
-    :abilities [trash-program]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
+   (space-ice trash-program)
 
    "Negotiator"
-   {:abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))} trash-program]}
+   {:abilities [(gain-credits 2)
+                trash-program]}
 
    "Neural Katana"
-   {:abilities [{:msg "do 3 net damage" :effect (effect (damage :net 3 {:card card}))}]}
+   {:abilities [(do-net-damage 3)]}
 
    "News Hound"
-   {:abilities [{:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
+   {:abilities [(tag-trace 3)
                 {:label "End the run if a Current is active"
                  :req (req (or (not (empty? (runner :current)))
                                (not (empty? (corp :current)))))
@@ -551,11 +660,7 @@
 
    "NEXT Bronze"
    {:abilities [end-the-run]
-    :strength-bonus (req (reduce (fn [c server]
-                                   (+ c (count (filter #(and (rezzed? %)
-                                                             (has-subtype? % "NEXT"))
-                                                       (:ices server)))))
-                                 0 (flatten (seq (:servers corp)))))
+    :strength-bonus (req (next-ice-count corp))
     :events (let [nb {:req (req (and (not= (:cid target) (:cid card))
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
@@ -563,38 +668,32 @@
 
    "NEXT Gold"
    {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
-                 :msg (msg "do "
-                           (reduce (fn [c server]
-                                     (+ c (count (filter #(and (rezzed? %)
-                                                               (has-subtype? % "NEXT"))
-                                                         (:ices server)))))
-                                   0 (flatten (seq (:servers corp)))) " net damage")
-                 :effect (effect (damage :net (reduce (fn [c server]
-                                                        (+ c (count (filter #(and (rezzed? %)
-                                                                                  (has-subtype? % "NEXT"))
-                                                                            (:ices server)))))
-                                                      0 (flatten (seq (:servers corp)))) {:card card}))}
+                 :msg (msg "do " (next-ice-count corp) " net damage")
+                 :effect (effect (damage :net (next-ice-count corp) {:card card}))}
                 trash-program]}
 
    "NEXT Silver"
    {:abilities [end-the-run]}
 
    "Orion"
-   {:advanceable :always :abilities [trash-program end-the-run]
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   ;; TODO: wormhole subroutine
+   (space-ice trash-program end-the-run)
+   
    "Pachinko"
    {:abilities [{:label "End the run if the Runner is tagged"
-                 :req (req tagged) :msg "end the run" :effect (effect (end-run))}]}
+                 :req (req tagged)
+                 :msg "end the run"
+                 :effect (effect (end-run))}]}
 
    "Paper Wall"
    {:abilities [end-the-run]}
 
    "Pop-up Window"
-   {:abilities [{:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))} end-the-run]}
+   {:abilities [(gain-credits 1)
+                end-the-run]}
 
    "Pup"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [(do-net-damage 1)]}
 
    "Quandary"
    {:abilities [end-the-run]}
@@ -612,26 +711,23 @@
 
    "Resistor"
    {:strength-bonus (req (get-in @state [:runner :tag]))
-    :abilities [{:label "Trace 4 - End the run"
-                 :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
+    :abilities [(trace-ability 4 end-the-run)]}
 
    "Rototurret"
    {:abilities [trash-program end-the-run]}
 
    "Sagittarius"
-   {:abilities [{:label "Trace 2 - Trash a program"
-                 :trace (assoc trash-program :base 2 :not-distinct true :msg "trash 1 program"
-                                             :kicker (assoc trash-program :min 5))}]}
+   (constellation-ice trash-program)
 
    "Salvage"
    {:advanceable :while-rezzed
-    :abilities [{:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
+    :abilities [(tag-trace 2)]}
 
    "Searchlight"
    {:advanceable :always
+    ;; Could replace this with (tag-trace advance-counters).
     :abilities [{:label "Trace X - Give the Runner 1 tag"
-                 :trace {:base (req (or (:advance-counter card) 0)) :effect (effect (tag-runner :runner 1))
+                 :trace {:base advance-counters :effect (effect (tag-runner :runner 1))
                          :msg "give the Runner 1 tag"}}]}
 
    "Sensei"
@@ -640,10 +736,9 @@
 
    "Shadow"
    {:advanceable :always
-    :abilities [{:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))}
-                {:label "Trace 3 - Give the Runner 1 tag"
-                 :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]
-    :strength-bonus (req (or (:advance-counter card) 0))}
+    :abilities [(gain-credits 2)
+                (tag-trace 3)]
+    :strength-bonus advance-counters}
 
    "Sherlock 1.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the top of Stack"
@@ -654,14 +749,12 @@
                          :effect (effect (move :runner target :deck {:front true}))}}]}
 
    "Shinobi"
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
-    :abilities [{:label "Trace 1 - Do 1 net damage"
-                 :trace {:base 1 :msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
-                {:label "Trace 2 - Do 2 net damage"
-                 :trace {:base 2 :msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}}
-                {:label "Trace 3 - Do 3 net damage and end the run"
-                 :trace {:base 3 :msg "do 3 net damage and end the run"
-                         :effect (effect (damage :net 3 {:card card}) (end-run))}}]}
+   {:effect take-bad-pub
+    :abilities [(trace-ability 1 (do-net-damage 1))
+                (trace-ability 2 (do-net-damage 2))
+                (trace-ability 3 {:label "Do 3 net damage and end the run"
+                                  :msg "do 3 net damage and end the run"
+                                  :effect (effect (damage :net 3 {:card card}) (end-run))})]}
 
    "Shiro"
    {:abilities [{:label "Rearrange the top 3 cards of R&D"
@@ -674,24 +767,28 @@
                                 (handle-access state side [c])))}]}
 
    "Snoop"
-   {:abilities [{:req (req (= current-ice card)) :label "Reveal all cards in the Runner's Grip"
+   {:abilities [{:req (req (= current-ice card))
+                 :label "Reveal all cards in the Runner's Grip"
                  :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
-                {:label "Trace 3 - Place 1 power counter on Snoop"
-                 :trace {:base 3 :msg "place 1 power counter on Snoop" :effect (effect (add-prop card :counter 1))}}
-                {:counter-cost 1 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
-                 :msg (msg "look at all cards in Grip and trash " (:title target))
-                 :choices (req (:hand runner)) :prompt "Choose a card to trash"
-                 :effect (effect (trash target))}]}
+                {:req (req (> (:counter card 0) 0))
+                 :counter-cost 1
+                 :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
+                 :msg (msg "look at all cards in Grip and trash " (:title target)
+                           " using 1 power counter")
+                 :choices (req (:hand runner))
+                 :prompt "Choose a card to trash"
+                 :effect (effect (trash target))}
+                (trace-ability 3 add-power-counter)]}
 
    "Snowflake"
-   {:abilities [{:msg "start a Psi game"
-                 :psi {:not-equal end-the-run}}]}
+   {:abilities [(do-psi end-the-run)]}
 
    "Special Offer"
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
                  :effect (req (gain state :corp :credit 5)
+                              (when current-ice
+                                (trash-ice-in-run state))
                               (trash state side card)
-                              (trash-ice-in-run state)
                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
    "Spiderweb"
@@ -706,13 +803,12 @@
                               (update-run-ice state side))}]}
 
    "Swarm"
-   {:effect (effect (gain :bad-publicity 1))
+   {:effect take-bad-pub
     :advanceable :always
     :abilities [trash-program]}
 
    "Swordsman"
-   {:abilities [{:msg "do 1 net damage"
-                 :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(do-net-damage 1)
                 {:prompt "Choose an AI program to trash"
                  :msg (msg "trashes " (:title target))
                  :label "Trash an AI program"
@@ -722,32 +818,37 @@
                                       (has-subtype? % "AI"))}}]}
 
    "Taurus"
-   {:abilities [{:label "Trace 2 - Trash a piece of hardware"
-                 :trace (assoc trash-hardware :base 2 :not-distinct true :msg "trash 1 hardware"
-                                              :kicker (assoc trash-hardware :min 5))}]}
-
+   (constellation-ice trash-hardware)
+   
    "TMI"
-   {:trace {:base 2 :msg "keep TMI rezzed" :unsuccessful {:effect (effect (derez card))}} :abilities [end-the-run]}
+   {:trace {:base 2
+            :msg "keep TMI rezzed"
+            :unsuccessful {:effect (effect (derez card))}}
+    :abilities [end-the-run]}
 
    "Tollbooth"
-   {:abilities [{:msg "force the Runner to lose 3 [Credits]"
-                 :effect (effect (lose :runner :credit 3))}
+   {:abilities [{:msg "make the Runner pay 3 [Credits], if able"
+                 :effect (effect (pay :runner card :credit 3))}
                 end-the-run]}
 
    "Tour Guide"
    {:abilities [end-the-run]}
 
    "Troll"
-   {:abilities [{:label "Trace 2 - Force the Runner to lose [Click] or end the run"
-                 :trace {:base 2 :player :runner
-                         :msg "force the Runner to lose [Click] or end the run"
-                         :prompt "Choose one" :choices ["Lose [Click]" "End the run"]
-                         :effect (req (if-not (and (= target "Lose [Click]") (pay state side card :click 1))
-                                        (do (end-run state side) (system-msg state side "ends the run"))
-                                        (system-msg state side "loses [Click]")))}}]}
+   {:abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
+                                  :msg "force the Runner to lose [Click] or end the run"
+                                  :player :runner
+                                  :prompt "Choose one"
+                                  :choices ["Lose [Click]" "End the run"]
+                                  :effect (req (if-not (and (= target "Lose [Click]")
+                                                            (pay state side card :click 1))
+                                                 (do (end-run state side)
+                                                     (system-msg state side "ends the run"))
+                                                 (system-msg state side "loses [Click]")))})]}
 
    "Tsurugi"
-   {:abilities [end-the-run {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+   {:abilities [end-the-run
+                (do-net-damage 1)]}
 
    "Turing"
    {:abilities [end-the-run]
@@ -756,11 +857,11 @@
    "Turnpike"
    {:abilities [{:msg "force the Runner to lose 1 [Credits]"
                  :effect (effect (lose :runner :credit 1))}
-                {:label "Trace 5 - Give the Runner 1 tag"
-                 :trace {:base 5 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
+                (tag-trace 5)]}
 
    "Tyrant"
-   {:advanceable :while-rezzed :abilities [end-the-run]}
+   {:advanceable :while-rezzed
+    :abilities [end-the-run]}
 
    "Universal Connectivity Fee"
    {:abilities [{:msg (msg "force the Runner to lose " (if (pos? (:tag runner)) "all credits" "1 [Credits]"))
@@ -769,52 +870,42 @@
                                 (lose state :runner :credit 1)))}]}
 
    "Uroboros"
-   {:abilities [{:label "Trace 4 - Prevent the Runner from making another run"
-                 :trace {:base 4 :msg "prevent the Runner from making another run"
-                         :effect (effect (prevent-run))}}
-                {:label "Trace 4 - End the run"
-                 :trace {:base 4 :msg "end the run" :effect (effect (end-run))}}]}
+   {:abilities [(trace-ability 4 {:label "Prevent the Runner from making another run"
+                                  :msg "prevent the Runner from making another run"
+                                  :effect (effect (prevent-run))})
+                (trace-ability 4 end-the-run)]}
+
+   "Vikram 1.0"
+   {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
+                (trace-ability 4 (do-brain-damage 1))]}
 
    "Viktor 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))} end-the-run]}
+   {:abilities [(do-brain-damage 1)
+                end-the-run]}
 
    "Viktor 2.0"
-   {:abilities [{:msg "do 1 brain damage using 1 power counter" :counter-cost 1
-                 :effect (effect (damage :brain 1 {:card card}))}
-                {:label "Trace 2 - Add 1 power counter"
-                 :trace {:base 2 :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}}
+   {:abilities [(power-counter-ability (do-brain-damage 1))
+                (trace-ability 2 add-power-counter)
                 end-the-run]}
 
    "Viper"
-   {:abilities [{:label "Trace 3 - The Runner loses 1 [Click] if able"
-                 :trace {:base 3 :msg  "force the Runner to lose 1 [Click] if able"
-                         :effect (effect (lose :runner :click 1))}}
-                {:label "Trace 3 - End the run"
-                 :trace {:base 3 :msg "end the run" :effect (effect (end-run))}}]}
+   {:abilities [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
+                                  :msg "force the Runner to lose 1 [Click] if able"
+                                  :effect (effect (lose :runner :click 1))})
+                (trace-ability 3 end-the-run)]}
 
    "Virgo"
-   {:abilities [{:label "Trace 2 - Give the Runner 1 tag"
-                 :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))
-                         :kicker {:min 5 :msg "give the Runner 1 tag"
-                                  :effect (effect (tag-runner :runner 1))}}}]}
-
+   (constellation-ice give-tag)
+   
    "Wall of Static"
    {:abilities [end-the-run]}
 
    "Wall of Thorns"
-   {:abilities [end-the-run {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}]}
+   {:abilities [end-the-run
+                (do-net-damage 2)]}
 
    "Wendigo"
-   (let [ab {:req (req (= (:cid card) (:cid target)))
-             :effect (req (if (odd? (:advance-counter (get-card state card)))
-                            (morph state side card "Barrier" "Code Gate")
-                            (morph state side card "Code Gate" "Barrier")))}]
-     {:advanceable :always
-      :effect (req (if (odd? (get card :advance-counter 0))
-                     (morph state side card "Barrier" "Code Gate")
-                     (morph state side card "Code Gate" "Barrier")))
-      :abilities [{:msg "prevent the Runner from using a chosen program for the remainder of this run"}]
-      :events {:advance ab :advancement-placed ab}})
+   (morph-ice "Code Gate" "Barrier" {:msg "prevent the Runner from using a chosen program for the remainder of this run"})
 
    "Whirlpool"
    {:abilities [{:msg "prevent the Runner from jacking out"
@@ -822,17 +913,18 @@
                                          (> (count (concat (:ices (card->server state card))
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
-                              (trash state side card)
-                              (trash-ice-in-run state))}]}
+                              (when current-ice
+                                (trash-ice-in-run state))
+                              (trash state side card))}]}
 
    "Woodcutter"
    {:advanceable :while-rezzed
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+    :abilities [(do-net-damage 1)]}
 
    "Wormhole"
-   {:advanceable :always
-    :rez-cost-bonus (req (* -3 (or (:advance-counter card) 0)))}
-
+   ;; TODO: create an ability for wormhole
+   (space-ice)
+   
    "Wotan"
    {:abilities [end-the-run]}
 
@@ -846,11 +938,11 @@
               {:runner-install wr :trash wr :card-moved wr})}
 
    "Yagura"
-   {:abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
+   {:abilities [(do-net-damage 1)
                 {:msg "look at the top card of R&D"
                  :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
                             :msg "add the top card of R&D to the bottom"
                             :yes-ability {:effect (effect (move (first (:deck corp)) :deck))}}}]}
 
    "Zed 1.0"
-   {:abilities [{:msg "do 1 brain damage" :effect (effect (damage :brain 1 {:card card}))}]}})
+   {:abilities [(do-brain-damage 1)]}})

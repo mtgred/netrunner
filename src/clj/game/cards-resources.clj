@@ -52,6 +52,8 @@
 
    "Bank Job"
    {:data {:counter 8}
+    :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
+                         :req (req (and (is-remote? (:server run)) (not current-ice)))}}
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
                  :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?" :choices :counter :msg (msg "gain " target " [Credits]")
@@ -63,12 +65,26 @@
                                 (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
-   {:effect (effect (gain :max-hand-size 5)) :leave-play (effect (lose :max-hand-size 5))
+   {:effect (effect (gain :hand-size-modification 5))
+    :leave-play (effect (lose :hand-size-modification 5))
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Borrowed Satellite"
-   {:effect (effect (gain :link 1 :max-hand-size 1))
-    :leave-play (effect (lose :link 1 :max-hand-size 1))}
+   {:effect (effect (gain :link 1 :hand-size-modification 1))
+    :leave-play (effect (lose :link 1 :hand-size-modification 1))}
+
+   "Chatterjee University"
+   {:abilities [{:cost [:click 1] :label "Place 1 power counter"
+                 :msg "place 1 power counter on it"
+                 :effect (effect (add-prop card :counter 1))}
+                {:req (req (> (get card :counter 0) 0))
+                 :cost [:click 1] :label "Install a program from your Grip"
+                 :prompt "Choose a program to install from your Grip"
+                 :choices {:req #(and (is-type? % "Program") (in-hand? %))}
+                 :msg (msg "install " (:title target))
+                 :effect (effect (install-cost-bonus [:credit (* -1 (:counter card))])
+                                 (runner-install target)
+                                 (add-prop card :counter -1))}]}
 
    "Chrome Parlor"
    {:events
@@ -510,7 +526,8 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
+   {:effect (effect (gain :hand-size-modification 2))
+    :leave-play (effect (lose :hand-size-modification 2))}
 
    "Rachel Beckman"
    {:effect (req (gain state :runner :click 1 :click-per-turn 1)
@@ -563,9 +580,9 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:effect (effect (lose :runner :max-hand-size 2))
-    :leave-play (effect (gain :runner :max-hand-size 2))
-    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (:max-hand-size runner)))
+   {:effect (effect (lose :runner :hand-size-modification 2))
+    :leave-play (effect (gain :runner :hand-size-modification 2))
+    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
 
@@ -714,7 +731,7 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
-                                  (swap! ref assoc-in [:runner :max-hand-size] credit))))))
+                                  (swap! ref assoc-in [:runner :hand-size-base] credit))))))
     :leave-play (req (remove-watch state :theophilius-bagbiter))}
 
    "Tri-maf Contact"
@@ -766,11 +783,17 @@
    "Woman in the Red Dress"
    {:events {:runner-turn-begins
              {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
-              :optional {:player :corp
-                         :prompt (msg "Draw " (:title (first (:deck corp))) "?")
-                         :msg (msg "draw " (:title (first (:deck corp))))
-                         :yes-ability {:effect (effect (draw))}
-                         :no-ability {:effect (effect (system-msg "doesn't draw with Woman in the Red Dress"))}}}}}
+              :effect (effect (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
+                              (resolve-ability
+                                {:optional
+                                 {:player :corp
+                                  :prompt (msg "Draw " (:title (first (:deck corp))) "?")
+                                  :yes-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                (system-msg (str "draws " (:title (first (:deck corp)))))
+                                                                (draw))}
+                                  :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                               (system-msg "doesn't draw with Woman in the Red Dress"))}}}
+                               card nil))}}}
 
    "Wyldside"
    {:events {:runner-turn-begins {:msg "draw 2 cards and lose [Click]"

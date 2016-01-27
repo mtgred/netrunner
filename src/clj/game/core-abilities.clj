@@ -174,7 +174,7 @@
   "Prints the ability message"
   [state side ability card targets cost-str]
   (when-let [msg (:msg ability)]
-    (let [desc (if (string? msg) msg (msg state side card targets))]
+    (when-let [desc (if (string? msg) msg (msg state side card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
@@ -341,7 +341,7 @@
                                  " to initiate a trace with strength " total
                                  " (" base
                                  (when (pos? bonus) (str " + " bonus " bonus"))
-                                 " + " boost " [Credits]) (" (:msg ability) ")"))
+                                 " + " boost " [Credits]) (" (:label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %) {:priority 2})
     (swap! state assoc :trace {:strength total :ability ability :card card})

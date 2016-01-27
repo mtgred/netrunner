@@ -33,6 +33,26 @@
                                                                              (resolve-ability state side (abt 1 n) card nil))}
                                                                card nil)))}}})
 
+   "Advanced Concept Hopper"
+   {:events
+    {:run
+     {:req (req (first-event state side :run))
+      :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
+                      (resolve-ability
+                        {:player :corp
+                         :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?" :once :per-turn
+                         :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
+                         :effect (req (case target
+                                        "Gain 1 [Credits]"
+                                        (do (gain state :corp :credit 1)
+                                            (system-msg state :corp (str "uses Advanced Concept Hopper to gain 1 [Credits]")))
+                                        "Draw 1 card"
+                                        (do (draw state :corp)
+                                            (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card")))
+                                        "No action"
+                                        (system-msg state :corp (str "doesn't use Advanced Concept Hopper")))
+                                      (clear-wait-prompt state :runner))} card nil))}}}
+
    "Ancestral Imager"
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 
@@ -206,15 +226,13 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Hades Fragment"
-   {:events {:corp-turn-begins
-             {:optional
-              {:prompt "Add 1 card from Archives to bottom of R&D?"
-               :yes-ability {:effect (effect (resolve-ability
-                                              {:prompt "Choose a card"
-                                               :choices (:discard corp)
-                                               :effect (effect (move target :deck))
-                                               :msg (msg "add " (if (:seen target) (:title target) "a card")
-                                                         " to the bottom of R&D")} card target))}}}}}
+   {:events {:runner-turn-ends
+             {:effect (req (toast state :corp
+                                  (str "Click Hades Fragment to add 1 card from Archives to the bottom of R&D.") "info"))}}
+    :abilities [{:prompt "Choose a card to add to the bottom of R&D"
+                 :choices (req (:discard corp))
+                 :effect (effect (move target :deck))
+                 :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
 
    "Helium-3 Deposit"
    {:choices ["0", "1", "2"] :prompt "How many power counters?"
@@ -395,8 +413,8 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
-   {:effect (effect (lose :runner :max-hand-size 1))
-    :leave-play (effect (gain :runner :max-hand-size 1))}
+   {:effect (effect (lose :runner :hand-size-modification 1))
+    :leave-play (effect (gain :runner :hand-size-modification 1))}
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"

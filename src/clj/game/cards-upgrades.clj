@@ -175,6 +175,30 @@
                                        (move state side c :hand)
                                        (update-run-ice state side)))} card nil)))}]}
 
+   "Mumbad City Grid"
+   {:abilities [{:req (req (and this-server
+                                (< (:position run) (count (:ices run)))
+                                (> (count (:ices run)) 1)))
+                 :label "Swap the ICE just passed with another piece of ICE protecting this server"
+                 :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
+                                                                                (:position run))
+                                    ice-zone (:zone passed-ice)]
+                                 (resolve-ability state :corp
+                                   {:prompt (msg "Select a piece of ICE to swap with " (:title passed-ice))
+                                    :choices {:req #(and (= ice-zone (:zone %)) (ice? %))}
+                                    :effect (req (let [fndx (ice-index state passed-ice)
+                                                       sndx (ice-index state target)
+                                                       fnew (assoc passed-ice :zone (:zone target))
+                                                       snew (assoc target :zone (:zone passed-ice))]
+                                                   (swap! state update-in (cons :corp ice-zone)
+                                                          #(assoc % fndx snew))
+                                                   (swap! state update-in (cons :corp ice-zone)
+                                                          #(assoc % sndx fnew))
+                                                   (update-ice-strength state side fnew)
+                                                   (update-ice-strength state side snew)))} card nil)
+                                 (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
+                                                             " with " (card-str state target)))))}]}
+
    "NeoTokyo Grid"
    {:events {:advance {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
                        :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
@@ -227,7 +251,8 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
+    :effect (effect (gain :hand-size-modification 2))
+    :leave-play (effect (lose :hand-size-modification 2))}
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
@@ -314,19 +339,21 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :max-hand-size 1))}]
+                              (lose state :runner :hand-size-modification 1))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
                                                    {:corp-turn-begins
                                                     {:msg (msg "increase the Runner's maximum hand size by " n)
-                                                     :effect (effect (gain :runner :max-hand-size n)
+                                                     :effect (effect (gain :runner :hand-size-modification n)
                                                                      (unregister-events card)
                                                                      (update! (dissoc card :times-used)))}}
                                                    (assoc card :zone '(:discard)))))}
     :events {:corp-turn-begins {:req (req (:times-used card))
-                                :msg (msg "increase the Runner's maximum hand size by " (:times-used card))
-                                :effect (effect (gain :runner :max-hand-size (:times-used card))
+                                :msg (msg "increase the Runner's maximum hand size by "
+                                          (:times-used card))
+                                :effect (effect (gain :runner :hand-size-modification
+                                                      (:times-used card))
                                                 (update! (dissoc card :times-used)))}}}
 
    "Will-o-the-Wisp"

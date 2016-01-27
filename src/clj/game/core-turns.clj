@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare clear-turn-register! clear-wait-prompt create-deck keep-hand mulligan show-wait-prompt turn-message)
+(declare clear-turn-register! clear-wait-prompt create-deck keep-hand mulligan show-wait-prompt turn-message hand-size)
 
 ;;; Functions for the creation of games and the progression of turns.
 (defn init-game
@@ -20,14 +20,18 @@
                         :hand (zone :hand (take 5 corp-deck))
                         :discard [] :scored [] :rfg [] :play-area []
                         :servers {:hq {} :rd{} :archives {}}
-                        :click 0 :credit 5 :bad-publicity 0 :agenda-point 0 :max-hand-size 5
+                        :click 0 :credit 5 :bad-publicity 0
+                        :hand-size-base 5 :hand-size-modification 0
+                        :agenda-point 0
                         :click-per-turn 3 :agenda-point-req 7 :keep false}
                  :runner {:user (:user runner) :identity runner-identity
                           :deck (zone :deck (drop 5 runner-deck))
                           :hand (zone :hand (take 5 runner-deck))
                           :discard [] :scored [] :rfg [] :play-area []
                           :rig {:program [] :resource [] :hardware []}
-                          :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0 :agenda-point 0 :max-hand-size 5
+                          :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
+                          :hand-size-base 5 :hand-size-modification 0
+                          :agenda-point 0
                           :hq-access 1 :rd-access 1 :tagged 0
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (card-init state :corp corp-identity)
@@ -60,8 +64,10 @@
 
 ;; Appears to be unused???
 (def reset-value
-  {:corp {:credit 5 :bad-publicity 0 :max-hand-size 5}
-   :runner {:credit 5 :run-credit 0 :link 0 :memory 4 :max-hand-size 5}})
+  {:corp {:credit 5 :bad-publicity 0
+          :hand-size-base 5 :hand-size-modification 0}
+   :runner {:credit 5 :run-credit 0 :link 0 :memory 4
+            :hand-size-base 5 :hand-size-modification 0}})
 
 (defn mulligan
   "Mulligan starting hand."
@@ -109,11 +115,11 @@
     (update-all-advancement-costs state side)))
 
 (defn end-turn [state side args]
-  (let [max-hand-size (max (get-in @state [side :max-hand-size]) 0)]
+  (let [max-hand-size (max (hand-size state side) 0)]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (turn-message state side false)
       (if (= side :runner)
-        (do (when (neg? (get-in @state [:runner :max-hand-size]))
+        (do (when (neg? (hand-size state side))
               (flatline state))
             (trigger-event state side :runner-turn-ends))
         (trigger-event state side :corp-turn-ends))

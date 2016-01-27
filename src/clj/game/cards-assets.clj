@@ -55,8 +55,8 @@
                                       :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}}
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :max-hand-size 2))
-    :leave-play (effect (gain :runner :max-hand-size 2))
+   {:effect (effect (lose :runner :hand-size-modification 2))
+    :leave-play (effect (gain :runner :hand-size-modification 2))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "City Surveillance"
@@ -106,7 +106,8 @@
               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Cybernetics Court"
-   {:effect (effect (gain :max-hand-size 4)) :leave-play (effect (lose :max-hand-size 4))}
+   {:effect (effect (gain :hand-size-modification 4))
+    :leave-play (effect (lose :hand-size-modification 4))}
 
    "Daily Business Show"
    {:events {:corp-draw
@@ -297,6 +298,20 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
 
+   "Kala Ghoda Real TV"
+   {:events
+    {:corp-turn-begins
+     {:optional
+      {:req (req (not= (:title (:card (first (get-in @state [side :prompt])))) (:title card)))
+       :prompt "Use Kala Ghoda Real TV to look at the top card of the Runner's Stack?"
+       :yes-ability {:msg "look at the top card of the Runner's Stack"
+                     :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
+                                                        (:title (first (:deck runner)))) ["OK"] {}))}}}}
+    :abilities [{:label "[Trash]: Trash the top card of the Runner's Stack"
+                 :msg "trash the top card of the Runner's Stack"
+                 :effect (effect (mill :runner)
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Launch Campaign"
    {:effect (effect (add-prop card :counter 6))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -358,10 +373,13 @@
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"
-   {:effect (effect (gain :runner :max-hand-size 1))
-    :leave-play (effect (lose :runner :max-hand-size 1))
+   {:effect (effect (gain :runner :hand-size-modification 1))
+    :leave-play (effect (lose :runner :hand-size-modification 1))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Mumba Temple"
+   {:recurring 2}
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
@@ -570,8 +588,11 @@
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
 
    "Sundew"
-   {:events {:runner-spent-click {:req (req (not this-server)) :once :per-turn
-                                  :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}}
+   {:events {:runner-spent-click {:req (req (= (:click runner) (:click-per-turn runner)))
+                                  :once :per-turn
+                                  :msg (req (when (not this-server) "gain 2 [Credits]"))
+                                  :effect (req (when (not this-server)
+                                                 (gain state :corp :credit 2)))}}}
 
    "Team Sponsorship"
    {:events {:agenda-scored {:effect (req (toast state :corp (str "Click Team Sponsorship "
