@@ -103,6 +103,11 @@
   [card]
   (= (:zone card) [:hand]))
 
+(defn in-deck?
+  "Checks if the specified card is in the draw deck."
+  [card]
+  (= (:zone card) [:deck]))
+
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
   [card type]
