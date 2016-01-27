@@ -315,6 +315,22 @@
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
 
+   "Maya"
+   {:effect (effect (gain :memoryunits 2)) :leave-play (effect (lose :memoryunits 2))
+    :abilities [{:once :per-turn
+                 :req (req (when-let [c (:card (first (get-in @state [:runner :prompt])))]
+                             (in-deck? c)))
+                 :msg "move the card just accessed to the bottom of R&D"
+                 :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
+                                (when (is-type? c "Agenda") ; trashing before the :access events actually fire; fire them manually
+                                  (resolve-steal-events state side c))
+                                (move state :corp c :deck)
+                                (tag-runner state :runner 1)
+                                (swap! state update-in [side :prompt] rest)
+                                (when-let [run (:run @state)]
+                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+                                    (handle-end-run state :runner)))))}]}
+
    "MemStrips"
    {:effect (effect (gain :memory 3))}
 
