@@ -657,48 +657,6 @@
       (is (= 0 (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
-(deftest utopia-shard
-  "Utopia Shard - Installing multiple ways"
-  (do-game
-    (new-game (default-corp [(qty "Wraparound" 3) (qty "Quandary" 3)])
-              (default-runner [(qty "Utopia Shard" 1) (qty "Sneakdoor Beta" 1)]))
-    (play-from-hand state :corp "Wraparound" "HQ")
-    (play-from-hand state :corp "Wraparound" "Archives")
-    (take-credits state :corp)
-    ; Play Utopia Shard by running on HQ
-    (core/click-run state :runner {:server "HQ"})
-    (core/no-action state :corp nil)
-    (core/continue state :runner nil)
-    (core/no-action state :corp nil)
-    (play-from-hand state :runner "Utopia Shard")
-    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
-    (is (= 5 (:credit (get-runner))) "Free install")
-    (core/move state :runner (find-card "Utopia Shard" (:resource (:rig (get-runner)))) :hand)
-    (is (= 0 (count (get-in @state [:runner :rig :resource]))))
-    ; Play Utopia Shard regularly by paying 7
-    (core/gain state :runner :credit 2)
-    (play-from-hand state :runner "Utopia Shard")
-    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
-    (is (= 0 (:credit (get-runner))) "Paid install cost")
-    (core/move state :runner (find-card "Utopia Shard" (:resource (:rig (get-runner)))) :hand)
-    (is (= 0 (count (get-in @state [:runner :rig :resource]))))
-    ; Play Utopia Shard by running on Archives with Sneakdoor Beta
-    (core/gain state :runner :credit 4)
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (let [sneak (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner sneak 0)) ; Make a run on Archives. If successful treat it as a run on HQ.
-    (core/no-action state :corp nil)
-    (core/continue state :runner nil)
-    (core/no-action state :corp nil)
-    (play-from-hand state :runner "Utopia Shard")
-    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Utopia Shard installed")
-    (is (= 0 (:credit (get-runner))) "Free install")
-    (let [utopia (get-in @state [:runner :rig :resource 0])]
-      (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
-      (card-ability state :runner utopia 0)) ; Corp discards 2 cards from HQ at random
-    (is (= 1 (count (:discard (get-runner)))) "Utopia Shard trashed")
-    (is (= 2 (count (:discard (get-corp)))) "2 cards trashed")))
-
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"
   (do-game
