@@ -1,14 +1,23 @@
 (in-ns 'game.core)
 
+(defn campaign
+  "Creates a Campaign with X counters draining Y per-turn.
+  Trashes itself when out of counters"
+  [counters per-turn]
+  {:data {:counter-type "Credit"}
+   :effect (effect (add-prop card :counter counters))
+   :derezzed-events {:runner-turn-ends corp-rez-toast}
+   :events {:corp-turn-begins {:msg (str "gain " per-turn " [Credits]")
+                               :counter-cost per-turn
+                               :effect (req (gain state :corp :credit per-turn)
+                                            (when (zero? (:counter card))
+                                              (trash state :corp card)))}}})
+
+;;; Card definitions
 (def cards-assets
   {"Adonis Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 12))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
-                                :effect (req (gain state :corp :credit 3)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
-
+   (campaign 12 3)
+   
    "Aggressive Secretary"
    {:advanceable :always
     :access {:optional
@@ -194,12 +203,8 @@
                          :effect (effect (trash-cost-bonus 1))}}}
 
    "Eve Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 16))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
-                                :effect (req (gain state :corp :credit 2)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
+   (campaign 16 2)
+
 
    "Executive Boot Camp"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -315,13 +320,8 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Launch Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 6))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
-                                :effect (req (gain state :corp :credit 2)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
-
+   (campaign 6 2)
+   
    "Levy University"
    {:abilities [{:prompt "Choose an ICE"
                  :msg (msg "adds " (:title target) " to HQ")
