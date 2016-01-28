@@ -192,20 +192,11 @@
                  :msg (msg "place 1 advancement token on " (card-str state target))}]}
 
    "Edge of World"
-   {:access {:req (req installed)
-             :effect (effect (show-wait-prompt :runner "Corp to use Edge of World")
-                             (resolve-ability
-                               {:optional
-                                {:prompt "Pay 3 [Credits] to use Edge of World ability?"
-                                 :yes-ability {:cost [:credit 3]
-                                               :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
-                                                         " brain damage")
-                                               :effect (effect (clear-wait-prompt :runner)
-                                                               (damage :brain
-                                                                       (count (get-in corp [:servers (last (:server (:run @state))) :ices]))
-                                                                       {:card card}))}
-                                 :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                               card nil))}}
+   (letfn [(ice-count [state]
+             (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))] 
+       (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
+                                    :effect (effect (damage :brain (ice-count state)
+                                                            {:card card}))}))
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -588,13 +579,14 @@
    {:access {:req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
                              (resolve-ability
-                               {:optional {:prompt "Pay 4 [Credits] to use Snare! ability?"
-                                           :yes-ability {:cost [:credit 4]
-                                                         :msg "do 3 net damage and give the Runner 1 tag"
-                                                         :effect (effect (clear-wait-prompt :runner)
-                                                                         (damage :net 3 {:card card})
-                                                                         (tag-runner :runner 1))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}} card nil))}}
+                               {:optional
+                                {:prompt "Pay 4 [Credits] to use Snare! ability?"
+                                 :end-effect (effect (clear-wait-prompt :runner))
+                                 :yes-ability {:cost [:credit 4]
+                                               :msg "do 3 net damage and give the Runner 1 tag"
+                                               :effect (effect (damage :net 3 {:card card})
+                                                               (tag-runner :runner 1))}}}
+                               card nil))}}
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (card-str state target))
