@@ -2,7 +2,7 @@
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
-  "Effect for triggering ambush on access. 
+  "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
   ([cost ability]
    (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
@@ -43,7 +43,7 @@
 (def cards-assets
   {"Adonis Campaign"
    (campaign 12 3)
-   
+
    "Aggressive Secretary"
    (advance-ambush 2 {:effect
                       (req (let [agg card
@@ -51,7 +51,7 @@
                                         (assoc-in [:choices :max] (:advance-counter agg))
                                         (assoc :effect (effect (trash-cards targets))))]
                              (resolve-ability state side ab agg nil)))})
-   
+
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -84,7 +84,7 @@
    "Cerebral Overwriter"
    (advance-ambush 3 {:msg (msg "do " (:advance-counter card 0) " brain damage")
                       :effect (effect (damage :brain (:advance-counter card 0) {:card card}))})
-   
+
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
@@ -192,7 +192,7 @@
 
    "Edge of World"
    (letfn [(ice-count [state]
-             (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))] 
+             (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
        (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
                                     :effect (effect (damage :brain (ice-count state)
                                                             {:card card}))}))
@@ -324,7 +324,7 @@
 
    "Launch Campaign"
    (campaign 6 2)
-   
+
    "Levy University"
    {:abilities [{:prompt "Choose an ICE"
                  :msg (msg "adds " (:title target) " to HQ")
@@ -426,7 +426,7 @@
                                              (:advancementcost target))))}
               card nil))}
     "Score an Agenda from HQ?")
-   
+
    "Primary Transmission Dish"
    {:recurring 3}
 
