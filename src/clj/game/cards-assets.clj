@@ -1,5 +1,31 @@
 (in-ns 'game.core)
 
+;;; Asset-specific helpers
+(defn installed-access-trigger
+  "Effect for triggering ambush on access. 
+  Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
+  ([cost ability]
+   (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (> cost 0)
+                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
+                  (req (str "Use " (:title card) " ability?")))]
+     (installed-access-trigger cost ab prompt)))
+  ([cost ability prompt]
+   {:access {:req (req (and installed (>= (:credit corp) cost)))
+             :effect (effect (show-wait-prompt :runner (str "Corp to use " (:title card)))
+                             (resolve-ability
+                              {:optional
+                               {:prompt prompt
+                                :yes-ability ability
+                                :end-effect (effect (clear-wait-prompt :runner))}}
+                              card nil))}}))
+
+(defn advance-ambush
+  "Creates advanceable ambush structure with specified ability for specified cost"
+  ([cost ability] (assoc (installed-access-trigger cost ability) :advanceable :always))
+  ([cost ability prompt] (assoc (installed-access-trigger cost ability prompt)
+                           :advanceable :always)))
+
 (defn campaign
   "Creates a Campaign with X counters draining Y per-turn.
   Trashes itself when out of counters"
@@ -19,15 +45,13 @@
    (campaign 12 3)
    
    "Aggressive Secretary"
-   {:advanceable :always
-    :access {:optional
-             {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
-              :yes-ability {:cost [:credit 2]
-                            :effect (req (let [agg card]
-                                          (resolve-ability
-                                           state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
-                                                        :effect (effect (trash-cards targets))) agg nil)))}}}}
-
+   (advance-ambush 2 {:effect
+                      (req (let [agg card
+                                 ab (-> trash-program
+                                        (assoc-in [:choices :max] (:advance-counter agg))
+                                        (assoc :effect (effect (trash-cards targets))))]
+                             (resolve-ability state side ab agg nil)))})
+   
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -58,12 +82,9 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Cerebral Overwriter"
-   {:advanceable :always
-    :access {:optional {:req (req installed)
-                        :prompt "Pay 3 [Credits] to use Cerebral Overwriter ability?"
-                        :yes-ability {:cost [:credit 3] :msg (msg "do " (:advance-counter card) " brain damage")
-                                      :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}}
-
+   (advance-ambush 3 {:msg (msg "do " (:advance-counter card 0) " brain damage")
+                      :effect (effect (damage :brain (:advance-counter card 0) {:card card}))})
+   
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
@@ -234,17 +255,9 @@
                       :effect (effect (as-agenda :corp card 1))}}}
 
    "Ghost Branch"
-   {:advanceable :always
-    :access {:req (req installed)
-             :effect (effect (show-wait-prompt :runner "Corp to use Ghost Branch")
-                             (resolve-ability
-                               {:optional {:prompt "Use Ghost Branch ability?"
-                                           :yes-ability {:msg (msg "give the Runner " (:advance-counter card) " tag"
-                                                                   (when (> (:advance-counter card) 1) "s"))
-                                                         :effect (effect (clear-wait-prompt :runner)
-                                                                         (tag-runner :runner (:advance-counter card)))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                               card nil))}}
+   (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
+                                (when (> (:advance-counter card) 1) "s"))
+                      :effect (effect (tag-runner :runner (:advance-counter card)))})
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -410,21 +423,20 @@
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Plan B"
-   {:advanceable :always
-    :access {:optional
-             {:prompt "Score an Agenda from HQ?"
-              :req (req installed)
-              :yes-ability {:effect (req (let [c card]
-                                           (resolve-ability
-                                             state side
-                                             {:prompt "Choose an Agenda in HQ to score"
-                                              :choices {:req #(and (is-type? % "Agenda")
-                                                                   (<= (:advancementcost %) (:advance-counter c))
-                                                                   (in-hand? %))}
-                                              :msg (msg "score " (:title target))
-                                              :effect (effect (score (assoc target :advance-counter
-                                                                                   (:advancementcost target))))} c nil)))}}}}
-
+   (advance-ambush
+    0
+    {:effect
+     (effect (resolve-ability
+              {:prompt "Choose an Agenda in HQ to score"
+               :choices {:req #(and (is-type? % "Agenda")
+                                    (<= (:advancementcost %) (:advance-counter card))
+                                    (in-hand? %))}
+               :msg (msg "score " (:title target))
+               :effect (effect (score (assoc target :advance-counter
+                                             (:advancementcost target))))}
+              card nil))}
+    "Score an Agenda from HQ?")
+   
    "Primary Transmission Dish"
    {:recurring 3}
 
@@ -436,11 +448,9 @@
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
 
    "Project Junebug"
-   {:advanceable :always
-    :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?"
-                        :req (req (and installed (> (:credit corp) 0)))
-                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (get card :advance-counter 0)) " net damage")
-                                      :effect (effect (damage :net (* 2 (get card :advance-counter 0)) {:card card}))}}}}
+   (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter card 0)) " net damage")
+                      :effect (effect (damage :net (* 2 (:advance-counter card 0))
+                                              {:card card}))})
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
@@ -541,14 +551,13 @@
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
-   {:advanceable :always
-    :access {:optional
-             {:req (req installed) :prompt "Pay 1 [Credits] to use Shattered Remains ability?"
-              :yes-ability {:cost [:credit 1]
-                            :effect (req (let [shat card]
-                                          (resolve-ability
-                                           state side (assoc (assoc-in trash-hardware [:choices :max] (req (:advance-counter shat)))
-                                                        :effect (effect (trash-cards targets))) shat nil)))}}}}
+   (advance-ambush 1 {:effect (req (let [shat card]
+                                     (resolve-ability
+                                      state side 
+                                      (-> trash-hardware
+                                          (assoc-in [:choices :max] (:advance-counter shat))
+                                          (assoc :effect (effect (trash-cards targets))))
+                                      shat nil)))})
 
    "Shi.Kyū"
    {:access
