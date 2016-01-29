@@ -141,6 +141,38 @@
     (let [imp (get-in @state [:runner :rig :program 0])]
       (is (= 3 (:counter (refresh imp))) "Imp received an extra virus counter on install"))))
 
+(deftest maya
+  "Maya - Move accessed card to bottom of R&D"
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
+              (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3)]))
+    (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maya")
+    (let [maya (get-in @state [:runner :rig :hardware 0])
+          accessed (first (:deck (get-corp)))]
+      (run-empty-server state :rd)
+      (is (= (:cid accessed) (:cid (:card (first (:prompt (get-runner)))))) "Accessing the top card of R&D")
+      (card-ability state :runner maya 0)
+      (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+      (is (not (:run @state)) "Run is ended")
+      (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
+      (take-credits state :runner)
+      (core/draw state :corp)
+      (take-credits state :corp)
+      (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+      (let [accessed (first (:deck (get-corp)))]
+        (run-empty-server state :rd)
+        (prompt-choice :corp "Yes")
+        (is (= 0 (count (:hand (get-runner)))) "Runner took Snare! net damage")
+        (is (= (:cid accessed) (:cid (:card (first (:prompt (get-runner)))))) "Accessing the top card of R&D")
+        (card-ability state :runner maya 0)
+        (is (empty? (:prompt (get-runner))) "No more prompts for runner")
+        (is (not (:run @state)) "Run is ended")
+        (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))))
+
 (deftest plascrete
   "Plascrete Carapace - Prevent meat damage"
   (do-game
