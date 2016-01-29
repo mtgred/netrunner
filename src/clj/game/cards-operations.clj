@@ -235,7 +235,8 @@
    {:effect (effect (draw 3)
                     (resolve-ability
                       {:prompt "Choose a card in HQ to put on top of R&D"
-                       :choices (req (:hand corp)) :not-distinct true
+                       :choices {:req #(and (in-hand? %)
+                                            (= (:side %) "Corp"))}
                        :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
                        :effect (effect (move target :deck {:front true}))}
                      card nil))}
