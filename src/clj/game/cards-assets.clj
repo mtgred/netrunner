@@ -137,8 +137,7 @@
               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Cybernetics Court"
-   {:effect (effect (gain :hand-size-modification 4))
-    :leave-play (effect (lose :hand-size-modification 4))}
+   {:in-play [:hand-size-modification 4]}
 
    "Daily Business Show"
    {:events {:corp-draw
@@ -169,7 +168,7 @@
    {:recurring 2}
 
    "Director Haas"
-   {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
+   {:in-play [:click 1 :click-per-turn 1]
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"

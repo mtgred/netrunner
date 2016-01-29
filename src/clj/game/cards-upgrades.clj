@@ -251,8 +251,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :effect (effect (gain :hand-size-modification 2))
-    :leave-play (effect (lose :hand-size-modification 2))}
+    :in-play [:hand-size-modification 2]}
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
