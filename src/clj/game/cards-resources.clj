@@ -77,14 +77,15 @@
    {:abilities [{:cost [:click 1] :label "Place 1 power counter"
                  :msg "place 1 power counter on it"
                  :effect (effect (add-prop card :counter 1))}
-                {:req (req (> (get card :counter 0) 0))
+                {:req (req (>= (get card :counter 0) 0))
                  :cost [:click 1] :label "Install a program from your Grip"
                  :prompt "Choose a program to install from your Grip"
                  :choices {:req #(and (is-type? % "Program") (in-hand? %))}
                  :msg (msg "install " (:title target))
-                 :effect (effect (install-cost-bonus [:credit (* -1 (:counter card))])
-                                 (runner-install target)
-                                 (add-prop card :counter -1))}]}
+                 :effect (req (install-cost-bonus state side [:credit (* -1 (:counter card))])
+                              (runner-install state side target)
+                              (when (pos? (:counter card))
+                                (add-prop state side card :counter -1)))}]}
 
    "Chrome Parlor"
    {:events
