@@ -77,8 +77,7 @@
    {:abilities [{:cost [:click 1] :label "Place 1 power counter"
                  :msg "place 1 power counter on it"
                  :effect (effect (add-prop card :counter 1))}
-                {:req (req (>= (get card :counter 0) 0))
-                 :cost [:click 1] :label "Install a program from your Grip"
+                {:cost [:click 1] :label "Install a program from your Grip"
                  :prompt "Choose a program to install from your Grip"
                  :choices {:req #(and (is-type? % "Program") (in-hand? %))}
                  :msg (msg "install " (:title target))
