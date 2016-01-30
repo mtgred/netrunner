@@ -65,6 +65,30 @@
       (is (= 3 (count (:hand (get-runner))))
           "No meat damage dealt by Tri-maf's leave play effect"))))
 
+(deftest apocalypse-in-play-ability
+  "Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains"
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
+              (default-runner [(qty "Logos" 3) (qty "Apocalypse" 3)]))
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Logos")
+    (is (= 1 (:hand-size-modification (get-runner))) "Hand-size increased from Logos")
+    (is (= 5 (:memory (get-runner))) "Memory increased from Logos")
+    (core/gain state :runner :click 1 :credit 2)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Apocalypse")
+    (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+    (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+    (let [logos (get-in @state [:runner :rig :facedown 0])]
+      (is (:facedown (refresh logos)) "Logos is facedown")
+      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos facedown")
+      (is (= 4 (:memory (get-runner))) "Memory reset with Logos facedown"))))
+
 (deftest blackmail
   "Prevent rezzing of ice for one run"
   (do-game
