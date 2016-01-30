@@ -80,3 +80,20 @@
     (is (= 5 (:memory (get-runner))))
     (let [ov (get-in @state [:runner :rig :program 0])]
       (is (= 5 (:counter (refresh ov))) "Overmind has 5 counters"))))
+
+(deftest wyrm
+  "Wyrm reduces strength of ice"
+  (do-game
+   (new-game (default-corp [(qty "Ice Wall" 1)])
+             (default-runner [(qty "Wyrm" 1)]))
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Wyrm")
+   (run-on state "HQ")
+   (let [ice-wall (get-ice state :hq 0)
+         wyrm (get-in @state [:runner :rig :program 0])]
+     (core/rez state :corp ice-wall)
+     (card-ability state :runner wyrm 1)
+     (is (= 0 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
+     (card-ability state :runner wyrm 1)
+     (is (= -1 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
