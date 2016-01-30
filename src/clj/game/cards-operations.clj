@@ -175,6 +175,12 @@
    "Cyberdex Trial"
    {:effect (effect (purge))}
 
+   "Dedication Ceremony"
+   {:prompt "Choose a faceup card"
+    :choices {:req rezzed?}
+    :msg (msg "place 3 advancement tokens on " (card-str state target))
+    :effect (effect (add-prop :corp target :advance-counter 3 {:placed true}))}
+
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
@@ -224,6 +230,16 @@
                             (system-msg (str "adds " (:title target) " to the top of the Stack")))
             :unsuccessful {:msg "take 1 bad publicity"
                            :effect (effect (gain :corp :bad-publicity 1))}}}
+
+   "Heritage Committee"
+   {:effect (effect (draw 3)
+                    (resolve-ability
+                      {:prompt "Choose a card in HQ to put on top of R&D"
+                       :choices {:req #(and (in-hand? %)
+                                            (= (:side %) "Corp"))}
+                       :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
+                       :effect (effect (move target :deck {:front true}))}
+                     card nil))}
 
    "Housekeeping"
    {:events {:runner-install {:req (req (= side :runner))
