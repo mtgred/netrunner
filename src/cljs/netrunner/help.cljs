@@ -161,14 +161,6 @@
                        "First step in every troubleshooting should be a forced refresh of your browser by doing a force refresh ("
                        [:code "Ctrl + F5"] " on Windows). Also read the announcements on the main page, something about server problems "
                        "may be written there."]}
-            {:id "laggy"
-             :title "The site is laggy."
-             :content (list
-                        [:p "Check the number of games being played in upper right corner. Currently the server can handle "
-                         "about 60-70 simultaneous games without slowing down - above that number the lag is expected, sadly. "
-                         "Try to come back later."]
-                        [:p "If the game number is low and the site is laggy despite that, the server may be in a need of restart. "
-                         "Try to come back later."])}
             {:id "touchproblems"
              :title "The website doesn't work well on my touchscreen device."
              :content [:p "Touchscreen devices are currently not supported. See answer to " [:a {:href "#bestbrowser"} "this question"]
