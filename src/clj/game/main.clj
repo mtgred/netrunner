@@ -25,6 +25,7 @@
    "mulligan" core/mulligan
    "keep" core/keep-hand
    "start-turn" core/start-turn
+   "end-phase-12" core/end-phase-12
    "end-turn" core/end-turn
    "draw" core/click-draw
    "credit" core/click-credit
