@@ -104,7 +104,8 @@
                                  card nil)))}]}
 
    "Chop Bot 3000"
-   {:abilities [{:msg (msg "trash " (:title target))
+   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
+    :abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :effect (effect (trash target)
                                  (resolve-ability

@@ -40,6 +40,8 @@
                                               (trash state :corp card)))}}})
 
 ;;; Card definitions
+(declare in-server?)
+
 (def cards-assets
   {"Adonis Campaign"
    (campaign 12 3)
@@ -100,24 +102,28 @@
 
    "Constellation Protocol"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:optional
-              {:prompt "Move one advancement token between ICE?"
-               :yes-ability {:choices {:req #(and (ice? %) (:advance-counter %))}
-                             :priority true
-                             :effect (req (let [fr target]
-                                            (resolve-ability
-                                              state side
-                                              {:priority true
-                                               :prompt "Move to where?"
-                                               :choices {:req #(and (ice? %)
-                                                                    (not= (:cid fr) (:cid %))
-                                                                    (can-be-advanced? %))}
-                                               :effect (effect (add-prop :corp target :advance-counter 1)
-                                                               (add-prop :corp fr :advance-counter -1)
-                                                               (system-msg (str "uses Constellation Protocol to move an advancement token from "
-                                                                                (card-str state fr) " to " (card-str state target))))} card nil)
-                                            card nil))}}}}}
+    :flags {:corp-phase-12
+            (req (let [tokens (filter #(pos? (:advance-counter % 0)) (all-installed state :corp))
+                       advanceable (filter #(can-be-advanced? %) (all-installed state :corp))]
+                   (when (and (not-empty tokens) (not-empty (clojure.set/difference (set advanceable) (set tokens))))
+                     true)))}
+    :once :per-turn
+    :abilities [{:label "Move an advancement token between ICE"
+                 :choices {:req #(and (ice? %) (:advance-counter %))}
+                 :priority true
+                 :effect (req (let [fr target]
+                                (resolve-ability
+                                  state side
+                                  {:priority true
+                                   :prompt "Move to where?"
+                                   :choices {:req #(and (ice? %)
+                                                        (not= (:cid fr) (:cid %))
+                                                        (can-be-advanced? %))}
+                                   :effect (effect (add-prop :corp target :advance-counter 1)
+                                                   (add-prop :corp fr :advance-counter -1)
+                                                   (system-msg (str "uses Constellation Protocol to move an advancement token from "
+                                                                    (card-str state fr) " to " (card-str state target))))} card nil)
+                                card nil))}]}
 
    "Contract Killer"
    {:advanceable :always
@@ -130,11 +136,14 @@
    "Corporate Town"
    {:additional-cost [:forfeit]
     :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:prompt "Choose a resource to trash with Corporate Town"
-              :choices {:req #(is-type? % "Resource")}
-              :msg (msg "trash " (:title target))
-              :effect (effect (trash target {:unpreventable true}))}}}
+    ; not-empty doesn't work for the next line, because it does not return literal true; it returns the collection.
+    ; flags need exact equality of value to work.
+    :flags {:corp-phase-12 (req (pos? (count (filter #(card-is? % :type "Resource") (all-installed state :runner)))))}
+    :abilities [{:label "Trash a resource"
+                 :prompt "Choose a resource to trash with Corporate Town"
+                 :choices {:req #(is-type? % "Resource")}
+                 :msg (msg "trash " (:title target))
+                 :effect (effect (trash target {:unpreventable true}))}]}
 
    "Cybernetics Court"
    {:in-play [:hand-size-modification 4]}
@@ -183,10 +192,11 @@
 
    "Early Premiere"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %) (in-server? %)) (all-installed state :corp)))}
     :abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced in a server"
                  :choices {:req #(and (can-be-advanced? %)
                                       (installed? %)
-                                      (= (last (:zone %)) :content))} ; should be *in* a server
+                                      (in-server? %))} ; should be *in* a server
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
                  :msg (msg "place 1 advancement token on " (card-str state target))}]}
 
@@ -219,6 +229,7 @@
 
    "Executive Boot Camp"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
@@ -309,15 +320,11 @@
                            card nil))}]}
 
    "Kala Ghoda Real TV"
-   {:events
-    {:corp-turn-begins
-     {:optional
-      {:req (req (not= (:title (:card (first (get-in @state [side :prompt])))) (:title card)))
-       :prompt "Use Kala Ghoda Real TV to look at the top card of the Runner's Stack?"
-       :yes-ability {:msg "look at the top card of the Runner's Stack"
-                     :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
-                                                        (:title (first (:deck runner)))) ["OK"] {}))}}}}
-    :abilities [{:label "[Trash]: Trash the top card of the Runner's Stack"
+   {:flags {:corp-phase-12 (req true)}
+    :abilities [{:msg "look at the top card of the Runner's Stack"
+                  :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
+                                                     (:title (first (:deck runner)))) ["OK"] {}))}
+                {:label "[Trash]: Trash the top card of the Runner's Stack"
                  :msg "trash the top card of the Runner's Stack"
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
@@ -387,6 +394,17 @@
 
    "Mumba Temple"
    {:recurring 2}
+
+   "Museum of History"
+   {:flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
+    :abilities [{:label "Shuffle a card in Archives into R&D"
+                 :prompt "Choose a card in Archives to shuffle into R&D"
+                 :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
+                 :show-discard true :priority true
+                 :msg (msg "to shuffle " (if (:seen target) (:title target) "a card")
+                           " into R&D")
+                 :effect (effect (move :corp target :deck)
+                                 (shuffle! :corp :deck))}]}
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
@@ -617,6 +635,7 @@
 
    "Tech Startup"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req true)}
     :abilities [{:label "Install an asset from R&D"
                  :prompt "Choose an asset to install"
                  :msg (msg "install " (:title target))
