@@ -30,14 +30,19 @@
   "Creates a Campaign with X counters draining Y per-turn.
   Trashes itself when out of counters"
   [counters per-turn]
-  {:data {:counter-type "Credit"}
-   :effect (effect (add-prop card :counter counters))
-   :derezzed-events {:runner-turn-ends corp-rez-toast}
-   :events {:corp-turn-begins {:msg (str "gain " per-turn " [Credits]")
-                               :counter-cost per-turn
-                               :effect (req (gain state :corp :credit per-turn)
-                                            (when (zero? (:counter card))
-                                              (trash state :corp card)))}}})
+  (let [ability {:msg (str "gain " per-turn " [Credits]")
+                 :counter-cost per-turn
+                 :once :per-turn
+                 :req (req (:corp-phase-12 @state))
+                 :label (str "Gain " per-turn " [Credits] (start of turn)")
+                 :effect (req (gain state :corp :credit per-turn)
+                              (when (zero? (:counter card))
+                                (trash state :corp card)))}]
+    {:data {:counter-type "Credit"}
+     :effect (effect (add-prop card :counter counters))
+     :derezzed-events {:runner-turn-ends corp-rez-toast}
+     :events {:corp-turn-begins ability}
+     :abilities [ability]}))
 
 ;;; Card definitions
 (declare in-server?)
@@ -138,7 +143,8 @@
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     ; not-empty doesn't work for the next line, because it does not return literal true; it returns the collection.
     ; flags need exact equality of value to work.
-    :flags {:corp-phase-12 (req (pos? (count (filter #(card-is? % :type "Resource") (all-installed state :runner)))))}
+    :flags {:corp-phase-12 (req (and (pos? (count (filter #(card-is? % :type "Resource") (all-installed state :runner))))
+                                     (:rezzed card)))}
     :abilities [{:label "Trash a resource"
                  :prompt "Choose a resource to trash with Corporate Town"
                  :choices {:req #(is-type? % "Resource")}
@@ -377,20 +383,30 @@
                                 card nil))}]}
 
    "Marked Accounts"
+   (let [ability {:msg "gain 1 [Credits]"
+                  :label "Gain 1 [Credits] (start of turn)"
+                  :once :per-turn
+                  :counter-cost 1
+                  :effect (effect (gain :credit 1))}]
    {:data {:counter-type "Credit"}
-    :abilities [{:cost [:click 1] :msg "store 3 [Credits]"
+    :abilities [ability
+                {:cost [:click 1] :msg "store 3 [Credits]"
                  :effect (effect (add-prop card :counter 3))}]
-    :events {:corp-turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
-                                :effect (effect (gain :credit 1))}}}
+    :events {:corp-turn-begins ability}})
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"
-   {:effect (effect (gain :runner :hand-size-modification 1))
-    :leave-play (effect (lose :runner :hand-size-modification 1))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   (let [ability {:msg "gain 1 [Credits]"
+                  :label "Gain 1 [Credits] (start of turn)"
+                  :once :per-turn
+                  :effect (effect (gain :credit 1))}]
+     {:effect (effect (gain :runner :hand-size-modification 1))
+      :leave-play (effect (lose :runner :hand-size-modification 1))
+      :derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Mumba Temple"
    {:recurring 2}
@@ -427,8 +443,13 @@
                               card targets))}}
 
    "PAD Campaign"
+   (let [ability {:msg "gain 1 [Credits]"
+                  :label "Gain 1 [Credits] (start of turn)"
+                  :once :per-turn
+                  :effect (effect (gain :credit 1))}]
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+    :events {:corp-turn-begins ability}
+    :abilities [ability]})
 
    "Plan B"
    (advance-ambush
@@ -476,11 +497,14 @@
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Reality Threedee"
+   (let [ability {:effect (effect (gain :credit (if tagged 2 1)))
+                  :label "Gain credits (start of turn)"
+                  :once :per-turn
+                  :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}]
    {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:effect (req (gain state side :credit (if tagged 2 1)))
-              :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}}}
+    :events {:corp-turn-begins ability}
+    :abilities [ability]})
 
    "Reversed Accounts"
    {:advanceable :always
@@ -490,21 +514,24 @@
                  :effect (effect (lose :runner :credit (* 4 (get card :advance-counter 0))) (trash card))}]}
 
    "Rex Campaign"
+   (let [ability {:once :per-turn
+                  :label "Remove 1 counter (start of turn)"
+                  :effect (req (add-prop state side card :counter -1)
+                               (when (<= (:counter card) 1)
+                                 (trash state side card)
+                                 (resolve-ability state side
+                                                  {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+                                                   :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
+                                                   :msg (msg (if (= target "Remove 1 bad publicity")
+                                                               "remove 1 bad publicity" "gain 5 [Credits]"))
+                                                   :effect (req (if (= target "Remove 1 bad publicity")
+                                                                  (lose state side :bad-publicity 1)
+                                                                  (gain state side :credit 5)))}
+                                                  card targets)))}]
    {:effect (effect (add-prop card :counter 3))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:effect (req (add-prop state side card :counter -1)
-                           (when (<= (:counter card) 1)
-                             (trash state side card)
-                             (resolve-ability state side
-                                              {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                                               :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                                               :msg (msg (if (= target "Remove 1 bad publicity")
-                                                           "remove 1 bad publicity" "gain 5 [Credits]"))
-                                               :effect (req (if (= target "Remove 1 bad publicity")
-                                                              (lose state side :bad-publicity 1)
-                                                              (gain state side :credit 5)))}
-                                              card targets)))}}}
+    :events {:corp-turn-begins ability}
+    :ability [ability]})
 
    "Ronald Five"
    {:events {:runner-trash {:req (req (and (= (:side target) "Corp") (> (:click runner) 0)))
@@ -535,12 +562,16 @@
                  :effect (effect (trash target) (gain :credit 4))}]}
 
    "Server Diagnostics"
+   (let [ability {:effect (effect (gain :credit 2))
+                  :once :per-turn
+                  :label "Gain 2 [Credits] (start of turn)"
+                  :msg "gain 2 [Credits]"}]
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:effect (effect (gain :credit 2))
-                                :msg "gain 2 [Credits]"}
+    :abilities [ability]
+    :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
                             :effect (effect (trash card)
-                                            (system-msg "trashes Server Diagnostics"))}}}
+                                            (system-msg "trashes Server Diagnostics"))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]

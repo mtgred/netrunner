@@ -15,12 +15,15 @@
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
-   {:events {:runner-turn-begins
-              {:prompt "Select a card to install facedown"
-               :choices {:max 1 :req #(and (:side % "Runner")
-                                           (in-hand? %))}
-               :req (req (> (count (:hand runner)) 0))
-               :effect (req (runner-install state side target {:facedown true}))}}}
+   (let [ability {:prompt "Select a card to install facedown"
+                  :label "Install a card facedown (start of turn)"
+                  :once :per-turn
+                  :choices {:max 1 :req #(and (:side % "Runner")
+                                              (in-hand? %))}
+                  :req (req (> (count (:hand runner)) 0))
+                  :effect (effect (runner-install target {:facedown true}))}]
+   {:events {:runner-turn-begins ability}
+    :abilities [ability]})
 
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen

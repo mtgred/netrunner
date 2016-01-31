@@ -353,13 +353,17 @@
                  :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
 
    "Jak Sinclair"
+   (let [ability {:label "Make a run (start of turn)"
+                  :prompt "Choose a server"
+                  :choices (req servers)
+                  :msg (msg "make a run on " target " during which no programs can be used")
+                  :effect (effect (run target))}]
    {:install-cost-bonus (req [:credit (* -1 (:link runner))])
     :events {:runner-turn-begins
               {:optional {:prompt "Use Jak Sinclair to make a run?"
-                          :yes-ability {:prompt "Choose a server"
-                                        :choices (req servers)
-                                        :msg (msg "make a run on " target " during which no programs can be used")
-                                        :effect (effect (run target))}}}}}
+                          :once :per-turn
+                          :yes-ability ability}}}
+    :abilities [ability]})
 
    "John Masanori"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
@@ -417,6 +421,7 @@
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
                   :label "Look at the top card of Stack (start of turn)"
+                  :once :per-turn
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (prompt! card (str "The top card of your Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}]
@@ -766,15 +771,15 @@
                 {:label "Install a hosted card (start of turn)"
                  :prompt "Choose a hosted card to install"
                  :choices {:req #(= "The Supplier" (:title (:host %)))}
-                 ;(req (can-pay? state side nil (modified-install-cost state side target [:credit -2])))
                  :msg (msg "install " (:title target) " lowering its install cost by 2")
-                 :effect (effect (install-cost-bonus [:credit -2])
-                                 (runner-install target)
-                                 (update! (-> card
-                                              (assoc :supplier-installed (:cid target))
-                                              (update-in [:hosted]
-                                                         (fn [coll]
-                                                           (remove-once #(not= (:cid %) (:cid target)) coll))))))}]
+                 :effect (req (when (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
+                                (install-cost-bonus state side [:credit -2])
+                                (runner-install state side target)
+                                (update! state side (-> card
+                                                        (assoc :supplier-installed (:cid target))
+                                                        (update-in [:hosted]
+                                                                   (fn [coll]
+                                                                     (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
 
     ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
     :suppress {:runner-turn-begins {:req (req (= (:cid target) (:supplier-installed (get-card state card))))}}
@@ -852,6 +857,7 @@
 
    "Woman in the Red Dress"
    (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
+                  :label "Reveal the top card of R&D (start of turn)"
                   :once :per-turn
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
@@ -866,7 +872,7 @@
                                                                    (system-msg "doesn't draw with Woman in the Red Dress"))}}}
                                     card nil))}]
    {:events {:runner-turn-begins ability}
-    :abilities [(assoc ability :label "Reveal the top card of R&D (start of turn)")]})
+    :abilities [ability]})
 
    "Wyldside"
    (let [ability {:msg "draw 2 cards and lose [Click]"
