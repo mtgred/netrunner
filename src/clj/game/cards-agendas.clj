@@ -154,12 +154,12 @@
 
    "Eden Fragment"
    {:abilities [{:cost [:click 1] :msg "install the first piece of ICE this turn at no cost"
-                :prompt "Select a piece of ICE to install from the HQ"
-                :choices {:req #(and (:side % "Corp")
-                                   (ice? %)
-                                   (= (:zone %) [:hand]))}
-                :effect (req (corp-install state side target nil
-                                           {:no-install-cost true}))}]}
+                 :prompt "Select a piece of ICE from HQ to install"
+                 :choices {:req #(and (:side % "Corp")
+                                      (ice? %)
+                                      (= (:zone %) [:hand]))}
+                 :effect (req (corp-install state side target nil
+                                            {:no-install-cost true}))}]}
 
    "Efficiency Committee"
    {:effect (effect (add-prop card :counter 3))
