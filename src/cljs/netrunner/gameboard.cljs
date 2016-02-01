@@ -346,7 +346,9 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) [:div.darkbg.counter counter])
+         (when (pos? counter) (if (> (.indexOf subtype "Virus") -1)
+                                  [:div.darkbg.virus.counter counter]
+                                  [:div.darkbg.counter counter]))
          (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
