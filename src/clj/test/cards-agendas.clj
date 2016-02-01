@@ -116,10 +116,9 @@
     (take-credits state :runner)
     (take-credits state :runner)
     (take-credits state :runner)
-    (is (= 3 (get-in @state [:corp :click])) "It's the beginning of the corp's turn")
-    (let [hriscored (get-in @state [:corp :scored 0])
+    (let [efscored (get-in @state [:corp :scored 0])
           hqice (find-card "Ice Wall" (get-in @state [:corp :hand]))]
-      (card-ability state :corp hriscored 0)
+      (card-ability state :corp efscored 0)
       (prompt-select :corp hqice)
       (prompt-choice :corp "HQ")
       (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
