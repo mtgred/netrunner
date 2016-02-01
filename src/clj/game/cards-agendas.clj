@@ -154,6 +154,8 @@
 
    "Eden Fragment"
    {:abilities [{:cost [:click 1] :msg "install the first piece of ICE this turn at no cost"
+                 :req (req (empty? (let [cards (map first (turn-events state side :corp-install))]
+                                     (filter #(is-type? % "ICE") cards))))
                  :prompt "Select a piece of ICE from HQ to install"
                  :choices {:req #(and (:side % "Corp")
                                       (ice? %)
