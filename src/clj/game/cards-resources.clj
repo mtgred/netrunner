@@ -332,12 +332,12 @@
                                                   :msg "gain 1 tag"}}}}}}
 
    "Kati Jones"
-   {:abilities
-    [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
-      :effect (effect (add-prop card :counter 3))}
-     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
-      :label "Take all credits"
-      :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
+   {:data {:counter-type "Credit"}
+    :abilities [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
+                 :effect (effect (add-prop card :counter 3))}
+                {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
+                 :label "Take all credits"
+                 :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
 
    "Liberated Account"
    {:data {:counter 16}
