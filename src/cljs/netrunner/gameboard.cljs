@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize]]
+            [clojure.string :refer [capitalize lower-case]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
@@ -347,8 +347,8 @@
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
          (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
-                                    norm-type (clojure.string/lower-case counter-type)
-                                    selector (clojure.string/format "div.darkbg.%s-counter.counter" norm-type)]
+                                    norm-type (lower-case counter-type)
+                                    selector (str "div.darkbg." norm-type "-counter.counter")]
                                 [(keyword selector) counter]))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
