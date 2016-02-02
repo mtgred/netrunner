@@ -346,7 +346,8 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (if (> (.indexOf subtype "Virus") -1)
+         (when (pos? counter) (if (and (:installed @cursor)
+                                       (> (.indexOf subtype "Virus") -1))
                                   [:div.darkbg.virus.counter counter]
                                   [:div.darkbg.counter counter]))
          (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
