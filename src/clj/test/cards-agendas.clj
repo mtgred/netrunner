@@ -103,6 +103,27 @@
     (take-credits state :corp)
     (is (= 0 (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
 
+(deftest eden-fragment
+  "Test that Eden Fragment ignores the install cost of the first ice"
+  (do-game
+    (new-game (default-corp [(qty "Eden Fragment" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Eden Fragment" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (take-credits state :runner)
+    (take-credits state :runner)
+    (take-credits state :runner)
+    (let [efscored (get-in @state [:corp :scored 0])
+          hqice (find-card "Ice Wall" (get-in @state [:corp :hand]))]
+      (card-ability state :corp efscored 0)
+      (prompt-select :corp hqice)
+      (prompt-choice :corp "HQ")
+      (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
+      (is (= 6 (get-in @state [:corp :credit])) "Corp does not pay for installing the first ICE of the turn"))))
+
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
   (do-game
