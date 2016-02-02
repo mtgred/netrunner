@@ -348,10 +348,10 @@
         [:div.counters
          (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
                                     norm-type (clojure.string/lower-case counter-type)
-                                    selector (clojure.string/join "." ["div.darkbg" norm-type "counter"])]
+                                    selector (clojure.string/format "div.darkbg.%s-counter.counter" norm-type)]
                                 [(keyword selector) counter]))
-         (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
-         (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
+         (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
+         (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
               current-strength [:div.darkbg.strength current-strength])
         (when named-target [:div.darkbg.named-target named-target])
