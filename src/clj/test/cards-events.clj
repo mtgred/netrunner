@@ -205,6 +205,23 @@
         "3 programs in Heap")
     (is (= 11 (:credit (get-runner))) "Gained 6 credits from 3 trashed programs")))
 
+(deftest game-day
+  "Game Day - draw until at handsize"
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Game Day" 3)
+                              (qty "Public Sympathy" 3)
+                              (qty "Sure Gamble" 3)
+                              (qty "Easy Mark" 3)]))
+   (take-credits state :corp)
+   ;; move needed cards to hand -- in case they were not drawn
+   (core/move state :runner (find-card "Game Day" (:deck (get-runner))) :hand)
+   (core/move state :runner (find-card "Public Sympathy" (:deck (get-runner))) :hand)
+   (play-from-hand state :runner "Public Sympathy")
+   (is (= 7 (core/hand-size state :runner)) "Runner hand size is 7")
+   (play-from-hand state :runner "Game Day")
+   (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
+
 (deftest inject
   "Inject - Draw 4 cards from Stack and gain 1 credit per trashed program"
   (do-game

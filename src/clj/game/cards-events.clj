@@ -265,8 +265,8 @@
     :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
 
    "Game Day"
-   {:msg (msg "draw " (- (hand-size runner) (count (:hand runner))) " cards")
-    :effect (effect (draw (- (hand-size runner) (count (:hand runner)))))}
+   {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
+    :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
    {:events {:rez {:req (req (not (ice? target)))
