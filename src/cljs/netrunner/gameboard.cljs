@@ -346,10 +346,21 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (if (and (:installed @cursor)
-                                       (> (.indexOf subtype "Virus") -1))
-                                  [:div.darkbg.virus.counter counter]
-                                  [:div.darkbg.counter counter]))
+         (when (pos? counter) (let [counter-type (:counter-type @cursor)]
+                                ;; Determine the appropriate type of counter
+                                ;; for styling, falling back to a default grey
+                                ;; counter when no type is known.
+                                (cond
+                                  ;; Scored agendas with counters are not :installed.
+                                  (= "Agenda" type) [:div.darkbg.agenda.counter counter]
+                                  ;; Check for cards hosted on Personal Workshop before the rest.
+                                  (not (:installed @cursor)) [:div.darkbg.power.counter counter]
+                                  (or (> (.indexOf subtype "Virus") -1)
+                                      (= "Virus" counter-type))
+                                    [:div.darkbg.virus.counter counter]
+                                  (= "Power" counter-type) [:div.darkbg.power.counter counter]
+                                  (= "Credit" counter-type) [:div.darkbg.credit.counter counter]
+                                  :else [:div.darkbg.counter counter])))
          (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
