@@ -346,21 +346,10 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (let [counter-type (:counter-type @cursor)]
-                                ;; Determine the appropriate type of counter
-                                ;; for styling, falling back to a default grey
-                                ;; counter when no type is known.
-                                (cond
-                                  ;; Scored agendas with counters are not :installed.
-                                  (= "Agenda" type) [:div.darkbg.agenda.counter counter]
-                                  ;; Check for cards hosted on Personal Workshop before the rest.
-                                  (not (:installed @cursor)) [:div.darkbg.power.counter counter]
-                                  (or (> (.indexOf subtype "Virus") -1)
-                                      (= "Virus" counter-type))
-                                    [:div.darkbg.virus.counter counter]
-                                  (= "Power" counter-type) [:div.darkbg.power.counter counter]
-                                  (= "Credit" counter-type) [:div.darkbg.credit.counter counter]
-                                  :else [:div.darkbg.counter counter])))
+         (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
+                                    norm-type (clojure.string/lower-case counter-type)
+                                    selector (clojure.string/join "." ["div.darkbg" norm-type "counter"])]
+                                [(keyword selector) counter]))
          (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
@@ -409,6 +398,23 @@
        (when (pos? (count hosted))
          [:div.hosted
           (om/build-all card-view hosted {:key :cid})])]))))
+
+(defn card-counter-type [card]
+  (let [counter-type (:counter-type card)]
+    ;; Determine the appropriate type of counter
+    ;; for styling, falling back to a default grey
+    ;; counter when no type is known.
+    (cond
+      (and (:installed card)
+           (not (nil? counter-type))) counter-type
+      ;; Scored agendas with counters are not :installed.
+      (= "Agenda" (:type card)) "Agenda"
+      ;; Assume uninstalled cards with counters are hosted on Personal Workshop.
+      (not (:installed card)) "Power"
+      ;; Assume uninstalled cards with counters are hosted on Personal Workshop.
+      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
+      ;; Power counters are the assumed default type of counter.
+      :else "Power")))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
