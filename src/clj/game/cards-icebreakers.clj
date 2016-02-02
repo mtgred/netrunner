@@ -71,11 +71,14 @@
     :pump strength}))
 
 (defn- break-sub
-  "Creates a break subroutine ability."
+  "Creates a break subroutine ability.
+  If num = 0 then any number of subs are broken."
   ([cost num] (break-sub cost num nil))
   ([cost num subtype]
-   {:msg (str "break " (when (> num 1) "up to ") num (when subtype (str " " subtype))
-              " subroutine" (when (> num 1) "s"))
+   {:msg (str "break " (when (> num 1) "up to ")
+              (if (pos? num) num "any number of")
+              (when subtype (str " " subtype))
+              " subroutine" (when-not (= num 1) "s"))
     :cost [:credit cost]}))
 
 ;;; Breaker sets
@@ -98,6 +101,12 @@
                                 {:runner-install cloud :trash cloud :card-moved cloud})
                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
                                                           (all-installed state :runner))))}))
+
+(defn- global-sec-breaker
+  "GlobalSec breakers for Sunny"
+  [type]
+  (cloud-icebreaker (auto-icebreaker [type] {:abilities [(break-sub 2 0 (lower-case type))
+                                                         (strength-pump 2 3)]})))
 
 ;;; Icebreaker definitions
 (def cards-icebreakers
@@ -291,25 +300,13 @@
                                  (strength-pump 2 3)]})
 
    "GS Sherman M3"
-   (cloud-icebreaker
-     (auto-icebreaker ["Barrier"]
-                      {:abilities [{:cost [:credit 2]
-                                    :msg "break any number of barrier subroutines"}
-                                   (strength-pump 2 3)]}))
+   (global-sec-breaker "Barrier")
 
    "GS Shrike M2"
-   (cloud-icebreaker
-     (auto-icebreaker ["Sentry"]
-                      {:abilities [{:cost [:credit 2]
-                                    :msg "break any number of sentry subroutines"}
-                                   (strength-pump 2 3)]}))
+   (global-sec-breaker "Sentry")
 
    "GS Striker M1"
-   (cloud-icebreaker
-     (auto-icebreaker ["Code Gate"]
-                      {:abilities [{:cost [:credit 2]
-                                    :msg "break any number of code gate subroutines"}
-                                   (strength-pump 2 3)]}))
+   (global-sec-breaker "Code Gate")
 
    "Inti"
    (auto-icebreaker ["Barrier"]
@@ -332,7 +329,7 @@
                                  (strength-pump 3 5)]})
 
    "Morning Star"
-   {:abilities [{:cost [:credit 1] :msg "break any number of barrier subroutines"}]}
+   {:abilities [(break-sub 1 0 "barrier")]}
 
    "Mimic"
    {:abilities [(break-sub 1 1 "sentry")]}
@@ -419,7 +416,7 @@
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [{:cost [:credit 1] :msg "break any number of sentry subroutines"}
+                    {:abilities [(break-sub 1 0 "sentry")
                                  (strength-pump 1 7)]})
 
    "Torch"
