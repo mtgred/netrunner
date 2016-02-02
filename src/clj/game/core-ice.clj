@@ -80,7 +80,8 @@
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
   [state side breaker]
-  (let [breaker (get-card state breaker) oldstren (or (:current-strength breaker) (:strength breaker))]
+  (let [breaker (get-card state breaker)
+        oldstren (or (:current-strength breaker) (:strength breaker))]
     (swap! state update-in [:bonus] dissoc :breaker-strength)
     (trigger-event state side :pre-breaker-strength breaker)
     (update! state side (assoc breaker :current-strength (breaker-strength state side breaker)))
@@ -89,7 +90,7 @@
 (defn pump
   "Increase a breaker's strength by n for the given duration of :encounter or :all-run"
   ([state side card n] (pump state side card n :encounter))
-  ([state side {:keys [strength current-strength] :as card} n duration]
+  ([state side card n duration]
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
    (update-breaker-strength state side (get-card state card))))
 

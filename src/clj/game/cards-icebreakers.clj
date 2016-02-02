@@ -78,6 +78,16 @@
               " subroutine" (when (> num 1) "s"))
     :cost [:credit cost]}))
 
+;;; Breaker sets
+(defn- cerberus
+  "Breaker from the dog set"
+  [type]
+  (auto-icebreaker [type]
+                   {:data {:counter 4}
+                    :abilities [{:counter-cost 1
+                                 :msg (str "break up to 2 " (lower-case type) " subroutines")}
+                                (strength-pump 1 1)]}))
+
 ;;; Icebreaker definitions
 (def cards-icebreakers
   {"Alpha"
@@ -131,22 +141,13 @@
                                  (strength-pump 2 4)]})
 
    "Cerberus \"Cuj.0\" H3"
-   (auto-icebreaker ["Sentry"]
-                    {:data {:counter 4}
-                     :abilities [{:counter-cost 1 :msg "break up to 2 sentry subroutines"}
-                                 (strength-pump 1 1)]})
+   (cerberus "Sentry")
 
    "Cerberus \"Rex\" H2"
-   (auto-icebreaker ["Code Gate"]
-                    {:data {:counter 4}
-                     :abilities [{:counter-cost 1 :msg "break up to 2 code gate subroutines"}
-                                 (strength-pump 1 1)]})
+   (cerberus "Code Gate")
 
    "Cerberus \"Lady\" H1"
-   (auto-icebreaker ["Barrier"]
-                    {:data {:counter 4}
-                     :abilities [{:counter-cost 1 :msg "break up to 2 barrier subroutines"}
-                                 (strength-pump 1 1)]})
+   (cerberus "Barrier")
 
    "Chameleon"
    {:prompt "Choose one subtype"

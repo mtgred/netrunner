@@ -26,6 +26,25 @@
       (is (= 0 (:counter atman)) "0 power counters")
       (is (= 0 (:current-strength atman)) "0 current strength"))))
 
+(deftest cerberus
+  "Cerberus - boost 1 for 1 cred. Break for 1 counter"
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Cerberus \"Rex\" H2" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Cerberus \"Rex\" H2")
+   (is (= 2 (:credit (get-runner))) "2 credits left after install")
+   (let [rex (get-in @state [:runner :rig :program 0])]
+     (is (= 4 (:counter rex)) "Start with 4 counters")
+     ;; boost strength
+     (card-ability state :runner rex 1)
+     (is (= 1 (:credit (get-runner))) "Spend 1 credit to boost")
+     (is (= 2 (:current-strength (refresh rex))) "At strength 2 after boost")
+     ;; break
+     (card-ability state :runner rex 0)
+     (is (= 1 (:credit (get-runner))) "No credits spent to break")
+     (is (= 3 (:counter (refresh rex))) "One counter used to break"))))
+
 (deftest faust-pump
   "Faust - Pump by discarding"
   (do-game

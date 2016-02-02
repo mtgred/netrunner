@@ -5,7 +5,7 @@
                                 build-spend-msg cost-names remote->name central->name zone->name central->zone
                                 is-remote? is-central? get-server-type other-side]]
             [game.macros :refer [effect req msg]]
-            [clojure.string :refer [split-lines split join]]
+            [clojure.string :refer [split-lines split join lower-case]]
             [clojure.core.match :refer [match]]))
 
 (declare get-card resolve-ability say system-msg trigger-event update!)
