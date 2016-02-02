@@ -105,7 +105,7 @@
                  :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
    "D4v1d"
-   {:data {:counter 3, :counter-type "Power"}
+   {:data {:counter 3}
     :abilities [{:counter-cost 1 :msg "break 1 subroutine"}]}
 
    "DaVinci"
