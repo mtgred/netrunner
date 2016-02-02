@@ -88,6 +88,17 @@
                                  :msg (str "break up to 2 " (lower-case type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
+(defn- break-and-enter
+  "Breakers from the Break and Entry set"
+  [type]
+  (cloud-icebreaker {:abilities [{:msg (str "break up to 3 " (lower-case type) " subroutines")
+                                  :effect (effect (trash card {:cause :ability-cost}))}]
+                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
+                                           :effect (effect (update-breaker-strength card))}]
+                                {:runner-install cloud :trash cloud :card-moved cloud})
+                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                          (all-installed state :runner))))}))
+
 ;;; Icebreaker definitions
 (def cards-icebreakers
   {"Alpha"
@@ -169,13 +180,7 @@
                                    (strength-pump 1 1)]}))
 
    "Crowbar"
-   (cloud-icebreaker {:abilities [{:msg "break up to 3 code gate subroutines"
-                                   :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
-                                           :effect (effect (update-breaker-strength card))}]
-                                {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                          (all-installed state :runner))))})
+   (break-and-enter "Code Gate")
 
    "Crypsis"
    (auto-icebreaker ["All"]
@@ -400,20 +405,10 @@
                                  (strength-pump 1 2)]})
 
    "Shiv"
-   (cloud-icebreaker {:abilities [{:msg "break up to 3 sentry subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
-                                           :effect (effect (update-breaker-strength card))}]
-                                {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                          (all-installed state :runner))))})
+   (break-and-enter "Sentry")
 
    "Spike"
-   (cloud-icebreaker {:abilities [{:msg "break up to 3 barrier subroutines" :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
-                                           :effect (effect (update-breaker-strength card))}]
-                                {:runner-install cloud :trash cloud :card-moved cloud})
-                      :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                          (all-installed state :runner))))})
+   (break-and-enter "Barrier")
 
    "Study Guide"
    {:abilities [(break-sub 1 1 "code gate")
