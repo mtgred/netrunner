@@ -236,6 +236,7 @@
                            (update! state side (assoc card :bounce-hq true)))}}
     :abilities [{:req (req (:bounce-hq card))
                  :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
+                 :priority true
                  :msg (msg "add " (card-str state target) " to HQ")
                  :effect (effect (move :corp target :hand)
                                  (update! (dissoc (get-card state card) :bounce-hq)))}]}

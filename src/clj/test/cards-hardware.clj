@@ -232,7 +232,6 @@
         (card-ability state :runner tt 0)
         ;; Turntable prompt should be active
         (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
-        (prompt-choice :runner "Yes")
         (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
         (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")
