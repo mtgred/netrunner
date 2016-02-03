@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize]]
+            [clojure.string :refer [capitalize lower-case]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
@@ -307,6 +307,22 @@
 (defn remote-list [remotes]
   (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
 
+(defn card-counter-type [card]
+  (let [counter-type (:counter-type card)]
+    ;; Determine the appropriate type of counter for styling, falling back to
+    ;; power counters when no other type can be inferred.
+    (cond
+      ;; If an installed card contains an annotation, use it.
+      (and (:installed card)
+           (not (nil? counter-type)))
+        counter-type
+      (= "Agenda" (:type card)) "Agenda"
+      ;; Assume uninstalled cards with counters are hosted on Personal
+      ;; Workshop.
+      (not (:installed card)) "Power"
+      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
+      :else "Power")))
+
 (defn card-img
   "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
   [{:keys [code title] :as cursor}]
@@ -346,9 +362,12 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) [:div.darkbg.counter counter])
-         (when (pos? rec-counter) [:div.darkbg.recurring.counter rec-counter])
-         (when (pos? advance-counter) [:div.darkbg.advance.counter advance-counter])]
+         (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
+                                    norm-type (lower-case counter-type)
+                                    selector (str "div.darkbg." norm-type "-counter.counter")]
+                                [(keyword selector) counter]))
+         (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
+         (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
               current-strength [:div.darkbg.strength current-strength])
         (when named-target [:div.darkbg.named-target named-target])

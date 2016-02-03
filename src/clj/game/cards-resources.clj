@@ -45,13 +45,15 @@
                                           :effect (req (move state side (first (:deck runner)) :deck))}}}]}
 
    "Armitage Codebusting"
-   {:data {:counter 12}
+   {:data {:counter 12
+           :count-type "Credit"}
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :runner :credit 2)
                               (when (zero? (:counter card)) (trash state :runner card {:unpreventable true})))}]}
 
    "Bank Job"
-   {:data {:counter 8}
+   {:data {:counter 8
+           :counter-type "Credit"}
     :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
                          :req (req (and (is-remote? (:server run)) (not current-ice)))}}
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
@@ -105,7 +107,8 @@
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
    "Daily Casts"
-   {:data {:counter 8}
+   {:data {:counter 8
+           :counter-type "Credit"}
     :events {:runner-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                   :effect (req (gain state :runner :credit 2)
                                                (when (zero? (:counter card)) (trash state :runner card
@@ -332,15 +335,16 @@
                                                   :msg "gain 1 tag"}}}}}}
 
    "Kati Jones"
-   {:abilities
-    [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
-      :effect (effect (add-prop card :counter 3))}
-     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
-      :label "Take all credits"
-      :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
+   {:data {:counter-type "Credit"}
+    :abilities [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
+                 :effect (effect (add-prop card :counter 3))}
+                {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
+                 :label "Take all credits"
+                 :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
 
    "Liberated Account"
-   {:data {:counter 16}
+   {:data {:counter 16
+           :counter-type "Credit"}
     :abilities [{:cost [:click 1] :counter-cost 4 :msg "gain 4 [Credits]"
                  :effect (req (gain state :runner :credit 4)
                               (when (<= (:counter card) 0) (trash state :runner card {:unpreventable true})))}]}
@@ -677,7 +681,8 @@
                                             (has-subtype? target "Gray Ops")))}}}
 
    "Technical Writer"
-   {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
+   {:data {:counter-type "Credit"}
+    :events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
                               :effect (effect (add-prop :runner card :counter 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]")

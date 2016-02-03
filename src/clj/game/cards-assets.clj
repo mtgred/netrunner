@@ -2,7 +2,8 @@
 
 (def cards-assets
   {"Adonis Campaign"
-   {:effect (effect (add-prop card :counter 12))
+   {:data {:counter-type "Credit"}
+    :effect (effect (add-prop card :counter 12))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
                                 :effect (req (gain state :corp :credit 3)
@@ -193,7 +194,8 @@
                          :effect (effect (trash-cost-bonus 1))}}}
 
    "Eve Campaign"
-   {:effect (effect (add-prop card :counter 16))
+   {:data {:counter-type "Credit"}
+    :effect (effect (add-prop card :counter 16))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                 :effect (req (gain state :corp :credit 2)
@@ -313,7 +315,8 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Launch Campaign"
-   {:effect (effect (add-prop card :counter 6))
+   {:data {:counter-type "Credit"}
+    :effect (effect (add-prop card :counter 6))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
                                 :effect (req (gain state :corp :credit 2)
@@ -364,7 +367,8 @@
                                 card nil))}]}
 
    "Marked Accounts"
-   {:abilities [{:cost [:click 1] :msg "store 3 [Credits]"
+   {:data {:counter-type "Credit"}
+    :abilities [{:cost [:click 1] :msg "store 3 [Credits]"
                  :effect (effect (add-prop card :counter 3))}]
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :counter-cost 1
                                 :effect (effect (gain :credit 1))}}}
@@ -425,7 +429,8 @@
    {:recurring 3}
 
    "Private Contracts"
-   {:effect (effect (add-prop card :counter 14))
+   {:data {:counter-type "Credit"}
+    :effect (effect (add-prop card :counter 14))
     :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
