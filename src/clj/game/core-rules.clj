@@ -2,7 +2,7 @@
 
 (declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
          handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         update-all-ice win)
+         in-corp-scored? update-all-ice win)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -284,7 +284,8 @@
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."
   [state side card]
-  (let [c (deactivate state side card)]
+  (let [c (if (in-corp-scored? state side card)
+            (deactivate state side card) card)]
     (system-msg state side (str "forfeits " (:title c)))
     (gain-agenda-point state side (- (get-agenda-points state side c)))
     (move state :corp c :rfg)))
