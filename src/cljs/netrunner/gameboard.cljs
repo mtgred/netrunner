@@ -307,6 +307,22 @@
 (defn remote-list [remotes]
   (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
 
+(defn card-counter-type [card]
+  (let [counter-type (:counter-type card)]
+    ;; Determine the appropriate type of counter for styling, falling back to
+    ;; power counters when no other type can be inferred.
+    (cond
+      ;; If an installed card contains an annotation, use it.
+      (and (:installed card)
+           (not (nil? counter-type)))
+        counter-type
+      (= "Agenda" (:type card)) "Agenda"
+      ;; Assume uninstalled cards with counters are hosted on Personal
+      ;; Workshop.
+      (not (:installed card)) "Power"
+      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
+      :else "Power")))
+
 (defn card-img
   "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
   [{:keys [code title] :as cursor}]
@@ -398,23 +414,6 @@
        (when (pos? (count hosted))
          [:div.hosted
           (om/build-all card-view hosted {:key :cid})])]))))
-
-(defn card-counter-type [card]
-  (let [counter-type (:counter-type card)]
-    ;; Determine the appropriate type of counter
-    ;; for styling, falling back to a default grey
-    ;; counter when no type is known.
-    (cond
-      (and (:installed card)
-           (not (nil? counter-type))) counter-type
-      ;; Scored agendas with counters are not :installed.
-      (= "Agenda" (:type card)) "Agenda"
-      ;; Assume uninstalled cards with counters are hosted on Personal Workshop.
-      (not (:installed card)) "Power"
-      ;; Assume uninstalled cards with counters are hosted on Personal Workshop.
-      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
-      ;; Power counters are the assumed default type of counter.
-      :else "Power")))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
