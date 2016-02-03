@@ -108,6 +108,16 @@
   [card]
   (= (:zone card) [:deck]))
 
+(defn in-corp-scored?
+  "Checks if the specified card is in the Corp score area."
+  [state side card]
+  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
+
+(defn in-runner-scored?
+  "Checks if the specified card is in the Runner score area."
+  [state side card]
+  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:runner :scored])))))
+
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
   [card type]
