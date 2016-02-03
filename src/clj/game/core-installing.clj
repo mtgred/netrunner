@@ -18,7 +18,7 @@
        (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
                  (:rezzed card)
                  (= (first (:zone card)) :current)
-                 (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
+                 (= (first (:zone card)) :scored))
          (leave-effect state side card nil)))
      (when-let [prevent (:prevent (card-def card))]
        (doseq [[ptype pvec] prevent]
