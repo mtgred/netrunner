@@ -99,8 +99,10 @@
     (swap! state update-in [:bonus] dissoc :steal-cost)
     (swap! state update-in [:bonus] dissoc :access-cost)
     (trigger-event state side :pre-access-card c)
-    (let [acost (access-cost state side c)]
-      (if (or (empty? acost) (pay state side c acost))
+    (let [acost (access-cost state side c)
+          ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
+          anon-card (dissoc c :title)]
+      (if (or (empty? acost) (pay state side anon-card acost))
         ;; Either there were no access costs, or the runner cold pay them.
         (let [cdef (card-def c)
               c (assoc c :seen true)]
