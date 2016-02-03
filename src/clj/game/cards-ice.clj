@@ -166,7 +166,8 @@
              {:req (req (not= (first (:zone card)) :discard))
               :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
               :yes-ability {:cost [:credit 3]
-                            :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}}}
+                            :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}
+              :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel"))}}}
     :abilities [(trace-ability 6 {:choices {:req installed?}
                                   :label "Add 1 installed card to the Runner's Grip"
                                   :msg "add 1 installed card to the Runner's Grip"
