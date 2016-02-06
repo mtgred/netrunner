@@ -8,7 +8,7 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [valid?]]))
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -27,15 +27,26 @@
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
 
+(defn sort-games-list [games]
+  (sort-by #(vec (map (assoc % :started (not (:started %)))
+                      [:started :date]))
+           > games))
+
 (go (while true
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "game" (do (swap! app-state assoc :gameid (:gameid msg))
                      (when (:started msg) (launch-game nil)))
-          "games" (do (swap! app-state assoc :games
-                             (sort-by #(vec (map (assoc % :started (not (:started %)))
-                                                 [:started :date]))
-                                      > (vals (:games msg))))
+          "games" (do (when (:gamesdiff msg)
+                        (swap! app-state update-in [:games]
+                               (fn [games]
+                                 (let [gamemap (into {} (map #(assoc {} (keyword (:gameid %)) %) games))
+                                       create (merge gamemap (get-in msg [:gamesdiff :create]))
+                                       update (merge create (get-in msg [:gamesdiff :update]))
+                                       delete (apply dissoc update (map keyword (keys (get-in msg [:gamesdiff :delete]))))]
+                                   (sort-games-list (vals delete))))))
+                      (when (:games msg)
+                        (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
                           (.play (.getElementById js/document sound)))))
@@ -127,8 +138,7 @@
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
              [:img {:src (image-url (:identity deck))}]
-             (when-not (valid? deck)
-               [:div.float-right.invalid "Invalid deck"])
+             [:div.float-right (deck-status-span deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
              [:p (get-in deck [:identity :title])]])])]]])))
@@ -241,13 +251,13 @@
                     [:div
                      (om/build player-view player)
                      (when-let [deck (:deck player)]
-                       [:span.label
-                        (if (= (:user player) user)
-                          (:name deck)
-                          "Deck selected")])
+                       [:span {:class (deck-status-label deck)}
+                        [:span.label
+                         (if (= (:user player) user)
+                           (:name deck)
+                           "Deck selected")]])
                      (when-let [deck (:deck player)]
-                       (when-not (valid? deck)
-                         [:span.invalid "Invalid deck"]))
+                       [:div.float-right (deck-status-span deck)])
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]

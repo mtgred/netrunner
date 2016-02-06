@@ -1,4 +1,5 @@
-(ns game.utils)
+(ns game.utils
+  (:require [clojure.string :refer [split-lines split join]]))
 
 (def cid (atom 0))
 
@@ -16,13 +17,16 @@
   (let [[head tail] (split-with pred coll)]
     (vec (concat head (rest tail)))))
 
-(defn has? [card property value]
+(defn has?
   "Checks the string property of the card to see if it contains the given value"
+  [card property value]
   (when-let [p (property card)]
     (> (.indexOf p value) -1)))
 
-(defn card-is? [card property value]
-  "Checks the property of the card to see if it is equal to the given value, as either a string or a keyword"
+(defn card-is?
+  "Checks the property of the card to see if it is equal to the given value,
+  as either a string or a keyword"
+  [card property value]
   (let [cv (property card)]
     (cond
       (or (keyword? cv) (and (string? value) (string? cv))) (= value cv)
@@ -83,8 +87,70 @@
     (dissoc m k)))
 
 (defn cancellable
+  "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
+  with Cancel always last."
   ([choices] (cancellable choices false))
   ([choices sorted]
    (if sorted
      (conj (vec (sort-by :title choices)) "Cancel")
      (conj (vec choices) "Cancel"))))
+
+(defn build-spend-msg
+  ([cost-str verb] (build-spend-msg cost-str verb nil))
+  ([cost-str verb verb2]
+   (if (or (not (instance? String cost-str))
+           (= "" cost-str))
+     (str (or verb2 (str verb "s")) " ")
+     (str "spends " cost-str " to " verb " "))))
+
+(defn cost-names [value attr]
+  (when (pos? value)
+    (case attr
+      :credit (str value " [$]")
+      :click  (->> "[Click]" repeat (take value) (apply str))
+      nil)))
+
+(defn other-side [side]
+  (if (= side :corp) :runner :corp))
+
+; Functions for working with zones.
+(defn remote->name [zone]
+  "Converts a remote zone to a string"
+  (let [kw (if (keyword? zone) zone (last zone))
+        s (str kw)]
+    (if (.startsWith s ":remote")
+      (let [num (last (split s #":remote"))]
+        (str "Server " num)))))
+
+(defn central->name [zone]
+  "Converts a central zone keyword to a string."
+  (case (if (keyword? zone) zone (last zone))
+    :hq "HQ"
+    :rd "R&D"
+    :archives "Archives"
+    nil))
+
+(defn zone->name [zone]
+  "Converts a zone to a string."
+  (or (central->name zone)
+      (remote->name zone)))
+
+(defn is-remote? [zone]
+  "Returns true if the zone is for a remote server"
+  (not (nil? (remote->name zone))))
+
+(defn is-central? [zone]
+  "Returns true if the zone is for a central server"
+  (not (is-remote? zone)))
+
+(defn central->zone [zone]
+  "Converts a central server keyword like :discard into a corresponding zone vector"
+  (case (if (keyword? zone) zone (last zone))
+    :discard [:servers :archives]
+    :hand [:servers :hq]
+    :deck [:servers :rd]
+    nil))
+
+(defn get-server-type [zone]
+  (or (#{:hq :rd :archives} zone) :remote))
+

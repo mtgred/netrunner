@@ -12,7 +12,7 @@
          :decks []
          :games [] :gameid nil :messages []}))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/about" "/account"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/about" "/account"])
 
 (def history (Html5History.))
 
@@ -36,7 +36,8 @@
                  ["Cards" "/cards" 1]
                  ["Deck Builder" "/deckbuilder" 2]
                  ["Play" "/play" 3]
-                 ["About" "/about" 4]
+                 ["Help" "/help" 4]
+                 ["About" "/about" 5]
                  ["My Account" "/account" 5]]]
        (let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")

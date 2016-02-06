@@ -2,13 +2,13 @@
 
 (def cards-upgrades
   {"Akitaro Watanabe"
-   {:events {:pre-rez-cost {:req (req (and (= (:type target) "ICE")
+   {:events {:pre-rez-cost {:req (req (and (ice? target)
                                            (= (card->server state card) (card->server state target))))
                             :effect (effect (rez-cost-bonus -2))}}}
 
    "Amazon Industrial Zone"
    {:events
-     {:corp-install  {:optional {:req (req (and (= (:type target) "ICE")
+     {:corp-install  {:optional {:req (req (and (ice? target)
                                                 (= (card->server state card) (card->server state target))))
                                  :prompt "Rez ICE with rez cost lowered by 3?"
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
@@ -25,10 +25,11 @@
 
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
-                 :cost [:click 1] :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
-                 :choices {:req #(and (= (:type %) "ICE")
-                                      (has? % :subtype "Bioroid")
-                                      (= (:zone %) [:hand]))}
+                 :cost [:click 1]
+                 :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
+                 :choices {:req #(and (ice? %)
+                                      (has-subtype? % "Bioroid")
+                                      (in-hand? %))}
                  :msg "host a piece of bioroid ICE"
                  :effect (effect (trigger-event :corp-install target)
                                  (host card target {:facedown true}))}
@@ -69,7 +70,8 @@
                  :effect (req (let [boost target]
                                 (resolve-ability
                                   state side
-                                  {:choices {:req #(and (has? % :type "ICE") (:rezzed %))}
+                                  {:choices {:req #(and (ice? %)
+                                                        (rezzed? %))}
                                    :msg (msg "add " boost " strength to " (:title target))
                                    :effect (req (update! state side (assoc card :troubleshooter-target target
                                                                                 :troubleshooter-amount boost))
@@ -92,7 +94,7 @@
     :events {:successful-run {:req (req this-server)
                               :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                            (swap! state update-in [:run] dissoc :successful)
-                                           (swap! state update-in [:runner :register :successful-run] #(butlast %)))}}}
+                                           (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}
 
    "Cyberdex Virus Suite"
    {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
@@ -112,9 +114,12 @@
     :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Expo Grid"
-   {:events {:corp-turn-begins {:req (req (not (empty? (filter #(and (= (:type %) "Asset") (:rezzed %))
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins {:req (req (not (empty? (filter #(and (is-type? % "Asset")
+                                                                     (rezzed? %))
                                                                (get-in corp (:zone card))))))
-                                :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+                                :msg "gain 1 [Credits]"
+                                :effect (effect (gain :credit 1))}}}
 
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
@@ -129,8 +134,9 @@
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server
-                                (> (get-in @state [:runner :tag]) 0)
-                                (not (empty? (filter #(has? % :type "Program") (all-installed state :runner))))))
+                                (pos? (get-in @state [:runner :tag]))
+                                (not (empty? (filter #(is-type? % "Program")
+                                                     (all-installed state :runner))))))
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
@@ -138,10 +144,11 @@
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
-                 :label "[Trash]: Start a Psi game" :msg "start a Psi game"
+                 :label "[Trash]: Start a Psi game"
+                 :msg "start a Psi game"
                  :psi {:not-equal {:prompt "Choose a rezzed piece of ICE to resolve one of its subroutines"
-                                   :choices {:req #(and (has? % :type "ICE")
-                                                        (:rezzed %))}
+                                   :choices {:req #(and (ice? %)
+                                                        (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
                  :effect (effect (trash card))}]}
 
@@ -150,10 +157,10 @@
     [{:req (req this-server)
       :label "Swap the ICE being approached with a piece of ICE from HQ"
       :prompt "Choose a piece of ICE"
-      :choices {:req #(and (= (:type %) "ICE")
-                           (= (:zone %) [:hand]))}
+      :choices {:req #(and (ice? %)
+                           (in-hand? %))}
       :once :per-run
-      :msg (msg "swap " (if (:rezzed current-ice) (:title current-ice) "the approached ICE") " with a piece of ICE from HQ")
+      :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
       :effect (req (let [hqice target
                          c current-ice]
                      (resolve-ability state side
@@ -167,6 +174,30 @@
                                        (trigger-event state side :corp-install newice)
                                        (move state side c :hand)
                                        (update-run-ice state side)))} card nil)))}]}
+
+   "Mumbad City Grid"
+   {:abilities [{:req (req (and this-server
+                                (< (:position run) (count (:ices run)))
+                                (> (count (:ices run)) 1)))
+                 :label "Swap the ICE just passed with another piece of ICE protecting this server"
+                 :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
+                                                                                (:position run))
+                                    ice-zone (:zone passed-ice)]
+                                 (resolve-ability state :corp
+                                   {:prompt (msg "Select a piece of ICE to swap with " (:title passed-ice))
+                                    :choices {:req #(and (= ice-zone (:zone %)) (ice? %))}
+                                    :effect (req (let [fndx (ice-index state passed-ice)
+                                                       sndx (ice-index state target)
+                                                       fnew (assoc passed-ice :zone (:zone target))
+                                                       snew (assoc target :zone (:zone passed-ice))]
+                                                   (swap! state update-in (cons :corp ice-zone)
+                                                          #(assoc % fndx snew))
+                                                   (swap! state update-in (cons :corp ice-zone)
+                                                          #(assoc % sndx fnew))
+                                                   (update-ice-strength state side fnew)
+                                                   (update-ice-strength state side snew)))} card nil)
+                                 (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
+                                                             " with " (card-str state target)))))}]}
 
    "NeoTokyo Grid"
    {:events {:advance {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
@@ -183,7 +214,7 @@
 
    "Old Hollywood Grid"
    (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
-             :effect (req (if (not (some #(= (:title %) (:title target)) (:scored runner)))
+             :effect (req (if-not (some #(= (:title %) (:title target)) (:scored runner))
                             (prevent-steal state side)
                             (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
          un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
@@ -199,7 +230,7 @@
       :events {:pre-steal-cost ab :run-ends un}})
 
    "Panic Button"
-   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :effect (effect (draw))
+   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Product Placement"
@@ -220,7 +251,8 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :effect (effect (gain :max-hand-size 2)) :leave-play (effect (lose :max-hand-size 2))}
+    :effect (effect (gain :hand-size-modification 2))
+    :leave-play (effect (lose :hand-size-modification 2))}
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
@@ -232,9 +264,11 @@
                  :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
-   {:effect (req (when-let [agenda (some #(when (= (:type %) "Agenda") %) (:content (card->server state card)))]
+   {:effect (req (when-let [agenda (some #(when (is-type? % "Agenda") %)
+                                         (:content (card->server state card)))]
                    (update-advancement-cost state side agenda)))
-    :events {:corp-install {:req (req (and (= (:type target) "Agenda") (= (:zone card) (:zone target))))
+    :events {:corp-install {:req (req (and (is-type? target "Agenda")
+                                           (= (:zone card) (:zone target))))
                             :effect (effect (update-advancement-cost target))}
              :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
                                     :effect (effect (advancement-cost-bonus -1))}}}
@@ -284,8 +318,8 @@
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose a copy of the ICE just passed"
-                                   :choices {:req #(and (= (:zone %) [:hand])
-                                                        (= (:type %) "ICE")
+                                   :choices {:req #(and (in-hand? %)
+                                                        (ice? %)
                                                         (= (:title %) icename))}
                                    :effect (req (trash state side (assoc target :seen true))
                                                 (swap! state update-in [:run]
@@ -296,7 +330,8 @@
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
-                                (has? current-ice :subtype "Bioroid"))) :effect (effect (trash card))
+                                (has-subtype? current-ice "Bioroid")))
+                 :effect (effect (trash card))
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
 
    "Valley Grid"
@@ -304,23 +339,25 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :max-hand-size 1))}]
+                              (lose state :runner :hand-size-modification 1))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
                                                    {:corp-turn-begins
                                                     {:msg (msg "increase the Runner's maximum hand size by " n)
-                                                     :effect (effect (gain :runner :max-hand-size n)
+                                                     :effect (effect (gain :runner :hand-size-modification n)
                                                                      (unregister-events card)
                                                                      (update! (dissoc card :times-used)))}}
                                                    (assoc card :zone '(:discard)))))}
     :events {:corp-turn-begins {:req (req (:times-used card))
-                                :msg (msg "increase the Runner's maximum hand size by " (:times-used card))
-                                :effect (effect (gain :runner :max-hand-size (:times-used card))
+                                :msg (msg "increase the Runner's maximum hand size by "
+                                          (:times-used card))
+                                :effect (effect (gain :runner :hand-size-modification
+                                                      (:times-used card))
                                                 (update! (dissoc card :times-used)))}}}
 
    "Will-o-the-Wisp"
    {:abilities [{:label "[Trash]: Add an icebreaker to the bottom of Stack"
-                 :choices {:req #(has? % :subtype "Icebreaker")}
+                 :choices {:req #(has-subtype? % "Icebreaker")}
                  :msg (msg "add " (:title target) " to the bottom of Stack")
                  :effect (effect (trash card) (move :runner target :deck))}]}})

@@ -160,7 +160,15 @@ button.small
 
 .invalid
   color: orangered
-  margin-left: 5px
+  border-color: orangered
+
+.casual
+  color: yellow
+  border-color: yellow
+
+.legal
+  color: lawngreen
+  border-color: lawngreen
 
 .smallwarning
     position: relative
@@ -424,28 +432,12 @@ nav ul
   background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
 
-.influence
-  font-size: 18px
-  font-family: sans-serif
-  line-height: 0
-  position: relative
-  top: 2px
+// Influence dots
 
-.decklist .influence
-  margin-left: 3px
+.influence.neutral
+  color: white
 
-.influence.anarch
-  color: red
-
-.influence.shaper
-  color: limegreen
-
-.influence.criminal
-  color: royalblue
-
-.influence.weyland-consortium
-  color: darkgreen
-
+// Corps
 .influence.haas-bioroid
   color: blueviolet
 
@@ -455,8 +447,27 @@ nav ul
 .influence.nbn
   color: yellow
 
-.influence.neutral
-  color: white
+.influence.weyland-consortium
+  color: darkgreen
+
+// Runners
+.influence.adam
+  color: olive
+
+.influence.anarch
+  color: orangered
+
+.influence.apex
+  color: maroon
+
+.influence.criminal
+  color: royalblue
+
+.influence.shaper
+  color: limegreen
+
+.influence.sunny-lebeau
+  color: lightslategray
 
 // Top nav
 #left-menu
@@ -553,6 +564,9 @@ nav ul
 
 .cardbrowser-bg
   cover-img: url('/img/bg/DysonMemChip.jpg')
+
+.help-bg
+  cover-img: url('/img/bg/ArmitageCodebust.jpg')
 
 .about-bg
   cover-img: url('/img/bg/FastTrack.jpg')
@@ -790,6 +804,7 @@ nav ul
       padding: 0
 
       .button-bar
+        box-sizing: initial
         padding: 0 15px 15px
 
         button
@@ -820,7 +835,7 @@ nav ul
           min-width: 75px
 
       .header
-        height: 76px
+        height: 106px
         clear: both
 
         > img
@@ -995,8 +1010,8 @@ nav ul
       .label
         display: inline-block
         text-align: center
-        color: limegreen
-        border-color: limegreen
+        color: inherit
+        border-color: inherit
         margin-right: 0
 
       .fake-link
@@ -1100,18 +1115,21 @@ nav ul
     text-align: center
     margin: 2px
 
-  .advance
-    background-color: blue
+  .advance-counter
+    background-color: transparent-lightblue
 
-  .recurring
-    background-color: limegreen
+  .recurring-counter
+    background-color: transparent-green
+
+  .virus-counter
+    background-color: transparent-red
 
   .strength
     position: absolute
     z-index: 10
     padding: 0
     text-align: center
-    background-color: orange
+    background-color: transparent-orange-bright
     line-height: 24px
     font-size: 12px
     bottom: 3px
@@ -1456,6 +1474,9 @@ nav ul
                 .counters
                   transform(rotate(-90deg))
 
+            .counter
+              transform(rotate(-90deg))
+
             .run-card
               transform(rotate(0deg))
 
@@ -1527,6 +1548,55 @@ nav ul
         input
           width: 100%
 
+#help
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  overflow: auto
+
+#help nav li
+  padding-left: 3px
+  font-weight: bold
+
+#help nav li li
+  padding-left: 8px
+  font-weight: normal
+
+.help
+  padding: 10px 20px
+  width: 650px
+  margin: 40px auto 10px
+
+  > h3
+    margin-top: -35px
+    padding-top: 35px
+    -webkit-background-clip: content-box
+    background-clip: content-box
+
+  > h3:target
+    animation: highlight 1.5s ease
+
+  > h4
+    margin-top: -35px
+    padding-top: 35px
+    -webkit-background-clip: content-box
+    background-clip: content-box
+
+  > h4:target
+    animation: highlight 1.5s ease
+
+  li
+    padding-left: 20px
+    list-style-type: none
+
+@keyframes highlight
+  from
+    background: darkolivegreen
+  to
+    background: none
+
 #about
   position: absolute
   top: 0
@@ -1573,6 +1643,9 @@ nav ul
 
   .news-item
     margin-bottom: 4px
+
+    .title p
+        display: inline
 
     .date
       margin-right: 10px
