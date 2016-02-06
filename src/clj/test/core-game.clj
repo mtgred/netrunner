@@ -22,6 +22,35 @@
       (core/trash state :runner gord)
       (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
 
+(deftest agenda-forfeit-runner
+  "forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda"
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Upgrades" 1)])
+              (default-runner [(qty "Data Dealer" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Dealer")
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))))
+    (let [dd (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner dd 0)
+      (is (= 1 (:click (get-runner))) "Didn't lose a click")
+      (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn"))))
+
+(deftest agenda-forfeit-corp
+  "forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda"
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Corporate Town" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
+    (play-from-hand state :corp "Corporate Town" "New remote")
+    (let [ctown (get-content state :remote2 0)]
+      (core/rez state :corp ctown)
+      (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
+
 (deftest refresh-recurring-credits-hosted
   "host - Recurring credits on cards hosted after install refresh properly"
   (do-game

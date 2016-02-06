@@ -236,3 +236,23 @@
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
         (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")
         (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+
+(deftest turntable-mandatory-upgrades
+  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn"
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Project Vitruvius" 1)])
+              (default-runner [(qty "Turntable" 1)]))
+    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
+    (let [manups (get-content state :remote1 0)]
+      (score-agenda state :corp manups)
+      (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Turntable")
+      (let [tt (get-in @state [:runner :rig :hardware 0])]
+        (run-empty-server state "HQ")
+        (prompt-choice :runner "Steal")
+        (is (= 2 (:agenda-point (get-runner))) "Stole Project Vitruvius")
+        (card-ability state :runner tt 0)
+        (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
+        (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
+        (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
