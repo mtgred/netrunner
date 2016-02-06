@@ -61,6 +61,15 @@ Compile server side Clojure files:
 $ lein uberjar
 ```
 
+$ lein repl
+$ (update-dev core)
+
+`git fetch upstream`,
+`git merge upstream/master`
+then `git branch newfeature` `git checkout newfeature` commit some stuff
+then merge stuff to master and push
+create the pull request and boom
+
 Launch game server:
 
 ```
