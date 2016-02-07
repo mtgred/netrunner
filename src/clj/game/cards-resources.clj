@@ -2,7 +2,7 @@
 
 (def cards-resources
   {"Access to Globalsec"
-   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))}
+   {:in-play [:link 1]}
 
    "Activist Support"
    {:events
@@ -74,13 +74,11 @@
                                 (trash state :runner card {:unpreventable true})))}]}
 
    "Beach Party"
-   {:effect (effect (gain :hand-size-modification 5))
-    :leave-play (effect (lose :hand-size-modification 5))
+   {:in-play [:hand-size-modification 5]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Borrowed Satellite"
-   {:effect (effect (gain :link 1 :hand-size-modification 1))
-    :leave-play (effect (lose :link 1 :hand-size-modification 1))}
+   {:in-play [:hand-size-modification 1 :link 1]}
 
    "Chatterjee University"
    {:abilities [{:cost [:click 1] :label "Place 1 power counter"
@@ -405,8 +403,7 @@
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
 
    "Neutralize All Threats"
-   {:effect (effect (gain :hq-access 1))
-    :leave-play (effect (lose :hq-access 1))
+   {:in-play [:hq-access 1]
     :events {:access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
                                      (empty? (filter #(not (nil? (:trash %))) cards))))
@@ -537,18 +534,16 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:effect (effect (gain :hand-size-modification 2))
-    :leave-play (effect (lose :hand-size-modification 2))}
+   {:in-play [:hand-size-modification 2]}
 
    "Rachel Beckman"
-   {:effect (req (gain state :runner :click 1 :click-per-turn 1)
-                 (add-watch state :rachel-beckman
+   {:in-play [:click 1 :click-per-turn 1]
+    :effect (req (add-watch state :rachel-beckman
                             (fn [k ref old new]
                               (when (is-tagged? new)
                                 (remove-watch ref :rachel-beckman)
                                 (trash ref :runner card)
-                                (system-msg ref side "trashes Rachel Beckman for being tagged")))))
-    :leave-play (effect (lose :click 1 :click-per-turn 1))}
+                                (system-msg ref side "trashes Rachel Beckman for being tagged")))))}
 
    "Raymond Flint"
    {:effect (req (add-watch state :raymond-flint
@@ -591,8 +586,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:effect (effect (lose :runner :hand-size-modification 2))
-    :leave-play (effect (gain :runner :hand-size-modification 2))
+   {:in-play [:hand-size-modification -2]
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
@@ -696,7 +690,7 @@
                  :effect (effect (gain :credit (:counter card)) (trash card {:cause :ability-cost}))}]}
 
    "The Helpful AI"
-   {:effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
+   {:in-play [:link 1]
     :abilities [{:msg (msg "give +2 strength to " (:title target))
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}

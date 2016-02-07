@@ -1,24 +1,57 @@
 (in-ns 'game.core)
 
+;;; Asset-specific helpers
+(defn installed-access-trigger
+  "Effect for triggering ambush on access. 
+  Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
+  ([cost ability]
+   (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (> cost 0)
+                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
+                  (req (str "Use " (:title card) " ability?")))]
+     (installed-access-trigger cost ab prompt)))
+  ([cost ability prompt]
+   {:access {:req (req (and installed (>= (:credit corp) cost)))
+             :effect (effect (show-wait-prompt :runner (str "Corp to use " (:title card)))
+                             (resolve-ability
+                              {:optional
+                               {:prompt prompt
+                                :yes-ability ability
+                                :end-effect (effect (clear-wait-prompt :runner))}}
+                              card nil))}}))
+
+(defn advance-ambush
+  "Creates advanceable ambush structure with specified ability for specified cost"
+  ([cost ability] (assoc (installed-access-trigger cost ability) :advanceable :always))
+  ([cost ability prompt] (assoc (installed-access-trigger cost ability prompt)
+                           :advanceable :always)))
+
+(defn campaign
+  "Creates a Campaign with X counters draining Y per-turn.
+  Trashes itself when out of counters"
+  [counters per-turn]
+  {:data {:counter-type "Credit"}
+   :effect (effect (add-prop card :counter counters))
+   :derezzed-events {:runner-turn-ends corp-rez-toast}
+   :events {:corp-turn-begins {:msg (str "gain " per-turn " [Credits]")
+                               :counter-cost per-turn
+                               :effect (req (gain state :corp :credit per-turn)
+                                            (when (zero? (:counter card))
+                                              (trash state :corp card)))}}})
+
+;;; Card definitions
 (def cards-assets
   {"Adonis Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 12))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 3 [Credits]" :counter-cost 3
-                                :effect (req (gain state :corp :credit 3)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
-
+   (campaign 12 3)
+   
    "Aggressive Secretary"
-   {:advanceable :always
-    :access {:optional
-             {:req (req installed) :prompt "Pay 2 [Credits] to use Aggressive Secretary ability?"
-              :yes-ability {:cost [:credit 2]
-                            :effect (req (let [agg card]
-                                          (resolve-ability
-                                           state side (assoc (assoc-in trash-program [:choices :max] (req (:advance-counter agg)))
-                                                        :effect (effect (trash-cards targets))) agg nil)))}}}}
-
+   (advance-ambush 2 {:effect
+                      (req (let [agg card
+                                 ab (-> trash-program
+                                        (assoc-in [:choices :max] (:advance-counter agg))
+                                        (assoc :effect (effect (trash-cards targets))))]
+                             (resolve-ability state side ab agg nil)))})
+   
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -49,12 +82,9 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Cerebral Overwriter"
-   {:advanceable :always
-    :access {:optional {:req (req installed)
-                        :prompt "Pay 3 [Credits] to use Cerebral Overwriter ability?"
-                        :yes-ability {:cost [:credit 3] :msg (msg "do " (:advance-counter card) " brain damage")
-                                      :effect (effect (damage :brain (:advance-counter card) {:card card}))}}}}
-
+   (advance-ambush 3 {:msg (msg "do " (:advance-counter card 0) " brain damage")
+                      :effect (effect (damage :brain (:advance-counter card 0) {:card card}))})
+   
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
@@ -107,8 +137,7 @@
               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Cybernetics Court"
-   {:effect (effect (gain :hand-size-modification 4))
-    :leave-play (effect (lose :hand-size-modification 4))}
+   {:in-play [:hand-size-modification 4]}
 
    "Daily Business Show"
    {:events {:corp-draw
@@ -139,7 +168,7 @@
    {:recurring 2}
 
    "Director Haas"
-   {:effect (effect (gain :click 1 :click-per-turn 1)) :leave-play (effect (lose :click-per-turn 1))
+   {:in-play [:click 1 :click-per-turn 1]
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
@@ -162,20 +191,11 @@
                  :msg (msg "place 1 advancement token on " (card-str state target))}]}
 
    "Edge of World"
-   {:access {:req (req installed)
-             :effect (effect (show-wait-prompt :runner "Corp to use Edge of World")
-                             (resolve-ability
-                               {:optional
-                                {:prompt "Pay 3 [Credits] to use Edge of World ability?"
-                                 :yes-ability {:cost [:credit 3]
-                                               :msg (msg "do " (count (get-in corp [:servers (last (:server run)) :ices]))
-                                                         " brain damage")
-                                               :effect (effect (clear-wait-prompt :runner)
-                                                               (damage :brain
-                                                                       (count (get-in corp [:servers (last (:server (:run @state))) :ices]))
-                                                                       {:card card}))}
-                                 :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                               card nil))}}
+   (letfn [(ice-count [state]
+             (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))] 
+       (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
+                                    :effect (effect (damage :brain (ice-count state)
+                                                            {:card card}))}))
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -194,12 +214,8 @@
                          :effect (effect (trash-cost-bonus 1))}}}
 
    "Eve Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 16))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
-                                :effect (req (gain state :corp :credit 2)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
+   (campaign 16 2)
+
 
    "Executive Boot Camp"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -229,17 +245,9 @@
                       :effect (effect (as-agenda :corp card 1))}}}
 
    "Ghost Branch"
-   {:advanceable :always
-    :access {:req (req installed)
-             :effect (effect (show-wait-prompt :runner "Corp to use Ghost Branch")
-                             (resolve-ability
-                               {:optional {:prompt "Use Ghost Branch ability?"
-                                           :yes-ability {:msg (msg "give the Runner " (:advance-counter card) " tag"
-                                                                   (when (> (:advance-counter card) 1) "s"))
-                                                         :effect (effect (clear-wait-prompt :runner)
-                                                                         (tag-runner :runner (:advance-counter card)))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                               card nil))}}
+   (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
+                                (when (> (:advance-counter card) 1) "s"))
+                      :effect (effect (tag-runner :runner (:advance-counter card)))})
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -315,13 +323,8 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Launch Campaign"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 6))
-    :derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins {:msg "gain 2 [Credits]" :counter-cost 2
-                                :effect (req (gain state :corp :credit 2)
-                                             (when (zero? (:counter card)) (trash state :corp card)))}}}
-
+   (campaign 6 2)
+   
    "Levy University"
    {:abilities [{:prompt "Choose an ICE"
                  :msg (msg "adds " (:title target) " to HQ")
@@ -410,21 +413,20 @@
     :events {:corp-turn-begins {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Plan B"
-   {:advanceable :always
-    :access {:optional
-             {:prompt "Score an Agenda from HQ?"
-              :req (req installed)
-              :yes-ability {:effect (req (let [c card]
-                                           (resolve-ability
-                                             state side
-                                             {:prompt "Choose an Agenda in HQ to score"
-                                              :choices {:req #(and (is-type? % "Agenda")
-                                                                   (<= (:advancementcost %) (:advance-counter c))
-                                                                   (in-hand? %))}
-                                              :msg (msg "score " (:title target))
-                                              :effect (effect (score (assoc target :advance-counter
-                                                                                   (:advancementcost target))))} c nil)))}}}}
-
+   (advance-ambush
+    0
+    {:effect
+     (effect (resolve-ability
+              {:prompt "Choose an Agenda in HQ to score"
+               :choices {:req #(and (is-type? % "Agenda")
+                                    (<= (:advancementcost %) (:advance-counter card))
+                                    (in-hand? %))}
+               :msg (msg "score " (:title target))
+               :effect (effect (score (assoc target :advance-counter
+                                             (:advancementcost target))))}
+              card nil))}
+    "Score an Agenda from HQ?")
+   
    "Primary Transmission Dish"
    {:recurring 3}
 
@@ -436,11 +438,9 @@
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
 
    "Project Junebug"
-   {:advanceable :always
-    :access {:optional {:prompt "Pay 1 [Credits] to use Project Junebug ability?"
-                        :req (req (and installed (> (:credit corp) 0)))
-                        :yes-ability {:cost [:credit 1] :msg (msg "do " (* 2 (get card :advance-counter 0)) " net damage")
-                                      :effect (effect (damage :net (* 2 (get card :advance-counter 0)) {:card card}))}}}}
+   (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter card 0)) " net damage")
+                      :effect (effect (damage :net (* 2 (:advance-counter card 0))
+                                              {:card card}))})
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
@@ -541,14 +541,13 @@
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
-   {:advanceable :always
-    :access {:optional
-             {:req (req installed) :prompt "Pay 1 [Credits] to use Shattered Remains ability?"
-              :yes-ability {:cost [:credit 1]
-                            :effect (req (let [shat card]
-                                          (resolve-ability
-                                           state side (assoc (assoc-in trash-hardware [:choices :max] (req (:advance-counter shat)))
-                                                        :effect (effect (trash-cards targets))) shat nil)))}}}}
+   (advance-ambush 1 {:effect (req (let [shat card]
+                                     (resolve-ability
+                                      state side 
+                                      (-> trash-hardware
+                                          (assoc-in [:choices :max] (:advance-counter shat))
+                                          (assoc :effect (effect (trash-cards targets))))
+                                      shat nil)))})
 
    "Shi.Kyū"
    {:access
@@ -579,13 +578,14 @@
    {:access {:req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
                              (resolve-ability
-                               {:optional {:prompt "Pay 4 [Credits] to use Snare! ability?"
-                                           :yes-ability {:cost [:credit 4]
-                                                         :msg "do 3 net damage and give the Runner 1 tag"
-                                                         :effect (effect (clear-wait-prompt :runner)
-                                                                         (damage :net 3 {:card card})
-                                                                         (tag-runner :runner 1))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}} card nil))}}
+                               {:optional
+                                {:prompt "Pay 4 [Credits] to use Snare! ability?"
+                                 :end-effect (effect (clear-wait-prompt :runner))
+                                 :yes-ability {:cost [:credit 4]
+                                               :msg "do 3 net damage and give the Runner 1 tag"
+                                               :effect (effect (damage :net 3 {:card card})
+                                                               (tag-runner :runner 1))}}}
+                               card nil))}}
 
    "Space Camp"
    {:access {:msg (msg "place 1 advancement token on " (card-str state target))
@@ -627,24 +627,8 @@
                  :cost [:click 1]
                  :prompt "Select two pieces of ICE to swap positions"
                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
-                 :effect (req (if (= (count targets) 2)
-                                (let [fndx (ice-index state (first targets))
-                                      sndx (ice-index state (second targets))
-                                      fnew (assoc (first targets) :zone (:zone (second targets)))
-                                      snew (assoc (second targets) :zone (:zone (first targets)))]
-                                  (swap! state update-in (cons :corp (:zone (first targets)))
-                                         #(assoc % fndx snew))
-                                  (swap! state update-in (cons :corp (:zone (second targets)))
-                                         #(assoc % sndx fnew))
-                                  (doseq [newcard [fnew snew]]
-                                    (doseq [h (:hosted newcard)]
-                                      (let [newh (-> h (assoc-in [:zone] '(:onhost))
-                                                     (assoc-in [:host :zone] (:zone newcard)))]
-                                        (update! state side newh)
-                                        (unregister-events state side h)
-                                        (register-events state side (:events (card-def newh)) newh))))
-                                  (update-ice-strength state side fnew)
-                                  (update-ice-strength state side snew))))
+                 :effect (req (when (= (count targets) 2)
+                                (swap-ice state side (first targets) (second targets))))
                  :msg "swap the positions of two ICE"}]}
 
    "Test Ground"
