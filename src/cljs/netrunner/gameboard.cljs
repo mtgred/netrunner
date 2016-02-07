@@ -677,7 +677,7 @@
 (defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
    (sab/html
-    [:div.runner-board
+    [:div.runner-board {:class (when (= (:side @game-state) :corp) "opponent")}
      (for [zone [:program :hardware :resource :facedown]]
        [:div (for [c (zone (:rig player))]
                [:div.card-wrapper {:class (when (playable? c) "playable")}
