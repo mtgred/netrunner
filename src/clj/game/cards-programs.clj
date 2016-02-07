@@ -305,7 +305,7 @@
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
-                 :req (req (<= (count (:hosted card)) 2))
+                 :req (req (< (count (:hosted card)) 2))
                  :cost [:click 1]
                  :prompt "Choose a program in your Grip to install on Leprechaun"
                  :choices {:req #(and (is-type? % "Program")
@@ -316,7 +316,7 @@
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}
                 {:label "Host an installed program on Leprechaun"
-                 :req (req (<= (count (:hosted card)) 2))
+                 :req (req (< (count (:hosted card)) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
