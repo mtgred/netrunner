@@ -2,7 +2,7 @@
 
 (declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
          handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         in-corp-scored? update-all-ice win)
+         in-corp-scored? update-all-ice win remove-icon)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -189,7 +189,9 @@
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card (cons cause targets)))))
+      (resolve-ability state side trash-effect moved-card (cons cause targets)))
+    (when-let [icon-card (get-in moved-card [:icon :card])]
+      (remove-icon state side icon-card moved-card))))
 
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."

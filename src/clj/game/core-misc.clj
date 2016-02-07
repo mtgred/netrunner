@@ -90,17 +90,19 @@
         mod (get side' :hand-size-modification 0)]
     (+ base mod)))
 
+;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon
-  "Adds an icon to a card. E.g. a Femme Fatal token"
+  "Adds an icon to a card. E.g. a Femme Fatale token.
+  Card is the card adding the icon, target is card receiving the icon."
   [state side card target char color]
   ;; add icon
-  (set-prop state side target :icon {:char char :color color})
+  (set-prop state side target :icon {:char char :color color :card card})
   ;; specify icon target on card
   (set-prop state side card :icon-target target))
 
 (defn remove-icon
-  "Remove the icon associated with the card."
-  [state side card]
-  (when-let [target (get-card state (:icon-target card))]
-    (set-prop state side target :icon nil)
-    (set-prop state side card :icon-target nil)))
+  "Remove the icon associated with the card and target."
+  ([state side card] (remove-icon state side card (get-card state (:icon-target card))))
+  ([state side card target]
+   (set-prop state side target :icon nil)
+   (set-prop state side card :icon-target nil)))
