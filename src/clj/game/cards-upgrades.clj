@@ -233,6 +233,16 @@
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                                     :req (req (and run (= (first (:server run)) :hq)))}]}
 
+   "Port Anson Grid"
+   {:msg "prevent the Runner from jacking out unless they trash an installed program"
+    :effect (req (when this-server
+                   (prevent-jack-out state side)))
+    :events {:run {:req (req this-server)
+                   :msg "prevent the Runner from jacking out unless they trash an installed program"
+                   :effect (effect (prevent-jack-out))}
+             :runner-trash {:req (req (and this-server (is-type? target "Program")))
+                            :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}}}
+
    "Product Placement"
    {:access {:req (req (not= (first (:zone card)) :discard))
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
@@ -251,8 +261,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :effect (effect (gain :hand-size-modification 2))
-    :leave-play (effect (lose :hand-size-modification 2))}
+    :in-play [:hand-size-modification 2]}
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)

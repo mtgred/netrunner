@@ -518,25 +518,19 @@
    {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
 
    "Sunset"
-   (let [sunhelp (fn sun [serv] {:prompt "Select two pieces of ICE to swap positions"
-                                 :choices {:req #(and (= serv (rest (butlast (:zone %))))
-                                                      (ice? %)) :max 2}
-                                 :effect (req (if (= (count targets) 2)
-                                                (let [fndx (ice-index state (first targets))
-                                                      sndx (ice-index state (second targets))
-                                                      fnew (assoc (first targets) :zone (:zone (second targets)))
-                                                      snew (assoc (second targets) :zone (:zone (first targets)))]
-                                                  (swap! state update-in (cons :corp (:zone (first targets)))
-                                                         #(assoc % fndx snew))
-                                                  (swap! state update-in (cons :corp (:zone (second targets)))
-                                                         #(assoc % sndx fnew))
-                                                  (update-ice-strength state side fnew)
-                                                  (update-ice-strength state side snew)
-                                                  (resolve-ability state side (sun serv) card nil))
-                                                (system-msg state side "has finished rearranging ICE")))})]
-     {:prompt "Choose a server" :choices (req servers) :msg (msg "rearrange ICE protecting " target)
+   (letfn [(sun [serv]
+             {:prompt "Select two pieces of ICE to swap positions"
+              :choices {:req #(and (= serv (rest (butlast (:zone %)))) (ice? %))
+                        :max 2}
+              :effect (req (if (= (count targets) 2)
+                             (do (swap-ice state side (first targets) (second targets))
+                                 (resolve-ability state side (sun serv) card nil))
+                             (system-msg state side "has finished rearranging ICE")))})]
+     {:prompt "Choose a server"
+      :choices (req servers)
+      :msg (msg "rearrange ICE protecting " target)
       :effect (req (let [serv (next (server->zone state target))]
-                     (resolve-ability state side (sunhelp serv) card nil)))})
+                     (resolve-ability state side (sun serv) card nil)))})
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))

@@ -20,8 +20,7 @@
                                card nil))}]}
 
    "Astrolabe"
-   {:effect (effect (gain :memory 1))
-    :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
                               :effect (effect (draw :runner))}}}
 
@@ -39,7 +38,7 @@
                                                 (system-msg "trashes Autoscripter"))}}}
 
    "Blackguard"
-   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
+   {:in-play [:memory 2]
     :events {:expose {:msg (msg "attempt to force the rez of " (:title target))
                       :effect (effect (rez :corp target))}}}
 
@@ -60,13 +59,11 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
-   {:effect (effect (gain :memory 2 :hand-size-modification 2))
-    :leave-play (effect (lose :memory 2 :hand-size-modification 2))}
+   {:in-play [:memory 2 :hand-size-modification 2]}
 
    "Brain Cage"
-   {:effect (effect (damage :brain 1 {:card card})
-                    (gain :hand-size-modification 3))
-    :leave-play (effect (lose :hand-size-modification 3))}
+   {:in-play [:hand-size-modification 3]
+    :effect (effect (damage :brain 1 {:card card}))}
 
    "Brain Chip"
    (let [runner-points (fn [s] (max (or (get-in s [:runner :agenda-point]) 0) 0))]
@@ -126,8 +123,7 @@
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Comet"
-   {:effect (effect (gain :memory 1))
-    :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:play-event {:req (req (first-event state side :play-event))
                           :effect (req (system-msg state :runner
                                                    (str "can play another event without spending a [Click] by clicking on Comet"))
@@ -161,13 +157,13 @@
    {:recurring 1}
 
    "CyberSolutions Mem Chip"
-   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))}
+   {:in-play [:memory 2]}
 
    "Cybsoft MacroDrive"
    {:recurring 1}
 
    "Deep Red"
-   {:effect (effect (gain :memory 3)) :leave-play (effect (lose :memory 3))
+   {:in-play [:memory 3]
     :events {:runner-install
              {:optional
               {:req (req (has-subtype? target "Caïssa"))
@@ -178,7 +174,7 @@
                                             (play-ability state side {:card (get-card state caissa) :ability 0})))}}}}}
 
    "Desperado"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Dinosaurus"
@@ -209,7 +205,7 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "Doppelgänger"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:runner-install
              {:req (req (= card target))
               :effect (effect (update! (assoc card :dopp-active true)))}
@@ -241,7 +237,7 @@
    {:recurring 1}
 
    "Dyson Mem Chip"
-   {:effect (effect (gain :link 1 :memory 1)) :leave-play (effect (lose :link 1 :memory 1))}
+   {:in-play [:memory 1 :link 1]}
 
    "e3 Feedback Implants"
    {:abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
@@ -262,19 +258,19 @@
 
    "Forger"
    {:prevent {:tag [:all]}
-    :effect (effect (gain :link 1)) :leave-play (effect (lose :link 1))
+    :in-play [:link 1]
     :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
                  :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
                 {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
    "Grimoire"
-   {:effect (effect (gain :memory 2)) :leave-play (effect (lose :memory 2))
+   {:in-play [:memory 2]
     :events {:runner-install {:req (req (has-subtype? target "Virus"))
                               :effect (effect (add-prop target :counter 1))}}}
 
    "Heartbeat"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :prevent {:damage [:meat :net :brain]}
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
@@ -285,7 +281,7 @@
                                  (damage-prevent :net 1))}]}
 
    "HQ Interface"
-   {:effect (effect (gain :hq-access 1)) :leave-play (effect (lose :hq-access 1))}
+   {:in-play [:hq-access 1]}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
@@ -309,14 +305,13 @@
    {:recurring 1}
 
    "Logos"
-   {:effect (effect (gain :memory 1 :hand-size-modification 1))
-    :leave-play (effect (lose :memory 1 :hand-size-modification 1))
+   {:in-play [:memory 1 :hand-size-modification 1]
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
               :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
 
    "Maya"
-   {:effect (effect (gain :memoryunits 2)) :leave-play (effect (lose :memoryunits 2))
+   {:in-play [:memory 2]
     :abilities [{:once :per-turn
                  :req (req (when-let [c (:card (first (get-in @state [:runner :prompt])))]
                              (in-deck? c)))
@@ -332,7 +327,7 @@
                                     (handle-end-run state :runner)))))}]}
 
    "MemStrips"
-   {:effect (effect (gain :memory 3))}
+   {:in-play [:memory 3]}
 
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
@@ -343,9 +338,8 @@
                                             (when (< n 3)
                                               (resolve-ability state side (mh (inc n)) card nil)))})]
      {:prevent {:damage [:net :brain]}
-      :effect (effect (gain :memory 3)
-                      (resolve-ability (mhelper 1) card nil))
-      :leave-play (effect (lose :memory 3))
+      :in-play [:memory 3]
+      :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority true
                    :choices {:req #(and (is-type? % "Program")
@@ -418,19 +412,18 @@
                        :effect (effect (tag-prevent 1) (update! (dissoc card :qianju-active)))}}}
 
    "R&D Interface"
-   {:effect (effect (gain :rd-access 1)) :leave-play (effect (lose :rd-access 1))}
+   {:in-play [:rd-access 1]}
 
    "Rabbit Hole"
-   {:effect
-    (effect (gain :link 1)
-            (resolve-ability
+   {:in-play [:link 1]
+    :effect
+    (effect (resolve-ability
              {:optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
                          :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
                          :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                                       (:deck runner))]
                                                      (runner-install state side c)
-                                                     (shuffle! state :runner :deck)))}}} card nil))
-    :leave-play (effect (lose :link 1))}
+                                                     (shuffle! state :runner :deck)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
@@ -489,8 +482,7 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Security Nexus"
-   {:effect (effect (gain :link 1) (gain :memory 1))
-    :leave-play (effect (lose :link 1) (lose :memory 1))
+   {:in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))
                  :msg "force the Corp to initiate a trace"
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
@@ -506,7 +498,8 @@
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Spinal Modem"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1)) :recurring 2
+   {:in-play [:memory 1]
+    :recurring 2
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
 
    "The Personal Touch"
@@ -517,15 +510,14 @@
                                     :effect (effect (breaker-strength-bonus 1))}}}
 
    "The Toolbox"
-   {:effect (effect (gain :link 2 :memory 2)) :leave-play (effect (lose :link 2 :memory 2))
+   {:in-play [:link 2 :memory 2]
     :recurring 2}
 
    "Titanium Ribs"
    {:effect (effect (damage :meat 2 {:card card}))}
 
    "Turntable"
-   {:effect (effect (gain :memory 1))
-    :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:agenda-stolen {:req (req (not (empty? (:scored corp))))
                              :effect (req (toast state :runner "Click Turntable to swap for a scored Corp agenda." "info")
                                           (update! state side (assoc card :swap true)))}
@@ -577,7 +569,7 @@
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Vigil"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
+   {:in-play [:memory 1]
     :events {:runner-turn-begins {:req (req (= (count (:hand corp)) (hand-size state :corp)))
                                   :msg "draw 1 card" :effect (effect (draw 1))}}}
 

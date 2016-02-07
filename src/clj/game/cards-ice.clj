@@ -134,6 +134,13 @@
 
 
 ;;; For Morph ICE
+(defn morph [state side card new old]
+  (update! state side (assoc card :subtype
+                             (->> (remove #(= old %) (.split (:subtype card) " - "))
+                                  vec (concat [new]) distinct (join " - "))))
+  (update-ice-strength state side card)
+  (update-run-ice state side))
+
 (defn morph-effect
   "Creates morph effect for ICE. Morphs from base type to other type"
   [base other]

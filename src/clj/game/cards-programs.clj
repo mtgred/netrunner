@@ -583,32 +583,30 @@
                                                   card nil))}]}
 
    "Surfer"
-   {:abilities [{:cost [:credit 2]
-                 :req (req (and (:run @state)
-                                (:rezzed current-ice)
-                                (has-subtype? current-ice "Barrier")))
-                 :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
-                 :effect (req (let [cice current-ice]
-                                (resolve-ability
-                                  state side
-                                  {:prompt (msg "Choose an ICE before or after " (:title cice))
-                                   :choices {:req #(and (ice? %)
-                                                        (= (:zone %) (:zone cice))
-                                                        (= 1 (abs (- (ice-index state %) (ice-index state cice)))))}
-                                   :msg "swap a piece of barrier ICE"
-                                   :effect (req (let [tgtndx (ice-index state target)
-                                                      oldndx (ice-index state cice)]
-                                                  (swap! state update-in (cons :corp (:zone cice))
-                                                      #(assoc % tgtndx cice))
-                                                  (swap! state update-in (cons :corp (:zone cice))
-                                                      #(assoc % oldndx target))
-                                                  (swap! state update-in [:run]
-                                                      #(assoc % :position (inc tgtndx)))
-                                                  (update-all-ice state side)
-                                                  (update-run-ice state side)
-                                                  (trigger-event state side :approach-ice current-ice)))}
-                                 card nil)))}]}
-
+   (letfn [(surf [cice]
+             {:prompt (msg "Choose an ICE before or after " (:title cice))
+              :choices {:req (req #(and (ice? %)
+                                        (= (:zone %) (:zone cice))
+                                        (= 1 (abs (- (ice-index state %)
+                                                     (ice-index state cice))))))}
+              :msg "swap a piece of barrier ICE"
+              :effect (req (let [tgtndx (ice-index state target)
+                                 cidx (ice-index state cice)] 
+                             (swap! state update-in (cons :corp (:zone cice))
+                                    #(assoc % tgtndx cice))
+                             (swap! state update-in (cons :corp (:zone cice))
+                                    #(assoc % cidx target))
+                             (swap! state update-in [:run] #(assoc % :position (inc tgtndx)))
+                             (update-all-ice state side)
+                             (update-run-ice state side)
+                             (trigger-event state side :approach-ice current-ice)))})]
+     {:abilities [{:cost [:credit 2]
+                   :req (req (and (:run @state)
+                                  (:rezzed current-ice)
+                                  (has-subtype? current-ice "Barrier")))
+                   :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
+                   :effect (effect (resolve-ability surf card nil))}]})
+   
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
