@@ -50,7 +50,7 @@
     [:div
      [:div.float-right
       (let [c (count (:games cursor))]
-        (str c " Game" (when (> c 1) "s")))]
+        (str c " Game" (when (not= c 1) "s")))]
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          [:div.float-right
