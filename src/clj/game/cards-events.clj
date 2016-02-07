@@ -26,8 +26,15 @@
                                 (sort-by #(vec (:zone %)))
                                 (reverse))]
                    (trash state side c))
+                 ;; do hosted cards first so they don't get trashed twice
                  (doseq [c (all-installed state :runner)]
-                   (move state side c [:rig :facedown])))}
+                   (if (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone)))
+                     (do (move state side c [:rig :facedown])
+                         (deactivate state side c))))
+                 (doseq [c (all-installed state :runner)]
+                   (if (not (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                     (do (move state side c [:rig :facedown])
+                         (deactivate state side c)))))}
 
    "Blackmail"
    {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
