@@ -206,12 +206,6 @@
                  [:h4 (str (:title game)
                            (when (pos? c)
                              (str  " (" c " spectator" (when (> c 1) "s") ")")))])
-               (when-not (and (empty? gamepassword) (or gameid (= (count (:players game)) 2) (:started game)))
-                 (let [gamepassword (:gamepassword game)]
-                    [:h5 "Password"]
-                    [:input.game-playerpassword {:on-change #(om/set-state! owner :playerpassword (.. % -target -value))
-                                  :value (:playerpassword state) :type "password"}]
-                    ))
                [:div
                 (om/build-all player-view (:players game))]]))]]
 
@@ -224,9 +218,6 @@
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title"}]
-            [:h4 "Password (optional)"]
-            [:input.game-gamepassword {:on-change #(om/set-state! owner :gamepassword (.. % -target -value))
-                                :value (:gamepassword state) :type "password"}]
             [:p.flash-message (:flash-message state)]
             [:label
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
@@ -251,7 +242,6 @@
                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
                 [:div.content
                  [:h2 (:title game)]
-                 [:h2 (:gamepassword game)]
                  [:div
                   [:h3.float-left "Players"]
                   (when-not (every? :deck players)
