@@ -387,7 +387,7 @@ nav ul
 
 .topnav
   position: absolute
-  z-index: 10
+  z-index: 100
   top: 0
   left: 0
   right: 0
@@ -1481,6 +1481,10 @@ nav ul
     .dashboard
       display-flex()
       align-items(flex-end)
+      z-index: 10
+
+    .me
+      z-index: 1
 
   .rightpane
     position: relative
