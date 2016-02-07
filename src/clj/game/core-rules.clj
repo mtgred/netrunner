@@ -150,6 +150,7 @@
 (defn resolve-tag [state side n args]
   (when (pos? n)
     (gain state :runner :tag n)
+    (toast state side (str "Took " n " tag" (when (> n 1) "s") "!") "info")
     (trigger-event state side :runner-gain-tag n)))
 
 (defn tag-runner
