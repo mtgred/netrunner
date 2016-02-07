@@ -43,27 +43,33 @@
     (is (= 4 (core/hand-size state :runner)) "Runner handsize decreased by 1")
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
-(deftest apocalypse-turn-facedown
-  "Apocalypse - Turn Runner cards facedown without firing their leave play effects"
+(deftest apocalypse-hosting
+  "Apocalypse - Ensure MU is correct and no duplicate cards in heap"
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
-              (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
+              (default-runner [(qty "Scheherazade" 1) (qty "Corroder" 1)
+                               (qty "Hyperdriver" 1) (qty "Apocalypse" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
-    (play-from-hand state :runner "Tri-maf Contact")
-    (core/gain state :runner :click 2)
+    (core/gain state :runner :click 3)
+    (play-from-hand state :runner "Scheherazade")
+    (let [scheherazade (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner scheherazade 0)
+      (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
+      (is (= 3 (:memory (get-runner))) "Memory at 3 (-1 from Corroder)"))
+    (play-from-hand state :runner "Hyperdriver")
+    (is (= 0 (:memory (get-runner))) "Memory at 0 (-1 from Corroder, -3 from Hyperdriver)")
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
     (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-    (let [tmc (get-in @state [:runner :rig :facedown 0])]
-      (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
-      (is (= 3 (count (:hand (get-runner))))
-          "No meat damage dealt by Tri-maf's leave play effect"))))
+    (is (= 3 (count (get-in @state [:runner :rig :facedown]))) "Scheherazade, Corroder, Hyperdriver facedown")
+    (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
+    (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
 (deftest apocalypse-in-play-ability
   "Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains"
@@ -88,6 +94,28 @@
       (is (:facedown (refresh logos)) "Logos is facedown")
       (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos facedown")
       (is (= 4 (:memory (get-runner))) "Memory reset with Logos facedown"))))
+
+(deftest apocalypse-turn-facedown
+  "Apocalypse - Turn Runner cards facedown without firing their leave play effects"
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
+              (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tri-maf Contact")
+    (core/gain state :runner :click 2)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Apocalypse")
+    (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+    (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+    (let [tmc (get-in @state [:runner :rig :facedown 0])]
+      (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
+      (is (= 3 (count (:hand (get-runner))))
+          "No meat damage dealt by Tri-maf's leave play effect"))))
 
 (deftest blackmail
   "Prevent rezzing of ice for one run"
