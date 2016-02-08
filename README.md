@@ -4,7 +4,7 @@ Play Android: Netrunner in the browser.
 
 http://www.jinteki.net
 
-![Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
+[Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
 
 ![screenshot](https://dl.dropboxusercontent.com/u/5601199/screenshot.jpg)
 
