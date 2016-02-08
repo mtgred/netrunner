@@ -274,7 +274,7 @@ app.get '/logout', (req, res) ->
   res.redirect('/')
 
 app.post '/register', (req, res) ->
-  db.collection('users').findOne username: req.body.username, (err, user) ->
+  db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.send {message: 'Username taken'}, 422
     else
