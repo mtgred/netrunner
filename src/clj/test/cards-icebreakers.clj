@@ -85,6 +85,26 @@
       (prompt-card :runner (find-card "Armitage Codebusting" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource"))))
 
+(deftest femme-counter
+  "Femme Fatale counter test"
+  (do-game
+   (new-game (default-corp [(qty "Ice Wall" 1)])
+             (default-runner [(qty "Femme Fatale" 2)]))
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (core/gain state :runner :credit 18)
+   (let [iw (get-ice state :hq 0)]
+    (play-from-hand state :runner "Femme Fatale")
+    (prompt-select :runner iw)
+    (is (:icon (refresh iw)) "Ice Wall has an icon")
+    (core/trash state :runner (get-in @state [:runner :rig :program 0]))
+    (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after Femme trashed")
+    (play-from-hand state :runner "Femme Fatale")
+    (prompt-select :runner iw)
+    (is (:icon (refresh iw)) "Ice Wall has an icon")
+    (core/trash state :corp iw)
+    (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
+
 (deftest overmind-counters
   "Overmind - Start with counters equal to unused MU"
   (do-game

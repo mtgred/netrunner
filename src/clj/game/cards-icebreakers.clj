@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare add-icon remove-icon)
+
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the auto-pump routine in
   core, IF we are encountering a rezzed ice with a subtype we can break."
@@ -271,8 +273,10 @@
    (auto-icebreaker ["Sentry"]
                     {:prompt "Choose a piece of ICE to target for bypassing"
                      :choices {:req ice?}
+                     :leave-play (req (remove-icon state side card))
                      :effect (req (let [ice target
                                         serv (zone->name (second (:zone ice)))]
+                                    (add-icon state side card ice "F" "blue")
                                     (system-msg state side
                                                 (str "chooses " (card-str state ice)
                                                      " for Femme Fatale's bypass ability"))))

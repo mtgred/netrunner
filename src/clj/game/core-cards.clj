@@ -2,7 +2,7 @@
 
 (declare all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
          has-subtype? remove-from-host rezzed?
-         trash update-hosted! update-ice-strength)
+         trash update-hosted! update-ice-strength remove-icon)
 
 ; Functions for loading card information.
 (defn card-def
@@ -84,6 +84,9 @@
                  (handle-end-run state side)))
              (swap! state dissoc-in z)))
          (trigger-event state side :card-moved card moved-card)
+         (when-let [icon-card (get-in moved-card [:icon :card])]
+           ;; remove icon if card moved to :discard or :hand
+           (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
          moved-card)))))
 
 (defn move-zone

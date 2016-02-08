@@ -1132,6 +1132,24 @@ nav ul
     height: 24px
     width: 24px
 
+  .icon
+    position: absolute
+    z-index: 10
+    padding: 0
+    text-align: center
+    line-height: 24px
+    font-size: 12px
+    top: 3px
+    right: 3px
+    height: 24px
+    width: 24px
+
+    &.blue
+      background-color: blue
+    
+    &.red
+      background-color: red
+
   .named-target
     position: absolute
     z-index: 10
@@ -1377,6 +1395,9 @@ nav ul
             .strength
               transform(rotate(90deg))
 
+            .icon
+              transform(rotate(90deg))
+
             .run-arrow
               position: absolute
               z-index: 10
@@ -1471,6 +1492,9 @@ nav ul
             left: 13px
 
           .strength
+            transform(rotate(-90deg))
+
+          .icon
             transform(rotate(-90deg))
 
           .ices
