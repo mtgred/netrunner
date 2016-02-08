@@ -157,11 +157,10 @@
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
                                          (filter #(is-type? % "ICE") cards)))))
-                ;; FIXME:
-                ;; The credit cost adjustment is incorrect.  It should be
-                ;; decreased only by the number of ICE on the server.  Any
-                ;; additional credit costs must still be paid.
-                :effect (effect (install-cost-bonus [:credit -1000]))}
+                ;; Install cost is decreased only by the number of ICE on the
+                ;; server.  Any additional credit costs must still be paid.
+                :effect (effect (install-cost-bonus
+                                  [:credit (- (count (:dest-zone (second targets))))]))}
              :corp-install
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
