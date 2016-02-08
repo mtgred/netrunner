@@ -320,6 +320,7 @@
       ;; Assume uninstalled cards with counters are hosted on Personal
       ;; Workshop.
       (not (:installed card)) "Power"
+      (not (:subtype card)) "Power"
       (> (.indexOf (:subtype card) "Virus") -1) "Virus"
       :else "Power")))
 
