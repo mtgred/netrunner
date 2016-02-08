@@ -4,7 +4,7 @@ Play Android: Netrunner in the browser.
 
 http://www.jinteki.net
 
-Gameplay video: https://www.youtube.com/watch?v=EO0O12s0tr8&list=PL_qsBCj4eFZHUZpEwGbW0y9IwnDDvULwX&index=2
+![Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
 
 ![screenshot](https://dl.dropboxusercontent.com/u/5601199/screenshot.jpg)
 
@@ -52,7 +52,7 @@ $ coffee fetch.coffee
 Compile and watch client side Clojurescript files:
 
 ```
-$ lein cljsbuild auto dev
+$ lein figwheel
 ```
 
 Compile server side Clojure files:
@@ -60,15 +60,6 @@ Compile server side Clojure files:
 ```
 $ lein uberjar
 ```
-
-$ lein repl
-$ (update-dev core)
-
-`git fetch upstream`,
-`git merge upstream/master`
-then `git branch newfeature` `git checkout newfeature` commit some stuff
-then merge stuff to master and push
-create the pull request and boom
 
 Launch game server:
 
