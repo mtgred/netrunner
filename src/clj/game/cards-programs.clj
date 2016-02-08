@@ -339,7 +339,11 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Medium"
-   {:events {:no-action {:req (req (and run
+   {:effect (req (when (and run
+                            (= (first (get-in @state [:run :server])) :rd)
+                            (not current-ice))
+                   (update! state side (assoc card :medium-active true))))
+    :events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :rd)
                                         (not current-ice)
                                         (> (get-virus-counters state side card) 0)))
@@ -367,7 +371,11 @@
    {:recurring 2}
 
    "Nerve Agent"
-   {:events {:no-action {:req (req (and run
+   {:effect (req (when (and run
+                            (= (first (get-in @state [:run :server])) :hq)
+                            (not current-ice))
+                   (update! state side (assoc card :nerve-active true))))
+    :events {:no-action {:req (req (and run
                                         (= (first (get-in @state [:run :server])) :hq)
                                         (not current-ice)
                                         (> (get-virus-counters state side card) 0)))
