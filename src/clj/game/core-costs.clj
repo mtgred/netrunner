@@ -95,7 +95,8 @@
 (defn install-cost [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
             (-> (concat (get-in @state [:bonus :install-cost]) all-cost
-                        (when-let [instfun (:install-cost-bonus (card-def card))] (instfun state side card nil)))
+                        (when-let [instfun (:install-cost-bonus (card-def card))]
+                          (instfun state side card nil)))
                 merge-costs flatten))))
 
 (defn modified-install-cost
