@@ -132,7 +132,9 @@
          ;; trigger :pre-corp-install before computing install costs so that
          ;; event handlers may adjust the cost.
          (trigger-event state side :pre-corp-install card {:server server :dest-zone dest-zone})
-         (let [ice-cost (if (and (ice? c) (not no-install-cost))
+         (let [ice-cost (if (and (ice? c)
+                                 (not no-install-cost)
+                                 (not (ignore-install-cost? state side)))
                             (count dest-zone) 0)
                all-cost (concat extra-cost [:credit ice-cost])
                end-cost (install-cost state side card all-cost)
@@ -155,7 +157,8 @@
                    (card-init state side
                               (assoc (get-card state moved-card) :rezzed true :seen true) false))
                  (when-let [dre (:derezzed-events cdef)]
-                   (register-events state side dre moved-card)))))))))))
+                   (register-events state side dre moved-card)))))
+           (clear-install-cost-bonus state side)))))))
 
 
 ;;; Installing a runner card
@@ -227,4 +230,4 @@
                      (update-breaker-strength state side c))))))
            (when (is-type? card "Resource")
              (swap! state assoc-in [:runner :register :installed-resource] true))
-           (swap! state update-in [:bonus] dissoc :install-cost))))))
+           (clear-install-cost-bonus state side))))))

@@ -92,6 +92,16 @@
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
 
+(defn ignore-install-cost [state side b]
+  (swap! state assoc-in [:bonus :ignore-install-cost] b))
+
+(defn ignore-install-cost? [state side]
+  (get-in @state [:bonus :ignore-install-cost]))
+
+(defn clear-install-cost-bonus [state side]
+  (swap! state update-in [:bonus] dissoc :install-cost)
+  (swap! state update-in [:bonus] dissoc :ignore-install-cost))
+
 (defn install-cost [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
             (-> (concat (get-in @state [:bonus :install-cost]) all-cost
@@ -108,4 +118,5 @@
    (trigger-event state side :pre-install card)
    (let [cost (install-cost state side card (merge-costs (concat additional [:credit (:cost card)])))]
      (swap! state update-in [:bonus] dissoc :install-cost)
+     (swap! state update-in [:bonus] dissoc :ignore-install-cost)
      cost)))

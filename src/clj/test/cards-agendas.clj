@@ -116,11 +116,12 @@
     (take-credits state :runner)
     (take-credits state :runner)
     (take-credits state :runner)
-    (let [efscored (get-in @state [:corp :scored 0])
-          hqice (find-card "Ice Wall" (get-in @state [:corp :hand]))]
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
-      (is (= 6 (get-in @state [:corp :credit])) "Corp does not pay for installing the first ICE of the turn"))))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
+    (is (= 6 (get-in @state [:corp :credit])) "Corp does not pay for installing the first ICE of the turn")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (not (nil? (get-ice state :hq 2))) "Corp has three ice installed on HQ")
+    (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
 
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"

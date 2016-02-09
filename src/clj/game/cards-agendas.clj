@@ -157,10 +157,7 @@
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
                                          (filter #(is-type? % "ICE") cards)))))
-                ;; Install cost is decreased only by the number of ICE on the
-                ;; server.  Any additional credit costs must still be paid.
-                :effect (effect (install-cost-bonus
-                                  [:credit (- (count (:dest-zone (second targets))))]))}
+                :effect (effect (ignore-install-cost true))}
              :corp-install
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
