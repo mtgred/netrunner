@@ -605,17 +605,17 @@
     (let [me? (= (:side @game-state) :runner)]
       [:div.stats.panel.blue-shade {}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
-       [:div (str credit " Credit" (if (> credit 1) "s" "")
+       [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (not= credit 1) "s" "")
                   (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
-       [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
-       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+       [:div (str memory " Memory Unit" (if (not= memory 1) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
+       [:div (str link " Link Strength") (when me? (controls :link))]
+       [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
-       [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
+       [:div (str tag " Tag" (if (not= tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
+       [:div (str brain-damage " Brain Damage")
         (when me? (controls :brain-damage))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
@@ -627,11 +627,11 @@
     (let [me? (= (:side @game-state) :corp)]
       [:div.stats.panel.blue-shade {}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
-       [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
-       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+       [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
+       [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))
+       [:div (str bad-publicity " Bad Publicity")
         (when me? (controls :bad-publicity))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
