@@ -448,6 +448,23 @@
           "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
+(deftest street-peddler-in-play-effects
+  "Street Peddler - Trashing hardware should not reduce :in-play values"
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Street Peddler" 1) (qty "HQ Interface" 3)]))
+   (take-credits state :corp)
+   ;; move HQIs back to deck
+   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
+   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
+   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
+   (play-from-hand state :runner "Street Peddler")
+   (let [sp (get-in @state [:runner :rig :resource 0])]
+     (card-ability state :runner sp 0)
+     (prompt-card :runner (first (:hosted sp))) ; choose to install HQ Interface
+     (is (= 2 (:hq-access (get-runner)))
+         "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
+
 (deftest street-peddler-parasite-1cr
   "Street Peddler - Installing Parasite with only 1cr. Issue #491."
   (do-game

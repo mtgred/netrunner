@@ -583,12 +583,12 @@
                                                   card nil))}]}
 
    "Surfer"
-   (letfn [(surf [cice]
+   (letfn [(surf [state cice]
              {:prompt (msg "Choose an ICE before or after " (:title cice))
-              :choices {:req (req #(and (ice? %)
-                                        (= (:zone %) (:zone cice))
-                                        (= 1 (abs (- (ice-index state %)
-                                                     (ice-index state cice))))))}
+              :choices {:req #(and (ice? %)
+                                   (= (:zone %) (:zone cice))
+                                   (= 1 (abs (- (ice-index state %)
+                                                (ice-index state cice)))))}
               :msg "swap a piece of barrier ICE"
               :effect (req (let [tgtndx (ice-index state target)
                                  cidx (ice-index state cice)] 
@@ -602,10 +602,10 @@
                              (trigger-event state side :approach-ice current-ice)))})]
      {:abilities [{:cost [:credit 2]
                    :req (req (and (:run @state)
-                                  (:rezzed current-ice)
+                                  (rezzed? current-ice)
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
-                   :effect (effect (resolve-ability surf card nil))}]})
+                   :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
    
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}

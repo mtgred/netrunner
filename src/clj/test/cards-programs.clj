@@ -293,3 +293,23 @@
         (prompt-select :runner hive)
         (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
         (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
+
+(deftest surfer
+  "Surfer - Swap position with ice before or after when encountering a barrier ice"
+  (do-game
+   (new-game (default-corp [(qty "Ice Wall" 1) (qty "Quandary" 1)])
+             (default-runner [(qty "Surfer" 1)]))
+   (play-from-hand state :corp "Quandary" "HQ")
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Surfer")
+   (is (= 3 (:credit (get-runner))) "Paid 2 credits to install Surfer")
+   (core/rez state :corp (get-ice state :hq 1))
+   (run-on state "HQ")
+   (is (= 2 (get-in @state [:run :position])) "Starting run at position 2")
+   (let [surf (get-in @state [:runner :rig :program 0])]
+     (card-ability state :runner surf 0)
+     (prompt-select :runner (get-ice state :hq 0))
+     (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
+     (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
+     (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
