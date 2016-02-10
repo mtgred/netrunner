@@ -254,10 +254,19 @@
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
 
+(defn released?
+  "Returns false if the card comes from a spoiled set or is out of competetive rotation."
+  [card]
+  (let [cid (js/parseInt (:code card))]
+    ;; Cards up to Kala Ghoda are currently released
+    (and cid (<= cid 10019))))
+
 (defn mwl-legal?
   "Returns true if a deck is valid and the influence limit fits within NAPD MWL restrictions."
   [deck]
-  (and (valid? deck) (<= (influence-count deck) (deck-inf-limit deck))))
+  (and (valid? deck)
+       (<= (influence-count deck) (deck-inf-limit deck))
+       (every? #(released? (:card %)) (:cards deck))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -561,11 +570,15 @@
                        (if-let [name (get-in line [:card :title])]
                          (let [card (:card line)
                                infaction (noinfcost? identity card)
-                               wanted (mostwanted? card)]
+                               wanted (mostwanted? card)
+                               valid (and (allowed? card identity)
+                                          (legal-num-copies? line))
+                               released (released? card)]
                            [:span
-                            [:span {:class (if (and (allowed? card identity)
-                                                    (legal-num-copies? line))
-                                             "fake-link" "invalid")
+                            [:span {:class (cond
+                                             (and valid released) "fake-link"
+                                             valid "casual"
+                                             :else "invalid")
                                     :on-mouse-enter #(put! zoom-channel card)
                                     :on-mouse-leave #(put! zoom-channel false)} name]
                             (when (or wanted (not infaction))
