@@ -255,7 +255,7 @@
              (<= min (agenda-points deck) (inc min))))))
 
 (defn released?
-  "Returns false if the card comes from a spoiled set or is out of competetive rotation."
+  "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [card]
   (let [cid (js/parseInt (:code card))]
     ;; Cards up to Kala Ghoda are currently released

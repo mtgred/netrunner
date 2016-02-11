@@ -120,7 +120,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator,\
+        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator, lobby: msg.lobby,\
                 players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
         games[gameid] = game
         socket.join(gameid)
