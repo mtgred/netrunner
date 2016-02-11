@@ -543,10 +543,12 @@
    "Shattered Remains"
    (advance-ambush 1 {:effect (req (let [shat card]
                                      (resolve-ability
-                                      state side 
+                                      state side
                                       (-> trash-hardware
                                           (assoc-in [:choices :max] (:advance-counter shat))
-                                          (assoc :effect (effect (trash-cards targets))))
+                                          (assoc :prompt (msg "Choose " (:advance-counter shat) " pieces of hardware to trash")
+                                                 :effect (effect (trash-cards targets))
+                                                 :msg (msg "trash " (join ", " (map :title targets)))))
                                       shat nil)))})
 
    "Shi.Kyū"
