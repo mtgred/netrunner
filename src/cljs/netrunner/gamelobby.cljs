@@ -180,6 +180,25 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
+(defn game-list [{:keys [games gameid] :as cursor} owner]
+  [:div.game-list
+   (if (empty? games)
+     [:h4 "No game"]
+     (for [game games]
+       [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
+        (when-not (or gameid (= (count (:players game)) 2) (:started game))
+          (let [id (:gameid game)]
+            [:button {:on-click #(join-game id owner)} "Join"]))
+        (when (and (:allowspectator game) (not gameid))
+          (let [id (:gameid game)]
+            [:button {:on-click #(watch-game id owner)} "Watch"]))
+        (let [c (count (:spectators game))]
+          [:h4 (str (:title game)
+                    (when (pos? c)
+                      (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+        [:div
+         (om/build-all player-view (:players game))]]))])
+
 (defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]
   (reify
     om/IRenderState
@@ -191,23 +210,7 @@
           (if gameid
             [:button {:class "disabled"} "New game"]
             [:button {:on-click #(new-game cursor owner)} "New game"])]
-         [:div.game-list
-          (if (empty? games)
-            [:h4 "No game"]
-            (for [game games]
-              [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
-               (when-not (or gameid (= (count (:players game)) 2) (:started game))
-                 (let [id (:gameid game)]
-                   [:button {:on-click #(join-game id owner)} "Join"]))
-               (when (and (:allowspectator game) (not gameid))
-                 (let [id (:gameid game)]
-                  [:button {:on-click #(watch-game id owner)} "Watch"]))
-               (let [c (count (:spectators game))]
-                 [:h4 (str (:title game)
-                           (when (pos? c)
-                             (str  " (" c " spectator" (when (> c 1) "s") ")")))])
-               [:div
-                (om/build-all player-view (:players game))]]))]]
+         (game-list cursor owner)]
 
         [:div.game-panel
          (if (:editing state)
