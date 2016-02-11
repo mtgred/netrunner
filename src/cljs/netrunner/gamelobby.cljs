@@ -216,10 +216,11 @@
             [:button {:class "disabled"} "New game"]
             [:button {:on-click #(new-game cursor owner)} "New game"])
           [:div.float-right "Lobby: "
-           [:select.lobbies {:value (om/get-state owner :current-lobby)
-                     :on-change #(om/set-state! owner :current-lobby (.. % -target -value))}
-            [:option {:value "casual"} (str "Casual (" (count (filter #(= "casual" (:lobby %)) games)) ")")]
-            [:option {:value "competitive"} (str "Competitive (" (count (filter #(= "competitive" (:lobby %)) games)) ")")]]]]
+           (let [count-games (fn [lobby] (count (filter #(= lobby (:lobby %)) games)))]
+             [:select.lobbies {:value (om/get-state owner :current-lobby)
+                               :on-change #(om/set-state! owner :current-lobby (.. % -target -value))}
+              [:option {:value "casual"} (str "Casual (" (count-games "casual") ")")]
+              [:option {:value "competitive"} (str "Competitive (" (count-games "competitive") ")")]])]]
          (game-list cursor owner)]
 
         [:div.game-panel
