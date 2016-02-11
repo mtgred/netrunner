@@ -145,7 +145,10 @@
                          [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
                         [:p "Decks that are valid and fit within tournament restrictions are marked \"Tournament legal\". "
                          "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."])}
+                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."]
+                        [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
+                         "out of competetive rotation will also result in your deck being marked as casual. Such cards "
+                         "should be easy to identify - they are highlighted in the deckbuilder."])}
             {:id "rezaccess"
              :title "How do I rez cards as Corp in the 4.3 run timing window?"
              :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "
