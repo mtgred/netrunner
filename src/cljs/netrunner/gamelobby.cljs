@@ -204,7 +204,7 @@
   (reify
     om/IInitState
     (init-state [this]
-      {:current-lobby "Casual"})
+      {:current-lobby "casual"})
 
     om/IRenderState
     (render-state [this state]
@@ -218,8 +218,8 @@
           [:div.float-right "Lobby: "
            [:select {:value (om/get-state owner :current-lobby)
                      :on-change #(om/set-state! owner :current-lobby (.. % -target -value))}
-            [:option "Casual"]
-            [:option "Competitive"]]]]
+            [:option {:value "casual"} (str "Casual (" (count (filter #(= "casual" (:lobby %)) games)) ")")]
+            [:option {:value "competitive"} (str "Competitive (" (count (filter #(= "competitive" (:lobby %)) games)) ")")]]]]
          (game-list cursor owner)]
 
         [:div.game-panel
