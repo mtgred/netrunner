@@ -162,7 +162,7 @@
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
                                          (filter #(is-type? % "ICE") cards)))))
-                :msg (msg "ignore the install cost of " (:title target))}}}
+                :msg (msg "ignore the install cost of the first ICE this turn")}}}
 
    "Efficiency Committee"
    {:effect (effect (add-prop card :counter 3))
