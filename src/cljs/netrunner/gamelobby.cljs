@@ -186,12 +186,12 @@
      [:h4 "No game"]
      (for [game games]
        [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
-        (when-not (or gameid (= (count (:players game)) 2) (:started game))
-          (let [id (:gameid game)]
-            [:button {:on-click #(join-game id owner)} "Join"]))
         (when (and (:allowspectator game) (not gameid))
           (let [id (:gameid game)]
             [:button {:on-click #(watch-game id owner)} "Watch"]))
+        (when-not (or gameid (= (count (:players game)) 2) (:started game))
+          (let [id (:gameid game)]
+            [:button {:on-click #(join-game id owner)} "Join"]))
         (let [c (count (:spectators game))]
           [:h4 (str (:title game)
                     (when (pos? c)
