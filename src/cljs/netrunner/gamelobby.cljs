@@ -80,7 +80,7 @@
            (send {:action "create" :title (om/get-state owner :title)
                   :allowspectator (om/get-state owner :allowspectator)
                   :side (om/get-state owner :side)
-                  :lobby (om/get-state owner :current-lobby)}))))))
+                  :room (om/get-state owner :current-room)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -182,11 +182,11 @@
           [:button "Send"]]]]))))
 
 (defn game-list [{:keys [games gameid] :as cursor} owner]
-  (let [lobbygames (filter #(= (:lobby %) (om/get-state owner :current-lobby)) games)]
+  (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)]
     [:div.game-list
-     (if (empty? lobbygames)
+     (if (empty? roomgames)
        [:h4 "No games"]
-       (for [game lobbygames]
+       (for [game roomgames]
          [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
           (when (and (:allowspectator game) (not gameid))
             (let [id (:gameid game)]
@@ -204,7 +204,7 @@
   (reify
     om/IInitState
     (init-state [this]
-      {:current-lobby "casual"})
+      {:current-room "casual"})
 
     om/IRenderState
     (render-state [this state]
@@ -215,10 +215,10 @@
           (if gameid
             [:button {:class "disabled"} "New game"]
             [:button {:on-click #(new-game cursor owner)} "New game"])
-          [:div.float-right "Lobby: "
-           (let [count-games (fn [lobby] (count (filter #(= lobby (:lobby %)) games)))]
-             [:select.lobbies {:value (om/get-state owner :current-lobby)
-                               :on-change #(om/set-state! owner :current-lobby (.. % -target -value))}
+          [:div.float-right "Room: "
+           (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))]
+             [:select.rooms {:value (om/get-state owner :current-room)
+                               :on-change #(om/set-state! owner :current-room (.. % -target -value))}
               [:option {:value "casual"} (str "Casual (" (count-games "casual") ")")]
               [:option {:value "competitive"} (str "Competitive (" (count-games "competitive") ")")]])]]
          (game-list cursor owner)]
