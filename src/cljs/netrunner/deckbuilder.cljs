@@ -266,7 +266,8 @@
   [deck]
   (and (valid? deck)
        (<= (influence-count deck) (deck-inf-limit deck))
-       (every? #(released? (:card %)) (:cards deck))))
+       (every? #(released? (:card %)) (:cards deck))
+       (released? (:identity deck))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
