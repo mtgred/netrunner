@@ -524,13 +524,13 @@
              :runner-spent-click {:req (req (:swap card))
                                   :effect (effect (update! (dissoc card :swap)))}}
     :abilities [{:req (req (:swap card))
-                 :effect (req (let [agendas (get-in corp [:scored])
-                                    st (last (get-in runner [:scored]))]
+                 :effect (req (let [st (last (get-in runner [:scored]))]
                                 (resolve-ability
                                   state side
                                   {:req (req (is-type? st "Agenda"))
                                    :prompt (msg "Choose a scored Corp agenda to swap for " (:title st))
-                                   :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) agendas)}
+                                   :priority true
+                                   :choices {:req #(in-corp-scored? state side %)}
                                    :effect (req (let [sw target
                                                       stpts-corp (get-agenda-points state :corp st)
                                                       swpts-corp (get-agenda-points state :corp sw)

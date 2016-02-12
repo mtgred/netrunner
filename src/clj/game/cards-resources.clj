@@ -24,7 +24,7 @@
    "Aesops Pawnshop"
    {:abilities [{:msg (msg "trash " (:title target) " and gain 3 [Credits]")
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                 :effect (effect (gain :credit 3) (trash target))}]}
+                 :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}]}
 
    "Always Be Running"
    {:abilities [{:once :per-turn
