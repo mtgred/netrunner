@@ -36,6 +36,7 @@
    "derez" #(core/derez %1 %2 (:card %3))
    "run" core/click-run
    "no-action" core/no-action
+   "corp-phase-43" core/corp-phase-43
    "continue" core/continue
    "access" core/successful-run
    "jack-out" core/jack-out

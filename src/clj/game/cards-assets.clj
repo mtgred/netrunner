@@ -497,7 +497,7 @@
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Reality Threedee"
-   (let [ability {:effect (effect (gain :credit (if tagged 2 1)))
+   (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
                   :label "Gain credits (start of turn)"
                   :once :per-turn
                   :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}]

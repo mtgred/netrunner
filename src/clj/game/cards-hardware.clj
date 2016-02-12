@@ -413,7 +413,7 @@
              :pre-tag {:req (req (:qianju-active card))
                        :msg "to avoid the first tag received"
                        :effect (effect (tag-prevent 1)
-                                       (update! (dissoc card :qianju-active)))}}}
+                                       (update! (dissoc card :qianju-active)))}}
 
    "R&D Interface"
    {:in-play [:rd-access 1]}

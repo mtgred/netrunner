@@ -255,7 +255,6 @@
         (trigger-event state side :encounter-ice ice)
         (update-ice-strength state side ice)))))
 
-
 ;;; Runner actions
 (defn click-run
   "Click to start a run."

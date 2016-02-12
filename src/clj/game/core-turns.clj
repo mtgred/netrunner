@@ -104,11 +104,11 @@
   "End phase 1.2 and trigger appropriate events for the player."
   [state side args]
   (turn-message state side true)
+  (gain state side :click (get-in @state [side :click-per-turn]))
   (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
   (when (= side :corp)
     (draw state side))
   (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-  (gain state side :click (get-in @state [side :click-per-turn]))
   (when (= side :corp)
     (update-all-advancement-costs state side)))
 
@@ -119,20 +119,21 @@
     (swap! state update-in [:turn] inc))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
+  (swap! state assoc-in [side :register] nil)
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
                             (concat (cons (get-in @state [side :identity])
                                           (all-installed state side))
                                     (when (= side :corp) (get-in @state [side :scored]))))]
+    (swap! state assoc phase true)
     (if (not-empty start-cards)
-      (do (swap! state assoc phase true)
-          (toast state side
+      (toast state side
                  (str "You may use " (clojure.string/join "," (map :title start-cards))
                       (if (= side :corp)
                         " between the start of your turn and your mandatory draw."
                         " before taking your first click."))
-                 "info"))
+                 "info")
       (end-phase-12 state side args))))
 
 (defn end-turn [state side args]

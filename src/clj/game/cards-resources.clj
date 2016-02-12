@@ -381,8 +381,8 @@
                   :end-turn {:effect (effect (tag-runner 1))
                              :msg "gain 1 tag"}}]
    {:events {:runner-turn-begins
-             {:once :per-turn
-              :optional {:prompt "Use Joshua B. to gain [Click]?"
+             {:optional {:prompt "Use Joshua B. to gain [Click]?"
+                         :once :per-turn
                          :yes-ability ability}}}
     :abilities [ability]})
 
@@ -656,8 +656,6 @@
    "Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing" :choices (req servers)
                   :msg (msg "target " target)
-                  :once :per-turn
-                  :req (req (:runner-phase-12 @state))
                   :effect (effect (update! (assoc card :testing-target (vec (next (server->zone state target))))))}]
    {:events {:runner-turn-begins ability
              :successful-run
@@ -760,31 +758,34 @@
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Supplier"
-   {:flags {:drip-economy true  ; not technically drip economy, but has an interaction with Drug Dealer
-            :runner-phase-12 (req (not (empty? (:hosted card))))}
+   (let [ability  {:label "Install a hosted card (start of turn)"
+                   :prompt "Choose a hosted card to install"
+                   :once :per-turn
+                   :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
+                                   (:hosted card)))
+                   :choices {:req #(= "The Supplier" (:title (:host %)))}
+                   :msg (msg "install " (:title target) " lowering its install cost by 2")
+                   :effect (req (when (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
+                                  (install-cost-bonus state side [:credit -2])
+                                  (runner-install state side target)
+                                  (update! state side (-> card
+                                                          (assoc :supplier-installed (:cid target))
+                                                          (update-in [:hosted]
+                                                                     (fn [coll]
+                                                                       (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
+   {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
     :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Choose a card to host on The Supplier"
                  :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
                                       (in-hand? %))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}
-
-                {:label "Install a hosted card (start of turn)"
-                 :prompt "Choose a hosted card to install"
-                 :choices {:req #(= "The Supplier" (:title (:host %)))}
-                 :msg (msg "install " (:title target) " lowering its install cost by 2")
-                 :effect (req (when (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
-                                (install-cost-bonus state side [:credit -2])
-                                (runner-install state side target)
-                                (update! state side (-> card
-                                                        (assoc :supplier-installed (:cid target))
-                                                        (update-in [:hosted]
-                                                                   (fn [coll]
-                                                                     (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
+                ability]
 
     ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
     :suppress {:runner-turn-begins {:req (req (= (:cid target) (:supplier-installed (get-card state card))))}}
-    :events {:runner-turn-ends {:req (req (:supplier-installed card))
-                                :effect (effect (update! (dissoc card :supplier-installed)))}}}
+    :events {:runner-turn-begins ability
+             :runner-turn-ends {:req (req (:supplier-installed card))
+                                :effect (effect (update! (dissoc card :supplier-installed)))}}})
 
    "The Source"
    {:effect (effect (update-all-advancement-costs))
