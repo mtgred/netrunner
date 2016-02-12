@@ -519,6 +519,31 @@
       (is (nil? (:ts-active (refresh tsp1))) "Team Sponsorship 1 ability disabled")
       (is (nil? (:ts-active (refresh tsp2))) "Team Sponsorship 2 ability disabled"))))
 
+(deftest toshiyuki-sakai
+  "Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not"
+  (do-game
+    (new-game (default-corp [(qty "Toshiyuki Sakai" 1) (qty "Project Junebug" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
+    (play-from-hand state :corp "Toshiyuki Sakai" "New remote")
+    (let [toshi (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh toshi)})
+      (core/advance state :corp {:card (refresh toshi)})
+      (take-credits state :corp)
+      (is (= 2 (:advance-counter (refresh toshi))) "Toshiyuki has 2 advancements")
+      (run-empty-server state "Server 1")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Toshiyuki")
+      (prompt-choice :corp "Yes") ; choose to do a swap
+      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (is (= (refresh toshi) (get-content state :remote1 0)) "Toshiyuki still in remote; can't target an operation in hand")
+      (prompt-select :corp (find-card "Project Junebug" (:hand (get-corp))))
+      (let [june (get-content state :remote1 0)]
+        (is (= "Project Junebug" (:title (refresh june))) "Project Junebug swapped into Server 1")
+        (is (= 2 (:advance-counter (refresh june))) "Project Junebug has 2 advancements")
+        (prompt-choice :runner "Yes") ; choose to access new card
+        (prompt-choice :corp "Yes") ; pay 1c to fire Junebug
+        (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage")))))
+
 (deftest turtlebacks
   "Turtlebacks - Gain 1 credit for every new server created"
   (do-game
