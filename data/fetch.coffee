@@ -44,15 +44,28 @@ cardFields = [
   "limited"
 ]
 
+availableSets = []
+
 baseurl = "http://netrunnerdb.com/api/"
 
 selectFields = (fields, objectList) ->
   ((fields.reduce ((newObj, key) -> newObj[key] = obj[key] if typeof(obj[key]) isnt "undefined"; newObj), {}) for obj in objectList)
 
+reduceBySetAvailability = (sets) ->
+  (set for set in sets when set.available isnt "")
+
+reduceByCardAvailability = (cards, sets) ->
+  (card for card in cards when card.setname in sets)
+
 fetchSets = (callback) ->
   request.get baseurl + "sets", (error, response, body) ->
     if !error and response.statusCode is 200
       sets = selectFields(setFields, JSON.parse(body))
+      if process.argv[2] isnt "dev"
+        sets = reduceBySetAvailability(sets)
+
+      availableSets = sets.map((set) -> set.name)
+
       db.collection("sets").remove ->
       db.collection("sets").insert sets, (err, result) ->
         fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
@@ -79,6 +92,9 @@ fetchCards = (callback) ->
         imgPath = path.join(imgDir, "#{card.code}.png")
         if !fs.existsSync(imgPath)
           fetchImg(card.code, imgPath, i++ * 200)
+
+      if process.argv[2] isnt "dev"
+        cards = reduceByCardAvailability(cards, availableSets)
 
       db.collection("cards").remove ->
       db.collection("cards").insert cards, (err, result) ->
