@@ -213,14 +213,18 @@
         [:div.games
          [:div.button-bar
           (if gameid
-            [:button {:class "disabled"} "New game"]
-            [:button {:on-click #(new-game cursor owner)} "New game"])
-          [:div.float-right "Room: "
-           (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))]
-             [:select.rooms {:value (om/get-state owner :current-room)
-                               :on-change #(om/set-state! owner :current-room (.. % -target -value))}
-              [:option {:value "casual"} (str "Casual (" (count-games "casual") ")")]
-              [:option {:value "competitive"} (str "Competitive (" (count-games "competitive") ")")]])]]
+            [:button.float-left {:class "disabled"} "New game"]
+            [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
+          (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
+                room-tab (fn [room roomname]
+                           [:span.roomtab
+                            (if (= room (om/get-state owner :current-room))
+                              {:class "current"}
+                              {:on-click #(om/set-state! owner :current-room room)})
+                            roomname " (" (count-games room) ")"])]
+            [:div.rooms
+             (room-tab "competitive" "Competitive")
+             (room-tab "casual" "Casual")])]
          (game-list cursor owner)]
 
         [:div.game-panel

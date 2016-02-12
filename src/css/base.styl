@@ -948,8 +948,23 @@ nav ul
     box-sizing: initial
     padding: 0 15px 15px
 
-    .rooms
-      min-width: 145px
+    .rooms .roomtab
+      display: block
+      padding: 5px 10px
+      border: 1px solid white
+      border-radius: 4px
+      color: white
+      margin-right: 1px
+      cursor: pointer
+      float: right
+
+      &:hover
+        border-color: orange
+        color: orange
+
+      &.current
+        border-color: orange
+        cursor: default
 
   .game-list
     padding: 0 15px
