@@ -413,14 +413,26 @@
 
    "Museum of History"
    {:flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
-    :abilities [{:label "Shuffle a card in Archives into R&D"
-                 :prompt "Choose a card in Archives to shuffle into R&D"
-                 :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
-                 :show-discard true :priority true
-                 :msg (msg "to shuffle " (if (:seen target) (:title target) "a card")
+    :abilities [{:label "Shuffle cards in Archives into R&D"
+                 :prompt (msg (let [mus (count (filter #(= "10019" (:code %)) (all-installed state :corp)))]
+                                (str "Choose " (if (< 1 mus) (str mus " cards") "a card")
+                                     " in Archives to shuffle into R&D")))
+                 :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))
+                           :max (req (count (filter #(= "10019" (:code %)) (all-installed state :corp))))}
+                 :show-discard true
+                 :priority 1
+                 :once :per-turn
+                 :once-key :museum-of-history
+                 :msg (msg "shuffle "
+                           (let [seen (filter :seen targets)]
+                             (str (join ", " (map :title seen))
+                                  (let [n (count (filter #(not (:seen %)) targets))]
+                                    (when (pos? n)
+                                      (str (when-not (empty? seen) " and ") n " card"
+                                           (when (> n 1) "s"))))))
                            " into R&D")
-                 :effect (effect (move :corp target :deck)
-                                 (shuffle! :corp :deck))}]}
+                 :effect (req (doseq [c targets] (move state side c :deck))
+                              (shuffle! state side :deck))}]}
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
