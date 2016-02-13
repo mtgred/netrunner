@@ -14,22 +14,24 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-(def toastr-options (js-obj
-                     "closeButton" false
-                     "debug" false
-                     "newestOnTop" false
-                     "progressBar" false
-                     "positionClass" "toast-card"
-                     "preventDuplicates" true
-                     "onclick" nil
-                     "showDuration" 300
-                     "hideDuration" 3000
-                     "timeOut" 3000
-                     "extendedTimeOut" 1000
-                     "showEasing" "swing"
-                     "hideEasing" "linear"
-                     "showMethod" "fadeIn"
-                     "hideMethod" "fadeOut"))
+(defn toastr-options
+  "Function that generates the correct toastr options for specified settings"
+  [options]
+  (js-obj "closeButton" (:close-button options false)
+          "debug" false
+          "newestOnTop" false
+          "progressBar" false
+          "positionClass" "toast-card"
+          "preventDuplicates" (:prevent-duplicates options true)
+          "onclick" nil
+          "showDuration" 300
+          "hideDuration" 1000
+          "timeOut" (:time-out options 3000)
+          "extendedTimeOut" (:time-out options 1000)
+          "showEasing" "swing"
+          "hideEasing" "linear"
+          "showMethod" "fadeIn"
+          "hideMethod" "fadeOut"))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -43,7 +45,7 @@
   "Send a notification to the chat, and a toast to the current player of the specified severity"
   [text severity]
   (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity))
+  (toast text severity nil))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -114,9 +116,9 @@
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
-  [msg type]
-  (set! (.-options js/toastr) toastr-options)
-  (let [f (aget js/toastr type)] 
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr type)]
     (f msg))
   (send-command "toast"))
 
@@ -763,7 +765,7 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
     (if (> (count (:hand me)) max-size)
-      (toast (str "Discard to " max-size " cards") "warning")
+      (toast (str "Discard to " max-size " cards") "warning" nil)
       (send-command "end-turn"))))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
@@ -781,8 +783,8 @@
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default"))
-      (doseq [{:keys [msg type]} (get-in cursor [side :toast])]
-        (toast msg type)))
+      (doseq [{:keys [msg type options]} (get-in cursor [side :toast])]
+        (toast msg type options)))
 
     om/IRenderState
     (render-state [this state]
