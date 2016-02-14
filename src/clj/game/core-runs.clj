@@ -419,7 +419,8 @@
                      (fn [args-corp]
                        (clear-wait-prompt state :runner)
                        (show-prompt state :runner nil "The run is now successful" ["Continue"]
-                                    (fn [args-runner] (successful-run-trigger state :runner))))))
+                                    (fn [args-runner] (successful-run-trigger state :runner))))
+                     {:priority -1}))
     (successful-run-trigger state side)))
 
 (defn corp-phase-43
