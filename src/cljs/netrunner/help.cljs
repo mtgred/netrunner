@@ -149,12 +149,12 @@
                          "the influence printed on the ID by 1, with a minimum of 1 (so Professor is unaffected). For "
                          "more information about the MWL read Tournament Rules from "
                          [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
-                        [:p "Decks that are valid and fit within tournament restrictions are marked \"Tournament legal\". "
+                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
                          "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."]
+                         "are marked " [:span.casual "Casual play only"] ". Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Invalid"] "."]
                         [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
-                         "out of competetive rotation will also result in your deck being marked as casual. Such cards "
-                         "should be easy to identify - they are highlighted in the deckbuilder."])}
+                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
+                         "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."])}
             {:id "rezaccess"
              :title "How do I rez cards as Corp in the 4.3 run timing window?"
              :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "

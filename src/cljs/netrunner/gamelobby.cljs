@@ -79,7 +79,8 @@
            (swap! app-state assoc :messages [])
            (send {:action "create" :title (om/get-state owner :title)
                   :allowspectator (om/get-state owner :allowspectator)
-                  :side (om/get-state owner :side)}))))))
+                  :side (om/get-state owner :side)
+                  :room (om/get-state owner :current-room)}))))))
 
 (defn join-game [gameid owner]
   (authenticated
@@ -180,8 +181,31 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
+(defn game-list [{:keys [games gameid] :as cursor} owner]
+  (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)]
+    [:div.game-list
+     (if (empty? roomgames)
+       [:h4 "No games"]
+       (for [game roomgames]
+         [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
+          (when (and (:allowspectator game) (not gameid))
+            (let [id (:gameid game)]
+              [:button {:on-click #(watch-game id owner)} "Watch"]))
+          (when-not (or gameid (= (count (:players game)) 2) (:started game))
+            (let [id (:gameid game)]
+              [:button {:on-click #(join-game id owner)} "Join"]))
+          (let [c (count (:spectators game))]
+            [:h4 (str (:title game)
+                      (when (pos? c)
+                        (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+          [:div (om/build-all player-view (:players game))]]))]))
+
 (defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]
   (reify
+    om/IInitState
+    (init-state [this]
+      {:current-room "casual"})
+
     om/IRenderState
     (render-state [this state]
       (sab/html
@@ -189,25 +213,19 @@
         [:div.games
          [:div.button-bar
           (if gameid
-            [:button {:class "disabled"} "New game"]
-            [:button {:on-click #(new-game cursor owner)} "New game"])]
-         [:div.game-list
-          (if (empty? games)
-            [:h4 "No game"]
-            (for [game games]
-              [:div.gameline {:class (when (= gameid (:gameid game)) "active")}
-               (when-not (or gameid (= (count (:players game)) 2) (:started game))
-                 (let [id (:gameid game)]
-                   [:button {:on-click #(join-game id owner)} "Join"]))
-               (when (and (:allowspectator game) (not gameid))
-                 (let [id (:gameid game)]
-                  [:button {:on-click #(watch-game id owner)} "Watch"]))
-               (let [c (count (:spectators game))]
-                 [:h4 (str (:title game)
-                           (when (pos? c)
-                             (str  " (" c " spectator" (when (> c 1) "s") ")")))])
-               [:div
-                (om/build-all player-view (:players game))]]))]]
+            [:button.float-left {:class "disabled"} "New game"]
+            [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
+          (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
+                room-tab (fn [room roomname]
+                           [:span.roomtab
+                            (if (= room (om/get-state owner :current-room))
+                              {:class "current"}
+                              {:on-click #(om/set-state! owner :current-room room)})
+                            roomname " (" (count-games room) ")"])]
+            [:div.rooms
+             (room-tab "competitive" "Competitive")
+             (room-tab "casual" "Casual")])]
+         (game-list cursor owner)]
 
         [:div.game-panel
          (if (:editing state)
