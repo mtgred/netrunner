@@ -199,8 +199,9 @@
              (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                          (:title card) (when ignore-cost " at no cost")))
              (when (:corp-phase-12 @state)
-               (toast state :corp "You are not allowed to rez cards at this time. Please rez prior to clicking
-                  Start Turn in the future." "warning"))
+               (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+                      Please rez prior to clicking Start Turn in the future." "warning"
+                      {:time-out 0 :close-button true}))
              (when (ice? card)
                (update-ice-strength state side card)
                (update-run-ice state side))
