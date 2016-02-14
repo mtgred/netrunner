@@ -28,12 +28,20 @@
 
 (defn toast
   "Adds a message to toast with specified severity (default as a warning) to the toast msg list.
-  If message is nil, removes first toast in the list."
-  ([state side msg] (toast state side msg "warning"))
-  ([state side msg type]
+  If message is nil, removes first toast in the list.
+  For options see http://codeseven.github.io/toastr/demo.html
+  Currently implemented options:
+    - type (warning, info etc)
+    - time-out (sets both timeOut and extendedTimeOut currently)
+    - close-button
+    - prevent-duplicates"
+  ([state side msg] (toast state side msg "warning" nil))
+  ([state side msg type] (toast state side msg type nil))
+  ([state side msg type options]
+   ;; Allows passing just the toast type as the options parameter
    (if msg
      ;; normal toast - add to list
-     (swap! state update-in [side :toast] #(conj % {:type type :msg msg}))
+     (swap! state update-in [side :toast] #(conj % {:msg msg :type type :options options}))
      ;; no msg - remove top toast from list
      (swap! state update-in [side :toast] #(rest %)))))
 
