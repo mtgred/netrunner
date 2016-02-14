@@ -155,15 +155,16 @@
                               (set-prop state side card :counter 1 :agendapoints 1))}]}
 
    "Eden Fragment"
-   {:abilities [{:cost [:click 1] :msg "install the first piece of ICE this turn at no cost"
-                 :req (req (empty? (let [cards (map first (turn-events state side :corp-install))]
-                                     (filter #(is-type? % "ICE") cards))))
-                 :prompt "Select a piece of ICE from HQ to install"
-                 :choices {:req #(and (:side % "Corp")
-                                      (ice? %)
-                                      (= (:zone %) [:hand]))}
-                 :effect (req (corp-install state side target nil
-                                            {:no-install-cost true}))}]}
+   {:events {:pre-corp-install
+               {:req (req (and (is-type? target "ICE")
+                               (empty? (let [cards (map first (turn-events state side :corp-install))]
+                                         (filter #(is-type? % "ICE") cards)))))
+                :effect (effect (ignore-install-cost true))}
+             :corp-install
+               {:req (req (and (is-type? target "ICE")
+                               (empty? (let [cards (map first (turn-events state side :corp-install))]
+                                         (filter #(is-type? % "ICE") cards)))))
+                :msg (msg "ignore the install cost of the first ICE this turn")}}}
 
    "Efficiency Committee"
    {:effect (effect (add-prop card :counter 3))

@@ -122,19 +122,27 @@
    (if-not server
      (prompt! state side card (str "Choose a server to install " (:title card))
               (server-list state card) {:effect (effect (corp-install card target args))})
-     (do (when (= server "New remote")
-           (trigger-event state side :server-created card))
-         (let [cdef (card-def card)
-               c (-> card
-                     (assoc :advanceable (:advanceable cdef))
-                     (dissoc :seen))
-               slot (conj (server->zone state server) (if (ice? c) :ices :content))
-               dest-zone (get-in @state (cons :corp slot))
-               install-cost (if (and (ice? c) (not no-install-cost))
-                              (count dest-zone) 0)
+     (do
+       (let [cdef (card-def card)
+             c (-> card
+                   (assoc :advanceable (:advanceable cdef))
+                   (dissoc :seen))
+             slot (conj (server->zone state server) (if (ice? c) :ices :content))
+             dest-zone (get-in @state (cons :corp slot))]
+         ;; trigger :pre-corp-install before computing install costs so that
+         ;; event handlers may adjust the cost.
+         (trigger-event state side :pre-corp-install card {:server server :dest-zone dest-zone})
+         (let [ice-cost (if (and (ice? c)
+                                 (not no-install-cost)
+                                 (not (ignore-install-cost? state side)))
+                            (count dest-zone) 0)
+               all-cost (concat extra-cost [:credit ice-cost])
+               end-cost (install-cost state side card all-cost)
                install-state (or install-state (:install-state cdef))]
            (when (corp-can-install? card dest-zone)
-             (when-let [cost-str (pay state side card extra-cost :credit install-cost)]
+             (when-let [cost-str (pay state side card end-cost)]
+               (when (= server "New remote")
+                 (trigger-event state side :server-created card))
                (corp-install-asset-agenda state side c dest-zone)
                (corp-install-message state side c server install-state cost-str)
                (let [moved-card (move state side c slot)]
@@ -149,7 +157,8 @@
                    (card-init state side
                               (assoc (get-card state moved-card) :rezzed true :seen true) false))
                  (when-let [dre (:derezzed-events cdef)]
-                   (register-events state side dre moved-card))))))))))
+                   (register-events state side dre moved-card)))))
+           (clear-install-cost-bonus state side)))))))
 
 
 ;;; Installing a runner card
@@ -221,4 +230,4 @@
                      (update-breaker-strength state side c))))))
            (when (is-type? card "Resource")
              (swap! state assoc-in [:runner :register :installed-resource] true))
-           (swap! state update-in [:bonus] dissoc :install-cost))))))
+           (clear-install-cost-bonus state side))))))
