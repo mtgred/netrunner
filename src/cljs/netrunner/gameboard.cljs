@@ -766,7 +766,7 @@
       (toast (str "Discard to " max-size " cards") "warning")
       (send-command "end-turn"))))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -861,13 +861,20 @@
                                         #(send-command "jack-out"))]
                           [:div.panel.blue-shade
                            (cond-button "No more action" (not (:no-action run))
-                                        #(send-command "no-action"))]))
+                                        #(send-command "no-action"))
+                           (when (zero? (:position run))
+                             (cond-button "Action before access" (not (:no-action run))
+                                          #(send-command "corp-phase-43")))]))
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
-                         (when (and (zero? (:click me)) (not end-turn))
-                           [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
+                         (when (and (zero? (:click me)) (not end-turn) (not runner-phase-12) (not corp-phase-12))
+                               [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                       (when (and (= (keyword active-player side))
+                                  (or runner-phase-12 corp-phase-12))
+                           [:button {:on-click #(send-command "end-phase-12")}
+                            (if (= side :corp) "Mandatory Draw" "Take Clicks")])
                        (when (= side :runner)
                          [:div
                           (cond-button "Remove Tag"

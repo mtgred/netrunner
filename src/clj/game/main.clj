@@ -25,6 +25,7 @@
    "mulligan" core/mulligan
    "keep" core/keep-hand
    "start-turn" core/start-turn
+   "end-phase-12" core/end-phase-12
    "end-turn" core/end-turn
    "draw" core/click-draw
    "credit" core/click-credit
@@ -35,6 +36,7 @@
    "derez" #(core/derez %1 %2 (:card %3))
    "run" core/click-run
    "no-action" core/no-action
+   "corp-phase-43" core/corp-phase-43
    "continue" core/continue
    "access" core/successful-run
    "jack-out" core/jack-out

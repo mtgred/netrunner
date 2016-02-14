@@ -9,6 +9,14 @@
   (let [cdef (card-def card)]
     (= value (get-in cdef [:flags flag-key]))))
 
+(defn card-flag-fn?
+  "Checks the card to see if it has a :flags entry of the given flag-key, whose value is a four-argument
+  function that returns the given value"
+  [state side card flag-key value]
+  (let [cdef (card-def card)
+        func (get-in cdef [:flags flag-key])]
+    (and func (= (func state side card nil) value))))
+
 (defn is-tagged?
   "Returns true if the runner is tagged."
   [state]
@@ -98,10 +106,20 @@
 
 
 ;;; Small utilities for card properties.
+(defn in-server?
+  "Checks if the specified card is installed in -- and not PROTECTING -- a server"
+  [card]
+  (= (last (:zone card)) :content))
+
 (defn in-hand?
   "Checks if the specified card is in the hand."
   [card]
   (= (:zone card) [:hand]))
+
+(defn is-scored?
+  "Checks if the specified card is in the scored area of the specified player."
+  [state side card]
+  (some #(= (:cid %) (:cid card)) (get-in @state [side :scored])))
 
 (defn in-deck?
   "Checks if the specified card is in the draw deck."

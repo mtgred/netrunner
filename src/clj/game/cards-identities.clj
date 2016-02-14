@@ -15,12 +15,15 @@
    {:effect (effect (gain :link 1) (draw 4)) :mulligan (effect (draw 4))}
 
    "Apex: Invasive Predator"
-   {:events {:runner-turn-begins
-              {:prompt "Select a card to install facedown"
-               :choices {:max 1 :req #(and (:side % "Runner")
-                                           (in-hand? %))}
-               :req (req (> (count (:hand runner)) 0))
-               :effect (req (runner-install state side target {:facedown true}))}}}
+   (let [ability {:prompt "Select a card to install facedown"
+                  :label "Install a card facedown (start of turn)"
+                  :once :per-turn
+                  :choices {:max 1 :req #(and (:side % "Runner")
+                                              (in-hand? %))}
+                  :req (req (> (count (:hand runner)) 0))
+                  :effect (effect (runner-install target {:facedown true}))}]
+   {:events {:runner-turn-begins ability}
+    :abilities [ability]})
 
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
@@ -39,7 +42,8 @@
                             :effect (effect (draw 1))}}}
 
    "Blue Sun: Powering the Future"
-   {:abilities [{:choices {:req #(:rezzed %)}
+   {:flags {:corp-phase-12 (req (some #(rezzed? %) (all-installed state :corp)))}
+    :abilities [{:choices {:req #(:rezzed %)}
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain state side :credit cost)
@@ -146,9 +150,14 @@
                                                 :effect (effect (runner-install target))} card nil)))}}}}}
 
    "Iain Stirling: Retired Spook"
-   {:effect (effect (gain :link 1))
-    :events {:runner-turn-begins {:req (req (> (:agenda-point corp) (:agenda-point runner)))
-                                  :msg "to gain 2 [Credits]" :effect (effect (gain :credit 2))}}}
+   (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
+                  :once :per-turn
+                  :msg "gain 2 [Credits]"
+                  :effect (effect (gain :credit 2))}]
+   {:flags {:drip-economy true}
+    :effect (effect (gain :link 1))
+    :events {:runner-turn-begins ability}
+    :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
    {:events {:pre-trash {:effect (effect (trash-cost-bonus
@@ -242,8 +251,13 @@
                                  (update! (dissoc (get-card state card) :bounce-hq)))}]}
 
    "MaxX: Maximum Punk Rock"
-   {:events {:runner-turn-begins {:msg "trash the top 2 cards from Stack and draw 1 card"
-                                  :effect (effect (mill 2) (draw))}}}
+   (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
+                  :once :per-turn
+                  :effect (effect (mill 2) (draw))}]
+   {:flags {:runner-turn-draw true
+            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner)))}
+    :events {:runner-turn-begins ability}
+    :abilities [ability]})
 
    "Nasir Meidan: Cyber Explorer"
    {:effect (effect (gain :link 1))
@@ -366,7 +380,8 @@
                        :prompt "Choose a card in Archives to shuffle into R&D"
                        :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
                        :player :corp :show-discard true :priority true
-                       :msg (msg "to shuffle " (:title target) " into R&D")
+                       :msg (msg "to shuffle " (if (:seen target) (:title target) "a card")
+                                 " into R&D")
                        :effect (effect (move :corp target :deck)
                                        (shuffle! :corp :deck))}}}
 
@@ -387,8 +402,7 @@
                  :msg (msg "flip their ID")}]}
 
    "Tennin Institute: The Secrets Within"
-   {:events {:runner-turn-ends {:req (req (not (:successful-run runner-reg)))
-                                :effect (req (toast state :corp "Reminder: you may click Tennin Institute: The Secrets Within to place 1 advancement token on a card." "info"))}}
+   {:flags {:corp-phase-12 (req (and (not= 1 (:turn @state)) (not (:successful-run runner-reg))))}
     :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req installed?}
                  :req (req (not (:successful-run runner-reg)))

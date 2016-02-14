@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare clear-turn-register! clear-wait-prompt create-deck keep-hand mulligan show-wait-prompt turn-message hand-size)
+(declare card-flag-fn? clear-turn-register! clear-wait-prompt create-deck hand-size keep-hand mulligan show-wait-prompt
+         turn-message)
 
 ;;; Functions for the creation of games and the progression of turns.
 (defn init-game
@@ -99,20 +100,41 @@
   (when (and (= side :runner)  (-> @state :corp :identity :title))
     (clear-wait-prompt state :corp)))
 
+(defn end-phase-12
+  "End phase 1.2 and trigger appropriate events for the player."
+  [state side args]
+  (turn-message state side true)
+  (gain state side :click (get-in @state [side :click-per-turn]))
+  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
+  (when (= side :corp)
+    (draw state side))
+  (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+  (when (= side :corp)
+    (update-all-advancement-costs state side)))
+
 (defn start-turn
   "Start turn."
-  ;; TODO: distinguish between corp start of turn and corp draw when necessary.
   [state side args]
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
-  (turn-message state side true)
+
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
-  (swap! state assoc-in [side :click] (get-in @state [side :click-per-turn]))
-  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp)
-    (draw state :corp)
-    (update-all-advancement-costs state side)))
+
+  (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
+        start-cards (filter #(card-flag-fn? state side % phase true)
+                            (concat (cons (get-in @state [side :identity])
+                                          (all-installed state side))
+                                    (when (= side :corp) (get-in @state [side :scored]))))]
+    (swap! state assoc phase true)
+    (if (not-empty start-cards)
+      (toast state side
+                 (str "You may use " (clojure.string/join "," (map :title start-cards))
+                      (if (= side :corp)
+                        " between the start of your turn and your mandatory draw."
+                        " before taking your first click."))
+                 "info")
+      (end-phase-12 state side args))))
 
 (defn end-turn [state side args]
   (let [max-hand-size (max (hand-size state side) 0)]

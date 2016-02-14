@@ -104,7 +104,8 @@
                                  card nil)))}]}
 
    "Chop Bot 3000"
-   {:abilities [{:msg (msg "trash " (:title target))
+   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
+    :abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :effect (effect (trash target)
                                  (resolve-ability
@@ -401,15 +402,18 @@
               {:runner-trash e :corp-trash e})}
 
    "Qianju PT"
-   {:events {:runner-turn-begins
-             {:optional {:prompt "Lose [Click] to avoid the first tag until next turn?"
-                         :yes-ability {:effect (effect (lose :click 1)
-                                                       (update! (assoc card :qianju-active true)))
-                                       :msg "avoid the first tag received until his/her next turn"}
-                         :no-ability {:effect (effect (update! (dissoc card :qianju-active)))}}}
+   {:flags {:runner-phase-12 (req true)}
+    :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
+                 :once :per-turn
+                 :req (req (:runner-phase-12 @state))
+                 :effect (effect (lose :click 1)
+                                 (update! (assoc card :qianju-active true)))
+                 :msg "avoid the first tag received until their next turn"}]
+    :events {:corp-turn-ends {:effect (effect (update! (dissoc card :qianju-active)))}}
              :pre-tag {:req (req (:qianju-active card))
                        :msg "to avoid the first tag received"
-                       :effect (effect (tag-prevent 1) (update! (dissoc card :qianju-active)))}}}
+                       :effect (effect (tag-prevent 1)
+                                       (update! (dissoc card :qianju-active)))}}
 
    "R&D Interface"
    {:in-play [:rd-access 1]}
@@ -569,9 +573,14 @@
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Vigil"
+   (let [ability {:req (req (and (:runner-phase-12 @state) (= (count (:hand corp)) (hand-size state :corp))))
+                  :msg "draw 1 card"
+                  :label "Draw 1 card (start of turn)"
+                  :once :per-turn
+                  :effect (effect (draw 1))}]
    {:in-play [:memory 1]
-    :events {:runner-turn-begins {:req (req (= (count (:hand corp)) (hand-size state :corp)))
-                                  :msg "draw 1 card" :effect (effect (draw 1))}}}
+    :events {:runner-turn-begins ability}
+    :abilities [ability]})
 
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"

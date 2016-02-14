@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare is-scored?)
+
 (def cards-agendas
 
   {"15 Minutes"
@@ -237,11 +239,10 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Hades Fragment"
-   {:events {:runner-turn-ends
-             {:effect (req (toast state :corp
-                                  (str "Click Hades Fragment to add 1 card from Archives to the bottom of R&D.") "info"))}}
+   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
     :abilities [{:prompt "Choose a card to add to the bottom of R&D"
-                 :choices (req (:discard corp))
+                 :show-discard true
+                 :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
                  :effect (effect (move target :deck))
                  :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
 
