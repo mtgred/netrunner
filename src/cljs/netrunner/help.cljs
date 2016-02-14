@@ -111,8 +111,14 @@
                        " and create an account with the same email as the one used to register on Jinteki.net."]}
             {:id "bestbrowser"
              :title "What is the best supported browser?"
-             :content [:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too. "
-                       "Touchscreen devices (smartphones, tablets etc.) are currently not supported."]}
+             :content '([:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too."]
+                        [:p "There is limited support for tablet browsers. If you have too many cards to fit on the screen you might not able to see all of them."]
+                        [:p "Using a phone is not recommended. The screen will most likely be too small to fit the gameboard."])}
+            {:id "fullscreen"
+             :title "How to use jinteki.net in fullscreen mode on a tablet?"
+             :content [:p "Add jinteki.net to your homescreen as described "
+                       [:a {:href "http://www.howtogeek.com/196087/how-to-add-websites-to-the-home-screen-on-any-smartphone-or-tablet/"} "here"]
+                       ". If you tap on the homescreen icon, you will be in fullscreen."]}
             {:id "privatemsgs"
              :title "How do I send a private message / add someone to friendlist?"
              :content [:p "The community management issues such as private messages or friendlist are currently not implemented. "
@@ -219,16 +225,16 @@
 (def help-contents
   "Takes help-data and translates it to HTML tags."
   (for [{:keys [id title sub] :as section} help-data]
-    (list [:h3 {:id id} title]
+    (list [:h2 {:id id} title]
           (for [{:keys [id title content] :as question} sub]
-            (list [:h4 {:id id} title]
+            (list [:h3 {:id id} title]
                   content)))))
 
 (defn help [cursor owner]
   (om/component
     (sab/html
       [:div.help.panel.blue-shade
-       [:h3 "Help Topics"]
+       [:h2 "Help Topics"]
        help-toc
        help-contents])))
 
