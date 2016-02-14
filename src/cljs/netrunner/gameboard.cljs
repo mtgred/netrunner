@@ -862,11 +862,11 @@
                            (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
                                         #(send-command "jack-out"))]
                           [:div.panel.blue-shade
-                           (cond-button "No more action" (not (:no-action run))
-                                        #(send-command "no-action"))
                            (when (zero? (:position run))
                              (cond-button "Action before access" (not (:no-action run))
-                                          #(send-command "corp-phase-43")))]))
+                                          #(send-command "corp-phase-43")))
+                           (cond-button "No more action" (not (:no-action run))
+                                        #(send-command "no-action"))]))
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
                          (when (and (zero? (:click me)) (not end-turn) (not runner-phase-12) (not corp-phase-12))
