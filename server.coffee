@@ -461,6 +461,15 @@ app.get '/data/news', (req, res) ->
   else
     res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
+app.get '/data/version', (req, res) ->
+  cached = cache.get('version')
+  if not cached
+    data = app.locals.version
+    cache.put('version', data, 60000) # 60 seconds timeout
+    res.json(200, data)
+  else
+    res.json(200, cached)
+
 app.get '/data/:collection', (req, res) ->
   if req.params.collection != 'users' && req.params.collection != 'games'
     db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->

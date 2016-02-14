@@ -1,7 +1,9 @@
 (ns netrunner.main
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [goog.events :as events])
+            [goog.events :as events]
+            [netrunner.ajax :refer [GET]])
   (:import goog.history.Html5History
            goog.history.EventType))
 
@@ -27,6 +29,8 @@
 (.setUseFragment history false)
 (.setPathPrefix history "")
 (.setEnabled history true)
+
+(go (swap! app-state assoc :version (:json (<! (GET "/data/version")))))
 
 (defn navbar [cursor owner]
   (om/component
@@ -64,6 +68,13 @@
               [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
                [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view (:spectators game))]]))))])))
 
+(defn version [cursor owner]
+  (om/component
+   (sab/html
+    [:div
+     [:div.float-right "Version: "
+      [:span (:version cursor)]]])))
+
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
-
+(om/root version app-state {:target (. js/document (getElementById "version"))})
