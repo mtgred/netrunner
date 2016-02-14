@@ -9,11 +9,17 @@
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
             [differ.core :as differ]
             [om.dom :as dom]
-            [netrunner.toast :refer [toast notify] :as toast]))
+            [netrunner.toast :refer [toast] :as toast]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
+
+(defn notify
+  "Send a notification to the chat, and a toast to the current player of the specified severity"
+  [text severity]
+  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
+  (toast text severity))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -86,8 +92,6 @@
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
-
-
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []

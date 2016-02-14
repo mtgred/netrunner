@@ -4,7 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [goog.events :as events]
             [netrunner.ajax :refer [GET]]
-            [netrunner.toast :refer [toast notify] :as toast])
+            [netrunner.toast :refer [toast] :as toast])
   (:import goog.history.Html5History
            goog.history.EventType))
 
@@ -71,11 +71,12 @@
 
 (defn version [cursor owner]
   (reify
-    om/IWillMount
-      (will-mount [this]
+
+    om/IDidUpdate
+      (did-update [this prev-props prev-state]
         (let [version-val (.html (js/$ "#version-val"))]
-          (when (not= version-val (:version cursor))
-            (toast (str version-val (:version cursor)) "warning"))))
+          (when (not= version-val (:version @app-state))
+            (toast (str (str "You have an older version: " (:version @app-state)) version-val2) "warning"))))
 
     om/IRenderState
       (render-state [this state]

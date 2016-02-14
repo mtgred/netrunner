@@ -19,12 +19,6 @@
 
 (declare toast)
 
-(defn notify
-  "Send a notification to the chat, and a toast to the current player of the specified severity"
-  [text severity]
-  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity))
-
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
