@@ -873,7 +873,7 @@
                                [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
-                       (when (and (= (keyword active-player side))
+                       (when (and (= (keyword active-player) side)
                                   (or runner-phase-12 corp-phase-12))
                            [:button {:on-click #(send-command "end-phase-12")}
                             (if (= side :corp) "Mandatory Draw" "Take Clicks")])

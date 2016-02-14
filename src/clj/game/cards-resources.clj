@@ -113,36 +113,33 @@
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
    "Daily Casts"
-   (let [ability (req (gain state :runner :credit 2)
-                      (when (zero? (:counter card))
-                        (trash state :runner card {:unpreventable true})))]
+   (let [ability {:once :per-turn
+                  :label "Take 2 [Credits] (start of turn)"
+                  :msg "gain 2 [Credits]"
+                  :req (req (:runner-phase-12 @state))
+                  :counter-cost 2
+                  :effect (req (gain state :runner :credit 2)
+                               (when (zero? (:counter card))
+                                 (trash state :runner card {:unpreventable true})))}]
    {:data {:counter 8
            :counter-type "Credit"}
     :flags {:drip-economy true}
-    :abilities [{:once :per-turn
-                 :label "Take 2 [Credits] (start of turn)"
-                 :msg "gain 2 [Credits]"
-                 :req (req (:runner-phase-12 @state))
-                 :counter-cost 2
-                 :effect ability}]
-    :events {:runner-turn-begins {:once :per-turn
-                                  :msg "gain 2 [Credits]"
-                                  :counter-cost 2
-                                  :effect ability}}})
+    :abilities [ability]
+    :events {:runner-turn-begins ability}})
 
    "Data Dealer"
    {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain :credit 9))
                  :msg (msg "gain 9 [Credits]")}]}
 
    "Data Folding"
-   {:flags {:drip-economy true}
-    :abilities [{:label "Gain 1 [Credits]"
-                 :once :per-turn
-                 :req (req (and (>= (:memory runner) 2) (:runner-phase-12 @state)))
-                 :effect (effect (gain :credit 1))}]
-    :events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:memory runner) 2))
-                                  :once :per-turn
-                                  :effect (effect (gain :credit 1))}}}
+   (let [ability {:label "Gain 1 [Credits] (start of turn)"
+                  :msg "gain 1 [Credits]"
+                  :once :per-turn
+                  :req (req (and (>= (:memory runner) 2) (:runner-phase-12 @state)))
+                  :effect (effect (gain :credit 1))}]
+    {:flags {:drip-economy true}
+    :abilities [ability]
+    :events {:runner-turn-begins ability}})
 
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
@@ -815,14 +812,14 @@
                  :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"
+   (let [ability {:label "Gain 1 [Credits] (start of turn)"
+                  :msg "gain 1 [Credits]"
+                  :once :per-turn
+                  :req (req (and (>= (:link runner) 2) (:runner-phase-12 @state)))
+                  :effect (effect (gain :credit 1))}]
    {:flags {:drip-economy true}
-    :abilities [{:label "Gain 1 [Credits]"
-                 :once :per-turn
-                 :req (req (and (>= (:link runner) 2) (:runner-phase-12 @state)))
-                 :effect (effect (gain :credit 1))}]
-    :events {:runner-turn-begins {:msg "gain 1 [Credits]" :req (req (>= (:link runner) 2))
-                                  :once :per-turn
-                                  :effect (effect (gain :credit 1))}}}
+    :abilities [ability]
+    :events {:runner-turn-begins ability}})
 
    "Utopia Shard"
    {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
