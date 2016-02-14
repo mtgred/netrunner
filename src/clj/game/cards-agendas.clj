@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare is-scored?)
+
 (def cards-agendas
 
   {"15 Minutes"
@@ -153,15 +155,16 @@
                               (set-prop state side card :counter 1 :agendapoints 1))}]}
 
    "Eden Fragment"
-   {:abilities [{:cost [:click 1] :msg "install the first piece of ICE this turn at no cost"
-                 :req (req (empty? (let [cards (map first (turn-events state side :corp-install))]
-                                     (filter #(is-type? % "ICE") cards))))
-                 :prompt "Select a piece of ICE from HQ to install"
-                 :choices {:req #(and (:side % "Corp")
-                                      (ice? %)
-                                      (= (:zone %) [:hand]))}
-                 :effect (req (corp-install state side target nil
-                                            {:no-install-cost true}))}]}
+   {:events {:pre-corp-install
+               {:req (req (and (is-type? target "ICE")
+                               (empty? (let [cards (map first (turn-events state side :corp-install))]
+                                         (filter #(is-type? % "ICE") cards)))))
+                :effect (effect (ignore-install-cost true))}
+             :corp-install
+               {:req (req (and (is-type? target "ICE")
+                               (empty? (let [cards (map first (turn-events state side :corp-install))]
+                                         (filter #(is-type? % "ICE") cards)))))
+                :msg (msg "ignore the install cost of the first ICE this turn")}}}
 
    "Efficiency Committee"
    {:effect (effect (add-prop card :counter 3))
@@ -237,11 +240,10 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
    "Hades Fragment"
-   {:events {:runner-turn-ends
-             {:effect (req (toast state :corp
-                                  (str "Click Hades Fragment to add 1 card from Archives to the bottom of R&D.") "info"))}}
+   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
     :abilities [{:prompt "Choose a card to add to the bottom of R&D"
-                 :choices (req (:discard corp))
+                 :show-discard true
+                 :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
                  :effect (effect (move target :deck))
                  :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
 

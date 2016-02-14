@@ -218,14 +218,15 @@
                                  (strength-pump 1 5)]})
 
    "Darwin"
-   {:events {:runner-turn-begins
-             {:optional {:prompt "Place 1 virus counter on Darwin?"
-                         :yes-ability {:cost [:credit 1]
-                                       :msg "place 1 virus counter"
-                                       :effect (effect (add-prop card :counter 1)
-                                                       (update-breaker-strength card))}}}
-             :purge {:effect (effect (update-breaker-strength card))}}
-    :abilities [(break-sub 2 1 "ice")]
+   {:flags {:runner-phase-12 true}
+    :events {:purge {:effect (effect (update-breaker-strength card))}}
+    :abilities [(break-sub 2 1 "ice")
+                {:label "Place 1 virus counter (start of turn)"
+                 :cost [:credit 1]
+                 :msg "place 1 virus counter"
+                 :req (req (:runner-phase-12 @state))
+                 :effect (effect (add-prop card :counter 1)
+                                 (update-breaker-strength card))}]
     :strength-bonus (req (or (get-virus-counters state side card) 0))}
 
    "Deus X"

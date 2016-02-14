@@ -384,9 +384,9 @@
   (swap! state assoc-in [:run :successful] true)
   (trigger-event state side :successful-run (first server)))
 
-(defn successful-run
-  "Triggered when a run has passed all ice and the runner decides to access."
-  [state side args]
+(defn- successful-run-trigger
+  "The real 'successful run' trigger."
+  [state side]
   (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
     (resolve-ability state side successful-run-effect (:card successful-run-effect) nil))
   (let [server (get-in @state [:run :server])]
@@ -407,6 +407,29 @@
                                             (replace-access state side replace-effect card)
                                             (do-access state side server))}))))
         (do-access state side server)))))
+
+(defn successful-run
+  "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
+  [state side args]
+  (if (get-in @state [:run :corp-phase-43])
+    ; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
+    (do (swap! state dissoc :no-action)
+        (show-wait-prompt state :runner "Corp's actions")
+        (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
+                     (fn [args-corp]
+                       (clear-wait-prompt state :runner)
+                       (show-prompt state :runner nil "The run is now successful" ["Continue"]
+                                    (fn [args-runner] (successful-run-trigger state :runner))))
+                     {:priority -1}))
+    (successful-run-trigger state side)))
+
+(defn corp-phase-43
+  "The corp indicates they want to take action after runner hits Successful Run, before access."
+  [state side args]
+  (swap! state assoc-in [:run :corp-phase-43] true)
+  (swap! state assoc-in [:run :no-action] true)
+  (system-msg state side "has no further action")
+  (trigger-event state side :no-action))
 
 (defn end-run
   "End this run, and set it as UNSUCCESSFUL"

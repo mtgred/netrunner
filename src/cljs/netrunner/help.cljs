@@ -111,8 +111,14 @@
                        " and create an account with the same email as the one used to register on Jinteki.net."]}
             {:id "bestbrowser"
              :title "What is the best supported browser?"
-             :content [:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too. "
-                       "Touchscreen devices (smartphones, tablets etc.) are currently not supported."]}
+             :content '([:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too."]
+                        [:p "There is limited support for tablet browsers. If you have too many cards to fit on the screen you might not able to see all of them."]
+                        [:p "Using a phone is not recommended. The screen will most likely be too small to fit the gameboard."])}
+            {:id "fullscreen"
+             :title "How to use jinteki.net in fullscreen mode on a tablet?"
+             :content [:p "Add jinteki.net to your homescreen as described "
+                       [:a {:href "http://www.howtogeek.com/196087/how-to-add-websites-to-the-home-screen-on-any-smartphone-or-tablet/"} "here"]
+                       ". If you tap on the homescreen icon, you will be in fullscreen."]}
             {:id "privatemsgs"
              :title "How do I send a private message / add someone to friendlist?"
              :content [:p "The community management issues such as private messages or friendlist are currently not implemented. "
@@ -143,12 +149,12 @@
                          "the influence printed on the ID by 1, with a minimum of 1 (so Professor is unaffected). For "
                          "more information about the MWL read Tournament Rules from "
                          [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
-                        [:p "Decks that are valid and fit within tournament restrictions are marked \"Tournament legal\". "
+                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
                          "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."]
+                         "are marked " [:span.casual "Casual play only"] ". Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Invalid"] "."]
                         [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
-                         "out of competetive rotation will also result in your deck being marked as casual. Such cards "
-                         "should be easy to identify - they are highlighted in the deckbuilder."])}
+                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
+                         "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."])}
             {:id "rezaccess"
              :title "How do I rez cards as Corp in the 4.3 run timing window?"
              :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "
@@ -219,16 +225,16 @@
 (def help-contents
   "Takes help-data and translates it to HTML tags."
   (for [{:keys [id title sub] :as section} help-data]
-    (list [:h3 {:id id} title]
+    (list [:h2 {:id id} title]
           (for [{:keys [id title content] :as question} sub]
-            (list [:h4 {:id id} title]
+            (list [:h3 {:id id} title]
                   content)))))
 
 (defn help [cursor owner]
   (om/component
     (sab/html
       [:div.help.panel.blue-shade
-       [:h3 "Help Topics"]
+       [:h2 "Help Topics"]
        help-toc
        help-contents])))
 
