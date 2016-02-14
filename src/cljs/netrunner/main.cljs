@@ -3,7 +3,8 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [goog.events :as events]
-            [netrunner.ajax :refer [GET]])
+            [netrunner.ajax :refer [GET]]
+            [netrunner.toast :refer [toast notify] :as toast])
   (:import goog.history.Html5History
            goog.history.EventType))
 
@@ -69,11 +70,19 @@
                [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view (:spectators game))]]))))])))
 
 (defn version [cursor owner]
-  (om/component
-   (sab/html
-    [:div
-     [:div.float-right "Version: "
-      [:span (:version cursor)]]])))
+  (reify
+    om/IWillMount
+      (will-mount [this]
+        (let [version-val (.html (js/$ "#version-val"))]
+          (when (not= version-val (:version cursor))
+            (toast (str version-val (:version cursor)) "warning"))))
+
+    om/IRenderState
+      (render-state [this state]
+        (sab/html
+          [:div
+            [:div.float-right "Version: "
+              [:span (:version cursor)]]]))))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})

@@ -8,42 +8,18 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
             [differ.core :as differ]
-            [om.dom :as dom]))
+            [om.dom :as dom]
+            [netrunner.toast :refer [toast notify] :as toast]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
-
-(def toastr-options (js-obj
-                     "closeButton" false
-                     "debug" false
-                     "newestOnTop" false
-                     "progressBar" false
-                     "positionClass" "toast-card"
-                     "preventDuplicates" true
-                     "onclick" nil
-                     "showDuration" 300
-                     "hideDuration" 3000
-                     "timeOut" 3000
-                     "extendedTimeOut" 1000
-                     "showEasing" "swing"
-                     "hideEasing" "linear"
-                     "showMethod" "fadeIn"
-                     "hideMethod" "fadeOut"))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
-
-(declare toast)
-
-(defn notify
-  "Send a notification to the chat, and a toast to the current player of the specified severity"
-  [text severity]
-  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -111,14 +87,7 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn toast
-  "Display a toast warning with the specified message.
-  Sends a command to clear any server side toasts."
-  [msg type]
-  (set! (.-options js/toastr) toastr-options)
-  (let [f (aget js/toastr type)] 
-    (f msg))
-  (send-command "toast"))
+
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
@@ -764,6 +733,7 @@
         max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
     (if (> (count (:hand me)) max-size)
       (toast (str "Discard to " max-size " cards") "warning")
+      (send-command "toast")
       (send-command "end-turn"))))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
@@ -782,7 +752,8 @@
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default"))
       (doseq [{:keys [msg type]} (get-in cursor [side :toast])]
-        (toast msg type)))
+        (toast msg type)
+        (send-command "toast")))
 
     om/IRenderState
     (render-state [this state]
