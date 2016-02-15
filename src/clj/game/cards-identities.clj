@@ -8,7 +8,9 @@
    {:effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
                    (when (not= 3 (count directives))
                      (toast state :runner
-                            "Your deck doesn't contain enough directives for Adam's ability. The deck needs to contain one copy of each directive. They are not counted against the decksize limit." "warning"))
+                            "Your deck doesn't contain enough directives for Adam's ability. The deck needs to contain at least one copy of each directive. They are not counted against the decksize limit."
+                            "warning"
+                            {:time-out 0 :close-button true}))
                    (doseq [c directives]
                      (runner-install state side c {:no-cost true
                                                    :custom-message (str "starts with " (:title c) " in play")}))
