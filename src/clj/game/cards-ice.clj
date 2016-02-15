@@ -821,7 +821,7 @@
    "Swordsman"
    {:abilities [(do-net-damage 1)
                 {:prompt "Choose an AI program to trash"
-                 :msg (msg "trashes " (:title target))
+                 :msg (msg "trash " (:title target))
                  :label "Trash an AI program"
                  :effect (effect (trash target))
                  :choices {:req #(and (installed? %)
