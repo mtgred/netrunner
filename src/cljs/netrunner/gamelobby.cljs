@@ -145,19 +145,20 @@
              [:p (get-in deck [:identity :title])]])])]]])))
 
 (defn faction-icon
-  [faction]
-  (case faction
-    "Adam" [:span.faction-icon.adam {:title "Adam"}]
-    "Anarch" [:span.faction-icon.anarch {:title "Anarch"}]
-    "Apex" [:span.faction-icon.apex {:title "Apex"}]
-    "Criminal" [:span.faction-icon.criminal {:title "Criminal"}]
-    "Haas-Bioroid" [:span.faction-icon.hb {:title "Haas-Bioroid"}]
-    "Jinteki" [:span.faction-icon.jinteki {:title "Jinteki"}]
-    "NBN" [:span.faction-icon.nbn {:title "NBN"}]
-    "Shaper" [:span.faction-icon.shaper {:title "Shaper"}]
-    "Sunny Lebeau" [:span.faction-icon.sunny {:title "Sunny Lebeau"}]
-    "Weyland Consortium" [:span.faction-icon.weyland {:title "Weyland"}]
-    [:span.side "Unknown"]))
+  [faction identity]
+  (let [icon-span (fn [css-faction] [:span.faction-icon {:class css-faction :title identity}])]
+    (case faction
+      "Adam" (icon-span "adam")
+      "Anarch" (icon-span "anarch")
+      "Apex" (icon-span "apex")
+      "Criminal" (icon-span "criminal")
+      "Haas-Bioroid" (icon-span "hb")
+      "Jinteki" (icon-span "jinteki")
+      "NBN" (icon-span "nbn")
+      "Shaper" (icon-span "shaper")
+      "Sunny Lebeau" (icon-span "sunny")
+      "Weyland Consortium" (icon-span "weyland")
+      [:span.side "(Unknown)"])))
 
 (defn player-view [cursor]
   (om/component
@@ -166,9 +167,10 @@
      (om/build avatar (:user cursor) {:opts {:size 22}})
      (get-in cursor [:user :username])
      (let [side (:side cursor)
-           faction (:faction cursor)]
+           faction (:faction cursor)
+           identity (:identity cursor)]
        (cond
-         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction)
+         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction identity)
          side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
