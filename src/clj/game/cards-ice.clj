@@ -233,6 +233,9 @@
    "Bastion"
    {:abilities [end-the-run]}
 
+   "Brainstorm"
+   {:abilities [(do-brain-damage 1)]}
+
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)
