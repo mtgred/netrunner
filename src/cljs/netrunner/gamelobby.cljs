@@ -144,6 +144,21 @@
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
              [:p (get-in deck [:identity :title])]])])]]])))
 
+(defn faction-icon
+  [faction]
+  (case faction
+    "Adam" [:span.faction-icon.adam {:title "Adam"}]
+    "Anarch" [:span.faction-icon.anarch {:title "Anarch"}]
+    "Apex" [:span.faction-icon.apex {:title "Apex"}]
+    "Criminal" [:span.faction-icon.criminal {:title "Criminal"}]
+    "Haas-Bioroid" [:span.faction-icon.hb {:title "Haas-Bioroid"}]
+    "Jinteki" [:span.faction-icon.jinteki {:title "Jinteki"}]
+    "NBN" [:span.faction-icon.nbn {:title "NBN"}]
+    "Shaper" [:span.faction-icon.shaper {:title "Shaper"}]
+    "Sunny Lebeau" [:span.faction-icon.sunny {:title "Sunny Lebeau"}]
+    "Weyland Consortium" [:span.faction-icon.weyland {:title "Weyland"}]
+    [:span.side "Unknown"]))
+
 (defn player-view [cursor]
   (om/component
    (sab/html
@@ -153,7 +168,7 @@
      (let [side (:side cursor)
            faction (:faction cursor)]
        (cond
-         (and (some? faction) (not= "Neutral" faction)) [:span.side (str "(" faction ")")]
+         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction)
          side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
