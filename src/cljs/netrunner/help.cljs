@@ -136,8 +136,9 @@
                               [:li "a " [:span.legal "tournament legal"] " deck"]
                               [:li "enough time reserved for a full game and no distractions"]]]
                             [:p "Games with players not able or willing to follow above recommendations are propably better suited to the Casual room."
-                             "Some examples could be learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
-                             "testing future spoilers, playing at work and likely to have to quit on short notice, etc."])}
+                             "Some examples would be: learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
+                             "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
+                             "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
 
             )}
     {:id "cards"
