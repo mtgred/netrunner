@@ -205,6 +205,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
           for player in game.players
+            player.faction = player["deck"]["identity"]["faction"]
             delete player["deck"]
           refreshLobby("update", msg.gameid)
 

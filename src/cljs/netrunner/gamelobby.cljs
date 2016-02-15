@@ -150,8 +150,11 @@
     [:span.player
      (om/build avatar (:user cursor) {:opts {:size 22}})
      (get-in cursor [:user :username])
-     (when-let [side (:side cursor)]
-       [:span.side (str "(" side ")")])])))
+     (let [side (:side cursor)
+           faction (:faction cursor)]
+       (cond
+         (and (some? faction) (not= "Neutral" faction)) [:span.side (str "(" faction ")")]
+         side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
   (reify
