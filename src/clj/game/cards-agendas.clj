@@ -467,6 +467,8 @@
    "Underway Renovation"
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))
+                       :msg (msg "trash the top " (if (>= (:advance-counter (get-card state card)) 4) "2 cards" "card")
+                                 " of the Runner's Stack")
                        :effect (effect (mill :runner
                                              (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
 
