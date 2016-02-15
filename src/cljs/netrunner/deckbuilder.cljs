@@ -108,11 +108,6 @@
     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
       (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards))))))
 
-(go (let [cards (<! cards-channel)
-          decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-      (load-decks decks)
-      (>! cards-channel cards)))
-
 (defn distinct-by [f coll]
   (letfn [(step [xs seen]
             (lazy-seq (when-let [[x & more] (seq xs)]
@@ -609,5 +604,10 @@
              [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
            [:textarea {:ref "deck-edit" :value (:deck-edit state)
                        :on-change #(handle-edit owner)}]]]]]))))
+
+(go (let [cards (<! cards-channel)
+          decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+      (load-decks decks)
+      (>! cards-channel cards)))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})
