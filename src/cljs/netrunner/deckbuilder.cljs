@@ -101,7 +101,8 @@
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
-  (put! select-channel (first (sort-by :date > decks))))
+  (put! select-channel (first (sort-by :date > decks)))
+  (swap! app-state assoc :decks-loaded true))
 
 (defn process-decks [decks]
   (for [deck decks]
@@ -451,7 +452,18 @@
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
-(defn deck-builder [{:keys [decks] :as cursor} owner]
+(defn deck-collection
+  [decks active-deck]
+  (for [deck (sort-by :date > decks)]
+    [:div.deckline {:class (when (= active-deck deck) "active")
+                    :on-click #(put! select-channel deck)}
+     [:img {:src (image-url (:identity deck))}]
+     [:div.float-right (deck-status-span deck)]
+     [:h4 (:name deck)]
+     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+     [:p (get-in deck [:identity :title])]]))
+
+(defn deck-builder [{:keys [decks decks-loaded] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -493,16 +505,10 @@
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            [:div.deck-collection
-            (if (empty? decks)
-              [:h4 "You have no deck"]
-              (for [deck (sort-by :date > decks)]
-                [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
-                                :on-click #(put! select-channel deck)}
-                 [:img {:src (image-url (:identity deck))}]
-                 [:div.float-right (deck-status-span deck)]
-                 [:h4 (:name deck)]
-                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
-                 [:p (get-in deck [:identity :title])]]))]
+            (cond
+              (not decks-loaded) [:h4 "Loading deck collection..."]
+              (empty? decks) [:h4 "No decks"]
+              :else (deck-collection decks (om/get-state owner :deck)))]
            [:div {:class (when (:edit state) "edit")}
             (when-let [card (om/get-state owner :zoom)]
               (om/build card-view card))]]
