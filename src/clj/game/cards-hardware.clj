@@ -509,6 +509,12 @@
    {:in-play [:memory 1]
     :recurring 2
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
+   
+   "Sports Hopper"
+   {:in-play [:link 1]
+    :abilities [{:label "Draw 3 cards"
+                 :msg "draw 3 cards"
+                 :effect (effect (trash card {:cause :ability-cost}) (draw 3))}]}
 
    "Spy Camera"
    {:abilities [{:cost [:click 1]
