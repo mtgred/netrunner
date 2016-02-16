@@ -886,6 +886,9 @@
                                   :effect (effect (prevent-run))})
                 (trace-ability 4 end-the-run)]}
 
+   "Vanilla"
+   {:abilities [end-the-run]}
+
    "Vikram 1.0"
    {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
                 (trace-ability 4 (do-brain-damage 1))]}
