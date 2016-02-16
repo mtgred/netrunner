@@ -144,14 +144,34 @@
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
              [:p (get-in deck [:identity :title])]])])]]])))
 
+(defn faction-icon
+  [faction identity]
+  (let [icon-span (fn [css-faction] [:span.faction-icon {:class css-faction :title identity}])]
+    (case faction
+      "Adam" (icon-span "adam")
+      "Anarch" (icon-span "anarch")
+      "Apex" (icon-span "apex")
+      "Criminal" (icon-span "criminal")
+      "Haas-Bioroid" (icon-span "hb")
+      "Jinteki" (icon-span "jinteki")
+      "NBN" (icon-span "nbn")
+      "Shaper" (icon-span "shaper")
+      "Sunny Lebeau" (icon-span "sunny")
+      "Weyland Consortium" (icon-span "weyland")
+      [:span.side "(Unknown)"])))
+
 (defn player-view [cursor]
   (om/component
    (sab/html
     [:span.player
      (om/build avatar (:user cursor) {:opts {:size 22}})
      (get-in cursor [:user :username])
-     (when-let [side (:side cursor)]
-       [:span.side (str "(" side ")")])])))
+     (let [side (:side cursor)
+           faction (:faction cursor)
+           identity (:identity cursor)]
+       (cond
+         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction identity)
+         side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
   (reify
@@ -235,7 +255,7 @@
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
             [:h4 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                :value (:title state) :placeholder "Title"}]
+                                :value (:title state) :placeholder "Title" :maxlength "30"}]
             [:p.flash-message (:flash-message state)]
             [:label
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
