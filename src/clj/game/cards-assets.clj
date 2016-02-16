@@ -784,4 +784,9 @@
                               (host state side card target)
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
                               (when (:rezzed (last (:hosted (get-card state card))))
-                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}})
+                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
+   "Zealous Judge"
+   {:abilities [{:label "Give the Runner 1 tag"
+                :cost [:click 1 :credit 1]
+                :msg (msg "give the Runner 1 tag")
+                :effect (effect (tag-runner 1))}]}})
