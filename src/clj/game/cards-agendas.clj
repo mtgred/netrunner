@@ -317,6 +317,9 @@
     :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
                                                    (concat (:scored corp) (:scored runner))))))}
 
+   "Merger"
+   {:agendapoints-runner (req (do 3))}
+
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (:bad-publicity corp))}
