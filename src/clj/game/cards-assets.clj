@@ -51,6 +51,20 @@
   {"Adonis Campaign"
    (campaign 12 3)
 
+   "Advanced Assembly Lines"
+   {:effect (effect (gain :credit 3))
+    :msg (msg "gain 3 [Credits]")
+    :abilities [{:label "[Trash]: Install a non-agenda card from HQ"
+                 :effect (effect (trash card) (corp-install target nil))
+                 :msg (msg (corp-install-msg target))
+                 :prompt "Choose a non-agenda card to install from HQ"
+                 :priority true
+                 :req (req (not (:run @state)))
+                 :choices {:req #(and (not (is-type? % "Operation"))
+                                      (not (is-type? % "Agenda"))
+                                      (= (:zone %) [:hand])
+                                      (= (:side %) "Corp"))}}]}
+
    "Aggressive Secretary"
    (advance-ambush 2 {:effect
                       (req (let [agg card
@@ -770,4 +784,9 @@
                               (host state side card target)
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
                               (when (:rezzed (last (:hosted (get-card state card))))
-                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}})
+                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
+   "Zealous Judge"
+   {:abilities [{:label "Give the Runner 1 tag"
+                :cost [:click 1 :credit 1]
+                :msg (msg "give the Runner 1 tag")
+                :effect (effect (tag-runner 1))}]}})

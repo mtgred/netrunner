@@ -435,6 +435,10 @@
                             card nil)))}]
     :events {:run-ends nil}}
 
+   "Panchatantra"
+   {:abilities [{:msg "add a custom subtype to currently encountered ICE"
+                 :once :per-turn}]}
+
    "Parasite"
    {:hosting {:req #(and (ice? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]
