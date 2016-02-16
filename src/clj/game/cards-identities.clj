@@ -326,6 +326,11 @@
                               :effect (effect (mill :corp))
                               :req (req (has-subtype? target "Virus"))}}}
 
+   "Pālanā Foods"
+   {:events {:runner-draw {:msg "gain 1 [Credits]"
+                           :once :per-turn
+                           :effect (effect (gain [:credit 1]))}}}
+
    "Quetzal: Free Spirit"
    {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
 
