@@ -285,7 +285,9 @@
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
-    :trace {:base 6 :msg "give the Runner X tags"
+    :trace {:base 6
+            :msg "give the Runner X tags"
+            :label "Give the Runner X tags"
             :effect (effect (tag-runner :runner (- target (second targets)))
                             (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
 
@@ -450,7 +452,10 @@
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
-    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
+    :trace {:base 3
+            :msg "give the Runner 1 tag"
+            :label "Give the Runner 1 tag"
+            :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
