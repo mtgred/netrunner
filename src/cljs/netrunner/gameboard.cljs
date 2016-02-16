@@ -22,11 +22,15 @@
           "newestOnTop" false
           "progressBar" false
           "positionClass" "toast-card"
+          ;; preventDuplicates - identical toasts don't stack when the property is set to true.
+          ;; Duplicates are matched to the previous toast based on their message content.
           "preventDuplicates" (:prevent-duplicates options true)
           "onclick" nil
           "showDuration" 300
           "hideDuration" 1000
+          ;; timeOut - how long the toast will display without user interaction
           "timeOut" (:time-out options 3000)
+          ;; extendedTimeOut - how long the toast will display after a user hovers over it
           "extendedTimeOut" (:time-out options 1000)
           "showEasing" "swing"
           "hideEasing" "linear"
