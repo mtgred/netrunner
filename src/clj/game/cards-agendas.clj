@@ -283,6 +283,12 @@
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
                  :effect (effect (damage :net 1 {:card card}))}]}
 
+   "Improved Protein Source"
+     {:msg (msg "make the Runner gain 4 [Credits]")
+      :effect (effect (gain :runner :credit 4))
+      :stolen {:msg "gain 4 [Credits]"
+               :effect (effect (gain :credit 4))}}
+
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
@@ -362,17 +368,17 @@
                           :bad-publicity (Integer/parseInt target)))}
 
    "Project Ares"
-   {:req (req #(and (> (:advance-counter card) 4) (> (count (all-installed state :runner)) 0)))
-    :msg (msg "force the Runner to trash " (- (:advance-counter card) 4) " installed cards and take 1 bad publicity")
-	  :effect (req (let [ares card]
-	                 (resolve-ability
-	                   state :runner
-	                   {:prompt (msg "Choose " (- (:advance-counter ares) 4) " installed cards to trash")
-                      :choices {:max (- (:advance-counter ares) 4) :req #(and (:installed %) (= (:side %) "Runner"))}
-                      :effect (effect (trash-cards targets)
-                                      (system-msg (str "trashes " (join ", " (map :title targets)))))}
-                    card nil))
-	               (gain state :corp :bad-publicity 1))}
+     {:req (req #(and (> (:advance-counter card) 4) (> (count (all-installed state :runner)) 0)))
+      :msg (msg "force the Runner to trash " (- (:advance-counter card) 4) " installed cards and take 1 bad publicity")
+      :effect (req (let [ares card]
+                     (resolve-ability
+                       state :runner
+                       {:prompt (msg "Choose " (- (:advance-counter ares) 4) " installed cards to trash")
+                        :choices {:max (- (:advance-counter ares) 4) :req #(and (:installed %) (= (:side %) "Runner"))}
+                        :effect (effect (trash-cards targets)
+                                        (system-msg (str "trashes " (join ", " (map :title targets)))))}
+                       card nil))
+                   (gain state :corp :bad-publicity 1))}
 
    "Project Atlas"
    {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
