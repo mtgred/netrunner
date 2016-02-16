@@ -337,7 +337,7 @@
                               :effect (effect (mill :corp))
                               :req (req (has-subtype? target "Virus"))}}}
 
-   "Pālanā Foods"
+   "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"
                            :once :per-turn
                            :effect (effect (gain [:credit 1]))}}}
