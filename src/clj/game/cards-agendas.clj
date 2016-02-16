@@ -286,7 +286,7 @@
    "Improved Protein Source"
      {:msg (msg "make the Runner gain 4 [Credits]")
       :effect (effect (gain :runner :credit 4))
-      :stolen {:msg "gain 4 [Credits]"
+      :stolen {:msg "make the Runner gain 4 [Credits]"
                :effect (effect (gain :credit 4))}}
 
    "Improved Tracers"
