@@ -454,6 +454,10 @@
                                            :effect (req (move state :corp target :deck {:front true}))}
                                          rr nil))})))}}}
 
+   "Reflection"
+   {:in-play [:memory 1 :link 1]
+    :events {:jack-out {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))) " from HQ")}}}
+
    "Replicator"
    {:events {:runner-install
              {:optional {:req (req (is-type? target "Hardware"))
@@ -505,6 +509,21 @@
    {:in-play [:memory 1]
     :recurring 2
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
+
+   "Spy Camera"
+   {:abilities [{:cost [:click 1]
+                 :label "Look at the top X cards of your Stack"
+                 :msg "look at the top X cards of their Stack and rearrange them"
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
+                                                     (all-installed state :runner)))]
+                                (prompt! state side card
+                                                    (str "Drag cards from the Temporary Zone back onto your Stack") ["OK"] {})
+                                (doseq [c (take n (:deck runner))] (move state side c :play-area))))}
+                {:label "[Trash]: Look at the top card of R&D"
+                 :msg "trash it and look at the top card of R&D"
+                 :effect (effect (prompt! card (str "The top card of R&D is "
+                                                    (:title (first (:deck corp)))) ["OK"] {})
+                                 (trash card {:cause :ability-cost}))}]}
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
