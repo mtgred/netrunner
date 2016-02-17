@@ -952,6 +952,28 @@ nav ul
         line-height: 18px
         flex(1)
 
+.deck-status
+  .status-tooltip
+    z-index: 30
+    display: none
+    padding: 10px
+    margin-left: -110px
+    margin-top: -85px
+    width: 180px
+
+    table
+      border: none
+
+  &:hover
+    cursor: default
+    .status-tooltip
+      display: inline
+      position: absolute
+      border: 1px solid #153051
+      border-radius: 4px
+      box-shadow: 5px 5px 8px #222
+      background: #27384C
+
 // Game Lobby
 
 .lobby
