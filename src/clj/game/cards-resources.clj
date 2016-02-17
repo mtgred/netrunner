@@ -572,6 +572,23 @@
                                     card nil)))}]
       :events {:runner-turn-begins remove-counter}})
 
+   "Political Operative"
+   {:req (req (some #{:hq} (:successful-run runner-reg)))
+    :abilities [{:prompt "Choose a rezzed card with a trash cost"
+                 :choices {:req #(and (:trash %) (rezzed? %))}
+                 :effect (req (let [c target]
+                                (trigger-event state side :pre-trash c)
+                                (let [cost (trash-cost state :runner c)]
+                                  (when (can-pay? state side nil [:credit cost])
+                                    (resolve-ability
+                                      state side
+                                      {:msg (msg "pay " cost " [Credit] and trash " (:title c))
+                                       :effect (effect (lose :credit cost)
+                                                       (trash card {:cause :ability-cost})
+                                                       (trash c))}
+                                     card nil)))
+                                (swap! state update-in [:bonus] dissoc :trash)))}]}
+
    "Power Tap"
    {:events {:trace {:msg "gain 1 [Credits]" :effect (effect (gain :runner :credit 1))}}}
 
