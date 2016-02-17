@@ -460,6 +460,14 @@
                                              (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
 
+   "Populist Rally"
+   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-installed state :runner))))
+    :msg "give the Corp 1 fewer [Click] to spend on their next turn"
+    :effect (effect (lose :corp :click-per-turn 1)
+                    (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1))}}}
+
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
                                                       (:discard runner))))))
