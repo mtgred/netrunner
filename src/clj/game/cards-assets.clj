@@ -85,6 +85,11 @@
                  :effect (effect (trash card))
                  :msg (msg "Swap " (:advance-counter card) " cards in HQ and Archives")}]}
 
+   "Aryabhata Tech"
+   {:events {:successful-trace {:msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
+                                :effect (effect (gain :credit 1)
+                                                (lose :runner :credit 1))}}}
+
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
