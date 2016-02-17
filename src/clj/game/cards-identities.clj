@@ -291,6 +291,12 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
+   "Nero Severn: Information Broker"
+   {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
+                 :once :per-turn
+                 :msg "jack out when encountering a sentry"
+                 :effect (effect (jack-out nil))}]}
+
    "New Angeles Sol: Your News"
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp
