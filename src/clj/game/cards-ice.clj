@@ -467,6 +467,23 @@
     :abilities [end-the-run]
     :strength-bonus advance-counters}
 
+   "Harvester"
+   {:abilities [{:label "Runner draws 3 cards and discards down to maximum hand size"
+                 :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
+                 :effect (req (draw state :runner 3)
+                              (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
+                                (when (> delta 0)
+                                  (resolve-ability
+                                    state :runner
+                                    {:prompt (msg "Choose " delta " cards to discard")
+                                     :player :runner
+                                     :choices {:max delta :req #(in-hand? %)}
+                                     :effect (req (doseq [c targets]
+                                                    (trash state :runner c))
+                                                  (system-msg state :runner
+                                                              (str "trashes " (join ", " (map :title targets)))))}
+                                   card nil))))}]}
+
    "Himitsu-Bako"
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
 
