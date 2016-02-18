@@ -985,9 +985,10 @@
    "Yagura"
    {:abilities [(do-net-damage 1)
                 {:msg "look at the top card of R&D"
-                 :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
-                            :msg "add the top card of R&D to the bottom"
-                            :yes-ability {:effect (effect (move (first (:deck corp)) :deck))}}}]}
+                 :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
+
+                            :yes-ability {:effect (effect (move (first (:deck corp)) :deck)
+                                                          (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
    {:abilities [(do-brain-damage 1)]}})
