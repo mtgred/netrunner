@@ -207,6 +207,7 @@
    "Firmware Updates"
    {:data [:counter 3]
     :abilities [{:counter-cost 1 :choices {:req #(and (ice? %) (can-be-advanced? %))}
+                 :req (req (< 0 (:counter card 0)))
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :once :per-turn :effect (effect (add-prop target :advance-counter 1))}]}
 
@@ -383,6 +384,7 @@
    "Project Atlas"
    {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
     :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
+                 :req (req (< 0 (:counter card 0))) ;; we need the req or the prompt will still show
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (cancellable (:deck corp) :sorted))
                  :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
@@ -396,6 +398,7 @@
    "Project Vitruvius"
    {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
     :abilities [{:counter-cost 1 :prompt "Choose a card"
+                 :req (req (< 0 (:counter card 0)))
                  :msg (msg "add " (if (:seen target)
                                     (:title target) "an unseen card ") " to HQ from Archives")
                  :choices (req (:discard corp)) :effect (effect (move target :hand))}]}

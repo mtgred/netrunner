@@ -322,6 +322,7 @@
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
                  :choices {:req #(and (ice? %) (:rezzed %))}
+                 :req (req (< 0 (:counter card 0)))
                  :msg (msg "add strength to a rezzed ICE")
                  :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
                                                              (fnil inc 0)))
