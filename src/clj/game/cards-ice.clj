@@ -219,7 +219,7 @@
 
    "Asteroid Belt"
    (space-ice end-the-run)
-   
+
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
@@ -260,7 +260,7 @@
                                       (move state side card
                                             (conj (server->zone state target) :ices))
                                       (update-run-ice state side))})]}
-   
+
    "Burke Bugs"
    {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
                                         :player :runner
@@ -277,7 +277,7 @@
 
    "Changeling"
    (morph-ice "Barrier" "Sentry" end-the-run)
-   
+
    "Checkpoint"
    {:effect take-bad-pub
     :abilities [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
@@ -304,7 +304,7 @@
       :events {:runner-turn-ends ab
                :corp-turn-ends ab}
       :abilities [end-the-run]})
-   
+
    "Clairvoyant Monitor"
    {:abilities [(do-psi {:label "Place 1 advancement token and end the run"
                          :player :corp
@@ -439,7 +439,7 @@
 
    "Gemini"
    (constellation-ice (do-net-damage 1))
-   
+
    "Grim"
    {:effect take-bad-pub
     :abilities [trash-program]}
@@ -706,7 +706,7 @@
    "Orion"
    ;; TODO: wormhole subroutine
    (space-ice trash-program end-the-run)
-   
+
    "Pachinko"
    {:abilities [{:label "End the run if the Runner is tagged"
                  :req (req tagged)
@@ -847,7 +847,7 @@
 
    "Taurus"
    (constellation-ice trash-hardware)
-   
+
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
@@ -927,7 +927,21 @@
 
    "Virgo"
    (constellation-ice give-tag)
-   
+
+   "Waiver"
+   {:abilities [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"
+                                  :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))
+                                            ". Cards with a play/install cost less than or equal to " (- target (second targets))
+                                            " will be trashed")
+                                  :effect (req (let [delta (- target (second targets))]
+                                                 (doseq [c (:hand runner)]
+                                                   (when (<= (:cost c) delta)
+                                                     (resolve-ability
+                                                       state side
+                                                       {:msg (msg "trash " (:title c))
+                                                        :effect (effect (trash c))}
+                                                      card nil)))))})]}
+
    "Wall of Static"
    {:abilities [end-the-run]}
 
@@ -955,7 +969,7 @@
    "Wormhole"
    ;; TODO: create an ability for wormhole
    (space-ice)
-   
+
    "Wotan"
    {:abilities [end-the-run]}
 
