@@ -266,7 +266,8 @@
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (not (ice? target)))
+   {:events {:rez {:req (req (and (not (ice? target))) (< 0 (count (:hand corp))))
+                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
 
