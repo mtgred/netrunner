@@ -160,6 +160,10 @@
     :leave-play (req (when-let [events (:events (card-def (:identity runner)))]
                        (register-events state side events (:identity runner))))}
 
+   "\"Clones are not People\""
+   {:events {:agenda-scored {:msg "add it to their score area and gain 1 agenda point"
+                             :effect (effect (as-agenda :corp card 1))}}}
+
    "Closed Accounts"
    {:req (req tagged)
     :effect (effect (lose :runner :credit :all))}
