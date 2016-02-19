@@ -101,17 +101,13 @@
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
-  (put! select-channel (first (sort-by :date > decks))))
+  (put! select-channel (first (sort-by :date > decks)))
+  (swap! app-state assoc :decks-loaded true))
 
 (defn process-decks [decks]
   (for [deck decks]
     (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
       (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards))))))
-
-(go (let [cards (<! cards-channel)
-          decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-      (load-decks decks)
-      (>! cards-channel cards)))
 
 (defn distinct-by [f coll]
   (letfn [(step [xs seen]
@@ -232,8 +228,15 @@
     (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
       INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
 
+(defn min-deck-size
+  "Contains implementation-specific decksize adjustments, if they need to be different from printed ones."
+  [identity]
+  (cond
+    (= "09037" (:code identity)) 48 ;; Adam needs to have his 3 directives in deck
+    :else (:minimumdecksize identity)))
+
 (defn min-agenda-points [deck]
-  (let [size (max (card-count (:cards deck)) (get-in deck [:identity :minimumdecksize]))]
+  (let [size (max (card-count (:cards deck)) (min-deck-size (:identity deck)))]
     (+ 2 (* 2 (quot size 5)))))
 
 (defn agenda-points [{:keys [cards]}]
@@ -245,14 +248,23 @@
   [{:keys [qty card] :as line}]
   (<= qty (or (:limited card) 3)))
 
+(defn adam-valid?
+  "Checks for Adam decks specific to current implementation of his identity."
+  [{:keys [identity cards] :as deck}]
+  (or (not= "09037" (:code identity))
+      (and (<= 1 (card-count (filter #(= "09041" (:code (:card %))) cards))) ;; Always Be Running
+           (<= 1 (card-count (filter #(= "09043" (:code (:card %))) cards))) ;; Neutralize All Threats
+           (<= 1 (card-count (filter #(= "09044" (:code (:card %))) cards)))))) ;; Safety First
+
 (defn valid? [{:keys [identity cards] :as deck}]
-  (and (>= (card-count cards) (:minimumdecksize identity))
+  (and (>= (card-count cards) (min-deck-size identity))
        (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
                      (legal-num-copies? %)) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
-             (<= min (agenda-points deck) (inc min))))))
+             (<= min (agenda-points deck) (inc min))))
+       (adam-valid? deck)))
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
@@ -456,7 +468,18 @@
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
-(defn deck-builder [{:keys [decks] :as cursor} owner]
+(defn deck-collection
+  [decks active-deck]
+  (for [deck (sort-by :date > decks)]
+    [:div.deckline {:class (when (= active-deck deck) "active")
+                    :on-click #(put! select-channel deck)}
+     [:img {:src (image-url (:identity deck))}]
+     [:div.float-right (deck-status-span deck)]
+     [:h4 (:name deck)]
+     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+     [:p (get-in deck [:identity :title])]]))
+
+(defn deck-builder [{:keys [decks decks-loaded] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -498,16 +521,10 @@
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            [:div.deck-collection
-            (if (empty? decks)
-              [:h4 "You have no deck"]
-              (for [deck (sort-by :date > decks)]
-                [:div.deckline {:class (when (= (om/get-state owner :deck) deck) "active")
-                                :on-click #(put! select-channel deck)}
-                 [:img {:src (image-url (:identity deck))}]
-                 [:div.float-right (deck-status-span deck)]
-                 [:h4 (:name deck)]
-                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
-                 [:p (get-in deck [:identity :title])]]))]
+            (cond
+              (not decks-loaded) [:h4 "Loading deck collection..."]
+              (empty? decks) [:h4 "No decks"]
+              :else (deck-collection decks (om/get-state owner :deck)))]
            [:div {:class (when (:edit state) "edit")}
             (when-let [card (om/get-state owner :zoom)]
               (om/build card-view card))]]
@@ -531,10 +548,12 @@
                  [:h4.fake-link {:on-mouse-enter #(put! zoom-channel identity)
                                  :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
-                       min-count (:minimumdecksize identity)]
+                       min-count (min-deck-size identity)]
                    [:div count " cards"
                     (when (< count min-count)
-                      [:span.invalid (str " (minimum " min-count ")")])])
+                      [:span.invalid (str " (minimum " min-count ")")])
+                    (when-not (adam-valid? deck)
+                      [:span.invalid " (not enough directives)"])])
                  (let [inf (influence-count deck)
                        limit (deck-inf-limit deck)
                        id-limit (id-inf-limit identity)
@@ -609,5 +628,10 @@
              [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
            [:textarea {:ref "deck-edit" :value (:deck-edit state)
                        :on-change #(handle-edit owner)}]]]]]))))
+
+(go (let [cards (<! cards-channel)
+          decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+      (load-decks decks)
+      (>! cards-channel cards)))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})

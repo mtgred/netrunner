@@ -120,7 +120,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator, room: msg.room,\
+        game = {date: new Date(), gameid: gameid, title: msg.title.substring(0,30), allowspectator: msg.allowspectator, room: msg.room,\
                 players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
         games[gameid] = game
         socket.join(gameid)
@@ -205,6 +205,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
           for player in game.players
+            player.faction = player["deck"]["identity"]["faction"]
+            player.identity = player["deck"]["identity"]["title"]
             delete player["deck"]
           refreshLobby("update", msg.gameid)
 
@@ -277,6 +279,8 @@ app.post '/register', (req, res) ->
   db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.send {message: 'Username taken'}, 422
+    else if req.body.username.length < 4 or req.body.username.length > 16
+      res.send {message: 'Username too short/too long'}, 423
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')

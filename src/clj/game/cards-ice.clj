@@ -233,6 +233,9 @@
    "Bastion"
    {:abilities [end-the-run]}
 
+   "Brainstorm"
+   {:abilities [(do-brain-damage 1)]}
+
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)
@@ -818,7 +821,7 @@
    "Swordsman"
    {:abilities [(do-net-damage 1)
                 {:prompt "Choose an AI program to trash"
-                 :msg (msg "trashes " (:title target))
+                 :msg (msg "trash " (:title target))
                  :label "Trash an AI program"
                  :effect (effect (trash target))
                  :choices {:req #(and (installed? %)
@@ -882,6 +885,9 @@
                                   :msg "prevent the Runner from making another run"
                                   :effect (effect (prevent-run))})
                 (trace-ability 4 end-the-run)]}
+
+   "Vanilla"
+   {:abilities [end-the-run]}
 
    "Vikram 1.0"
    {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}

@@ -9,7 +9,7 @@
   (atom {:active-page "/"
          :user (js->clj js/user :keywordize-keys true)
          :cards [] :sets []
-         :decks []
+         :decks [] :decks-loaded false
          :games [] :gameid nil :messages []}))
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/about"])
