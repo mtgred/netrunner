@@ -143,5 +143,14 @@
   [state side title]
   (core/trash state side (find-card title (get-in @state [side :hand]))))
 
+(defn starting-hand
+  "Moves all cards in the player's hand to their draw pile, then moves the specified card names
+  back into the player's hand."
+  [state side cards]
+  (doseq [c (get-in @state [side :hand])]
+    (core/move state side c :deck))
+  (doseq [ctitle cards]
+    (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
+
 (load "core-game")
 (load "cards")

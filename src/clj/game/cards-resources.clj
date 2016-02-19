@@ -891,16 +891,18 @@
     :abilities [ability]})
 
    "Wyldside"
-   (let [ability {:msg "draw 2 cards and lose [Click]"
-                  :once :per-turn
-                  :effect (effect (lose :click 1) (draw 2))}]
    {:flags {:runner-turn-draw true
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                       (cons (get-in @state [:runner :identity])
                                                             (all-installed state :runner))))))}
 
-    :events {:runner-turn-begins ability}
-    :abilities [ability]})
+    :events {:runner-turn-begins {:effect (req (lose state side :click 1)
+                                               (when-not (get-in @state [:per-turn (:cid card)])
+                                                 (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                                                 (draw state side 2)))}}
+    :abilities [{:msg "draw 2 cards and lose [Click]"
+                 :once :per-turn
+                 :effect (effect (draw 2))}]}
 
    "Xanadu"
    {:events {:pre-rez-cost {:req (req (ice? target))

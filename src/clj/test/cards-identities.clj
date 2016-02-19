@@ -146,6 +146,34 @@
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
 
+(deftest maxx-wyldside-start-of-turn
+  "MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click"
+  (do-game
+    (new-game (default-corp)
+              (make-deck "MaxX: Maximum Punk Rock" [(qty "Wyldside" 3)
+                                                     (qty "Sure Gamble" 3)
+                                                     (qty "Infiltration" 3)
+                                                     (qty "Corroder" 3)
+                                                     (qty "Eater" 3)]))
+    (take-credits state :corp)
+    (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+    (starting-hand state :runner ["Wyldside"])
+    (play-from-hand state :runner "Wyldside")
+    (take-credits state :runner 3)
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits at end of first turn")
+    (is (find-card "Wyldside" (get-in @state [:runner :rig :resource])) "Wyldside was installed")
+    (take-credits state :corp)
+    (is (= 0 (:click (get-runner))) "Runner has 0 clicks")
+    (is (:runner-phase-12 @state) "Runner is in Step 1.2")
+    (let [maxx (get-in @state [:runner :identity])
+          wyld (find-card "Wyldside" (get-in @state [:runner :rig :resource]))]
+      (card-ability state :runner maxx 0)
+      (card-ability state :runner wyld 0)
+      (core/end-phase-12 state :runner nil)
+      (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+      (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
+      (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
+
 (deftest nasir-ability-basic
   "Nasir Ability - Basic"
   (do-game
