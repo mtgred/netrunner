@@ -286,7 +286,7 @@ app.post '/register', (req, res) ->
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
       req.body.registrationDate = new Date()
       req.body.lastConnection = new Date()
-      bcrypt.hash req.body.password, 3, (err, hash) ->
+      hashPassword req.body.password, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
@@ -373,7 +373,7 @@ app.post '/reset/:token', (req, res) ->
         #if (req.body.password != req.body.confirm)
         #  res.send {message: 'Password does not match Confirm'}, 412
 
-        bcrypt.hash req.body.password, 3, (err, hash) ->
+        hashPassword req.body.password, (err, hash) ->
           password = hash
           resetPasswordToken = undefined;
           resetPasswordExpires = undefined
@@ -403,6 +403,9 @@ app.post '/reset/:token', (req, res) ->
   ], (err) ->
     throw err if err
     res.redirect('/')
+
+hashPassword = (password, cb) ->
+    bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
