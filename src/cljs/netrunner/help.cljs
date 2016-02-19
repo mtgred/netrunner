@@ -80,7 +80,9 @@
                              ", too."]
                             [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
                              "the official FAQ on "
-                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] "."])}
+                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
+                             "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
+                             "of rulings (also unofficial) regarding various cards and game situations."])}
             {:id "firstgame"
              :title "Can I play my first game on jinteki.net even though I'm a total beginner and never played in meatspace?"
              :content [:p "Sure! Many players will be happy to play/teach a beginner if they know what they're getting into beforehand. "
