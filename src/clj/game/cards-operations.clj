@@ -166,6 +166,10 @@
     :leave-play (req (when-let [events (:events (card-def (:identity runner)))]
                        (register-events state side events (:identity runner))))}
 
+   "\"Clones are not People\""
+   {:events {:agenda-scored {:msg "add it to their score area and gain 1 agenda point"
+                             :effect (effect (as-agenda :corp card 1))}}}
+
    "Closed Accounts"
    {:req (req tagged)
     :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
@@ -292,7 +296,9 @@
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
-    :trace {:base 6 :msg "give the Runner X tags"
+    :trace {:base 6
+            :msg "give the Runner X tags"
+            :label "Give the Runner X tags"
             :effect (effect (tag-runner :runner (- target (second targets)))
                             (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
 
@@ -463,7 +469,10 @@
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
-    :trace {:base 3 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}
+    :trace {:base 3
+            :msg "give the Runner 1 tag"
+            :label "Give the Runner 1 tag"
+            :effect (effect (tag-runner :runner 1))}}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}

@@ -143,6 +143,13 @@
                               :effect (effect (prompt! card (str "The top card of R&D is "
                                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
+   "Diwan"
+   {:prompt "Choose the server that this copy of Diwan is targeting:"
+    :choices (req servers)
+    :effect (effect (update! (assoc card :named-target target)))
+    :leave-play (effect (update! (dissoc card :named-target)))
+    :events {:purge {:effect (effect (trash card))}}}
+
    "Djinn"
    {:abilities [{:label "Add a virus program to your Grip from your Stack"
                  :prompt "Choose a Virus"
