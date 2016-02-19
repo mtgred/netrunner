@@ -953,26 +953,35 @@ nav ul
         flex(1)
 
 .deck-status
-  .status-tooltip
-    z-index: 30
-    display: none
-    padding: 10px
-    margin-left: -110px
-    margin-top: -85px
-    width: 180px
+  position: relative
+  padding-right: 12px
 
-    table
-      border: none
+  .status-tooltip
+    display: none
+    position: absolute
+    left: 100%
+    top: 3px
+    z-index: 30
+    width: 185px
+    background-clip: padding-box
+    border: 1px solid white
+    border-radius: 4px
+    outline: none
+    padding: 6px 12px
+    color: white
+    transition(all 0.2s ease-in-out)
+    box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+
+    > div
+      margin: 2px 0
+
+    .tick
+      margin-right: 4px
 
   &:hover
     cursor: default
     .status-tooltip
       display: inline
-      position: absolute
-      border: 1px solid #153051
-      border-radius: 4px
-      box-shadow: 5px 5px 8px #222
-      background: #27384C
 
 // Game Lobby
 

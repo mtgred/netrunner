@@ -399,14 +399,13 @@
                    "invalid" "Invalid")]
      [:span.deck-status {:class status} message
       (when tooltip?
-        [:span.status-tooltip
-         [:table
-          [:tr {:class (if valid "legal" "invalid")}
-           [:td (if valid "✔" "✘")] [:td "Basic deckbuilding rules"]]
-          [:tr {:class (if mwl "legal" "invalid")}
-           [:td (if mwl "✔" "✘")] [:td "NAPD Most Wanted List"]]
-          [:tr {:class (if rotation "legal" "invalid")}
-           [:td (if rotation "✔" "✘")] [:td "Only released cards"]]]])])))
+        [:div.status-tooltip.blue-shade
+         [:div {:class (if valid "legal" "invalid")}
+          [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
+         [:div {:class (if mwl "legal" "invalid")}
+          [:span.tick (if mwl "✔" "✘")] "NAPD Most Wanted List"]
+         [:div {:class (if rotation "legal" "invalid")}
+          [:span.tick (if rotation "✔" "✘")] "Only released cards"]])])))
 
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
