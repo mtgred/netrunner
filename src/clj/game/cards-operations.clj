@@ -76,7 +76,8 @@
                     card nil)))}
 
    "Anonymous Tip"
-   {:effect (effect (draw 3))}
+   {:msg "draw 3 cards"
+    :effect (effect (draw 3))}
 
    "Archived Memories"
    {:prompt "Choose a card from Archives to add to HQ" :show-discard true
@@ -100,10 +101,13 @@
                             (system-msg state :runner "regains 2[mu]"))}}
 
    "Beanstalk Royalties"
-   {:effect (effect (gain :credit 3))}
+   {:msg "gain 3 [Credits]"
+    :effect (effect (gain :credit 3))}
 
    "Big Brother"
-   {:req (req tagged) :effect (effect (tag-runner :runner 2))}
+   {:req (req tagged)
+    :msg "give the Runner 2 tags"
+    :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
    {:choices {:req #(and (ice? %)
@@ -114,10 +118,12 @@
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Biotic Labor"
-   {:effect (effect (gain :click 2))}
+   {:msg "gain [Click][Click]"
+    :effect (effect (gain :click 2))}
 
    "Blue Level Clearance"
-   {:effect (effect (gain :credit 5) (draw 2))}
+   {:msg "gain 5 [Credits] and draw 2 cards"
+    :effect (effect (gain :credit 5) (draw 2))}
 
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
@@ -162,6 +168,7 @@
 
    "Closed Accounts"
    {:req (req tagged)
+    :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
     :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
@@ -170,10 +177,12 @@
     :effect (effect (gain :credit (or (:advance-counter target) 0)))}
 
    "Corporate Shuffle"
-   {:effect (effect (shuffle-into-deck :hand) (draw 5))}
+   {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
+    :effect (effect (shuffle-into-deck :hand) (draw 5))}
 
    "Cyberdex Trial"
-   {:effect (effect (purge))}
+   {:msg "purge virus counters"
+    :effect (effect (purge))}
 
    "Dedication Ceremony"
    {:prompt "Choose a faceup card"
@@ -215,10 +224,11 @@
     :effect (effect (trash-cards :runner targets))}
 
    "Green Level Clearance"
-   {:effect (effect (gain :credit 3) (draw))}
+   {:msg "gain 3 [Credits] and draw 1 card"
+    :effect (effect (gain :credit 3) (draw))}
 
    "Hedge Fund"
-   {:effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
 
    "Hellion Alpha Test"
    {:req (req (:installed-resource runner-reg))
@@ -277,7 +287,8 @@
                                       :effect (effect (tag-runner :runner 1))}}}}
 
    "Medical Research Fundraiser"
-   {:effect (effect (gain :credit 8) (gain :runner :credit 3))}
+   {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
+    :effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Midseason Replacements"
    {:req (req (:stole-agenda runner-reg))
@@ -316,7 +327,9 @@
                    (shuffle! state :corp :deck)))}
 
    "Neural EMP"
-   {:req (req (:made-run runner-reg)) :effect (effect (damage :net 1 {:card card}))}
+   {:req (req (:made-run runner-reg))
+    :msg "do 1 net damage"
+    :effect (effect (damage :net 1 {:card card}))}
 
    "Oversight AI"
    {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
@@ -326,6 +339,7 @@
 
    "Patch"
    {:choices {:req #(and (ice? %) (rezzed? %))}
+    :msg (msg "give +2 strength to " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :installed true))
                     (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
@@ -439,10 +453,13 @@
    {:prompt "Choose a card from HQ to shuffle into R&D"
     :choices {:req #(and (in-hand? %)
                          (= (:side %) "Corp"))}
+    :msg "shuffle a card from HQ into R&D"
     :effect (effect (move target :deck) (shuffle! :deck))}
 
    "Scorched Earth"
-   {:req (req tagged) :effect (effect (damage :meat 4 {:card card}))}
+   {:req (req tagged)
+    :msg "do 4 meat damage"
+    :effect (effect (damage :meat 4 {:card card}))}
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
@@ -501,6 +518,7 @@
 
    "Sub Boost"
    {:choices {:req #(and (ice? %) (rezzed? %))}
+    :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
     :effect (effect (update! (assoc target :subtype
                                            (->> (vec (.split (:subtype target) " - "))
                                                 (concat ["Barrier"])
@@ -510,12 +528,16 @@
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
-   {:effect (effect (gain :credit 1)
+   {:msg "gain 1 [Credits]"
+    :effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
+                                      :msg "gain [Click]"
                                       :effect (effect (gain :corp :click 1))} card nil))}
 
    "Successful Demonstration"
-   {:req (req (:unsuccessful-run runner-reg)) :effect (effect (gain :credit 7))}
+   {:req (req (:unsuccessful-run runner-reg))
+    :msg "gain 7 [Credits]"
+    :effect (effect (gain :credit 7))}
 
    "Sunset"
    (letfn [(sun [serv]
@@ -571,7 +593,9 @@
                   card targets))})
 
    "Traffic Accident"
-   {:req (req (>= (:tag runner) 2)) :effect (effect (damage :meat 2 {:card card}))}
+   {:req (req (>= (:tag runner) 2))
+    :msg "do 2 meat damage"
+    :effect (effect (damage :meat 2 {:card card}))}
 
    "Trick of Light"
    {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
@@ -595,4 +619,5 @@
                       card nil)))}
 
    "Witness Tampering"
-   {:effect (effect (lose :bad-publicity 2))}})
+   {:msg "remove 2 bad publicity"
+    :effect (effect (lose :bad-publicity 2))}})

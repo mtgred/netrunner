@@ -279,7 +279,7 @@
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
-    :flags {:runner-phase-12 true}
+    :flags {:runner-phase-12 (req true)}
     :abilities [{:msg "lose [Click] and look at the top card of R&D"
                  :once :per-turn
                  :effect (effect (lose :click 1)
@@ -756,7 +756,7 @@
 
    "The Supplier"
    (let [ability  {:label "Install a hosted card (start of turn)"
-                   :prompt "Choose a hosted card to install"
+                   :prompt "Choose a card hosted on The Supplier to install"
                    :once :per-turn
                    :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
                                    (:hosted card)))
@@ -799,7 +799,8 @@
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
                                   (swap! ref assoc-in [:runner :hand-size-base] credit))))))
-    :leave-play (req (remove-watch state :theophilius-bagbiter))}
+    :leave-play (req (remove-watch state :theophilius-bagbiter)
+                     (swap! state assoc-in [:runner :hand-size-base] 5))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
