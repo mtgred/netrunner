@@ -492,7 +492,7 @@
      [:img {:src (image-url (:identity deck))}]
      [:div.float-right (deck-status-span deck)]
      [:h4 (:name deck)]
-     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
      [:p (get-in deck [:identity :title])]]))
 
 (defn deck-builder [{:keys [decks decks-loaded] :as cursor} owner]
