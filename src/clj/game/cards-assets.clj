@@ -251,7 +251,6 @@
    "Eve Campaign"
    (campaign 16 2)
 
-
    "Executive Boot Camp"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
@@ -268,6 +267,19 @@
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
+
+   "Executive Search Firm"
+   {:abilities [{:prompt "Choose an executive, sysop, or character to add to HQ"
+                 :msg (msg "add " (:title target) " to HQ and shuffle R&D")
+                 :activatemsg "searches R&D for an executive, sysop, or character"
+                 :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
+                                                         (has-subtype? % "Sysop")
+                                                         (has-subtype? % "Character"))
+                                                    (:deck corp))
+                                            :sorted))
+                 :cost [:click 1]
+                 :label "Search R&D for an executive, sysop, or character"
+                 :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Exposé"
    {:advanceable :always
