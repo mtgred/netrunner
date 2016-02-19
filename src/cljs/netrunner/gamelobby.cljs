@@ -253,7 +253,7 @@
             [:div.button-bar
              [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
-            [:h4 "Title"]
+            [:h3 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
                                 :value (:title state) :placeholder "Title" :maxlength "30"}]
             [:p.flash-message (:flash-message state)]
@@ -261,12 +261,13 @@
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
              "Allow spectators"]
-            [:h4 "Side"]
-            (for [option ["Corp" "Runner"]] [:label [:input {:type "radio"
-                                                             :name "side"
-                                                             :value option
-                                                             :on-change #(om/set-state! owner :side (.. % -target -value))
-                                                             :checked (= (om/get-state owner :side) option)}] option])]
+            [:p
+             [:h3 "Side"]
+             (for [option ["Corp" "Runner"]] [:label [:input {:type "radio"
+                                                              :name "side"
+                                                              :value option
+                                                              :on-change #(om/set-state! owner :side (.. % -target -value))
+                                                              :checked (= (om/get-state owner :side) option)}] option])]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
