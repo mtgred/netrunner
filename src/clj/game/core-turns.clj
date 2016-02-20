@@ -169,7 +169,7 @@
     (when (and (= side :corp) (true? (get-in @state [:corp :subliminal-in-deck]))) (subliminal state side))
     (if (not-empty start-cards)
       (toast state side
-                 (str "You may use " (clojure.string/join "," (map :title start-cards))
+                 (str "You may use " (clojure.string/join ", " (map :title start-cards))
                       (if (= side :corp)
                         " between the start of your turn and your mandatory draw."
                         " before taking your first click."))

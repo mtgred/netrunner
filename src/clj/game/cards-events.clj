@@ -266,7 +266,8 @@
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (not (ice? target)))
+   {:events {:rez {:req (req (and (not (ice? target))) (< 0 (count (:hand corp))))
+                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
 
@@ -459,6 +460,14 @@
     :choices (req (cancellable (filter #(and (has-subtype? % "Run")
                                              (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
+
+   "Populist Rally"
+   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-installed state :runner))))
+    :msg "give the Corp 1 fewer [Click] to spend on their next turn"
+    :effect (effect (lose :corp :click-per-turn 1)
+                    (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1))}}}
 
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")

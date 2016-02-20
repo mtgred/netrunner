@@ -274,11 +274,14 @@
     (and cid (<= cid 10019))))
 
 (defn mwl-legal?
-  "Returns true if a deck is valid and the influence limit fits within NAPD MWL restrictions."
+  "Returns true if the deck's influence fits within NAPD MWL restrictions."
   [deck]
-  (and (valid? deck)
-       (<= (influence-count deck) (deck-inf-limit deck))
-       (every? #(released? (:card %)) (:cards deck))
+  (<= (influence-count deck) (deck-inf-limit deck)))
+
+(defn only-in-rotation?
+  "Returns true if the deck doesn't contain any cards outside of current rotation."
+  [deck]
+  (and (every? #(released? (:card %)) (:cards deck))
        (released? (:identity deck))))
 
 (defn edit-deck [owner]
@@ -378,19 +381,31 @@
 (defn deck-status-label
   [deck]
   (cond
-    (mwl-legal? deck) "legal"
+    (and (mwl-legal? deck) (valid? deck) (only-in-rotation? deck)) "legal"
     (valid? deck) "casual"
     :else "invalid"))
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
-  [deck]
-  (let [status (deck-status-label deck)
-        message (case status
-                  "legal" "Tournament legal"
-                  "casual" "Casual play only"
-                  "invalid" "Invalid")]
-  [:span {:class status} message]))
+  ([deck] (deck-status-span deck false))
+  ([deck tooltip?]
+   (let [status (deck-status-label deck)
+         valid (valid? deck)
+         mwl (mwl-legal? deck)
+         rotation (only-in-rotation? deck)
+         message (case status
+                   "legal" "Tournament legal"
+                   "casual" "Casual play only"
+                   "invalid" "Invalid")]
+     [:span.deck-status {:class status} message
+      (when tooltip?
+        [:div.status-tooltip.blue-shade
+         [:div {:class (if valid "legal" "invalid")}
+          [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
+         [:div {:class (if mwl "legal" "invalid")}
+          [:span.tick (if mwl "✔" "✘")] "NAPD Most Wanted List"]
+         [:div {:class (if rotation "legal" "invalid")}
+          [:span.tick (if rotation "✔" "✘")] "Only released cards"]])])))
 
 (defn octgn-link [owner]
   (let [deck (om/get-state owner :deck)
@@ -476,7 +491,7 @@
      [:img {:src (image-url (:identity deck))}]
      [:div.float-right (deck-status-span deck)]
      [:h4 (:name deck)]
-     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
      [:p (get-in deck [:identity :title])]]))
 
 (defn deck-builder [{:keys [decks decks-loaded] :as cursor} owner]
@@ -572,7 +587,7 @@
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
                         [:span.invalid " (maximum" (inc min-point) ")"])]))
-                 [:div (deck-status-span deck)]]
+                 [:div (deck-status-span deck true)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group

@@ -52,7 +52,8 @@
                                       :effect (effect (tag-runner :runner 1))}}}}
 
    "Breaker Bay Grid"
-   {:events {:pre-rez-cost {:req (req (= (:zone card) (:zone target)))
+   {:events {:pre-rez-cost {:req (req (or (= (:zone card) (:zone target))
+                                          (= (:zone card) (:zone (get-card state (:host target))))))
                             :effect (effect (rez-cost-bonus -5))}}}
 
    "Caprice Nisei"
@@ -101,7 +102,7 @@
                         :yes-ability {:msg (msg "purge viruses")
                                       :effect (effect (purge))}}}
     :abilities [{:label "[Trash]: Purge virus counters"
-                 :msg "purge viruses" :effect (effect (purge) (trash card))}]}
+                 :msg "purge viruses" :effect (effect (trash card) (purge))}]}
 
    "Dedicated Technician Team"
    {:recurring 2}

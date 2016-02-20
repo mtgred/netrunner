@@ -250,7 +250,7 @@
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
-                 :effect (effect (trash target {:cause :ability-cost}))}]}
+                 :effect (effect (trash target {:unpreventable true}))}]}
 
    "Faerie"
    (auto-icebreaker ["Sentry"]

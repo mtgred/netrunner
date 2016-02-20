@@ -85,6 +85,11 @@
                  :effect (effect (trash card))
                  :msg (msg "Swap " (:advance-counter card) " cards in HQ and Archives")}]}
 
+   "Aryabhata Tech"
+   {:events {:successful-trace {:msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
+                                :effect (effect (gain :credit 1)
+                                                (lose :runner :credit 1))}}}
+
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
@@ -246,14 +251,13 @@
    "Eve Campaign"
    (campaign 16 2)
 
-
    "Executive Boot Camp"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1) (rez target))}
+                 :effect (effect (rez-cost-bonus -1) (rez target {:no-warning true}))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -263,6 +267,19 @@
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
                  :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
+
+   "Executive Search Firm"
+   {:abilities [{:prompt "Choose an executive, sysop, or character to add to HQ"
+                 :msg (msg "add " (:title target) " to HQ and shuffle R&D")
+                 :activatemsg "searches R&D for an executive, sysop, or character"
+                 :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
+                                                         (has-subtype? % "Sysop")
+                                                         (has-subtype? % "Character"))
+                                                    (:deck corp))
+                                            :sorted))
+                 :cost [:click 1]
+                 :label "Search R&D for an executive, sysop, or character"
+                 :effect (effect (move target :hand) (shuffle! :deck))}]}
 
    "Exposé"
    {:advanceable :always
@@ -305,6 +322,7 @@
    "IT Department"
    {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
                  :choices {:req #(and (ice? %) (:rezzed %))}
+                 :req (req (< 0 (:counter card 0)))
                  :msg (msg "add strength to a rezzed ICE")
                  :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
                                                              (fnil inc 0)))
@@ -428,7 +446,7 @@
    "Museum of History"
    {:flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
     :abilities [{:label "Shuffle cards in Archives into R&D"
-                 :prompt (msg (let [mus (count (filter #(= "10019" (:code %)) (all-installed state :corp)))]
+                 :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %)) (rezzed? %)) (all-installed state :corp)))]
                                 (str "Choose " (if (< 1 mus) (str mus " cards") "a card")
                                      " in Archives to shuffle into R&D")))
                  :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))
@@ -786,7 +804,8 @@
                               (when (:rezzed (last (:hosted (get-card state card))))
                                 (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
    "Zealous Judge"
-   {:abilities [{:label "Give the Runner 1 tag"
+   {:rez-req (req tagged)
+    :abilities [{:label "Give the Runner 1 tag"
                 :cost [:click 1 :credit 1]
                 :msg (msg "give the Runner 1 tag")
                 :effect (effect (tag-runner 1))}]}})
