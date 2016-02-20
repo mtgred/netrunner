@@ -257,7 +257,7 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1) (rez target))}
+                 :effect (effect (rez-cost-bonus -1) (rez target {:no-warning true}))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
