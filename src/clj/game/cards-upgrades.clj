@@ -102,7 +102,7 @@
                         :yes-ability {:msg (msg "purge viruses")
                                       :effect (effect (purge))}}}
     :abilities [{:label "[Trash]: Purge virus counters"
-                 :msg "purge viruses" :effect (effect (purge) (trash card))}]}
+                 :msg "purge viruses" :effect (effect (trash card) (purge))}]}
 
    "Dedicated Technician Team"
    {:recurring 2}
