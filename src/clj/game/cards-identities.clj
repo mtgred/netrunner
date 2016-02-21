@@ -6,6 +6,11 @@
          one-of-each   (fn [cards] (->> cards (group-by :title) (map second) (map first)))
          get-directives (fn [source] (filter #(some #{(:title %)} titles) source))]
    {:effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
+                   (when (not= 3 (count directives))
+                     (toast state :runner
+                            "Your deck doesn't contain enough directives for Adam's ability. The deck needs to contain at least one copy of each directive. They are not counted against the printed decksize limit, so minimal Adam's decksize on this site is 48 cards."
+                            "warning"
+                            {:time-out 0 :close-button true}))
                    (doseq [c directives]
                      (runner-install state side c {:no-cost true
                                                    :custom-message (str "starts with " (:title c) " in play")}))
@@ -286,6 +291,12 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
+   "Nero Severn: Information Broker"
+   {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
+                 :once :per-turn
+                 :msg "jack out when encountering a sentry"
+                 :effect (effect (jack-out nil))}]}
+
    "New Angeles Sol: Your News"
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp
@@ -325,6 +336,11 @@
    {:events {:runner-install {:msg "force the Corp to trash the top card of R&D"
                               :effect (effect (mill :corp))
                               :req (req (has-subtype? target "Virus"))}}}
+
+   "Pālanā Foods: Sustainable Growth"
+   {:events {:runner-draw {:msg "gain 1 [Credits]"
+                           :once :per-turn
+                           :effect (effect (gain [:credit 1]))}}}
 
    "Quetzal: Free Spirit"
    {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}

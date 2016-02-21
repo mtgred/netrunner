@@ -120,7 +120,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator, room: msg.room,\
+        game = {date: new Date(), gameid: gameid, title: msg.title.substring(0,30), allowspectator: msg.allowspectator, room: msg.room,\
                 players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
         games[gameid] = game
         socket.join(gameid)
@@ -205,6 +205,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
           for player in game.players
+            player.faction = player["deck"]["identity"]["faction"]
+            player.identity = player["deck"]["identity"]["title"]
             delete player["deck"]
           refreshLobby("update", msg.gameid)
 
@@ -277,12 +279,14 @@ app.post '/register', (req, res) ->
   db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.send {message: 'Username taken'}, 422
+    else if req.body.username.length < 4 or req.body.username.length > 16
+      res.send {message: 'Username too short/too long'}, 423
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
       req.body.registrationDate = new Date()
       req.body.lastConnection = new Date()
-      bcrypt.hash req.body.password, 3, (err, hash) ->
+      hashPassword req.body.password, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
@@ -369,7 +373,7 @@ app.post '/reset/:token', (req, res) ->
         #if (req.body.password != req.body.confirm)
         #  res.send {message: 'Password does not match Confirm'}, 412
 
-        bcrypt.hash req.body.password, 3, (err, hash) ->
+        hashPassword req.body.password, (err, hash) ->
           password = hash
           resetPasswordToken = undefined;
           resetPasswordExpires = undefined
@@ -399,6 +403,9 @@ app.post '/reset/:token', (req, res) ->
   ], (err) ->
     throw err if err
     res.redirect('/')
+
+hashPassword = (password, cb) ->
+    bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->

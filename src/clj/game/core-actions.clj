@@ -176,7 +176,7 @@
 (defn rez
   "Rez a corp card."
   ([state side card] (rez state side card nil))
-  ([state side card {:keys [ignore-cost] :as args}]
+  ([state side card {:keys [ignore-cost no-warning] :as args}]
    (if (can-rez? state side card)
      (do
        (trigger-event state side :pre-rez card)
@@ -198,7 +198,7 @@
                                        (update-in [:host :zone] #(map to-keyword %)))))
              (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
                                          (:title card) (when ignore-cost " at no cost")))
-             (when (:corp-phase-12 @state)
+             (when (and (not no-warning) (:corp-phase-12 @state))
                (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                       Please rez prior to clicking Start Turn in the future." "warning"
                       {:time-out 0 :close-button true}))

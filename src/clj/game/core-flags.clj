@@ -163,7 +163,10 @@
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
    (and (run-flag? state side card :can-rez)
-        (turn-flag? state side card :can-rez))))
+        (turn-flag? state side card :can-rez)
+        (if-let [rez-req (:rez-req (card-def card))]
+          (rez-req state side card nil)
+          true))))
 
 (defn can-be-advanced?
   "Returns true if the card can be advanced"

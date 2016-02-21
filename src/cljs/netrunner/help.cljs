@@ -58,7 +58,7 @@
                         [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
                         [:li [:code "/end-run"] " - End the run (Corp only)"]
                         [:li [:code "/jack-out"] " - Jack out (Runner only)"]
-                        [:li [:code "/trace n"] " - Start trace with base strength n (Corp only)"]
+                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
                         [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
                         [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only)"]
@@ -80,7 +80,9 @@
                              ", too."]
                             [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
                              "the official FAQ on "
-                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] "."])}
+                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
+                             "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
+                             "of rulings (also unofficial) regarding various cards and game situations."])}
             {:id "firstgame"
              :title "Can I play my first game on jinteki.net even though I'm a total beginner and never played in meatspace?"
              :content [:p "Sure! Many players will be happy to play/teach a beginner if they know what they're getting into beforehand. "
@@ -123,6 +125,23 @@
              :title "How do I send a private message / add someone to friendlist?"
              :content [:p "The community management issues such as private messages or friendlist are currently not implemented. "
                        "They are planned, but no specific date is set, as all of our code is written by volunteers."]}
+            {:id "competitive"
+             :title "What is the point of the \"Competitive\" room in lobby? How does it differ from \"Casual\"?"
+             :content (list [:p "Different rooms in lobby are meant to help people with similar expectations about the game find each other. "
+                             "In general, competitive room is for games with players intending to play competitively. "
+                             "This may mean something different to each of them... However, since it's a non-default room, "
+                             "going there and creating or joining a game usually isn't accidental and is a declaration of some kind of competitive intent."]
+                            [:p "Some recommendations for playing in the competitive room:"
+                             [:ul
+                              [:li "a decent knowledge of the game's rules"]
+                              [:li "familiarity with the site's interface"]
+                              [:li "a " [:span.legal "tournament legal"] " deck"]
+                              [:li "enough time reserved for a full game and no distractions"]]]
+                            [:p "Games with players not able or willing to follow above recommendations are probably better suited to the Casual room. "
+                             "Some examples would be: learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
+                             "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
+                             "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
+
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"
@@ -142,7 +161,7 @@
                        "put one copy of each directive in the deck in addition to your normal deck. Yes, that means that "
                        "minimal Adam decksize on Jinteki.net is 48."]}
             {:id "napdmwl"
-             :title "What is MWL? Why is my deck marked as \"Casual play only\"?"
+             :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
              :content (list
                         [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
                          "of restricted cards introduced by FFG to tournament play. Each of the cards on the list reduces "
@@ -155,11 +174,11 @@
                         [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
                          "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
                          "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."])}
-            {:id "rezaccess"
-             :title "How do I rez cards as Corp in the 4.3 run timing window?"
-             :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "
-                       "See " [:a {:href "https://github.com/mtgred/netrunner/issues/334"} "the discussion on GitHub"]
-                       " about this issue."]}
+            {:id "altarts"
+             :title "How do I change my decks to use alternative art versions of cards (or promotional ones)?"
+             :content [:p "Alternative art cards are enabled for the " [:a {:href "#donations"} "donators"] " and "
+                       [:a {:href "#devs"} "developers"] " of the site. If you belong to one of the aforementioned groups and you feel like you should have them enabled, "
+                       "but you don't, " [:a {:href "/about"} "contact us"] "."]}
              )}
     {:id "troubleshooting"
      :title "Troubleshooting"

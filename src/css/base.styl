@@ -28,7 +28,7 @@ h2
 
 h3
   font-size: 18px
-  margin: 0 0 5px
+  margin: 0 0 4px
 
 h4
   font-size: 14px
@@ -90,14 +90,14 @@ input, select, textarea
     box-shadow(0 0 6px blue)
     border-color: blue !important
 
-input[type="checkbox"]
+input[type="radio"], input[type="checkbox"]
   height: auto
   vertical-align: middle
-  margin-right: 6px
-  
-input[type="radio"]
-  vertical-align: middle
-  margin-right: 6px
+  margin: -3px 8px 0 0
+
+label
+  padding: 3px 0
+  cursor: pointer
 
 button, a.button
   display: inline-block
@@ -293,6 +293,48 @@ span.small
 
 .image-container
   position: relative
+
+// Faction icons
+
+.faction-icon
+  width: 24px
+  height: 24px
+  margin-left: 5px
+  background: transparent
+  background-repeat: no-repeat
+  background-size: contain
+  display: inline-block
+  vertical-align: middle
+
+  &.adam
+    background-image: url('/img/factions/runner-adam.png')
+
+  &.anarch
+    background-image: url('/img/factions/runner-anarch.png')
+
+  &.apex
+    background-image: url('/img/factions/runner-apex.png')
+
+  &.criminal
+    background-image: url('/img/factions/runner-criminal.png')
+
+  &.hb
+    background-image: url('/img/factions/corp-hb.png')
+
+  &.jinteki
+    background-image: url('/img/factions/corp-jinteki.png')
+
+  &.nbn
+    background-image: url('/img/factions/corp-nbn.png')
+
+  &.shaper
+    background-image: url('/img/factions/runner-shaper.png')
+
+  &.sunny
+    background-image: url('/img/factions/runner-sunny.png')
+
+  &.weyland
+    background-image: url('/img/factions/corp-weyland.png')
 
 // Dropdown
 
@@ -910,6 +952,37 @@ nav ul
         line-height: 18px
         flex(1)
 
+.deck-status
+  position: relative
+  padding-right: 12px
+
+  .status-tooltip
+    display: none
+    position: absolute
+    left: 100%
+    top: 3px
+    z-index: 30
+    width: 185px
+    background-clip: padding-box
+    border: 1px solid white
+    border-radius: 4px
+    outline: none
+    padding: 6px 12px
+    color: white
+    transition(all 0.2s ease-in-out)
+    box-shadow(0 6px 12px rgba(0, 0, 0, .175))
+
+    > div
+      margin: 2px 0
+
+    .tick
+      margin-right: 4px
+
+  &:hover
+    cursor: default
+    .status-tooltip
+      display: inline
+
 // Game Lobby
 
 .lobby
@@ -950,21 +1023,18 @@ nav ul
 
     .rooms .roomtab
       display: block
-      padding: 5px 10px
-      border: 1px solid white
-      border-radius: 4px
       color: white
-      margin-right: 1px
-      cursor: pointer
+      margin: 0 10px
+      line-height: 24px
       float: right
+      transition(all 0.2s ease-in-out)
 
       &:hover
-        border-color: orange
         color: orange
+        cursor: pointer
 
       &.current
-        border-color: orange
-        cursor: default
+        color: orange
 
   .game-list
     padding: 0 15px

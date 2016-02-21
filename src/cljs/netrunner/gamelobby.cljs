@@ -141,8 +141,24 @@
              [:img {:src (image-url (:identity deck))}]
              [:div.float-right (deck-status-span deck)]
              [:h4 (:name deck)]
-             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY - HH:mm"))]
+             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
              [:p (get-in deck [:identity :title])]])])]]])))
+
+(defn faction-icon
+  [faction identity]
+  (let [icon-span (fn [css-faction] [:span.faction-icon {:class css-faction :title identity}])]
+    (case faction
+      "Adam" (icon-span "adam")
+      "Anarch" (icon-span "anarch")
+      "Apex" (icon-span "apex")
+      "Criminal" (icon-span "criminal")
+      "Haas-Bioroid" (icon-span "hb")
+      "Jinteki" (icon-span "jinteki")
+      "NBN" (icon-span "nbn")
+      "Shaper" (icon-span "shaper")
+      "Sunny Lebeau" (icon-span "sunny")
+      "Weyland Consortium" (icon-span "weyland")
+      [:span.side "(Unknown)"])))
 
 (defn player-view [cursor]
   (om/component
@@ -150,8 +166,12 @@
     [:span.player
      (om/build avatar (:user cursor) {:opts {:size 22}})
      (get-in cursor [:user :username])
-     (when-let [side (:side cursor)]
-       [:span.side (str "(" side ")")])])))
+     (let [side (:side cursor)
+           faction (:faction cursor)
+           identity (:identity cursor)]
+       (cond
+         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction identity)
+         side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
   (reify
@@ -233,20 +253,21 @@
             [:div.button-bar
              [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
-            [:h4 "Title"]
+            [:h3 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                :value (:title state) :placeholder "Title"}]
+                                :value (:title state) :placeholder "Title" :maxlength "30"}]
             [:p.flash-message (:flash-message state)]
             [:label
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                       :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
              "Allow spectators"]
-            [:h4 "Side"]
-            (for [option ["Corp" "Runner"]] [:label [:input {:type "radio"
-                                                             :name "side"
-                                                             :value option
-                                                             :on-change #(om/set-state! owner :side (.. % -target -value))
-                                                             :checked (= (om/get-state owner :side) option)}] option])]
+            [:p
+             [:h3 "Side"]
+             (for [option ["Corp" "Runner"]] [:label [:input {:type "radio"
+                                                              :name "side"
+                                                              :value option
+                                                              :on-change #(om/set-state! owner :side (.. % -target -value))
+                                                              :checked (= (om/get-state owner :side) option)}] option])]]
            (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
              (let [players (:players game)]
                [:div
@@ -275,7 +296,7 @@
                            (:name deck)
                            "Deck selected")]])
                      (when-let [deck (:deck player)]
-                       [:div.float-right (deck-status-span deck)])
+                       [:div.float-right (deck-status-span deck true)])
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]

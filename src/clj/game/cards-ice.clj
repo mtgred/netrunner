@@ -219,7 +219,7 @@
 
    "Asteroid Belt"
    (space-ice end-the-run)
-   
+
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
@@ -232,6 +232,9 @@
 
    "Bastion"
    {:abilities [end-the-run]}
+
+   "Brainstorm"
+   {:abilities [(do-brain-damage 1)]}
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
@@ -257,7 +260,7 @@
                                       (move state side card
                                             (conj (server->zone state target) :ices))
                                       (update-run-ice state side))})]}
-   
+
    "Burke Bugs"
    {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
                                         :player :runner
@@ -274,7 +277,7 @@
 
    "Changeling"
    (morph-ice "Barrier" "Sentry" end-the-run)
-   
+
    "Checkpoint"
    {:effect take-bad-pub
     :abilities [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
@@ -301,7 +304,7 @@
       :events {:runner-turn-ends ab
                :corp-turn-ends ab}
       :abilities [end-the-run]})
-   
+
    "Clairvoyant Monitor"
    {:abilities [(do-psi {:label "Place 1 advancement token and end the run"
                          :player :corp
@@ -436,7 +439,7 @@
 
    "Gemini"
    (constellation-ice (do-net-damage 1))
-   
+
    "Grim"
    {:effect take-bad-pub
     :abilities [trash-program]}
@@ -463,6 +466,23 @@
    {:advanceable :always
     :abilities [end-the-run]
     :strength-bonus advance-counters}
+
+   "Harvester"
+   {:abilities [{:label "Runner draws 3 cards and discards down to maximum hand size"
+                 :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
+                 :effect (req (draw state :runner 3)
+                              (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
+                                (when (> delta 0)
+                                  (resolve-ability
+                                    state :runner
+                                    {:prompt (msg "Choose " delta " cards to discard")
+                                     :player :runner
+                                     :choices {:max delta :req #(in-hand? %)}
+                                     :effect (req (doseq [c targets]
+                                                    (trash state :runner c))
+                                                  (system-msg state :runner
+                                                              (str "trashes " (join ", " (map :title targets)))))}
+                                   card nil))))}]}
 
    "Himitsu-Bako"
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
@@ -686,7 +706,7 @@
    "Orion"
    ;; TODO: wormhole subroutine
    (space-ice trash-program end-the-run)
-   
+
    "Pachinko"
    {:abilities [{:label "End the run if the Runner is tagged"
                  :req (req tagged)
@@ -818,7 +838,7 @@
    "Swordsman"
    {:abilities [(do-net-damage 1)
                 {:prompt "Choose an AI program to trash"
-                 :msg (msg "trashes " (:title target))
+                 :msg (msg "trash " (:title target))
                  :label "Trash an AI program"
                  :effect (effect (trash target))
                  :choices {:req #(and (installed? %)
@@ -827,7 +847,7 @@
 
    "Taurus"
    (constellation-ice trash-hardware)
-   
+
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
@@ -883,6 +903,9 @@
                                   :effect (effect (prevent-run))})
                 (trace-ability 4 end-the-run)]}
 
+   "Vanilla"
+   {:abilities [end-the-run]}
+
    "Vikram 1.0"
    {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
                 (trace-ability 4 (do-brain-damage 1))]}
@@ -904,7 +927,21 @@
 
    "Virgo"
    (constellation-ice give-tag)
-   
+
+   "Waiver"
+   {:abilities [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"
+                                  :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))
+                                            ". Cards with a play/install cost less than or equal to " (- target (second targets))
+                                            " will be trashed")
+                                  :effect (req (let [delta (- target (second targets))]
+                                                 (doseq [c (:hand runner)]
+                                                   (when (<= (:cost c) delta)
+                                                     (resolve-ability
+                                                       state side
+                                                       {:msg (msg "trash " (:title c))
+                                                        :effect (effect (trash c))}
+                                                      card nil)))))})]}
+
    "Wall of Static"
    {:abilities [end-the-run]}
 
@@ -932,7 +969,7 @@
    "Wormhole"
    ;; TODO: create an ability for wormhole
    (space-ice)
-   
+
    "Wotan"
    {:abilities [end-the-run]}
 
@@ -948,9 +985,10 @@
    "Yagura"
    {:abilities [(do-net-damage 1)
                 {:msg "look at the top card of R&D"
-                 :optional {:prompt (msg "Add " (:title (first (:deck corp))) " to bottom of R&D?")
-                            :msg "add the top card of R&D to the bottom"
-                            :yes-ability {:effect (effect (move (first (:deck corp)) :deck))}}}]}
+                 :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
+
+                            :yes-ability {:effect (effect (move (first (:deck corp)) :deck)
+                                                          (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
    {:abilities [(do-brain-damage 1)]}})

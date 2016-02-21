@@ -21,15 +21,15 @@
 
      [:h3 "Development"]
 
-     [:p "The gameplay functionalities are currently under development. Check "
-      [:a {:href "https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml"
-           :target "_blank"} "card automation status"] "."]
-
      [:p "The code is open source and available on "
       [:a {:href "https://github.com/mtgred/netrunner" :target "_blank"} "Github"] "."]
 
      [:p "Bug reports and feature suggestions can be submitted "
       [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank"} "here"] "."]
+
+     [:p "Card automation "
+      [:a {:href "https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml"
+           :target "_blank"} "status"] "."]
 
      [:p "Donations can be submitted to PayPal account mtgred@gmail.com or to Bitcoin address "
       [:span.bitcoin "1ByjuLNZRvG17YaRKgKUjNi3c4qQ3daX3g" [:img.qr {:src "/img/bitcoin.png"}]]
@@ -38,7 +38,7 @@
      [:p "Contributions are appreciated and help finance fast servers."]
 
      [:h3 "Contributors"]
-     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25) and Dominic Kexel (queueseven) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
+     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Lukasz Dobrogowski (zaroth) and Filip Gokstorp (Saintis) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
      [:p "Many thanks to all the donators. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
      [:ul.list.compact
       (for [d (:donators cursor)]

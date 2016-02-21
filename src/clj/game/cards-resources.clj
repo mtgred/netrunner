@@ -279,7 +279,7 @@
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
-    :flags {:runner-phase-12 true}
+    :flags {:runner-phase-12 (req true)}
     :abilities [{:msg "lose [Click] and look at the top card of R&D"
                  :once :per-turn
                  :effect (effect (lose :click 1)
@@ -572,6 +572,23 @@
                                     card nil)))}]
       :events {:runner-turn-begins remove-counter}})
 
+   "Political Operative"
+   {:req (req (some #{:hq} (:successful-run runner-reg)))
+    :abilities [{:prompt "Choose a rezzed card with a trash cost"
+                 :choices {:req #(and (:trash %) (rezzed? %))}
+                 :effect (req (let [c target]
+                                (trigger-event state side :pre-trash c)
+                                (let [cost (trash-cost state :runner c)]
+                                  (when (can-pay? state side nil [:credit cost])
+                                    (resolve-ability
+                                      state side
+                                      {:msg (msg "pay " cost " [Credit] and trash " (:title c))
+                                       :effect (effect (lose :credit cost)
+                                                       (trash card {:cause :ability-cost})
+                                                       (trash c))}
+                                     card nil)))
+                                (swap! state update-in [:bonus] dissoc :trash)))}]}
+
    "Power Tap"
    {:events {:trace {:msg "gain 1 [Credits]" :effect (effect (gain :runner :credit 1))}}}
 
@@ -756,7 +773,7 @@
 
    "The Supplier"
    (let [ability  {:label "Install a hosted card (start of turn)"
-                   :prompt "Choose a hosted card to install"
+                   :prompt "Choose a card hosted on The Supplier to install"
                    :once :per-turn
                    :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
                                    (:hosted card)))
@@ -799,7 +816,8 @@
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
                                   (swap! ref assoc-in [:runner :hand-size-base] credit))))))
-    :leave-play (req (remove-watch state :theophilius-bagbiter))}
+    :leave-play (req (remove-watch state :theophilius-bagbiter)
+                     (swap! state assoc-in [:runner :hand-size-base] 5))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
@@ -873,16 +891,18 @@
     :abilities [ability]})
 
    "Wyldside"
-   (let [ability {:msg "draw 2 cards and lose [Click]"
-                  :once :per-turn
-                  :effect (effect (lose :click 1) (draw 2))}]
    {:flags {:runner-turn-draw true
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                       (cons (get-in @state [:runner :identity])
                                                             (all-installed state :runner))))))}
 
-    :events {:runner-turn-begins ability}
-    :abilities [ability]})
+    :events {:runner-turn-begins {:effect (req (lose state side :click 1)
+                                               (when-not (get-in @state [:per-turn (:cid card)])
+                                                 (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                                                 (draw state side 2)))}}
+    :abilities [{:msg "draw 2 cards and lose [Click]"
+                 :once :per-turn
+                 :effect (effect (draw 2))}]}
 
    "Xanadu"
    {:events {:pre-rez-cost {:req (req (ice? target))

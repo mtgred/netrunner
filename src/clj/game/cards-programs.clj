@@ -143,6 +143,13 @@
                               :effect (effect (prompt! card (str "The top card of R&D is "
                                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
+   "Diwan"
+   {:prompt "Choose the server that this copy of Diwan is targeting:"
+    :choices (req servers)
+    :effect (effect (update! (assoc card :named-target target)))
+    :leave-play (effect (update! (dissoc card :named-target)))
+    :events {:purge {:effect (effect (trash card))}}}
+
    "Djinn"
    {:abilities [{:label "Add a virus program to your Grip from your Stack"
                  :prompt "Choose a Virus"
@@ -228,7 +235,9 @@
    "Harbinger"
    {:trash-effect
      {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
-       :effect (effect (runner-install card {:facedown true}))}}
+      :effect (req (resolve-ability state :runner
+                     {:effect (effect (runner-install card {:facedown true}))}
+                    card nil))}}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
@@ -435,6 +444,10 @@
                             card nil)))}]
     :events {:run-ends nil}}
 
+   "Panchatantra"
+   {:abilities [{:msg "add a custom subtype to currently encountered ICE"
+                 :once :per-turn}]}
+
    "Parasite"
    {:hosting {:req #(and (ice? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]
@@ -614,7 +627,7 @@
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                    :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
-   
+
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:cost [:click 1] :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
