@@ -150,7 +150,7 @@
    "Early Bird"
    {:prompt "Choose a server"
     :choices (req servers)
-    :msg (msg "run " target " and gain [Click]")
+    :msg (msg "make a run on " target " and gain [Click]")
     :effect (effect (gain :click 1) (run target nil card))}
 
    "Easy Mark"
@@ -216,6 +216,7 @@
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
+    :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "Feint"
@@ -270,7 +271,7 @@
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (and (not (ice? target))) (< 0 (count (:hand corp))))
+   {:events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
