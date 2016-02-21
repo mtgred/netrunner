@@ -543,6 +543,10 @@
                         :choices (req (filter #(is-type? % "Program") (:discard runner)))
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
 
+   "Run Amok"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
+
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
     :effect (effect (run target nil card)
