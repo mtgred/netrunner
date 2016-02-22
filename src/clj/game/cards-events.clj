@@ -22,6 +22,7 @@
                            ;; trash cards from right to left
                            ;; otherwise, auto-killing servers would move the cards to the next server
                            ;; so they could no longer be trashed in the same loop
+    :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
     :effect (req (doseq [c (->> (all-installed state :corp)
                                 (sort-by #(vec (:zone %)))
                                 (reverse))]
@@ -66,7 +67,7 @@
    {:prompt "Choose a resource to install from your Grip"
     :choices {:req #(and (is-type? % "Resource")
                          (in-hand? %))}
-    :effect  (effect (install-cost-bonus [:credit -3]) (runner-install target))}
+    :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Code Siphon"
    {:effect (effect (run :rd
@@ -100,7 +101,8 @@
                     card nil)))}
 
    "Day Job"
-   {:additional-cost [:click 3] :effect (effect (gain :credit 10))}
+   {:additional-cost [:click 3]
+    :msg "gain 10 [Credits]" :effect (effect (gain :credit 10))}
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
@@ -129,7 +131,7 @@
     :events {:run-ends nil}}
 
    "Diesel"
-   {:effect (effect (draw 3))}
+   {:msg "draw 3 cards" :effect (effect (draw 3))}
 
    "Dirty Laundry"
    {:prompt "Choose a server" :choices (req servers)
@@ -148,10 +150,11 @@
    "Early Bird"
    {:prompt "Choose a server"
     :choices (req servers)
+    :msg (msg "make a run on " target " and gain [Click]")
     :effect (effect (gain :click 1) (run target nil card))}
 
    "Easy Mark"
-   {:effect (effect (gain :credit 3))}
+   {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -213,6 +216,7 @@
 
    "Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
+    :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
     :effect (effect (move target :hand) (shuffle! :deck))}
 
    "Feint"
@@ -223,7 +227,8 @@
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
-   {:effect (effect (draw 3) (draw :corp 3))}
+   {:msg "make each player draw 3 cards"
+    :effect (effect (draw 3) (draw :corp 3))}
 
    "Forged Activation Orders"
    {:choices {:req #(and (ice? %)
@@ -266,7 +271,7 @@
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (and (not (ice? target))) (< 0 (count (:hand corp))))
+   {:events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
@@ -316,7 +321,7 @@
                                                    :choices {:req #(and (ice? %)
                                                                         (rezzed? %)
                                                                         (= (:title %) icename))}
-                                                   :msg (msg "trash " icename " protecting " (zone->name (second (:zone target))))
+                                                   :msg (msg "trash " (card-str state target))
                                                    :effect (req (trash state :corp target))} card nil)))}
                                card nil)
                               (unregister-events card))}}}
@@ -356,7 +361,8 @@
    {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
-   {:effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
+   {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
+    :effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
@@ -387,7 +393,8 @@
                     card nil)))}
 
    "Lawyer Up"
-   {:effect (effect (draw 3) (lose :tag 2))}
+   {:msg "remove 2 tags and draw 3 cards"
+    :effect (effect (draw 3) (lose :tag 2))}
 
    "Legwork"
    {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
@@ -413,11 +420,13 @@
     :events {:runner-turn-begins nil :pre-damage nil}}
 
    "Levy AR Lab Access"
-   {:effect (effect (shuffle-into-deck :hand :discard) (draw 5)
+   {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
+    :effect (effect (shuffle-into-deck :hand :discard) (draw 5)
                     (move (first (:play-area runner)) :rfg))}
 
    "Lucky Find"
-   {:effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]"
+    :effect (effect (gain :credit 9))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -439,7 +448,8 @@
    {:recurring 1}
 
    "Networking"
-   {:effect (effect (lose :tag 1))
+   {:msg "remove 1 tag"
+    :effect (effect (lose :tag 1))
     :optional {:prompt "Pay 1 [Credits] to add Networking to Grip?"
                :yes-ability {:cost [:credit 1]
                              :msg "add it to their Grip"
@@ -453,7 +463,7 @@
     :msg "add it to their score area and gain 1 agenda point"}
 
    "Paper Tripping"
-   {:effect (effect (lose :tag :all))}
+   {:msg "remove all tags" :effect (effect (lose :tag :all))}
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
@@ -477,7 +487,7 @@
    "Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
                                       {:once :per-turn :effect (effect (gain :credit 7))
-                                                       :msg "gain 7 [Credits] "}
+                                                       :msg "gain 7 [Credits]"}
                                       :runner-turn-ends
                                       {:effect (effect (unregister-events card))}}
                     (assoc card :zone '(:discard))))
@@ -500,7 +510,7 @@
                                      (gain state :runner :credit (* 2 target))))} card nil)))}
 
    "Quality Time"
-   {:effect (effect (draw 5))}
+   {:msg "draw 5 cards" :effect (effect (draw 5))}
 
    "Queens Gambit"
    {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
@@ -532,6 +542,10 @@
                         :msg (msg "install " (:title target))
                         :choices (req (filter #(is-type? % "Program") (:discard runner)))
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
+
+   "Run Amok"
+   {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
 
    "Running Interference"
    {:prompt "Choose a server" :choices (req servers)
@@ -631,7 +645,7 @@
                       card))}
 
    "Sure Gamble"
-   {:effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
 
    "Surge"
    {:msg (msg "place 2 virus tokens on " (:title target))
