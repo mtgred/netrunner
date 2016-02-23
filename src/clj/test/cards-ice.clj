@@ -270,6 +270,22 @@
       (is (= 3 (:current-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
 
+(deftest resistor
+  "Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag"
+  (do-game
+    (new-game (default-corp [(qty "Resistor" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Resistor" "HQ")
+    (let [resistor (get-ice state :hq 0)]
+      (core/rez state :corp resistor)
+      (is (= 0 (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
+      (core/tag-runner state :runner 2)
+      (is (= 2 (:tag (get-runner))))
+      (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
+      (take-credits state :corp)
+      (core/remove-tag state :runner 1)
+      (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
+
 (deftest special-offer-trash-ice-during-run
   "Special Offer trashes itself and updates the run position"
   (do-game
