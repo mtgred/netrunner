@@ -255,7 +255,7 @@
              [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
             [:h3 "Title"]
             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                :value (:title state) :placeholder "Title" :maxlength "30"}]
+                                :value (:title state) :placeholder "Title" :maxLength "30"}]
             [:p.flash-message (:flash-message state)]
             [:label
              [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)

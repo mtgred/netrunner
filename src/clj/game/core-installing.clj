@@ -53,8 +53,7 @@
 (defn- ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (let [make-label #(or (:label %) (and (string? (:msg %)) (capitalize (:msg %))) "")
-        abilities (if (:recurring cdef)
+  (let [abilities (if (:recurring cdef)
                     (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
                     (:abilities cdef))]
     (for [ab abilities]
