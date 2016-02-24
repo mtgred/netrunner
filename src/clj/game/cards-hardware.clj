@@ -572,13 +572,13 @@
                                                                      (dissoc sw :abilities :events))))
                                                   (gain-agenda-point state :runner (- swpts-runner stpts-runner))
                                                   (gain-agenda-point state :corp (- stpts-corp swpts-corp))
-                                                  (doseq [c (get-in @state [:corp :scored])]
+                                                  (let [c (find-cid (:cid st) (get-in @state [:corp :scored]))]
                                                     (let [abilities (:abilities (card-def c))
                                                           c (merge c {:abilities abilities})]
                                                       (update! state :corp c)
                                                       (when-let [events (:events (card-def c))]
                                                         (register-events state side events c))))
-                                                  (doseq [r (get-in @state [:runner :scored])]
+                                                  (let [r (find-cid (:cid sw) (get-in @state [:runner :scored]))]
                                                     (deactivate state :corp r))
                                                   (system-msg state side (str "uses Turntable to swap "
                                                                               (:title st) " for " (:title sw)))
