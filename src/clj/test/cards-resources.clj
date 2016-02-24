@@ -94,6 +94,24 @@
       (core/rez state :corp iwall)
       (is (get-in (refresh iwall) [:rezzed])))))
 
+(deftest film-critic-discarded-executives
+  "Film Critic - Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042"
+  (do-game
+    (new-game (default-corp [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Film Critic" 1)]))
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (run-empty-server state "Server 1")
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (trash-from-hand state :corp "Director Haas")
+      (is (= 1 (count (:discard (get-corp)))) "Director Haas stayed in Archives")
+      (is (= 0 (:agenda-point (get-runner))) "No points gained by Runner")
+      (is (empty? (:scored (get-runner))) "Nothing in Runner scored"))))
+
 (deftest film-critic-fetal-ai
   "Film Critic - Fetal AI interaction"
   (do-game
