@@ -59,7 +59,7 @@
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 
    "AstroScript Pilot Program"
-   {:data {:counter 1}
+   {:effect (effect (add-prop card :counter 1))
     :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
                                            (card-str state target))
                  :choices {:req can-be-advanced?}
@@ -187,7 +187,8 @@
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Executive Retreat"
-   {:data {:counter 1} :effect (effect (shuffle-into-deck :hand))
+   {:effect (effect (add-prop card :counter 1)
+                    (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
@@ -205,7 +206,7 @@
     :steal-cost-bonus (req [:credit 2])}
 
    "Firmware Updates"
-   {:data [:counter 3]
+   {:effect (effect (add-prop card :counter 3))
     :abilities [{:counter-cost 1 :choices {:req #(and (ice? %) (can-be-advanced? %))}
                  :req (req (< 0 (:counter card 0)))
                  :msg (msg "place 1 advancement token on " (card-str state target))
@@ -216,7 +217,7 @@
     :effect (effect (add-prop target :counter 1))}
 
    "Geothermal Fracking"
-   {:data {:counter 2}
+   {:effect (effect (add-prop card :counter 2))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
                  :effect (effect (gain :credit 7 :bad-publicity 1))}]}
 
@@ -258,7 +259,7 @@
                       :effect (effect (add-prop target :counter c))} card nil)))}
 
    "High-Risk Investment"
-   {:data {:counter 1}
+   {:effect (effect (add-prop card :counter 1))
     :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
@@ -280,7 +281,7 @@
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"
-   {:data {:counter 3}
+   {:effect (effect (add-prop card :counter 3))
     :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
                  :effect (effect (damage :net 1 {:card card}))}]}
 
@@ -298,7 +299,7 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:data {:counter 2}
+   {:effect (effect (add-prop card :counter 2))
     :abilities [{:counter-cost 1 :effect (effect (prevent-jack-out))
                  :msg "prevent the Runner from jacking out"}]}
 
@@ -332,7 +333,7 @@
     :advancement-cost-bonus (req (:bad-publicity corp))}
 
    "Nisei MK II"
-   {:data {:counter 1}
+   {:effect (effect (add-prop card :counter 1))
     :abilities [{:req (req (:run @state)) :counter-cost 1 :msg "end the run"
                  :effect (effect (end-run))}]}
 
@@ -404,7 +405,7 @@
                  :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
 
    "Project Wotan"
-   {:data [:counter 3]
+   {:effect (effect (add-prop card :counter 3))
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Quantum Predictive Model"
