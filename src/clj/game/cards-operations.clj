@@ -462,6 +462,15 @@
     :msg "shuffle a card from HQ into R&D"
     :effect (effect (move target :deck) (shuffle! :deck))}
 
+   "Salems Hospitality"
+   {:msg "name a card. The Runner reveals their Grip and must trash all copies of the named card"
+    :effect (req (show-wait-prompt state :corp "Runner to reveal their Grip")
+                 (prompt! state :runner card (str "Reveal your Grip after the Corp has named a card")
+                                                  ["Reveal Grip"]
+                                                  {:msg (msg "reveal the Runner's Grip: "
+                                                             (join ", " (map :title (:hand runner))))
+                                                   :effect (effect (clear-wait-prompt :corp))}))}
+
    "Scorched Earth"
    {:req (req tagged)
     :msg "do 4 meat damage"
