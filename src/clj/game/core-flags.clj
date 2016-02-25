@@ -45,6 +45,12 @@
   [state]
   (swap! state assoc-in [:stack :current-run] nil))
 
+(defn clear-run-flag!
+  "Remove any entry associated with card for the given flag"
+  [state side card flag]
+  (swap! state update-in [:stack :current-run flag]
+         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+
 (defn register-turn-flag!
   "As register-run-flag, but for the entire turn."
   [state side card flag condition]
