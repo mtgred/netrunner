@@ -218,7 +218,7 @@
                                  (strength-pump 1 5)]})
 
    "Darwin"
-   {:flags {:runner-phase-12 true}
+   {:flags {:runner-phase-12 (req true)}
     :events {:purge {:effect (effect (update-breaker-strength card))}}
     :abilities [(break-sub 2 1 "ice")
                 {:label "Place 1 virus counter (start of turn)"
