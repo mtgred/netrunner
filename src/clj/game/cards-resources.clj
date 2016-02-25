@@ -823,6 +823,22 @@
              :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
+   "The Turning Wheel"
+   {:events {:run {:req (req (#{:hq :rd} target))
+                   :effect (effect (register-run-flag! card :no-agenda-stolen (constantly true)))}
+             :agenda-stolen {:req (req (#{[:hq] [:rd]} (:server run)))
+                             :effect (effect (clear-run-flag! card :no-agenda-stolen)
+                                             (register-run-flag! card :no-agenda-stolen (constantly false)))}
+             :run-ends {:req (req (and (run-flag? state side card :no-agenda-stolen)
+                                       (#{:hq :rd} target)))
+                        :effect (effect (add-prop card :counter 1))}}
+    :abilities [{:req (req (and (:run @state)
+                                (#{[:hq] [:rd]} (:server run))
+                                (> (:counter card 0) 1)))
+                 :msg "access 1 additional card for the remainder of the run"
+                 :effect (effect (add-prop card :counter -2)
+                                 (access-bonus 1))}]}
+
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
                  (add-watch state :theophilius-bagbiter
