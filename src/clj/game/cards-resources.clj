@@ -245,7 +245,8 @@
                                 (swap! state update-in [side :prompt] rest)
                                 (when-let [run (:run @state)]
                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)))))
+                                    (handle-end-run state :runner)
+                                    (swap! state dissoc :access)))))
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))

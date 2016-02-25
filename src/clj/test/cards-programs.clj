@@ -294,6 +294,24 @@
         (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
         (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
 
+(deftest sneakdoor-nerve-agent
+  "Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Sneakdoor Beta" 1) (qty "Nerve Agent" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Nerve Agent")
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (let [nerve (get-in @state [:runner :rig :program 0])
+          sb (get-in @state [:runner :rig :program 1])]
+      (card-ability state :runner sb 0)
+      (run-successful state)
+      (is (= 1 (:counter (refresh nerve))))
+      (card-ability state :runner sb 0)
+      (run-successful state)
+      (is (= 2 (:counter (refresh nerve)))))))
+
 (deftest surfer
   "Surfer - Swap position with ice before or after when encountering a barrier ice"
   (do-game
