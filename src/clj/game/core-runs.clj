@@ -387,8 +387,10 @@
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
   [state side]
-  (when-let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
-    (resolve-ability state side successful-run-effect (:card successful-run-effect) nil))
+  (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
+    (when (and successful-run-effect (not (apply trigger-suppress state side :successful-run
+                                                 (get-in @state [:run :run-effect :card]))))
+      (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
   (let [server (get-in @state [:run :server])]
     (register-successful-run state side server)
     (let [run-effect (get-in @state [:run :run-effect])
