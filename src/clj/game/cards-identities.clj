@@ -98,9 +98,14 @@
    "Edward Kim: Humanitys Hammer"
    {:effect (effect (gain :link 1))
     :events {:access {:once :per-turn
-                      :req (req (is-type? target "Operation"))
+                      :req (req (and (is-type? target "Operation")
+                                     (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
-                      :msg (msg "trash " (:title target) (if (some #{:discard} (:zone target)) ", but it is already trashed."))}}}
+                      :msg (msg "trash " (:title target))}
+             :successful-run-ends {:req (req (and (= target :archives)
+                                                  (not= (:max-access run) 0)
+                                                  (seq (filter #(is-type? % "Operation") (:discard corp)))))
+                                   :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))
