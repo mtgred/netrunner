@@ -163,9 +163,11 @@
 ;;; Installing a runner card
 (defn- runner-can-install?
   "Checks if the specified card can be installed.
-  Uses uniqueness of card"
+   Checks uniqueness of card and installed console"
   [state side {:keys [uniqueness] :as card} facedown]
   (and (or (not uniqueness) (not (in-play? state card)) facedown) ; checks uniqueness
+       (or (not (has-subtype? card "Console"))
+           (not (some #(has-subtype? % "Console") (all-installed state :runner)))) ; console check
        (if-let [req (:req (card-def card))]
          (or facedown (req state side card nil)) ; checks req for install
          true)))
