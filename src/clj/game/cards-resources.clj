@@ -759,6 +759,11 @@
                                :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                             card nil))}}}
 
+   "Tech Trader"
+   {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                            :msg "Gain a credit"
+                            :effect (effect (gain :credit 1))}}}
+
    "Technical Writer"
    {:data {:counter-type "Credit"}
     :events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
