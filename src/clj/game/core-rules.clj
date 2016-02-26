@@ -195,7 +195,7 @@
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."
   ([state side {:keys [zone type] :as card}] (trash state side card nil))
-  ([state side {:keys [zone type] :as card} {:keys [unpreventable cause] :as args} & targets]
+  ([state side {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
    (when (not (some #{:discard} zone))
      (if (untrashable-while-rezzed? card)
        (enforce-msg state card "cannot be trashed while installed")
@@ -203,7 +203,7 @@
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-         (when (not= (last zone) :current) ; Trashing a current does not trigger a trash event.
+         (when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
            (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
          (let [prevent (get-in @state [:prevent :trash ktype])]
            ;; Check for prevention effects

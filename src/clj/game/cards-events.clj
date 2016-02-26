@@ -23,10 +23,13 @@
                            ;; otherwise, auto-killing servers would move the cards to the next server
                            ;; so they could no longer be trashed in the same loop
     :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
-    :effect (req (doseq [c (->> (all-installed state :corp)
-                                (sort-by #(vec (:zone %)))
-                                (reverse))]
-                   (trash state side c))
+    :effect (req (let [allcorp (->> (all-installed state :corp)
+                                    (sort-by #(vec (:zone %)))
+                                    (reverse))]
+                   (apply trigger-event state side :runner-trash allcorp)
+                   (doseq [c allcorp]
+                     (trash state side c {:suppress-event true})))
+
                  ;; do hosted cards first so they don't get trashed twice
                  (doseq [c (all-installed state :runner)]
                    (when (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone)))
@@ -606,8 +609,11 @@
                       {:req (req (is-remote? target))
                        :replace-access
                        {:msg "trash all cards in the server at no cost"
-                        :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
-                                       (trash state side c)))}} card))}
+                        :mandatory true
+                        :effect (req (let [allcorp (get-in (:servers corp) (conj (:server run) :content))]
+                                       (apply trigger-event state side :runner-trash allcorp)
+                                       (doseq [c allcorp]
+                                         (trash state side c {:suppress-event true}))))}} card))}
 
    "Social Engineering"
    {:prompt "Choose an unrezzed piece of ICE"
