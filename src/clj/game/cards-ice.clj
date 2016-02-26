@@ -220,6 +220,10 @@
    "Asteroid Belt"
    (space-ice end-the-run)
 
+   "Bailiff"
+   {:abilities [(gain-credits 1)
+                end-the-run]}
+
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
