@@ -108,8 +108,8 @@
    "Councilman"
    {:events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
                                   (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
-                   :effect (req (toast state :runner (str "Click Councilman to derez " (:title target)
-                                                          " just rezzed in " (zone->name (second (:zone target)))) "info"))}}
+                   :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
+                                                          " that was just rezzed") "info"))}}
     :abilities [{:prompt "Choose an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
                                       (or (is-type? % "Asset") (is-type? % "Upgrade")))}
