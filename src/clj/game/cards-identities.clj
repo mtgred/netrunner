@@ -184,8 +184,17 @@
                               :choices ["[The Brewery~brewery]" "[The Tank~tank]" "[The Greenhouse~greenhouse]"]
                               :effect (effect (update! (assoc card :biotech-target target))
                                               (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
-    :abilities [{:cost [:click 3]
+    :abilities [{:label "Check chosen flip identity"
+                 :effect (req (case (:biotech-target card)
+                                "[The Brewery~brewery]"
+                                (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
+                                "[The Tank~tank]"
+                                (toast state :corp "Flip to: The Tank (Shuffle Archives into R&D)" "info")
+                                "[The Greenhouse~greenhouse]"
+                                (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")))}
+                {:cost [:click 3]
                  :req (req (not (:biotech-used card)))
+                 :label "Flip this identity"
                  :effect (req (let [flip (:biotech-target card)]
                                 (update! state side (assoc card :biotech-used true))
                                 (case flip
