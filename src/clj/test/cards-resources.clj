@@ -167,6 +167,24 @@
        (core/trash state :runner gcs2)
        (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))))))
 
+(deftest globalsec-security-clearance
+  "Globalsec Security Clearance - Ability, click lost on use"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Globalsec Security Clearance" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :link 2)
+    (play-from-hand state :runner "Globalsec Security Clearance")
+    (take-credits state :runner)
+    (starting-hand state :corp ["Hedge Fund"]) ; Hedge Fund on top
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [gsec (-> (get-runner) :rig :resource first)]
+      (card-ability state :runner gsec 0)
+      (is (pos? (.indexOf (-> (get-runner) :prompt first :msg) "Hedge Fund")) "GSec revealed Hedge Fund")
+      (core/end-phase-12 state :runner nil)
+      (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
+
 (deftest ice-carver
   "Ice Carver - lower ice strength on encounter"
   (do-game
