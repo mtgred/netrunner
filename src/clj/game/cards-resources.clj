@@ -108,7 +108,8 @@
    "Councilman"
    {:events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
                                   (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
-                   :effect (req (toast state :runner "Click Councilman to derez the asset or upgrade that was just rezzed" "info"))}}
+                   :effect (req (toast state :runner (str "Click Councilman to derez " (:title target)
+                                                          " just rezzed in " (zone->name (second (:zone target)))) "info"))}}
     :abilities [{:prompt "Choose an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
                                       (or (is-type? % "Asset") (is-type? % "Upgrade")))}
@@ -311,6 +312,25 @@
                                       {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
                                       {:effect (effect (trash card)) :msg "trash Grifter"})]
                              (resolve-ability state side ab card targets)))}}}
+
+   "Guru Davinder"
+   {:events {:pre-damage
+             {:req (req (or (= target :meat) (= target :net)))
+              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
+              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
+                           (damage-prevent state side :net Integer/MAX_VALUE)
+                           (if (< (:credit runner) 4)
+                             (trash state side card)
+                             (resolve-ability
+                               state :runner
+                               {:optional
+                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
+                                 :player :runner
+                                 :yes-ability {:effect (effect (lose :runner :credit 4)
+                                                               (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
+                                                                                "from being trashed")))}
+                                 :no-ability {:effect (effect (trash card))}}}
+                              card nil)))}}}
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
