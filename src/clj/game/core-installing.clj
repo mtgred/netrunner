@@ -53,8 +53,7 @@
 (defn- ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (let [make-label #(or (:label %) (and (string? (:msg %)) (capitalize (:msg %))) "")
-        abilities (if (:recurring cdef)
+  (let [abilities (if (:recurring cdef)
                     (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
                     (:abilities cdef))]
     (for [ab abilities]
@@ -74,7 +73,7 @@
                  (effect (set-prop card :rec-counter recurring))
                  recurring)]
          (register-events state side
-                          {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
+                          {(if (= side :corp) :corp-phase-12 :runner-phase-12)
                            {:effect r}} c)))
      (when-let [prevent (:prevent cdef)]
        (doseq [[ptype pvec] prevent]
@@ -164,9 +163,11 @@
 ;;; Installing a runner card
 (defn- runner-can-install?
   "Checks if the specified card can be installed.
-  Uses uniqueness of card"
+   Checks uniqueness of card and installed console"
   [state side {:keys [uniqueness] :as card} facedown]
   (and (or (not uniqueness) (not (in-play? state card)) facedown) ; checks uniqueness
+       (or (not (has-subtype? card "Console"))
+           (not (some #(has-subtype? % "Console") (all-installed state :runner)))) ; console check
        (if-let [req (:req (card-def card))]
          (or facedown (req state side card nil)) ; checks req for install
          true)))

@@ -98,9 +98,14 @@
    "Edward Kim: Humanitys Hammer"
    {:effect (effect (gain :link 1))
     :events {:access {:once :per-turn
-                      :req (req (is-type? target "Operation"))
+                      :req (req (and (is-type? target "Operation")
+                                     (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
-                      :msg (msg "trash " (:title target) (if (some #{:discard} (:zone target)) ", but it is already trashed."))}}}
+                      :msg (msg "trash " (:title target))}
+             :successful-run-ends {:req (req (and (= target :archives)
+                                                  (not= (:max-access run) 0)
+                                                  (seq (filter #(is-type? % "Operation") (:discard corp)))))
+                                   :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
    "Exile: Streethawk"
    {:effect (effect (gain :link 1))
@@ -184,8 +189,17 @@
                               :choices ["[The Brewery~brewery]" "[The Tank~tank]" "[The Greenhouse~greenhouse]"]
                               :effect (effect (update! (assoc card :biotech-target target))
                                               (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
-    :abilities [{:cost [:click 3]
+    :abilities [{:label "Check chosen flip identity"
+                 :effect (req (case (:biotech-target card)
+                                "[The Brewery~brewery]"
+                                (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
+                                "[The Tank~tank]"
+                                (toast state :corp "Flip to: The Tank (Shuffle Archives into R&D)" "info")
+                                "[The Greenhouse~greenhouse]"
+                                (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")))}
+                {:cost [:click 3]
                  :req (req (not (:biotech-used card)))
+                 :label "Flip this identity"
                  :effect (req (let [flip (:biotech-target card)]
                                 (update! state side (assoc card :biotech-used true))
                                 (case flip
@@ -292,7 +306,8 @@
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
    "Nero Severn: Information Broker"
-   {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
+   {:effect (effect (gain :link 1))
+    :abilities [{:req (req (has-subtype? current-ice "Sentry"))
                  :once :per-turn
                  :msg "jack out when encountering a sentry"
                  :effect (effect (jack-out nil))}]}

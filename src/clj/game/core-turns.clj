@@ -127,6 +127,7 @@
                                           (all-installed state side))
                                     (when (= side :corp) (get-in @state [side :scored]))))]
     (swap! state assoc phase true)
+    (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
                  (str "You may use " (clojure.string/join ", " (map :title start-cards))

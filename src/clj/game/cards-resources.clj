@@ -245,7 +245,8 @@
                                 (swap! state update-in [side :prompt] rest)
                                 (when-let [run (:run @state)]
                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)))))
+                                    (handle-end-run state :runner)
+                                    (swap! state dissoc :access)))))
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
@@ -282,9 +283,10 @@
     :flags {:runner-phase-12 (req true)}
     :abilities [{:msg "lose [Click] and look at the top card of R&D"
                  :once :per-turn
-                 :effect (effect (lose :click 1)
-                                 (prompt! card (str "The top card of R&D is "
-                                 (:title (first (:deck corp)))) ["OK"] {}))}]}
+                 :effect (effect (prompt! card (str "The top card of R&D is "
+                                                    (:title (first (:deck corp)))) ["OK"] {}))}]
+    :events {:runner-turn-begins {:req (req (get-in @state [:per-turn (:cid card)]))
+                                  :effect (effect (lose :click 1))}}}
 
    "Grifter"
    {:events {:runner-turn-ends
@@ -410,7 +412,7 @@
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
                  :choices {:req #(:host %)}
-                 :msg (msg "add " (:title target) "to their Grip")
+                 :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
                                                (trash state side c)))}}}
@@ -656,7 +658,9 @@
 
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
-                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
+                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                                (< 0 (count (filter #(is-type? % "Event")
+                                                    (get-in @state [:runner :discard]))))))
                  :prompt "Choose an event to play"
                  :msg (msg "play " (:title target))
                  :show-discard true
@@ -740,10 +744,21 @@
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                  :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
-    :events {:play-operation {:msg "give the Corp 1 bad publicity and take 1 tag"
-                              :effect (effect (gain :bad-publicity 1) (tag-runner :runner 1))
-                              :req (req (or (has-subtype? target "Black Ops")
-                                            (has-subtype? target "Gray Ops")))}}}
+    :events {:play-operation
+             {:req (req (or (has-subtype? target "Black Ops")
+                            (has-subtype? target "Gray Ops")))
+              :effect (req (show-wait-prompt state :corp "Runner to use Tallie Perrault")
+                           (resolve-ability
+                             state :runner
+                             {:optional
+                              {:prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
+                               :player :runner
+                               :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
+                                             :effect (effect (gain :corp :bad-publicity 1)
+                                                             (tag-runner :runner 1)
+                                                             (clear-wait-prompt :corp))}
+                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                            card nil))}}}
 
    "Technical Writer"
    {:data {:counter-type "Credit"}

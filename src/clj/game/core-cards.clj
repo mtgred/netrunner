@@ -27,6 +27,11 @@
                   (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
+(defn find-cid
+  "Return a card with specific :cid from given sequence"
+  [cid from]
+  (some #(when (= (:cid %) cid) %) from))
+
 ; Functions for updating cards
 (defn update!
   "Updates the state so that its copy of the given card matches the argument given."

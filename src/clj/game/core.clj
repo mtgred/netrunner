@@ -1,5 +1,5 @@
 (ns game.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
+  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs string->num safe-split
                                 dissoc-in cancellable card-is?
                                 build-spend-msg cost-names remote->name central->name zone->name central->zone

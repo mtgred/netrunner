@@ -94,6 +94,24 @@
       (core/rez state :corp iwall)
       (is (get-in (refresh iwall) [:rezzed])))))
 
+(deftest film-critic-discarded-executives
+  "Film Critic - Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042"
+  (do-game
+    (new-game (default-corp [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Film Critic" 1)]))
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (run-empty-server state "Server 1")
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (trash-from-hand state :corp "Director Haas")
+      (is (= 1 (count (:discard (get-corp)))) "Director Haas stayed in Archives")
+      (is (= 0 (:agenda-point (get-runner))) "No points gained by Runner")
+      (is (empty? (:scored (get-runner))) "Nothing in Runner scored"))))
+
 (deftest film-critic-fetal-ai
   "Film Critic - Fetal AI interaction"
   (do-game
@@ -148,6 +166,24 @@
        (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
        (core/trash state :runner gcs2)
        (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))))))
+
+(deftest globalsec-security-clearance
+  "Globalsec Security Clearance - Ability, click lost on use"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Globalsec Security Clearance" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :link 2)
+    (play-from-hand state :runner "Globalsec Security Clearance")
+    (take-credits state :runner)
+    (starting-hand state :corp ["Hedge Fund"]) ; Hedge Fund on top
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [gsec (-> (get-runner) :rig :resource first)]
+      (card-ability state :runner gsec 0)
+      (is (pos? (.indexOf (-> (get-runner) :prompt first :msg) "Hedge Fund")) "GSec revealed Hedge Fund")
+      (core/end-phase-12 state :runner nil)
+      (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
 
 (deftest ice-carver
   "Ice Carver - lower ice strength on encounter"
@@ -226,6 +262,51 @@
       (card-ability state :runner (refresh kati) 1)
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (:counter (refresh kati))) "No counters left on Kati"))))
+
+(deftest london-library
+  "Install non-virus programs on London library. Includes #325/409"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
+                                              (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "London Library")
+    (let [lib (get-in @state [:runner :rig :resource 0])]
+      (is (= 0 (count (:hosted (refresh lib)))) "0 programs hosted")
+      (card-ability state :runner lib 0) ; Install a non-virus program on London Library
+      (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
+      (prompt-choice :runner "Done") ; Cancel out of Femme's bypass
+      (is (= 1 (count (:hosted (refresh lib)))) "1 program hosted")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
+      (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
+      (let [sg (second (:hosted (refresh lib)))]
+        (is (= 0 (:current-strength (refresh sg))) "Study Guide at 0 strength")
+        (card-ability state :runner sg 1) ; Place 1 power counter
+        (is (= 1 (:current-strength (refresh sg))) "Study Guide at 1 strength"))
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Chameleon" (:hand (get-runner))))
+      (prompt-choice :runner "Sentry")
+      (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
+      (is (= 2 (:click (get-runner))) "At 2 clicks")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Darwin" (:hand (get-runner)))) ; Darwin is a virus
+      (is (= 3 (count (:hosted (refresh lib)))) "Still 3 programs hosted")
+      (is (= 2 (:click (get-runner))) "Failed Darwin didn't use a click")
+      (is (= 1 (count (:hand (get-runner)))))
+      (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
+      (prompt-card :runner nil)
+      (prompt-select :runner (find-card "Study Guide" (:hosted (refresh lib))))
+      (is (= 2 (count (:hand (get-runner)))) "Return Study Guide to hand")
+      (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
+      (card-ability state :runner lib 0)
+      (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
+      (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
+      (is (= 0 (count (:discard (get-runner)))) "Nothing in archives yet")
+      (take-credits state :runner)
+      (is (= 0 (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
+      (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
+      (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
 
 (deftest muertos-trashed
   "Muertos Gang Member - Install and Trash"

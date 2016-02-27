@@ -31,6 +31,37 @@
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
     (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
+(deftest edward-kim
+  "Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2) (qty "PAD Campaign" 1)])
+      (make-deck "Edward Kim: Humanity's Hammer" [(qty "Eater" 1) (qty "Sure Gamble" 2)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (trash-from-hand state :corp "PAD Campaign")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (run-empty-server state "HQ")
+    (is (= 2 (count (:discard (get-corp)))) "No operation trashed from HQ; accessed one in Archives first")
+    (take-credits state :runner)
+    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :hand)
+    (is (= 1 (count (:discard (get-corp)))))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (run-empty-server state "HQ")
+    (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Eater")
+    (let [eater (get-in @state [:runner :rig :program 0])]
+      (run-on state "Archives")
+      (card-ability state :runner eater 0) ; pretend to break a sub so no cards in Archives will be accessed
+      (run-successful state)
+      (is (= 3 (count (:discard (get-corp)))))
+      (run-empty-server state "HQ")
+      (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"
   (do-game

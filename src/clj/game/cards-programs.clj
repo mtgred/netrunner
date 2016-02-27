@@ -151,7 +151,7 @@
     :events {:purge {:effect (effect (trash card))}}}
 
    "Djinn"
-   {:abilities [{:label "Add a virus program to your Grip from your Stack"
+   {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
                  :prompt "Choose a Virus"
                  :msg (msg "adds " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(and (is-type? % "Program")
@@ -590,6 +590,7 @@
                                    {:req (req (= target :archives))
                                     :successful-run
                                     {:effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                  (trigger-event state :corp :no-action)
                                                   (update-run-ice state side)
                                                   (system-msg state side
                                                               (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
