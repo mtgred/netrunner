@@ -13,7 +13,6 @@
         runner-deck (create-deck (:deck runner))
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        subliminal-in-deck? (not (empty? (filter #(= "04100" (:code %)) corp-deck)))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
                  :rid 0 :turn 0
@@ -25,8 +24,7 @@
                         :click 0 :credit 5 :bad-publicity 0
                         :hand-size-base 5 :hand-size-modification 0
                         :agenda-point 0
-                        :click-per-turn 3 :agenda-point-req 7 :keep false
-                        :subliminal-in-deck false}
+                        :click-per-turn 3 :agenda-point-req 7 :keep false}
                  :runner {:user (:user runner) :identity runner-identity
                           :deck (zone :deck (drop 5 runner-deck))
                           :hand (zone :hand (take 5 runner-deck))
@@ -37,7 +35,6 @@
                           :agenda-point 0
                           :hq-access 1 :rd-access 1 :tagged 0
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
-    (if (true? subliminal-in-deck?) (do (swap! state assoc-in [:corp :subliminal-in-deck] true)))
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (swap! game-states assoc gameid state)
@@ -115,42 +112,6 @@
   (when (= side :corp)
     (update-all-advancement-costs state side)))
 
-(defn- subliminal
-  "Subliminal Messaging function for returning to hand."
-  [state side]
-   (let [num_sublims (count (filter #(= "04100" (:code %)) (get-in @state [:corp :discard])))]
-     (when (and (> num_sublims 0)
-                (not (:made-run (get-in @state [:runner :register]))))
-       (let [sublim1 (first (filter #(= "04100" (:code %)) (get-in @state [:corp :discard])))
-             sublim2 (second (filter #(= "04100" (:code %)) (get-in @state [:corp :discard])))
-             sublim3 (second (rest (filter #(= "04100" (:code %)) (get-in @state [:corp :discard]))))]
-         (case num_sublims
-           1 (show-prompt state side nil "Move Subliminal Messaging back to HQ?" ["Yes" "No"]
-                          #(case % "Yes" (do (move state side sublim1 :hand)
-                                             (system-msg state side "moves Subliminal Messaging to HQ"))))
-           2 (show-prompt state side nil "Move Subliminal Messaging back to HQ?" ["0" "1" "2"]
-                          #(case % "1" (do (move state side sublim1 :hand)
-                                           (system-msg state side "moves Subliminal Messaging to HQ"))
-                                   "2" (do (move state side sublim1 :hand)
-                                           (move state side sublim2 :hand)
-                                           (system-msg state side "moves Subliminal Messaging to HQ")
-                                           (system-msg state side "moves Subliminal Messaging to HQ"))))
-           3 (show-prompt state side nil "Move Subliminal Messaging back to HQ?" ["0" "1" "2" "3"]
-                          #(case % "1" (do (move state side sublim1 :hand)
-                                           (system-msg state side "moves Subliminal Messaging to HQ"))
-                                   "2" (do (move state side sublim1 :hand)
-                                           (move state side sublim2 :hand)
-                                           (system-msg state side "moves Subliminal Messaging to HQ")
-                                           (system-msg state side "moves Subliminal Messaging to HQ"))
-                                   "3" (do (move state side sublim1 :hand)
-                                           (move state side sublim2 :hand)
-                                           (move state side sublim3 :hand)
-                                           (system-msg state side "moves Subliminal Messaging to HQ")
-                                           (system-msg state side "moves Subliminal Messaging to HQ")
-                                           (system-msg state side "moves Subliminal Messaging to HQ"))))
-           :else () ; should never happen but this will prevent a nullpointerexception if it gets here
-           )))))
-
 (defn start-turn
   "Start turn."
   [state side args]
@@ -166,7 +127,6 @@
                                           (all-installed state side))
                                     (when (= side :corp) (get-in @state [side :scored]))))]
     (swap! state assoc phase true)
-    (when (and (= side :corp) (true? (get-in @state [:corp :subliminal-in-deck]))) (subliminal state side))
     (if (not-empty start-cards)
       (toast state side
                  (str "You may use " (clojure.string/join ", " (map :title start-cards))
