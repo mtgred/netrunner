@@ -553,8 +553,7 @@
                                                                                           (system-msg state side "moves Subliminal Messaging to HQ")))} card nil))
                                             (unregister-events state side card))}
                                       } (assoc card :zone '(:discard))))
-    :events {:corp-turn-begins nil}
-    }
+    :events {:corp-turn-begins nil}}
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg))
