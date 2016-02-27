@@ -312,6 +312,22 @@
       (run-successful state)
       (is (= 2 (:counter (refresh nerve)))))))
 
+(deftest sneakdoor-crisium
+  "Sneakdoor Beta - do not switch to HQ if Archives has Crisium Grid. Issue #1229."
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 1) (qty "Priority Requisition" 1) (qty "Private Security Force" 1)])
+              (default-runner [(qty "Sneakdoor Beta" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "Archives")
+    (trash-from-hand state :corp "Priority Requisition")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (let [sb (get-in @state [:runner :rig :program 0])
+          cr (get-content state :archives 0)]
+      (core/rez state :corp cr)
+      (card-ability state :runner sb 0)
+      (run-successful state)
+      (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
+
 (deftest surfer
   "Surfer - Swap position with ice before or after when encountering a barrier ice"
   (do-game
