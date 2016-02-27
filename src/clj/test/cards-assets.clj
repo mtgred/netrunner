@@ -519,6 +519,24 @@
       (is (nil? (:ts-active (refresh tsp1))) "Team Sponsorship 1 ability disabled")
       (is (nil? (:ts-active (refresh tsp2))) "Team Sponsorship 2 ability disabled"))))
 
+(deftest the-root
+  "The Root - recurring credits refill at Step 1.2"
+  (do-game
+    (new-game (make-deck "Blue Sun: Powering the Future" [(qty "The Root" 1)])
+              (default-runner))
+    (play-from-hand state :corp "The Root" "New remote")
+    (core/gain state :corp :credit 6)
+    (let [root (get-content state :remote1 0)]
+      (core/rez state :corp root)
+      (card-ability state :corp (refresh root) 0)
+      (is (= 2 (:rec-counter (refresh root))) "Took 1 credit from The Root")
+       (is (= 6 (:credit (get-corp))) "Corp took Root credit into credit pool")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      ; we expect Step 1.2 to have triggered because of Blue Sun
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (is (= 3 (:rec-counter (refresh root))) "Recurring credits were refilled before Step 1.2 window"))))
+
 (deftest toshiyuki-sakai
   "Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not"
   (do-game
