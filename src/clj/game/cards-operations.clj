@@ -541,7 +541,20 @@
     :effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
                                       :msg "gain [Click]"
-                                      :effect (effect (gain :corp :click 1))} card nil))}
+                                      :effect (effect (gain :corp :click 1))} card nil)
+                    (register-events {:corp-turn-begins
+                                      {:effect
+                                       (req (when (and (not (empty? (filter #(= "04100" (:code %)) (get-in @state [:corp :discard]))))
+                                                  (not (:made-run runner-reg)))
+                                              (resolve-ability state side {:prompt "Move Subliminal Messaging back to HQ?"
+                                                                           :choices ["Yes" "No"]
+                                                                           :effect (req (when (= target "Yes")
+                                                                                          (move state side card :hand)
+                                                                                          (system-msg state side "moves Subliminal Messaging to HQ")))} card nil))
+                                            (unregister-events state side card))}
+                                      } (assoc card :zone '(:discard))))
+    :events {:corp-turn-begins nil}
+    }
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg))
