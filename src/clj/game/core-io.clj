@@ -131,6 +131,19 @@
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         "/close-prompt" #(swap! %1 update-in [%2 :prompt] rest)
+        "/rez"        #(when (= %2 :corp)
+                        (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs}))
+                                                :choices {:req (fn [t] (card-is? t :side %2))}}
+                                         {:title "/rez command"} nil))
+        "/rez-all"    #(when (= %2 :corp)
+                        (resolve-ability
+                          %1 %2
+                          {:optional {:prompt "Rez all cards?"
+                                      :yes-ability {:effect (req (doseq [c (all-installed state side)]
+                                                                   (when-not (:rezzed c)
+                                                                     (rez state side c {:ignore-cost :all-costs}))))}}}
+                          {:title "/rez-all command"} nil))
+
         nil))))
 
 (defn corp-install-msg
