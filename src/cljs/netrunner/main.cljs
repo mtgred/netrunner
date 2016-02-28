@@ -31,7 +31,14 @@
 (.setPathPrefix history "")
 (.setEnabled history true)
 
-(go (swap! app-state assoc :version (:json (<! (GET "/data/version")))))
+(go (while true
+      (let [msg (<! socket-channel)]
+        (reset! lock false)
+        (case (:type msg)
+          ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
+                                                                             #(assoc (:state msg) :side (:side @game-state))))
+                                           (swap! last-state #(identity @game-state)))
+          nil))))
 
 (defn navbar [cursor owner]
   (om/component
@@ -71,12 +78,18 @@
 
 (defn version [cursor owner]
   (reify
+    om/IWillMount
+    (will-mount [this]
+      (let [edit-channel (om/get-state owner :edit-channel)]
+        (go (while true
+            (let [card (<! zoom-channel)]
+              (om/set-state! owner :zoom card))))
 
     om/IDidUpdate
       (did-update [this prev-props prev-state]
         (let [version-val (.html (js/$ "#version-val"))]
-          (when (not= version-val (:version @app-state))
-            (toast (str (str "You have an older version: " (:version @app-state)) version-val2) "warning"))))
+          (cond
+              (not= version-val (:version @app-state)) (toast (str (str "You have an older version: " (:version @app-state)) version-val) "warning"))))
 
     om/IRenderState
       (render-state [this state]
