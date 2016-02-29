@@ -4,7 +4,8 @@
 
 (declare card-str can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
          jack-out move name-zone play-instant purge resolve-select run has-subtype?
-         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win)
+         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
+         can-run-server?)
 
 ;;; Neutral actions
 (defn play
@@ -263,7 +264,9 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner "a run" :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run]))
+             (can-run-server? state server)
+             (can-pay? state :runner "a run" :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)
     (pay state :runner nil :click 1)))

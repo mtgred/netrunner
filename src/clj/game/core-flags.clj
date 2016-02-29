@@ -23,17 +23,20 @@
   (or (pos? (get-in state [:runner :tag]))
       (pos? (get-in state [:runner :tagged]))))
 
-(defn register-run-flag! [state side card flag condition]
+(defn register-run-flag!
   "Registers a flag for the current run only. The flag gets cleared in end-run.
   Example: Blackmail flags the inability to rez ice."
+  [state side card flag condition]
   (let [stack (get-in @state [:stack :current-run flag])]
-    (swap! state assoc-in [:stack :current-run flag] (conj stack {:card card :condition condition}))))
+    (swap! state assoc-in [:stack :current-run flag]
+           (conj stack {:card card :condition condition}))))
 
-(defn run-flag? [state side card flag]
+(defn run-flag?
   "Execute all conditions for the given run flag
   The resulting collection is expected to be empty if nothing is blocking the action
   If the collection has any contents, the flag is considered to be false
   (consider it as something has flagged the action as not being allowed)"
+  [state side card flag]
   (empty?
     (for [condition (get-in @state [:stack :current-run flag])
           :let [result ((:condition condition) state side card)]
@@ -80,6 +83,35 @@
   [state side card flag]
   (swap! state update-in [:stack :persistent flag]
          #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+
+;;; Functions related to servers that can be run
+(defn prevent-run-on-server 
+  "Adds specified server to list of servers that cannot be run on.
+  The causing card is also specified"
+  [state card & servers]
+  (doseq [server servers]
+    (swap! state assoc-in [:runner :register :cannot-run-on-server server (:cid card)] true)))
+
+(defn enable-run-on-server
+  "Removes specified server from list of server for the associated card.
+  If other cards are associated with the same server that server will still be unable to be run
+  on."
+  [state card & servers]
+  (doseq [server servers]
+    (let [card-map (get-in @state [:runner :register :cannot-run-on-server server])
+          reduced-card-map (dissoc card-map (:cid card))]
+      (if (empty? reduced-card-map)
+        ;; removes server if no cards block it, otherwise updates the map
+        (swap! state update-in [:runner :register :cannot-run-on-server] dissoc server)
+        (swap! state assoc-in [:runner :register :cannot-run-on-server server]
+               reduced-card-map)))))
+
+(defn can-run-server?
+  "Returns true if the specified server can be run on. Specified server must be string form."
+  [state server]
+  (not-any? #{server}
+            (map zone->name (keys (get-in @state [:runner :register :cannot-run-on-server])))))
+
 
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.

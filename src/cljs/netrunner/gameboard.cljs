@@ -358,6 +358,19 @@
   (let [num (remote->num server)]
     (str "Server " num)))
 
+(defn central->name [zone]
+  "Converts a central zone keyword to a string."
+  (case (if (keyword? zone) zone (last zone))
+    :hq "HQ"
+    :rd "R&D"
+    :archives "Archives"
+    nil))
+
+(defn zone->name [zone]
+  "Converts a zone to a string."
+  (or (central->name zone)
+      (remote->name zone)))
+
 (defn get-remotes [servers]
  (->> servers 
      (filter #(not (#{:hq :rd :archives} (first %))))
@@ -772,6 +785,14 @@
       (toast (str "Discard to " max-size " cards") "warning" nil)
       (send-command "end-turn"))))
 
+(defn runnable-servers
+  "List of servers the runner can run on."
+  [state]
+  (let [servers (keys (get-in @state [:corp :servers]))
+        restricted-servers (keys (get-in @state [:runner :register :cannot-run-on-server]))]
+    ;; remove restricted servers from all servers to just return allowed servers
+    (remove (set restricted-servers) (set servers))))
+
 (defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12] :as cursor} owner]
   (reify
     om/IWillMount
@@ -892,14 +913,14 @@
                            (cond-button "Run" (and (pos? (:click me))
                                                    (not (get-in me [:register :cannot-run])))
                                         #(-> (om/get-node owner "servers") js/$ .toggle))
-                           (let [remotes (get-remotes (get-in cursor [:corp :servers]))
-                                 servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
-                             [:div.blue-shade.panel.servers-menu {:ref "servers"}
-                              (map (fn [label]
-                                     [:div {:on-click #(do (send-command "run" {:server label})
-                                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                                      label])
-                                   servers)])]])
+                           [:div.blue-shade.panel.servers-menu {:ref "servers"}
+                            (map (fn [label]
+                                   [:div {:on-click #(do (send-command "run" {:server label})
+                                                         (-> (om/get-node owner "servers")
+                                                             js/$
+                                                             .fadeOut))}
+                                    label])
+                                 (map zone->name (runnable-servers cursor)))]]])
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)
