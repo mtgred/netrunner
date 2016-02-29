@@ -106,15 +106,6 @@
         (swap! state assoc-in [:runner :register :cannot-run-on-server server]
                reduced-card-map)))))
 
-#_(defn runable-servers
-  "Returns all servers that can be run on.
-  Servers will be returned as keywords."
-  [state]
-  (let [servers (keys (get-in @state [:corp :servers]))
-        restricted-servers (keys (get-in @state [:runner :register :cannot-run-on-server]))]
-    ;; remove restricted servers from all servers to just return allowed servers
-    (remove (set restricted-servers) (set servers))))
-
 (defn can-run-server?
   "Returns true if the specified server can be run on. Specified server must be string form."
   [state server]
