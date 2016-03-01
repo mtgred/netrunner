@@ -431,6 +431,11 @@
    {:msg "gain 9 [Credits]"
     :effect (effect (gain :credit 9))}
 
+   "Making an Entrance"
+   {:msg "look at and trash or rearrange the top 6 cards of their Stack"
+    :effect (req (toast state :runner "Drag remaining untrashed cards from the Temporary Zone back onto your Stack" "info")
+                 (doseq [c (take 6 (:deck runner))] (move state side c :play-area)))}
+
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
                              :choices {:req #(and (is-type? % "Program")

@@ -105,6 +105,25 @@
                    :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
 
+   "Councilman"
+   {:events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
+                                  (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
+                   :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
+                                                          " that was just rezzed") "info"))}}
+    :abilities [{:prompt "Choose an asset or upgrade that was just rezzed"
+                 :choices {:req #(and (rezzed? %)
+                                      (or (is-type? % "Asset") (is-type? % "Upgrade")))}
+                 :effect (req (let [c target
+                                    creds (rez-cost state :corp c)]
+                                (when (can-pay? state side nil [:credit creds])
+                                  (resolve-ability
+                                    state :runner
+                                    {:msg (msg "pay " creds " [Credit] and derez " (:title c) ". Councilman is trashed")
+                                     :effect (req (lose state :runner :credit creds)
+                                                  (derez state :corp c)
+                                                  (trash state side card {:unpreventable true}))}
+                                   card nil))))}]}
+
    "Crash Space"
    {:prevent {:damage [:meat]}
     :recurring 2
@@ -294,6 +313,25 @@
                                       {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
                                       {:effect (effect (trash card)) :msg "trash Grifter"})]
                              (resolve-ability state side ab card targets)))}}}
+
+   "Guru Davinder"
+   {:events {:pre-damage
+             {:req (req (or (= target :meat) (= target :net)))
+              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
+              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
+                           (damage-prevent state side :net Integer/MAX_VALUE)
+                           (if (< (:credit runner) 4)
+                             (trash state side card)
+                             (resolve-ability
+                               state :runner
+                               {:optional
+                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
+                                 :player :runner
+                                 :yes-ability {:effect (effect (lose :runner :credit 4)
+                                                               (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
+                                                                                "from being trashed")))}
+                                 :no-ability {:effect (effect (trash card))}}}
+                              card nil)))}}}
 
    "Hades Shard"
    {:abilities [{:msg "access all cards in Archives"
@@ -823,6 +861,22 @@
              :agenda-stolen {:effect (effect (trash card))}
              :pre-advancement-cost {:effect (effect (advancement-cost-bonus 1))}
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
+
+   "The Turning Wheel"
+   {:events {:run {:req (req (#{:hq :rd} target))
+                   :effect (effect (register-run-flag! card :no-agenda-stolen (constantly true)))}
+             :agenda-stolen {:req (req (#{[:hq] [:rd]} (:server run)))
+                             :effect (effect (clear-run-flag! card :no-agenda-stolen)
+                                             (register-run-flag! card :no-agenda-stolen (constantly false)))}
+             :run-ends {:req (req (and (run-flag? state side card :no-agenda-stolen)
+                                       (#{:hq :rd} target)))
+                        :effect (effect (add-prop card :counter 1))}}
+    :abilities [{:req (req (and (:run @state)
+                                (#{[:hq] [:rd]} (:server run))
+                                (> (:counter card 0) 1)))
+                 :msg "access 1 additional card for the remainder of the run"
+                 :effect (effect (add-prop card :counter -2)
+                                 (access-bonus 1))}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
