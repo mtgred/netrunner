@@ -214,7 +214,8 @@
 
    "Off the Grid"
    {:effect (req (prevent-run-on-server state card (second (:zone card))))
-    :events {:successful-run {:req (req (= target :hq))
+    :events {:runner-turn-begins {:effect (req (prevent-run-on-server state card (second (:zone card))))}
+             :successful-run {:req (req (= target :hq))
                               :effect (req (trash state :corp card)
                                            (enable-run-on-server state card
                                                                  (second (:zone card)))
