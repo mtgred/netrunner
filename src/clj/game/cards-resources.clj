@@ -392,7 +392,7 @@
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
                   :prompt "Choose a server"
-                  :choices (req servers)
+                  :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :effect (effect (run target))}]
    {:install-cost-bonus (req [:credit (* -1 (:link runner))])

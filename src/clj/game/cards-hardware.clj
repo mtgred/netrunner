@@ -217,7 +217,7 @@
               {:req (req (:dopp-active card))
                :prompt "Use Doppelgänger to run again?" :player :runner
                :yes-ability {:prompt "Choose a server"
-                             :choices (req servers)
+                             :choices (req runnable-servers)
                              :msg (msg "make a run on " target)
                              :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
 
@@ -225,7 +225,7 @@
    {:data {:counter 4}
     :abilities [{:counter-cost 1 :cost [:click 1]
                  :req (req (not run))
-                 :prompt "Choose a server" :choices (req servers)
+                 :prompt "Choose a server" :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :effect (effect (update! (assoc card :dorm-active true))
                                  (run target))}]
@@ -509,7 +509,7 @@
    {:in-play [:memory 1]
     :recurring 2
     :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
-   
+
    "Sports Hopper"
    {:in-play [:link 1]
     :abilities [{:label "Draw 3 cards"
