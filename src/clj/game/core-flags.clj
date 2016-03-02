@@ -206,6 +206,11 @@
           (rez-req state side card nil)
           true))))
 
+(defn can-score?
+  ([state side card] (can-score? state side card nil))
+  ([state side card {:as args}]
+   (turn-flag? state side card :can-score)))
+
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
   [card]
