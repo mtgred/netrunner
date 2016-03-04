@@ -190,7 +190,8 @@
                                    card nil)))})
 
 (defmethod choose-access :remote [cards server]
-  {:effect (req (if (>= 1 (count cards))
+  {:effect (req (if (and (>= 1 (count cards)) (not (some #(card-flag-fn? state :runner % :slow-remote-access true)
+                                                         (concat (all-active state :runner) (all-active state :corp)))))
                   (handle-access state side cards)
                   (resolve-ability state side (access-helper-remote cards) card nil)))})
 
