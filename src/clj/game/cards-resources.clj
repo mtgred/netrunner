@@ -715,14 +715,14 @@
                   :effect (effect (update! (assoc card :testing-target (vec (next (server->zone state target))))))}]
    {:events {:runner-turn-begins ability
              :successful-run
-             {:req (req (= (get-in @state [:run :server]) (get (get-card state card) :testing-target)))
+             {:req (req (= (get-in @state [:run :server]) (:testing-target (get-card state card))))
               :once :per-turn
               :effect (req (let [st card]
                              (swap! state assoc-in [:run :run-effect :replace-access]
                                     {:mandatory true
                                      :effect (effect (resolve-ability
-                                                      {:msg "gain 2 [Credits] instead of accessing"
-                                                       :effect (effect (gain :credit 2))} st nil))})))}}
+                                                       {:msg "gain 2 [Credits] instead of accessing"
+                                                        :effect (effect (gain :credit 2))} st nil))})))}}
     :abilities [ability]})
 
    "Spoilers"
