@@ -26,6 +26,32 @@
       (is (= 1 (:counter (refresh ds))) "1 counter spent from Datasucker")
       (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
 
+(deftest diwan
+  "Diwan - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 3) (qty "Fire Wall" 3) (qty "Crisium Grid" 2)])
+              (default-runner [(qty "Diwan" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Diwan")
+    (prompt-choice :runner "HQ")
+    (take-credits state :runner)
+    (is (= 8 (:credit (get-corp))) "8 credits for corp at start of second turn")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (is (= 8 (:credit (get-corp))) "Diwan did not charge extra for install on another server")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (= 7 (:credit (get-corp))) "Diwan charged 1cr to install ice protecting the named server")
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (is (= 6 (:credit (get-corp))) "Diwan charged 1cr to install in the named server")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (= 4 (:credit (get-corp))) "Diwan charged 1cr + 1cr to install a second ice protecting the named server")
+    (core/gain state :corp :click 1)
+    (core/purge state :corp)
+    (play-from-hand state :corp "Fire Wall" "HQ") ; 2cr cost from normal install cost
+    (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
+    (is (= 2 (:credit (get-corp))) "No charge for installs after Diwan purged")))
+
 (deftest djinn-host-chakana
   "Djinn - Hosted Chakana does not disable advancing agendas. Issue #750"
   (do-game
