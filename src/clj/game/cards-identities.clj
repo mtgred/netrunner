@@ -263,7 +263,8 @@
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
-   {:events {:agenda-scored
+   {:flags {:slow-hq-access (req true)}
+    :events {:agenda-scored
              {:effect (req (toast state :runner
                                   (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
                            (update! state :runner (update-in card [:bounce-hq] #(inc (or % 0)))))}
