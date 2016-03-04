@@ -3,7 +3,7 @@
 (declare clear-run-register!
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability
-         get-remote-names card-name)
+         get-remote-names card-name can-steal?)
 
 ;;; Steps in the run sequence
 (defn run
@@ -109,7 +109,7 @@
           (when-let [name (:title c)]
             (if (is-type? c "Agenda") ; accessing an agenda
               (do (trigger-event state side :pre-steal-cost c)
-                  (if (get-in @state [:runner :register :cannot-steal])
+                  (if-not (can-steal? state side c)
                     ;; The runner cannot steal this agenda.
                     (do (resolve-steal-events state side c)
                         (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))
