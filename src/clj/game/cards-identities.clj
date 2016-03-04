@@ -266,17 +266,17 @@
    {:events {:agenda-scored
              {:effect (req (toast state :runner
                                   (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
-                           (update! state :runner (assoc card :bounce-hq true)))}
+                           (update! state :runner (update-in card [:bounce-hq] #(inc (or % 0)))))}
              :agenda-stolen
              {:effect (req (toast state :runner
                                   (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
-                           (update! state side (assoc card :bounce-hq true)))}}
-    :abilities [{:req (req (:bounce-hq card))
+                           (update! state :runner (update-in card [:bounce-hq] #(inc (or % 0)))))}}
+    :abilities [{:req (req (pos? (:bounce-hq card 0)))
                  :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
                  :priority true
                  :msg (msg "add " (card-str state target) " to HQ")
                  :effect (effect (move :corp target :hand)
-                                 (update! (dissoc (get-card state card) :bounce-hq)))}]}
+                                 (update! (update-in (get-card state card) [:bounce-hq] dec)))}]}
 
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
