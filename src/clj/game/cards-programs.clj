@@ -590,6 +590,9 @@
                                    {:req (req (= target :archives))
                                     :successful-run
                                     {:effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                  ; remove the :req from the run-effect, so that other cards that replace
+                                                  ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
+                                                  (swap! state dissoc-in [:run :run-effect :req])
                                                   (trigger-event state :corp :no-action)
                                                   (update-run-ice state side)
                                                   (system-msg state side
