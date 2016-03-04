@@ -312,6 +312,28 @@
       (run-successful state)
       (is (= 2 (:counter (refresh nerve)))))))
 
+(deftest sneakdoor-ash
+  "Sneakdoor Beta - Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits.
+  Issue #1138."
+  (do-game
+    (new-game (default-corp [(qty "Ash 2X3ZB9CY" 1)])
+              (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Sneakdoor Beta" 1)]))
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (is (= 1 (:credit (get-runner))) "Sneakdoor cost 4 credits")
+    (let [sb (get-in @state [:runner :rig :program 0])
+          ash (get-content state :hq 0)]
+      (core/rez state :corp ash)
+      (card-ability state :runner sb 0)
+      (card-ability state :corp ash 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (run-successful state)
+      (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
+      (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
+      (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
+
 (deftest sneakdoor-crisium
   "Sneakdoor Beta - do not switch to HQ if Archives has Crisium Grid. Issue #1229."
   (do-game
@@ -327,6 +349,24 @@
       (card-ability state :runner sb 0)
       (run-successful state)
       (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
+
+(deftest sneakdoor-sectest
+  "Sneakdoor Beta - Grant Security Testing credits on HQ."
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Security Testing" 1) (qty "Sneakdoor Beta" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (play-from-hand state :runner "Security Testing")
+    (take-credits state :runner)
+    (is (= 3 (:credit (get-runner))))
+    (take-credits state :corp)
+    (let [sb (get-in @state [:runner :rig :program 0])]
+      (prompt-choice :runner "HQ")
+      (card-ability state :runner sb 0)
+      (run-successful state)
+      (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
+      (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
 
 (deftest surfer
   "Surfer - Swap position with ice before or after when encountering a barrier ice"
