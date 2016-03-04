@@ -282,8 +282,8 @@
    "High-Stakes Job"
    {:prompt "Choose a server"
     :choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))
-                        ok-servs (filter unrezzed-ice runnable-servers)]
-                    (map (comp zone->name first) ok-servs)))
+                        ok-servs (filter unrezzed-ice (get-in @state [:corp :servers]))]
+                    (filter #(can-run-server? state %) (map (comp zone->name first) ok-servs))))
     :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 12 [Credits]"
                                            :effect (effect (gain :runner :credit 12))}} card))}
 
