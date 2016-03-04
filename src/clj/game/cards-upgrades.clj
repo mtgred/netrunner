@@ -19,8 +19,9 @@
                          :effect (req (max-access state side 0)
                                       (let [ash card]
                                         (swap! state update-in [:run :run-effect]
-                                               #(assoc % :successful-run
-                                                         {:effect (effect (handle-access [ash])) :card ash}))))
+                                               #(assoc % :replace-access
+                                                         {:mandatory true
+                                                          :effect (effect (handle-access [ash])) :card ash}))))
                          :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
 
    "Awakening Center"
