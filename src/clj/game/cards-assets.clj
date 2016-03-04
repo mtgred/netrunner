@@ -292,6 +292,14 @@
                       :msg "add it to their score area and gain 1 agenda point"
                       :effect (effect (as-agenda :corp card 1))}}}
 
+   "Genetics Pavilion"
+   {:msg "prevent the Runner from drawing more than 2 cards during their turn"
+    :effect (req (max-draw state :runner 2)
+                 (when (= 0 (remaining-draws state side))
+                   (prevent-draw state side)))
+    :events {:runner-turn-begins {:effect (effect (max-draw 2))}}
+    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw))}
+
    "Ghost Branch"
    (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
                                 (when (> (:advance-counter card) 1) "s"))
