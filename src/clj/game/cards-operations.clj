@@ -579,6 +579,7 @@
                                       :effect (effect (gain :corp :click 1))} card nil)
                     (register-events subliminal (assoc card :zone '(:discard))))
     :trash-effect {:effect (effect (register-events subliminal (assoc card :zone '(:discard))))}
+    :mill-effect {:effect (effect (register-events subliminal (assoc card :zone '(:discard))))}
     :events {:corp-turn-begins nil}})
 
    "Successful Demonstration"
