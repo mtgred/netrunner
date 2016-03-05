@@ -239,6 +239,45 @@
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (:advance-counter (refresh iwall)))))))
 
+(deftest subliminal-messaging
+  "Subliminal Messaging - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 3)])
+              (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) (qty "Utopia Shard" 1)]))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (is (= 6 (:credit (get-corp))))
+    (is (= 3 (:click (get-corp))) "First Subliminal Messaging gains 1 click")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (is (= 7 (:credit (get-corp))))
+    (is (= 2 (:click (get-corp))) "Second Subliminal Messaging does not gain 1 click")
+    (trash-from-hand state :corp "Subliminal Messaging")
+    (is (= 0 (count (:hand (get-corp)))) "Corp no more cards in HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (count (:hand (get-corp)))) "All 3 Subliminals returned to HQ")
+    (core/move state :corp (find-card "Subliminal Messaging" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Utopia Shard")
+    (let [utopia (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner utopia 0))
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (count (:hand (get-corp)))) "All 3 Subliminals returned to HQ")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (take-credits state :corp) ; There should not be a prompt here because runner made a run last turn
+    (is (= 2 (count (:hand (get-corp)))) "2 Subliminals in HQ")
+    (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
+
 (deftest successful-demonstration
   "Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits"
   (do-game

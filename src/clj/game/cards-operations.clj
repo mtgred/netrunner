@@ -566,11 +566,10 @@
                      {:effect
                       (req (when (and (not (empty? (filter #(= "04100" (:code %)) (get-in @state [:corp :discard]))))
                                       (not (:made-run runner-reg)))
-                             (resolve-ability state side {:prompt "Move Subliminal Messaging back to HQ?"
-                                                          :choices ["Yes" "No"]
-                                                          :effect (req (when (= target "Yes")
-                                                                         (move state side card :hand)
-                                                                         (system-msg state side "moves Subliminal Messaging to HQ")))} card nil))
+                             (resolve-ability state side {:optional {
+                                                          :prompt "Move Subliminal Messaging back to HQ?"
+                                                          :yes-ability {:effect (req (move state side card :hand)
+                                                                                     (system-msg state side "moves Subliminal Messaging to HQ"))}}} card nil))
                            (unregister-events state side card))}}]
    {:msg "gain 1 [Credits]"
     :effect (effect (gain :credit 1)
