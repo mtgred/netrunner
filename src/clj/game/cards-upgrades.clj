@@ -19,8 +19,9 @@
                          :effect (req (max-access state side 0)
                                       (let [ash card]
                                         (swap! state update-in [:run :run-effect]
-                                               #(assoc % :successful-run
-                                                         {:effect (effect (handle-access [ash])) :card ash}))))
+                                               #(assoc % :replace-access
+                                                         {:mandatory true
+                                                          :effect (effect (handle-access [ash])) :card ash}))))
                          :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
 
    "Awakening Center"
@@ -213,8 +214,12 @@
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Off the Grid"
-   {:events {:successful-run {:req (req (= target :hq))
+   {:effect (req (prevent-run-on-server state card (second (:zone card))))
+    :events {:runner-turn-begins {:effect (req (prevent-run-on-server state card (second (:zone card))))}
+             :successful-run {:req (req (= target :hq))
                               :effect (req (trash state :corp card)
+                                           (enable-run-on-server state card
+                                                                 (second (:zone card)))
                                            (system-msg state :corp (str "trashes Off the Grid")))}}}
 
    "Old Hollywood Grid"
@@ -322,6 +327,24 @@
                                          :run-ends {:effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
+
+   "Surat City Grid"
+   {:events
+    {:rez {:req (req (let [serv (card->server state card)
+                           servcards (concat (:ices serv) (:contents serv))]
+                       (and (= (card->server state target) serv)
+                            (not= (:cid target) (:cid card))
+                            (seq (filter #(not (rezzed? %)) servcards)))))
+           :effect (effect (resolve-ability
+                             {:optional
+                              {:prompt (msg "Rez another card in or protecting " (zone->name (second (:zone card)))
+                                            " with Surat City Grid?")
+                               :yes-ability {:prompt "Choose a card to rez"
+                                             :choices {:req #(= (card->server state %) (card->server state card))}
+                                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
+                                             :effect (effect (rez-cost-bonus -2)
+                                                             (rez target))}}}
+                            card nil))}}}
 
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"

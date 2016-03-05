@@ -86,6 +86,32 @@
       (prompt-choice :runner 0) ; Runner won't match
       (is (= 6 (:tag (get-runner))) "Runner took 6 tags"))))
 
+(deftest mushin-no-shin
+  "Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn"
+  (do-game
+    (new-game (default-corp [(qty "Mushin No Shin" 2) (qty "Ronin" 1) (qty "Profiteering" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mushin No Shin")
+    (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
+    (let [ronin (get-content state :remote1 0)]
+      (is (= 3 (:advance-counter (refresh ronin))) "3 advancements placed on Ronin")
+      (core/rez state :corp (refresh ronin))
+      (is (not (get-in (refresh ronin) [:rezzed])) "Ronin did not rez")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/rez state :corp (refresh ronin))
+      (is (get-in (refresh ronin) [:rezzed]) "Ronin now rezzed")
+      (play-from-hand state :corp "Mushin No Shin")
+      (prompt-select :corp (find-card "Profiteering" (:hand (get-corp))))
+      (let [prof (get-content state :remote2 0)]
+        (core/score state :corp (refresh prof))
+        (is (empty? (:scored (get-corp))) "Profiteering not scored")
+        (is (= 0 (:agenda-point (get-corp))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/score state :corp (refresh prof))
+        (is (= 1 (:agenda-point (get-corp))) "Profiteering was able to be scored")))))
+
 (deftest neural-emp
   "Neural EMP - Play if Runner made a run the previous turn to do 1 net damage"
   (do-game

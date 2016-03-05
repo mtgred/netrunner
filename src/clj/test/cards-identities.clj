@@ -313,6 +313,18 @@
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
 
+(deftest replicating-perfection
+  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
+  (do-game
+   (new-game
+    (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
+    (default-runner))
+   (play-from-hand state :corp "Mental Health Clinic" "New remote")
+   (take-credits state :corp)
+   (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+   (run-empty-server state "HQ")
+   (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+
 (deftest spark-advertisements
   "Spark Agency - Rezzing advertisements"
   (do-game

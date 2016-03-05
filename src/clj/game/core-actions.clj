@@ -4,7 +4,8 @@
 
 (declare card-str can-rez? corp-install enforce-msg gain-agenda-point get-remote-names
          jack-out move name-zone play-instant purge resolve-select run has-subtype?
-         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win)
+         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
+         can-run-server? can-score?)
 
 ;;; Neutral actions
 (defn play
@@ -232,20 +233,21 @@
   "Score an agenda."
   [state side args]
   (let [card (or (:card args) args)]
-    (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-               (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
-      (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card)
-            points (get-agenda-points state :corp c)]
-        (system-msg state :corp (str "scores " (:title c) " and gains " points
-                                     " agenda point" (when (> points 1) "s")))
-        (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-        (gain-agenda-point state :corp points)
-        (set-prop state :corp c :advance-counter 0)
-        (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
-        (when-let [current (first (get-in @state [:runner :current]))]
-          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-          (trash state side current))))))
+    (when (can-score? state side card)
+      (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+                 (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+        (let [moved-card (move state :corp card :scored)
+              c (card-init state :corp moved-card)
+              points (get-agenda-points state :corp c)]
+          (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                       " agenda point" (when (> points 1) "s")))
+          (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+          (gain-agenda-point state :corp points)
+          (set-prop state :corp c :advance-counter 0)
+          (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
+          (when-let [current (first (get-in @state [:runner :current]))]
+            (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+            (trash state side current)))))))
 
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
@@ -263,7 +265,9 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run])) (can-pay? state :runner "a run" :click 1))
+  (when (and (not (get-in @state [:runner :register :cannot-run]))
+             (can-run-server? state server)
+             (can-pay? state :runner "a run" :click 1))
     (system-msg state :runner (str "makes a run on " server))
     (run state side server)
     (pay state :runner nil :click 1)))

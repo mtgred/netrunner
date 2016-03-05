@@ -43,7 +43,7 @@
                        (gain state :runner :memory (:memoryunits c))))))}
 
    "Blackmail"
-   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req servers)
+   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req runnable-servers)
     :msg "prevent ICE from being rezzed during this run"
     :effect (effect (register-run-flag!
                       card
@@ -57,7 +57,7 @@
    "Bribery"
    {:prompt "How many [Credits]?" :choices :credit
     :msg (msg "increase the rez cost of the 1st unrezzed ICE approached by " target " [Credits]")
-    :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req servers)
+    :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req runnable-servers)
                                       :effect (effect (run target nil card))} card nil))}
 
    "Calling in Favors"
@@ -82,7 +82,7 @@
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
    "Cyber Threat"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (req (let [serv target
                        runtgt [(last (server->zone state serv))]
                        ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
@@ -137,7 +137,7 @@
    {:msg "draw 3 cards" :effect (effect (draw 3))}
 
    "Dirty Laundry"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 5 [Credits]"
                                            :effect (effect (gain :runner :credit 5))}} card))}
 
@@ -152,7 +152,7 @@
 
    "Early Bird"
    {:prompt "Choose a server"
-    :choices (req servers)
+    :choices (req runnable-servers)
     :msg (msg "make a run on " target " and gain [Click]")
     :effect (effect (gain :click 1) (run target nil card))}
 
@@ -200,7 +200,7 @@
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
 
    "Exploratory Romp"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target
                        {:replace-access
                         {:prompt "Advancements to remove from a card in or protecting this server?"
@@ -253,7 +253,7 @@
                      card nil)))}
 
    "Forked"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Frame Job"
    {:prompt "Choose an agenda to forfeit"
@@ -283,7 +283,7 @@
    {:prompt "Choose a server"
     :choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))
                         ok-servs (filter unrezzed-ice (get-in @state [:corp :servers]))]
-                    (map (comp zone->name first) ok-servs)))
+                    (filter #(can-run-server? state %) (map (comp zone->name first) ok-servs))))
     :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 12 [Credits]"
                                            :effect (effect (gain :runner :credit 12))}} card))}
 
@@ -361,7 +361,7 @@
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
    "Inside Job"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
@@ -378,7 +378,7 @@
                      (gain state :corp :hand-size-modification (:bad-publicity corp)))}
 
    "Knifed"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
@@ -430,6 +430,11 @@
    "Lucky Find"
    {:msg "gain 9 [Credits]"
     :effect (effect (gain :credit 9))}
+
+   "Making an Entrance"
+   {:msg "look at and trash or rearrange the top 6 cards of their Stack"
+    :effect (req (toast state :runner "Drag remaining untrashed cards from the Temporary Zone back onto your Stack" "info")
+                 (doseq [c (take 6 (:deck runner))] (move state side c :play-area)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -497,7 +502,7 @@
     :events {:pre-steal-cost nil :runner-turn-ends nil}}
 
    "Prey"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Push Your Luck"
    {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
@@ -535,7 +540,7 @@
     :effect (effect (handle-access targets))}
 
    "Recon"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Retrieval Run"
    {:effect (effect (run :archives
@@ -547,11 +552,11 @@
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
 
    "Run Amok"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
 
    "Running Interference"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target nil card)
                     (register-events {:pre-rez
                                       {:req (req (ice? target))
@@ -604,7 +609,7 @@
                                             (rseq (into [] (get-in @state [:corp :deck])))))}} card))}
 
    "Singularity"
-   {:prompt "Choose a server" :choices (req remotes)
+   {:prompt "Choose a server" :choices (req (filter #(can-run-server? state %) remotes))
     :effect (effect (run target
                       {:req (req (is-remote? target))
                        :replace-access
@@ -640,10 +645,10 @@
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
-   {:prompt "Choose a server" :choices (req servers) :effect (effect (run target nil card))}
+   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Stimhack"
-   {:prompt "Choose a server" :choices (req servers)
+   {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (gain-run-credits 9)
                     (run target {:end-run
                                  {:msg " take 1 brain damage"

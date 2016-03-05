@@ -220,6 +220,10 @@
    "Asteroid Belt"
    (space-ice end-the-run)
 
+   "Bailiff"
+   {:abilities [(gain-credits 1)
+                end-the-run]}
+
    "Bandwidth"
    {:abilities [{:msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1)
@@ -876,10 +880,11 @@
                                   :prompt "Choose one"
                                   :choices ["Lose [Click]" "End the run"]
                                   :effect (req (if-not (and (= target "Lose [Click]")
-                                                            (pay state side card :click 1))
+                                                            (apply pay state side card [:click 1]))
                                                  (do (end-run state side)
                                                      (system-msg state side "ends the run"))
-                                                 (system-msg state side "loses [Click]")))})]}
+                                                 (do (lose state side :click 1)
+                                                     (system-msg state side "loses [Click]"))))})]}
 
    "Tsurugi"
    {:abilities [end-the-run

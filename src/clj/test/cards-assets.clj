@@ -204,6 +204,33 @@
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
+(deftest genetics-pavilion
+  (do-game
+    (new-game (default-corp [(qty "Genetics Pavilion" 1)])
+              (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Genetics Pavilion" "New remote")
+    (let [gp (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (core/rez state :corp gp)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (is (= 2 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Diesel")
+      (is (= 3 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
+      (take-credits state :runner)
+      (core/derez state :corp (refresh gp))
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :deck)
+      (is (= 1 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Diesel")
+      (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
+      (core/rez state :corp (refresh gp))
+      (core/draw state :runner)
+      (is (= 3 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez"))))
+
 (deftest ghost-branch
   "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
   (do-game

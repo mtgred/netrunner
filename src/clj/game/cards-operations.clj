@@ -192,7 +192,13 @@
    {:prompt "Choose a faceup card"
     :choices {:req rezzed?}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-prop :corp target :advance-counter 3 {:placed true}))}
+    :effect (effect (add-prop :corp target :advance-counter 3 {:placed true})
+                    (register-turn-flag!
+                      target :can-score
+                      (fn [state side card]
+                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
+                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                          true))))}
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
@@ -307,7 +313,17 @@
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
                          (in-hand? %))}
-    :effect (effect (corp-install (assoc target :advance-counter 3) "New remote"))}
+    :effect (effect (corp-install (assoc target :advance-counter 3) "New remote")
+                    (register-turn-flag!
+                      target :can-rez
+                      (fn [state side card]
+                        ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))))
+                    (register-turn-flag!
+                      target :can-score
+                      (fn [state side card]
+                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
+                          ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
+                          true))))}
 
    "Mutate"
    {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
@@ -461,6 +477,15 @@
                          (= (:side %) "Corp"))}
     :msg "shuffle a card from HQ into R&D"
     :effect (effect (move target :deck) (shuffle! :deck))}
+
+   "Salems Hospitality"
+   {:msg "name a card. The Runner reveals their Grip and must trash all copies of the named card"
+    :effect (req (show-wait-prompt state :corp "Runner to reveal their Grip")
+                 (prompt! state :runner card (str "Reveal your Grip after the Corp has named a card")
+                                                  ["Reveal Grip"]
+                                                  {:msg (msg "reveal the Runner's Grip: "
+                                                             (join ", " (map :title (:hand runner))))
+                                                   :effect (effect (clear-wait-prompt :corp))}))}
 
    "Scorched Earth"
    {:req (req tagged)

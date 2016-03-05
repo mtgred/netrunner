@@ -176,6 +176,28 @@
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
           "Runner prompt is waiting for Corp"))))
 
+(deftest off-the-grid
+  "Off the Grid run ability - and interaction with RP"
+  (do-game
+   (new-game
+    (make-deck "Jinteki: Replicating Perfection" [(qty "Off the Grid" 3)
+                                                  (qty "Mental Health Clinic" 3)])
+    (default-runner))
+   (play-from-hand state :corp "Off the Grid" "New remote")
+   (play-from-hand state :corp "Mental Health Clinic" "Server 1")
+   (let [otg (get-content state :remote1 0)]
+     (take-credits state :corp)
+     (core/rez state :corp (refresh otg))
+     (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+     (run-empty-server state "R&D")
+     (is (not (core/can-run-server? state "Server 1")) "Runner cannot run on Off the Grid")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (not (core/can-run-server? state "Server 1")) "Off the Grid prevention persisted")
+     (run-empty-server state "HQ")
+     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on Server 1")
+     (is (= nil (refresh otg)) "Off the Grid trashed"))))
+
 (deftest old-hollywood-grid
   "Old Hollywood Grid - Ability"
   (do-game

@@ -2,7 +2,7 @@
 
 (declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
          handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         in-corp-scored? update-all-ice win)
+         in-corp-scored? update-all-ice win prevent-draw)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -39,20 +39,38 @@
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard)))))))))))
 
+(defn max-draw
+  "Put an upper limit on the number of cards that can be drawn in this turn."
+  [state side n]
+  (swap! state assoc-in [side :register :max-draw] n))
+
+(defn remaining-draws
+  "Calculate remaining number of cards that can be drawn this turn if a maximum exists"
+  [state side]
+  (let [active-player (get-in @state [:active-player])]
+    (when-let [max-draw (get-in @state [active-player :register :max-draw])]
+      (let [drawn-this-turn (get-in @state [active-player :register :drawn-this-turn] 0)]
+        (max (- max-draw drawn-this-turn) 0)))))
+
 (defn draw
   "Draw n cards from :deck to :hand."
   ([state side] (draw state side 1))
   ([state side n]
-   (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
-     (system-msg state side "is decked")
-     (win state :runner "Decked"))
    (let [active-player (get-in @state [:active-player])]
-     (when-not (get-in @state [active-player :register :cannot-draw])
-       (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
-         (swap! state update-in [side :hand] #(concat % drawn)))
-       (swap! state update-in [side :deck] (partial drop n))
-       (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)))))
-
+     (let [n (if (get-in @state [active-player :register :max-draw])
+               (min n (remaining-draws state side))
+               n)]
+       (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
+         (system-msg state side "is decked")
+         (win state :runner "Decked"))
+       (when-not (get-in @state [active-player :register :cannot-draw])
+         (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
+           (swap! state update-in [side :hand] #(concat % drawn))
+           (swap! state update-in [side :deck] (partial drop n))
+           (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
+           (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)
+           (when (= 0 (remaining-draws state side))
+             (prevent-draw state side))))))))
 
 ;;; Damage
 (defn flatline [state]
