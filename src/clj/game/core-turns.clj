@@ -123,9 +123,7 @@
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
-                            (concat (cons (get-in @state [side :identity])
-                                          (all-installed state side))
-                                    (when (= side :corp) (get-in @state [side :scored]))))]
+                            (all-active state side))]
     (swap! state assoc phase true)
     (trigger-event state side phase nil)
     (if (not-empty start-cards)

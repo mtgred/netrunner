@@ -119,7 +119,8 @@
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
-   {:events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
+   {:flags {:slow-remote-access (req true)}
+    :events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
                                :effect (effect (access-cost-bonus [:credit 1]))
                                :msg  (msg (if
                                       (= (get-in @state [:runner :credit]) 0)
