@@ -223,21 +223,14 @@
                                            (system-msg state :corp (str "trashes Off the Grid")))}}}
 
    "Old Hollywood Grid"
-   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
-             :effect (req (if-not (some #(= (:title %) (:title target)) (:scored runner))
-                            (prevent-steal state side)
-                            (swap! state update-in [:runner :register] dissoc :cannot-steal)))}
-         un {:effect (req (swap! state update-in [:runner :register] dissoc :cannot-steal))}]
-     {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
-                                                                                 (= (central->zone (:zone target))
-                                                                                    (butlast (:previous-zone card))))))
-                                         :run-ends {:effect (req (unregister-events state side card)
-                                                                 (swap! state update-in [:runner :register] dissoc
-                                                                        :cannot-steal))}}
-                                        (assoc card :zone '(:discard))))}
-      :events {:pre-steal-cost ab :run-ends un}})
+   {:events {:pre-steal-cost
+             {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+              :effect (effect (register-run-flag!
+                                card :can-steal
+                                (fn [state side card]
+                                  (if-not (some #(= (:title %) (:title card)) (:scored runner))
+                                    ((constantly false) (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                                    true))))}}}
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

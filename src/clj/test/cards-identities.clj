@@ -62,6 +62,28 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest haarpsichord-studios
+  "Haarpsichord Studios - Prevent stealing more than 1 agenda per turn"
+  (do-game
+    (new-game
+      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+      (default-runner [(qty "Gang Sign" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))))
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Second steal of turn prevented")
+    (take-credits state :runner)
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [gs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner gs 0)
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn"))))
+
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"
   (do-game

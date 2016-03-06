@@ -132,8 +132,14 @@
    {:effect (effect (gain :credit 5 :bad-publicity 1))}
 
    "Haarpsichord Studios: Entertainment Unleashed"
-   {:events {:pre-steal-cost {:req (req (:stole-agenda runner-reg))
-                              :effect (effect (prevent-steal))}}}
+   {:events {:agenda-stolen
+             {:effect (effect (register-turn-flag!
+                                card :can-steal
+                                (fn [state side card]
+                                  (if (is-type? card "Agenda")
+                                    ((constantly false)
+                                     (toast state :runner "Cannot steal due to Haarpsichord Studios." "warning"))
+                                    true))))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
