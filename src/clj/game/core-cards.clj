@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
+(declare all-active all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
          has-subtype? remove-from-host rezzed?
          trash update-hosted! update-ice-strength remove-icon)
 
