@@ -224,8 +224,8 @@
 (defn advance
   "Advance a corp card that can be advanced."
   [state side {:keys [card]}]
-  (when (pay state side card :click 1 :credit 1)
-    (system-msg state side (str "advances " (card-str state card)))
+  (when-let [cost (pay state side card :click 1 :credit 1)]
+    (system-msg state side (str (build-spend-msg cost "advance") (card-str state card)))
     (update-advancement-cost state side card)
     (add-prop state side (get-card state card) :advance-counter 1)))
 
@@ -262,15 +262,16 @@
         (update-ice-strength state side ice)))))
 
 ;;; Runner actions
+
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
   (when (and (not (get-in @state [:runner :register :cannot-run]))
              (can-run-server? state server)
              (can-pay? state :runner "a run" :click 1))
-    (system-msg state :runner (str "makes a run on " server))
-    (run state side server)
-    (pay state :runner nil :click 1)))
+    (let [cost (pay state :runner nil :click 1)]
+      (system-msg state :runner (str (build-spend-msg cost "make a run on") server))
+      (run state side server))))
 
 (defn remove-tag
   "Click to remove a tag."
