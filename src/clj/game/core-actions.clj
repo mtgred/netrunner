@@ -170,9 +170,11 @@
 (defn do-purge
   "Purge viruses."
   [state side args]
-  (when (pay state side nil :click 3)
-    (system-msg state side "purges viruses")
-    (purge state side)))
+  (when-let [cost (pay state side nil :click 3)]
+    (purge state side)
+    (let [spent (build-spend-msg cost "purge")
+          message (str spent "all virus counters")]
+      (system-msg state side message))))
 
 (defn rez
   "Rez a corp card."
