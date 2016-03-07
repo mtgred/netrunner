@@ -240,7 +240,7 @@
       (is (= 2 (:advance-counter (refresh iwall)))))))
 
 (deftest subliminal-messaging
-  "Subliminal Messaging - Full test"
+  "Subliminal Messaging - Playing/trashing/milling all will prompt returning to hand"
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)])
               (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) (qty "Utopia Shard" 1)]))
@@ -277,6 +277,26 @@
     (take-credits state :corp) ; There should not be a prompt here because runner made a run last turn
     (is (= 2 (count (:hand (get-corp)))) "2 Subliminals in HQ")
     (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
+
+(deftest subliminal-messaging-no
+  "Subliminal Messaging - User declines to return to hand, ensure game asks again next turn"
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (trash-from-hand state :corp "Subliminal Messaging")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "No")
+    (prompt-choice :corp "No")
+    (is (= 0 (count (:hand (get-corp)))) "Neither Subliminal returned to HQ")
+    (is (= 2 (count (:discard (get-corp)))) "Both Subliminals in Archives")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 2 (count (:hand (get-corp)))) "Both Subliminals returned to HQ")
+    (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
 (deftest successful-demonstration
   "Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits"
