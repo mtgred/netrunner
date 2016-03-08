@@ -362,6 +362,44 @@
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
 
+   "NetChip"
+   {:abilities [{:label "Install a program on NetChip"
+                 :cost [:click 1]
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (in-hand? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (gain :memory (:memoryunits target))
+                                                   (runner-install target {:host-card card})
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}
+                {:label "Host an installed program on NetChip"
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose an installed program to host on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (installed? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (host card target)
+                                                   (gain :memory (:memoryunits target))
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
+                          :effect (effect (update! (assoc card
+                                                          :hosted-programs
+                                                          (remove #(= (:cid target) %) (:hosted-programs card))))
+                                          (lose :memory (:memoryunits target)))}}}
+
    "Omni-Drive"
    {:recurring 1
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-Drive"
