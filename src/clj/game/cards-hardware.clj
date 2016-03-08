@@ -251,6 +251,21 @@
                                                  (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play (req (remove-watch state :ekomind))}
 
+   "EMP Device"
+   {:abilities [{:req (req (:run @state))
+                 :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
+                 :effect (effect (register-events
+                                   {:rez {:req (req (ice? target))
+                                          :effect (effect (register-run-flag!
+                                                            card :can-rez
+                                                            (fn [state side card]
+                                                              (if (ice? card)
+                                                                ((constantly false)
+                                                                 (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
+                                                                true))))}
+                                    :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Feedback Filter"
    {:prevent {:damage [:net :brain]}
     :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
