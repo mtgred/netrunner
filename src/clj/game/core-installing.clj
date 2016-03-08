@@ -156,7 +156,8 @@
                    (card-init state side
                               (assoc (get-card state moved-card) :rezzed true :seen true) false))
                  (when-let [dre (:derezzed-events cdef)]
-                   (register-events state side dre moved-card)))))
+                   (when-not (:rezzed (get-card state moved-card))
+                     (register-events state side dre moved-card))))))
            (clear-install-cost-bonus state side)))))))
 
 

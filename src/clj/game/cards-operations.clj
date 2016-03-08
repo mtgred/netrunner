@@ -416,6 +416,14 @@
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
+   "Product Recall"
+   {:prompt "Choose a rezzed asset or upgrade to trash"
+    :choices {:req #(and (rezzed? %)
+                         (or (is-type? % "Asset") (is-type? % "Upgrade")))}
+    :msg (msg "trash " (card-str state target) " and gain " (:trash target) " [Credits]")
+    :effect (effect (trash target)
+                    (gain :credit (:trash target)))}
+
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"
     :effect (req (let [c (min target (:tag runner))]

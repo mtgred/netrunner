@@ -332,6 +332,24 @@
    {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (:bad-publicity corp))}
 
+   "New Construction"
+   {:install-state :face-up
+    :events {:advance
+             {:optional
+              {:req (req (= (:cid card) (:cid target)))
+               :prompt "Install a card from HQ in a new remote?"
+               :yes-ability {:prompt "Choose a card in HQ to install"
+                             :choices {:req #(and (not (is-type? % "Operation"))
+                                                  (= (:side %) "Corp")
+                                                  (in-hand? %))}
+                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
+                                       " and rez it, ignoring all costs"))
+                             :effect (req (if (>= (:advance-counter (get-card state card)) 5)
+                                            (do (corp-install state side target "New remote"
+                                                              {:install-state :rezzed-no-cost})
+                                                (trigger-event state side :rez target))
+                                            (corp-install state side target "New remote")))}}}}}
+
    "Nisei MK II"
    {:effect (effect (add-prop card :counter 1))
     :abilities [{:req (req (:run @state)) :counter-cost 1 :msg "end the run"
@@ -426,6 +444,11 @@
                                                    distinct
                                                    (join " - "))))))
     :msg "make all assets gain Advertisement"}
+
+   "Remote Data Farm"
+   {:msg "increase their maximum hand size by 2"
+    :effect (effect (gain :hand-size-modification 2))
+    :leave-play (effect (lose :hand-size-modification 2))}
 
    "Research Grant"
    {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))

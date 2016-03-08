@@ -251,6 +251,21 @@
                                                  (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play (req (remove-watch state :ekomind))}
 
+   "EMP Device"
+   {:abilities [{:req (req (:run @state))
+                 :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
+                 :effect (effect (register-events
+                                   {:rez {:req (req (ice? target))
+                                          :effect (effect (register-run-flag!
+                                                            card :can-rez
+                                                            (fn [state side card]
+                                                              (if (ice? card)
+                                                                ((constantly false)
+                                                                 (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
+                                                                true))))}
+                                    :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Feedback Filter"
    {:prevent {:damage [:net :brain]}
     :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
@@ -361,6 +376,44 @@
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
+
+   "NetChip"
+   {:abilities [{:label "Install a program on NetChip"
+                 :cost [:click 1]
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (in-hand? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (gain :memory (:memoryunits target))
+                                                   (runner-install target {:host-card card})
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}
+                {:label "Host an installed program on NetChip"
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose an installed program to host on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (installed? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (host card target)
+                                                   (gain :memory (:memoryunits target))
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
+                          :effect (effect (update! (assoc card
+                                                          :hosted-programs
+                                                          (remove #(= (:cid target) %) (:hosted-programs card))))
+                                          (lose :memory (:memoryunits target)))}}}
 
    "Omni-Drive"
    {:recurring 1
