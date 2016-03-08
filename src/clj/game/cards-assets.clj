@@ -378,6 +378,30 @@
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Lakshmi Smartfabrics"
+   {:events {:rez {:req (req (not= (:cid card) (:cid target)))
+                   :effect (effect (add-prop card :counter 1))}}
+    :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
+                                              (= (get card :counter 0) (:agendapoints %))) (:hand corp))))
+                 :label "X power counters: Reveal an agenda worth X points from HQ"
+                 :effect (req (let [c (:counter card)]
+                                (resolve-ability
+                                  state side
+                                  {:prompt "Choose an agenda in HQ"
+                                   :choices {:req #(and (is-type? % "Agenda")
+                                                        (= c (:agendapoints %)))}
+                                   :msg (msg "reveal " (:title target) " from HQ")
+                                   :effect (req (let [title (:title target)
+                                                      pts (:agendapoints target)]
+                                                  (register-turn-flag! state side
+                                                    card :can-steal
+                                                    (fn [state side card]
+                                                      (if (= (:title card) title)
+                                                        ((constantly false)
+                                                         (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
+                                                        true)))
+                                                  (add-prop state side card :counter (- pts))))} card nil)))}]}
+
    "Launch Campaign"
    (campaign 6 2)
 
@@ -454,6 +478,19 @@
    "Mumba Temple"
    {:recurring 2}
 
+   "Mumbad Construction Co."
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}}
+    :abilities [{:cost [:credit 2]
+                 :req (req (and (> (get card :advance-counter 0) 0)
+                                (some #(rezzed? %) (all-installed state :corp))))
+                 :label "Move an advancement token to a faceup card"
+                 :prompt "Choose a faceup card"
+                 :choices {:req #(rezzed? %)}
+                 :msg (msg "move an advancement token to " (card-str state target))
+                 :effect (effect (add-prop card :advance-counter -1 {:placed true})
+                                 (add-prop target :advance-counter 1 {:placed true}))}]}
+
    "Museum of History"
    {:flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
     :abilities [{:label "Shuffle cards in Archives into R&D"
@@ -505,6 +542,29 @@
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :abilities [ability]})
+
+   "PAD Factory"
+   {:abilities [{:cost [:click 1]
+                 :label "Place 1 advancement token on a card"
+                 :choices {:req #(and (:side % "Corp") (installed? %))}
+                 :msg (msg "place 1 advancement token on " (card-str state target))
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                                 (register-turn-flag!
+                                   target :can-score
+                                   (fn [state side card]
+                                     (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
+                                       ((constantly false) (toast state :corp "Cannot score due to PAD Factory." "warning"))
+                                       true))))}]}
+
+   "Pālanā Agroplex"
+   (let [ability {:msg "make each player draw 1 card"
+                  :label "Make each player draw 1 card (start of turn)"
+                  :once :per-turn
+                  :effect (effect (draw 1) (draw :runner))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Plan B"
    (advance-ambush
