@@ -2,8 +2,8 @@
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-3196"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.7.228"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
@@ -20,7 +20,7 @@
   :main game.main
   :aot :all
 
-  :plugins [[lein-cljsbuild "1.0.6"]
+  :plugins [[lein-cljsbuild "1.1.3"]
             [lein-figwheel "0.3.7"]]
 
   :source-paths ["src/clj" "src/cljs"]
