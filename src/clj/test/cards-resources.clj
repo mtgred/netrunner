@@ -703,6 +703,21 @@
       (is (= 0 (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
+(deftest tech-trader
+  "Basic test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Tech Trader" 1) (qty "Fall Guy" 1)]))
+
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tech Trader")
+    (play-from-hand state :runner "Fall Guy")
+    (is (= 4 (:credit (get-runner))))
+
+    (let [fall (get-in @state [:runner :rig :resource 1])]
+      (card-ability state :runner fall 1)
+      (is (= 7 (:credit (get-runner)))))))
+
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"
   (do-game
