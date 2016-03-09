@@ -94,6 +94,16 @@
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/counter command"} nil))
 
+(defn command-rezall [state side value]
+  (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+  (resolve-ability state side
+    {:optional {:prompt "Rez all cards and turn cards in archives faceup?"
+                :yes-ability {:effect (req
+                                        (doseq [c (all-installed state side)]
+                                          (when-not (:rezzed c)
+                                            (rez state side c {:ignore-cost :all-costs}))))}}}
+    {:title "/rez-all command"} nil))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (string->num (first args))] n 1)
@@ -135,15 +145,7 @@
                         (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs}))
                                                 :choices {:req (fn [t] (card-is? t :side %2))}}
                                          {:title "/rez command"} nil))
-        "/rez-all"    #(when (= %2 :corp)
-                        (resolve-ability
-                          %1 %2
-                          {:optional {:prompt "Rez all cards?"
-                                      :yes-ability {:effect (req (doseq [c (all-installed state side)]
-                                                                   (when-not (:rezzed c)
-                                                                     (rez state side c {:ignore-cost :all-costs}))))}}}
-                          {:title "/rez-all command"} nil))
-
+        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
         nil))))
 
 (defn corp-install-msg

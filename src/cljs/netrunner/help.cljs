@@ -52,7 +52,7 @@
                         [:li [:code "/link n"] " - Set your link to n"]
                         [:li [:code "/handsize n"] " - Set your handsize to n"]
                         [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
-                        [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs (Corp only). For revealing your servers at the end of a game."]
+                        [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
                         [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
