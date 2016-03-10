@@ -180,8 +180,8 @@
               :once-key :daily-business-show
               :req (req (first-event state side :corp-draw))
               :effect (req
-                        (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
-                                       (filter #(and (:rezzed %) (= (:title %) "Daily Business Show")))  count)
+                        (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
+                                                  (all-installed state :corp))) 
                               newcards (take dbs (:deck corp))
                               drawn (conj newcards (last (:hand corp)))]
                           (doseq [c newcards] (move state side c :hand))
