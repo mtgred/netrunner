@@ -192,13 +192,15 @@
    {:prompt "Choose a faceup card"
     :choices {:req rezzed?}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-prop :corp target :advance-counter 3 {:placed true})
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state side card]
-                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
-                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                          true))))}
+    :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
+                 (let [tgtcid (:cid target)]
+                   (register-turn-flag! state side
+                     target :can-score
+                     (fn [state side card]
+                       (if (and (= (:cid card) tgtcid)
+                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                         ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                         true)))))}
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
