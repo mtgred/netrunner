@@ -95,10 +95,10 @@
                    {:title "/counter command"} nil))
 
 (defn command-rezall [state side value]
-  (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
   (resolve-ability state side
     {:optional {:prompt "Rez all cards and turn cards in archives faceup?"
                 :yes-ability {:effect (req
+                                        (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                                         (doseq [c (all-installed state side)]
                                           (when-not (:rezzed c)
                                             (rez state side c {:ignore-cost :all-costs}))))}}}
