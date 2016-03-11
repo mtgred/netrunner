@@ -183,7 +183,7 @@
                         (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
                                                   (all-installed state :corp))) 
                               newcards (take dbs (:deck corp))
-                              drawn (conj newcards (last (:hand corp)))]
+                              (concat newcards (take-last target (:hand corp)))]
                           (doseq [c newcards] (move state side c :hand))
                           (resolve-ability
                             state side
