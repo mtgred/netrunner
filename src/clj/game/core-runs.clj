@@ -429,6 +429,7 @@
   (if (get-in @state [:run :corp-phase-43])
     ; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
     (do (swap! state dissoc :no-action)
+        (system-msg state :corp "wants to act before the run is successful")
         (show-wait-prompt state :runner "Corp's actions")
         (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
                      (fn [args-corp]
