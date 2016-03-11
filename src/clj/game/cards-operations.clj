@@ -422,9 +422,14 @@
    {:prompt "Choose a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
                          (or (is-type? % "Asset") (is-type? % "Upgrade")))}
-    :msg (msg "trash " (card-str state target) " and gain " (:trash target) " [Credits]")
-    :effect (effect (trash target)
-                    (gain :credit (:trash target)))}
+    :effect (req (let [c target]
+                   (trigger-event state side :pre-trash c)
+                   (let [tcost (trash-cost state side c)]
+                     (trash state side c)
+                     (gain state :corp :credit tcost)
+                     (resolve-ability state side
+                       {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
+                      card nil))))}
 
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"
