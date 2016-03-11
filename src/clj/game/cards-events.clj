@@ -26,9 +26,8 @@
     :effect (req (let [allcorp (->> (all-installed state :corp)
                                     (sort-by #(vec (:zone %)))
                                     (reverse))]
-                   (apply trigger-event state side :runner-trash allcorp)
                    (doseq [c allcorp]
-                     (trash state side c {:suppress-event true})))
+                     (trash state side c)))
 
                  ;; do hosted cards first so they don't get trashed twice
                  (doseq [c (all-installed state :runner)]
@@ -616,9 +615,8 @@
                        {:msg "trash all cards in the server at no cost"
                         :mandatory true
                         :effect (req (let [allcorp (get-in (:servers corp) (conj (:server run) :content))]
-                                       (apply trigger-event state side :runner-trash allcorp)
                                        (doseq [c allcorp]
-                                         (trash state side c {:suppress-event true}))))}} card))}
+                                         (trash state side c))))}} card))}
 
    "Social Engineering"
    {:prompt "Choose an unrezzed piece of ICE"
