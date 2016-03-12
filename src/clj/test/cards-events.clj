@@ -468,6 +468,43 @@
       (prompt-select :runner gd)
       (is (= 3 (get-in (refresh gd) [:counter])) "Surge does not trigger on Gorman Drip"))))
 
+(deftest test-run
+  "Test Run - Programs hosted after install get returned to Stack. Issue #1081"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Test Run" 2) (qty "Morning Star" 1)
+                               (qty "Knight" 1) (qty "Leprechaun" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-ice state :hq 0)]
+      (core/rez state :corp wrap)
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (core/move state :runner (find-card "Morning Star" (:hand (get-runner))) :discard)
+      (core/move state :runner (find-card "Knight" (:hand (get-runner))) :discard)
+      (let [ms (find-card "Morning Star" (:discard (get-runner)))]
+        (play-from-hand state :runner "Leprechaun")
+        (play-from-hand state :runner "Test Run")
+        (prompt-choice :runner "Heap")
+        (prompt-choice :runner ms)
+        (let [lep (get-in @state [:runner :rig :program 0])
+              ms (get-in @state [:runner :rig :program 1])]
+          (card-ability state :runner lep 1)
+          (prompt-select :runner ms)
+          (is (= "Morning Star" (:title (first (:hosted (refresh lep))))) "Morning Star hosted on Lep")
+          (take-credits state :runner)
+          (is (= "Morning Star" (:title (first (:deck (get-runner))))) "Morning Star returned to Stack from host")
+          (take-credits state :corp)
+          (let [kn (find-card "Knight" (:discard (get-runner)))]
+            (play-from-hand state :runner "Test Run")
+            (prompt-choice :runner "Heap")
+            (prompt-choice :runner kn)
+            (let [kn (get-in @state [:runner :rig :program 1])]
+              (card-ability state :runner kn 0)
+              (prompt-select :runner wrap)
+              (is (= "Knight" (:title (first (:hosted (refresh wrap))))) "Knight hosted on Wraparound")
+              (take-credits state :runner)
+              (is (= "Knight" (:title (first (:deck (get-runner))))) "Knight returned to Stack from host ICE"))))))))
+
 (deftest vamp
   "Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp"
   (do-game
