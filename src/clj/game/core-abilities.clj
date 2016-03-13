@@ -308,8 +308,8 @@
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
-  (when (= :waiting (-> @state side :prompt first :prompt-type))
-    (swap! state update-in [side :prompt] rest)))
+  (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (-> @state side :prompt))]
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
 (defn psi-game
