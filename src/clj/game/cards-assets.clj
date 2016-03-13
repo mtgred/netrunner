@@ -658,8 +658,10 @@
 
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault" :cost [:credit 1]
-                 :prompt "How many [Credits]?" :choices :credit :msg (msg "store " target " [Credits]")
-                 :effect (effect (add-prop card :counter target))}
+                 :prompt "How many [Credits]?" :choices {:number (req (- (:credit corp) 1))}
+                 :msg (msg "store " target " [Credits]")
+                 :effect (effect (lose :credit target)
+                                 (add-prop card :counter target))}
                 {:label "Move any number of [Credits] to your credit pool"
                  :cost [:click 1] :prompt "How many [Credits]?"
                  :choices :counter :msg (msg "gain " target " [Credits]")
