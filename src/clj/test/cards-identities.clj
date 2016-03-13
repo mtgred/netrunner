@@ -1,5 +1,20 @@
 (in-ns 'test.core)
 
+(deftest apex-facedown-console
+  "Apex - Allow facedown install of a second console. Issue #1326"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2)]))
+    (take-credits state :corp)
+    (prompt-choice :runner "Done") ; no facedown install on turn 1
+    (play-from-hand state :runner "Heartbeat")
+    (is (= 1 (count (get-in @state [:runner :rig :hardware]))))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
+
 (deftest argus-security
   "Argus Security - Runner chooses to take 1 tag or 2 meat damage when stealing an agenda"
   (do-game
