@@ -674,7 +674,7 @@
     :effect (req (add-prop state :runner target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a program from Stack or Heap?"
+   {:prompt "Install a program from your Stack or Heap?"
     :choices (cancellable ["Stack" "Heap"])
     :msg (msg "install a program from " target)
     :effect (effect (resolve-ability
@@ -684,12 +684,9 @@
                                              ((if (= target "Heap") :discard :deck) runner))))
                       :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
                       :end-turn
-                      {:req (req (some #(when (and (= (:cid target) (:cid %))
-                                                   (get-in % [:special :test-run])) %)
-                                       (get-in runner [:rig :program])))
-                       :msg (msg "move " (:title target) " on top of their Stack")
-                       :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
-                                                           (get-in runner [:rig :program]))
+                      {:req (req (find-cid (:cid target) (all-installed state :runner)))
+                       :msg (msg "move " (:title target) " to the top of their Stack")
+                       :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
                                           :deck {:front true}))}}
                      card targets))}
 
