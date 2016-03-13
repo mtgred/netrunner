@@ -202,12 +202,12 @@
    :effect (req (case target
                   "Unrezzed upgrade in HQ"
                   ;; accessing an unrezzed upgrade
-                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) cards)]
+                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) from-root)]
                     (if (= 1 (count unrezzed))
                       ;; only one unrezzed upgrade; access it and continue
                       (do (system-msg state side (str "accesses " (:title (first unrezzed))))
                           (handle-access state side unrezzed)
-                          (when (or (pos? from-hq) (< 1 (count from-hq)))
+                          (when (or (pos? from-hq) (< 1 (count from-root)))
                             (resolve-ability
                               state side (access-helper-hq from-hq
                                                            (filter #(not= (:cid %) (:cid (first unrezzed))) from-root)
@@ -237,10 +237,10 @@
                                          card nil)))
                   ;; accessing a rezzed upgrade
                   (do (system-msg state side (str "accesses " target))
-                      (handle-access state side [(some #(when (= (:title %) target) %) cards)])
-                      (when (or (pos? from-hq) (< 1 (count from-hq)))
+                      (handle-access state side [(some #(when (= (:title %) target) %) from-root)])
+                      (when (or (pos? from-hq) (< 1 (count from-root)))
                         (resolve-ability state side (access-helper-hq from-hq
-                                                                      (remove-once #(not= (:title %) target) cards)
+                                                                      (remove-once #(not= (:title %) target) from-root)
                                                                       already-accessed) card nil)))))})
 
 (defmethod choose-access :hq [cards server]

@@ -72,6 +72,16 @@
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
+   "CBI Raid"
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
+                              {:msg "force the Corp to add all cards in HQ to the top of R&D"
+                               :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
+                                            (prompt! state :corp card
+                                                    (str "Click Done when finished moving cards from HQ to R&D")
+                                                    ["Done"]
+                                                    {:effect (effect (clear-wait-prompt :runner))}))}} card))}
+
    "Code Siphon"
    {:effect (effect (run :rd
                          {:replace-access

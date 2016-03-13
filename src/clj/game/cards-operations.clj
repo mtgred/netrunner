@@ -192,13 +192,15 @@
    {:prompt "Choose a faceup card"
     :choices {:req rezzed?}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-prop :corp target :advance-counter 3 {:placed true})
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state side card]
-                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
-                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                          true))))}
+    :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
+                 (let [tgtcid (:cid target)]
+                   (register-turn-flag! state side
+                     target :can-score
+                     (fn [state side card]
+                       (if (and (= (:cid card) tgtcid)
+                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                         ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                         true)))))}
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
@@ -420,9 +422,14 @@
    {:prompt "Choose a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
                          (or (is-type? % "Asset") (is-type? % "Upgrade")))}
-    :msg (msg "trash " (card-str state target) " and gain " (:trash target) " [Credits]")
-    :effect (effect (trash target)
-                    (gain :credit (:trash target)))}
+    :effect (req (let [c target]
+                   (trigger-event state side :pre-trash c)
+                   (let [tcost (trash-cost state side c)]
+                     (trash state side c)
+                     (gain state :corp :credit tcost)
+                     (resolve-ability state side
+                       {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
+                      card nil))))}
 
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"

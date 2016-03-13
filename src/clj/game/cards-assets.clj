@@ -379,17 +379,16 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Lakshmi Smartfabrics"
-   {:events {:rez {:req (req (not= (:cid card) (:cid target)))
-                   :effect (effect (add-prop card :counter 1))}}
+   {:events {:rez {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
-                                              (= (get card :counter 0) (:agendapoints %))) (:hand corp))))
+                                              (>= (get card :counter 0) (:agendapoints %))) (:hand corp))))
                  :label "X power counters: Reveal an agenda worth X points from HQ"
                  :effect (req (let [c (:counter card)]
                                 (resolve-ability
                                   state side
-                                  {:prompt "Choose an agenda in HQ"
+                                  {:prompt "Choose an agenda in HQ to reveal"
                                    :choices {:req #(and (is-type? % "Agenda")
-                                                        (= c (:agendapoints %)))}
+                                                        (>= c (:agendapoints %)))}
                                    :msg (msg "reveal " (:title target) " from HQ")
                                    :effect (req (let [title (:title target)
                                                       pts (:agendapoints target)]

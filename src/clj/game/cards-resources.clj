@@ -472,7 +472,8 @@
                  :effect (req (move state side target :hand)
                               (if (= target (first (:deck runner)))
                                 (move state side (second (:deck runner)) :deck)
-                                (move state side (first (:deck runner)) :deck)))}]}
+                                (move state side (first (:deck runner)) :deck))
+                              (trigger-event state side :runner-draw))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability
