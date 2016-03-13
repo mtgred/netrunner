@@ -153,8 +153,10 @@
                  (when (= install-state :rezzed)
                    (rez state side moved-card))
                  (when (= install-state :face-up)
-                   (card-init state side
-                              (assoc (get-card state moved-card) :rezzed true :seen true) false))
+                   (if (:install-state cdef)
+                     (card-init state side
+                                (assoc (get-card state moved-card) :rezzed true :seen true) false)
+                     (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
                  (when-let [dre (:derezzed-events cdef)]
                    (when-not (:rezzed (get-card state moved-card))
                      (register-events state side dre moved-card))))))
