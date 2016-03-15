@@ -42,7 +42,7 @@
                        (gain state :runner :memory (:memoryunits c))))))}
 
    "Blackmail"
-   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req runnable-servers)
+   {:req (req has-bad-pub) :prompt "Choose a server" :choices (req runnable-servers)
     :msg "prevent ICE from being rezzed during this run"
     :effect (effect (register-run-flag!
                       card
