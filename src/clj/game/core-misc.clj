@@ -69,8 +69,7 @@
   (if (= side :runner)
     (let [top-level-cards (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))
           hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
-      (concat top-level-cards
-              (filter #(= (:side %) "Runner") hosted-on-ice))
+      (concat top-level-cards (filter #(= (:side %) "Runner") hosted-on-ice))
       (loop [unchecked top-level-cards installed ()]
         (if (empty? unchecked)
           (filter :installed installed)
