@@ -696,7 +696,7 @@
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
                                       hand-size-base hand-size-modification]} owner]
   (om/component
    (sab/html
@@ -707,7 +707,7 @@
        [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str bad-publicity " Bad Publicity")
+       [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity") (when (or (pos? bad-publicity) (pos? has-bad-pub)) [:div.warning "!"])
         (when me? (controls :bad-publicity))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
