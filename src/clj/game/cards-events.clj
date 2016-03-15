@@ -682,7 +682,7 @@
                                              ((if (= target "Heap") :discard :deck) runner))))
                       :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
                       :end-turn
-                      {:req (req (find-cid (:cid target) (all-installed state :runner)))
+                      {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
                        :msg (msg "move " (:title target) " to the top of their Stack")
                        :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
                                           :deck {:front true}))}}
