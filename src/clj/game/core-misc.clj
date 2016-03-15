@@ -79,8 +79,12 @@
     (let [servers (->> (:corp @state) :servers seq flatten)
           content (mapcat :content servers)
           ice (mapcat :ices servers)
-          hosted-on-content (mapcat :hosted content)]
-      (concat ice content hosted-on-content))))
+          top-level-cards (concat ice content)]
+      (loop [unchecked top-level-cards installed ()]
+        (if (empty? unchecked)
+          installed
+          (let [[card & remaining] unchecked]
+            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))))
 
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
