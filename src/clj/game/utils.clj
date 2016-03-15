@@ -118,6 +118,9 @@
 (defn other-side [side]
   (if (= side :corp) :runner :corp))
 
+(defn side-str [side]
+  (if (= side :corp) "Corp" "Runner"))
+
 ; Functions for working with zones.
 (defn remote->name [zone]
   "Converts a remote zone to a string"

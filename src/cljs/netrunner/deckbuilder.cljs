@@ -190,6 +190,7 @@
                                            (case (:code (:card card))
                                              (list
                                                "10013" ; Heritage Committee
+                                               "10029" ; Product Recall
                                                "10067" ; Jeeves Model Bioroids
                                                "10068" ; Raman Rai
                                                "10071" ; Salem's Hospitality
@@ -200,6 +201,8 @@
                                              (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
                                              "10019" ; Museum of History
                                              (<= 50 (card-count cards))
+                                             "10038" ; PAD Factory
+                                             (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
                                              "10076" ; Mumbad Virtual Tour
                                              (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
                                              false))
@@ -270,8 +273,8 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [card]
   (let [cid (js/parseInt (:code card))]
-    ;; Cards up to Kala Ghoda are currently released
-    (and cid (<= cid 10019))))
+    ;; Cards up to Business First are currently released
+    (and cid (<= cid 10038))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."

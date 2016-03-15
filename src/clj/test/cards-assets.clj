@@ -400,6 +400,33 @@
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
 
+(deftest sealed-vault
+  "Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click"
+  (do-game
+    (new-game (default-corp [(qty "Sealed Vault" 1) (qty "Hedge Fund" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Sealed Vault" "New remote")
+    (play-from-hand state :corp "Hedge Fund")
+    (let [sv (get-content state :remote1 0)]
+      (core/rez state :corp sv)
+      (card-ability state :corp sv 0)
+      (prompt-choice :corp 8)
+      (is (= 8 (:counter (refresh sv))) "8 credits stored on Sealed Vault")
+      (is (= 0 (:credit (get-corp))))
+      (card-ability state :corp sv 1)
+      (prompt-choice :corp 8)
+      (is (= 0 (:counter (refresh sv))) "Credits removed from Sealed Vault")
+      (is (= 8 (:credit (get-corp))))
+      (is (= 0 (:click (get-corp))) "Spent a click")
+      (card-ability state :corp sv 0)
+      (prompt-choice :corp 7)
+      (is (= 7 (:counter (refresh sv))) "7 credits stored on Sealed Vault")
+      (is (= 0 (:credit (get-corp))))
+      (card-ability state :corp sv 2)
+      (prompt-choice :corp 7)
+      (is (= 7 (:credit (get-corp))))
+      (is (= 2 (count (:discard (get-corp)))) "Sealed Vault trashed"))))
+
 (deftest snare-cant-afford
   "Snare! - Can't afford"
   (do-game

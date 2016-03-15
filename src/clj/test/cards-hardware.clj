@@ -122,9 +122,9 @@
         (is (= 4 (:credit (get-runner))))
         (run-successful state)
         (prompt-choice :corp "Yes") ; pay 3 to fire Overwriter
-        (prompt-choice :runner "Yes") ; trash Overwriter for 0 to get to prevention prompt
         (card-ability state :runner ff 1)
         (prompt-choice :runner "Done")
+        (prompt-choice :runner "Yes") ; trash Overwriter for 0
         (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-in @state [:runner :rig :hardware])) "Feedback Filter trashed")))))

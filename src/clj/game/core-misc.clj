@@ -67,10 +67,16 @@
   but not including 'inactive hosting' like Personal Workshop."
   [state side]
   (if (= side :runner)
-    (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))]
-      (concat installed (filter :installed (mapcat :hosted installed))))
-    (let [servers (->> (:corp @state) :servers seq flatten)]
-      (concat (mapcat :content servers) (mapcat :ices servers)))))
+    (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))
+          hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
+      (concat installed
+              (filter :installed (mapcat :hosted installed))
+              (filter #(= (:side %) "Runner") hosted-on-ice)))
+    (let [servers (->> (:corp @state) :servers seq flatten)
+          content (mapcat :content servers)
+          ice (mapcat :ices servers)
+          hosted-on-content (mapcat :hosted content)]
+      (concat ice content hosted-on-content))))
 
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,

@@ -43,7 +43,7 @@
    (unregister-events state side card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
-   (when (:installed card)
+   (when (find-cid (:cid card) (all-installed state side))
      (when-let [in-play (:in-play (card-def card))]
        (apply lose state side in-play)))
    (dissoc-card card keep-counter)))
@@ -153,8 +153,10 @@
                  (when (= install-state :rezzed)
                    (rez state side moved-card))
                  (when (= install-state :face-up)
-                   (card-init state side
-                              (assoc (get-card state moved-card) :rezzed true :seen true) false))
+                   (if (:install-state cdef)
+                     (card-init state side
+                                (assoc (get-card state moved-card) :rezzed true :seen true) false)
+                     (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
                  (when-let [dre (:derezzed-events cdef)]
                    (when-not (:rezzed (get-card state moved-card))
                      (register-events state side dre moved-card))))))
@@ -167,7 +169,7 @@
    Checks uniqueness of card and installed console"
   [state side {:keys [uniqueness] :as card} facedown]
   (and (or (not uniqueness) (not (in-play? state card)) facedown) ; checks uniqueness
-       (or (not (has-subtype? card "Console"))
+       (or (not (and (has-subtype? card "Console") (not facedown)))
            (not (some #(has-subtype? % "Console") (all-installed state :runner)))) ; console check
        (if-let [req (:req (card-def card))]
          (or facedown (req state side card nil)) ; checks req for install

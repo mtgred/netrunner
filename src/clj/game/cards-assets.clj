@@ -180,10 +180,10 @@
               :once-key :daily-business-show
               :req (req (first-event state side :corp-draw))
               :effect (req
-                        (let [dbs (->> (:corp @state) :servers seq flatten (mapcat :content)
-                                       (filter #(and (:rezzed %) (= (:title %) "Daily Business Show")))  count)
+                        (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
+                                                  (all-installed state :corp))) 
                               newcards (take dbs (:deck corp))
-                              drawn (conj newcards (last (:hand corp)))]
+                              drawn (concat newcards (take-last target (:hand corp)))]
                           (doseq [c newcards] (move state side c :hand))
                           (resolve-ability
                             state side
@@ -379,17 +379,16 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Lakshmi Smartfabrics"
-   {:events {:rez {:req (req (not= (:cid card) (:cid target)))
-                   :effect (effect (add-prop card :counter 1))}}
+   {:events {:rez {:effect (effect (add-prop card :counter 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
-                                              (= (get card :counter 0) (:agendapoints %))) (:hand corp))))
+                                              (>= (get card :counter 0) (:agendapoints %))) (:hand corp))))
                  :label "X power counters: Reveal an agenda worth X points from HQ"
                  :effect (req (let [c (:counter card)]
                                 (resolve-ability
                                   state side
-                                  {:prompt "Choose an agenda in HQ"
+                                  {:prompt "Choose an agenda in HQ to reveal"
                                    :choices {:req #(and (is-type? % "Agenda")
-                                                        (= c (:agendapoints %)))}
+                                                        (>= c (:agendapoints %)))}
                                    :msg (msg "reveal " (:title target) " from HQ")
                                    :effect (req (let [title (:title target)
                                                       pts (:agendapoints target)]
@@ -659,8 +658,10 @@
 
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault" :cost [:credit 1]
-                 :prompt "How many [Credits]?" :choices :credit :msg (msg "store " target " [Credits]")
-                 :effect (effect (add-prop card :counter target))}
+                 :prompt "How many [Credits]?" :choices {:number (req (- (:credit corp) 1))}
+                 :msg (msg "store " target " [Credits]")
+                 :effect (effect (lose :credit target)
+                                 (add-prop card :counter target))}
                 {:label "Move any number of [Credits] to your credit pool"
                  :cost [:click 1] :prompt "How many [Credits]?"
                  :choices :counter :msg (msg "gain " target " [Credits]")

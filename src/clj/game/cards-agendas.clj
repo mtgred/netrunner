@@ -295,7 +295,7 @@
    {:effect (req (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
                                 :effect (effect (ice-strength-bonus 1 target))}
-             :pre-init-trace {:req (req (ice? target))
+             :pre-init-trace {:req (req (has-subtype? target "Tracer"))
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
@@ -340,6 +340,7 @@
                :prompt "Install a card from HQ in a new remote?"
                :yes-ability {:prompt "Choose a card in HQ to install"
                              :choices {:req #(and (not (is-type? % "Operation"))
+                                                  (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
                                                   (in-hand? %))}
                              :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
