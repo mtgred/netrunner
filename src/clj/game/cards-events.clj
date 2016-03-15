@@ -90,6 +90,11 @@
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
+   "Corporate Scandal"
+   {:msg "give the Corp 1 additional bad publicity"
+    :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
+    :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
+
    "Cyber Threat"
    {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (req (let [serv target
