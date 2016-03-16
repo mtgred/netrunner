@@ -26,7 +26,7 @@
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                                 :choices {:req #(and (= (:side %) "Runner") (:installed %) (not= (:cid card) (:cid %)))}
+                                 :choices {:req #(and (card-is? % :side :runner) (installed? %) (not (card-is? % :cid (:cid card))))}
                                  :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}
                                card nil))}]}
 
