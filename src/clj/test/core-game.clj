@@ -231,7 +231,7 @@
             (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
             (is (not-empty (filter #(= (:title %) "Omni-Drive") all-installed)) "Omni-Drive is in all-installed")
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
-            (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corrder is not in all-installed")))))))
+            (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
 (deftest counter-manipulation-commands
   "Test interactions of various cards with /counter and /adv-counter commands"
