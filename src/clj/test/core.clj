@@ -11,20 +11,25 @@
 
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  [corp runner]
-  (let [states (core/init-game
-                 {:gameid 1
-                  :players [{:side "Corp"
-                             :deck {:identity (load-card (:identity corp))
-                                    :cards (:deck corp)}}
-                            {:side "Runner"
-                             :deck {:identity (load-card (:identity runner))
-                                    :cards (:deck runner)}}]})
-        state (second (last states))]
-    (core/resolve-prompt state :corp {:choice "Keep"})
-    (core/resolve-prompt state :runner {:choice "Keep"})
-    (core/start-turn state :corp nil)
-    state))
+  ([corp runner] (new-game corp runner nil))
+  ([corp runner {:keys [mulligan] :as args}]
+    (let [states (core/init-game
+                   {:gameid 1
+                    :players [{:side "Corp"
+                               :deck {:identity (load-card (:identity corp))
+                                      :cards (:deck corp)}}
+                              {:side "Runner"
+                               :deck {:identity (load-card (:identity runner))
+                                      :cards (:deck runner)}}]})
+          state (second (last states))]
+      (if (#{:both :corp} mulligan)
+        (core/mulligan state :corp nil)
+        (core/resolve-prompt state :corp {:choice "Keep"}))
+      (if (#{:both :runner} mulligan)
+        (core/mulligan state :runner nil)
+        (core/resolve-prompt state :runner {:choice "Keep"}))
+      (core/start-turn state :corp nil)
+      state)))
 
 
 ;;; Card related functions

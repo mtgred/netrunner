@@ -239,7 +239,19 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content])))
           "Project Atlas not trashed from Server 3"))))
 
-(deftest freelance-coding-contract
+(deftest employee-strike-blue-sun
+  "Employee Strike - vs Blue Sun, suppress Step 1.2"
+  (do-game
+    (new-game (make-deck "Blue Sun: Powering the Future" [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
+
+    (deftest freelance-coding-contract
   "Freelance Coding Contract - Gain 2 credits per program trashed from Grip"
   (do-game
     (new-game (default-corp)
