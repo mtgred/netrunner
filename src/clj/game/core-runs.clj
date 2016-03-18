@@ -427,15 +427,17 @@
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
   [state side args]
   (if (get-in @state [:run :corp-phase-43])
-    ; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
+    ;; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
     (do (swap! state dissoc :no-action)
         (system-msg state :corp "wants to act before the run is successful")
         (show-wait-prompt state :runner "Corp's actions")
         (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
                      (fn [args-corp]
                        (clear-wait-prompt state :runner)
-                       (show-prompt state :runner nil "The run is now successful" ["Continue"]
-                                    (fn [args-runner] (successful-run-trigger state :runner))))
+                       (if-not (:ended (:run @state))
+                        (show-prompt state :runner nil "The run is now successful" ["Continue"]
+                                     (fn [args-runner] (successful-run-trigger state :runner)))
+                        (handle-end-run state side)))
                      {:priority -1}))
     (successful-run-trigger state side)))
 

@@ -227,6 +227,24 @@
         (core/score state :corp {:card (refresh napd)})
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
+(deftest nisei-mk-ii-step-43
+  "Nisei MK II - Remove hosted counter to ETR, check this works in 4.3"
+  (do-game
+   (new-game (default-corp [(qty "Nisei MK II" 1)])
+             (default-runner))
+   (play-from-hand state :corp "Nisei MK II" "New remote")
+   (score-agenda state :corp (get-content state :remote1 0))
+   (let [scored-nisei (get-in @state [:corp :scored 0])]
+     (is (= 1 (:counter scored-nisei)) "Scored Nisei has one counter")
+     (take-credits state :corp)
+     
+     (run-on state "HQ")
+     (run-phase-43 state)
+     (card-ability state :corp (refresh scored-nisei) 0)
+     (prompt-choice :corp "Done") ; close 4.3 corp
+     (is (not (:run @state)) "Run ended by using Nisei counter")
+     (is (= 0 (:counter (refresh scored-nisei))) "Scored Nisei has no counters"))))
+
 (deftest oaktown-renovation
   "Oaktown Renovation - Installed face up, gain credits with each conventional advancement"
   (do-game
