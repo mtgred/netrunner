@@ -707,7 +707,7 @@
        [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity") (when (or (pos? bad-publicity) (pos? has-bad-pub)) [:div.warning "!"])
+       [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
         (when me? (controls :bad-publicity))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
