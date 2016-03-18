@@ -155,6 +155,30 @@
         (prompt-choice :runner "Done")
         (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn")))))
 
+(deftest trash-remove-per-turn-restriction
+  "Trashing a card should remove it from [:per-turn] - Issue #1345"
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Imp" 1) (qty "Scavenge" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
+      (prompt-choice :runner "OK")
+      (play-from-hand state :runner "Scavenge")
+      (prompt-select :runner imp)
+      (prompt-select :runner (find-card "Imp" (:discard (get-runner))))
+      (is (= 2 (:counter (refresh imp))) "Reinstalled Imp has 2 counters")
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn"))))
+
 (deftest trash-seen-and-unseen
   "Trash installed assets that are both seen and unseen by runner"
   (do-game

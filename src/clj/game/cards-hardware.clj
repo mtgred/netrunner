@@ -290,7 +290,7 @@
     :prevent {:damage [:meat :net :brain]}
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                 :priority true
+                 :priority 50
                  :effect (effect (trash target {:cause :ability-cost})
                                  (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
@@ -358,12 +358,13 @@
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
-                   :priority true
+                   :priority 50
                    :choices {:req #(and (is-type? % "Program")
                                         (in-hand? %))}
-                   :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
-                                                                       (damage-prevent :brain 1)
-                                                                       (damage-prevent :net 1))}]})
+                   :prompt "Choose a program to trash from your Grip"
+                   :effect (effect (trash target)
+                                   (damage-prevent :brain 1)
+                                   (damage-prevent :net 1))}]})
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
@@ -487,7 +488,7 @@
    {:prevent {:damage [:net :brain]}
     :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose how much damage to prevent" :priority true
+                                  {:prompt "Choose how much damage to prevent" :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
                                    :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)

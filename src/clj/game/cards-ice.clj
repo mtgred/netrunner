@@ -379,7 +379,7 @@
    {:prompt "How many power counters?"
     :choices :credit
     :msg (msg "add " target " power counters")
-    :effect (effect (set-prop card :counter target)
+    :effect (effect (add-prop card :counter target)
                     (update-ice-strength card))
     :strength-bonus (req (or (:counter card) 0))
     :abilities [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"

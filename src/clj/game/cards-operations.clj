@@ -429,7 +429,8 @@
                      (gain state :corp :credit tcost)
                      (resolve-ability state side
                        {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
-                      card nil))))}
+                      card nil)
+                     (swap! state update-in [:bonus] dissoc :trash))))}
 
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"

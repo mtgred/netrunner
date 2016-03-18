@@ -505,6 +505,26 @@
               (take-credits state :runner)
               (is (= "Knight" (:title (first (:deck (get-runner))))) "Knight returned to Stack from host ICE"))))))))
 
+(deftest test-run-scavenge
+  "Test Run - Make sure program remains installed if Scavenged"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Test Run" 1) (qty "Morning Star" 1) (qty "Scavenge" 1)]))
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Morning Star" (:hand (get-runner))) :discard)
+    (play-from-hand state :runner "Test Run")
+    (let [ms (find-card "Morning Star" (:discard (get-runner)))]
+      (prompt-choice :runner "Heap")
+      (prompt-choice :runner ms)
+      (is (= 2 (:credit (get-runner))) "Program installed for free")
+      (let [ms (get-in @state [:runner :rig :program 0])]
+        (play-from-hand state :runner "Scavenge")
+        (prompt-select :runner ms)
+        (prompt-select :runner (find-card "Morning Star" (:discard (get-runner))))
+        (take-credits state :runner)
+        (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
+        (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
+
 (deftest vamp
   "Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp"
   (do-game
