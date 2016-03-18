@@ -70,6 +70,12 @@
 (defn clear-turn-register! [state]
   (swap! state assoc-in [:stack :current-turn] nil))
 
+(defn clear-turn-flag!
+  "Remove any entry associated with card for the given flag"
+  [state side card flag]
+  (swap! state update-in [:stack :current-turn flag]
+         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+
 (defn register-persistent-flag!
   "A flag that persists until cleared."
   [state side card flag condition]
