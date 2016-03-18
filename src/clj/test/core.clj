@@ -23,10 +23,10 @@
                                       :cards (:deck runner)}}]})
           state (second (last states))]
       (if (#{:both :corp} mulligan)
-        (core/mulligan state :corp nil)
+        (core/resolve-prompt state :corp {:choice "Mulligan"})
         (core/resolve-prompt state :corp {:choice "Keep"}))
       (if (#{:both :runner} mulligan)
-        (core/mulligan state :runner nil)
+        (core/resolve-prompt state :runner {:choice "Mulligan"})
         (core/resolve-prompt state :runner {:choice "Keep"}))
       (core/start-turn state :corp nil)
       state)))

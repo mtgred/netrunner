@@ -157,7 +157,7 @@
                        :choices {:req #(and (installed? %) (ice? %))}
                        :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}]
               {:runner-turn-begins fap
-               :pre-start-game {:effect draft-points-target})}
+               :pre-start-game {:effect draft-points-target}})}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
