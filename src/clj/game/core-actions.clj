@@ -170,9 +170,11 @@
 (defn do-purge
   "Purge viruses."
   [state side args]
-  (when (pay state side nil :click 3)
-    (system-msg state side "purges viruses")
-    (purge state side)))
+  (when-let [cost (pay state side nil :click 3)]
+    (purge state side)
+    (let [spent (build-spend-msg cost "purge")
+          message (str spent "all virus counters")]
+      (system-msg state side message))))
 
 (defn rez
   "Rez a corp card."
@@ -224,8 +226,11 @@
 (defn advance
   "Advance a corp card that can be advanced."
   [state side {:keys [card]}]
-  (when (pay state side card :click 1 :credit 1)
-    (system-msg state side (str "advances " (card-str state card)))
+  (when-let [cost (pay state side card :click 1 :credit 1)]
+    (let [spent   (build-spend-msg cost "advance")
+          card    (card-str state card)
+          message (str spent card)]
+      (system-msg state side message))
     (update-advancement-cost state side card)
     (add-prop state side (get-card state card) :advance-counter 1)))
 
@@ -268,9 +273,11 @@
   (when (and (not (get-in @state [:runner :register :cannot-run]))
              (can-run-server? state server)
              (can-pay? state :runner "a run" :click 1))
-    (system-msg state :runner (str "makes a run on " server))
     (run state side server)
-    (pay state :runner nil :click 1)))
+    (let [cost (pay state :runner nil :click 1)
+          spent (build-spend-msg cost "make a run on")
+          message (str spent server)]
+      (system-msg state :runner message))))
 
 (defn remove-tag
   "Click to remove a tag."

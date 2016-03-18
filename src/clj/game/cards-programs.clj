@@ -148,7 +148,10 @@
     :choices (req servers)
     :effect (effect (update! (assoc card :named-target target)))
     :leave-play (effect (update! (dissoc card :named-target)))
-    :events {:purge {:effect (effect (trash card))}}}
+    :events {:purge {:effect (effect (trash card))}
+             :pre-corp-install {:req (req (let [serv (:server (second targets))]
+                                            (= serv (:named-target card))))
+                                :effect (effect (install-cost-bonus [:credit 1]))}}}
 
    "Djinn"
    {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"

@@ -1,5 +1,20 @@
 (in-ns 'test.core)
 
+(deftest apex-facedown-console
+  "Apex - Allow facedown install of a second console. Issue #1326"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2)]))
+    (take-credits state :corp)
+    (prompt-choice :runner "Done") ; no facedown install on turn 1
+    (play-from-hand state :runner "Heartbeat")
+    (is (= 1 (count (get-in @state [:runner :rig :hardware]))))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
+
 (deftest argus-security
   "Argus Security - Runner chooses to take 1 tag or 2 meat damage when stealing an agenda"
   (do-game
@@ -62,6 +77,28 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest haarpsichord-studios
+  "Haarpsichord Studios - Prevent stealing more than 1 agenda per turn"
+  (do-game
+    (new-game
+      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+      (default-runner [(qty "Gang Sign" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))))
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Second steal of turn prevented")
+    (take-credits state :runner)
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [gs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner gs 0)
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn"))))
+
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"
   (do-game
@@ -72,6 +109,56 @@
     (let [eli (get-ice state :archives 0)]
       (core/rez state :corp eli)
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+
+(deftest hayley-kaplan
+  "Hayley Kaplan - Complicated install triggers at end of opponent's turn"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Hayley Kaplan: Universal Scholar" [(qty "Street Peddler" 1) (qty "Daily Casts" 1) (qty "Gang Sign" 3)
+                                                     (qty "Clone Chip" 1) (qty "Multithreader" 2) (qty "Study Guide" 1)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Daily Casts" "Clone Chip" "Multithreader" "Multithreader"
+                                  "Study Guide"])
+    (trash-from-hand state :runner "Multithreader")
+    (play-from-hand state :runner "Street Peddler")
+    (prompt-choice :runner "No")
+    (play-from-hand state :runner "Clone Chip")
+    (play-from-hand state :runner "Study Guide")
+    (take-credits state :runner)
+    (core/gain state :runner :credit 7)
+    (core/request-phase-32 state :runner nil)
+    (core/end-turn state :corp nil)
+    (is (not (:end-turn @state)) "Corp turn has not ended")
+    (card-ability state :runner (-> (get-runner) :rig :hardware first) 0)
+    (prompt-select :runner (first (:discard (get-runner))))
+    (prompt-choice :runner "Yes")
+    (prompt-select :runner (find-card "Multithreader" (:hand (get-runner))))
+    (let [sg (-> (get-runner) :rig :program first)
+          mt1 (-> (get-runner) :rig :program second)
+          mt2 (-> (get-runner) :rig :program next second)
+          sp (-> (get-runner) :rig :resource first)]
+      (is (and sp sg mt1 mt2) "Street Peddler, Study Guide and 2x Multithreaders installed")
+      (card-ability state :runner mt1 0)
+      (card-ability state :runner mt1 0)
+      (card-ability state :runner mt2 0)
+      (card-ability state :runner mt2 0)
+      (card-ability state :runner sg 1)
+      (card-ability state :runner sg 1)
+      (is (= 2 (:current-strength (refresh sg))) "Study Guide at strength 2")
+      (is (= 0 (:rec-counter (refresh mt1))) "Multithreader credits spent")
+      (prompt-choice :runner "Done")
+      (prompt-choice :corp "Done")
+      (is (:end-turn @state) "Corp turn ended")
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (first (:hosted sp)))
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "Daily Casts" (:hand (get-runner))))
+      (is (find-card "Daily Casts" (:resource (:rig (get-runner)))) "Daily Casts installed by Haley")
+      (is (= 0 (:credit (get-runner))) "Runner has 0 credits before start of turn")
+      (core/start-turn state :runner nil)
+      (is (= 2 (:credit (get-runner))) "Runner has 2 credits after start of turn")
+      (is (= 2 (:rec-counter (refresh mt1))) "Multithreaders regained credits"))))
 
 (deftest iain-stirling-credits
   "Iain Stirling - Gain 2 credits when behind"

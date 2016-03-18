@@ -173,7 +173,7 @@
         ;; checks card ID against list of currently known alliance cards
         has-alliance-subtype? (fn [card]
                                 (case (:code (:card card))
-                                  (list "10013" "10018" "10019" "10067" "10068" "10071" "10072" "10076" "10109")
+                                  (list "10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10109")
                                   true
                                   false))
         ;; alliance helper, subtracts influence of free ally cards from given influence map
@@ -190,6 +190,7 @@
                                            (case (:code (:card card))
                                              (list
                                                "10013" ; Heritage Committee
+                                               "10029" ; Product Recall
                                                "10067" ; Jeeves Model Bioroids
                                                "10068" ; Raman Rai
                                                "10071" ; Salem's Hospitality
@@ -200,6 +201,8 @@
                                              (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
                                              "10019" ; Museum of History
                                              (<= 50 (card-count cards))
+                                             "10038" ; PAD Factory
+                                             (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
                                              "10076" ; Mumbad Virtual Tour
                                              (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
                                              false))
@@ -270,8 +273,8 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [card]
   (let [cid (js/parseInt (:code card))]
-    ;; Cards up to Kala Ghoda are currently released
-    (and cid (<= cid 10019))))
+    ;; Cards up to Business First are currently released
+    (and cid (<= cid 10038))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
@@ -292,15 +295,44 @@
   (go (<! (timeout 500))
       (-> owner (om/get-node "deckname") js/$ .select)))
 
-(defn new-deck [side owner]
-  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
-  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-  (edit-deck owner))
-
 (defn end-edit [owner]
   (om/set-state! owner :edit false)
   (om/set-state! owner :query "")
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
+
+(defn handle-edit [owner]
+  (let [text (.-value (om/get-node owner "deck-edit"))]
+    (om/set-state! owner :deck-edit text)
+    (om/set-state! owner
+                   [:deck :cards]
+                   (parse-deck (om/get-state owner [:deck :identity :side])
+                               text))))
+
+(defn delete-deck [owner]
+  (om/set-state! owner :delete true)
+  (deck->str owner)
+  (-> owner (om/get-node "viewport") js/$ (.addClass "delete"))
+  (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e)))
+
+(defn end-delete [owner]
+  (om/set-state! owner :delete false)
+  (-> owner (om/get-node "viewport") js/$ (.removeClass "delete")))
+
+(defn handle-delete [cursor owner]
+  (authenticated
+   (fn [user]
+     (let [deck (om/get-state owner :deck)]
+       (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
+       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
+       (do
+         (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
+         (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))
+         (end-delete owner))))))
+
+(defn new-deck [side owner]
+  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
+  (edit-deck owner))
 
 (defn save-deck [cursor owner]
   (authenticated
@@ -316,30 +348,6 @@
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
-
-(defn match [identity query]
-  (if (empty? query)
-    []
-    (let [cards (->> (:cards @app-state)
-                     (filter #(and (allowed? % identity)
-                                   (not= "Special" (:setname %))
-                                   (alt-art? %)))
-                     (distinct-by :title))]
-      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
-
-(defn handle-edit [owner]
-  (let [text (.-value (om/get-node owner "deck-edit"))]
-    (om/set-state! owner :deck-edit text)
-    (om/set-state! owner [:deck :cards] (parse-deck (om/get-state owner [:deck :identity :side]) text))))
-
-(defn handle-delete [cursor owner]
-  (authenticated
-   (fn [user]
-     (let [deck (om/get-state owner :deck)]
-       (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
-       (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
-       (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
@@ -421,6 +429,16 @@
              "</section></deck>")
         blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
     (.createObjectURL js/URL blob)))
+
+(defn match [identity query]
+  (if (empty? query)
+    []
+    (let [cards (->> (:cards @app-state)
+                     (filter #(and (allowed? % identity)
+                                   (not= "Special" (:setname %))
+                                   (alt-art? %)))
+                     (distinct-by :title))]
+      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
@@ -547,16 +565,23 @@
           [:div.decklist
            (when-let [deck (:deck state)]
              (let [identity (:identity deck)
-                   cards (:cards deck)]
+                   cards (:cards deck)
+                   edit? (:edit state)
+                   delete? (:delete state)]
                [:div
-                (if (:edit state)
-                  [:div.button-bar
-                   [:button {:on-click #(save-deck cursor owner)} "Save"]
-                   [:button {:on-click #(end-edit owner)} "Cancel"]]
-                  [:div.button-bar
-                   [:button {:on-click #(edit-deck owner)} "Edit"]
-                   [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                   [:a.button {:href (octgn-link owner) :download (str (:name deck) ".o8d")} "OCTGN Export"]])
+                (cond
+                  edit? [:div.button-bar
+                         [:button {:on-click #(save-deck cursor owner)} "Save"]
+                         [:button {:on-click #(end-edit owner)} "Cancel"]]
+                  delete? [:div.button-bar
+                           [:button {:on-click #(handle-delete cursor owner)} "Confirm Delete"]
+                           [:button {:on-click #(end-delete owner)} "Cancel"]]
+                  :else [:div.button-bar
+                         [:button {:on-click #(edit-deck owner)} "Edit"]
+                         [:button {:on-click #(delete-deck owner)} "Delete"]
+                         [:a.button {:href (octgn-link owner)
+                                     :download (str (:name deck) ".o8d")}
+                          "OCTGN Export"]])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]

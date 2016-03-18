@@ -144,7 +144,8 @@
                                  (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
                                       " " (name type) " damage")
                                  "will not prevent damage"))
-                   (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))))
+                   (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
+               {:priority 10}))
          (resolve-damage state side type n args))))))
 
 
@@ -190,7 +191,8 @@
                                  (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                       (if (< 1 prevent) " tags" " tag"))
                                  "will not avoid tags"))
-                   (resolve-tag state side (max 0 (- n (or prevent 0))) args)))))
+                   (resolve-tag state side (max 0 (- n (or prevent 0))) args)))
+               {:priority 10}))
          (resolve-tag state side n args))))))
 
 
@@ -208,7 +210,8 @@
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card (cons cause targets)))))
+      (resolve-ability state side trash-effect moved-card (cons cause targets)))
+    (swap! state update-in [:per-turn] dissoc (:cid moved-card))))
 
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."
@@ -234,7 +237,8 @@
                                   (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
                                       (swap! state update-in [:trash :trash-prevent] dissoc ktype))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                      (apply resolve-trash state side card args targets))))))
+                                      (apply resolve-trash state side card args targets))))
+                              {:priority 10}))
              ;; No prevention effects; resolve the trash.
              (apply resolve-trash state side card args targets))))))))
 

@@ -276,10 +276,11 @@
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:effect (req (system-msg state :runner (str "can access cards in HQ by clicking on Gang Sign"))
+   {:events {:agenda-scored {:effect (req (toast state :runner "Click on Gang Sign to access 1 card from HQ" "info")
                                           (update! state side (assoc card :access-hq true)))}}
     :abilities [{:req (req (:access-hq card))
-                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
+                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
+                           (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)
                                 (update! state side (dissoc (get-card state card) :access-hq))))}]}
@@ -471,7 +472,8 @@
                  :effect (req (move state side target :hand)
                               (if (= target (first (:deck runner)))
                                 (move state side (second (:deck runner)) :deck)
-                                (move state side (first (:deck runner)) :deck)))}]}
+                                (move state side (first (:deck runner)) :deck))
+                              (trigger-event state side :runner-draw))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability
@@ -797,6 +799,11 @@
                                                              (clear-wait-prompt :corp))}
                                :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                             card nil))}}}
+
+   "Tech Trader"
+   {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+                            :msg "gain 1 [Credits]"
+                            :effect (effect (gain :credit 1))}}}
 
    "Technical Writer"
    {:data {:counter-type "Credit"}

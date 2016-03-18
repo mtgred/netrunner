@@ -135,6 +135,50 @@
       (core/score state :corp {:card (refresh ai)})
       (is (not (nil? (get-content state :remote1 0)))))))
 
+(deftest trash-corp-hosted
+  "Hosted Corp cards are included in all-installed and fire leave-play effects when trashed"
+  (do-game
+    (new-game (default-corp [(qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Worlds Plaza" "New remote")
+    (let [wp (get-content state :remote1 0)]
+      (core/rez state :corp wp)
+      (card-ability state :corp wp 0)
+      (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
+      (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
+      (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (let [dh (first (:hosted (refresh wp)))]
+        (prompt-select :runner dh)
+        (prompt-choice :runner "Yes") ; trash Director Haas
+        (prompt-choice :runner "Done")
+        (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn")))))
+
+(deftest trash-remove-per-turn-restriction
+  "Trashing a card should remove it from [:per-turn] - Issue #1345"
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Imp" 1) (qty "Scavenge" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Imp")
+    (let [imp (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
+      (prompt-choice :runner "OK")
+      (play-from-hand state :runner "Scavenge")
+      (prompt-select :runner imp)
+      (prompt-select :runner (find-card "Imp" (:discard (get-runner))))
+      (is (= 2 (:counter (refresh imp))) "Reinstalled Imp has 2 counters")
+      (run-empty-server state "HQ")
+      (card-ability state :runner imp 0)
+      (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn"))))
+
 (deftest trash-seen-and-unseen
   "Trash installed assets that are both seen and unseen by runner"
   (do-game
@@ -172,6 +216,46 @@
     (prompt-select :corp (first (get-in @state [:corp :discard])))
     (prompt-choice :corp "New remote")
     (is (not (:seen (get-content state :remote2 0))) "New asset is unseen")))
+
+(deftest all-installed-runner-test
+  "Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Omni-Drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (let [wrap (get-ice state :hq 0)]
+      (core/rez state :corp wrap)
+      (take-credits state :corp)
+      (core/draw state :runner)
+      (core/gain state :runner :credit 7)
+      (play-from-hand state :runner "Knight")
+      (play-from-hand state :runner "Personal Workshop")
+      (play-from-hand state :runner "Omni-Drive")
+      (take-credits state :corp)
+      (let [kn (get-in @state [:runner :rig :program 0])
+            pw (get-in @state [:runner :rig :resource 0])
+            od (get-in @state [:runner :rig :hardware 0])
+            co (find-card "Corroder" (:hand (get-runner)))
+            le (find-card "Leprechaun" (:hand (get-runner)))]
+        (card-ability state :runner kn 0)
+        (prompt-select :runner wrap)
+        (card-ability state :runner pw 0)
+        (prompt-select :runner co)
+        (card-ability state :runner od 0)
+        (prompt-select :runner le)
+        (let [od (refresh od)
+              le (first (:hosted od))
+              mi (find-card "Mimic" (:hand (get-runner)))]
+          (card-ability state :runner le 0)
+          (prompt-select :runner mi)
+          (let [all-installed (core/all-installed state :runner)]
+            (is (= 5 (count all-installed)) "Number of installed runner cards is correct")
+            (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
+            (is (not-empty (filter #(= (:title %) "Personal Workshop") all-installed)) "Personal Workshop is in all-installed")
+            (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
+            (is (not-empty (filter #(= (:title %) "Omni-Drive") all-installed)) "Omni-Drive is in all-installed")
+            (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
+            (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
 (deftest counter-manipulation-commands
   "Test interactions of various cards with /counter and /adv-counter commands"

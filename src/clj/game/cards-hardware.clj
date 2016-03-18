@@ -251,6 +251,21 @@
                                                  (swap! ref assoc-in [:runner :memory] hand-size))))))
     :leave-play (req (remove-watch state :ekomind))}
 
+   "EMP Device"
+   {:abilities [{:req (req (:run @state))
+                 :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
+                 :effect (effect (register-events
+                                   {:rez {:req (req (ice? target))
+                                          :effect (effect (register-run-flag!
+                                                            card :can-rez
+                                                            (fn [state side card]
+                                                              (if (ice? card)
+                                                                ((constantly false)
+                                                                 (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
+                                                                true))))}
+                                    :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Feedback Filter"
    {:prevent {:damage [:net :brain]}
     :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
@@ -275,7 +290,7 @@
     :prevent {:damage [:meat :net :brain]}
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                 :priority true
+                 :priority 50
                  :effect (effect (trash target {:cause :ability-cost})
                                  (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
@@ -291,16 +306,17 @@
 
    "LLDS Processor"
    {:events
-             (let [llds {:effect (req (let [cards (:llds-target card)]
-                                           (update! state side (dissoc card :llds-target))
-                                           (doseq [c cards]
-                                             (update-breaker-strength state side c))))}]
-               {:runner-turn-ends llds :corp-turn-ends llds
-                :runner-install {:req (req (has-subtype? target "Icebreaker"))
-                                 :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
-                                                 (update-breaker-strength target))}
-                :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
-                                       :effect (effect (breaker-strength-bonus 1))}})}
+     (let [llds {:effect (req (let [cards (:llds-target card)]
+                                (update! state side (dissoc card :llds-target))
+                                (doseq [c cards]
+                                (update-breaker-strength state side
+                                                         (find-cid (:cid c) (all-installed state :runner))))))}]
+       {:runner-turn-ends llds :corp-turn-ends llds
+        :runner-install {:req (req (has-subtype? target "Icebreaker"))
+                         :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
+                                         (update-breaker-strength target))}
+        :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
+                               :effect (effect (breaker-strength-bonus 1))}})}
 
    "Lockpick"
    {:recurring 1}
@@ -342,12 +358,13 @@
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
-                   :priority true
+                   :priority 50
                    :choices {:req #(and (is-type? % "Program")
                                         (in-hand? %))}
-                   :prompt "Choose a program to trash from your grip" :effect (effect (trash target)
-                                                                       (damage-prevent :brain 1)
-                                                                       (damage-prevent :net 1))}]})
+                   :prompt "Choose a program to trash from your Grip"
+                   :effect (effect (trash target)
+                                   (damage-prevent :brain 1)
+                                   (damage-prevent :net 1))}]})
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
@@ -361,6 +378,44 @@
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
+
+   "NetChip"
+   {:abilities [{:label "Install a program on NetChip"
+                 :cost [:click 1]
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (in-hand? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (gain :memory (:memoryunits target))
+                                                   (runner-install target {:host-card card})
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}
+                {:label "Host an installed program on NetChip"
+                 :req (req (empty? (:hosted card)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                                (resolve-ability state side
+                                  {:prompt "Choose an installed program to host on NetChip"
+                                   :choices {:req #(and (is-type? % "Program")
+                                                        (<= (:memoryunits %) n)
+                                                        (installed? %))}
+                                   :msg (msg "host " (:title target))
+                                   :effect (effect (host card target)
+                                                   (gain :memory (:memoryunits target))
+                                                   (update! (assoc (get-card state card)
+                                                                   :hosted-programs
+                                                                   (cons (:cid target) (:hosted-programs card)))))}
+                                 card nil)))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
+                          :effect (effect (update! (assoc card
+                                                          :hosted-programs
+                                                          (remove #(= (:cid target) %) (:hosted-programs card))))
+                                          (lose :memory (:memoryunits target)))}}}
 
    "Omni-Drive"
    {:recurring 1
@@ -433,7 +488,7 @@
    {:prevent {:damage [:net :brain]}
     :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose how much damage to prevent" :priority true
+                                  {:prompt "Choose how much damage to prevent" :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
                                    :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)

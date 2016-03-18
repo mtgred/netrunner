@@ -32,6 +32,35 @@
     (is (= 1 (:click (get-corp))))
     (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
 
+(deftest casting-call
+  "Casting Call - Only do card-init on the Public agendas.  Issue #1128"
+  (do-game
+    (new-game (default-corp [(qty "Casting Call" 2) (qty "Oaktown Renovation" 1)
+                             (qty "Improved Tracers" 1) (qty "Hunter" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Hunter" "HQ")
+    (let [hunter (get-ice state :hq 0)]
+      (core/rez state :corp hunter)
+      (is (= 4 (:current-strength (refresh hunter))))
+      (play-from-hand state :corp "Casting Call")
+      (prompt-select :corp (find-card "Improved Tracers" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (let [imptrac (get-content state :remote1 0)]
+        (is (get-in (refresh imptrac) [:rezzed]) "Improved Tracers is faceup")
+        (is (= 4 (:current-strength (refresh hunter))) "Hunter hasn't gained strength")
+        (play-from-hand state :corp "Casting Call")
+        (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+        (prompt-choice :corp "New remote")
+        (let [oak (get-content state :remote2 0)]
+          (core/advance state :corp {:card (refresh oak)})
+          (is (= 5 (:credit (get-corp))) "Events on Public agenda work; gained 2 credits from advancing")
+          (take-credits state :corp)
+          (run-empty-server state "Server 2")
+          (prompt-select :runner oak)
+          (prompt-choice :runner "Steal")
+          (is (= 2 (:tag (get-runner))) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
+
 (deftest closed-accounts
   "Closed Accounts - Play if Runner is tagged to make Runner lose all credits"
   (do-game

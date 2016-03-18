@@ -3,7 +3,7 @@
 (declare clear-run-register!
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability
-         get-remote-names card-name)
+         get-remote-names card-name can-steal?)
 
 ;;; Steps in the run sequence
 (defn run
@@ -109,7 +109,7 @@
           (when-let [name (:title c)]
             (if (is-type? c "Agenda") ; accessing an agenda
               (do (trigger-event state side :pre-steal-cost c)
-                  (if (get-in @state [:runner :register :cannot-steal])
+                  (if-not (can-steal? state side c)
                     ;; The runner cannot steal this agenda.
                     (do (resolve-steal-events state side c)
                         (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))
@@ -171,7 +171,7 @@
 
 (defn access-count [state side kw]
   (let [run (:run @state)
-        accesses (+ (get-in @state [:runner kw]) (:access-bonus run))]
+        accesses (+ (get-in @state [:runner kw]) (:access-bonus run 0))]
     (if-let [max-access (:max-access run)]
       (min max-access accesses) accesses)))
 
@@ -190,55 +190,68 @@
                                    card nil)))})
 
 (defmethod choose-access :remote [cards server]
-  {:effect (req (if (>= 1 (count cards))
+  {:effect (req (if (and (>= 1 (count cards)) (not (some #(card-flag-fn? state :runner % :slow-remote-access true)
+                                                         (concat (all-active state :runner) (all-active state :corp)))))
                   (handle-access state side cards)
                   (resolve-ability state side (access-helper-remote cards) card nil)))})
 
-(defn access-helper-hq [cards]
+(defn access-helper-hq [from-hq from-root already-accessed]
   {:prompt "Select a card to access."
-   :choices (concat (when (some #(= (first (:zone %)) :hand) cards) ["Card from hand"])
-                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in HQ")
-                         (filter #(= (last (:zone %)) :content) cards)))
+   :choices (concat (when (pos? from-hq) ["Card from hand"])
+                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in HQ") from-root))
    :effect (req (case target
                   "Unrezzed upgrade in HQ"
                   ;; accessing an unrezzed upgrade
-                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) cards)]
+                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) from-root)]
                     (if (= 1 (count unrezzed))
                       ;; only one unrezzed upgrade; access it and continue
                       (do (system-msg state side (str "accesses " (:title (first unrezzed))))
                           (handle-access state side unrezzed)
-                          (when (< 1 (count cards))
+                          (when (or (pos? from-hq) (< 1 (count from-root)))
                             (resolve-ability
-                              state side (access-helper-hq (filter #(not= (:cid %) (:cid (first unrezzed))) cards))
+                              state side (access-helper-hq from-hq
+                                                           (filter #(not= (:cid %) (:cid (first unrezzed))) from-root)
+                                                           already-accessed)
                               card nil)))
-                      ;; more than one unrezzed upgrade. allow user to select with mouse.
+                      ;; more than one unrezzed upgrade. allow user to select.
                       (resolve-ability state side
                                        {:prompt "Choose an upgrade in HQ to access."
                                         :choices {:req #(= (second (:zone %)) :hq)}
                                         :effect (effect (system-msg (str "accesses " (:title target)))
                                                         (handle-access [target])
                                                         (resolve-ability (access-helper-hq
+                                                                           from-hq
                                                                            (remove-once #(not= (:cid %) (:cid target))
-                                                                                        cards)) card nil))} card nil)))
-                  ;; accessing a card in hand or a rezzed upgade
+                                                                                        from-root)
+                                                                           already-accessed)
+                                                                         card nil))} card nil)))
+                  ;; accessing a card in hand
                   "Card from hand"
-                  (do (system-msg state side (str "accesses " (:title (first cards))))
-                      (handle-access state side [(first cards)])
-                      (when (< 1 (count cards))
-                        (resolve-ability state side (access-helper-hq (rest cards)) card nil)))
+                  (when-let [accessed (some #(when-not (contains? already-accessed %) %) (shuffle (get-in @state [:corp :hand])))]
+                    (system-msg state side (str "accesses " (:title accessed)))
+                    (handle-access state side [accessed])
+                    (when (or (< 1 from-hq) (not-empty from-root))
+                      (resolve-ability state side (access-helper-hq (dec from-hq)
+                                                                    from-root
+                                                                    (conj already-accessed accessed))
+                                         card nil)))
                   ;; accessing a rezzed upgrade
                   (do (system-msg state side (str "accesses " target))
-                      (handle-access state side [(some #(when (= (:title %) target) %) cards)])
-                      (when (< 1 (count cards))
-                        (resolve-ability state side (access-helper-hq
-                                                      (remove-once #(not= (:title %) target) cards)) card nil)))))})
+                      (handle-access state side [(some #(when (= (:title %) target) %) from-root)])
+                      (when (or (pos? from-hq) (< 1 (count from-root)))
+                        (resolve-ability state side (access-helper-hq from-hq
+                                                                      (remove-once #(not= (:title %) target) from-root)
+                                                                      already-accessed) card nil)))))})
 
 (defmethod choose-access :hq [cards server]
   {:effect (req (if (pos? (count cards))
-                  (if (= 1 (count cards))
+                  (if (and (= 1 (count cards)) (not (some #(card-flag-fn? state :runner % :slow-hq-access true)
+                                                          (all-active state :runner))))
                     (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
                         (handle-access state side cards))
-                    (resolve-ability state side (access-helper-hq cards) card nil))))})
+                    (let [in-root (filter #(= (last (:zone %)) :content) cards)
+                          from-hq (access-count state side :hq-access)]
+                      (resolve-ability state side (access-helper-hq from-hq in-root #{}) card nil)))))})
 
 (defn access-helper-rd [cards]
   {:prompt "Select a card to access."
@@ -414,14 +427,17 @@
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
   [state side args]
   (if (get-in @state [:run :corp-phase-43])
-    ; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
+    ;; if corp requests phase 4.3, then we do NOT fire :successful-run yet, which does not happen until 4.4
     (do (swap! state dissoc :no-action)
+        (system-msg state :corp "wants to act before the run is successful")
         (show-wait-prompt state :runner "Corp's actions")
         (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
                      (fn [args-corp]
                        (clear-wait-prompt state :runner)
-                       (show-prompt state :runner nil "The run is now successful" ["Continue"]
-                                    (fn [args-runner] (successful-run-trigger state :runner))))
+                       (if-not (:ended (:run @state))
+                        (show-prompt state :runner nil "The run is now successful" ["Continue"]
+                                     (fn [args-runner] (successful-run-trigger state :runner)))
+                        (handle-end-run state side)))
                      {:priority -1}))
     (successful-run-trigger state side)))
 

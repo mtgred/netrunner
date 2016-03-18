@@ -26,9 +26,8 @@
     :effect (req (let [allcorp (->> (all-installed state :corp)
                                     (sort-by #(vec (:zone %)))
                                     (reverse))]
-                   (apply trigger-event state side :runner-trash allcorp)
                    (doseq [c allcorp]
-                     (trash state side c {:suppress-event true})))
+                     (trash state side c)))
 
                  ;; do hosted cards first so they don't get trashed twice
                  (doseq [c (all-installed state :runner)]
@@ -71,6 +70,16 @@
     :choices {:req #(and (is-type? % "Resource")
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
+
+   "CBI Raid"
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
+                              {:msg "force the Corp to add all cards in HQ to the top of R&D"
+                               :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
+                                            (prompt! state :corp card
+                                                    (str "Click Done when finished moving cards from HQ to R&D")
+                                                    ["Done"]
+                                                    {:effect (effect (clear-wait-prompt :runner))}))}} card))}
 
    "Code Siphon"
    {:effect (effect (run :rd
@@ -616,9 +625,8 @@
                        {:msg "trash all cards in the server at no cost"
                         :mandatory true
                         :effect (req (let [allcorp (get-in (:servers corp) (conj (:server run) :content))]
-                                       (apply trigger-event state side :runner-trash allcorp)
                                        (doseq [c allcorp]
-                                         (trash state side c {:suppress-event true}))))}} card))}
+                                         (trash state side c))))}} card))}
 
    "Social Engineering"
    {:prompt "Choose an unrezzed piece of ICE"
@@ -664,7 +672,7 @@
     :effect (req (add-prop state :runner target :counter 2))}
 
    "Test Run"
-   {:prompt "Install a program from Stack or Heap?"
+   {:prompt "Install a program from your Stack or Heap?"
     :choices (cancellable ["Stack" "Heap"])
     :msg (msg "install a program from " target)
     :effect (effect (resolve-ability
@@ -674,12 +682,9 @@
                                              ((if (= target "Heap") :discard :deck) runner))))
                       :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
                       :end-turn
-                      {:req (req (some #(when (and (= (:cid target) (:cid %))
-                                                   (get-in % [:special :test-run])) %)
-                                       (get-in runner [:rig :program])))
-                       :msg (msg "move " (:title target) " on top of their Stack")
-                       :effect (req (move state side (some #(when (= (:cid target) (:cid %)) %)
-                                                           (get-in runner [:rig :program]))
+                      {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
+                       :msg (msg "move " (:title target) " to the top of their Stack")
+                       :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
                                           :deck {:front true}))}}
                      card targets))}
 

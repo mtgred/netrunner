@@ -91,7 +91,7 @@
          #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
 
 ;;; Functions related to servers that can be run
-(defn prevent-run-on-server 
+(defn prevent-run-on-server
   "Adds specified server to list of servers that cannot be run on.
   The causing card is also specified"
   [state card & servers]
@@ -205,6 +205,12 @@
         (if-let [rez-req (:rez-req (card-def card))]
           (rez-req state side card nil)
           true))))
+
+(defn can-steal?
+  ([state side card] (can-steal? state side card nil))
+  ([state side card {:as args}]
+   (and (turn-flag? state side card :can-steal)
+        (run-flag? state side card :can-steal))))
 
 (defn can-score?
   ([state side card] (can-score? state side card nil))
