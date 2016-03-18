@@ -187,6 +187,32 @@
       (is (= 4 (get-in @state [:corp :credit])))
       (is (= 14 (get-in (refresh eve) [:counter]))))))
 
+(deftest executive-boot-camp-suppress-start-of-turn
+  "Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346."
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Executive Boot Camp" "New remote")
+    (take-credits state :corp)
+    (is (= 6 (:credit (get-corp))) "Corp ends turn with 6 credits")
+    (let [eve (get-content state :remote1 0)
+          ebc (get-content state :remote2 0)]
+      (core/rez state :corp ebc)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ebc 0)
+      (prompt-select :corp eve)
+      (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
+      (is (= 16 (get-in (refresh eve) [:counter])))
+      (core/end-phase-12 state :corp nil)
+      (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
+      (is (= 16 (get-in (refresh eve) [:counter])) "Did not take counters from Eve")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
+      (is (= 14 (get-in (refresh eve) [:counter])) "Took counters from Eve"))))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
