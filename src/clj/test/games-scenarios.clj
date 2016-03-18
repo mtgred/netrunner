@@ -122,7 +122,7 @@
         (run-on state "Server 1") ; letting Runner in this time to use Caprice
         (core/rez state :corp cap)
         (run-continue state)
-        (card-ability state :corp cap 0) ; psi game
+        ;; Caprice psi game started automatically
         (prompt-choice :corp "1 [Credits]")
         (prompt-choice :runner "2 [Credits]")
         (is (not (:run @state)) "Corp won Caprice psi game and ended the run")))))

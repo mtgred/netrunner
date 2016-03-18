@@ -16,6 +16,46 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest caprice-nisei
+  "Caprice Nisei - Psi game for ETR after runner passes last ice"
+  (do-game
+   (new-game (default-corp [(qty "Caprice Nisei" 3) (qty "Quandary" 3)])
+             (default-runner))
+   (play-from-hand state :corp "Caprice Nisei" "New remote")
+   (take-credits state :corp)
+   (let [caprice (get-content state :remote1 0)]
+     ;; Check Caprice triggers properly on no ice (and rezzed)
+     (core/rez state :corp caprice)
+     (run-on state "Server 1")
+     (is (prompt-is-card? :corp caprice)
+         "Caprice prompt even with no ice, once runner makes run")
+     (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+     (prompt-choice :corp "0 [Credits]")
+     (prompt-choice :runner "1 [Credits]")
+     (take-credits state :runner)
+
+
+     (play-from-hand state :corp "Quandary" "Server 1")
+     (play-from-hand state :corp "Quandary" "Server 1")
+     (take-credits state :corp)
+
+     ;; Check Caprice triggers properly on multiple ice
+     (run-on state "Server 1")
+     (run-continue state)
+     (is (empty? (get-in @state [:corp :prompt])) "Caprice not trigger on first ice")
+     (run-continue state) ; Caprice prompt after this
+     (is (prompt-is-card? :corp caprice)
+         "Corp has Caprice prompt (triggered automatically as runner passed last ice)")
+     (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+     (prompt-choice :corp "0 [Credits]")
+     (prompt-choice :runner "1 [Credits]")
+     (is (not (:run @state)) "Run ended by Caprice")
+     (is (empty? (get-in @state [:corp :prompt])) "Caprice prompted cleared")
+
+     ;; Check Caprice does not trigger on other servers
+     (run-on state "HQ")
+     (is (empty? (get-in @state [:corp :prompt])) "Caprice does not trigger on other servers"))))
+
 (deftest chilo-city-grid
   "ChiLo City Grid - Give 1 tag for successful traces during runs on its server"
   (do-game
@@ -139,8 +179,7 @@
       (run-on state "Server 1")
       (core/rez state :corp drt)
       (run-successful state)
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner has prompt to wait for Ghost Branch")
+      (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
       (prompt-choice :corp "Yes")
       (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
       (prompt-choice :runner "Yes")
@@ -165,16 +204,12 @@
       (card-ability state :corp mb 0)
       (card-ability state :runner sn 0)
       ;; both prompts should be on Batty
-      (is (= (:cid mb) (-> @state :corp :prompt first :card :cid))
-          "Corp prompt is on Marcus Batty")
-      (is (= (:cid mb) (-> @state :runner :prompt first :card :cid))
-          "Runner prompt is on Marcus Batty")
+      (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
+      (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
       (prompt-choice :corp "0")
       (prompt-choice :runner "0")
-      (is (= (:cid sn) (-> @state :corp :prompt first :card :cid))
-          "Corp prompt is on Security Nexus")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner prompt is waiting for Corp"))))
+      (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
+      (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
 
 (deftest off-the-grid
   "Off the Grid run ability - and interaction with RP"
