@@ -488,7 +488,7 @@
    {:prevent {:damage [:net :brain]}
     :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose how much damage to prevent" :priority true
+                                  {:prompt "Choose how much damage to prevent" :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
                                    :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)
