@@ -315,17 +315,21 @@
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
                          (in-hand? %))}
-    :effect (effect (corp-install (assoc target :advance-counter 3) "New remote")
-                    (register-turn-flag!
-                      target :can-rez
-                      (fn [state side card]
-                        ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))))
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state side card]
-                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
-                          ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
-                          true))))}
+    :effect (req (corp-install state side (assoc target :advance-counter 3) "New remote")
+                 (let [tgtcid (:cid target)]
+                   (register-turn-flag! state side
+                     card :can-rez
+                     (fn [state side card]
+                       (if (= (:cid card) tgtcid)
+                         ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
+                         true)))
+                   (register-turn-flag! state side
+                     card :can-score
+                     (fn [state side card]
+                       (if (and (= (:cid card) tgtcid)
+                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                         ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
+                         true)))))}
 
    "Mutate"
    {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
