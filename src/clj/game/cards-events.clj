@@ -494,7 +494,8 @@
     :effect (effect (lose :corp :click-per-turn 1)
                     (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
-    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1))}}}
+    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1)
+                                              (unregister-events card))}}}
 
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
