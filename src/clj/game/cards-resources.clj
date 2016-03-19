@@ -494,9 +494,13 @@
 
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
-    :events {:access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
+    :events {:pre-access {:req (req (and (= target :archives)
+                                         (seq (filter #(not (nil? (:trash %))) (:discard corp)))))
+                          :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
+             :access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
                                      (empty? (filter #(not (nil? (:trash %))) cards))))
+                         :once :per-turn
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
    "New Angeles City Hall"
