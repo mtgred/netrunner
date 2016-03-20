@@ -728,7 +728,8 @@
                                     {:mandatory true
                                      :effect (effect (resolve-ability
                                                        {:msg "gain 2 [Credits] instead of accessing"
-                                                        :effect (effect (gain :credit 2))} st nil))})))}}
+                                                        :effect (effect (gain :credit 2))} st nil))})))}
+             :runner-turn-ends {:effect (effect (update! (dissoc card :testing-target)))}}
     :abilities [ability]})
 
    "Spoilers"
