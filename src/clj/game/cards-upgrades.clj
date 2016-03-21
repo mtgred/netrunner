@@ -116,6 +116,25 @@
    "Dedicated Technician Team"
    {:recurring 2}
 
+   "Disposable HQ"
+   (letfn [(dhq [n i]
+             {:req (req (pos? i))
+              :prompt "Choose a card in HQ to add to the bottom of R&D"
+              :choices {:req #(and (:side % "Corp") (in-hand? %))}
+              :msg "add a card to the bottom of R&D"
+              :effect (req (move state side target :deck)
+                           (when (< n i)
+                             (resolve-ability state side (dhq (inc n) i) card nil)))})]
+     {:access {:effect (req (let [n (count (:hand corp))]
+                              (show-wait-prompt state :runner "Corp to finish using Disposable HQ")
+                              (resolve-ability state side
+                                {:optional
+                                 {:prompt "Use Disposable HQ to add cards to the bottom of R&D?"
+                                  :yes-ability {:msg "add cards in HQ to the bottom of R&D"
+                                                :effect (effect (resolve-ability (dhq 1 n) card nil))}
+                                  :end-effect (effect (clear-wait-prompt :runner))}}
+                               card nil)))}})
+
    "Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
     :events {:pre-ice-strength {:req (req (= (card->server state card) (card->server state target)))
