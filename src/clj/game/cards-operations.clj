@@ -452,7 +452,9 @@
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
     :show-discard true
-    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
+    :choices {:req #(and (= (:side %) "Corp")
+                         (not= (:title %) "Reclamation Order")
+                         (= (:zone %) [:discard]))}
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
