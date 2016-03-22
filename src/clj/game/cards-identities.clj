@@ -271,7 +271,6 @@
                  :req (req (not (:biotech-used card)))
                  :label "Flip this identity"
                  :effect (req (let [flip (:biotech-target card)]
-                                (update! state side (assoc card :biotech-used true))
                                 (case flip
                                   "[The Brewery~brewery]"
                                   (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
@@ -289,7 +288,8 @@
                                         state side
                                         {:prompt "Choose a card that can be advanced"
                                          :choices {:req can-be-advanced?}
-                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))))}]}
+                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))
+                                (update! state side (assoc (get-card state card) :biotech-used true))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    {:effect (effect (gain :link 1))
