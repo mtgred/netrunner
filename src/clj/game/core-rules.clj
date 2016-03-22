@@ -147,8 +147,8 @@
                                      (trigger-event state side :prevented-damage type prevent))
                                  "will not prevent damage"))
                    (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
-                 {:priority 10}))
-           (resolve-damage state side type n args))))))
+               {:priority 10}))
+         (resolve-damage state side type n args))))))
 
 
 ;;; Tagging
