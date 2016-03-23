@@ -162,9 +162,8 @@
 
    "Cerebral Static"
    {:msg "disable the Runner's identity"
-    :effect (req (unregister-events state side (:identity runner)))
-    :leave-play (req (when-let [events (:events (card-def (:identity runner)))]
-                       (register-events state side events (:identity runner))))}
+    :effect (effect (disable-identity :runner))
+    :leave-play (effect (enable-identity :runner))}
 
    "\"Clones are not People\""
    {:events {:agenda-scored {:msg "add it to their score area and gain 1 agenda point"

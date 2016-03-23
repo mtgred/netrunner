@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
 (declare all-active all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
-         has-subtype? remove-from-host rezzed?
-         trash update-hosted! update-ice-strength remove-icon)
+         has-subtype? register-events remove-from-host remove-icon rezzed?
+         trash update-hosted! update-ice-strength unregister-events)
 
 ; Functions for loading card information.
 (defn card-def
@@ -152,3 +152,24 @@
   [state card]
   (let [z (:zone card)]
     (get-in @state [:corp :servers (second z)])))
+
+(defn disable-identity
+  "Disables the side's identity"
+  [state side]
+  (let [id (assoc (:identity (side @state)) :disabled true)]
+    (update! state side id)
+    (unregister-events state side id)
+    (when-let [leave-play (:leave-play (card-def id))]
+      (leave-play state side id nil))))
+
+(defn enable-identity
+  "Enables the side's identity"
+  [state side]
+  (let [id (assoc (:identity (side @state)) :disabled false)
+        cdef (card-def id)
+        events (:events cdef)]
+    (update! state side id)
+    (when-let [eff (:effect cdef)]
+      (eff state side id nil))
+    (when events
+      (register-events state side events id))))

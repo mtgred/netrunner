@@ -182,9 +182,8 @@
 
    "Employee Strike"
    {:msg "disable the Corp's identity"
-    :effect (req (unregister-events state side (:identity corp)))
-    :leave-play (req (when-let [events (:events (card-def (:identity corp)))]
-                       (register-events state side events (:identity corp))))}
+    :effect (effect (disable-identity :corp))
+    :leave-play (effect (enable-identity :corp))}
 
    "Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"

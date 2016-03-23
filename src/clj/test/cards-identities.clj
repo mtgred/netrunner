@@ -1,5 +1,40 @@
 (in-ns 'test.core)
 
+
+(deftest adam-directives
+  "Adam: Compulsive Hacker - install 3 directives"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 3) (qty "Safety First" 3)
+                                                   (qty "Always Be Running" 3) (qty "Bank Job" 3)]))
+    (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
+          sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
+          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
+      (is (and nat sf abr) "3 directives installed")
+      (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
+
+(deftest andromeda
+  "Andromeda - 9 card starting hand, 1 link"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)]))
+    (is (= 1 (:link (get-runner))) "1 link")
+    (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
+
+(deftest andromeda-mulligan
+  "Andromeda - 9 card starting hand after mulligan"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)])
+      {:mulligan :runner})
+    (is (= 1 (:link (get-runner))) "1 link")
+    (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
+
 (deftest apex-facedown-console
   "Apex - Allow facedown install of a second console. Issue #1326"
   (do-game
@@ -77,6 +112,24 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest grndl-power-unleashed
+  "GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub."
+  (do-game
+    (new-game
+      (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
+      (default-runner))
+    (is (= 10 (:credit (get-corp))) "GRNDL starts with 10 credits")
+    (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
+
+(deftest grndl-valencia
+  "GRNDL vs Valencia - only 1 bad pub at start"
+  (do-game
+    (new-game
+      (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 10 (:credit (get-corp))) "GRNDL starts with 10 credits")
+    (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
+
 (deftest haarpsichord-studios
   "Haarpsichord Studios - Prevent stealing more than 1 agenda per turn"
   (do-game
@@ -98,6 +151,26 @@
       (card-ability state :runner gs 0)
       (prompt-choice :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn"))))
+
+(deftest haarpsichord-studios-employee-strike
+  "Haarpsichord Studios - Interactions with Employee Strike. Issue #1313."
+  (do-game
+    (new-game
+      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 5)
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))))
+    (play-from-hand state :runner "Employee Strike")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
+    (play-from-hand state :runner "Scrubbed")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
 
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"
@@ -218,6 +291,30 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
+
+(deftest jinteki-replicating-perfection
+  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Mental Health Clinic" "New remote")
+    (take-credits state :corp)
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+    (run-empty-server state "HQ")
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+
+(deftest jinteki-replicating-perfection-employee-strike
+  "Replicating Perfection - interaction with Employee Strike. Issue #1313."
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (play-from-hand state :corp "Mental Health Clinic" "New remote")
+    (take-credits state :corp)
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+    (play-from-hand state :runner "Employee Strike")
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest kate-mac-mccaffrey-discount
   "Kate 'Mac' McCaffrey - Install discount"
@@ -399,18 +496,6 @@
     (let [quan (get-ice state :rd 0)]
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
-
-(deftest replicating-perfection
-  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
-  (do-game
-   (new-game
-    (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
-    (default-runner))
-   (play-from-hand state :corp "Mental Health Clinic" "New remote")
-   (take-credits state :corp)
-   (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
-   (run-empty-server state "HQ")
-   (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest spark-advertisements
   "Spark Agency - Rezzing advertisements"

@@ -38,6 +38,8 @@
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (swap! game-states assoc gameid state)
+    (trigger-event state :corp :pre-start-game)
+    (trigger-event state :runner :pre-start-game)
     (when (and (-> @state :corp :identity :title) (-> @state :runner :identity :title))
       (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
     (doseq [s [:corp :runner]]
