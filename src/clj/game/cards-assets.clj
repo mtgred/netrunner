@@ -257,7 +257,9 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1) (rez target {:no-warning true}))}
+                 :effect (effect (rez-cost-bonus -1)
+                                 (rez target {:no-warning true})
+                                 (update! (assoc card :ebc-rezzed (:cid target))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -266,7 +268,12 @@
                                             :sorted))
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
-                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
+                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]
+
+    ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
+    :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
+    :events {:corp-turn-ends {:req (req (:ebc-rezzed card))
+                              :effect (effect (update! (dissoc card :ebc-rezzed)))}}}
 
    "Executive Search Firm"
    {:abilities [{:prompt "Choose an executive, sysop, or character to add to HQ"
