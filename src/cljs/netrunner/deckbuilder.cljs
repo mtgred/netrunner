@@ -273,8 +273,8 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [card]
   (let [cid (js/parseInt (:code card))]
-    ;; Cards up to Business First are currently released
-    (and cid (<= cid 10038))))
+    ;; Cards up to Democracy and Dogma are currently released
+    (and cid (<= cid 10057))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
