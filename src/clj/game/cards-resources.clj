@@ -9,7 +9,7 @@
     {:corp-turn-begins {:req (req (not tagged))
                         :msg "take 1 tag"
                         :effect (effect (tag-runner :runner 1))}
-     :runner-turn-begins {:req (req (zero? (:bad-publicity corp)))
+     :runner-turn-begins {:req (req (not has-bad-pub))
                           :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
@@ -389,7 +389,7 @@
    {:recurring 2}
 
    "Investigative Journalism"
-   {:req (req (> (:bad-publicity corp) 0))
+   {:req (req has-bad-pub)
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
 
@@ -785,7 +785,8 @@
 
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
-                 :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (draw (+ (:bad-publicity corp) (:has-bad-pub corp))))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation
              {:req (req (or (has-subtype? target "Black Ops")

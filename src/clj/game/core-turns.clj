@@ -21,7 +21,7 @@
                         :hand (zone :hand (take 5 corp-deck))
                         :discard [] :scored [] :rfg [] :play-area []
                         :servers {:hq {} :rd{} :archives {}}
-                        :click 0 :credit 5 :bad-publicity 0
+                        :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
                         :hand-size-base 5 :hand-size-modification 0
                         :agenda-point 0
                         :click-per-turn 3 :agenda-point-req 7 :keep false}

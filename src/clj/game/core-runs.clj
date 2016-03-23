@@ -17,7 +17,7 @@
        (swap! state assoc :per-run nil
               :run {:server s :position (count ices) :ices ices :access-bonus 0
                     :run-effect (assoc run-effect :card card)})
-       (gain-run-credits state side (get-in @state [:corp :bad-publicity]))
+       (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
        (trigger-event state :runner :run s)))))

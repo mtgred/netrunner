@@ -42,7 +42,7 @@
                        (gain state :runner :memory (:memoryunits c))))))}
 
    "Blackmail"
-   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req runnable-servers)
+   {:req (req has-bad-pub) :prompt "Choose a server" :choices (req runnable-servers)
     :msg "prevent ICE from being rezzed during this run"
     :effect (effect (register-run-flag!
                       card
@@ -89,6 +89,11 @@
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
+
+   "Corporate Scandal"
+   {:msg "give the Corp 1 additional bad publicity"
+    :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
+    :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
 
    "Cyber Threat"
    {:prompt "Choose a server" :choices (req runnable-servers)
