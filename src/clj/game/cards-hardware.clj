@@ -2,7 +2,7 @@
 
 (def cards-hardware
   {"Akamatsu Mem Chip"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+   {:in-play [:memory 1]}
 
    "Archives Interface"
    {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
@@ -79,7 +79,7 @@
                                      :hand-size-modification bonus))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner
-                             :memory (runner-points @state) 
+                             :memory (runner-points @state)
                              :hand-size-modification (runner-points @state)))})
 
    "Capstone"
