@@ -56,21 +56,23 @@
   "Draw n cards from :deck to :hand."
   ([state side] (draw state side 1))
   ([state side n]
-   (let [active-player (get-in @state [:active-player])]
-     (let [n (if (get-in @state [active-player :register :max-draw])
-               (min n (remaining-draws state side))
-               n)]
-       (when (and (= side :corp) (> n (count (get-in @state [:corp :deck]))))
-         (system-msg state side "is decked")
-         (win state :runner "Decked"))
-       (when-not (get-in @state [active-player :register :cannot-draw])
-         (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
-           (swap! state update-in [side :hand] #(concat % drawn))
-           (swap! state update-in [side :deck] (partial drop n))
-           (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
-           (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n)
-           (when (= 0 (remaining-draws state side))
-             (prevent-draw state side))))))))
+   (let [active-player (get-in @state [:active-player])
+         n (if (get-in @state [active-player :register :max-draw])
+             (min n (remaining-draws state side))
+             n)
+         deck-count (count (get-in @state [side :deck]))]
+     (when (and (= side :corp) (> n deck-count))
+       (system-msg state side "is decked")
+       (win state :runner "Decked"))
+     (when-not (get-in @state [active-player :register :cannot-draw])
+       (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
+         (swap! state update-in [side :hand] #(concat % drawn))
+         (swap! state update-in [side :deck] (partial drop n))
+         (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
+         (when-not (zero? deck-count)
+           (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
+         (when (= 0 (remaining-draws state side))
+           (prevent-draw state side)))))))
 
 ;;; Damage
 (defn flatline [state]
