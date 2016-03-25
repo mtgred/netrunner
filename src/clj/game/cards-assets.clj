@@ -184,15 +184,18 @@
                                                   (all-installed state :corp))) 
                               newcards (take dbs (:deck corp))
                               drawn (concat newcards (take-last target (:hand corp)))]
-                          (doseq [c newcards] (move state side c :hand))
-                          (resolve-ability
-                            state side
-                            {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
-                             :choices {:max dbs
-                                       :req #(and (in-hand? %)
-                                                  (some (fn [c] (= (:cid c) (:cid %))) drawn))}
-                             :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
-                             :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
+                          (if (not= (count newcards) dbs)
+                            ; couldn't draw from R&D, so corp is decked
+                            (win-decked state)
+                            (do (doseq [c newcards] (move state side c :hand))
+                                (resolve-ability
+                                  state side
+                                  {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
+                                   :choices {:max dbs
+                                             :req #(and (in-hand? %)
+                                                        (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                   :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
+                                   :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"

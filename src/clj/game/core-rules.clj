@@ -2,7 +2,7 @@
 
 (declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
          handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         in-corp-scored? update-all-ice win prevent-draw)
+         in-corp-scored? update-all-ice win win-decked prevent-draw)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -62,8 +62,7 @@
              n)
          deck-count (count (get-in @state [side :deck]))]
      (when (and (= side :corp) (> n deck-count))
-       (system-msg state side "is decked")
-       (win state :runner "Decked"))
+       (win-decked state))
      (when-not (get-in @state [active-player :register :cannot-draw])
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
          (swap! state update-in [side :hand] #(concat % drawn))
@@ -360,6 +359,12 @@
   [state side reason]
   (system-msg state side "wins the game")
   (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+
+(defn win-decked
+  "Records a win via decking the corp."
+  [state]
+  (system-msg state :corp "is decked")
+  (win state :runner "Decked"))
 
 (defn init-trace-bonus
   "Applies a bonus base strength of n to the next trace attempt."
