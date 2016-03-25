@@ -292,6 +292,17 @@
       (prompt-choice :runner 0)
       (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
 
+(deftest jesminder-john-masanori
+  "Jesminder Sareen - don't avoid John Masanori tag"
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "John Masanori" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "John Masanori")
+    (run-on state "HQ")
+    (core/jack-out state :runner nil)
+    (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
+
 (deftest jinteki-replicating-perfection
   "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
   (do-game
