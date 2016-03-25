@@ -76,7 +76,7 @@
   "Mulligan starting hand."
   [state side args]
   (shuffle-into-deck state side :hand)
-  (draw state side 5)
+  (draw state side 5 {:suppress-event true})
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]

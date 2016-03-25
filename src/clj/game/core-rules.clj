@@ -54,8 +54,9 @@
 
 (defn draw
   "Draw n cards from :deck to :hand."
-  ([state side] (draw state side 1))
-  ([state side n]
+  ([state side] (draw state side 1 nil))
+  ([state side n] (draw state side n nil))
+  ([state side n {:keys [suppress-event] :as args}]
    (let [active-player (get-in @state [:active-player])
          n (if (get-in @state [active-player :register :max-draw])
              (min n (remaining-draws state side))
@@ -68,7 +69,7 @@
          (swap! state update-in [side :hand] #(concat % drawn))
          (swap! state update-in [side :deck] (partial drop n))
          (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
-         (when-not (zero? deck-count)
+         (when (and (not suppress-event) (pos? deck-count))
            (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
          (when (= 0 (remaining-draws state side))
            (prevent-draw state side)))))))

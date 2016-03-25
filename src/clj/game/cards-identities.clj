@@ -28,8 +28,8 @@
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
                               :effect (effect (gain :link 1)
-                                              (draw 4))}}
-    :mulligan (effect (draw 4))}
+                                              (draw 4 {:suppress-event true}))}}
+    :mulligan (effect (draw 4 {:suppress-event true}))}
 
    "Apex: Invasive Predator"
    (let [ability {:prompt "Select a card to install facedown"
@@ -448,8 +448,7 @@
                               :req (req (has-subtype? target "Virus"))}}}
 
    "Pālanā Foods: Sustainable Growth"
-   {:events {:runner-draw {:req (req (not= 0 (:turn @state)))
-                           :msg "gain 1 [Credits]"
+   {:events {:runner-draw {:msg "gain 1 [Credits]"
                            :once :per-turn
                            :effect (effect (gain :corp :credit 1))}}}
 

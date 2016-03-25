@@ -35,6 +35,16 @@
     (is (= 1 (:link (get-runner))) "1 link")
     (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
 
+(deftest andromeda-palana
+  "Andromeda - should not grant Palana credits."
+  (do-game
+    (new-game
+      (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)]))
+    (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand")))
+
+
 (deftest apex-facedown-console
   "Apex - Allow facedown install of a second console. Issue #1326"
   (do-game
