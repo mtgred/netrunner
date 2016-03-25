@@ -47,28 +47,27 @@
 (defn remaining-draws
   "Calculate remaining number of cards that can be drawn this turn if a maximum exists"
   [state side]
-  (let [active-player (get-in @state [:active-player])]
-    (when-let [max-draw (get-in @state [active-player :register :max-draw])]
-      (let [drawn-this-turn (get-in @state [active-player :register :drawn-this-turn] 0)]
-        (max (- max-draw drawn-this-turn) 0)))))
+  (when-let [max-draw (get-in @state [side :register :max-draw])]
+    (let [drawn-this-turn (get-in @state [side :register :drawn-this-turn] 0)]
+      (max (- max-draw drawn-this-turn) 0))))
 
 (defn draw
   "Draw n cards from :deck to :hand."
   ([state side] (draw state side 1))
   ([state side n]
    (let [active-player (get-in @state [:active-player])
-         n (if (get-in @state [active-player :register :max-draw])
+         n (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
              (min n (remaining-draws state side))
              n)
          deck-count (count (get-in @state [side :deck]))]
      (when (and (= side :corp) (> n deck-count))
        (system-msg state side "is decked")
        (win state :runner "Decked"))
-     (when-not (get-in @state [active-player :register :cannot-draw])
+     (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
          (swap! state update-in [side :hand] #(concat % drawn))
          (swap! state update-in [side :deck] (partial drop n))
-         (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
+         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % n) 0))
          (when-not (zero? deck-count)
            (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
          (when (= 0 (remaining-draws state side))
