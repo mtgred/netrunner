@@ -274,6 +274,10 @@
     :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
+   "\"Freedom Through Equality\""
+   {:events {:agenda-stolen {:msg "add it to their score area and gain 1 agenda point"
+                             :effect (effect (as-agenda :runner card 1))}}}
+
    "Freelance Coding Contract"
    {:choices {:max 5
               :req #(and (is-type? % "Program")
