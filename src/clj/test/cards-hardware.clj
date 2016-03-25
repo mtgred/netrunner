@@ -213,6 +213,36 @@
       (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
       (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
 
+(deftest titanium-ribs
+  "Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol"
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Viktor 1.0" 1)
+                                                                     (qty "Neural EMP" 1)])
+              (default-runner [(qty "Titanium Ribs" 2) (qty "Sure Gamble" 1)
+                               (qty "Fall Guy" 1) (qty "Kati Jones" 1)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (play-from-hand state :corp "Viktor 1.0" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fall Guy")
+    (play-from-hand state :runner "Titanium Ribs")
+    (prompt-select :runner (find-card "Titanium Ribs" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
+    (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")
+    (is (= 2 (count (:discard (get-runner)))) "2 cards trashed for Ribs installation meat damage")
+    (run-on state "HQ")
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-ability state :corp pup 0)
+      (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner)))) ; Ribs takes precedence over CP on Runner turn
+      (is (= 3 (count (:discard (get-runner)))) "Chose card lost from 1 net damage")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (core/move state :runner (find-card "Sure Gamble" (:discard (get-runner))) :hand)
+      (core/move state :runner (find-card "Kati Jones" (:discard (get-runner))) :hand)
+      (play-from-hand state :corp "Neural EMP")
+      (prompt-choice :corp "Kati Jones") ; Chronos Protocol takes precedence over Ribs on Corp turn
+      (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage"))))
+
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"
   (do-game
