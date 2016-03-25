@@ -110,7 +110,7 @@
   [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (trigger-event state side :pre-resolve-damage type card n)
-  (when-not (get-in @state [:damage :damage-replace])
+  (when-not (or (get-in @state [:damage :damage-replace]) (get-in @state [:damage :damage-choose]))
     (let [n (if (get-defer-damage state side type args) 0 n)]
       (let [hand (get-in @state [:runner :hand])]
         (when (< (count hand) n)
