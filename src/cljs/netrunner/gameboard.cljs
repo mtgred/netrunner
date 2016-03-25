@@ -793,7 +793,7 @@
     ;; remove restricted servers from all servers to just return allowed servers
     (remove (set restricted-servers) (set servers))))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 phase-32] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -888,9 +888,9 @@
                                         #(send-command "jack-out"))]
                           [:div.panel.blue-shade
                            (when (zero? (:position run))
-                             (cond-button "Action Before Access" (not (:no-action run))
+                             (cond-button "Action before access" (not (:no-action run))
                                           #(send-command "corp-phase-43")))
-                           (cond-button "No More Action" (not (:no-action run))
+                           (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
@@ -898,8 +898,6 @@
                                [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
-                       (when (and (not= (keyword active-player) side) (not end-turn))
-                         (cond-button "Action Before Turn Ends" (not phase-32) #(send-command "request-phase-32")))
                        (when (and (= (keyword active-player) side)
                                   (or runner-phase-12 corp-phase-12))
                            [:button {:on-click #(send-command "end-phase-12")}
