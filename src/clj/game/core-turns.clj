@@ -120,6 +120,9 @@
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
+  (doseq [c (filter #(:new %) (all-installed state side))]
+    (update! state side (dissoc c :new)))
+
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
 

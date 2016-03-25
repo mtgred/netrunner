@@ -403,7 +403,7 @@
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blud-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+       [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
         (when-let [url (image-url cursor)]
           [:div
@@ -412,14 +412,14 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon]
+                         side rec-counter facedown named-target icon new]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blue-shade.card {:class (when selected "selected")
+       [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
                               :draggable (when (not-spectator? game-state app-state) true)
                               :on-touch-start #(handle-touchstart % cursor)
                               :on-touch-end   #(handle-touchend %)
