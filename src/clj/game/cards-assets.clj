@@ -90,6 +90,16 @@
                                 :effect (effect (gain :credit 1)
                                                 (lose :runner :credit 1))}}}
 
+   "Bio-Ethics Association"
+   (let [ability {:req (req (no-ice? state (second (:zone card))))
+                  :label "Do 1 net damage (start of turn)"
+                  :once :per-turn
+                  :msg "do 1 net damage"
+                  :effect (effect (damage :net 1 {:card card}))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
@@ -123,6 +133,27 @@
               :effect (req (if-not (and (= target "Pay 1 [Credits]") (pay state side card :credit 1))
                              (do (tag-runner state side 1) (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
+
+   "Clone Suffrage Movement"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
+                                     (no-ice? state (second (:zone card)))))}
+    :abilities [{:label "Add 1 operation from Archives to HQ"
+                 :prompt "Choose an operation in Archives to add to HQ" :show-discard true
+                 :choices {:req #(and (is-type? % "Operation")
+                                      (= (:zone %) [:discard]))}
+                 :effect (effect (move target :hand)) :once :per-turn
+                 :msg (msg "add " (card-str state target) " to HQ")}]}
+
+   "Commercial Bankers Group"
+   (let [ability {:req (req (no-ice? state (second (:zone card))))
+                  :label "Gain 3 [Credits] (start of turn)"
+                  :once :per-turn
+                  :msg "gain 3 [Credits]"
+                  :effect (effect (damage :net 1 {:card card}))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Constellation Protocol"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -181,7 +212,7 @@
               :req (req (first-event state side :corp-draw))
               :effect (req
                         (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
-                                                  (all-installed state :corp))) 
+                                                  (all-installed state :corp)))
                               newcards (take dbs (:deck corp))
                               drawn (concat newcards (take-last target (:hand corp)))]
                           (doseq [c newcards] (move state side c :hand))
@@ -683,6 +714,20 @@
                  :msg (msg "trash " (:title target) " to gain 4 [Credits]")
                  :label "Trash a rezzed ICE to gain 4 [Credits]"
                  :effect (effect (trash target) (gain :credit 4))}]}
+
+   "Sensie Actors Union"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (no-ice? state (second (:zone card))))}
+    :abilities [{:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D"
+                 :once :per-turn
+                 :msg "draw 3 cards"
+                 :effect (effect (draw 3)
+                                 (resolve-ability
+                                   {:prompt "Choose a card in HQ to add to the bottom of R&D"
+                                    :choices {:req #(and (= (:side %) "Corp")
+                                                         (in-hand? %))}
+                                    :effect (effect (move target :deck))}
+                                  card nil))}]}
 
    "Server Diagnostics"
    (let [ability {:effect (effect (gain :credit 2))
