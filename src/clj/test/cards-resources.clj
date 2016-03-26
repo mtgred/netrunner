@@ -592,6 +592,24 @@
       (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
       (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
 
+(deftest street-peddler-tech-trader
+  "Street Peddler - Tech Trader install"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Tech Trader" 1)]))
+    (take-credits state :corp)
+    ;; move Gordian back to deck
+    (core/move state :runner (find-card "Tech Trader" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
+      (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
+          "Tech Trader was installed")
+      (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
+
 (deftest symmetrical-visage
   "Symmetrical Visage - Gain 1 credit the first time you click to draw each turn"
   (do-game

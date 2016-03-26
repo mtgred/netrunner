@@ -238,9 +238,10 @@
    "Harbinger"
    {:trash-effect
      {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
-      :effect (req (resolve-ability state :runner
-                     {:effect (effect (runner-install card {:facedown true}))}
-                    card nil))}}
+      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
+                     (swap! state assoc-in [:runner :locked] nil)
+                     (runner-install state :runner card {:facedown true})
+                     (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}

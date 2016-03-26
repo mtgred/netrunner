@@ -455,8 +455,8 @@
   (let [server (first (get-in @state [:run :server]))]
     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
     (swap! state assoc-in [:run :unsuccessful] true)
-    (trigger-event state side :unsuccessful-run)
-    (handle-end-run state side)))
+    (handle-end-run state side)
+    (trigger-event state side :unsuccessful-run)))
 
 (defn jack-out
   "The runner decides to jack out."

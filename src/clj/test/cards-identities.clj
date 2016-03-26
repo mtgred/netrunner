@@ -35,6 +35,16 @@
     (is (= 1 (:link (get-runner))) "1 link")
     (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
 
+(deftest andromeda-palana
+  "Andromeda - should not grant Palana credits."
+  (do-game
+    (new-game
+      (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)]))
+    (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand")))
+
+
 (deftest apex-facedown-console
   "Apex - Allow facedown install of a second console. Issue #1326"
   (do-game
@@ -291,6 +301,17 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
+
+(deftest jesminder-john-masanori
+  "Jesminder Sareen - don't avoid John Masanori tag"
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "John Masanori" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "John Masanori")
+    (run-on state "HQ")
+    (core/jack-out state :runner nil)
+    (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
 
 (deftest jinteki-replicating-perfection
   "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"

@@ -774,11 +774,11 @@
                  :effect (req
                            (when (can-pay? state side nil (modified-install-cost state side target [:credit -1]))
                              (install-cost-bonus state side [:credit -1])
-                             (runner-install state side (dissoc target :facedown))
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
                                                             (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                    {:cause :ability-cost})))}]}
+                                    {:cause :ability-cost})
+                             (runner-install state side (dissoc target :facedown))))}]}
 
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
