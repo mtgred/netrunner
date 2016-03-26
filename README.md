@@ -74,3 +74,7 @@ $ coffee server.coffee
 ```
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+
+This line was added to verify that the current build is broken.
+
