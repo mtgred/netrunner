@@ -76,7 +76,7 @@
   "Mulligan starting hand."
   [state side args]
   (shuffle-into-deck state side :hand)
-  (draw state side 5)
+  (draw state side 5 {:suppress-event true})
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
@@ -120,6 +120,9 @@
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
+  (doseq [c (filter #(:new %) (all-installed state side))]
+    (update! state side (dissoc c :new)))
+
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
   (swap! state assoc-in [side :register] nil)
 
@@ -137,9 +140,7 @@
                  "info")
       (end-phase-12 state side args))))
 
-(defn end-phase-32
-  "End step 2.2/3.2 (window before end of turn) and end the turn."
-  [state side]
+(defn end-turn [state side args]
   (let [max-hand-size (max (hand-size state side) 0)]
     (when (<= (count (get-in @state [side :hand])) max-hand-size)
       (turn-message state side false)
@@ -158,29 +159,8 @@
           ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
           (when (has-subtype? card "Virus")
             (set-prop state :runner card :added-virus-counter false))))
-      (swap! state assoc :end-turn true :phase-32 false)
+      (swap! state assoc :end-turn true)
       (swap! state update-in [side :register] dissoc :cannot-draw)
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
       (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
-
-(defn end-turn
-  [state side args]
-  (if-not (:phase-32 @state)
-    (end-phase-32 state side)
-    (let [opp (other-side side)]
-      (system-msg state opp (str "wants to act before " (side-str side) "'s end of turn"))
-      (show-wait-prompt state side (str (side-str opp) "'s actions before end of turn"))
-      (show-prompt state opp nil
-                   (if (= :corp side) "Take actions before Corp's end of turn."
-                                      "Rez and take actions before Runner's end of turn.")
-                   ["Done"]
-                   (fn [_]
-                     (clear-wait-prompt state side)
-                     (system-msg state opp "has no further action")
-                     (show-prompt state side nil "Your turn is now ending." ["Done"]
-                                    (fn [_] (end-phase-32 state side))))
-                   {:priority -1}))))
-
-(defn request-phase-32 [state side args]
-  (swap! state assoc :phase-32 true))
