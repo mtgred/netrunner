@@ -15,13 +15,13 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.2.1"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.3.7"]]}}
+  :profiles {:dev {:dependencies [[figwheel "0.5.2"]]}}
 
   :main game.main
   :aot :all
 
   :plugins [[lein-cljsbuild "1.1.3"]
-            [lein-figwheel "0.3.7"]]
+            [lein-figwheel "0.5.2"]]
 
   :source-paths ["src/clj" "src/cljs"]
 
