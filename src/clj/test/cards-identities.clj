@@ -210,7 +210,6 @@
     (play-from-hand state :runner "Study Guide")
     (take-credits state :runner)
     (core/gain state :runner :credit 7)
-    (core/request-phase-32 state :runner nil)
     (core/end-turn state :corp nil)
     (is (not (:end-turn @state)) "Corp turn has not ended")
     (card-ability state :runner (-> (get-runner) :rig :hardware first) 0)
