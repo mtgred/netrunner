@@ -156,7 +156,7 @@
    "Djinn"
    {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
                  :prompt "Choose a Virus"
-                 :msg (msg "adds " (:title target) " to their Grip")
+                 :msg (msg "add " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(and (is-type? % "Program")
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
