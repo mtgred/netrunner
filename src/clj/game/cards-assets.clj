@@ -518,6 +518,19 @@
    "Mumba Temple"
    {:recurring 2}
 
+   "Mumbad City Hall"
+   {:abilities [{:label "Search R&D for an Alliance card"
+                 :cost [:click 1]
+                 :prompt "Choose an Alliance card to play or install"
+                 :choices (req (cancellable (filter #(and (has-subtype? % "Alliance")
+                                                          (if (is-type? % "Operation")
+                                                            (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
+                 :msg (msg "reveal " (:title target) " from R&D and "
+                           (if (= (:type target) "Operation") "play " "install ") " it")
+                 :effect (req (if (= (:type target) "Operation")
+                                (play-instant state side target)
+                                (corp-install state side target nil)))}]}
+
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}}
