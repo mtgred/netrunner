@@ -621,6 +621,24 @@
               card nil))}
     "Score an Agenda from HQ?")
 
+   "Political Dealings"
+   (let [pd-register [:corp :register :pd-drawn]
+         clear (fn [state side] (swap! state assoc-in pd-register []))]
+     {:events {:corp-draw {:effect (req (toast state :corp (str "Political Dealings "
+                                                                "to reveal and install "
+                                                                "an agenda.") "info")
+                                        (let [drawn (take-last target (:hand corp))]
+                                          (swap! state assoc-in pd-register (vec (filter #(is-type? % "Agenda") drawn)))))}
+               :corp-spent-click {:effect (effect (clear))}
+               :corp-turn-ends {:effect (effect (clear))}}
+      :abilities [{:label "Reveal and install agenda"
+                   :req (req (seq (get-in @state [:corp :register :pd-drawn])))
+                   :prompt "Choose an angenda to reveal and install"
+                   :choices (req (cancellable (get-in @state [:corp :register :pd-drawn]) :sorted))
+                   :msg (msg "reveal " (:title target))
+                   :effect (req (corp-install state side target nil {:install-state (or (:install-state (card-def target)) :rezzed-no-cost)})
+                                (swap! state update-in pd-register (fn [pd] (remove #(= (:cid %) (:cid target)) pd))))}]})
+
    "Primary Transmission Dish"
    {:recurring 3}
 
