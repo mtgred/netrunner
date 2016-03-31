@@ -350,20 +350,20 @@
 
    "Surat City Grid"
    {:events
-    {:rez {:req (req (let [serv (card->server state card)
-                           servcards (concat (:ices serv) (:contents serv))]
-                       (and (= (card->server state target) serv)
-                            (not= (:cid target) (:cid card))
-                            (seq (filter #(not (rezzed? %)) servcards)))))
+    {:rez {:req (req (and (= (card->server state target) (card->server state card))
+                          (not= (:cid target) (:cid card))
+                          (seq (filter #(not (rezzed? %)) (all-installed state :corp)))))
            :effect (effect (resolve-ability
                              {:optional
-                              {:prompt (msg "Rez another card in or protecting " (zone->name (second (:zone card)))
-                                            " with Surat City Grid?")
+                              {:prompt (msg "Rez another card with Surat City Grid?")
                                :yes-ability {:prompt "Choose a card to rez"
-                                             :choices {:req #(= (card->server state %) (card->server state card))}
-                                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
-                                             :effect (effect (rez-cost-bonus -2)
-                                                             (rez target))}}}
+                                             :choices {:req #(not (rezzed? %))}
+                                             :msg (msg "rez " (:title target)
+                                                       (when (= (card->server state target) (card->server state card))
+                                                         ", lowering the rez cost by 2 [Credits]"))
+                                             :effect (req (when (= (card->server state target) (card->server state card))
+                                                            (rez-cost-bonus state side -2))
+                                                          (rez state side target))}}}
                             card nil))}}}
 
    "The Twins"
