@@ -339,7 +339,7 @@
                  (when (= 0 (remaining-draws state :runner))
                    (prevent-draw state :runner)))
     :events {:runner-turn-begins {:effect (effect (max-draw :runner 2))}}
-    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw))}
+    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
    (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
