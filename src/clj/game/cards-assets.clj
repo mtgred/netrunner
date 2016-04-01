@@ -150,7 +150,7 @@
                   :label "Gain 3 [Credits] (start of turn)"
                   :once :per-turn
                   :msg "gain 3 [Credits]"
-                  :effect (effect (damage :net 1 {:card card}))}]
+                  :effect (effect (gain :credit 3))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
