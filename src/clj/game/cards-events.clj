@@ -703,6 +703,21 @@
     :events {:successful-run {:effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
+   "The Price of Freedom"
+   {:req (req (some #(has-subtype? % "Connection") (all-installed state :runner)))
+    :prompt "Choose an installed connection to trash"
+    :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
+    :msg (msg "trash " (:title target) " to prevent the corp from advancing cards during their next turn")
+    :effect (effect (move (find-cid (:cid card) (:discard runner)) :rfg)
+                    (trash target)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+                    (register-persistent-flag!
+                             card :cannot-advance
+                             (fn [state side card]
+                                 ((constantly true) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
+                                              (unregister-events card))}}}
+
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
