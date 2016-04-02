@@ -395,12 +395,13 @@
 
    "NetChip"
    {:abilities [{:label "Install a program on NetChip"
-                 :cost [:click 1]
                  :req (req (empty? (:hosted card)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
                                   {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :cost [:click 1]
                                    :choices {:req #(and (is-type? % "Program")
+                                                        (runner-can-install? state side % false)
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
                                    :msg (msg "host " (:title target))
