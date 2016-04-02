@@ -445,6 +445,37 @@
       (is (= 2 (:click (get-runner))) "Runner was charged 1click")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest tori-hanzo
+  "Tori Hanzō - Pay to do 1 brain damage instead of net damage"
+  (do-game
+    (new-game (default-corp [(qty "Pup" 1) (qty "Tori Hanzō" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Net Shield" 1)]))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Pup" "HQ")
+    (play-from-hand state :corp "Tori Hanzō" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Net Shield")
+    (run-on state "HQ")
+    (let [pup (get-ice state :hq 0)
+          tori (get-content state :hq 0)
+          nshld (get-in @state [:runner :rig :program 0])]
+      (core/rez state :corp pup)
+      (core/rez state :corp tori)
+      (card-ability state :corp pup 0)
+      (card-ability state :runner nshld 0)
+      (prompt-choice :runner "Done")
+      (is (empty? (:discard (get-runner))) "1 net damage prevented")
+      (card-ability state :corp pup 0)
+      (prompt-choice :runner "Done") ; decline to prevent
+      (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
+      (run-jack-out state)
+      (run-on state "HQ")
+      (card-ability state :corp pup 0)
+      (prompt-choice :runner "Done")
+      (prompt-choice :corp "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
+      (is (= 1 (:brain-damage (get-runner)))))))
+
 (deftest valley-grid-trash
   "Valley Grid - Reduce Runner max hand size and restore it even if trashed"
   (do-game

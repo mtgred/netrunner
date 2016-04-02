@@ -384,6 +384,29 @@
                                    :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")}
                                  card nil)))}]}
 
+   "Tori Hanzō"
+   {:events
+    {:pre-resolve-damage
+     {:once :per-run
+      :req (req (and this-server (= target :net) (> (last targets) 0)))
+      :effect (req (swap! state assoc-in [:damage :damage-replace] true)
+                   (damage-defer state side :net (last targets))
+                   (show-wait-prompt state :runner "Corp to use Tori Hanzō")
+                   (resolve-ability state side
+                     {:optional {:req (req (can-pay? state :corp nil [:credit 2]))
+                                 :prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
+                                 :yes-ability {:msg "do 1 brain damage instead of net damage"
+                                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                                            (clear-wait-prompt state :runner)
+                                                            (pay state :corp card :credit 2)
+                                                            (damage state side :brain 1 {:card card}))}
+                                 :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                                           (clear-wait-prompt state :runner)
+                                                           (damage state side :net (get-defer-damage state side :net nil)
+                                                                   {:card card}))}}} card nil))}
+     :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
+                        :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
+
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))

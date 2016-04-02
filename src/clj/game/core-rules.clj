@@ -100,7 +100,7 @@
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
   [state side dtype n]
-  (swap! state assoc-in [:damage :defer-damage dtype] n ))
+  (swap! state assoc-in [:damage :defer-damage dtype] n))
 
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
   (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
@@ -111,16 +111,17 @@
   [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (trigger-event state side :pre-resolve-damage type card n)
-  (let [n (if (get-defer-damage state side type args) 0 n)]
-    (let [hand (get-in @state [:runner :hand])]
-      (when (< (count hand) n)
-        (flatline state))
-      (when (= type :brain)
-        (swap! state update-in [:runner :brain-damage] #(+ % n))
-        (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-      (doseq [c (take n (shuffle hand))]
-        (trash state side c {:unpreventable true :cause type} type))
-      (trigger-event state side :damage type card))))
+  (when-not (or (get-in @state [:damage :damage-replace]) (get-in @state [:damage :damage-choose]))
+    (let [n (if (get-defer-damage state side type args) 0 n)]
+      (let [hand (get-in @state [:runner :hand])]
+        (when (< (count hand) n)
+          (flatline state))
+        (when (= type :brain)
+          (swap! state update-in [:runner :brain-damage] #(+ % n))
+          (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+        (doseq [c (take n (shuffle hand))]
+          (trash state side c {:unpreventable true :cause type} type))
+        (trigger-event state side :damage type card)))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
@@ -130,7 +131,7 @@
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
-   (trigger-event state side :pre-damage type card)
+   (trigger-event state side :pre-damage type card n)
    (let [n (damage-count state side type n args)]
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
@@ -142,8 +143,9 @@
                  (let [prevent (get-in @state [:damage :damage-prevent type])]
                    (system-msg state :runner
                                (if prevent
-                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
-                                      " " (name type) " damage")
+                                 (do (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                          " " (name type) " damage")
+                                     (trigger-event state side :prevented-damage type prevent))
                                  "will not prevent damage"))
                    (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
