@@ -141,11 +141,12 @@
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                (fn [choice]
                  (let [prevent (get-in @state [:damage :damage-prevent type])]
+                   (when prevent
+                     (trigger-event state side :prevented-damage type prevent))
                    (system-msg state :runner
                                (if prevent
-                                 (do (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                           " " (name type) " damage")
-                                     (trigger-event state side :prevented-damage type prevent))
                                  "will not prevent damage"))
                    (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
