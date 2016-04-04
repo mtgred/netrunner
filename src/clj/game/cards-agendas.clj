@@ -78,9 +78,12 @@
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
     :optional {:prompt "Trigger the ability of a scored agenda?"
                :yes-ability {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                             :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
+                             :choices {:req #(and (is-type? % "Agenda")
+                                                  (not= (:title %) "Bifrost Array")
+                                                  (= (first (:zone %)) :scored)
+                                                  (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                             :effect (effect (card-init target))}}}
+                             :effect (effect (resolve-ability (card-def target) target nil))}}}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
