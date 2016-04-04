@@ -292,6 +292,18 @@
     :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
     :leave-play (effect (update-all-ice))}
 
+   "Lateral Growth"
+   {:msg "gain 4 [Credits]"
+    :effect (effect (gain :credit 4)
+                    (resolve-ability {:player :corp
+                                      :prompt "Choose a card to install"
+                                      :choices {:req #(and (not (is-type? % "Operation"))
+                                                           (:side % "Corp")
+                                                           (in-hand? %))}
+                                      :effect (effect (corp-install target nil))
+                                      :msg (msg (corp-install-msg target))}
+                                      card nil))}
+
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
