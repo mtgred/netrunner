@@ -160,5 +160,7 @@
           (when (has-subtype? card "Virus")
             (set-prop state :runner card :added-virus-counter false))))
       (swap! state assoc :end-turn true)
+      (swap! state update-in [side :register] dissoc :cannot-draw)
+      (swap! state update-in [side :register] dissoc :drawn-this-turn)
       (clear-turn-register! state)
       (swap! state dissoc :turn-events))))
