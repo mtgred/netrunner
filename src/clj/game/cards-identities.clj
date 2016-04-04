@@ -95,13 +95,14 @@
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
-    {:pre-resolve-damage
+    {:corp-turn-begins {:effect (effect (enable-corp-damage-choice))}
+     :runner-turn-begins {:effect (effect (enable-corp-damage-choice))}
+     :pre-resolve-damage
      {:once :per-turn
       :req (req (and (= target :net)
-                     (not (and (= (:active-player @state) :runner) (get-in @state [:damage] :damage-choose)))
+                     (corp-can-choose-damage? state)
                      (> (last targets) 0)))
-      :effect (req (swap! state assoc-in [:damage :damage-choose] true)
-                   (damage-defer state side :net (last targets))
+      :effect (req (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                    (resolve-ability state side
                      {:optional {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
@@ -113,12 +114,12 @@
                                                         (str " and deal "
                                                              (- (get-defer-damage state side :net nil) 1)
                                                              " more net damage")))
-                                               :effect (req (swap! state update-in [:damage] dissoc :damage-choose)
-                                                            (clear-wait-prompt state :runner)
+                                               :effect (req (clear-wait-prompt state :runner)
                                                             (trash state side target {:cause :net :unpreventable true})
+                                                            (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                             (damage state side :net (- (get-defer-damage state side :net nil) 1)
                                                                     {:unpreventable true :card card}))}
-                                 :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-choose)
+                                 :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                            (clear-wait-prompt state :runner)
                                                            (damage state side :net (get-defer-damage state side :net nil)
                                                                    {:unpreventable true :card card}))}}} card nil))}}}
