@@ -395,12 +395,13 @@
 
    "NetChip"
    {:abilities [{:label "Install a program on NetChip"
-                 :cost [:click 1]
                  :req (req (empty? (:hosted card)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
                                   {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :cost [:click 1]
                                    :choices {:req #(and (is-type? % "Program")
+                                                        (runner-can-install? state side % false)
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
                                    :msg (msg "host " (:title target))
@@ -612,7 +613,32 @@
     :recurring 2}
 
    "Titanium Ribs"
-   {:effect (effect (damage :meat 2 {:card card}))}
+   {:events
+    {:pre-resolve-damage
+     {:req (req (and (> (last targets) 0)
+                     (not (and (= (:active-player @state) :corp) (get-in @state [:damage] :damage-choose)))
+                     (not (get-in @state [:damage :damage-replace]))))
+      :effect (req (let [dtype target
+                         dmg (last targets)]
+                     (when (> dmg (count (:hand runner)))
+                       (flatline state))
+                     (when (= dtype :brain)
+                       (swap! state update-in [:runner :brain-damage] #(+ % dmg))
+                       (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
+                     (swap! state assoc-in [:damage :damage-choose] true)
+                     (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
+                     (resolve-ability state side
+                       {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
+                        :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                        :msg (msg "trash " (join ", " (map :title targets)))
+                        :effect (req (swap! state update-in [:damage] dissoc :damage-choose)
+                                     (clear-wait-prompt state :corp)
+                                     (doseq [c targets]
+                                       (trash state side c {:cause dtype :unpreventable true})))}
+                      card nil)
+                      (trigger-event state side :damage dtype nil)))}}
+    :effect (effect (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
+                    (damage :meat 2 {:card card}))}
 
    "Turntable"
    {:in-play [:memory 1]

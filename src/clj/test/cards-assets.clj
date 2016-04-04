@@ -231,9 +231,10 @@
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
 (deftest genetics-pavilion
+  "Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn"
   (do-game
     (new-game (default-corp [(qty "Genetics Pavilion" 1)])
-              (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
+              (default-runner [(qty "Diesel" 1) (qty "Sure Gamble" 3) (qty "Sports Hopper" 1)]))
     (play-from-hand state :corp "Genetics Pavilion" "New remote")
     (let [gp (get-content state :remote1 0)]
       (take-credits state :corp)
@@ -241,21 +242,48 @@
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-      (is (= 2 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Sports Hopper")
       (play-from-hand state :runner "Diesel")
-      (is (= 3 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
+      (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
       (take-credits state :runner)
-      (core/derez state :corp (refresh gp))
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (let [hopper (get-in @state [:runner :rig :hardware 0])]
+        (card-ability state :runner hopper 0)
+        (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
+        (core/derez state :corp (refresh gp))
+        (take-credits state :corp)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :hand)
+        (is (= 1 (count (:hand (get-runner)))))
+        (play-from-hand state :runner "Diesel")
+        (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/rez state :corp (refresh gp))
+        (core/draw state :runner)
+        (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez")))))
+
+(deftest genetics-pavilion-fisk-investment
+  (do-game
+    (new-game (default-corp [(qty "Genetics Pavilion" 1) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Fisk Investment Seminar" 1) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Genetics Pavilion" "New remote")
+    (let [gp (get-content state :remote1 0)]
       (take-credits state :corp)
+      (core/rez state :corp gp)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (is (= 1 (count (:hand (get-runner)))))
-      (play-from-hand state :runner "Diesel")
-      (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
-      (core/rez state :corp (refresh gp))
-      (core/draw state :runner)
-      (is (= 3 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez"))))
+      (is (= 0 (count (:hand (get-corp)))))
+      (play-from-hand state :runner "Fisk Investment Seminar")
+      (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
+      (is (= 3 (count (:hand (get-corp)))) "Drew all 3 cards"))))
 
 (deftest ghost-branch
   "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"

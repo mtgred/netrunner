@@ -150,7 +150,7 @@
                   :label "Gain 3 [Credits] (start of turn)"
                   :once :per-turn
                   :msg "gain 3 [Credits]"
-                  :effect (effect (damage :net 1 {:card card}))}]
+                  :effect (effect (gain :credit 3))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -336,10 +336,10 @@
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)
-                 (when (= 0 (remaining-draws state side))
-                   (prevent-draw state side)))
-    :events {:runner-turn-begins {:effect (effect (max-draw 2))}}
-    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw))}
+                 (when (= 0 (remaining-draws state :runner))
+                   (prevent-draw state :runner)))
+    :events {:runner-turn-begins {:effect (effect (max-draw :runner 2))}}
+    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
    (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
@@ -517,6 +517,19 @@
 
    "Mumba Temple"
    {:recurring 2}
+
+   "Mumbad City Hall"
+   {:abilities [{:label "Search R&D for an Alliance card"
+                 :cost [:click 1]
+                 :prompt "Choose an Alliance card to play or install"
+                 :choices (req (cancellable (filter #(and (has-subtype? % "Alliance")
+                                                          (if (is-type? % "Operation")
+                                                            (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
+                 :msg (msg "reveal " (:title target) " from R&D and "
+                           (if (= (:type target) "Operation") "play " "install ") " it")
+                 :effect (req (if (= (:type target) "Operation")
+                                (play-instant state side target)
+                                (corp-install state side target nil)))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

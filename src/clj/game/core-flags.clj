@@ -224,6 +224,11 @@
    (and (turn-flag? state side card :can-steal)
         (run-flag? state side card :can-steal))))
 
+(defn can-advance?
+  ([state side card] (can-advance? state side card nil))
+  ([state side card {:as args}]
+   (not (persistent-flag? state side card :cannot-advance))))
+
 (defn can-score?
   ([state side card] (can-score? state side card nil))
   ([state side card {:as args}]

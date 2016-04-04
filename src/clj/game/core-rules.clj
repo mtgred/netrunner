@@ -47,10 +47,9 @@
 (defn remaining-draws
   "Calculate remaining number of cards that can be drawn this turn if a maximum exists"
   [state side]
-  (let [active-player (get-in @state [:active-player])]
-    (when-let [max-draw (get-in @state [active-player :register :max-draw])]
-      (let [drawn-this-turn (get-in @state [active-player :register :drawn-this-turn] 0)]
-        (max (- max-draw drawn-this-turn) 0)))))
+  (when-let [max-draw (get-in @state [side :register :max-draw])]
+    (let [drawn-this-turn (get-in @state [side :register :drawn-this-turn] 0)]
+      (max (- max-draw drawn-this-turn) 0))))
 
 (defn draw
   "Draw n cards from :deck to :hand."
@@ -58,17 +57,17 @@
   ([state side n] (draw state side n nil))
   ([state side n {:keys [suppress-event] :as args}]
    (let [active-player (get-in @state [:active-player])
-         n (if (get-in @state [active-player :register :max-draw])
+         n (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
              (min n (remaining-draws state side))
              n)
          deck-count (count (get-in @state [side :deck]))]
      (when (and (= side :corp) (> n deck-count))
        (win-decked state))
-     (when-not (get-in @state [active-player :register :cannot-draw])
+     (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
        (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
          (swap! state update-in [side :hand] #(concat % drawn))
          (swap! state update-in [side :deck] (partial drop n))
-         (swap! state update-in [active-player :register :drawn-this-turn] (fnil #(+ % n) 0))
+         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % n) 0))
          (when (and (not suppress-event) (pos? deck-count))
            (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
          (when (= 0 (remaining-draws state side))
@@ -101,7 +100,7 @@
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
   [state side dtype n]
-  (swap! state assoc-in [:damage :defer-damage dtype] n ))
+  (swap! state assoc-in [:damage :defer-damage dtype] n))
 
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
   (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
@@ -112,16 +111,17 @@
   [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (trigger-event state side :pre-resolve-damage type card n)
-  (let [n (if (get-defer-damage state side type args) 0 n)]
-    (let [hand (get-in @state [:runner :hand])]
-      (when (< (count hand) n)
-        (flatline state))
-      (when (= type :brain)
-        (swap! state update-in [:runner :brain-damage] #(+ % n))
-        (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-      (doseq [c (take n (shuffle hand))]
-        (trash state side c {:unpreventable true :cause type} type))
-      (trigger-event state side :damage type card))))
+  (when-not (or (get-in @state [:damage :damage-replace]) (get-in @state [:damage :damage-choose]))
+    (let [n (if (get-defer-damage state side type args) 0 n)]
+      (let [hand (get-in @state [:runner :hand])]
+        (when (< (count hand) n)
+          (flatline state))
+        (when (= type :brain)
+          (swap! state update-in [:runner :brain-damage] #(+ % n))
+          (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+        (doseq [c (take n (shuffle hand))]
+          (trash state side c {:unpreventable true :cause type} type))
+        (trigger-event state side :damage type card)))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
@@ -131,7 +131,7 @@
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
-   (trigger-event state side :pre-damage type card)
+   (trigger-event state side :pre-damage type card n)
    (let [n (damage-count state side type n args)]
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
@@ -141,10 +141,12 @@
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                (fn [choice]
                  (let [prevent (get-in @state [:damage :damage-prevent type])]
+                   (when prevent
+                     (trigger-event state side :prevented-damage type prevent))
                    (system-msg state :runner
                                (if prevent
-                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent )
-                                      " " (name type) " damage")
+                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                          " " (name type) " damage")
                                  "will not prevent damage"))
                    (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
