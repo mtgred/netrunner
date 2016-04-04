@@ -616,7 +616,7 @@
    {:events
     {:pre-resolve-damage
      {:req (req (and (> (last targets) 0)
-                     (not (and (= (:active-player @state) :corp) (get-in @state [:damage] :damage-choose)))
+                     (runner-can-choose-damage? state)
                      (not (get-in @state [:damage :damage-replace]))))
       :effect (req (let [dtype target
                          dmg (last targets)]
@@ -625,19 +625,20 @@
                      (when (= dtype :brain)
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
                        (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
-                     (swap! state assoc-in [:damage :damage-choose] true)
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
                      (resolve-ability state side
                        {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
                         :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
                         :msg (msg "trash " (join ", " (map :title targets)))
-                        :effect (req (swap! state update-in [:damage] dissoc :damage-choose)
-                                     (clear-wait-prompt state :corp)
+                        :effect (req (clear-wait-prompt state :corp)
                                      (doseq [c targets]
-                                       (trash state side c {:cause dtype :unpreventable true})))}
+                                       (trash state side c {:cause dtype :unpreventable true}))
+                                     (trigger-event state side :damage-chosen))}
                       card nil)
-                      (trigger-event state side :damage dtype nil)))}}
-    :effect (effect (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
+                      (trigger-event state side :damage dtype nil)))}
+     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
+    :effect (effect (enable-runner-damage-choice)
+                    (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
                     (damage :meat 2 {:card card}))}
 
    "Turntable"
