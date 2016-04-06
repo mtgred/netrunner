@@ -91,6 +91,35 @@
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
     (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
+(deftest chronos-protocol
+  "Chronos Protocol - Choose Runner discard for first net damage of a turn"
+  (do-game
+    (new-game
+      (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Neural EMP" 2)])
+      (default-runner [(qty "Imp" 3)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-ability state :corp pup 0)
+      (prompt-choice :corp "Yes")
+      (let [imp (find-card "Imp" (:hand (get-runner)))]
+        (prompt-choice :corp imp)
+        (is (= 1 (count (:discard (get-runner)))))
+        (card-ability state :corp pup 0)
+        (is (empty? (:prompt (get-corp))) "No choice on second net damage")
+        (is (= 2 (count (:discard (get-runner)))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
+        (play-from-hand state :corp "Neural EMP")
+        (prompt-choice :corp "No")
+        (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
+        (play-from-hand state :corp "Neural EMP")
+        (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
+        (is (= 3 (count (:discard (get-runner)))))))))
+
 (deftest edward-kim
   "Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives"
   (do-game

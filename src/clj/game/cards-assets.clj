@@ -529,7 +529,8 @@
                            (if (= (:type target) "Operation") "play " "install ") " it")
                  :effect (req (if (= (:type target) "Operation")
                                 (play-instant state side target)
-                                (corp-install state side target nil)))}]}
+                                (corp-install state side target nil))
+                              (shuffle! state side :deck))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

@@ -240,8 +240,10 @@
       (core/move state :runner (find-card "Sure Gamble" (:discard (get-runner))) :hand)
       (core/move state :runner (find-card "Kati Jones" (:discard (get-runner))) :hand)
       (play-from-hand state :corp "Neural EMP")
-      (prompt-choice :corp "Kati Jones") ; Chronos Protocol takes precedence over Ribs on Corp turn
-      (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage"))))
+      (prompt-choice :corp "Yes")
+      (let [kati (find-card "Kati Jones" (:hand (get-runner)))]
+        (prompt-choice :corp kati) ; Chronos Protocol takes precedence over Ribs on Corp turn
+        (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
 (deftest turntable-swap
   "Turntable - Swap a stolen agenda for a scored agenda"

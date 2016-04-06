@@ -105,13 +105,42 @@
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
   (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
 
+(defn enable-runner-damage-choice
+  [state side]
+  (swap! state assoc-in [:damage :damage-choose-runner] true))
+
+(defn enable-corp-damage-choice
+  [state side]
+  (swap! state assoc-in [:damage :damage-choose-corp] true))
+
+(defn runner-can-choose-damage?
+  [state]
+  (get-in @state [:damage :damage-choose-runner]))
+
+(defn corp-can-choose-damage?
+  [state]
+  (get-in @state [:damage :damage-choose-corp]))
+
+(defn damage-choice-priority
+  "Determines which side gets to act if either or both have the ability to choose cards for damage.
+  Currently just for Chronos Protocol vs Titanium Ribs"
+  [state]
+  (let [active-player (get-in @state [:active-player])]
+    (when (and (corp-can-choose-damage? state) (runner-can-choose-damage? state))
+      (if (= active-player :corp)
+        (swap! state update-in [:damage] dissoc :damage-choose-runner)
+        (swap! state update-in [:damage] dissoc :damage-choose-corp)))))
+
 (defn resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
   [state side type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
+  (damage-choice-priority state)
   (trigger-event state side :pre-resolve-damage type card n)
-  (when-not (or (get-in @state [:damage :damage-replace]) (get-in @state [:damage :damage-choose]))
+  (when-not (or (get-in @state [:damage :damage-replace])
+                (get-in @state [:damage :damage-choose-runner])
+                (get-in @state [:damage :damage-choose-corp]))
     (let [n (if (get-defer-damage state side type args) 0 n)]
       (let [hand (get-in @state [:runner :hand])]
         (when (< (count hand) n)
