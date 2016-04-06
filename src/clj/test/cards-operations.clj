@@ -106,6 +106,18 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
 
+(deftest lateral-growth
+  (do-game
+    (new-game (default-corp [(qty "Lateral Growth" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (is (= 5 (:credit (get-corp))))
+    (play-from-hand state :corp "Lateral Growth")
+    (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (= "Breaking News" (:title (get-content state :remote1 0)))
+      "Breaking News installed by Lateral Growth")
+    (is (= 7 (:credit (get-corp))))))
+
 (deftest midseason-replacements
   "Midseason Replacements - Trace to give Runner tags after they steal an agenda"
   (do-game
