@@ -364,6 +364,33 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
+(deftest political-dealings
+  (do-game
+    (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])
+              (default-runner))
+    (core/move state :corp (find-card "Medical Breakthrough" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Oaktown Renovation" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Political Dealings" "New remote")
+    (is (= "Political Dealings" (:title (get-content state :remote1 0))) "Political Dealings installed")
+    (let [pd (get-content state :remote1 0)]
+      (core/rez state :corp (refresh pd))
+      (core/draw state :corp)
+      (let [mb (first (:hand (get-corp)))]
+        (card-ability state :corp pd 0)
+        (prompt-choice :corp mb)
+        (prompt-choice :corp "New remote")
+        (is (= "Medical Breakthrough" (:title (get-content state :remote2 0)))
+            "Medical Breakthrough installed by Political Dealings")
+        (core/draw state :corp)
+        (let [oak (first (:hand (get-corp)))]
+          (card-ability state :corp pd 0)
+          (prompt-choice :corp oak)
+          (prompt-choice :corp "New remote")
+          (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
+              "Oaktown Renovation installed by Political Dealings")
+          (is (= true (:rezzed (get-content state :remote3 0)))
+              "Oaktown Renovation installed face up"))))))
+
 (deftest public-support
   "Public support scoring and trashing"
   ;; TODO could also test for NOT triggering "when scored" events
