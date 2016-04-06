@@ -101,7 +101,7 @@
     :choices {:req #(and (installed? %)
                          (is-type? % "Resource"))}
     :msg (msg "trash " (:title target))
-    :effect (effect (trash target))}
+    :effect (effect (trash target {:unpreventable true}))}
 
    "Chronos Project"
    {:msg "remove all cards in the Runner's Heap from the game"
