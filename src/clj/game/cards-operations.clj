@@ -86,10 +86,12 @@
                     (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
 
    "Back Channels"
-   {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
-    :effect (effect (gain :credit (* 3 (:advance-counter target))) (trash target))
+   {:prompt "Choose an installed card in a server to trash"
+    :choices {:req #(and (= (last (:zone %)) :content)
+                         (is-remote? (second (:zone %))))}
+    :effect (effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
     :msg (msg "trash " (card-str state target) " and gain "
-              (* 3 (:advance-counter target)) " [Credits]")}
+              (* 3 (get target :advance-counter 0)) " [Credits]")}
 
    "Bad Times"
    {:req (req tagged)
