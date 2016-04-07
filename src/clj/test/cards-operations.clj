@@ -326,7 +326,8 @@
     (run-on state "R&D")
     (run-jack-out state)
     (take-credits state :runner)
-    (take-credits state :corp) ; There should not be a prompt here because runner made a run last turn
+    (is (empty? (get-in @state [:corp :prompt])) "No prompt here because runner made a run last turn")
+    (take-credits state :corp)
     (is (= 2 (count (:hand (get-corp)))) "2 Subliminals in HQ")
     (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
 
