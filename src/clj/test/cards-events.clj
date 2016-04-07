@@ -161,6 +161,31 @@
       (run-jack-out state)
       (run-on state "Archives"))))
 
+(deftest corporate-scandal
+  "Corporate Scandal - Corp has 1 additional bad pub even with 0"
+  (do-game
+    (new-game (default-corp [(qty "Elizabeth Mills" 1)])
+              (default-runner [(qty "Corporate Scandal" 1) (qty "Activist Support" 1)
+                               (qty "Raymond Flint" 1) (qty "Investigative Journalism" 1)]))
+    (play-from-hand state :corp "Elizabeth Mills" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5 :click 1)
+    (play-from-hand state :runner "Raymond Flint")
+    (play-from-hand state :runner "Corporate Scandal")
+    (is (empty? (:prompt (get-runner))) "No BP taken, so no HQ access from Raymond")
+    (play-from-hand state :runner "Investigative Journalism")
+    (is (= "Investigative Journalism" (:title (get-in @state [:runner :rig :resource 1]))) "IJ able to be installed")
+    (run-on state "HQ")
+    (is (= 1 (:run-credit (get-runner))) "1 run credit from bad publicity")
+    (run-jack-out state)
+    (play-from-hand state :runner "Activist Support")
+    (take-credits state :runner)
+    (let [em (get-content state :remote1 0)]
+      (core/rez state :corp em)
+      (is (= 1 (:has-bad-pub (get-corp))) "Corp still has BP")
+      (take-credits state :corp)
+      (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
+
 (deftest demolition-run
   "Demolition Run - Trash at no cost"
   (do-game
@@ -215,7 +240,7 @@
     (play-from-hand state :corp "Project Atlas" "New remote")
     (play-from-hand state :corp "Product Placement" "HQ")
     (take-credits state :corp)
-    (let [eve1 (get-content state :remote1 0) 
+    (let [eve1 (get-content state :remote1 0)
           eve2 (get-content state :remote2 0)
           atl (get-content state :remote3 0)
           pp (get-content state :hq 0)]
@@ -239,7 +264,19 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content])))
           "Project Atlas not trashed from Server 3"))))
 
-(deftest freelance-coding-contract
+(deftest employee-strike-blue-sun
+  "Employee Strike - vs Blue Sun, suppress Step 1.2"
+  (do-game
+    (new-game (make-deck "Blue Sun: Powering the Future" [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
+
+    (deftest freelance-coding-contract
   "Freelance Coding Contract - Gain 2 credits per program trashed from Grip"
   (do-game
     (new-game (default-corp)
@@ -524,6 +561,38 @@
         (take-credits state :runner)
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
+
+(deftest the-price-of-freedom
+  "The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn"
+  (do-game
+    (new-game (default-corp [(qty "NAPD Contract" 1)])
+              (default-runner [(qty "Kati Jones" 1) (qty "The Price of Freedom" 1)]))
+    (play-from-hand state :corp "NAPD Contract" "New remote")
+    (take-credits state :corp)
+    (is (= 7 (:credit (get-corp))) "Corp has 7 credits (play NAPD + 2 clicks for credit")
+    (play-from-hand state :runner "The Price of Freedom")
+    (is (= 2 (count (get-in @state [:runner :hand]))) "The Price of Freedom could not be played because no connection is installed")
+    (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")
+    (play-from-hand state :runner "Kati Jones")
+    (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Kati Jones was installed")
+    (play-from-hand state :runner "The Price of Freedom")
+    (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
+    (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
+      (prompt-select :runner kj)
+      (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
+      (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
+    (take-credits state :runner)
+    (let [napd (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh napd)})
+      (is (= 7 (:credit (get-corp))) "NAPD contract could not be advanced because of The Price of Freedom")
+      (take-credits state :corp)
+      (is (= 10 (:credit (get-corp))) "Corp has 10 credits now (3 clicks for credit, no click charged for failed advancing)")
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (is (= 7 (:credit (get-corp))) "NAPD could be advanced (3 credits charged for advancing)"))))
+
 
 (deftest vamp
   "Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp"

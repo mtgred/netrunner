@@ -89,14 +89,14 @@
 
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
-  [card {:keys [side faction title] :as identity}]
+  [card {:keys [side faction setname code] :as identity}]
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
            (= (:faction card) "Neutral")
            (= (:faction card) faction)
-           (= title "The Shadow: Pulling the Strings"))
-       (or (not= title "Custom Biotics: Engineered for Success")
+           (= setname "Draft"))
+       (or (not= code "03002") ; Custom Biotics: Engineered for Success
            (not= (:faction card) "Jinteki"))))
 
 (defn load-decks [decks]

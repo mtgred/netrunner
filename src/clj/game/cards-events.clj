@@ -42,7 +42,7 @@
                        (gain state :runner :memory (:memoryunits c))))))}
 
    "Blackmail"
-   {:req (req (> (:bad-publicity corp) 0)) :prompt "Choose a server" :choices (req runnable-servers)
+   {:req (req has-bad-pub) :prompt "Choose a server" :choices (req runnable-servers)
     :msg "prevent ICE from being rezzed during this run"
     :effect (effect (register-run-flag!
                       card
@@ -89,6 +89,11 @@
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
+
+   "Corporate Scandal"
+   {:msg "give the Corp 1 additional bad publicity"
+    :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
+    :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
 
    "Cyber Threat"
    {:prompt "Choose a server" :choices (req runnable-servers)
@@ -177,9 +182,8 @@
 
    "Employee Strike"
    {:msg "disable the Corp's identity"
-    :effect (req (unregister-events state side (:identity corp)))
-    :leave-play (req (when-let [events (:events (card-def (:identity corp)))]
-                       (register-events state side events (:identity corp))))}
+    :effect (effect (disable-identity :corp))
+    :leave-play (effect (enable-identity :corp))}
 
    "Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
@@ -269,6 +273,10 @@
     :choices (req (:scored runner))
     :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
+
+   "\"Freedom Through Equality\""
+   {:events {:agenda-stolen {:msg "add it to their score area and gain 1 agenda point"
+                             :effect (effect (as-agenda :runner card 1))}}}
 
    "Freelance Coding Contract"
    {:choices {:max 5
@@ -494,7 +502,8 @@
     :effect (effect (lose :corp :click-per-turn 1)
                     (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
-    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1))}}}
+    :events {:corp-turn-ends {:effect (effect (gain :corp :click-per-turn 1)
+                                              (unregister-events card))}}}
 
    "Power Nap"
    {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
@@ -693,6 +702,21 @@
                                                         (assoc card :zone '(:discard))))
     :events {:successful-run {:effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
+
+   "The Price of Freedom"
+   {:req (req (some #(has-subtype? % "Connection") (all-installed state :runner)))
+    :prompt "Choose an installed connection to trash"
+    :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
+    :msg (msg "trash " (:title target) " to prevent the corp from advancing cards during their next turn")
+    :effect (effect (move (find-cid (:cid card) (:discard runner)) :rfg)
+                    (trash target)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+                    (register-persistent-flag!
+                             card :cannot-advance
+                             (fn [state side card]
+                                 ((constantly true) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
+                                              (unregister-events card))}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))

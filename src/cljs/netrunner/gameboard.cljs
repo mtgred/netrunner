@@ -403,7 +403,7 @@
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blud-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+       [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
         (when-let [url (image-url cursor)]
           [:div
@@ -412,14 +412,14 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon]
+                         side rec-counter facedown named-target icon new]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blue-shade.card {:class (when selected "selected")
+       [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
                               :draggable (when (not-spectator? game-state app-state) true)
                               :on-touch-start #(handle-touchstart % cursor)
                               :on-touch-end   #(handle-touchend %)
@@ -696,7 +696,7 @@
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
                                       hand-size-base hand-size-modification]} owner]
   (om/component
    (sab/html
@@ -707,7 +707,7 @@
        [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str bad-publicity " Bad Publicity")
+       [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
         (when me? (controls :bad-publicity))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
@@ -793,7 +793,7 @@
     ;; remove restricted servers from all servers to just return allowed servers
     (remove (set restricted-servers) (set servers))))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 phase-32] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -888,9 +888,9 @@
                                         #(send-command "jack-out"))]
                           [:div.panel.blue-shade
                            (when (zero? (:position run))
-                             (cond-button "Action Before Access" (not (:no-action run))
+                             (cond-button "Action before access" (not (:no-action run))
                                           #(send-command "corp-phase-43")))
-                           (cond-button "No More Action" (not (:no-action run))
+                           (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
@@ -898,8 +898,6 @@
                                [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
-                       (when (and (not= (keyword active-player) side) (not end-turn))
-                         (cond-button "Action Before Turn Ends" (not phase-32) #(send-command "request-phase-32")))
                        (when (and (= (keyword active-player) side)
                                   (or runner-phase-12 corp-phase-12))
                            [:button {:on-click #(send-command "end-phase-12")}

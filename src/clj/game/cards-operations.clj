@@ -86,10 +86,12 @@
                     (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
 
    "Back Channels"
-   {:prompt "Choose an installed card in a server to trash" :choices {:req #(= (last (:zone %)) :content)}
-    :effect (effect (gain :credit (* 3 (:advance-counter target))) (trash target))
+   {:prompt "Choose an installed card in a server to trash"
+    :choices {:req #(and (= (last (:zone %)) :content)
+                         (is-remote? (second (:zone %))))}
+    :effect (effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
     :msg (msg "trash " (card-str state target) " and gain "
-              (* 3 (:advance-counter target)) " [Credits]")}
+              (* 3 (get target :advance-counter 0)) " [Credits]")}
 
    "Bad Times"
    {:req (req tagged)
@@ -162,9 +164,8 @@
 
    "Cerebral Static"
    {:msg "disable the Runner's identity"
-    :effect (req (unregister-events state side (:identity runner)))
-    :leave-play (req (when-let [events (:events (card-def (:identity runner)))]
-                       (register-events state side events (:identity runner))))}
+    :effect (effect (disable-identity :runner))
+    :leave-play (effect (enable-identity :runner))}
 
    "\"Clones are not People\""
    {:events {:agenda-scored {:msg "add it to their score area and gain 1 agenda point"
@@ -293,6 +294,18 @@
     :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
     :leave-play (effect (update-all-ice))}
 
+   "Lateral Growth"
+   {:msg "gain 4 [Credits]"
+    :effect (effect (gain :credit 4)
+                    (resolve-ability {:player :corp
+                                      :prompt "Choose a card to install"
+                                      :choices {:req #(and (not (is-type? % "Operation"))
+                                                           (:side % "Corp")
+                                                           (in-hand? %))}
+                                      :effect (effect (corp-install target nil))
+                                      :msg (msg (corp-install-msg target))}
+                                      card nil))}
+
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
@@ -315,17 +328,21 @@
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
                          (in-hand? %))}
-    :effect (effect (corp-install (assoc target :advance-counter 3) "New remote")
-                    (register-turn-flag!
-                      target :can-rez
-                      (fn [state side card]
-                        ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))))
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state side card]
-                        (if (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card)))
-                          ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
-                          true))))}
+    :effect (req (corp-install state side (assoc target :advance-counter 3) "New remote")
+                 (let [tgtcid (:cid target)]
+                   (register-turn-flag! state side
+                     card :can-rez
+                     (fn [state side card]
+                       (if (= (:cid card) tgtcid)
+                         ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
+                         true)))
+                   (register-turn-flag! state side
+                     card :can-score
+                     (fn [state side card]
+                       (if (and (= (:cid card) tgtcid)
+                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                         ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
+                         true)))))}
 
    "Mutate"
    {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
@@ -448,7 +465,9 @@
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
     :show-discard true
-    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
+    :choices {:req #(and (= (:side %) "Corp")
+                         (not= (:title %) "Reclamation Order")
+                         (= (:zone %) [:discard]))}
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand)))}
 
@@ -562,8 +581,8 @@
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
                                                    :effect (effect (tag-runner 1 {:unpreventable true}))}
-                                                  {:effect (trash state side c) :msg (msg "trash " (:title c))})
-                                                card nil))}
+                                                  {:effect (effect (trash c)) :msg (msg "trash " (:title c))})
+                                               card nil))}
                              card nil)))}}
 
    "Sub Boost"

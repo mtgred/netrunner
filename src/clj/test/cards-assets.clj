@@ -187,6 +187,32 @@
       (is (= 4 (get-in @state [:corp :credit])))
       (is (= 14 (get-in (refresh eve) [:counter]))))))
 
+(deftest executive-boot-camp-suppress-start-of-turn
+  "Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346."
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Executive Boot Camp" "New remote")
+    (take-credits state :corp)
+    (is (= 6 (:credit (get-corp))) "Corp ends turn with 6 credits")
+    (let [eve (get-content state :remote1 0)
+          ebc (get-content state :remote2 0)]
+      (core/rez state :corp ebc)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ebc 0)
+      (prompt-select :corp eve)
+      (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
+      (is (= 16 (get-in (refresh eve) [:counter])))
+      (core/end-phase-12 state :corp nil)
+      (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
+      (is (= 16 (get-in (refresh eve) [:counter])) "Did not take counters from Eve")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
+      (is (= 14 (get-in (refresh eve) [:counter])) "Took counters from Eve"))))
+
 (deftest franchise-city
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
@@ -205,9 +231,10 @@
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
 (deftest genetics-pavilion
+  "Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn"
   (do-game
     (new-game (default-corp [(qty "Genetics Pavilion" 1)])
-              (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
+              (default-runner [(qty "Diesel" 1) (qty "Sure Gamble" 3) (qty "Sports Hopper" 1)]))
     (play-from-hand state :corp "Genetics Pavilion" "New remote")
     (let [gp (get-content state :remote1 0)]
       (take-credits state :corp)
@@ -215,21 +242,48 @@
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-      (is (= 2 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Sports Hopper")
       (play-from-hand state :runner "Diesel")
-      (is (= 3 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
+      (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
       (take-credits state :runner)
-      (core/derez state :corp (refresh gp))
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (let [hopper (get-in @state [:runner :rig :hardware 0])]
+        (card-ability state :runner hopper 0)
+        (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
+        (core/derez state :corp (refresh gp))
+        (take-credits state :corp)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :hand)
+        (is (= 1 (count (:hand (get-runner)))))
+        (play-from-hand state :runner "Diesel")
+        (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/rez state :corp (refresh gp))
+        (core/draw state :runner)
+        (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez")))))
+
+(deftest genetics-pavilion-fisk-investment
+  (do-game
+    (new-game (default-corp [(qty "Genetics Pavilion" 1) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "Fisk Investment Seminar" 1) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Genetics Pavilion" "New remote")
+    (let [gp (get-content state :remote1 0)]
       (take-credits state :corp)
+      (core/rez state :corp gp)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :deck)
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (is (= 1 (count (:hand (get-runner)))))
-      (play-from-hand state :runner "Diesel")
-      (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
-      (core/rez state :corp (refresh gp))
-      (core/draw state :runner)
-      (is (= 3 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez"))))
+      (is (= 0 (count (:hand (get-corp)))))
+      (play-from-hand state :runner "Fisk Investment Seminar")
+      (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
+      (is (= 3 (count (:hand (get-corp)))) "Drew all 3 cards"))))
 
 (deftest ghost-branch
   "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
@@ -309,6 +363,33 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
+
+(deftest political-dealings
+  (do-game
+    (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])
+              (default-runner))
+    (core/move state :corp (find-card "Medical Breakthrough" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Oaktown Renovation" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Political Dealings" "New remote")
+    (is (= "Political Dealings" (:title (get-content state :remote1 0))) "Political Dealings installed")
+    (let [pd (get-content state :remote1 0)]
+      (core/rez state :corp (refresh pd))
+      (core/draw state :corp)
+      (let [mb (first (:hand (get-corp)))]
+        (card-ability state :corp pd 0)
+        (prompt-choice :corp mb)
+        (prompt-choice :corp "New remote")
+        (is (= "Medical Breakthrough" (:title (get-content state :remote2 0)))
+            "Medical Breakthrough installed by Political Dealings")
+        (core/draw state :corp)
+        (let [oak (first (:hand (get-corp)))]
+          (card-ability state :corp pd 0)
+          (prompt-choice :corp oak)
+          (prompt-choice :corp "New remote")
+          (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
+              "Oaktown Renovation installed by Political Dealings")
+          (is (= true (:rezzed (get-content state :remote3 0)))
+              "Oaktown Renovation installed face up"))))))
 
 (deftest public-support
   "Public support scoring and trashing"

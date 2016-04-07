@@ -144,7 +144,7 @@
                  (trigger-event state side :server-created card))
                (corp-install-asset-agenda state side c dest-zone)
                (corp-install-message state side c server install-state cost-str)
-               (let [moved-card (move state side c slot)]
+               (let [moved-card (move state side (assoc c :new true) slot)]
                  (trigger-event state side :corp-install moved-card)
                  (when (is-type? c "Agenda")
                    (update-advancement-cost state side moved-card))
@@ -208,8 +208,7 @@
   "Installs specified runner card if able
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
   ([state side card] (runner-install state side card nil))
-  ([state side card
-    {:keys [host-card facedown] :as params}]
+  ([state side card {:keys [host-card facedown] :as params}]
    (when (empty? (get-in @state [side :locked (-> card :zone first)]))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
        (resolve-ability state side
@@ -224,9 +223,10 @@
                            (host state side host-card card)
                            (move state side card
                                  [:rig (if facedown :facedown (to-keyword (:type card)))]))
+                       c (assoc c :installed true :new true)
                        installed-card (if facedown
-                                        (update! state side (assoc c :installed true))
-                                        (card-init state side (assoc c :installed true) true))]
+                                        (update! state side c)
+                                        (card-init state side c true))]
                    (runner-install-message state side (:title card) cost-str params)
                    (handle-virus-counter-flag state side installed-card)
                    (trigger-event state side :runner-install installed-card)

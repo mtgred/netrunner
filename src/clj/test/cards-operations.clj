@@ -61,6 +61,17 @@
           (prompt-choice :runner "Steal")
           (is (= 2 (:tag (get-runner))) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
+(deftest cerebral-static-chaos-theory
+  "Cerebral Static - vs Chaos Theory"
+  (do-game
+    (new-game (default-corp [(qty "Cerebral Static" 1) (qty "Lag Time" 1)])
+              (make-deck "Chaos Theory: Wünderkind" [(qty "Sure Gamble" 3)]))
+    (is (= 5 (:memory (get-runner))) "CT starts with 5 memory")
+    (play-from-hand state :corp "Cerebral Static")
+    (is (= 4 (:memory (get-runner))) "Cerebral Static causes CT to have 4 memory")
+    (play-from-hand state :corp "Lag Time")
+    (is (= 5 (:memory (get-runner))) "CT 5 memory restored")))
+
 (deftest closed-accounts
   "Closed Accounts - Play if Runner is tagged to make Runner lose all credits"
   (do-game
@@ -94,6 +105,18 @@
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
+
+(deftest lateral-growth
+  (do-game
+    (new-game (default-corp [(qty "Lateral Growth" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (is (= 5 (:credit (get-corp))))
+    (play-from-hand state :corp "Lateral Growth")
+    (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (= "Breaking News" (:title (get-content state :remote1 0)))
+      "Breaking News installed by Lateral Growth")
+    (is (= 7 (:credit (get-corp))))))
 
 (deftest midseason-replacements
   "Midseason Replacements - Trace to give Runner tags after they steal an agenda"

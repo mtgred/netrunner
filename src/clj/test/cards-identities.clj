@@ -1,5 +1,50 @@
 (in-ns 'test.core)
 
+
+(deftest adam-directives
+  "Adam: Compulsive Hacker - install 3 directives"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 3) (qty "Safety First" 3)
+                                                   (qty "Always Be Running" 3) (qty "Bank Job" 3)]))
+    (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
+          sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
+          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
+      (is (and nat sf abr) "3 directives installed")
+      (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
+
+(deftest andromeda
+  "Andromeda - 9 card starting hand, 1 link"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)]))
+    (is (= 1 (:link (get-runner))) "1 link")
+    (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
+
+(deftest andromeda-mulligan
+  "Andromeda - 9 card starting hand after mulligan"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)])
+      {:mulligan :runner})
+    (is (= 1 (:link (get-runner))) "1 link")
+    (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
+
+(deftest andromeda-palana
+  "Andromeda - should not grant Palana credits."
+  (do-game
+    (new-game
+      (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
+      (make-deck "Andromeda: Dispossessed Ristie" [(qty "Sure Gamble" 3) (qty "Desperado" 3)
+                                                   (qty "Security Testing" 3) (qty "Bank Job" 3)]))
+    (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand")))
+
+
 (deftest apex-facedown-console
   "Apex - Allow facedown install of a second console. Issue #1326"
   (do-game
@@ -46,6 +91,35 @@
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
     (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
+(deftest chronos-protocol
+  "Chronos Protocol - Choose Runner discard for first net damage of a turn"
+  (do-game
+    (new-game
+      (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Neural EMP" 2)])
+      (default-runner [(qty "Imp" 3)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-ability state :corp pup 0)
+      (prompt-choice :corp "Yes")
+      (let [imp (find-card "Imp" (:hand (get-runner)))]
+        (prompt-choice :corp imp)
+        (is (= 1 (count (:discard (get-runner)))))
+        (card-ability state :corp pup 0)
+        (is (empty? (:prompt (get-corp))) "No choice on second net damage")
+        (is (= 2 (count (:discard (get-runner)))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
+        (play-from-hand state :corp "Neural EMP")
+        (prompt-choice :corp "No")
+        (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
+        (play-from-hand state :corp "Neural EMP")
+        (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
+        (is (= 3 (count (:discard (get-runner)))))))))
+
 (deftest edward-kim
   "Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives"
   (do-game
@@ -77,6 +151,24 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest grndl-power-unleashed
+  "GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub."
+  (do-game
+    (new-game
+      (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
+      (default-runner))
+    (is (= 10 (:credit (get-corp))) "GRNDL starts with 10 credits")
+    (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
+
+(deftest grndl-valencia
+  "GRNDL vs Valencia - only 1 bad pub at start"
+  (do-game
+    (new-game
+      (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 10 (:credit (get-corp))) "GRNDL starts with 10 credits")
+    (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
+
 (deftest haarpsichord-studios
   "Haarpsichord Studios - Prevent stealing more than 1 agenda per turn"
   (do-game
@@ -99,6 +191,26 @@
       (prompt-choice :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn"))))
 
+(deftest haarpsichord-studios-employee-strike
+  "Haarpsichord Studios - Interactions with Employee Strike. Issue #1313."
+  (do-game
+    (new-game
+      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 5)
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))))
+    (play-from-hand state :runner "Employee Strike")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
+    (play-from-hand state :runner "Scrubbed")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
+
 (deftest haas-bioroid-stronger-together
   "Stronger Together - +1 strength for Bioroid ice"
   (do-game
@@ -109,56 +221,6 @@
     (let [eli (get-ice state :archives 0)]
       (core/rez state :corp eli)
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
-
-(deftest hayley-kaplan
-  "Hayley Kaplan - Complicated install triggers at end of opponent's turn"
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Hayley Kaplan: Universal Scholar" [(qty "Street Peddler" 1) (qty "Daily Casts" 1) (qty "Gang Sign" 3)
-                                                     (qty "Clone Chip" 1) (qty "Multithreader" 2) (qty "Study Guide" 1)]))
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler" "Daily Casts" "Clone Chip" "Multithreader" "Multithreader"
-                                  "Study Guide"])
-    (trash-from-hand state :runner "Multithreader")
-    (play-from-hand state :runner "Street Peddler")
-    (prompt-choice :runner "No")
-    (play-from-hand state :runner "Clone Chip")
-    (play-from-hand state :runner "Study Guide")
-    (take-credits state :runner)
-    (core/gain state :runner :credit 7)
-    (core/request-phase-32 state :runner nil)
-    (core/end-turn state :corp nil)
-    (is (not (:end-turn @state)) "Corp turn has not ended")
-    (card-ability state :runner (-> (get-runner) :rig :hardware first) 0)
-    (prompt-select :runner (first (:discard (get-runner))))
-    (prompt-choice :runner "Yes")
-    (prompt-select :runner (find-card "Multithreader" (:hand (get-runner))))
-    (let [sg (-> (get-runner) :rig :program first)
-          mt1 (-> (get-runner) :rig :program second)
-          mt2 (-> (get-runner) :rig :program next second)
-          sp (-> (get-runner) :rig :resource first)]
-      (is (and sp sg mt1 mt2) "Street Peddler, Study Guide and 2x Multithreaders installed")
-      (card-ability state :runner mt1 0)
-      (card-ability state :runner mt1 0)
-      (card-ability state :runner mt2 0)
-      (card-ability state :runner mt2 0)
-      (card-ability state :runner sg 1)
-      (card-ability state :runner sg 1)
-      (is (= 2 (:current-strength (refresh sg))) "Study Guide at strength 2")
-      (is (= 0 (:rec-counter (refresh mt1))) "Multithreader credits spent")
-      (prompt-choice :runner "Done")
-      (prompt-choice :corp "Done")
-      (is (:end-turn @state) "Corp turn ended")
-      (card-ability state :runner sp 0)
-      (prompt-card :runner (first (:hosted sp)))
-      (prompt-choice :runner "Yes")
-      (prompt-select :runner (find-card "Daily Casts" (:hand (get-runner))))
-      (is (find-card "Daily Casts" (:resource (:rig (get-runner)))) "Daily Casts installed by Haley")
-      (is (= 0 (:credit (get-runner))) "Runner has 0 credits before start of turn")
-      (core/start-turn state :runner nil)
-      (is (= 2 (:credit (get-runner))) "Runner has 2 credits after start of turn")
-      (is (= 2 (:rec-counter (refresh mt1))) "Multithreaders regained credits"))))
 
 (deftest iain-stirling-credits
   "Iain Stirling - Gain 2 credits when behind"
@@ -218,6 +280,41 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
+
+(deftest jesminder-john-masanori
+  "Jesminder Sareen - don't avoid John Masanori tag"
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "John Masanori" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "John Masanori")
+    (run-on state "HQ")
+    (core/jack-out state :runner nil)
+    (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
+
+(deftest jinteki-replicating-perfection
+  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Mental Health Clinic" "New remote")
+    (take-credits state :corp)
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+    (run-empty-server state "HQ")
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+
+(deftest jinteki-replicating-perfection-employee-strike
+  "Replicating Perfection - interaction with Employee Strike. Issue #1313."
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+    (play-from-hand state :corp "Mental Health Clinic" "New remote")
+    (take-credits state :corp)
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+    (play-from-hand state :runner "Employee Strike")
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest kate-mac-mccaffrey-discount
   "Kate 'Mac' McCaffrey - Install discount"
@@ -399,18 +496,6 @@
     (let [quan (get-ice state :rd 0)]
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
-
-(deftest replicating-perfection
-  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
-  (do-game
-   (new-game
-    (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
-    (default-runner))
-   (play-from-hand state :corp "Mental Health Clinic" "New remote")
-   (take-credits state :corp)
-   (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
-   (run-empty-server state "HQ")
-   (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest spark-advertisements
   "Spark Agency - Rezzing advertisements"

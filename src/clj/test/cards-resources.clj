@@ -39,6 +39,27 @@
    (take-credits state :corp)
    (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks")))
 
+(deftest aesops-pawnshop
+  "Tests use cases for Aesop's Pawnshop"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Aesop's Pawnshop" 1) (qty "Cache" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Aesop's Pawnshop")
+    (play-from-hand state :runner "Cache")
+    (let [orig-credits (:credit (get-runner))
+          ap (get-in @state [:runner :rig :resource 0])
+          cache (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner ap 0)
+      (prompt-select :runner cache)
+      (card-ability state :runner ap 0)
+      (prompt-select :runner ap)
+      (let [ap (get-in @state [:runner :rig :resource 0])
+            cache (get-in @state [:runner :discard 0])]
+        (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
+        (is (not= cache nil) "Cache should be in Heap")
+        (is (not= ap nil) "Aesops should still be installed")))))
+
 (deftest daily-casts
   "Play and tick through all turns of daily casts"
   (do-game
@@ -570,6 +591,24 @@
       (prompt-select :runner pu)
       (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
       (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
+
+(deftest street-peddler-tech-trader
+  "Street Peddler - Tech Trader install"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Tech Trader" 1)]))
+    (take-credits state :corp)
+    ;; move Gordian back to deck
+    (core/move state :runner (find-card "Tech Trader" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-in @state [:runner :rig :resource 0])]
+      (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
+      (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
+          "Tech Trader was installed")
+      (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
 
 (deftest symmetrical-visage
   "Symmetrical Visage - Gain 1 credit the first time you click to draw each turn"

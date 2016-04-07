@@ -78,9 +78,12 @@
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
     :optional {:prompt "Trigger the ability of a scored agenda?"
                :yes-ability {:prompt "Choose an agenda to trigger its \"when scored\" ability"
-                             :choices (req (filter #(not= (:title %) "Bifrost Array") (:scored corp)))
+                             :choices {:req #(and (is-type? % "Agenda")
+                                                  (not= (:title %) "Bifrost Array")
+                                                  (= (first (:zone %)) :scored)
+                                                  (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                             :effect (effect (card-init target))}}}
+                             :effect (effect (resolve-ability (card-def target) target nil))}}}
 
    "Braintrust"
    {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
@@ -98,7 +101,7 @@
     :choices {:req #(and (installed? %)
                          (is-type? % "Resource"))}
     :msg (msg "trash " (:title target))
-    :effect (effect (trash target))}
+    :effect (effect (trash target {:unpreventable true}))}
 
    "Chronos Project"
    {:msg "remove all cards in the Runner's Heap from the game"
@@ -521,6 +524,18 @@
    "Veterans Program"
    {:msg "lose 2 bad publicity"
     :effect (effect (lose :bad-publicity 2))}
+
+   "Voting Machine Initiative"
+   {:effect (effect (add-prop card :counter 3))
+    :abilities [{:optional {:req (req (> (:counter card) (:vmi-count card 0)))
+                            :prompt "Cause the Runner to lose [Click] at the start of their next turn?"
+                            :yes-ability {:effect (effect (toast (str "The Runner will lose " (inc (:vmi-count card 0))
+                                                                      " [Click] at the start of their next turn") "info")
+                                                    (update! (update-in card [:vmi-count] #(inc (or % 0)))))}}}]
+    :events {:runner-turn-begins {:req (req (pos? (:vmi-count card 0)))
+                                  :msg (msg "to force the Runner to lose " (:vmi-count card) " [Click]")
+                                  :effect (effect (lose :runner :click (:vmi-count card))
+                                                  (add-prop (dissoc card :vmi-count) :counter (- (:vmi-count card))))}}}
 
    "Vulcan Coverup"
    {:msg "do 2 meat damage" :effect (effect (damage :meat 2 {:card card}))

@@ -2,7 +2,7 @@
 
 (def cards-hardware
   {"Akamatsu Mem Chip"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))}
+   {:in-play [:memory 1]}
 
    "Archives Interface"
    {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
@@ -79,7 +79,7 @@
                                      :hand-size-modification bonus))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner
-                             :memory (runner-points @state) 
+                             :memory (runner-points @state)
                              :hand-size-modification (runner-points @state)))})
 
    "Capstone"
@@ -330,6 +330,7 @@
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
+                 :label "Move this accessed card to bottom of R&D"
                  :req (req (when-let [c (:card (first (get-in @state [:runner :prompt])))]
                              (in-deck? c)))
                  :msg "move the card just accessed to the bottom of R&D"
@@ -341,7 +342,20 @@
                                 (swap! state update-in [side :prompt] rest)
                                 (when-let [run (:run @state)]
                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)))))}]}
+                                    (handle-end-run state :runner)))))}
+                {:once :per-turn
+                 :label "Move a previously accessed card to bottom of R&D"
+                 :effect (effect (resolve-ability
+                                   {; only allow targeting cards that were accessed this turn -- not perfect, but good enough?
+                                    :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
+                                                          (map first (turn-events state side :access)))}
+                                    :msg (msg "move " (:title target) " to the bottom of R&D")
+                                    :effect (req (move state :corp target :deck)
+                                                 (tag-runner state :runner 1)
+                                                 (swap! state update-in [side :prompt] rest)
+                                                 (when-let [run (:run @state)]
+                                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
+                                                     (handle-end-run state :runner))))} card nil))}]}
 
    "MemStrips"
    {:in-play [:memory 3]}
@@ -381,12 +395,13 @@
 
    "NetChip"
    {:abilities [{:label "Install a program on NetChip"
-                 :cost [:click 1]
                  :req (req (empty? (:hosted card)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
                                   {:prompt "Choose a program in your Grip to install on NetChip"
+                                   :cost [:click 1]
                                    :choices {:req #(and (is-type? % "Program")
+                                                        (runner-can-install? state side % false)
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
                                    :msg (msg "host " (:title target))
@@ -598,7 +613,33 @@
     :recurring 2}
 
    "Titanium Ribs"
-   {:effect (effect (damage :meat 2 {:card card}))}
+   {:events
+    {:pre-resolve-damage
+     {:req (req (and (> (last targets) 0)
+                     (runner-can-choose-damage? state)
+                     (not (get-in @state [:damage :damage-replace]))))
+      :effect (req (let [dtype target
+                         dmg (last targets)]
+                     (when (> dmg (count (:hand runner)))
+                       (flatline state))
+                     (when (= dtype :brain)
+                       (swap! state update-in [:runner :brain-damage] #(+ % dmg))
+                       (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
+                     (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
+                     (resolve-ability state side
+                       {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
+                        :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                        :msg (msg "trash " (join ", " (map :title targets)))
+                        :effect (req (clear-wait-prompt state :corp)
+                                     (doseq [c targets]
+                                       (trash state side c {:cause dtype :unpreventable true}))
+                                     (trigger-event state side :damage-chosen))}
+                      card nil)
+                      (trigger-event state side :damage dtype nil)))}
+     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
+    :effect (effect (enable-runner-damage-choice)
+                    (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
+                    (damage :meat 2 {:card card}))}
 
    "Turntable"
    {:in-play [:memory 1]

@@ -9,7 +9,7 @@
     {:corp-turn-begins {:req (req (not tagged))
                         :msg "take 1 tag"
                         :effect (effect (tag-runner :runner 1))}
-     :runner-turn-begins {:req (req (zero? (:bad-publicity corp)))
+     :runner-turn-begins {:req (req (not has-bad-pub))
                           :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
 
@@ -23,9 +23,18 @@
 
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
-    :abilities [{:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
-                 :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}]}
+    :abilities [{:effect (req (resolve-ability
+                                state side
+                                {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                                 :choices {:req #(and (card-is? % :side :runner) (installed? %) (not (card-is? % :cid (:cid card))))}
+                                 :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}
+                               card nil))}]}
+
+   "Akshara Sareen"
+   {:in-play [:click 1 :click-per-turn 1]
+    :msg "give each player 1 additional [Click] to spend during their turn"
+    :effect (effect (gain :corp :click-per-turn 1))
+    :leave-play (effect (lose :corp :click-per-turn 1))}
 
    "Always Be Running"
    {:abilities [{:once :per-turn
@@ -386,7 +395,7 @@
    {:recurring 2}
 
    "Investigative Journalism"
-   {:req (req (> (:bad-publicity corp) 0))
+   {:req (req has-bad-pub)
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
 
@@ -494,9 +503,13 @@
 
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
-    :events {:access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
+    :events {:pre-access {:req (req (and (= target :archives)
+                                         (seq (filter #(not (nil? (:trash %))) (:discard corp)))))
+                          :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
+             :access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
                                      (empty? (filter #(not (nil? (:trash %))) cards))))
+                         :once :per-turn
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
    "New Angeles City Hall"
@@ -506,11 +519,15 @@
 
    "Off-Campus Apartment"
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :cost [:click 1] :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
-                 :choices {:req #(and (has-subtype? % "Connection")
-                                      (in-hand? %))}
-                 :msg (msg "host " (:title target) " and draw 1 card")
-                 :effect (effect (runner-install target {:host-card card}) (draw))}
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                                    :choices {:req #(and (has-subtype? % "Connection")
+                                                         (runner-can-install? state side % false)
+                                                         (in-hand? %))}
+                                    :msg (msg "host " (:title target) " and draw 1 card")
+                                    :effect (effect (runner-install target {:host-card card}) (draw))}
+                                  card nil))}
                 {:label "Host an installed connection"
                  :prompt "Choose a connection to host on Off-Campus Apartment"
                  :choices {:req #(and (has-subtype? % "Connection")
@@ -724,7 +741,8 @@
                                     {:mandatory true
                                      :effect (effect (resolve-ability
                                                        {:msg "gain 2 [Credits] instead of accessing"
-                                                        :effect (effect (gain :credit 2))} st nil))})))}}
+                                                        :effect (effect (gain :credit 2))} st nil))})))}
+             :runner-turn-ends {:effect (effect (update! (dissoc card :testing-target)))}}
     :abilities [ability]})
 
    "Spoilers"
@@ -760,11 +778,11 @@
                  :effect (req
                            (when (can-pay? state side nil (modified-install-cost state side target [:credit -1]))
                              (install-cost-bonus state side [:credit -1])
-                             (runner-install state side (dissoc target :facedown))
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
                                                             (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                    {:cause :ability-cost})))}]}
+                                    {:cause :ability-cost})
+                             (runner-install state side (dissoc target :facedown))))}]}
 
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
@@ -782,7 +800,8 @@
 
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
-                 :effect (effect (trash card {:cause :ability-cost}) (draw (:bad-publicity corp)))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (draw (+ (:bad-publicity corp) (:has-bad-pub corp))))
                  :msg (msg "draw " (:bad-publicity corp) " cards")}]
     :events {:play-operation
              {:req (req (or (has-subtype? target "Black Ops")

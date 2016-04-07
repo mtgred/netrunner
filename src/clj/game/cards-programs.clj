@@ -156,22 +156,26 @@
    "Djinn"
    {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
                  :prompt "Choose a Virus"
-                 :msg (msg "adds " (:title target) " to their Grip")
+                 :msg (msg "add " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(and (is-type? % "Program")
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
                  :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
                 {:label "Install a non-Icebreaker program on Djinn"
-                 :cost [:click 1]
-                 :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
-                 :choices {:req #(and (is-type? % "Program")
-                                      (not (has-subtype? % "Icebreaker"))
-                                      (in-hand? %))}
-                 :msg (msg "install and host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card)
-                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (runner-can-install? state side % false)
+                                                         (not (has-subtype? % "Icebreaker"))
+                                                         (in-hand? %))}
+                                    :msg (msg "install and host " (:title target))
+                                    :effect (effect (gain :memory (:memoryunits target))
+                                                    (runner-install target {:host-card card})
+                                                    (update! (assoc (get-card state card)
+                                                                    :hosted-programs
+                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                  card nil))}
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
                  :choices {:req #(and (is-type? % "Program")
@@ -238,9 +242,10 @@
    "Harbinger"
    {:trash-effect
      {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
-      :effect (req (resolve-ability state :runner
-                     {:effect (effect (runner-install card {:facedown true}))}
-                    card nil))}}
+      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
+                     (swap! state assoc-in [:runner :locked] nil)
+                     (runner-install state :runner card {:facedown true})
+                     (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"
    {:events {:successful-run {:effect (effect (add-prop card :counter 1))}}
@@ -318,15 +323,19 @@
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
                  :req (req (< (count (:hosted card)) 2))
-                 :cost [:click 1]
-                 :prompt "Choose a program in your Grip to install on Leprechaun"
-                 :choices {:req #(and (is-type? % "Program")
-                                      (in-hand? %))}
-                 :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card)
-                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a program in your Grip to install on Leprechaun"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (runner-can-install? state side % false)
+                                                         (in-hand? %))}
+                                    :msg (msg "host " (:title target))
+                                    :effect (effect (gain :memory (:memoryunits target))
+                                                    (runner-install target {:host-card card})
+                                                    (update! (assoc (get-card state card)
+                                                                    :hosted-programs
+                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                  card nil))}
                 {:label "Host an installed program on Leprechaun"
                  :req (req (< (count (:hosted card)) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
@@ -566,12 +575,15 @@
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
-                 :cost [:click 1]
-                 :prompt "Choose a program to install on Scheherazade from your grip"
-                 :choices {:req #(and (is-type? % "Program")
-                                      (in-hand? %))}
-                 :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                 :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a program to install on Scheherazade from your grip"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (runner-can-install? state side % false)
+                                                         (in-hand? %))}
+                                    :msg (msg "host " (:title target) " and gain 1 [Credits]")
+                                    :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
+                                  card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade"
                  :choices {:req #(and (is-type? % "Program")

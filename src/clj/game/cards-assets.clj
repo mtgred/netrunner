@@ -90,6 +90,16 @@
                                 :effect (effect (gain :credit 1)
                                                 (lose :runner :credit 1))}}}
 
+   "Bio-Ethics Association"
+   (let [ability {:req (req (no-ice? state (second (:zone card))))
+                  :label "Do 1 net damage (start of turn)"
+                  :once :per-turn
+                  :msg "do 1 net damage"
+                  :effect (effect (damage :net 1 {:card card}))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
@@ -123,6 +133,27 @@
               :effect (req (if-not (and (= target "Pay 1 [Credits]") (pay state side card :credit 1))
                              (do (tag-runner state side 1) (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
+
+   "Clone Suffrage Movement"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
+                                     (no-ice? state (second (:zone card)))))}
+    :abilities [{:label "Add 1 operation from Archives to HQ"
+                 :prompt "Choose an operation in Archives to add to HQ" :show-discard true
+                 :choices {:req #(and (is-type? % "Operation")
+                                      (= (:zone %) [:discard]))}
+                 :effect (effect (move target :hand)) :once :per-turn
+                 :msg (msg "add " (card-str state target) " to HQ")}]}
+
+   "Commercial Bankers Group"
+   (let [ability {:req (req (no-ice? state (second (:zone card))))
+                  :label "Gain 3 [Credits] (start of turn)"
+                  :once :per-turn
+                  :msg "gain 3 [Credits]"
+                  :effect (effect (gain :credit 3))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Constellation Protocol"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -181,18 +212,21 @@
               :req (req (first-event state side :corp-draw))
               :effect (req
                         (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
-                                                  (all-installed state :corp))) 
+                                                  (all-installed state :corp)))
                               newcards (take dbs (:deck corp))
                               drawn (concat newcards (take-last target (:hand corp)))]
-                          (doseq [c newcards] (move state side c :hand))
-                          (resolve-ability
-                            state side
-                            {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
-                             :choices {:max dbs
-                                       :req #(and (in-hand? %)
-                                                  (some (fn [c] (= (:cid c) (:cid %))) drawn))}
-                             :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
-                             :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
+                          (if (not= (count newcards) dbs)
+                            ; couldn't draw from R&D, so corp is decked
+                            (win-decked state)
+                            (do (doseq [c newcards] (move state side c :hand))
+                                (resolve-ability
+                                  state side
+                                  {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
+                                   :choices {:max dbs
+                                             :req #(and (in-hand? %)
+                                                        (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                   :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to bottom of R&D")
+                                   :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
@@ -257,7 +291,9 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1) (rez target {:no-warning true}))}
+                 :effect (effect (rez-cost-bonus -1)
+                                 (rez target {:no-warning true})
+                                 (update! (assoc card :ebc-rezzed (:cid target))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -266,7 +302,12 @@
                                             :sorted))
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
-                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]}
+                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]
+
+    ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
+    :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
+    :events {:corp-turn-ends {:req (req (:ebc-rezzed card))
+                              :effect (effect (update! (dissoc card :ebc-rezzed)))}}}
 
    "Executive Search Firm"
    {:abilities [{:prompt "Choose an executive, sysop, or character to add to HQ"
@@ -295,10 +336,10 @@
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)
-                 (when (= 0 (remaining-draws state side))
-                   (prevent-draw state side)))
-    :events {:runner-turn-begins {:effect (effect (max-draw 2))}}
-    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw))}
+                 (when (= 0 (remaining-draws state :runner))
+                   (prevent-draw state :runner)))
+    :events {:runner-turn-begins {:effect (effect (max-draw :runner 2))}}
+    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
    (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
@@ -477,6 +518,20 @@
    "Mumba Temple"
    {:recurring 2}
 
+   "Mumbad City Hall"
+   {:abilities [{:label "Search R&D for an Alliance card"
+                 :cost [:click 1]
+                 :prompt "Choose an Alliance card to play or install"
+                 :choices (req (cancellable (filter #(and (has-subtype? % "Alliance")
+                                                          (if (is-type? % "Operation")
+                                                            (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
+                 :msg (msg "reveal " (:title target) " from R&D and "
+                           (if (= (:type target) "Operation") "play " "install ") " it")
+                 :effect (req (if (= (:type target) "Operation")
+                                (play-instant state side target)
+                                (corp-install state side target nil))
+                              (shuffle! state side :deck))}]}
+
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}}
@@ -580,6 +635,24 @@
               card nil))}
     "Score an Agenda from HQ?")
 
+   "Political Dealings"
+   (let [pd-register [:corp :register :pd-drawn]
+         clear (fn [state side] (swap! state assoc-in pd-register []))]
+     {:events {:corp-draw {:effect (req (toast state :corp (str "Political Dealings "
+                                                                "to reveal and install "
+                                                                "an agenda.") "info")
+                                        (let [drawn (take-last target (:hand corp))]
+                                          (swap! state assoc-in pd-register (vec (filter #(is-type? % "Agenda") drawn)))))}
+               :corp-spent-click {:effect (effect (clear))}
+               :corp-turn-ends {:effect (effect (clear))}}
+      :abilities [{:label "Reveal and install agenda"
+                   :req (req (seq (get-in @state [:corp :register :pd-drawn])))
+                   :prompt "Choose an angenda to reveal and install"
+                   :choices (req (cancellable (get-in @state [:corp :register :pd-drawn]) :sorted))
+                   :msg (msg "reveal " (:title target))
+                   :effect (req (corp-install state side target nil {:install-state (or (:install-state (card-def target)) :rezzed-no-cost)})
+                                (swap! state update-in pd-register (fn [pd] (remove #(= (:cid %) (:cid target)) pd))))}]})
+
    "Primary Transmission Dish"
    {:recurring 3}
 
@@ -676,6 +749,20 @@
                  :msg (msg "trash " (:title target) " to gain 4 [Credits]")
                  :label "Trash a rezzed ICE to gain 4 [Credits]"
                  :effect (effect (trash target) (gain :credit 4))}]}
+
+   "Sensie Actors Union"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (no-ice? state (second (:zone card))))}
+    :abilities [{:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D"
+                 :once :per-turn
+                 :msg "draw 3 cards"
+                 :effect (effect (draw 3)
+                                 (resolve-ability
+                                   {:prompt "Choose a card in HQ to add to the bottom of R&D"
+                                    :choices {:req #(and (= (:side %) "Corp")
+                                                         (in-hand? %))}
+                                    :effect (effect (move target :deck))}
+                                  card nil))}]}
 
    "Server Diagnostics"
    (let [ability {:effect (effect (gain :credit 2))

@@ -104,6 +104,19 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest harbinger-blacklist
+  "Harbinger - install facedown when Blacklist installed"
+  (do-game
+    (new-game (default-corp [(qty "Blacklist" 1)])
+              (default-runner [(qty "Harbinger" 1)]))
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (core/rez state :corp (get-content state :remote1 0) )
+    (take-credits state :corp)
+    (play-from-hand state :runner "Harbinger")
+    (core/trash state :runner (-> (get-runner) :rig :program first))
+    (is (= 0 (count (:discard (get-runner)))) "Harbinger not in heap")
+    (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
+
 (deftest incubator-transfer-virus-counters
   "Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program"
   (do-game

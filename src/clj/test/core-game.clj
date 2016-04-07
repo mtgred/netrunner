@@ -11,6 +11,37 @@
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
 
+(deftest runner-installing-uniques
+  "Installing a copy of an active unique Runner card is prevented"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
+                               (qty "Off-Campus Apartment" 1) (qty "Hivemind" 2)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 1 :memory 2)
+    (core/draw state :runner 2)
+    (play-from-hand state :runner "Kati Jones")
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (play-from-hand state :runner "Scheherazade")
+    (let [oca (get-in @state [:runner :rig :resource 1])
+          scheh (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner scheh 0)
+      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+      (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
+      (play-from-hand state :runner "Kati Jones")
+      (is (= 1 (:click (get-runner))) "Not charged a click")
+      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "2nd copy of Kati couldn't install")
+      (card-ability state :runner oca 0)
+      (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
+      (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
+      (is (= 1 (:click (get-runner))) "Not charged a click")
+      (play-from-hand state :runner "Hivemind")
+      (is (= 1 (count (get-in @state [:runner :rig :program]))) "2nd copy of Hivemind couldn't install")
+      (card-ability state :runner scheh 0)
+      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+      (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
+      (is (= 1 (:click (get-runner))) "Not charged a click"))))
+
 (deftest deactivate-program
   "deactivate - Program; ensure MU are restored"
   (do-game
