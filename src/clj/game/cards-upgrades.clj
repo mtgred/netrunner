@@ -233,8 +233,9 @@
                                                              " with " (card-str state target)))))}]}
 
    "NeoTokyo Grid"
-   {:events {:advance {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
-                       :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   (let [ng {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
+             :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
+     {:events {:advance ng :advancement-placed ng}})
 
    "Oaktown Grid"
    {:events {:pre-trash {:req (req (= (:zone card) (:zone target)))
