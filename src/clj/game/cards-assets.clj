@@ -91,7 +91,7 @@
                                                 (lose :runner :credit 1))}}}
 
    "Bio-Ethics Association"
-   (let [ability {:req (req (no-ice? state (second (:zone card))))
+   (let [ability {:req (req unprotected)
                   :label "Do 1 net damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 net damage"
@@ -137,7 +137,7 @@
    "Clone Suffrage Movement"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
-                                     (no-ice? state (second (:zone card)))))}
+                                     unprotected))}
     :abilities [{:label "Add 1 operation from Archives to HQ"
                  :prompt "Choose an operation in Archives to add to HQ" :show-discard true
                  :choices {:req #(and (is-type? % "Operation")
@@ -146,7 +146,7 @@
                  :msg (msg "add " (card-str state target) " to HQ")}]}
 
    "Commercial Bankers Group"
-   (let [ability {:req (req (no-ice? state (second (:zone card))))
+   (let [ability {:req (req unprotected)
                   :label "Gain 3 [Credits] (start of turn)"
                   :once :per-turn
                   :msg "gain 3 [Credits]"
@@ -752,7 +752,7 @@
 
    "Sensie Actors Union"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (no-ice? state (second (:zone card))))}
+    :flags {:corp-phase-12 (req unprotected)}
     :abilities [{:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D"
                  :once :per-turn
                  :msg "draw 3 cards"
