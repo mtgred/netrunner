@@ -908,9 +908,13 @@
     :abilities [end-the-run]}
 
    "Universal Connectivity Fee"
-   {:abilities [{:msg (msg "force the Runner to lose " (if (pos? (:tag runner)) "all credits" "1 [Credits]"))
-                 :effect (req (if (pos? (get-in @state [:runner :tag]))
-                                (do (lose state :runner :credit :all) (trash state side card))
+   {:abilities [{:label "Force the Runner to lose credits"
+                 :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
+                 :effect (req (if tagged
+                                (do (lose state :runner :credit :all)
+                                    (when current-ice
+                                      (trash-ice-in-run state))
+                                    (trash state side card))
                                 (lose state :runner :credit 1)))}]}
 
    "Uroboros"
