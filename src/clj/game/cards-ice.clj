@@ -277,7 +277,10 @@
 
    "Cell Portal"
    {:abilities [{:msg "make the Runner approach the outermost ICE"
-                 :effect (req (swap! state assoc-in [:run :position] 0) (derez state side card))}]}
+                 :effect (req (let [srv (first (:server run))
+                                    n (count (get-in @state [:corp :servers srv :ices]))]
+                                (swap! state assoc-in [:run :position] n)
+                                (derez state side card)))}]}
 
    "Changeling"
    (morph-ice "Barrier" "Sentry" end-the-run)
