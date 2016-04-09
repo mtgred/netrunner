@@ -359,12 +359,9 @@
                               {:prompt (msg "Rez another card with Surat City Grid?")
                                :yes-ability {:prompt "Choose a card to rez"
                                              :choices {:req #(not (rezzed? %))}
-                                             :msg (msg "rez " (:title target)
-                                                       (when (= (card->server state target) (card->server state card))
-                                                         ", lowering the rez cost by 2 [Credits]"))
-                                             :effect (req (when (= (card->server state target) (card->server state card))
-                                                            (rez-cost-bonus state side -2))
-                                                          (rez state side target))}}}
+                                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
+                                             :effect (effect (rez-cost-bonus -2)
+                                                             (rez target))}}}
                             card nil))}}}
 
    "The Twins"
