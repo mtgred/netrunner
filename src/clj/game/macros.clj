@@ -27,6 +27,9 @@
             'installed '(#{:rig :servers} (first (:zone card)))
             'remotes '(get-remote-names @state)
             'servers '(concat ["HQ" "R&D" "Archives"] remotes)
+            'unprotected '(let [server (second (:zone (if (:host card)
+                                                        (get-card state (:host card)) card)))]
+                            (empty? (get-in @state [:corp :servers server :ices])))
             'runnable-servers '(let [servers (map zone->name
                                                   (keys (get-in @state [:corp :servers])))
                                      restricted (map zone->name

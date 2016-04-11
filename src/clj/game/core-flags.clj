@@ -148,12 +148,6 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-;;; Small utilities for server properties.
-(defn no-ice?
-  "Checks if the specified server is unprotected by ICE.
-  For the Political assets in Democracy and Dogma."
-  [state server]
-  (empty? (get-in @state [:corp :servers server :ices])))
 
 ;;; Small utilities for card properties.
 (defn in-server?

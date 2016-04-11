@@ -204,7 +204,7 @@
                          true)))))}
 
    "Defective Brainchips"
-   {:events {:pre-damage {:req (req (= target :brain)) :msg "to do 1 additional brain damage"
+   {:events {:pre-damage {:req (req (= target :brain)) :msg "do 1 additional brain damage"
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Diversified Portfolio"
@@ -268,9 +268,9 @@
    {:events {:runner-install {:req (req (= side :runner))
                               :choices {:req #(and (in-hand? %)
                                                    (= (:side %) "Runner"))}
-                              :prompt "Choose a card from your grip to trash for Housekeeping" :once :per-turn
-                              :msg (msg "to force the Runner to trash " (:title target) " from Grip")
-                              :effect (effect (trash target))}}}
+                              :prompt "Choose a card from your Grip to trash for Housekeeping" :once :per-turn
+                              :msg (msg "force the Runner to trash " (:title target) " from their Grip")
+                              :effect (effect (trash target {:unpreventable true}))}}}
 
    "Interns"
    {:prompt "Choose a card to install from Archives or HQ"
@@ -498,13 +498,19 @@
     :effect (effect (lose :bad-publicity 2) (trash target))}
 
    "Restructure"
-   {:effect (effect (gain :credit 15))}
+   {:msg "gain 15 [Credits]"
+    :effect (effect (gain :credit 15))}
 
    "Reuse"
-   {:choices {:max 100 :req #(and (:side % "Corp")
-                                  (in-hand? %))}
-    :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s") " and gain " (* 2 (count targets)) " [Credits]")
-    :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
+   {:effect (req (let [n (count (:hand corp))]
+                   (resolve-ability state side
+                     {:prompt (msg "Choose up to " n " cards in HQ to trash with Reuse")
+                      :choices {:max n :req #(and (:side % "Corp")
+                                                  (in-hand? %))}
+                      :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
+                                " and gain " (* 2 (count targets)) " [Credits]")
+                      :effect (effect (trash-cards targets)
+                                      (gain :credit (* 2 (count targets))))} card nil)))}
 
    "Rework"
    {:prompt "Choose a card from HQ to shuffle into R&D"
