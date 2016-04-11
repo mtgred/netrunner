@@ -15,7 +15,9 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.2.1"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.5.2"]]}}
+  :profiles {:dev {:dependencies [[figwheel "0.5.2"]
+                                  [figwheel-sidecar "0.5.0-6"]
+                                  [com.cemerick/piggieback "0.2.1"]]}}
 
   :main game.main
   :aot :all
