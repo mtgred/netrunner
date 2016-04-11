@@ -272,10 +272,11 @@
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [{:keys [setname] :as card}]
-  (when-let [date (some #(when (= (:name %) setname)
+  (let [date (some #(when (= (:name %) setname)
                            (:available %))
-                        (:sets @app-state))]
-    (< date (.toJSON (js/Date.)))))
+                   (:sets @app-state))]
+    (and (not= date "")
+         (< date (.toJSON (js/Date.))))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
