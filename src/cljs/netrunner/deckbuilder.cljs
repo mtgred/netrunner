@@ -271,8 +271,8 @@
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [{:keys [setname]} card]
-  (when-let [date (some #(when (= (:name %) set)
+  [{:keys [setname] :as card}]
+  (when-let [date (some #(when (= (:name %) setname)
                            (:available %))
                         (:sets @app-state))]
     (< date (.toJSON (js/Date.)))))
