@@ -112,7 +112,8 @@
             {:id "avatar"
              :title "How do I change my avatar?"
              :content [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
-                       " and create an account with the same email as the one used to register on Jinteki.net."]}
+                       " and create an account with the same email as the one used to register on Jinteki.net. Please note that "
+                       "it can sometimes take up to a few hours for the new avatar to be visible on the site."]}
             {:id "bestbrowser"
              :title "What is the best supported browser?"
              :content '([:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too."]
@@ -188,9 +189,9 @@
             {:id "weird"
              :title "The site is behaving weird."
              :content [:p "The server code may have been freshly updated and you don't have the latest Javascript code. "
-                       "First step in every troubleshooting should be a forced refresh of your browser by doing a force refresh ("
-                       [:code "Ctrl + F5"] " on Windows). Also read the announcements on the main page, something about server problems "
-                       "may be written there."]}
+                       "First step in every troubleshooting should be a forced refresh of your browser by doing a "
+                       [:a {:href "http://refreshyourcache.com/en/cache/"} "force refresh"] " (" [:code "Ctrl + F5"] " on Windows). "
+                       "Also read the announcements on the main page, something about server problems may be written there."]}
             {:id "touchproblems"
              :title "The website doesn't work well on my touchscreen device."
              :content [:p "Touchscreen devices are currently not supported. See answer to " [:a {:href "#bestbrowser"} "this question"]
