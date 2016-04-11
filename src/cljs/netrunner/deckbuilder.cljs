@@ -271,10 +271,11 @@
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [card]
-  (let [cid (js/parseInt (:code card))]
-    ;; Cards up to Business First are currently released
-    (and cid (<= cid 10038))))
+  [{:keys [setname]} card]
+  (when-let [date (some #(when (= (:name %) set)
+                           (:available %))
+                        (:sets @app-state))]
+    (< date (.toJSON (js/Date.)))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
