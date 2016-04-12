@@ -53,14 +53,15 @@
                                       :effect (effect (tag-runner :runner 1))}}}}
 
    "Breaker Bay Grid"
-   {:events {:pre-rez-cost {:req (req (or (= (:zone card) (:zone target))
-                                          (= (:zone card) (:zone (get-card state (:host target))))))
+   {:events {:pre-rez-cost {:req (req (and (is-remote? (second (:zone card)))
+                                           (or (= (:zone card) (:zone target))
+                                               (= (:zone card) (:zone (get-card state (:host target)))))))
                             :effect (effect (rez-cost-bonus -5))}}}
 
    "Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
                                        (= (:position run) 1))) ; trigger when last ice passed
-                        :msg "start a Psi game"                        
+                        :msg "start a Psi game"
                         :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}
              :run {:req (req (and this-server
                                   (= (:position run) 0))) ; trigger on unprotected server

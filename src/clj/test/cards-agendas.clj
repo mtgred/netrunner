@@ -92,6 +92,21 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest braintrust
+  "Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored"
+  (do-game
+    (new-game (default-corp [(qty "Braintrust" 1) (qty "Ichi 1.0" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (let [bt (get-content state :remote1 0)]
+      (core/add-prop state :corp bt :advance-counter 7)
+      (core/score state :corp {:card (refresh bt)})
+      (let [scored-bt (get-in @state [:corp :scored 0])]
+        (is (= 2 (:counter (refresh scored-bt))) "Scored w/ 4 over-advancements; 2 agenda counters")
+        (play-from-hand state :corp "Ichi 1.0" "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (is (= 2 (:credit (get-corp))) "2c discount to rez Ichi")))))
+
 (deftest breaking-news
   "Test scoring breaking news"
   (do-game
@@ -102,6 +117,36 @@
     (is (= 2 (get-in @state [:runner :tag])) "Runner receives 2 tags from Breaking News")
     (take-credits state :corp)
     (is (= 0 (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
+
+(deftest character-assassination
+  "Character Assassination - Unpreventable trash of 1 resource when scored"
+  (do-game
+    (new-game (default-corp [(qty "Character Assassination" 1)])
+              (default-runner [(qty "Fall Guy" 1) (qty "Kati Jones" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kati Jones")
+    (play-from-hand state :runner "Fall Guy")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Character Assassination" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [kati (get-in @state [:runner :rig :resource 0])]
+      (prompt-select :corp kati)
+      (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
+      (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
+
+(deftest corporate-war
+  "Corporate War - Gain 7c if you have 7c or more when scoring, otherwise lose all credits"
+  (do-game
+    (new-game (default-corp [(qty "Corporate War" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Corporate War" "New remote")
+    (is (= 5 (:credit (get-corp))))
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 0 (:credit (get-corp))) "Lost all credits")
+    (core/gain state :corp :credit 7)
+    (play-from-hand state :corp "Corporate War" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
 (deftest eden-fragment
   "Test that Eden Fragment ignores the install cost of the first ice"
@@ -122,6 +167,18 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (not (nil? (get-ice state :hq 2))) "Corp has three ice installed on HQ")
     (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
+
+(deftest explode-a-palooza
+  "Explode-a-palooza - Gain 5 credits when Runner accesses it"
+  (do-game
+    (new-game (default-corp [(qty "Explode-a-palooza" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Explode-a-palooza" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
 
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
@@ -165,11 +222,23 @@
         (is (= 0 (:counter (refresh btscored))) "No agenda counters on scored Braintrust")
         (score-agenda state :corp gr)
         (prompt-select :corp bt2)
-        (is (nil? (:counter (refresh bt2))) 
+        (is (nil? (:counter (refresh bt2)))
             "No agenda counters on installed Braintrust; not a valid target")
         (prompt-select :corp btscored)
         (is (= 1 (:counter (refresh btscored)))
             "1 agenda counter placed on scored Braintrust")))))
+
+(deftest government-contracts
+  "Government Contracts - Spend 2 clicks for 4 credits"
+  (do-game
+    (new-game (default-corp [(qty "Government Contracts" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Government Contracts" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:click (get-corp))))
+    (card-ability state :corp (get-in @state [:corp :scored 0]) 0)
+    (is (= 0 (:click (get-corp))) "Spent 2 clicks")
+    (is (= 9 (:credit (get-corp))) "Gained 4 credits")))
 
 (deftest high-risk-investment
   "High-Risk Investment - Gain 1 agenda counter when scored; spend it to gain credits equal to Runner's credits"
@@ -200,6 +269,33 @@
       (score-agenda state :corp ht)
       (is (= 12 (:credit (get-corp))) "Gain 7 credits")
       (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
+
+(deftest medical-breakthrough
+  "Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy"
+  (do-game
+    (new-game (default-corp [(qty "Medical Breakthrough" 3) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+    (let [mb2 (get-content state :remote2 0)]
+      (core/advance state :corp {:card (refresh mb2)})
+      (core/advance state :corp {:card (refresh mb2)})
+      (core/advance state :corp {:card (refresh mb2)})
+      (core/score state :corp {:card (refresh mb2)})
+      (is (= 2 (:agenda-point (get-corp))) "Only needed 3 advancements to score")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Medical Breakthrough" "New remote")
+      (let [mb3 (get-content state :remote3 0)]
+        (core/advance state :corp {:card (refresh mb3)})
+        (core/advance state :corp {:card (refresh mb3)})
+        (core/score state :corp {:card (refresh mb3)})
+        (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score")))))
 
 (deftest napd-contract
   "NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity"
@@ -237,7 +333,7 @@
    (let [scored-nisei (get-in @state [:corp :scored 0])]
      (is (= 1 (:counter scored-nisei)) "Scored Nisei has one counter")
      (take-credits state :corp)
-     
+
      (run-on state "HQ")
      (run-phase-43 state)
      (card-ability state :corp (refresh scored-nisei) 0)
@@ -267,6 +363,28 @@
       (is (= 5 (:advance-counter (refresh oak))))
       (is (= 9 (:credit (get-corp)))
           "Spent 1 credit to advance, gained 3 credits from Oaktown"))))
+
+(deftest philotic-entanglement
+  "Philotic Entanglement - When scored, do 1 net damage for each agenda in the Runner's score area"
+  (do-game
+    (new-game (default-corp [(qty "Philotic Entanglement" 1) (qty "House of Knives" 3)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Cache" 2)]))
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Steal")
+    (run-empty-server state :remote3)
+    (prompt-choice :runner "Steal")
+    (is (= 3 (count (:scored (get-runner)))))
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote4 0))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
 
 (deftest profiteering
   "Profiteering - Gain 5 credits per bad publicity taken"
@@ -340,3 +458,41 @@
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
+
+(deftest underway-renovation
+  "Underway Renovation - Mill the Runner when advanced"
+  (do-game
+    (new-game (default-corp [(qty "Underway Renovation" 1) (qty "Shipment from SanSan" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (play-from-hand state :corp "Underway Renovation" "New remote")
+    (let [ur (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh ur)})
+      (is (= 1 (count (:discard (get-runner)))) "1 card milled from Runner Stack")
+      (play-from-hand state :corp "Shipment from SanSan")
+      (prompt-choice :corp "2")
+      (prompt-select :corp ur)
+      (is (= 3 (:advance-counter (refresh ur))))
+      (is (= 1 (count (:discard (get-runner)))) "No Runner mills; advancements were placed")
+      (core/advance state :corp {:card (refresh ur)})
+      (is (= 4 (:advance-counter (refresh ur))))
+      (is (= 3 (count (:discard (get-runner)))) "2 cards milled from Runner Stack; 4+ advancements"))))
+
+(deftest vulcan-coverup
+  "Vulcan Coverup - Do 2 meat damage when scored; take 1 bad pub when stolen"
+  (do-game
+    (new-game (default-corp [(qty "Vulcan Coverup" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Vulcan Coverup" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:bad-publicity (get-corp))) "Took 1 bad pub from stolen agenda")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Vulcan Coverup" "New remote")
+    (let [vc (get-content state :remote2 0)]
+      (score-agenda state :corp vc)
+      (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring"))))

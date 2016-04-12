@@ -58,6 +58,20 @@
   ([state server pos]
    (get-in @state [:corp :servers server :content pos])))
 
+(defn get-program
+  "Get non-hosted program by position."
+  [state pos]
+  (get-in @state [:runner :rig :program pos]))
+
+(defn get-hardware
+  "Get hardware by position."
+  [state pos]
+  (get-in @state [:runner :rig :hardware pos]))
+
+(defn get-resource
+  "Get non-hosted resource by position."
+  [state pos]
+  (get-in @state [:runner :rig :resource pos]))
 
 ;;; Click action functions
 (defn take-credits

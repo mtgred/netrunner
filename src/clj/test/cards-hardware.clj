@@ -1,5 +1,23 @@
 (in-ns 'test.core)
 
+(deftest archives-interface
+  "Archives Interface - Remove 1 card in Archives from the game instead of accessing it"
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 1) (qty "Launch Campaign" 1)])
+              (default-runner [(qty "Archives Interface" 1) (qty "Imp" 1)]))
+    (take-credits state :corp)
+    (core/move state :corp (find-card "Shock!" (:hand (get-corp))) :discard)
+    (core/move state :corp (find-card "Launch Campaign" (:hand (get-corp))) :discard)
+    (play-from-hand state :runner "Archives Interface")
+    (let [archint (get-hardware state 0)]
+      (run-on state :archives)
+      (core/no-action state :corp nil)
+      (card-ability state :runner archint 0)
+      (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
+      (core/successful-run state :runner nil)
+      (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
+      (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken"))))
+
 (deftest astrolabe-memory
   "Astrolabe - Gain 1 memory"
   (do-game
@@ -24,6 +42,16 @@
     (play-from-hand state :corp "Snare!" "Server 0")
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
+
+(deftest box-e
+  "Box-E - +2 MU, +2 max hand size"
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Box-E" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Box-E")
+   (is (= 6 (:memory (get-runner))))
+   (is (= 7 (core/hand-size state :runner)))))
 
 (deftest brain-chip
   "Brain Chip handsize and memory limit"
@@ -73,6 +101,22 @@
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+
+(deftest cortez-chip
+  "Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn"
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 1)])
+              (default-runner [(qty "Cortez Chip" 1)]))
+    (play-from-hand state :corp "Quandary" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cortez Chip")
+    (let [quan (get-ice state :rd 0)
+          cortez (get-hardware state 0)]
+      (card-ability state :runner cortez 0)
+      (prompt-select :runner quan)
+      (is (= 1 (count (:discard (get-runner)))) "Cortez Chip trashed")
+      (core/rez state :corp quan)
+      (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
 (deftest dinosaurus-strength-boost-mu-savings
   "Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
@@ -141,6 +185,24 @@
     (let [imp (get-in @state [:runner :rig :program 0])]
       (is (= 3 (:counter (refresh imp))) "Imp received an extra virus counter on install"))))
 
+(deftest llds-processor
+  "LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "LLDS Processor" 2) (qty "Inti" 1) (qty "Passport" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "LLDS Processor")
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "LLDS Processor")
+    (play-from-hand state :runner "Passport")
+    (let [inti (get-in @state [:runner :rig :program 0])
+          pass (get-in @state [:runner :rig :program 1])]
+      (is (= 2 (:current-strength (refresh inti))) "Strength boosted by 1; 1 copy of LLDS when installed")
+      (is (= 4 (:current-strength (refresh pass))) "Strength boosted by 2; 2 copies of LLDS when installed")
+      (take-credits state :runner)
+      (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
+      (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
+
 (deftest maya
   "Maya - Move accessed card to bottom of R&D"
   (do-game
@@ -192,6 +254,45 @@
       (prompt-choice :runner "Done")
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-in @state [:runner :rig :hardware])) "Plascrete depleted and trashed"))))
+
+(deftest rabbit-hole
+  "Rabbit Hole - +1 link, optionally search Stack to install more copies"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Sure Gamble" 1) (qty "Rabbit Hole" 3)]))
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Rabbit Hole")
+    (is (= 1 (:link (get-runner))))
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Yes")
+    (is (= 3 (:link (get-runner))))
+    (is (= 3 (count (get-in @state [:runner :rig :hardware]))))
+    (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
+    (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
+
+(deftest spinal-modem
+  "Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run"
+  (do-game
+    (new-game (default-corp [(qty "Caduceus" 1)])
+              (default-runner [(qty "Spinal Modem" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Caduceus" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Spinal Modem")
+    (let [cad (get-ice state :hq 0)
+          sm (get-hardware state 0)]
+      (is (= 5 (:memory (get-runner))))
+      (is (= 2 (:rec-counter (refresh sm))))
+      (run-on state :hq)
+      (core/rez state :corp cad)
+      (card-ability state :corp cad 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
 
 (deftest the-personal-touch
   "The Personal Touch - Give +1 strength to an icebreaker"
@@ -288,3 +389,24 @@
         (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
         (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
         (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+
+(deftest vigil
+  "Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size"
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3) (qty "PAD Campaign" 2)])
+              (default-runner [(qty "Vigil" 1) (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Vigil")
+    (is (= 5 (:memory (get-runner))))
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (is (empty? (:hand (get-runner))))
+    (take-credits state :runner)
+    (is (= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand filled to max")
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-runner)))) "Drew 1 card")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (is (not= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand below max")
+    (is (= 1 (count (:hand (get-runner)))) "No card drawn")))

@@ -163,6 +163,79 @@
     (let [ov (get-in @state [:runner :rig :program 0])]
       (is (= 5 (:counter (refresh ov))) "Overmind has 5 counters"))))
 
+(deftest shiv
+  "Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Nasir Meidan: Cyber Explorer" [(qty "Shiv" 1) (qty "Inti" 2)
+                                                 (qty "Access to Globalsec" 1)]))
+    (is (= 1 (:link (get-runner))) "1 link")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Shiv")
+    (let [shiv (get-program state 0)]
+      (is (= 1 (:current-strength (refresh shiv))) "1 installed breaker; 1 strength")
+      (play-from-hand state :runner "Inti")
+      (is (= 2 (:current-strength (refresh shiv))) "2 installed breakers; 2 strength")
+      (play-from-hand state :runner "Inti")
+      (is (= 3 (:current-strength (refresh shiv))) "3 installed breakers; 3 strength")
+      (is (= 1 (:memory (get-runner))) "3 MU consumed")
+      (play-from-hand state :runner "Access to Globalsec")
+      (is (= 2 (:link (get-runner))) "2 link")
+      (is (= 2 (:memory (get-runner))) "Shiv stops using MU when 2+ link"))))
+
+(deftest snowball
+  "Snowball - Strength boost until end of run when used to break a subroutine"
+  (do-game
+   (new-game (default-corp [(qty "Spiderweb" 1) (qty "Fire Wall" 1) (qty "Hedge Fund" 1)])
+             (default-runner [(qty "Snowball" 1)]))
+   (play-from-hand state :corp "Hedge Fund")
+   (play-from-hand state :corp "Fire Wall" "HQ")
+   (play-from-hand state :corp "Spiderweb" "HQ")
+   (take-credits state :corp)
+   (core/gain state :runner :credit 10)
+   (play-from-hand state :runner "Snowball")
+   (let [sp (get-ice state :hq 1)
+         fw (get-ice state :hq 0)
+         snow (get-program state 0)]
+     (run-on state "HQ")
+     (core/rez state :corp sp)
+     (core/rez state :corp fw)
+     (card-ability state :runner snow 1) ; match strength
+     (is (= 2 (:current-strength (refresh snow))))
+     (card-ability state :runner snow 0) ; strength matched, break a sub
+     (card-ability state :runner snow 0) ; break a sub
+     (is (= 4 (:current-strength (refresh snow))) "Broke 2 subs, gained 2 more strength")
+     (run-continue state)
+     (is (= 3 (:current-strength (refresh snow))) "Has +2 strength until end of run; lost 1 per-encounter boost")
+     (card-ability state :runner snow 1)
+     (card-ability state :runner snow 1) ; match strength
+     (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 2")
+     (card-ability state :runner snow 0) ; strength matched, break a sub
+     (is (= 6 (:current-strength (refresh snow))) "Broke 1 sub, gained 1 more strength")
+     (run-continue state)
+     (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")
+     (run-jack-out state)
+     (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
+
+(deftest study-guide
+  "Study Guide - 2c to add a power counter; +1 strength per counter"
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Study Guide" 1) (qty "Sure Gamble" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Sure Gamble")
+   (play-from-hand state :runner "Study Guide")
+   (let [sg (get-program state 0)]
+     (card-ability state :runner sg 1)
+     (is (= 4 (:credit (get-runner))) "Paid 2c")
+     (is (= 1 (:counter (refresh sg))) "Has 1 power counter")
+     (is (= 1 (:current-strength (refresh sg))) "1 strength")
+     (card-ability state :runner sg 1)
+     (is (= 2 (:credit (get-runner))) "Paid 2c")
+     (is (= 2 (:counter (refresh sg))) "Has 2 power counters")
+     (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
+
 (deftest wyrm
   "Wyrm reduces strength of ice"
   (do-game
