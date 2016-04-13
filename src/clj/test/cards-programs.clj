@@ -1,5 +1,21 @@
 (in-ns 'test.core)
 
+(deftest au-revoir
+  "Au Revoir - Gain 1 credit every time you jack out"
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Au Revoir" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Au Revoir")
+    (run-on state "Archives")
+    (core/no-action state :corp nil)
+    (core/jack-out state :runner nil)
+    (is (= 5 (:credit (get-runner))) "Gained 1 credit from jacking out")
+    (play-from-hand state :runner "Au Revoir")
+    (run-on state "Archives")
+    (core/no-action state :corp nil)
+    (core/jack-out state :runner nil)
+    (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
+
 (deftest datasucker
   "Datasucker - Reduce strength of encountered ICE"
   (do-game
@@ -104,6 +120,29 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest gravedigger
+  "Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp"
+  (do-game
+    (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Enigma" 2)])
+              (default-runner [(qty "Gravedigger" 1)]))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gravedigger")
+    (let [gd (get-in @state [:runner :rig :program 0])]
+      (core/trash state :corp (get-content state :remote1 0))
+      (is (= 1 (:counter (refresh gd))) "Gravedigger gained 1 counter")
+      (core/trash state :corp (get-content state :remote2 0))
+      (is (= 2 (:counter (refresh gd))) "Gravedigger gained 1 counter")
+      (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+      (is (= 2 (count (:deck (get-corp)))))
+      (card-ability state :runner gd 0)
+      (is (= 1 (:counter (refresh gd))) "Spent 1 counter from Gravedigger")
+      (is (= 2 (:click (get-runner))) "Spent 1 click")
+      (is (= 1 (count (:deck (get-corp)))))
+      (is (= 3 (count (:discard (get-corp)))) "Milled 1 card from R&D"))))
+
 (deftest harbinger-blacklist
   "Harbinger - install facedown when Blacklist installed"
   (do-game
@@ -116,6 +155,21 @@
     (core/trash state :runner (-> (get-runner) :rig :program first))
     (is (= 0 (count (:discard (get-runner)))) "Harbinger not in heap")
     (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
+
+(deftest hyperdriver
+  "Hyperdriver - Remove from game to gain 3 clicks"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Hyperdriver" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hyperdriver")
+    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [hyp (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner hyp 0)
+      (is (= 7 (:click (get-runner))) "Gained 3 clicks")
+      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
 (deftest incubator-transfer-virus-counters
   "Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program"
@@ -139,6 +193,24 @@
       (is (= 1 (count (get-in @state [:runner :rig :program]))))
       (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
       (is (= 3 (:click (get-runner)))))))
+
+(deftest lamprey
+  "Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Lamprey" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lamprey")
+    (let [lamp (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state :hq)
+      (is (= 7 (:credit (get-corp))) "Corp lost 1 credit")
+      (run-empty-server state :hq)
+      (is (= 6 (:credit (get-corp))) "Corp lost 1 credit")
+      (run-empty-server state :hq)
+      (is (= 5 (:credit (get-corp))) "Corp lost 1 credit")
+      (take-credits state :runner)
+      (core/purge state :corp)
+      (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
 
 (deftest leprechaun-mu-savings
   "Leprechaun - Keep MU the same when hosting or trashing hosted programs"
@@ -332,6 +404,30 @@
         (prompt-select :runner hive)
         (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
         (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
+
+(deftest scheherazade
+  "Scheherazade - Gain 1 credit when it hosts a program"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Scheherazade" 1) (qty "Cache" 1)
+                               (qty "Inti" 1) (qty "Fall Guy" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scheherazade")
+    (let [sch (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner sch 0)
+      (prompt-select :runner (find-card "Inti" (:hand (get-runner))))
+      (is (= 1 (count (:hosted (refresh sch)))))
+      (is (= 2 (:click (get-runner))) "Spent 1 click to install and host")
+      (is (= 6 (:credit (get-runner))) "Gained 1 credit")
+      (is (= 3 (:memory (get-runner))) "Programs hosted on Scheh consume MU")
+      (card-ability state :runner sch 0)
+      (prompt-select :runner (find-card "Cache" (:hand (get-runner))))
+      (is (= 2 (count (:hosted (refresh sch)))))
+      (is (= 6 (:credit (get-runner))) "Gained 1 credit")
+      (card-ability state :runner sch 0)
+      (prompt-select :runner (find-card "Fall Guy" (:hand (get-runner))))
+      (is (= 2 (count (:hosted (refresh sch)))) "Can't host non-program")
+      (is (= 1 (count (:hand (get-runner))))))))
 
 (deftest sneakdoor-nerve-agent
   "Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955"

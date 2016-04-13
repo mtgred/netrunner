@@ -151,6 +151,20 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest gabriel-santiago
+  "Gabriel Santiago - Gain 2c on first successful HQ run each turn"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Easy Mark" 1)]))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (is (= 5 (:credit (get-runner))) "No credits gained")
+    (run-empty-server state :hq)
+    (is (= 7 (:credit (get-runner))) "Gained 2c")
+    (run-empty-server state :hq)
+    (is (= 7 (:credit (get-runner))) "No credits gained")))
+
 (deftest grndl-power-unleashed
   "GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub."
   (do-game

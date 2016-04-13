@@ -85,6 +85,24 @@
     (play-from-hand state :corp "Closed Accounts")
     (is (= 0 (:credit (get-runner))) "Runner lost all credits")))
 
+(deftest defective-brainchips
+  "Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn"
+  (do-game
+    (new-game (default-corp [(qty "Defective Brainchips" 1) (qty "Viktor 1.0" 1)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Shiv" 2)]))
+    (play-from-hand state :corp "Defective Brainchips")
+    (play-from-hand state :corp "Viktor 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [vik (get-ice state :hq 0)]
+      (core/rez state :corp vik)
+      (card-ability state :corp vik 0)
+      (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
+      (card-ability state :corp vik 0)
+      (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
+
 (deftest diversified-portfolio
   (do-game
     (new-game (default-corp [(qty "Diversified Portfolio" 1)
@@ -105,6 +123,23 @@
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
+
+(deftest housekeeping
+  "Housekeeping - Runner must trash a card from Grip on first install of a turn"
+  (do-game
+    (new-game (default-corp [(qty "Housekeeping" 1)])
+              (default-runner [(qty "Cache" 2) (qty "Fall Guy" 1) (qty "Mr. Li" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fall Guy")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Housekeeping")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (prompt-select :runner (find-card "Mr. Li" (:hand (get-runner))))
+    (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't trigger")
+    (is (= 1 (count (:discard (get-runner)))) "Card trashed")
+    (play-from-hand state :runner "Cache")
+    (is (empty? (:prompt (get-runner))) "Housekeeping didn't trigger on 2nd install")))
 
 (deftest lateral-growth
   (do-game
@@ -248,6 +283,75 @@
     (is (= 8 (:credit (get-corp))) "Gained 1 credit from successful run")
     (run-empty-server state "Archives")
     (is (= 9 (:credit (get-corp))) "Gained 1 credit from successful run")))
+
+(deftest peak-efficiency
+  "Peak Efficiency - Gain 1 credit for each rezzed ICE"
+  (do-game
+    (new-game (default-corp [(qty "Peak Efficiency" 1) (qty "Paper Wall" 3) (qty "Wraparound" 1)])
+              (default-runner))
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (play-from-hand state :corp "Paper Wall" "R&D")
+    (play-from-hand state :corp "Paper Wall" "New remote")
+    (play-from-hand state :corp "Wraparound" "New remote")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :rd 0))
+    (core/rez state :corp (get-ice state :remote1 0))
+    (play-from-hand state :corp "Peak Efficiency")
+    (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed ICE; unrezzed ICE ignored")))
+
+(deftest power-shutdown
+  "Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware"
+  (do-game
+    (new-game (default-corp [(qty "Power Shutdown" 3) (qty "Hive" 3)])
+              (default-runner [(qty "Grimoire" 1) (qty "Cache" 1)]))
+    (play-from-hand state :corp "Power Shutdown")
+    (is (empty? (:discard (get-corp))) "Not played, no run last turn")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Grimoire")
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (core/move state :corp (find-card "Hive" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hive" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hive" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Power Shutdown")
+    (prompt-choice :corp 2)
+    (is (= 3 (count (:discard (get-corp)))) "2 cards trashed from R&D")
+    (is (= 1 (count (:deck (get-corp)))) "1 card remaining in R&D")
+    (prompt-select :runner (get-in @state [:runner :rig :hardware 0])) ; try targeting Grimoire
+    (is (empty? (:discard (get-runner))) "Grimoire too expensive to be targeted")
+    (prompt-select :runner (get-in @state [:runner :rig :program 0]))
+    (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
+
+(deftest psychographics
+  "Psychographics - Place advancements up to the number of Runner tags on a card"
+  (do-game
+    (new-game (default-corp [(qty "Psychographics" 1) (qty "Project Junebug" 1)])
+              (default-runner))
+    (core/gain state :runner :tag 4)
+    (play-from-hand state :corp "Project Junebug" "New remote")
+    (let [pj (get-content state :remote1 0)]
+      (play-from-hand state :corp "Psychographics")
+      (prompt-choice :corp 4)
+      (prompt-select :corp pj)
+      (is (= 1 (:credit (get-corp))) "Spent 4 credits")
+      (is (= 4 (:advance-counter (refresh pj))) "Junebug has 4 advancements"))))
+
+(deftest reuse
+  "Reuse - Gain 2 credits for each card trashed from HQ"
+  (do-game
+    (new-game (default-corp [(qty "Reuse" 2) (qty "Hive" 1) (qty "IQ" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Reuse")
+    (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Hive" (:hand (get-corp))))
+    (prompt-select :corp (find-card "IQ" (:hand (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (= 4 (count (:discard (get-corp)))) "3 cards trashed plus operation played")
+    (is (= 11 (:credit (get-corp))) "Gained 6 credits")
+    (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
 (deftest scorched-earth
   "Scorched Earth - burn 'em"

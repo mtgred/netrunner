@@ -16,6 +16,27 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest breaker-bay-grid
+  "Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits"
+  (do-game
+   (new-game (default-corp [(qty "Breaker Bay Grid" 2) (qty "The Root" 1) (qty "Strongbox" 1)])
+             (default-runner))
+   (core/gain state :corp :click 1)
+   (play-from-hand state :corp "Breaker Bay Grid" "New remote")
+   (play-from-hand state :corp "The Root" "Server 1")
+   (let [bbg1 (get-content state :remote1 0)
+         root (get-content state :remote1 1)]
+     (core/rez state :corp bbg1)
+     (core/rez state :corp root)
+     (is (= 4 (:credit (get-corp))) "Paid only 1 to rez The Root")
+     (play-from-hand state :corp "Breaker Bay Grid" "R&D")
+     (play-from-hand state :corp "Strongbox" "R&D")
+     (let [bbg2 (get-content state :rd 0)
+           sbox (get-content state :rd 1)]
+       (core/rez state :corp bbg2)
+       (core/rez state :corp sbox)
+       (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
+
 (deftest caprice-nisei
   "Caprice Nisei - Psi game for ETR after runner passes last ice"
   (do-game
@@ -122,7 +143,7 @@
     (play-from-hand state :runner "Cache")
     (let [virus-counters (fn [card] (core/get-virus-counters state :runner (refresh card)))
           cache (find-card "Cache" (get-in @state [:runner :rig :program]))
-          cvs (get-content state :hq 0)] 
+          cvs (get-content state :hq 0)]
       (is (= 3 (virus-counters cache)))
       (play-from-hand state :runner "Medium")
       (take-credits state :runner 2)
@@ -185,6 +206,39 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
+(deftest hokusai-grid
+  "Hokusai Grid - Do 1 net damage when run successful on its server"
+  (do-game
+    (new-game (default-corp [(qty "Hokusai Grid" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hokusai Grid" "HQ")
+    (take-credits state :corp)
+    (core/rez state :corp (get-content state :hq 0))
+    (run-empty-server state :rd)
+    (is (empty? (:discard (get-runner))) "No net damage done for successful run on R&D")
+    (run-empty-server state :hq)
+    (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
+
+(deftest keegan-lane
+  "Keegan Lane - Trash self and remove 1 Runner tag to trash a program"
+  (do-game
+    (new-game (default-corp [(qty "Keegan Lane" 1)])
+              (default-runner [(qty "Corroder" 1)]))
+    (play-from-hand state :corp "Keegan Lane" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (let [keeg (get-content state :hq 0)]
+      (core/rez state :corp keeg)
+      (card-ability state :corp keeg 0)
+      (is (= 1 (count (get-content state :hq))) "Keegan didn't fire, Runner has no tags")
+      (core/gain state :runner :tag 2)
+      (card-ability state :corp keeg 0)
+      (prompt-select :corp (get-program state 0))
+      (is (= 1 (:tag (get-runner))) "1 tag removed")
+      (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
+      (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
+
 (deftest marcus-batty-security-nexus
   "Marcus Batty - Simultaneous Interaction with Security Nexus"
   (do-game
@@ -210,6 +264,26 @@
       (prompt-choice :runner "0")
       (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
       (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
+
+(deftest neotokyo-grid
+  "NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement"
+  (do-game
+    (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
+                             (qty "Shipment from SanSan" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "NeoTokyo Grid" "New remote")
+    (play-from-hand state :corp "Nisei MK II" "Server 1")
+    (core/rez state :corp (get-content state :remote1 0))
+    (let [nis (get-content state :remote1 1)]
+      (play-from-hand state :corp "Shipment from SanSan")
+      (prompt-choice :corp "2")
+      (prompt-select :corp nis)
+      (is (= 2 (:advance-counter (refresh nis))) "2 advancements on agenda")
+      (is (= 4 (:credit (get-corp))) "Gained 1 credit")
+      (core/advance state :corp {:card (refresh nis)})
+      (is (= 3 (:advance-counter (refresh nis))) "3 advancements on agenda")
+      (is (= 3 (:credit (get-corp))) "No credit gained"))))
 
 (deftest off-the-grid
   "Off the Grid run ability - and interaction with RP"
@@ -396,6 +470,28 @@
       (prompt-choice :runner "Steal")
       (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
+(deftest ryon-knight
+  "Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining"
+  (do-game
+    (new-game (default-corp [(qty "Ryon Knight" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ryon Knight" "HQ")
+    (take-credits state :corp)
+    (let [ryon (get-content state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp ryon)
+      (card-ability state :corp ryon 0)
+      (is (= 3 (:click (get-runner))))
+      (is (= 0 (:brain-damage (get-runner))))
+      (is (= 1 (count (get-content state :hq))) "Ryon ability didn't fire with 3 Runner clicks left")
+      (run-jack-out state)
+      (take-credits state :runner 2)
+      (run-on state :hq)
+      (card-ability state :corp ryon 0)
+      (is (= 0 (:click (get-runner))))
+      (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
+      (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
 (deftest strongbox
   "Strongbox - Ability"

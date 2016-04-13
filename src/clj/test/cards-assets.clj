@@ -53,6 +53,42 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest brain-taping-warehouse
+  "Brain-Taping Warehouse - Lower rez cost of bioroid ICE by 1 for each unspent Runner click"
+  (do-game
+    (new-game (default-corp [(qty "Brain-Taping Warehouse" 1) (qty "Ichi 1.0" 1)
+                             (qty "Eli 1.0" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Brain-Taping Warehouse" "New remote")
+    (play-from-hand state :corp "Ichi 1.0" "Server 1")
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (let [ichi (get-ice state :remote1 0)
+          eli (get-ice state :hq 0)]
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 3 (:click (get-runner))))
+      (core/rez state :corp ichi)
+      (is (= 2 (:credit (get-corp))) "Paid only 2c to rez Ichi; reduction of 3c")
+      (run-jack-out state)
+      (run-on state :hq)
+      (is (= 2 (:click (get-runner))))
+      (core/rez state :corp eli)
+      (is (= 1 (:credit (get-corp))) "Paid only 1c to rez Eli; reduction of 2c"))))
+
+(deftest capital-investors
+  "Capital Investors - Click for 2 credits"
+  (do-game
+    (new-game (default-corp [(qty "Capital Investors" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Capital Investors" "New remote")
+    (let [cap (get-content state :remote1 0)]
+      (core/rez state :corp cap)
+      (card-ability state :corp cap 0)
+      (card-ability state :corp cap 0)
+      (is (= 0 (:click (get-corp))) "Used twice, spent 2 clicks")
+      (is (= 7 (:credit (get-corp))) "Used twice, gained 4 credits"))))
+
 (deftest chairman-hiro
   "Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him"
   (do-game
@@ -92,6 +128,51 @@
       (prompt-choice :runner "Take 1 tag")
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
+
+(deftest dedicated-response-team
+  "Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged"
+  (do-game
+    (new-game (default-corp [(qty "Dedicated Response Team" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (let [drt (get-content state :remote1 0)]
+      (core/rez state :corp drt)
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (is (empty? (:discard (get-runner))) "Not tagged, no damage done")
+      (core/gain state :runner :tag 1)
+      (run-on state :rd)
+      (run-jack-out state)
+      (is (empty? (:discard (get-runner))) "Tagged but run unsuccessful, no damage done")
+      (run-empty-server state :rd)
+      (is (= 2 (count (:discard (get-runner)))) "Suffered 2 damage for successful run w/ tag"))))
+
+(deftest early-premiere
+  "Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server"
+  (do-game
+    (new-game (default-corp [(qty "Early Premiere" 1) (qty "Ice Wall" 1)
+                             (qty "Ghost Branch" 1) (qty "Blacklist" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Early Premiere" "New remote")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (play-from-hand state :corp "Ghost Branch" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ep (get-content state :remote1 0)
+          bl (get-content state :remote2 0)
+          gb (get-content state :remote3 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp ep)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp ep 0)
+      (prompt-select :corp iw)
+      (is (nil? (:advance-counter (refresh iw))) "Ice Wall can't targeted, not in server")
+      (prompt-select :corp bl)
+      (is (nil? (:advance-counter (refresh bl))) "Blacklist can't targeted, can't be advanced")
+      (prompt-select :corp gb)
+      (is (= 1 (:advance-counter (refresh gb))) "1 advancement on Ghost Branch")
+      (is (= 4 (:credit (get-corp)))))))
 
 (deftest edge-of-world
   "Edge of World - ability"
@@ -300,6 +381,42 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
 
+(deftest it-department
+  "IT Department - Add strength to rezzed ICE until end of turn"
+  (do-game
+    (new-game (default-corp [(qty "IT Department" 1) (qty "Wall of Static" 1)])
+              (default-runner))
+    (play-from-hand state :corp "IT Department" "New remote")
+    (play-from-hand state :corp "Wall of Static" "Server 1")
+    (let [itd (get-content state :remote1 0)
+          wos (get-ice state :remote1 0)]
+      (core/rez state :corp itd)
+      (core/rez state :corp wos)
+      (card-ability state :corp itd 1)
+      (is (= 0 (:click (get-corp))) "Spent 1 click")
+      (is (= 1 (:counter (refresh itd))) "IT Dept has 1 counter")
+      (core/add-prop state :corp (refresh itd) :counter 4)
+      (is (= 5 (:counter (refresh itd))) "IT Dept has 5 counters")
+      (card-ability state :corp itd 0)
+      (prompt-select :corp wos)
+      ;; refer to online guides for summary of how this ludicrous formula is calculated
+      (is (= 8 (:current-strength (refresh wos))) "Gained 5 strength")
+      (is (= 4 (:counter (refresh itd))) "Spent 1 counter")
+      (card-ability state :corp itd 0)
+      (prompt-select :corp wos)
+      (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
+      (is (= 3 (:counter (refresh itd))) "Spent 1 counter")
+      (card-ability state :corp itd 0)
+      (prompt-select :corp wos)
+      (is (= 12 (:current-strength (refresh wos))) "Gained total of 9 strength")
+      (is (= 2 (:counter (refresh itd))) "Spent 1 counter")
+      (card-ability state :corp itd 0)
+      (prompt-select :corp wos)
+      (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
+      (is (= 1 (:counter (refresh itd))) "Spent 1 counter")
+      (take-credits state :corp)
+      (is (= 3 (:current-strength (refresh wos))) "Back to default strength"))))
+
 (deftest jackson-howard-draw
   "Jackson Howard - Draw 2 cards"
   (do-game
@@ -364,6 +481,27 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
+(deftest net-police
+  "Net Police - Recurring credits equal to Runner's link"
+  (do-game
+    (new-game
+      (default-corp [(qty "Net Police" 1)])
+      (make-deck "Sunny Lebeau: Security Specialist" [(qty "Dyson Mem Chip" 1)
+                                                      (qty "Access to Globalsec" 1)]))
+    (play-from-hand state :corp "Net Police" "New remote")
+    (is (= 2 (:link (get-runner))))
+    (let [netpol (get-content state :remote1 0)]
+      (core/rez state :corp netpol)
+      (is (= 2 (:rec-counter (refresh netpol))) "2 recurring for Runner's 2 link")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dyson Mem Chip")
+      (take-credits state :runner)
+      (is (= 3 (:rec-counter (refresh netpol))) "3 recurring for Runner's 3 link")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Access to Globalsec")
+      (take-credits state :runner)
+      (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
+
 (deftest political-dealings
   (do-game
     (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])
@@ -390,6 +528,32 @@
               "Oaktown Renovation installed by Political Dealings")
           (is (= true (:rezzed (get-content state :remote3 0)))
               "Oaktown Renovation installed face up"))))))
+
+(deftest psychic-field
+  "Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed"
+  (do-game
+    (new-game (default-corp [(qty "Psychic Field" 2)])
+              (default-runner [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (let [psyf1 (get-content state :remote1 0)
+          psyf2 (get-content state :remote2 0)]
+      (take-credits state :corp)
+      (starting-hand state :runner ["Infiltration" "Sure Gamble" "Sure Gamble"])
+      (play-from-hand state :runner "Infiltration")
+      (prompt-choice :runner "Expose a card")
+      (prompt-select :runner psyf1)
+      (is (= 2 (count (:hand (get-runner)))))
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 3 (count (:discard (get-runner)))) "Suffered 2 net damage on expose and psi loss")
+      (core/gain state :runner :click 3)
+      (core/draw state :runner 3)
+      (is (= 3 (count (:hand (get-runner)))))
+      (run-empty-server state :remote2)
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 6 (count (:discard (get-runner)))) "Suffered 3 net damage on access and psi loss"))))
 
 (deftest public-support
   "Public support scoring and trashing"
@@ -437,6 +601,23 @@
         (is (= "Public Support" (:title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
 
+(deftest reality-threedee
+  "Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)"
+  (do-game
+    (new-game (default-corp [(qty "Reality Threedee" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Reality Threedee" "New remote")
+    (let [r3d (get-content state :remote1 0)]
+      (core/rez state :corp r3d)
+      (is (= 1 (:bad-publicity (get-corp))) "Took 1 bad pub on rez")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Gained 1 credit")
+      (take-credits state :corp)
+      (core/gain state :runner :tag 1)
+      (take-credits state :runner)
+      (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
+
 (deftest reversed-accounts
   "Reversed Accounts - Trash to make Runner lose 4 credits per advancement"
   (do-game
@@ -459,6 +640,22 @@
       (card-ability state :corp rev 0)
       (is (= 1 (count (:discard (get-corp)))) "Reversed Accounts trashed")
       (is (= 2 (:credit (get-runner))) "Runner lost 16 credits"))))
+
+(deftest ronald-five
+  "Ronald Five - Runner loses a click every time they trash a Corp card"
+  (do-game
+    (new-game (default-corp [(qty "Ronald Five" 1) (qty "Melange Mining Corp." 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ronald Five" "New remote")
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (take-credits state :corp)
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Yes") ; trash MMC
+    (is (= 2 (:click (get-runner))) "Lost 1 click")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Yes") ; trash Ronald Five
+    (is (= 0 (:click (get-runner))) "Lost 1 click")))
 
 (deftest ronin
   "Ronin - Click-trash to do 3 net damage when it has 4 or more advancements"
@@ -507,6 +704,22 @@
       (prompt-choice :corp 7)
       (is (= 7 (:credit (get-corp))))
       (is (= 2 (count (:discard (get-corp)))) "Sealed Vault trashed"))))
+
+(deftest server-diagnostics
+  "Server Diagnostics - Gain 2c when turn begins; trashed when ICE is installed"
+  (do-game
+    (new-game (default-corp [(qty "Server Diagnostics" 1) (qty "Pup" 1)
+                             (qty "Launch Campaign" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Server Diagnostics" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (is (= 1 (count (get-content state :remote1))) "Non-ICE install didn't trash Serv Diag")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 5 (:credit (get-corp))) "Gained 2c at start of turn")
+    (play-from-hand state :corp "Pup" "HQ")
+    (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
 
 (deftest snare-cant-afford
   "Snare! - Can't afford"
