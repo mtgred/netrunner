@@ -603,11 +603,27 @@
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subliminal Messaging"
+   (letfn [(subliminal []
+             {:corp-turn-begins
+              {:effect
+               (req (when (and (not (empty? (filter #(= "04100" (:code %)) (get-in @state [:corp :discard]))))
+                               (not (:made-run runner-reg)))
+                      (resolve-ability state side {:optional
+                                                   {:prompt "Move Subliminal Messaging back to HQ?"
+                                                    :yes-ability {:effect (req (move state side card :hand)
+                                                                               (system-msg state side "moves Subliminal Messaging to HQ"))}
+                                                    :no-ability {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
+                                                    }} card nil))
+                    (unregister-events state side card))}})]
    {:msg "gain 1 [Credits]"
     :effect (effect (gain :credit 1)
                     (resolve-ability {:once :per-turn :once-key :subliminal-messaging
                                       :msg "gain [Click]"
-                                      :effect (effect (gain :corp :click 1))} card nil))}
+                                      :effect (effect (gain :corp :click 1))} card nil)
+                    (register-events (subliminal) (assoc card :zone '(:discard))))
+    :trash-effect {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
+    :mill-effect {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
+    :events {:corp-turn-begins nil}})
 
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg))

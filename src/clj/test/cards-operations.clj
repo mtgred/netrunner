@@ -395,6 +395,66 @@
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (:advance-counter (refresh iwall)))))))
 
+(deftest subliminal-messaging
+  "Subliminal Messaging - Playing/trashing/milling all will prompt returning to hand"
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 3)])
+              (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) (qty "Utopia Shard" 1)]))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (is (= 6 (:credit (get-corp))))
+    (is (= 3 (:click (get-corp))) "First Subliminal Messaging gains 1 click")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (is (= 7 (:credit (get-corp))))
+    (is (= 2 (:click (get-corp))) "Second Subliminal Messaging does not gain 1 click")
+    (trash-from-hand state :corp "Subliminal Messaging")
+    (is (= 0 (count (:hand (get-corp)))) "Corp no more cards in HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (count (:hand (get-corp)))) "All 3 Subliminals returned to HQ")
+    (core/move state :corp (find-card "Subliminal Messaging" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Utopia Shard")
+    (let [utopia (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner utopia 0))
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (count (:hand (get-corp)))) "All 3 Subliminals returned to HQ")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (is (empty? (get-in @state [:corp :prompt])) "No prompt here because runner made a run last turn")
+    (take-credits state :corp)
+    (is (= 2 (count (:hand (get-corp)))) "2 Subliminals in HQ")
+    (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
+
+(deftest subliminal-messaging-no
+  "Subliminal Messaging - User declines to return to hand, ensure game asks again next turn"
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (trash-from-hand state :corp "Subliminal Messaging")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "No")
+    (prompt-choice :corp "No")
+    (is (= 0 (count (:hand (get-corp)))) "Neither Subliminal returned to HQ")
+    (is (= 2 (count (:discard (get-corp)))) "Both Subliminals in Archives")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 2 (count (:hand (get-corp)))) "Both Subliminals returned to HQ")
+    (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
+
 (deftest successful-demonstration
   "Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits"
   (do-game
