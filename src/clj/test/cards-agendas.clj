@@ -323,6 +323,27 @@
         (core/score state :corp {:card (refresh napd)})
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
+(deftest napd-contract-corporate-scandal
+  "NAPD Contract - scoring requirement increases with bad publicity from Corporate Scandal"
+  (do-game
+    (new-game (default-corp [(qty "NAPD Contract" 1)])
+              (default-runner [(qty "Corporate Scandal" 1)]))
+    (play-from-hand state :corp "NAPD Contract" "New remote")
+      (let [napd (get-content state :remote1 0)]
+        (core/advance state :corp {:card (refresh napd)})
+        (core/advance state :corp {:card (refresh napd)})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corporate Scandal")
+        (take-credits state :runner)
+        (core/advance state :corp {:card (refresh napd)})
+        (core/advance state :corp {:card (refresh napd)})
+        (core/score state :corp {:card (refresh napd)})
+        (is (not (nil? (get-content state :remote1 0)))
+            "Corp can't score with 4 advancements because of BP")
+        (core/advance state :corp {:card (refresh napd)})
+        (core/score state :corp {:card (refresh napd)})
+        (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
+
 (deftest nisei-mk-ii-step-43
   "Nisei MK II - Remove hosted counter to ETR, check this works in 4.3"
   (do-game
