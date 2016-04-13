@@ -227,7 +227,7 @@
         (core/score state :corp {:card (refresh napd)})
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
-(deftest napd-contract
+(deftest napd-contract-corporate-scandal
   "NAPD Contract - scoring requirement increases with bad publicity from Corporate Scandal"
   (do-game
     (new-game (default-corp [(qty "NAPD Contract" 1)])
