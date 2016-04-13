@@ -101,7 +101,7 @@
                                  card nil)))}]}
 
    "Crescentus"
-   {:abilities [{:req (req current-ice) :msg (msg "derez " (:title current-ice))
+   {:abilities [{:req (req (rezzed? current-ice)) :msg (msg "derez " (:title current-ice))
                  :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
    "D4v1d"

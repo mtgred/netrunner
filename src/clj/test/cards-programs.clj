@@ -16,6 +16,25 @@
     (core/jack-out state :runner nil)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
+(deftest crescentus
+  "Crescentus should only work on rezzed ice"
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 1)])
+              (default-runner [(qty "Crescentus" 1)]))
+    (play-from-hand state :corp "Quandary" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crescentus")
+    (run-on state "HQ")
+    (let [cres (get-in @state [:runner :rig :program 0])
+          q (get-ice state :hq 0)]
+      (card-ability state :runner cres 0)
+      (is (not (nil? (get-in @state [:runner :rig :program 0]))) "Crescentus could not be used because the ICE is not rezzed")
+      (core/rez state :corp q)
+      (is (get-in (refresh q) [:rezzed]) "Quandary is now rezzed")
+      (card-ability state :runner cres 0)
+      (is (nil? (get-in @state [:runner :rig :program 0])) "Crescentus could be used because the ICE is rezzed")
+      (is (not (get-in (refresh q) [:rezzed])) "Quandary is no longer rezzed"))))
+
 (deftest datasucker
   "Datasucker - Reduce strength of encountered ICE"
   (do-game
