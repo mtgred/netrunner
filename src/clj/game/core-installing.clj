@@ -43,7 +43,8 @@
    (unregister-events state side card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
-   (when (find-cid (:cid card) (all-installed state side))
+   (when (and (find-cid (:cid card) (all-installed state side))
+              (or (:rezzed card) (:installed card)))
      (when-let [in-play (:in-play (card-def card))]
        (apply lose state side in-play)))
    (dissoc-card card keep-counter)))
