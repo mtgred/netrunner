@@ -354,12 +354,14 @@
    {:events
     {:rez {:req (req (and (= (card->server state target) (card->server state card))
                           (not= (:cid target) (:cid card))
-                          (seq (filter #(not (rezzed? %)) (all-installed state :corp)))))
+                          (seq (filter #(and (not (rezzed? %))
+                                             (not (is-type? % "Agenda"))) (all-installed state :corp)))))
            :effect (effect (resolve-ability
                              {:optional
                               {:prompt (msg "Rez another card with Surat City Grid?")
                                :yes-ability {:prompt "Choose a card to rez"
-                                             :choices {:req #(not (rezzed? %))}
+                                             :choices {:req #(and (not (rezzed? %))
+                                                                  (not (is-type? % "Agenda")))}
                                              :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                                              :effect (effect (rez-cost-bonus -2)
                                                              (rez target))}}}
