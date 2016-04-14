@@ -122,7 +122,8 @@
                                  :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                            (clear-wait-prompt state :runner)
                                                            (damage state side :net (get-defer-damage state side :net nil)
-                                                                   {:unpreventable true :card card}))}}} card nil))}}}
+                                                                   {:unpreventable true :card card}))}}} card nil))}}
+    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
    {:effect (effect (lose :hand-size-modification 1)
