@@ -324,8 +324,10 @@
    "Logos"
    {:in-play [:memory 1 :hand-size-modification 1]
     :events {:agenda-scored
-             {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
-              :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
+             {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
+              :choices (req (cancellable (:deck runner)))
+              :effect (effect (move target :hand)
+                              (shuffle! :deck))}}}
 
    "Maya"
    {:in-play [:memory 2]
