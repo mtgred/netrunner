@@ -407,7 +407,7 @@
   "Patron - Ability"
   (do-game
     (new-game (default-corp [(qty "Jackson Howard" 1)])
-              (default-runner [(qty "Patron" 1) (qty "Easy Mark" 8)]))
+              (default-runner [(qty "Patron" 4) (qty "Easy Mark" 4)]))
     (play-from-hand state :corp "Jackson Howard" "New remote")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Patron")

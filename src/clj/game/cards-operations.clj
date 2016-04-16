@@ -212,6 +212,15 @@
               " [Credits]")
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
+   "Election Day"
+   {:req (req (->> (get-in @state [:corp :hand])
+                   (filter #(not (= (:cid %) (:cid card))))
+                   (count)
+                   (pos?)))
+    :msg (msg "to trash all cards in HQ and draw 5 cards")
+    :effect (effect (trash-cards (get-in @state [:corp :hand]))
+                    (draw 5))}
+
    "Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))

@@ -117,6 +117,24 @@
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
 
+(deftest election-day
+  (do-game
+    (new-game (default-corp [(qty "Election Day" 7)])
+                (default-runner))
+      (is (= 6 (count (:hand (get-corp)))) "Corp starts with 5 + 1 cards")
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (play-from-hand state :corp "Election Day")
+      (is (= 1 (count (:hand (get-corp)))) "Could not play Election Day")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 2 (count (:hand (get-corp)))) "Corp has now 1 + 1 cards before Election Day")
+      (play-from-hand state :corp "Election Day")
+      (is (= 5 (count (:hand (get-corp)))) "Corp has now 5 cards due to Election Day")))
+
 (deftest hedge-fund
   (do-game
     (new-game (default-corp) (default-runner))
