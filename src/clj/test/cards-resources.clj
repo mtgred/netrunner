@@ -403,6 +403,31 @@
       (is (= 1 (:agenda-point (get-runner))))
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
+(deftest patron-testing
+  "Patron - Ability"
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Patron" 1) (qty "Easy Mark" 8)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp 2)
+    (play-from-hand state :runner "Patron")
+    (let [p (get-in @state [:runner :rig :resource 0])]
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (prompt-choice :runner "Server 1")
+      (is (= 4 (count (:hand (get-runner)))) "Starts with 4 cards")
+      (run-empty-server state "Server 1")
+      (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "No")
+      (is (= 6 (count (:hand (get-runner)))) "Drew no cards")
+      (play-from-hand state :runner "Easy Mark")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (prompt-choice :runner "Server 1")
+      (run-empty-server state "Archives")
+      (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
+
 (deftest professional-contacts
   "Professional Contacts - Click to gain 1 credit and draw 1 card"
   (do-game

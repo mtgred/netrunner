@@ -588,6 +588,22 @@
                                                                 (filter #(has? % :title (:title target)))
                                                                 (vec)))
                                                  card nil))}}})
+   "Patron"
+   (let [ability {:prompt "Choose a server for Patron" :choices (req servers)
+                  :msg (msg "target " target)
+                  :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
+   {:events {:runner-turn-begins ability
+             :successful-run
+             {:req (req (= (get-in @state [:run :server]) (:patron-target (get-card state card))))
+              :once :per-turn
+              :effect (req (let [st card]
+                             (swap! state assoc-in [:run :run-effect :replace-access]
+                                    {:mandatory true
+                                     :effect (effect (resolve-ability
+                                                       {:msg "draw 2 cards instead of accessing"
+                                                        :effect (effect (draw 2))} st nil))})))}
+             :runner-turn-ends {:effect (effect (update! (dissoc card :patron-target)))}}
+    :abilities [ability]})
 
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
