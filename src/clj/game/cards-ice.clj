@@ -16,7 +16,7 @@
    Mostly used with tag-trace"
   {:label "Give the Runner 1 tag"
    :msg "give the Runner 1 tag"
-   :effect (effect (tag-runner :runner 1))}) 
+   :effect (effect (tag-runner :runner 1))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -296,6 +296,13 @@
                                                                                {:card card}))})
                                                (swap! state assoc-in [:run :run-effect :card]
                                                       card))})]}
+
+   "Chetana"
+   {:abilities [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
+                                                                          (gain :corp :credit 2))}
+                (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
+                         :effect (effect (damage :net (count (get-in @state [:runner :hand])) {:card card}))
+                         :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
 
    "Chimera"
    (let [ab {:effect (effect (derez :corp card)
