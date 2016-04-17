@@ -68,6 +68,12 @@
                  :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
                  :effect (effect (runner-install target) (shuffle! :deck))}]}
 
+   "Bhagat"
+   {:events {:successful-run {:req (req (= target :hq))
+                              :msg "force the Corp to trash the top card of R&D"
+                              :effect (effect (mill :corp))
+                              :once :per-turn}}}
+
    "Bank Job"
    {:data {:counter 8
            :counter-type "Credit"}
