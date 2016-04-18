@@ -375,7 +375,7 @@
                          :once :per-turn
                          :req (req (seq (:hand runner)))
                          :prompt "Choose a card type"
-                         :choices ["Event" "Hardware" "Program" "Ressource"]
+                         :choices ["Event" "Hardware" "Program" "Resource"]
                          :msg (msg "reveal " (join ", " (map :title (:hand runner))) " and trash a " target)
                          :effect (effect (resolve-ability (trash-ability target) card nil))}]
      {:additional-cost [:forfeit]
