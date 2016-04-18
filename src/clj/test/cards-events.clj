@@ -378,6 +378,35 @@
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
+(deftest political-graffiti
+  "Political Graffiti - swapping with Turntable works / purging viruses restores points"
+  (do-game
+    (new-game (default-corp [(qty "Breaking News" 1) (qty "Chronos Project" 1)])
+              (default-runner [(qty "Turntable" 1) (qty "Political Graffiti" 1)]))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (:agenda-point (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Political Graffiti")
+    (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (prompt-select :runner (find-card "Breaking News" (:scored (get-corp))))
+    (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
+    (play-from-hand state :runner "Turntable")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Chronos Project stolen")
+    (let [tt (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner tt 0)
+      (prompt-select :runner (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (= 0 (:agenda-point (get-runner))))
+      (take-credits state :runner)
+      (core/purge state :corp)
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (= 1 (:agenda-point (get-runner)))))))
+
 (deftest retrieval-run
   "Retrieval Run - Run Archives successfully and install a program from Heap for free"
   (do-game
