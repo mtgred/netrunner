@@ -217,7 +217,7 @@
                    (filter #(not (= (:cid %) (:cid card))))
                    (count)
                    (pos?)))
-    :msg (msg "to trash all cards in HQ and draw 5 cards")
+    :msg (msg "trash all cards in HQ and draw 5 cards")
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
