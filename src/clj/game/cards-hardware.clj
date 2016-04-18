@@ -140,13 +140,12 @@
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE"
                  :choices {:req #(and (not (rezzed? %)) (ice? %))}
-                 :effect (req (let [ice target
-                                    serv (zone->name (second (:zone ice)))]
+                 :effect (req (let [ice target]
                                 (update! state side (assoc card :cortez-target ice))
                                 (trash state side (get-card state card) {:cause :ability-cost})
                                 (system-msg state side
-                                  (str "increases the cost to rez the ICE at position "
-                                    (ice-index state ice) " of " serv " by 2 [Credits] until the end of the turn"))))}]
+                                  (str "trashes Cortez Chip to increase the rez cost of " (card-str state ice)
+                                       " by 2 [Credits] until the end of the turn"))))}]
     :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
                                                                :effect (effect (rez-cost-bonus 2))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
