@@ -11,8 +11,22 @@
   (when-let [title (:title card)]
     (cards (.replace title "'" ""))))
 
+(defn find-cid
+  "Return a card with specific :cid from given sequence"
+  [cid from]
+  (some #(when (= (:cid %) cid) %) from))
+
+(defn get-scoring-owner
+  "Returns the owner of the scoring area the card is in"
+  [state {:keys [cid] :as card}]
+   (if (find-cid cid (get-in @state [:corp :scored]))
+      :corp
+      (if (find-cid cid (get-in @state [:runner :scored]))
+        :runner
+        nil)))
+
 (defn get-card
-  "Returns the most recent copy of the card from the curren state, as identified
+  "Returns the most recent copy of the card from the current state, as identified
   by the argument's :zone and :cid."
   [state {:keys [cid zone side host type] :as card}]
   (if (= type "Identity")
@@ -27,11 +41,6 @@
                   (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
-(defn find-cid
-  "Return a card with specific :cid from given sequence"
-  [cid from]
-  (some #(when (= (:cid %) cid) %) from))
-
 ; Functions for updating cards
 (defn update!
   "Updates the state so that its copy of the given card matches the argument given."
@@ -41,7 +50,7 @@
       (swap! state assoc-in [side :identity] card))
     (if host
       (update-hosted! state side card)
-      (let [z (cons (to-keyword (:side card)) zone)
+      (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
         (when-not (empty? tail)
           (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
