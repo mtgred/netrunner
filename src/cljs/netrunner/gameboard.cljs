@@ -194,14 +194,18 @@
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
               (pos? (:click me))))))
 
+(def ci-open "\u2664")
+(def ci-seperator "\u2665")
+(def ci-close "\u2666")
+
 (defn is-card-item [item]
-  (and (> (.indexOf item "~") -1)
-       (= 0 (.indexOf item "["))))
+  (and (> (.indexOf item ci-seperator) -1)
+       (= 0 (.indexOf item ci-open))))
 
 (defn extract-card-info [item]
   (if (is-card-item item)
-    [(.substring item 1 (.indexOf item "~"))
-     (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
+    [(.substring item 1 (.indexOf item ci-seperator))
+     (.substring item (inc (.indexOf item ci-seperator)) (dec (count item)))]))
 
 (defn create-span-impl [item]
   (if (= "[hr]" item)
@@ -229,14 +233,27 @@
 
 (def create-span (memoize create-span-impl))
 
+(defn find-card-regex-impl [title]
+  (str "(^|[^" ci-open "\\S])" title "(?![" ci-seperator "\\w]|([^" ci-open "]+" ci-close "))"))
+
+(def find-card-regex (memoize find-card-regex-impl))
+
+(defn card-image-token-impl [title code]
+  (str "$1" ci-open title ci-seperator code ci-close))
+
+(def card-image-token (memoize card-image-token-impl))
+
+(defn card-image-reducer [text card]
+  (.replace text (js/RegExp. (find-card-regex (:title card)) "g") (card-image-token (:title card) (:code card))))
+
 (defn add-image-codes-impl [text]
-  (reduce #(.replace %1 (js/RegExp. (str "(^|[^\\[\\S])" (:title %2) "(?![~\\w])") "g") (str "$1" "[" (:title %2) "~" (:code %2) "]")) text (prepared-cards)))
+  (reduce card-image-reducer text (prepared-cards)))
 
 (def add-image-codes (memoize add-image-codes-impl))
 
 (defn get-message-parts-impl [text]
   (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
-      (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
+    (.split with-image-codes (js/RegExp. (str "(" ci-open "[^" ci-close "]*" ci-close ")") "g"))))
 
 (def get-message-parts (memoize get-message-parts-impl))
 
@@ -372,7 +389,7 @@
       (remote->name zone)))
 
 (defn get-remotes [servers]
- (->> servers 
+ (->> servers
      (filter #(not (#{:hq :rd :archives} (first %))))
      (sort-by #(remote->num (first %)))))
 
