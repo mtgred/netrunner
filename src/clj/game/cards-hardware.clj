@@ -640,7 +640,8 @@
      :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage :meat 2 {:card card}))}
+                    (damage :meat 2 {:card card}))
+    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Turntable"
    {:in-play [:memory 1]
