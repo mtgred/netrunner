@@ -694,9 +694,10 @@
 
    "Rolodex"
    {:msg "look at the top 5 cards of their Stack"
-    :effect (req (prompt! state side card
-                          (str "Drag cards from the Temporary Zone  back onto your Stack") ["OK"] {})
-                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))}
+    :effect (req (toast state :runner
+                        "Drag cards from the Temporary Zone back onto your Stack." "info")
+                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
+    :leave-play (effect (mill :runner 3))}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
