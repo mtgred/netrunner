@@ -1237,7 +1237,7 @@ nav ul
 
     &.blue
       background-color: blue
-    
+
     &.red
       background-color: red
 
@@ -1664,6 +1664,9 @@ nav ul
         right: 4px
         margin: 0
 
+        div
+          animation: fadein 1s
+
       > form
         position: absolute
         bottom: 5px
@@ -1721,6 +1724,12 @@ nav ul
     background: darkolivegreen
   to
     background: none
+
+@keyframes fadein
+  from
+    opacity: 0
+  to
+    opacity: 1
 
 #about
   position: absolute
