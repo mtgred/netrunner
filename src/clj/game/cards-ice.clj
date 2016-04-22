@@ -16,7 +16,7 @@
    Mostly used with tag-trace"
   {:label "Give the Runner 1 tag"
    :msg "give the Runner 1 tag"
-   :effect (effect (tag-runner :runner 1))}) 
+   :effect (effect (tag-runner :runner 1))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -324,6 +324,9 @@
 
    "Chum"
    {:abilities [(do-net-damage 3)]}
+
+   "Cobra"
+   {:abilities [trash-program (do-net-damage 2)]}
 
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
