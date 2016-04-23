@@ -332,6 +332,9 @@
    "Chum"
    {:abilities [(do-net-damage 3)]}
 
+   "Cobra"
+   {:abilities [trash-program (do-net-damage 2)]}
+
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
                  :msg (msg "do " (:memory runner) " net damage")
