@@ -354,12 +354,14 @@
    {:events
     {:rez {:req (req (and (= (card->server state target) (card->server state card))
                           (not= (:cid target) (:cid card))
-                          (seq (filter #(not (rezzed? %)) (all-installed state :corp)))))
+                          (seq (filter #(and (not (rezzed? %))
+                                             (not (is-type? % "Agenda"))) (all-installed state :corp)))))
            :effect (effect (resolve-ability
                              {:optional
                               {:prompt (msg "Rez another card with Surat City Grid?")
                                :yes-ability {:prompt "Choose a card to rez"
-                                             :choices {:req #(not (rezzed? %))}
+                                             :choices {:req #(and (not (rezzed? %))
+                                                                  (not (is-type? % "Agenda")))}
                                              :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                                              :effect (effect (rez-cost-bonus -2)
                                                              (rez target))}}}
@@ -387,13 +389,12 @@
    {:events
     {:pre-resolve-damage
      {:once :per-run
-      :req (req (and this-server (= target :net) (> (last targets) 0)))
+      :req (req (and this-server (= target :net) (> (last targets) 0) (can-pay? state :corp nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (resolve-ability state side
-                     {:optional {:req (req (can-pay? state :corp nil [:credit 2]))
-                                 :prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
+                     {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
                                  :yes-ability {:msg "do 1 brain damage instead of net damage"
                                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                             (clear-wait-prompt state :runner)

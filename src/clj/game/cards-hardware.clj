@@ -140,13 +140,12 @@
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE"
                  :choices {:req #(and (not (rezzed? %)) (ice? %))}
-                 :effect (req (let [ice target
-                                    serv (zone->name (second (:zone ice)))]
+                 :effect (req (let [ice target]
                                 (update! state side (assoc card :cortez-target ice))
                                 (trash state side (get-card state card) {:cause :ability-cost})
                                 (system-msg state side
-                                  (str "increases the cost to rez the ICE at position "
-                                    (ice-index state ice) " of " serv " by 2 [Credits] until the end of the turn"))))}]
+                                  (str "trashes Cortez Chip to increase the rez cost of " (card-str state ice)
+                                       " by 2 [Credits] until the end of the turn"))))}]
     :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
                                                                :effect (effect (rez-cost-bonus 2))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
@@ -324,8 +323,10 @@
    "Logos"
    {:in-play [:memory 1 :hand-size-modification 1]
     :events {:agenda-scored
-             {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to Grip from Stack")
-              :choices (req (:deck runner)) :effect (effect (move target :hand) (shuffle! :deck))}}}
+             {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
+              :choices (req (cancellable (:deck runner)))
+              :effect (effect (move target :hand)
+                              (shuffle! :deck))}}}
 
    "Maya"
    {:in-play [:memory 2]
@@ -639,7 +640,8 @@
      :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage :meat 2 {:card card}))}
+                    (damage :meat 2 {:card card}))
+    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Turntable"
    {:in-play [:memory 1]

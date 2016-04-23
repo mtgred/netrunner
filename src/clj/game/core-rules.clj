@@ -21,6 +21,8 @@
                     (req state side card targets) true)
                   (not (and (has-subtype? card "Current")
                             (get-in @state [side :register :cannot-play-current])))
+                  (not (and (has-subtype? card "Run")
+                            (get-in @state [side :register :cannot-run])))
                   (not (and (has-subtype? card "Priority")
                             (get-in @state [side :register :spent-click]))))
          (when-let [cost-str (pay state side card :credit (:cost card) extra-cost

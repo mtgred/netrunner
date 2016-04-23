@@ -192,6 +192,26 @@
       (card-ability state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
+(deftest excalibur
+  "Excalibur - Prevent Runner from making another run this turn"
+  (do-game
+    (new-game (default-corp [(qty "Excalibur" 1)])
+              (default-runner [(qty "Stimhack" 1)]))
+    (play-from-hand state :corp "Excalibur" "HQ")
+    (take-credits state :corp)
+    (let [excal (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp excal)
+      (card-ability state :corp excal 0)
+      (run-jack-out state)
+      (run-on state "R&D")
+      (is (not (:run @state)) "No run initiated")
+      (is (= 3 (:click (get-runner))))
+      (play-from-hand state :runner "Stimhack")
+      (is (not (:run @state)) "No run initiated")
+      (is (= 3 (:click (get-runner))))
+      (is (empty? (:discard (get-runner))) "Card not played from Grip"))))
+
 (deftest fenris
   "Fenris - Illicit ICE give Corp 1 bad publicity when rezzed"
   (do-game
