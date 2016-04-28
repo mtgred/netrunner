@@ -499,7 +499,7 @@
               (for [i (range (count matches))]
                 [:div {:class (if (= i (:selected state)) "selected" "")
                        :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
-                                         (om/set-state! owner :query (.. e -target -innerHTML))
+                                         (om/set-state! owner :query (.. e -target -textContent))
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
