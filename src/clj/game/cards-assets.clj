@@ -501,7 +501,7 @@
                                 state side
                                 {:prompt "Select an agenda with a counter"
                                  :choices {:req #(and (is-type? % "Agenda")
-                                                      (:counter %))}
+                                                      (pos? (:counter %)))}
                                  :effect (req (add-prop state side target :counter -1)
                                               (gain state :corp :credit 2)
                                               (trigger-event state side :agenda-counter-spent card))
