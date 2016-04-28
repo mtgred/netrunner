@@ -542,7 +542,10 @@
                                       (has-subtype? % "Virus")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target))}]
+                 :effect (effect (host card target)
+                                 (gain :memory (:memoryunits target))
+                                 (update! (assoc (get-card state card)
+                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (:counter c)))))}
              :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
