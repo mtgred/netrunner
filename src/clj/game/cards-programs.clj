@@ -526,15 +526,20 @@
 
    "Progenitor"
    {:abilities [{:label "Install a virus program on Progenitor"
-                 :cost [:click 1]
                  :req (req (empty? (:hosted card)))
-                 :prompt "Choose a Virus program to install on Progenitor"
-                 :choices {:req #(and (is-type? % "Program")
-                                      (has-subtype? % "Virus")
-                                      (in-hand? %))}
-                 :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a Virus program to install on Progenitor"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (has-subtype? % "Virus")
+                                                         (in-hand? %))}
+                                    :msg (msg "host " (:title target))
+                                    :effect (effect (gain :memory (:memoryunits target))
+                                                    (runner-install target {:host-card card})
+                                                    (update! (assoc (get-card state card)
+                                                                    :hosted-programs
+                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                  card nil))}
                 {:label "Host an installed virus on Progenitor"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed virus program to host on Progenitor"
@@ -550,8 +555,10 @@
                                         (update! state side (assoc-in card [:special :numpurged] (:counter c)))))}
              :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
                      :effect (req (when-let [c (first (:hosted card))]
-                                    (add-prop state side c :counter 1)))}}}
-
+                                    (add-prop state side c :counter 1)))}
+             :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
+                          :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
+                                          (lose :memory (:memoryunits target)))}}}
 
    "Rook"
    {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
@@ -634,7 +641,7 @@
                                                 (ice-index state cice)))))}
               :msg "swap a piece of barrier ICE"
               :effect (req (let [tgtndx (ice-index state target)
-                                 cidx (ice-index state cice)] 
+                                 cidx (ice-index state cice)]
                              (swap! state update-in (cons :corp (:zone cice))
                                     #(assoc % tgtndx cice))
                              (swap! state update-in (cons :corp (:zone cice))
