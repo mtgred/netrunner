@@ -282,6 +282,11 @@
                   (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
           (aset div "scrollTop" height))))
 
+
+    om/IDidMount
+    (did-mount [this]
+      (-> ".log" js/$ (.resizable #js {:handles "w"})))
+
     om/IRenderState
     (render-state [this state]
       (sab/html
