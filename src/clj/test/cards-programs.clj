@@ -424,6 +424,23 @@
         (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
         (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
 
+(deftest progenitor-mu-savings
+  "Progenitor - Keep MU the same when hosting or trashing hosted programs"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Progenitor" 1) (qty "Hivemind" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Progenitor")
+    (let [pro (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner pro 0)
+      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+      (is (= 2 (:click (get-runner))))
+      (is (= 2 (:credit (get-runner))))
+      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not deducted from available MU")
+      ;; Trash Hivemind
+      (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
+      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
+
 (deftest scheherazade
   "Scheherazade - Gain 1 credit when it hosts a program"
   (do-game
