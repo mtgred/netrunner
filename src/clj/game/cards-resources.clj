@@ -744,6 +744,20 @@
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
 
+   "Salsette Slums"
+   {:events {:runner-install
+             {:req (req (= card target))
+             :effect (effect (update! (assoc card :slums-active true)))}
+             :runner-turn-begins
+             {:effect (effect (update! (assoc card :slums-active true)))}
+             :runner-trash
+             {:optional {:req (req (and (:slums-active card)
+                                        (= (:side target) "Corp")))
+                         :prompt "Use Salsette Slums to remove from the game?"
+                                    :yes-ability {:msg (msg "remove " (:title target) " from the game.")
+                                                  :effect (effect (update! (dissoc card :slums-active))
+                                                                  (move (assoc target :zone '(:discard)) :rfg))}}}}}
+
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
