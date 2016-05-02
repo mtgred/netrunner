@@ -764,7 +764,7 @@
                                  ((toast state :runner (str "Unable to pay for " (:title c) ".")) false))
                                ((toast state :runner "Not currently accessing a card with a trash cost.") false))))
                  :msg (msg (let [c (:card (first (get-in @state [:runner :prompt])))]
-                             (str "pay " (trash-cost state side c) " [Credits] and remove " (:title c) " from the game.")))
+                             (str "pay " (trash-cost state side c) " [Credits] and remove " (:title c) " from the game")))
                  :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
                                 (move state :corp c :rfg)
                                 (pay state :runner card :credit (trash-cost state side c))
@@ -781,7 +781,7 @@
                                    {; only allow targeting cards that were trashed this turn -- not perfect, but good enough?
                                     :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
                                                           (map first (turn-events state side :runner-trash)))}
-                                    :msg (msg "remove " (:title target) " from the game.")
+                                    :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (move state :corp target :rfg)
                                                  (update! state side (dissoc card :slums-active))
                                                  (swap! state update-in [side :prompt] rest)
