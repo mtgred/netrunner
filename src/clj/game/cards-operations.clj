@@ -315,6 +315,21 @@
                                       :msg (msg (corp-install-msg target))}
                                       card nil))}
 
+   "Localized Product Line"
+   {:prompt "Choose a card"
+    :choices (req (cancellable (:deck corp) :sorted))
+    :effect (req (let [c (:title target)
+                       cs (filter #(= (:title %) c) (:deck corp))]
+                   (resolve-ability
+                    state side
+                    {:prompt "How many copies?"
+                     :choices {:number (req (count cs))}
+                     :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
+                     :effect (req (doseq [c (take target cs)]
+                                    (move state side c :hand))
+                                  (shuffle! state :corp :deck))}
+                    card nil)))}
+
    "Manhunt"
    {:events {:successful-run {:req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
