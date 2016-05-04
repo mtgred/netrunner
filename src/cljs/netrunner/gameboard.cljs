@@ -700,11 +700,11 @@
 
 (defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag
                                         brain-damage agenda-point tagged hand-size-base
-                                        hand-size-modification]} owner]
+                                        hand-size-modification active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
-      [:div.stats.panel.blue-shade {}
+      [:div.stats.panel.blue-shade {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (not= credit 1) "s" "")
@@ -722,11 +722,11 @@
         (when me? (controls :hand-size-modification))]]))))
 
 (defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
-                                      hand-size-base hand-size-modification]} owner]
+                                      hand-size-base hand-size-modification active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
-      [:div.stats.panel.blue-shade {}
+      [:div.stats.panel.blue-shade {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
@@ -818,7 +818,7 @@
     ;; remove restricted servers from all servers to just return allowed servers
     (remove (set restricted-servers) (set servers))))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12] :as cursor} owner]
+(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -840,8 +840,8 @@
     (render-state [this state]
       (sab/html
        (when side
-         (let [me ((if (= side :runner) :runner :corp) cursor)
-               opponent ((if (= side :runner) :corp :runner) cursor)]
+         (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
+               opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
             [:div.mainpane
              (om/build zones {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})
