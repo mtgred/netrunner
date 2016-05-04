@@ -110,9 +110,36 @@
   (cloud-icebreaker (auto-icebreaker [type] {:abilities [(break-sub 2 0 (lower-case type))
                                                          (strength-pump 2 3)]})))
 
+(defn- deva
+  "Deva breakers"
+  [name]
+  (auto-icebreaker ["All"]
+                   {:abilities [(break-sub 1 1 "ice")
+                                (strength-pump 1 1)
+                                {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
+                                 :label "Swap with a deva program from your Grip" :cost [:credit 2]
+                                 :prompt (str "Choose a deva program in your Grip to swap with " name)
+                                 :choices {:req #(and in-hand? (has-subtype? % "Deva"))}
+                                 :msg (msg "swap in " (:title target) " from their Grip")
+                                 :effect (req (if-let [hostcard (:host card)]
+                                                (let [hosted (host state side (get-card state hostcard) target)]
+                                                  (card-init state side hosted false))
+                                                (let [devavec (get-in @state [:runner :rig :program])
+                                                      devaindex (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) devavec))
+                                                      newdeva (assoc target :zone (:zone card) :installed true)
+                                                      newvec (apply conj (subvec devavec 0 devaindex) newdeva (subvec devavec devaindex))]
+                                                  (lose state :runner :memory (:memoryunits card))
+                                                  (swap! state assoc-in [:runner :rig :program] newvec)
+                                                  (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                  (card-init state side newdeva false)))
+                                              (move state side card :hand))}]}))
+
 ;;; Icebreaker definitions
 (def cards-icebreakers
-  {"Alpha"
+  {"Aghora"
+   (deva "Aghora")
+
+   "Alpha"
    (auto-icebreaker ["All"]
                     {:abilities [{:cost [:credit 1]
                                   :req (req (= (:position run) (count (:ices run))))
@@ -382,6 +409,8 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "code gate")
                                  (strength-pump 1 3)]})
+   "Sadyojata"
+   (deva "Sadyojata")
 
    "Sage"
    {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
@@ -428,6 +457,9 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "code gate")
                                  (strength-pump 1 1)]})
+
+   "Vamadeva"
+   (deva "Vamadeva")
 
    "Wyrm"
    {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
