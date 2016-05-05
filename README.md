@@ -1,3 +1,5 @@
+[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
+
 Play Android: Netrunner in the browser.
 
 ## Live server
