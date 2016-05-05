@@ -430,7 +430,6 @@
 
    "Jeeves Model Bioroids"
    {:abilities [{:label "Gain [Click]"
-                 :req (req (< 2 (- (:click-per-turn corp) (:click corp))))
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
 
