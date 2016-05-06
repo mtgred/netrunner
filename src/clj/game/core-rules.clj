@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare card-init card-str deactivate enforce-msg gain-agenda-point get-agenda-points
+(declare card-init card-str deactivate effect-completed enforce-msg gain-agenda-point get-agenda-points
          handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
          in-corp-scored? update-all-ice win win-decked prevent-draw)
 
@@ -17,29 +17,36 @@
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))]
-       (when (and (if-let [req (:req cdef)]
-                    (req state side card targets) true)
+       ;; ensure the instant can be played
+       (if (and (if-let [req (:req cdef)]
+                    (req state side card targets) true) ; req is satisfied
                   (not (and (has-subtype? card "Current")
                             (get-in @state [side :register :cannot-play-current])))
                   (not (and (has-subtype? card "Run")
                             (get-in @state [side :register :cannot-run])))
                   (not (and (has-subtype? card "Priority")
-                            (get-in @state [side :register :spent-click]))))
-         (when-let [cost-str (pay state side card :credit (:cost card) extra-cost
-                                  (when-not no-additional-cost additional-cost))]
+                            (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
+         (if-let [cost-str (pay state side card :credit (:cost card) extra-cost
+                                  (when-not no-additional-cost additional-cost))] ; play cost can be paid
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
              (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
-                     (when-let [current (first (get-in @state [s :current]))]
+                     (when-let [current (first (get-in @state [s :current]))] ; trash old current
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                      (card-init state side moved-card)))
                (do (resolve-ability state side cdef card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
-                     (move state side c :discard)))))))))))
+                     (move state side c :discard))
+                   (when (or (false? (:delayed-completion cdef)) (not (:choices cdef)))
+                     (effect-completed state side card)))))
+           ;; could not pay the card's price; mark the effect as being over.
+           (effect-completed state side card))
+         ;; card's req was not satisfied; mark the effect as being over.
+         (effect-completed state side card))))))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
