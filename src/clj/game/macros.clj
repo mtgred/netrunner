@@ -54,3 +54,16 @@
             'target '(first targets)
             'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))]
        (str ~@expr))))
+
+(defmacro when-completed
+  ([action expr]
+   (let [reqmac (macroexpand (list (quote req) expr))]
+     `(do (~'register-effect-completed ~'state ~'side ~'card ~reqmac)
+          ~action)))
+  ([card action expr]
+   (let [reqmac (macroexpand (list (quote req) expr))]
+     `(do (~'register-effect-completed ~'state ~'side ~card ~reqmac)
+          ~action))))
+
+(defmacro final-effect [& expr]
+  (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'card)))))
