@@ -757,6 +757,51 @@
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
 
+   "Salsette Slums"
+   {:events {:runner-install
+             {:req (req (= card target))
+             :effect (effect (update! (assoc card :slums-active true)))}
+             :runner-turn-begins
+             {:effect (effect (update! (assoc card :slums-active true)))}
+             :pre-trash
+             {:req (req (toast state :runner (str "Click Salsette Slums to remove " (:title target) " from the game") "info" {:prevent-duplicates true})
+                     (and (:slums-active card)
+                       (= (:side target) "Corp"))) }}
+    :abilities [{:label "Remove the current card from the game instead of trashing it."
+                 :req (req (let [c (:card (first (get-in @state [:runner :prompt])))]
+                             (if-let [trash-cost (trash-cost state side c)]
+                               (if (can-pay? state :runner nil :credit trash-cost)
+                                 (if (:slums-active card)
+                                   true
+                                   ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false))
+                                 ((toast state :runner (str "Unable to pay for " (:title c) ".")) false))
+                               ((toast state :runner "Not currently accessing a card with a trash cost.") false))))
+                 :msg (msg (let [c (:card (first (get-in @state [:runner :prompt])))]
+                             (str "pay " (trash-cost state side c) " [Credits] and remove " (:title c) " from the game")))
+                 :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
+                                (move state :corp c :rfg)
+                                (pay state :runner card :credit (trash-cost state side c))
+                                (update! state side (dissoc card :slums-active))
+                                (swap! state update-in [side :prompt] rest)
+                                 (when-let [run (:run @state)]
+                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+                                     (handle-end-run state :runner)))))}
+                {:label "Remove a card trashed this turn from the game."
+                 :req (req (if (:slums-active card)
+                             true
+                             ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false)))
+                 :effect (effect (resolve-ability
+                                   {; only allow targeting cards that were trashed this turn -- not perfect, but good enough?
+                                    :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
+                                                          (map first (turn-events state side :runner-trash)))}
+                                    :msg (msg "remove " (:title target) " from the game")
+                                    :effect (req (move state :corp target :rfg)
+                                                 (update! state side (dissoc card :slums-active))
+                                                 (swap! state update-in [side :prompt] rest)
+                                                 (when-let [run (:run @state)]
+                                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
+                                                     (handle-end-run state :runner))))} card nil))}]}
+
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
