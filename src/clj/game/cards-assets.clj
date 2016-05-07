@@ -434,6 +434,11 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
 
+   "Jeeves Model Bioroids"
+   {:abilities [{:label "Gain [Click]"
+                 :msg "gain [Click]" :once :per-turn
+                 :effect (effect (gain :click 1))}]}
+
    "Kala Ghoda Real TV"
    {:flags {:corp-phase-12 (req true)}
     :abilities [{:msg "look at the top card of the Runner's Stack"
