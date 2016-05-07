@@ -89,6 +89,19 @@
                               (when (= target (:counter card))
                                 (trash state :runner card {:unpreventable true})))}]}
 
+   "Bazaar"
+   {:events
+    {:runner-install
+     {:req (req (is-type? target "Hardware"))
+      :effect (req (let [hw (:title target)]
+                     (resolve-ability state side
+                       {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
+                                   :prompt (msg "Install another copy of " hw "?")
+                                   :msg (msg "install another copy of " hw)
+                                   :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) hw) %)
+                                                                                 (:hand runner))]
+                                                                 (runner-install state side c)))}}} card nil)))}}}
+
    "Beach Party"
    {:in-play [:hand-size-modification 5]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
