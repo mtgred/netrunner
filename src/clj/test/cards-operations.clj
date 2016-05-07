@@ -1,5 +1,33 @@
 (in-ns 'test.core)
 
+(deftest accelerated-diagnostics
+  "Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan"
+  (do-game
+    (new-game (default-corp [(qty "Accelerated Diagnostics" 1) (qty "Cerebral Overwriter" 1) (qty "Shipment from SanSan" 1)
+                             (qty "Hedge Fund" 1) (qty "Back Channels" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (core/gain state :corp :credit 1)
+    (play-from-hand state :corp "Accelerated Diagnostics")
+
+    (let [playarea (get-in @state [:corp :play-area])
+          hf (find-card "Hedge Fund" playarea)
+          ss (find-card "Shipment from SanSan" playarea)
+          bc (find-card "Back Channels" playarea)
+          co (get-content state :remote1 0)]
+      (is (= 3 (count playarea)) "3 cards in play area")
+      (prompt-select :corp ss)
+      (prompt-choice :corp "2")
+      (prompt-select :corp co)
+      (is (= 2 (:advance-counter (refresh co))) "Cerebral Overwriter gained 2 advancements")
+      (prompt-select :corp hf)
+      (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")
+      (prompt-select :corp bc)
+      (prompt-select :corp (refresh co))
+      (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
+
+
 (deftest big-brother
   "Big Brother - Give the Runner 2 tags if already tagged"
   (do-game

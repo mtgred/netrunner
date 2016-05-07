@@ -546,10 +546,12 @@
                                                             (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
                  :msg (msg "reveal " (:title target) " from R&D and "
                            (if (= (:type target) "Operation") "play " "install ") " it")
-                 :effect (req (if (= (:type target) "Operation")
-                                (play-instant state side target)
-                                (corp-install state side target nil))
-                              (shuffle! state side :deck))}]}
+                 :effect (req (when-completed target
+                                              (if (= (:type target) "Operation")
+                                                (play-instant state side target)
+                                                (corp-install state side target nil))
+                                              (do (system-msg state side "shuffles their deck")
+                                                  (shuffle! state side :deck))))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

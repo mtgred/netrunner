@@ -67,3 +67,16 @@
   "Returns true if the given event has occurred exactly once this turn."
   [state side ev]
   (= (count (turn-events state side ev)) 1))
+
+;;; Effect completion triggers
+(defn register-effect-completed
+  ([state side card effect] (register-effect-completed state side card effect :ability))
+  ([state side card effect key]
+   (swap! state update-in [:effect-completed (:cid card) key] #(conj % effect))))
+
+(defn effect-completed
+  ([state side card] (effect-completed state side card :ability))
+  ([state side card key]
+   (doseq [handler (get-in @state [:effect-completed (:cid card) key])]
+     (handler state side card [key]))
+   (swap! state update-in [:effect-completed (:cid card)] dissoc key)))

@@ -161,7 +161,9 @@
                  (when-let [dre (:derezzed-events cdef)]
                    (when-not (:rezzed (get-card state moved-card))
                      (register-events state side dre moved-card))))))
-           (clear-install-cost-bonus state side)))))))
+           (clear-install-cost-bonus state side)
+           (when-not (:delayed-completion cdef)
+             (effect-completed state side card))))))))
 
 
 ;;; Installing a runner card
