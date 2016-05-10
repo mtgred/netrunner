@@ -211,7 +211,9 @@
                  :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
-   {:abilities [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (count (:hand corp)) " subroutines")}
+                end-the-run]}
 
    "Assassin"
    {:abilities [(trace-ability 5 (do-net-damage 3))
@@ -238,7 +240,9 @@
    {:abilities [end-the-run]}
 
    "Brainstorm"
-   {:abilities [(do-brain-damage 1)]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (count (:hand runner)) " subroutines")}
+                (do-brain-damage 1)]}
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
@@ -585,11 +589,16 @@
     :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
 
    "Information Overload"
-   {:abilities [(tag-trace 1)
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:tag runner 0) " subroutines")}
+                (tag-trace 1)
                 trash-installed]}
 
    "Ireress"
-   {:abilities [{:msg "make the Runner lose 1 [Credits]" :effect (effect (lose :runner :credit 1))}]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:bad-publicity corp 0) " subroutines")}
+                {:msg "make the Runner lose 1 [Credits]"
+                 :effect (effect (lose :runner :credit 1))}]}
 
    "Its a Trap!"
    {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
@@ -609,7 +618,9 @@
                  :effect (effect (handle-access targets) (trash card))}]}
 
    "Komainu"
-   {:abilities [(do-net-damage 1)]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (count (:hand runner)) " subroutines")}
+                (do-net-damage 1)]}
 
    "Lab Dog"
    {:abilities [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
@@ -719,7 +730,12 @@
                 trash-program]}
 
    "NEXT Silver"
-   {:abilities [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (count (filter #(and (is-type? % "ICE")
+                                                           (has-subtype? % "NEXT")
+                                                           (rezzed? %))
+                                                     (all-installed state :corp))) " subroutines")}
+                end-the-run]}
 
    "Orion"
    ;; TODO: wormhole subroutine
@@ -774,7 +790,9 @@
 
    "Salvage"
    {:advanceable :while-rezzed
-    :abilities [(tag-trace 2)]}
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                (tag-trace 2)]}
 
    "Searchlight"
    {:advanceable :always
@@ -858,7 +876,9 @@
    "Swarm"
    {:effect take-bad-pub
     :advanceable :always
-    :abilities [trash-program]}
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                trash-program]}
 
    "Swordsman"
    {:abilities [(do-net-damage 1)
@@ -885,7 +905,10 @@
                 end-the-run]}
 
    "Tour Guide"
-   {:abilities [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (count (filter #(and (is-type? % "Asset") (rezzed? %))
+                                                     (all-installed state :corp))) " subroutines")}
+                end-the-run]}
 
    "Troll"
    {:abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
@@ -915,7 +938,9 @@
 
    "Tyrant"
    {:advanceable :while-rezzed
-    :abilities [end-the-run]}
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                end-the-run]}
 
    "Universal Connectivity Fee"
    {:abilities [{:label "Force the Runner to lose credits"
@@ -994,7 +1019,9 @@
 
    "Woodcutter"
    {:advanceable :while-rezzed
-    :abilities [(do-net-damage 1)]}
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                (do-net-damage 1)]}
 
    "Wormhole"
    ;; TODO: create an ability for wormhole
