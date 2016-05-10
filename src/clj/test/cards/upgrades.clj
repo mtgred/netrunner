@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.upgrades
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest amazon-industrial-zone
   "Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount"

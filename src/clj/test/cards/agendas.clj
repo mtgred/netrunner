@@ -1,4 +1,9 @@
-(in-ns 'test.core)
+(ns test.cards.agendas
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
 
 (deftest fifteen-minutes
   "15 Minutes - check if it works correctly from both sides"

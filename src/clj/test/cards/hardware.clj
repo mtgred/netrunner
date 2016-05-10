@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.hardware
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest archives-interface
   "Archives Interface - Remove 1 card in Archives from the game instead of accessing it"

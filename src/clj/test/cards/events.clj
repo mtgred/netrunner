@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.events
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest account-siphon-ability
   "Account Siphon - Use ability"

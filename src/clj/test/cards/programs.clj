@@ -1,4 +1,11 @@
-(in-ns 'test.core)
+(ns test.cards.programs
+  (:require [game.core :as core]
+            [game.utils :refer :all]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest au-revoir
   "Au Revoir - Gain 1 credit every time you jack out"
