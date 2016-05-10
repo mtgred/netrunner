@@ -66,6 +66,7 @@
   ([state side n] (draw state side n nil))
   ([state side n {:keys [suppress-event] :as args}]
    (let [active-player (get-in @state [:active-player])
+         draws-wanted n
          n (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
              (min n (remaining-draws state side))
              n)
@@ -80,7 +81,12 @@
          (when (and (not suppress-event) (pos? deck-count))
            (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
          (when (= 0 (remaining-draws state side))
-           (prevent-draw state side)))))))
+           (prevent-draw state side))))
+     (when (< n draws-wanted)
+       (let [prevented (- draws-wanted n)]
+         (system-msg state (other-side side) (str "prevents " prevented " card"
+                                                  (when (> prevented 1) "s")
+                                                  " from being drawn")))))))
 
 ;;; Damage
 (defn flatline [state]
