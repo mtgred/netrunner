@@ -847,7 +847,7 @@
    "Spiderweb"
    {:abilities [end-the-run]}
 
-   "Susanoo-No-Mikoto"
+   "Susanoo-no-Mikoto"
    {:abilities [{:req (req (not= (:server run) [:discard]))
                  :msg "make the Runner continue the run on Archives"
                  :effect (req (swap! state update-in [:run]
