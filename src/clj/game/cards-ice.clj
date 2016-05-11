@@ -927,6 +927,12 @@
                                     (trash state side card))
                                 (lose state :runner :credit 1)))}]}
 
+   "Upayoga"
+   {:abilities [(do-psi {:label "Make the Runner lose 2 [Credits]"
+                         :msg "make the Runner lose 2 [Credits]"
+                         :effect (effect (lose :runner :credit 2))})
+                {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
+
    "Uroboros"
    {:abilities [(trace-ability 4 {:label "Prevent the Runner from making another run"
                                   :msg "prevent the Runner from making another run"
