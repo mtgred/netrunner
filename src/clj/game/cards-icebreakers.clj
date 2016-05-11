@@ -182,6 +182,11 @@
                  :msg "add 2 strength (using at least 1 stealth [Credits])"
                  :effect (effect (pump card 2)) :pump 2}]}
 
+   "Brahman"
+   (auto-icebreaker ["All"]
+                    {:abilities [(break-sub 1 2 "ICE")
+                                 (strength-pump 2 1)]})
+
    "Breach"
    (auto-icebreaker ["Barrier"]
                     {:abilities [{:cost [:credit 2]
