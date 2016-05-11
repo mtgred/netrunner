@@ -212,7 +212,7 @@
 
    "Ashigaru"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (count (:hand corp)) " subroutines")}
+                 :msg (msg "gain " (count (:hand corp)) " subroutines")}
                 end-the-run]}
 
    "Assassin"
@@ -241,7 +241,7 @@
 
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (count (:hand runner)) " subroutines")}
+                 :msg (msg "gain " (count (:hand runner)) " subroutines")}
                 (do-brain-damage 1)]}
 
    "Builder"
@@ -590,13 +590,13 @@
 
    "Information Overload"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:tag runner 0) " subroutines")}
+                 :msg (msg "gain " (:tag runner 0) " subroutines")}
                 (tag-trace 1)
                 trash-installed]}
 
    "Ireress"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:bad-publicity corp 0) " subroutines")}
+                 :msg (msg "gain " (:bad-publicity corp 0) " subroutines")}
                 {:msg "make the Runner lose 1 [Credits]"
                  :effect (effect (lose :runner :credit 1))}]}
 
@@ -619,7 +619,7 @@
 
    "Komainu"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (count (:hand runner)) " subroutines")}
+                 :msg (msg "gain " (count (:hand runner)) " subroutines")}
                 (do-net-damage 1)]}
 
    "Lab Dog"
@@ -731,7 +731,7 @@
 
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (count (filter #(and (is-type? % "ICE")
+                 :msg (msg "gain " (count (filter #(and (is-type? % "ICE")
                                                            (has-subtype? % "NEXT")
                                                            (rezzed? %))
                                                      (all-installed state :corp))) " subroutines")}
@@ -791,7 +791,7 @@
    "Salvage"
    {:advanceable :while-rezzed
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}
                 (tag-trace 2)]}
 
    "Searchlight"
@@ -877,7 +877,7 @@
    {:effect take-bad-pub
     :advanceable :always
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}
                 trash-program]}
 
    "Swordsman"
@@ -906,7 +906,7 @@
 
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (count (filter #(and (is-type? % "Asset") (rezzed? %))
+                 :msg (msg "gain " (count (filter #(and (is-type? % "Asset") (rezzed? %))
                                                      (all-installed state :corp))) " subroutines")}
                 end-the-run]}
 
@@ -939,7 +939,7 @@
    "Tyrant"
    {:advanceable :while-rezzed
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}
                 end-the-run]}
 
    "Universal Connectivity Fee"
@@ -1020,7 +1020,7 @@
    "Woodcutter"
    {:advanceable :while-rezzed
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "to gain " (:advance-counter card 0) " subroutines")}
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}
                 (do-net-damage 1)]}
 
    "Wormhole"
