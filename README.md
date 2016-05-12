@@ -75,4 +75,18 @@ Launch the Node server:
 $ coffee server.coffee
 ```
 
+## Tests
+
+To run all tests:
+
+```
+$ lein test test.all
+```
+
+To run a single test file:
+```
+$ lein test test.cards.agendas
+```
+
+
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).

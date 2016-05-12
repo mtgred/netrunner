@@ -38,7 +38,7 @@
      [:p "Contributions are appreciated and help finance fast servers."]
 
      [:h3 "Contributors"]
-     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Lukasz Dobrogowski (zaroth) and Filip Gokstorp (Saintis) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
+     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Dominic Kexel (queueseven), Lukasz Dobrogowski (zaroth) and Filip Gokstorp (Saintis) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
      [:p "Many thanks to all the donators. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
      [:ul.list.compact
       (for [d (:donators cursor)]
