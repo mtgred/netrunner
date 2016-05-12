@@ -26,12 +26,14 @@
   "Resolves all abilities registered as handlers for the given event key, passing them
   the targets given."
   [state side event & targets]
-  (doseq [{:keys [ability] :as e} (get-in @state [:events event])]
-    (when-let [card (get-card state (:card e))]
-      (when (and (not (apply trigger-suppress state side event (cons card targets)))
-                 (or (not (:req ability)) ((:req ability) state side card targets)))
-        (resolve-ability state side ability card targets))))
-  (swap! state update-in [:turn-events] #(cons [event targets] %)))
+  (let [get-side #(-> % :card :side game.utils/to-keyword)
+        is-active-player #(= (:active-player @state) (get-side %))]
+    (doseq [{:keys [ability] :as e} (sort-by (complement is-active-player) (get-in @state [:events event]))]
+      (when-let [card (get-card state (:card e))]
+        (when (and (not (apply trigger-suppress state side event (cons card targets)))
+                   (or (not (:req ability)) ((:req ability) state side card targets)))
+          (resolve-ability state side ability card targets))))
+    (swap! state update-in [:turn-events] #(cons [event targets] %))))
 
 ; Functions for registering trigger suppression events.
 (defn register-suppress
