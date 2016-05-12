@@ -810,14 +810,15 @@
                                                 (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
 
    "Windfall"
-   {:effect (req (shuffle! state :runner :deck)
-                 (let [topcard (first (:deck runner))
-                       cost (:cost topcard)]
-                   (if (is-type? topcard "Event")
-                     (do (trash state side topcard)
-                         (system-msg state side (str "shuffles their Stack and trashes "
-                          (:title topcard) " to gain 0 [Credits]")))
-                     (do (gain state side :credit cost)
-                         (trash state side topcard)
-                         (system-msg state side (str "shuffles their Stack and trashes "
-                          (:title topcard) " to gain " cost " [Credits]"))))))}})
+   {:effect (effect (shuffle! :deck)
+                    (resolve-ability
+                      {:effect (req (let [topcard (first (:deck runner))
+                                          cost (:cost topcard)]
+                                      (trash state side topcard)
+                                      (when-not (is-type? topcard "Event")
+                                        (gain state side :credit cost))
+                                      (system-msg state side
+                                                  (str "shuffles their Stack and trashes " (:title topcard)
+                                                       (when-not (is-type? topcard "Event")
+                                                         (str " to gain " cost " [Credits]"))))))}
+                     card nil))}})
