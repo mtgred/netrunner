@@ -1,4 +1,9 @@
-(in-ns 'test.core)
+(ns test.cards.assets
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
 
 (deftest adonis-campaign
   (do-game

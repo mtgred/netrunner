@@ -178,4 +178,3 @@
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
 (load "core-game")
-(load "cards")

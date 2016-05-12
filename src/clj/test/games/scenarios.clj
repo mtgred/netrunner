@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.games.scenarios
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest minigame-prevent-netdmg-resourcetrash
   "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"

@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.resources
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest activist-support
   "Activist Support - Take tag if you have none; Corp gains bad pub if they have none"

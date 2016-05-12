@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.icebreakers
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest atman-install-0
   "Atman - Installing with 0 power counters"

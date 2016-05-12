@@ -252,7 +252,7 @@
   "Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs"
   (do-game
     (new-game (default-corp [(qty "Wraparound" 1)])
-              (default-runner [(qty "Omni-Drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
+              (default-runner [(qty "Omni-drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
@@ -261,7 +261,7 @@
       (core/gain state :runner :credit 7)
       (play-from-hand state :runner "Knight")
       (play-from-hand state :runner "Personal Workshop")
-      (play-from-hand state :runner "Omni-Drive")
+      (play-from-hand state :runner "Omni-drive")
       (take-credits state :corp)
       (let [kn (get-in @state [:runner :rig :program 0])
             pw (get-in @state [:runner :rig :resource 0])
@@ -284,7 +284,7 @@
             (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
             (is (not-empty (filter #(= (:title %) "Personal Workshop") all-installed)) "Personal Workshop is in all-installed")
             (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
-            (is (not-empty (filter #(= (:title %) "Omni-Drive") all-installed)) "Omni-Drive is in all-installed")
+            (is (not-empty (filter #(= (:title %) "Omni-drive") all-installed)) "Omni-drive is in all-installed")
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
