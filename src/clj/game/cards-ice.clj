@@ -865,7 +865,7 @@
    "Spiderweb"
    {:abilities [end-the-run]}
 
-   "Susanoo-No-Mikoto"
+   "Susanoo-no-Mikoto"
    {:abilities [{:req (req (not= (:server run) [:discard]))
                  :msg "make the Runner continue the run on Archives"
                  :effect (req (swap! state update-in [:run]
@@ -951,6 +951,12 @@
                                       (trash-ice-in-run state))
                                     (trash state side card))
                                 (lose state :runner :credit 1)))}]}
+
+   "Upayoga"
+   {:abilities [(do-psi {:label "Make the Runner lose 2 [Credits]"
+                         :msg "make the Runner lose 2 [Credits]"
+                         :effect (effect (lose :runner :credit 2))})
+                {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
 
    "Uroboros"
    {:abilities [(trace-ability 4 {:label "Prevent the Runner from making another run"
