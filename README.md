@@ -90,3 +90,7 @@ $ lein test test.cards.agendas
 
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+## License
+
+Jinteki.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).
