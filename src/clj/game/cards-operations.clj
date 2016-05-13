@@ -642,6 +642,20 @@
                           (update-ice-strength target)
                           (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
+   "Subcontract"
+   (letfn [(sc [i sccard]
+             {:prompt "Select an operation in HQ to play"
+              :choices {:req #(and (= (:side %) "Corp")
+                                   (is-type? % "Operation")
+                                   (in-hand? %))}
+              :msg (msg "play " (:title target))
+              :effect (req (when-completed target
+                                           (play-instant state side target)
+                                           (when (< i 2)
+                                               (resolve-ability state side (sc (inc i) sccard) sccard nil))))})]
+     {:req (req tagged)
+      :effect (effect (resolve-ability (sc 1 card) card nil))})
+
    "Subliminal Messaging"
    {:msg "gain 1 [Credits]"
     :effect (effect (gain :credit 1)

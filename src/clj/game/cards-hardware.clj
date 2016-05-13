@@ -433,20 +433,20 @@
                                                           (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
 
-   "Omni-Drive"
+   "Omni-drive"
    {:recurring 1
-    :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-Drive"
+    :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-drive"
                  :req (req (empty? (:hosted card)))
                  :cost [:click 1]
-                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-Drive from your grip"
+                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
                  :choices {:req #(and (is-type? % "Program")
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card}))}
-                {:label "Host an installed program of 1[Memory Unit] or less on Omni-Drive"
-                 :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-Drive"
+                {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
+                 :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-drive"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))

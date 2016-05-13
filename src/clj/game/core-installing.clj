@@ -68,7 +68,8 @@
          recurring (:recurring cdef)
          abilities (ability-init cdef)
          c (merge card (:data cdef) {:abilities abilities})
-         c (if (number? recurring) (assoc c :rec-counter recurring) c)]
+         c (if (number? recurring) (assoc c :rec-counter recurring) c)
+         c (if (string? (:strength c)) (assoc c :strength 0) c)]
      (when recurring
        (let [r (if (number? recurring)
                  (effect (set-prop card :rec-counter recurring))

@@ -1,4 +1,11 @@
-(in-ns 'test.core)
+(ns test.cards.ice
+  (:require [game.core :as core]
+            [game.utils :refer :all]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest end-the-run
   "Since all ETR ice share a common ability, we only need one test"

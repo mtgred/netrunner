@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.cards.operations
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest accelerated-diagnostics
   "Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan"
