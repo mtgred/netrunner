@@ -485,7 +485,8 @@
                              (trigger-event state side :runner-install card))
                            (trash state side target)
                            (trash-ice-in-run state))
-              :msg (msg "trash " (:title target))}}}
+              :msg (msg "trash " (:title target))}}
+    :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Paricia"
    {:recurring 2}
