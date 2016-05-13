@@ -10,7 +10,7 @@
    {:events
      {:corp-install  {:optional {:req (req (and (ice? target)
                                                 (= (card->server state card) (card->server state target))))
-                                 :prompt "Rez ICE with rez cost lowered by 3?"
+                                 :prompt "Rez ICE with rez cost lowered by 3?" :priority 2
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
