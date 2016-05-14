@@ -239,7 +239,9 @@
      {:events {:advance ng :advancement-placed ng}})
 
    "Oaktown Grid"
-   {:events {:pre-trash {:req (req (= (:zone card) (:zone target)))
+   {:events {:pre-trash {:req (req (and (is-remote? (second (:zone card)))
+                                           (or (= (:zone card) (:zone target))
+                                               (= (:zone card) (:zone (get-card state (:host target)))))))
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Off the Grid"
@@ -353,6 +355,9 @@
    "Surat City Grid"
    {:events
     {:rez {:req (req (and (= (card->server state target) (card->server state card))
+                          (not (and (is-central? (card->server state card))
+                                    (= (card->server state target) (card->server state card))
+                                    (is-type? target "Upgrade")))
                           (not= (:cid target) (:cid card))
                           (seq (filter #(and (not (rezzed? %))
                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))))

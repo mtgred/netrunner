@@ -692,7 +692,8 @@
                                (has-subtype? % "Clone")
                                (has-subtype? % "Executive")
                                (has-subtype? % "Sysop"))
-                           (or (= (last (:zone %)) :content) (= (last (:zone %)) :onhost)))}
+                           (or (and (= (last (:zone %)) :content) (is-remote? (second (:zone %))))
+                               (= (last (:zone %)) :onhost)))}
       :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
 
    "Vigil"
