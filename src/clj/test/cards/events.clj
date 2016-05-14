@@ -317,6 +317,32 @@
    (play-from-hand state :runner "Game Day")
    (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
+(deftest independent-thinking
+  "Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards"
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Apex: Invasive Predator" [(qty "Neutralize All Threats" 1)
+                                            (qty "Independent Thinking" 2)
+                                            (qty "Fan Site" 3)
+                                            (qty "Street Magic" 3)]))
+    (starting-hand state :runner ["Fan Site"
+                                  "Fan Site"
+                                  "Neutralize All Threats"
+                                  "Independent Thinking"
+                                  "Independent Thinking"])
+    (take-credits state :corp)
+    (prompt-select :runner (find-card "Neutralize All Threats" (:hand (get-runner))))
+    (play-from-hand state :runner "Fan Site")
+    (let [fs (get-in @state [:runner :rig :resource 0])
+          nat (get-in @state [:runner :rig :facedown 0])]
+      (play-from-hand state :runner "Independent Thinking")
+      (prompt-select :runner fs)
+      (prompt-select :runner nat)
+      (prompt-choice :runner "Done")
+      (is (= 4 (count (:hand (get-runner)))) "Trashing 2 cards draws 2 card"))
+    ))
+
 (deftest inject
   "Inject - Draw 4 cards from Stack and gain 1 credit per trashed program"
   (do-game

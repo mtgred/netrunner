@@ -170,6 +170,11 @@
   [card]
   (= (:zone card) [:deck]))
 
+(defn facedown?
+  "Checks if the specified card is facedown."
+  [card]
+  (= (:zone card) [:rig :facedown]))
+
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
   [state side card]

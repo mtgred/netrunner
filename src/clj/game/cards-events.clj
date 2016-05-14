@@ -353,7 +353,7 @@
                               (unregister-events card))}}}
 
    "Independent Thinking"
-   (let [cards-to-draw (fn [ts] (* (count ts) (if (not-any? #(has-subtype? % "Directive") ts) 1 2)))]
+   (let [cards-to-draw (fn [ts] (* (count ts) (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) ts) 2 1)))]
      {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
       :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
       :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
