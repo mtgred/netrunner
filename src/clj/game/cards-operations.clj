@@ -747,6 +747,14 @@
                                        tol nil)))}
                      card nil)))}
 
+   "Voter Intimidation"
+   {:req (req (seq (:scored runner)))
+    :psi {:not-equal {:player :corp :prompt "Choose a resource to trash"
+                      :choices {:req #(and (installed? %)
+                                           (is-type? % "Resource"))}
+                      :msg (msg "trash " (:title target))
+                      :effect (effect (trash target))}}}
+
    "Witness Tampering"
    {:msg "remove 2 bad publicity"
     :effect (effect (lose :bad-publicity 2))}})
