@@ -298,7 +298,7 @@
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [{:msg "break any number of sentry subroutines"
+                    {:abilities [{:msg "break a sentry subroutine"
                                   :effect (effect (trash card))}
                                  (strength-pump 1 1)]})
 
