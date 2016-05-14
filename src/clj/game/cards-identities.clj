@@ -17,13 +17,14 @@
                                (toast state :runner
                                       (str "Your deck doesn't contain enough directives for Adam's ability. The deck "
                                            "needs to contain at least one copy of each directive. They are not counted "
-                                           "against the printed decksize limit, so minimal Adam's decksize on this site is 48 cards.")
+                                           "against the printed decksize limit, so Adam's minimum decksize on this "
+                                           "site is 48 cards.")
                                       "warning"
                                       {:time-out 0 :close-button true}))
                              (doseq [c directives]
                                (runner-install state side c {:no-cost true
                                                              :custom-message (str "starts with " (:title c) " in play")}))
-                             (draw state :runner (count (filter in-hand? directives)))))}}})
+                             (draw state :runner (count (filter in-hand? directives)) {:suppress-event true})))}}})
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))

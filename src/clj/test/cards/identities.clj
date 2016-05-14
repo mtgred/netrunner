@@ -20,6 +20,15 @@
       (is (and nat sf abr) "3 directives installed")
       (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
 
+(deftest adam-palana
+  "Adam - Directives should not grant Pālanā credits."
+  (do-game
+    (new-game
+      (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
+      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 1) (qty "Safety First" 1)
+                                            (qty "Always Be Running" 1) (qty "Bank Job" 3)]))
+    (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
+
 (deftest andromeda
   "Andromeda - 9 card starting hand, 1 link"
   (do-game
