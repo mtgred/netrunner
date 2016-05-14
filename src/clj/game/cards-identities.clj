@@ -575,7 +575,7 @@
                           (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
                                     (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-           {:prompt "Add another copy to HQ?"
+           {:prompt "Add another copy to HQ?" :priority 1
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
                           :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
                                           (shuffle! :deck))}}}}}

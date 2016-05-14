@@ -581,7 +581,7 @@
                  (effect-completed state side card))}
 
    "Shipment from MirrorMorph"
-   (let [shelper (fn sh [n] {:prompt "Select a card to install"
+   (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph" :priority -1
                              :choices {:req #(and (:side % "Corp")
                                                   (not (is-type? % "Operation"))
                                                   (in-hand? %))}
