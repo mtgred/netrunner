@@ -42,7 +42,9 @@
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))
                    (when (or (false? (:delayed-completion cdef)) (not (:choices cdef)))
-                     (effect-completed state side card)))))
+                     (effect-completed state side card))
+                   (when (has-subtype? card "Terminal")
+                     (lose state side :click (-> @state side :click))))))
            ;; could not pay the card's price; mark the effect as being over.
            (effect-completed state side card))
          ;; card's req was not satisfied; mark the effect as being over.
