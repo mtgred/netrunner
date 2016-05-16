@@ -335,12 +335,12 @@
 
    "Chrysalis"
    {:abilities [(do-net-damage 2)]
-    :access {:optional
-              {:req (req (not= (first (:zone card)) :discard))
-               :prompt "Use Chrysalis to do 2 net damage?"
-               :yes-ability {:effect (effect (damage :net 2 {:card card}))
-                             :msg "do 2 net damage"}}
-			   :msg "force the Runner to encounter Chrysalis"}}
+    :access {:req (req (not= (first (:zone card)) :discard))
+             :msg "force the Runner to encounter Chrysalis"
+             :optional {:req (req (not= (first (:zone card)) :discard))
+                        :prompt "Use Chrysalis to do 2 net damage?"
+                        :yes-ability {:effect (effect (damage :net 2 {:card card}))
+                        :msg "do 2 net damage"}}}}
 
    "Chum"
    {:abilities [(do-net-damage 3)]}
