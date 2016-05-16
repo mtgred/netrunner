@@ -333,6 +333,15 @@
                          :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                          (end-run))})]}
 
+   "Chrysalis"
+   {:abilities [(do-net-damage 2)]
+    :access {:optional
+              {:req (req (not= (first (:zone card)) :discard))
+               :prompt "Use Chrysalis to do 2 net damage?"
+               :yes-ability {:effect (effect (damage :net 2 {:card card}))
+                             :msg "do 2 net damage"}}
+			   :msg "force the Runner to encounter Chrysalis"}}
+
    "Chum"
    {:abilities [(do-net-damage 3)]}
 
@@ -340,7 +349,7 @@
    {:abilities [trash-program (do-net-damage 2)]}
 
    "Cortex Lock"
-   {:abilities [{:label "Do 1 net damage for each unused memory units the Runner has"
+   {:abilities [{:label "Do 1 net damage for each unused memory unit the Runner has"
                  :msg (msg "do " (:memory runner) " net damage")
                  :effect (effect (damage :net (:memory runner) {:card card}))}]}
 
