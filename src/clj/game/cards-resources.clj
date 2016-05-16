@@ -66,7 +66,7 @@
                  :msg (msg "install " (:title target))
                  :cost [:forfeit]
                  :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
-                 :effect (effect (runner-install target) (shuffle! :deck))}]}
+                 :effect (effect (trigger-event :searched-stack nil) (runner-install target) (shuffle! :deck))}]}
 
    "Bhagat"
    {:events {:successful-run {:req (req (= target :hq))
@@ -601,7 +601,8 @@
                         :yes-ability {:prompt "How many would you like to trash?"
                                       :choices {:number (req num)}
                                       :msg "shuffle their Stack"
-                                      :effect (req (doseq [c (take (int target) cards)]
+                                      :effect (req (trigger-event state side :searched-stack nil)
+                                                   (doseq [c (take (int target) cards)]
                                                      (trash state side c {:unpreventable true}))
                                                    (shuffle! state :runner :deck)
                                                    (when (> (int target) 0)
@@ -1018,9 +1019,9 @@
     :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
 
    "Tyson Observatory"
-   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "adds " (:title target) " to their Grip")
+   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
-                 :cost [:click 2] :effect (effect (move target :hand) (shuffle! :deck))}]}
+                 :cost [:click 2] :effect (effect (trigger-event :searched-stack nil) (move target :hand) (shuffle! :deck))}]}
 
    "Underworld Contact"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"

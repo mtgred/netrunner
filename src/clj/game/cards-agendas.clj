@@ -367,6 +367,12 @@
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
+   "Personality Profiles"
+   (let [pp {:msg "force the Runner to trash 1 card from their Grip at random"
+             :effect (effect (trash (first (shuffle (:hand runner)))))}]
+     {:events {:searched-stack pp
+               :runner-install (assoc pp :req (req (some #{:discard} (:previous-zone target))))}})
+
    "Philotic Entanglement"
    {:req (req (> (count (:scored runner)) 0))
     :msg (msg "do " (count (:scored runner)) " net damage")

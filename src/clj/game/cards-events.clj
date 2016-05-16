@@ -87,7 +87,8 @@
                           {:prompt "Choose a program to install"
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
-                           :effect (effect (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
+                           :effect (effect (trigger-event :searched-stack nil)
+                                           (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
 
    "Corporate Scandal"
@@ -313,8 +314,9 @@
    "Hostage"
    {:prompt "Choose a Connection"
     :choices (req (cancellable (filter #(has-subtype? % "Connection") (:deck runner)) :sorted))
-    :msg (msg "adds " (:title target) " to their Grip and shuffles their Stack")
+    :msg (msg "add " (:title target) " to their Grip and shuffle their Stack")
     :effect (req (let [connection target]
+                   (trigger-event state side :searched-stack nil)
                    (resolve-ability
                      state side
                      {:prompt (str "Install " (:title connection) "?")
@@ -500,7 +502,8 @@
    {:msg (msg "play " (:title target))
     :choices (req (cancellable (filter #(and (has-subtype? % "Run")
                                              (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
-    :prompt "Choose a Run event" :effect (effect (play-instant target {:no-additional-cost true}))}
+    :prompt "Choose a Run event" :effect (effect (trigger-event :searched-stack nil)
+                                                 (play-instant target {:no-additional-cost true}))}
 
    "Political Graffiti"
    (let [update-agendapoints (fn [state side target amount]
@@ -681,7 +684,8 @@
 
    "Special Order"
    {:prompt "Choose an Icebreaker"
-    :effect (effect (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
+    :effect (effect (trigger-event :searched-stack nil)
+                    (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
                     (move target :hand) (shuffle! :deck))
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
@@ -707,13 +711,14 @@
    "Test Run"
    {:prompt "Install a program from your Stack or Heap?"
     :choices (cancellable ["Stack" "Heap"])
-    :msg (msg "install a program from " target)
+    :msg (msg "install a program from their " target)
     :effect (effect (resolve-ability
                      {:prompt "Choose a program to install"
                       :choices (req (cancellable
                                      (filter #(is-type? % "Program")
                                              ((if (= target "Heap") :discard :deck) runner))))
-                      :effect (effect (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
+                      :effect (effect (trigger-event :searched-stack nil)
+                                      (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
                       :end-turn
                       {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
                        :msg (msg "move " (:title target) " to the top of their Stack")
@@ -773,11 +778,11 @@
                          (is-type? % "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
     :effect (effect (trash target) (gain [:credit (quot (:cost target) 2)])
-                    (resolve-ability {:prompt "Choose a Hardware to add to Grip from Stack"
+                    (resolve-ability {:prompt "Choose a Hardware to add to your Grip from your Stack"
                                       :choices (req (filter #(is-type? % "Hardware")
                                                             (:deck runner)))
-                                      :msg (msg "adds " (:title target) " to their Grip")
-                                      :effect (effect (move target :hand))} card nil))}
+                                      :msg (msg "add " (:title target) " to their Grip")
+                                      :effect (effect (trigger-event :searched-stack nil) (move target :hand))} card nil))}
 
    "Traffic Jam"
    {:effect (effect (update-all-advancement-costs))

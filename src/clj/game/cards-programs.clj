@@ -163,7 +163,7 @@
                  :choices (req (cancellable (filter #(and (is-type? % "Program")
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
-                 :cost [:click 1 :credit 1] :effect (effect (move target :hand) (shuffle! :deck))}
+                 :cost [:click 1 :credit 1] :effect (effect (trigger-event :searched-stack nil) (move target :hand) (shuffle! :deck))}
                 {:label "Install a non-Icebreaker program on Djinn"
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
@@ -611,7 +611,9 @@
                  :priority true
                  :choices (req (cancellable (filter #(is-type? % "Program") (:deck runner)) :sorted))
                  :cost [:credit 2]
-                 :effect (effect (trash card {:cause :ability-cost}) (runner-install target) (shuffle! :deck))}]}
+                 :effect (effect (trigger-event :searched-stack nil)
+                                 (trash card {:cause :ability-cost})
+                                 (runner-install target) (shuffle! :deck))}]}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make a run on Archives"
