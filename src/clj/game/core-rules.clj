@@ -403,6 +403,16 @@
     (resolve-ability state side ability target nil))
   (trigger-event state side :expose target))
 
+(defn reveal-hand
+  "Reveals a side's hand to opponent and spectators."
+  [state side]
+  (swap! state assoc-in [side :openhand] true))
+
+(defn conceal-hand
+  "Conceals a side's revealed hand from opponent and spectators."
+  [state side]
+  (swap! state update-in [side] dissoc :openhand))
+
 (defn win
   "Records a win reason for statistics."
   [state side reason]

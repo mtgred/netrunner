@@ -542,10 +542,11 @@
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
                       [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                                          (= (:user player) (:user @app-state))
                                                           (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
-                       (if (= (:user player) (:user @app-state))
+                       (if (or (= (:user player) (:user @app-state)) (:openhand player))
                          (om/build card-view (assoc card :remotes remotes))
                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                     (:hand player))]))))
