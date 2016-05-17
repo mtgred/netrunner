@@ -325,7 +325,8 @@
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
-              :effect (effect (move target :hand)
+              :effect (effect (trigger-event :searched-stack nil)
+                              (move target :hand)
                               (shuffle! :deck))}}}
 
    "Maya"
@@ -497,6 +498,7 @@
                          :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
                          :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                                       (:deck runner))]
+                                                     (trigger-event state side :searched-stack nil)
                                                      (runner-install state side c)
                                                      (shuffle! state :runner :deck)))}}} card nil))}
 
@@ -534,9 +536,10 @@
              {:optional {:req (req (is-type? target "Hardware"))
                          :prompt "Use Replicator to add a copy?"
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
-                                       :effect (effect (move (some #(when (= (:title %) (:title target)) %)
-                                                                  (:deck runner)) :hand)
-                                                      (shuffle! :deck))}}}}}
+                                       :effect (effect (trigger-event :searched-stack nil)
+                                                       (move (some #(when (= (:title %) (:title target)) %)
+                                                                   (:deck runner)) :hand)
+                                                       (shuffle! :deck))}}}}}
 
    "Security Chip"
    {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
