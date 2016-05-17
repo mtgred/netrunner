@@ -254,8 +254,10 @@
 
    "Hard-Hitting News"
    {:req (req (:made-run runner-reg))
-    :msg "give the Runner 4 tags and end their action phase"
-    :effect (effect (tag-runner :runner 4))}
+    :trace {:base 4
+            :msg "give the Runner 4 tags"
+            :label "Give the Runner 4 tags"
+            :effect (effect (tag-runner :runner 4))}}
 
    "Hedge Fund"
    {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
