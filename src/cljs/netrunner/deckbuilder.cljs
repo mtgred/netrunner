@@ -363,12 +363,18 @@
 (defn influence-dots
   "Returns a string with UTF-8 full circles representing influence."
   [num]
-  (join (conj (repeat num "&#9679;&#8203;") ""))) ; &#8203; is a zero-width space to allow wrapping
+  (let [dot "&#9679;&#8203;"] ; &#8203; is a zero-width space to allow wrapping
+    (if (<= 20 num)
+      (str num dot)
+      (join (conj (repeat num dot) "")))))
 
 (defn restricted-dots
   "Returns a string with UTF-8 empty circles representing MWL restricted cards."
   [num]
-  (join (conj (repeat num "&#9675;&#8203;") "")))
+  (let [dot "&#9675;&#8203;"]
+    (if (<= 20 num)
+      (str num dot)
+      (join (conj (repeat num dot) "")))))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
