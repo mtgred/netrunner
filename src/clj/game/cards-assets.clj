@@ -31,15 +31,14 @@
   Trashes itself when out of counters"
   [counters per-turn]
   (let [ability {:msg (str "gain " per-turn " [Credits]")
-                 :counter-cost per-turn
+                 :counter-cost [:credit per-turn]
                  :once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label (str "Gain " per-turn " [Credits] (start of turn)")
                  :effect (req (gain state :corp :credit per-turn)
-                              (when (zero? (:counter card))
+                              (when (zero? (get-in card [:counter :credit]))
                                 (trash state :corp card)))}]
-    {:data {:counter-type "Credit"}
-     :effect (effect (add-prop card :counter counters))
+    {:effect (effect (add-counter card :credit counters))
      :derezzed-events {:runner-turn-ends corp-rez-toast}
      :events {:corp-turn-begins ability}
      :abilities [ability]}))
@@ -77,10 +76,11 @@
                              (resolve-ability state side ab agg nil)))})
 
    "Alix T4LB07"
-   {:events {:corp-install {:effect (effect (add-prop card :counter 1))}}
+   {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
-                 :msg (msg "gain " (* 2 (get card :counter 0)) " [Credits]")
-                 :effect (effect (gain :credit (* 2 (get card :counter 0))) (trash card))}]}
+                 :msg (msg "gain " (* 2 (get-in card [:counter :power] 0)) " [Credits]")
+                 :effect (effect (gain :credit (* 2 (get-in card [:counter :power] 0)))
+                                 (trash card))}]}
 
    "Allele Repression"
    {:advanceable :always
@@ -243,13 +243,15 @@
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
-   {:abilities [{:cost [:click 2] :msg "add 1 power counter" :effect (effect (add-prop card :counter 1))}]
-    :events {:pre-install {:req (req (and (not (zero? (:counter card)))
+   {:abilities [{:cost [:click 2]
+                 :msg "add 1 power counter"
+                 :effect (effect (add-counter card :power 1))}]
+    :events {:pre-install {:req (req (and (not (zero? (get-in  card [:counter :power])))
                                           (not (get-in @state [:per-turn (:cid card)]))))
-                           :effect (effect (install-cost-bonus [:credit (:counter card)]))}
-             :runner-install {:req (req (and (not (zero? (:counter card)))
+                           :effect (effect (install-cost-bonus [:credit (get-in card [:counter :power])]))}
+             :runner-install {:req (req (and (not (zero? (get-in card [:counter :power])))
                                              (not (get-in @state [:per-turn (:cid card)]))))
-                              :msg (msg "increase the install cost of " (:title target) " by " (:counter card) " [Credits]")
+                              :msg (msg "increase the install cost of " (:title target) " by " (get-in card [:counter :power]) " [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Early Premiere"
@@ -399,21 +401,24 @@
                  :effect (effect (move target :hand))}]}
 
    "IT Department"
-   {:abilities [{:counter-cost 1 :label "Add strength to a rezzed ICE"
+   {:abilities [{:counter-cost [:power 1]
+                 :label "Add strength to a rezzed ICE"
                  :choices {:req #(and (ice? %) (:rezzed %))}
-                 :req (req (< 0 (:counter card 0)))
+                 :req (req (< 0 (get-in card [:counter :power] 0)))
                  :msg (msg "add strength to a rezzed ICE")
                  :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
                                                              (fnil inc 0)))
                               (update-ice-strength state side target))}
-                {:cost [:click 1] :msg "add 1 counter" :effect (effect (add-prop card :counter 1))}]
+                {:cost [:click 1]
+                 :msg "add 1 counter"
+                 :effect (effect (add-counter card :power 1))}]
     :events (let [it {:req (req (:it-targets card))
                       :effect (req (update! state side (dissoc card :it-targets))
                                    (update-all-ice state side))}]
               {:pre-ice-strength {:req (req (get-in card [:it-targets (keyword (str (:cid target)))]))
                                   :effect (effect (ice-strength-bonus
                                                     (* (get-in card [:it-targets (keyword (str (:cid target)))])
-                                                       (inc (:counter card))) target))}
+                                                       (inc (get-in card [:counter :power]))) target))}
                :runner-turn-ends it :corp-turn-ends it})}
 
    "Jackson Howard"
@@ -453,11 +458,13 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Lakshmi Smartfabrics"
-   {:events {:rez {:effect (effect (add-prop card :counter 1))}}
+   {:events {:rez {:effect (effect (add-counter card :power 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
-                                              (>= (get card :counter 0) (:agendapoints %))) (:hand corp))))
+                                              (>= (get-in card [:counter :power] 0)
+                                                  (:agendapoints %)))
+                                        (:hand corp))))
                  :label "X power counters: Reveal an agenda worth X points from HQ"
-                 :effect (req (let [c (:counter card)]
+                 :effect (req (let [c (get-in card [:counter :power])]
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose an agenda in HQ to reveal"
@@ -473,7 +480,7 @@
                                                         ((constantly false)
                                                          (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
                                                         true)))
-                                                  (add-prop state side card :counter (- pts))))} card nil)))}]}
+                                                  (add-counter state side card :power (- pts))))} card nil)))}]}
 
    "Launch Campaign"
    (campaign 6 2)
@@ -515,8 +522,8 @@
                                 state side
                                 {:prompt "Select an agenda with a counter"
                                  :choices {:req #(and (is-type? % "Agenda")
-                                                      (pos? (:counter %)))}
-                                 :effect (req (add-prop state side target :counter -1)
+                                                      (pos? (get-in % [:counter :agenda] 0)))}
+                                 :effect (req (add-counter state side target :agenda -1)
                                               (gain state :corp :credit 2)
                                               (trigger-event state side :agenda-counter-spent card))
                                  :msg (msg "spend an agenda token on " (:title target) " and gain 2 [Credits]")}
@@ -526,12 +533,12 @@
    (let [ability {:msg "gain 1 [Credits]"
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
-                  :counter-cost 1
+                  :counter-cost [:credit 1]
                   :effect (effect (gain :credit 1))}]
-   {:data {:counter-type "Credit"}
-    :abilities [ability
-                {:cost [:click 1] :msg "store 3 [Credits]"
-                 :effect (effect (add-prop card :counter 3))}]
+   {:abilities [ability
+                {:cost [:click 1]
+                 :msg "store 3 [Credits]"
+                 :effect (effect (add-counter card :credit 3))}]
     :events {:corp-turn-begins ability}})
 
    "Melange Mining Corp."
@@ -694,11 +701,12 @@
    {:recurring 3}
 
    "Private Contracts"
-   {:data {:counter-type "Credit"}
-    :effect (effect (add-prop card :counter 14))
-    :abilities [{:cost [:click 1] :counter-cost 2 :msg "gain 2 [Credits]"
+   {:effect (effect (add-counter card :credit 14))
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:credit 2]
+                 :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
-                              (when (= (:counter card) 0) (trash state :corp card)))}]}
+                              (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
 
    "Project Junebug"
    (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
@@ -712,11 +720,11 @@
      {:expose ab :access ab})
 
    "Public Support"
-   {:effect (effect (add-prop card :counter 3))
+   {:effect (effect (add-counter card :power 3))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins
-             {:effect (req (add-prop state side card :counter -1)
-                           (when (<= (:counter card) 1)
+             {:effect (req (add-counter state side card :power -1)
+                           (when (<= (get-in card [:counter :power]) 1)
                              (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
@@ -740,8 +748,8 @@
    "Rex Campaign"
    (let [ability {:once :per-turn
                   :label "Remove 1 counter (start of turn)"
-                  :effect (req (add-prop state side card :counter -1)
-                               (when (<= (:counter card) 1)
+                  :effect (req (add-counter state side card :power -1)
+                               (when (<= (get-in card [:counter :power]) 1)
                                  (trash state side card)
                                  (resolve-ability state side
                                                   {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
@@ -752,7 +760,7 @@
                                                                   (lose state side :bad-publicity 1)
                                                                   (gain state side :credit 5)))}
                                                   card targets)))}]
-   {:effect (effect (add-prop card :counter 3))
+   {:effect (effect (add-counter card :power 3))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :ability [ability]})
@@ -767,17 +775,22 @@
                  :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
 
    "Sealed Vault"
-   {:abilities [{:label "Store any number of [Credits] on Sealed Vault" :cost [:credit 1]
-                 :prompt "How many [Credits]?" :choices {:number (req (- (:credit corp) 1))}
+   {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
+                 :cost [:credit 1]
+                 :prompt "How many [Credits]?"
+                 :choices {:number (req (- (:credit corp) 1))}
                  :msg (msg "store " target " [Credits]")
                  :effect (effect (lose :credit target)
-                                 (add-prop card :counter target))}
+                                 (add-counter card :credit target))}
                 {:label "Move any number of [Credits] to your credit pool"
-                 :cost [:click 1] :prompt "How many [Credits]?"
-                 :choices :counter :msg (msg "gain " target " [Credits]")
+                 :cost [:click 1]
+                 :prompt "How many [Credits]?"
+                 :choices :counter
+                 :msg (msg "gain " target " [Credits]")
                  :effect (effect (gain :credit target))}
                 {:label "[Trash]: Move any number of [Credits] to your credit pool"
-                 :prompt "How many [Credits]?" :choices :counter
+                 :prompt "How many [Credits]?"
+                 :choices :counter
                  :msg (msg "trash it and gain " target " [Credits]")
                  :effect (effect (gain :credit target) (trash card))}]}
 

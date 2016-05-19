@@ -381,8 +381,8 @@
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
     (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
-                (= (:counter-type card) "Virus"))
-        (set-prop state :runner card :counter 0)))
+                (contains? (:counter card) :virus))
+        (add-counter state :runner card :virus (- (get-in card [:counter :virus] 0)))))
     (update-all-ice state side))
   (trigger-event state side :purge))
 

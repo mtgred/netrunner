@@ -87,6 +87,7 @@
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
+;; This command will no longer work as specified with rewrite
 (defn command-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-prop target :counter value)

@@ -221,8 +221,9 @@
                              :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
 
    "Dorm Computer"
-   {:data {:counter 4}
-    :abilities [{:counter-cost 1 :cost [:click 1]
+   {:data {:counter {:power 4}}
+    :abilities [{:counter-cost [:power 1]
+                 :cost [:click 1]
                  :req (req (not run))
                  :prompt "Choose a server" :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
@@ -282,7 +283,7 @@
    "Grimoire"
    {:in-play [:memory 2]
     :events {:runner-install {:req (req (has-subtype? target "Virus"))
-                              :effect (effect (add-prop target :counter 1))}}}
+                              :effect (effect (add-counter target :virus 1))}}}
 
    "Heartbeat"
    {:in-play [:memory 1]
@@ -454,12 +455,13 @@
                  :effect (effect (host card target))}]}
 
    "Plascrete Carapace"
-   {:data [:counter 4]
+   {:data [:counter {:power 4}]
     :prevent {:damage [:meat]}
-    :abilities [{:counter-cost 1
+    :abilities [{:counter-cost [:power 1]
                  :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
-                              (when (= (:counter card) 0) (trash state side card {:unpreventable true})))}]}
+                              (when (= (get-in card [:counter :power]) 0)
+                                (trash state side card {:unpreventable true})))}]}
 
    "Prepaid VoicePAD"
    {:recurring 1}

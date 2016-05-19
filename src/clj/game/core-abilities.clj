@@ -148,14 +148,18 @@
    {:keys [counter advance-counter] :as card} targets]
   ;; Ensure counter costs can be paid
   (when (and (or (not counter-cost)
-                 (<= counter-cost (or counter 0)))
+                 (<= (second counter-cost) (get-in card [:counter (first counter-cost)] 0)))
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid.
     (when-let [cost-str (apply pay (concat [state side card] cost))]
-      (let [c (-> card
-                  (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                  (update-in [:counter] #(- (or % 0) (or counter-cost 0))))]
+      (let [c (if counter-cost
+                (update-in card [:counter (first counter-cost)]
+                           #(- (or % 0) (or (second counter-cost) 0)))
+                card)
+            c (if advance-counter-cost
+                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                  c)]
         ;; Remove any counters.
         (when (or counter-cost advance-counter-cost)
           (update! state side c)

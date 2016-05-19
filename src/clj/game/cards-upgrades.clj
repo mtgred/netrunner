@@ -331,11 +331,14 @@
 
    "Shell Corporation"
    {:abilities
-    [{:cost [:click 1] :msg "store 3 [Credits]" :once :per-turn
-      :effect (effect (add-prop card :counter 3))}
-     {:cost [:click 1] :msg (msg "gain " (:counter card) " [Credits]") :once :per-turn
+    [{:cost [:click 1]
+      :msg "store 3 [Credits]" :once :per-turn
+      :effect (effect (add-counter card :credit 3))}
+     {:cost [:click 1]
+      :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]") :once :per-turn
       :label "Take all credits"
-      :effect (effect (gain :credit (:counter card)) (set-prop card :counter 0))}]}
+      :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                      (set-prop card :counter {:credit 0}))}]}
 
    "Simone Diego"
    {:recurring 2}

@@ -59,9 +59,9 @@
    {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
 
    "AstroScript Pilot Program"
-   {:effect (effect (add-prop card :counter 1))
-    :abilities [{:counter-cost 1 :msg (msg "place 1 advancement token on "
-                                           (card-str state target))
+   {:effect (effect (add-counter card :agenda 1))
+    :abilities [{:counter-cost {:agenda 1} :msg (msg "place 1 advancement token on "
+                                            (card-str state target))
                  :choices {:req can-be-advanced?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
@@ -86,9 +86,9 @@
                              :effect (effect (resolve-ability (card-def target) target nil))}}}
 
    "Braintrust"
-   {:effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)))
+   {:effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2)))
     :events {:pre-rez-cost {:req (req (ice? target))
-                            :effect (effect (rez-cost-bonus (- (:counter (get-card state card)))))}}}
+                            :effect (effect (rez-cost-bonus (- (get-in [:counter :agenda] (get-card state card)))))}}}
 
    "Breaking News"
    {:effect (effect (tag-runner :runner 2))
@@ -118,11 +118,11 @@
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
    "Corporate Sales Team"
-   (let [e {:msg "gain 1 [Credit]"  :counter-cost 1
+   (let [e {:msg "gain 1 [Credit]"  :counter-cost {:credit 1}
             :effect (req (gain state :corp :credit 1)
-                         (when (zero? (:counter card))
+                         (when (zero? (:credit (:counter card)))
                            (unregister-events state :corp card)))}]
-    {:effect (effect (add-prop card :counter 10))
+    {:effect (effect (add-counter card :credit 10))
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
@@ -153,9 +153,10 @@
    "Domestic Sleepers"
    {:agendapoints-runner (req (do 0))
     :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
-                 :effect (req (when (zero? (:counter card))
+                 :effect (req (when (zero? (:agenda (:counter card)))
                                 (gain-agenda-point state side 1))
-                              (set-prop state side card :counter 1 :agendapoints 1))}]}
+                              (add-counter state side card :agenda 1)
+                              (set-prop state side card :agendapoints 1))}]}
 
    "Eden Fragment"
    {:events {:pre-corp-install
@@ -170,8 +171,8 @@
                 :msg (msg "ignore the install cost of the first ICE this turn")}}}
 
    "Efficiency Committee"
-   {:effect (effect (add-prop card :counter 3))
-    :abilities [{:cost [:click 1] :counter-cost 1 :effect (effect (gain :click 2))
+   {:effect (effect (add-counter card :agenda 3))
+    :abilities [{:cost [:click 1] :counter-cost {:agenda 1} :effect (effect (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
    "Encrypted Portals"
@@ -192,7 +193,7 @@
    "Executive Retreat"
    {:effect (effect (add-prop card :counter 1)
                     (shuffle-into-deck :hand))
-    :abilities [{:cost [:click 1] :counter-cost 1 :msg "draw 5 cards" :effect (effect (draw 5))}]}
+    :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
    {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
@@ -209,19 +210,24 @@
     :steal-cost-bonus (req [:credit 2])}
 
    "Firmware Updates"
-   {:effect (effect (add-prop card :counter 3))
-    :abilities [{:counter-cost 1 :choices {:req #(and (ice? %) (can-be-advanced? %))}
-                 :req (req (< 0 (:counter card 0)))
+   {:effect (effect (add-counter card :agenda 3))
+    :abilities [{:counter-cost [:agenda 1]
+                 :choices {:req #(and (ice? %) (can-be-advanced? %))}
+                 :req (req (< 0 (get-in card [:counter :agenda] 0)))
                  :msg (msg "place 1 advancement token on " (card-str state target))
-                 :once :per-turn :effect (effect (add-prop target :advance-counter 1))}]}
+                 :once :per-turn
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Genetic Resequencing"
-   {:choices {:req #(= (last (:zone %)) :scored)} :msg (msg "add 1 agenda counter on " (:title target))
-    :effect (effect (add-prop target :counter 1))}
+   {:choices {:req #(= (last (:zone %)) :scored)}
+    :msg (msg "add 1 agenda counter on " (:title target))
+    :effect (effect (add-counter target :agenda 1))}
 
    "Geothermal Fracking"
-   {:effect (effect (add-prop card :counter 2))
-    :abilities [{:cost [:click 1] :counter-cost 1 :msg "gain 7 [Credits] and take 1 bad publicity"
+   {:effect (effect (add-counter card :agenda 2))
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:agenda 1]
+                 :msg "gain 7 [Credits] and take 1 bad publicity"
                  :effect (effect (gain :credit 7 :bad-publicity 1))}]}
 
    "Gila Hands Arcology"
@@ -253,17 +259,20 @@
                  :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
 
    "Helium-3 Deposit"
-   {:choices ["0", "1", "2"] :prompt "How many power counters?"
+   {:choices ["0", "1", "2"]
+    :prompt "How many power counters?"
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(contains? % :counter)}
+                     {:choices {:req #(< 0 (get-in [:counter :power] % 0))}
                       :msg (msg "add " c " power counters on " (:title target))
-                      :effect (effect (add-prop target :counter c))} card nil)))}
+                      :effect (effect (add-counter target :power c))} card nil)))}
 
    "High-Risk Investment"
-   {:effect (effect (add-prop card :counter 1))
-    :abilities [{:cost [:click 1] :counter-cost 1 :msg (msg "gain " (:credit runner) " [Credits]")
+   {:effect (effect (add-counter card :agenda 1))
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:agenda 1]
+                 :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain :credit (:credit runner)))}]}
 
    "Hostile Takeover"
@@ -284,8 +293,11 @@
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
 
    "House of Knives"
-   {:effect (effect (add-prop card :counter 3))
-    :abilities [{:counter-cost 1 :msg "do 1 net damage" :req (req (:run @state)) :once :per-run
+   {:effect (effect (add-counter card :agenda 3))
+    :abilities [{:counter-cost [:agenda 1]
+                 :msg "do 1 net damage"
+                 :req (req (:run @state))
+                 :once :per-run
                  :effect (effect (damage :net 1 {:card card}))}]}
 
    "Improved Protein Source"
@@ -302,8 +314,9 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:effect (effect (add-prop card :counter 2))
-    :abilities [{:counter-cost 1 :effect (effect (prevent-jack-out))
+   {:effect (effect (add-counter card :agenda 2))
+    :abilities [{:counter-cost [:agenda 1]
+                 :effect (effect (prevent-jack-out))
                  :msg "prevent the Runner from jacking out"}]}
 
    "License Acquisition"
@@ -320,7 +333,9 @@
     :leave-play (req (lose state :corp :click 1 :click-per-turn 1))}
 
    "Market Research"
-   {:req (req tagged) :effect (effect (set-prop card :counter 1 :agendapoints 3))}
+   {:req (req tagged)
+    :effect (effect (add-counter card :agenda 1)
+                    (set-prop card :agendapoints 3))}
 
    "Medical Breakthrough"
    {:effect (effect (update-all-advancement-costs))
@@ -356,8 +371,10 @@
                                             (corp-install state side target "New remote")))}}}}}
 
    "Nisei MK II"
-   {:effect (effect (add-prop card :counter 1))
-    :abilities [{:req (req (:run @state)) :counter-cost 1 :msg "end the run"
+   {:effect (effect (add-counter card :agenda 1))
+    :abilities [{:req (req (:run @state))
+                 :counter-cost [:agenda 1]
+                 :msg "end the run"
                  :effect (effect (end-run))}]}
 
    "Oaktown Renovation"
@@ -412,9 +429,12 @@
                    (gain state :corp :bad-publicity 1))}
 
    "Project Atlas"
-   {:effect (effect (set-prop card :counter (max 0 (- (:advance-counter card) 3))))
-    :abilities [{:counter-cost 1 :prompt "Choose a card" :label "Search R&D and add 1 card to HQ"
-                 :req (req (< 0 (:counter card 0))) ;; we need the req or the prompt will still show
+   {:effect (effect (add-counter card :agenda (max 0 (- (:advance-counter card) 3))))
+    :abilities [{:counter-cost [:agenda 1]
+                 :prompt "Choose a card"
+                 :label "Search R&D and add 1 card to HQ"
+                 ;; we need the req or the prompt will still show
+                 :req (req (< 0 (get-in card [:counter :agenda] 0)))
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (cancellable (:deck corp) :sorted))
                  :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
@@ -422,20 +442,22 @@
 
    "Project Beale"
    {:agendapoints-runner (req (do 2))
-    :effect (effect (set-prop card :counter (quot (- (:advance-counter card) 3) 2)
-                              :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
+    :effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2))
+                    (set-prop card :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
 
    "Project Vitruvius"
-   {:effect (effect (set-prop card :counter (- (:advance-counter card) 3)))
-    :abilities [{:counter-cost 1 :prompt "Choose a card"
-                 :req (req (< 0 (:counter card 0)))
+   {:effect (effect (add-counter card :agenda (- (:advance-counter card) 3)))
+    :abilities [{:counter-cost [:agenda 1]
+                 :prompt "Choose a card"
+                 :req (req (< 0 (get-in card [:counter :agenda] 0)))
                  :msg (msg "add " (if (:seen target)
                                     (:title target) "an unseen card ") " to HQ from Archives")
                  :choices (req (:discard corp)) :effect (effect (move target :hand))}]}
 
    "Project Wotan"
-   {:effect (effect (add-prop card :counter 3))
-    :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
+   {:effect (effect (add-counter card :agenda 3))
+    :abilities [{:counter-cost [:agenda 1]
+                 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Puppet Master"
    {:events {:successful-run
@@ -544,8 +566,9 @@
     :effect (effect (lose :bad-publicity 2))}
 
    "Voting Machine Initiative"
-   {:effect (effect (add-prop card :counter 3))
-    :abilities [{:optional {:req (req (> (:counter card) (:vmi-count card 0)))
+   {:effect (effect (add-counter card :agenda 3))
+    :abilities [{:optional {:req (req (> (get-in card [:counter :agenda] 0)
+                                         (:vmi-count card 0)))
                             :prompt "Cause the Runner to lose [Click] at the start of their next turn?"
                             :yes-ability {:effect (effect (toast (str "The Runner will lose " (inc (:vmi-count card 0))
                                                                       " [Click] at the start of their next turn") "info")
@@ -553,7 +576,7 @@
     :events {:runner-turn-begins {:req (req (pos? (:vmi-count card 0)))
                                   :msg (msg "to force the Runner to lose " (:vmi-count card) " [Click]")
                                   :effect (effect (lose :runner :click (:vmi-count card))
-                                                  (add-prop (dissoc card :vmi-count) :counter (- (:vmi-count card))))}}}
+                                                  (add-counter (dissoc card :vmi-count) :agenda (- (:vmi-count card))))}}}
 
    "Vulcan Coverup"
    {:msg "do 2 meat damage" :effect (effect (damage :meat 2 {:card card}))
