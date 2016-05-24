@@ -139,7 +139,7 @@
 
    "Cortez Chip"
    {:abilities [{:prompt "Choose a piece of ICE"
-                 :choices {:req #(and (not (rezzed? %)) (ice? %))}
+                 :choices {:req ice?}
                  :effect (req (let [ice target]
                                 (update! state side (assoc card :cortez-target ice))
                                 (trash state side (get-card state card) {:cause :ability-cost})
