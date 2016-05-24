@@ -417,6 +417,7 @@
    "Jackson Howard"
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
                 {:label "Shuffle up to 3 cards from Archives into R&D"
+                 :activatemsg "removes Jackson Howard from the game"
                  :effect (effect
                           (move card :rfg)
                           (resolve-ability
@@ -795,6 +796,7 @@
                                    {:prompt "Choose a card in HQ to add to the bottom of R&D"
                                     :choices {:req #(and (= (:side %) "Corp")
                                                          (in-hand? %))}
+                                    :msg "add a card in HQ to the bottom of R&D"
                                     :effect (effect (move target :deck))}
                                   card nil))}]}
 
