@@ -6,7 +6,7 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (not tagged))
+    {:corp-turn-begins {:req (req (= 0 (:tag runner)))
                         :msg "take 1 tag"
                         :effect (effect (tag-runner :runner 1))}
      :runner-turn-begins {:req (req (not has-bad-pub))
