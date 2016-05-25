@@ -586,7 +586,7 @@
       (core/advance state :corp {:card (refresh atl)})
       (core/score state :corp {:card (refresh atl)})
       (let [scored (get-in @state [:corp :scored 0])]
-        (is (= 1 (:counter scored)) "1 counter added by Titan")))))
+        (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
 
 (deftest wyvern-chemically-enhanced
   "Wyvern: Chemically Enhanced - Ability"

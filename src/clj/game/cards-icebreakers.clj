@@ -89,7 +89,7 @@
   [type]
   (auto-icebreaker [type]
                    {:data {:counter {:power 4}}
-                    :abilities [{:counter-cost [:power 4]
+                    :abilities [{:counter-cost [:power 1]
                                  :msg (str "break up to 2 " (lower-case type) " subroutines")}
                                 (strength-pump 1 1)]}))
 

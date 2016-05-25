@@ -61,7 +61,7 @@
    "Armitage Codebusting"
    {:data {:counter {:credit 12}}
     :abilities [{:cost [:click 1]
-                 :counter-cost {:credit 2}
+                 :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
                  :effect (req (gain state :runner :credit 2)
                               (when (zero? (get-in card [:counter :credit] 0))
@@ -490,8 +490,8 @@
                  :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]")
                  :once :per-turn
                  :label "Take all credits"
-                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
-                                 (add-prop card :counter (- (get-in card [:counter :credit]))))}]}
+                 :effect (req (gain state side :credit (get-in card [:counter :credit] 0))
+                              (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
    "Liberated Account"
    {:data {:counter {:credit 16}}

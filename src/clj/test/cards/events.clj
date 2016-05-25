@@ -565,10 +565,10 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Imp")
     (let [imp (get-in @state [:runner :rig :program 0])]
-      (is (= 2 (get-in imp [:counter])) "Imp has 2 counters after install")
+      (is (= 2 (get-counters imp :virus)) "Imp has 2 counters after install")
       (play-from-hand state :runner "Surge")
       (prompt-select :runner imp)
-      (is (= 4 (get-in (refresh imp) [:counter])) "Imp has 4 counters after surge"))))
+      (is (= 4 (get-counters (refresh imp) :virus)) "Imp has 4 counters after surge"))))
 
 (deftest surge-target-not-virus
   "Don't fire surge if target is not a virus"
@@ -590,12 +590,12 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Imp")
     (let [imp (get-in @state [:runner :rig :program 0])]
-      (is (= 2 (get-in imp [:counter])) "Imp has 2 counters after install")
+      (is (= 2 (get-counters imp :virus)) "Imp has 2 counters after install")
       (take-credits state :runner 3)
       (take-credits state :corp)
       (play-from-hand state :runner "Surge")
       (prompt-select :runner imp)
-      (is (= 2 (get-in (refresh imp) [:counter]))
+      (is (= 2 (get-counters (refresh imp) :virus))
           "Surge does not fire on Imp turn after install"))))
 
 (deftest surge-target-gorman-drip
@@ -606,14 +606,14 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Gorman Drip v1")
     (let [gd (get-in @state [:runner :rig :program 0])]
-      (is (= nil (get-in gd [:counter])) "Gorman Drip starts without counters")
+      (is (= 0 (get-counters gd :virus)) "Gorman Drip starts without counters")
       (take-credits state :runner 3)
       (take-credits state :corp)
-      (is (= 3 (get-in (refresh gd) [:counter]))
+      (is (= 3 (get-counters (refresh gd) :virus))
           "Gorman Drip gains 3 counters after Corp clicks 3 times for credits")
       (play-from-hand state :runner "Surge")
       (prompt-select :runner gd)
-      (is (= 3 (get-in (refresh gd) [:counter])) "Surge does not trigger on Gorman Drip"))))
+      (is (= 3 (get-counters (refresh gd) :virus)) "Surge does not trigger on Gorman Drip"))))
 
 (deftest test-run
   "Test Run - Programs hosted after install get returned to Stack. Issue #1081"
@@ -738,7 +738,7 @@
     (play-from-hand state :runner "Crypsis")
     (let [crypsis (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner crypsis 2) ;click to add a virus counter
-      (is (= 1 (get-in (refresh crypsis) [:counter])) "Crypsis added a virus token")
+      (is (= 1 (get-counters (refresh crypsis) :virus)) "Crypsis added a virus token")
       (is (get-in (refresh crypsis) [:added-virus-counter])
           "Counter flag was set on Crypsis"))))
 

@@ -189,7 +189,7 @@
     (is (= 6 (:memory (get-runner))) "Gained 2 MU")
     (play-from-hand state :runner "Imp")
     (let [imp (get-in @state [:runner :rig :program 0])]
-      (is (= 3 (:counter (refresh imp))) "Imp received an extra virus counter on install"))))
+      (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
 
 (deftest llds-processor
   "LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install"
@@ -249,7 +249,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Plascrete Carapace")
     (let [plas (get-in @state [:runner :rig :hardware 0])]
-      (is (= 4 (:counter (refresh plas))) "4 counters on install")
+      (is (= 4 (get-counters (refresh plas) :power)) "4 counters on install")
       (take-credits state :runner)
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")

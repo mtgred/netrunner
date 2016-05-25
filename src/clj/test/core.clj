@@ -73,6 +73,11 @@
   [state pos]
   (get-in @state [:runner :rig :resource pos]))
 
+(defn get-counters
+  "Get number of counters of specified type."
+  [card type]
+  (get-in card [:counter type] 0))
+
 ;;; Click action functions
 (defn take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.

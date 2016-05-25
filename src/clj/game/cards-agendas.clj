@@ -60,13 +60,14 @@
 
    "AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
-    :abilities [{:counter-cost {:agenda 1} :msg (msg "place 1 advancement token on "
-                                            (card-str state target))
+    :abilities [{:counter-cost [:agenda 1] :msg (msg "place 1 advancement token on "
+                                                      (card-str state target))
                  :choices {:req can-be-advanced?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
-   {:access {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
+   {:access {:choices ["0", "1", "2"]
+             :prompt "How many advancement tokens?"
              :effect (req (let [c (Integer/parseInt target)]
                             (resolve-ability
                              state side
@@ -88,7 +89,7 @@
    "Braintrust"
    {:effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2)))
     :events {:pre-rez-cost {:req (req (ice? target))
-                            :effect (effect (rez-cost-bonus (- (get-in [:counter :agenda] (get-card state card)))))}}}
+                            :effect (req (rez-cost-bonus state side (- (get-in card [:counter :agenda] 0))))}}}
 
    "Breaking News"
    {:effect (effect (tag-runner :runner 2))
@@ -118,7 +119,7 @@
                    (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
    "Corporate Sales Team"
-   (let [e {:msg "gain 1 [Credit]"  :counter-cost {:credit 1}
+   (let [e {:msg "gain 1 [Credit]"  :counter-cost [:credit 1]
             :effect (req (gain state :corp :credit 1)
                          (when (zero? (:credit (:counter card)))
                            (unregister-events state :corp card)))}]
@@ -172,7 +173,7 @@
 
    "Efficiency Committee"
    {:effect (effect (add-counter card :agenda 3))
-    :abilities [{:cost [:click 1] :counter-cost {:agenda 1} :effect (effect (gain :click 2))
+    :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :effect (effect (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
    "Encrypted Portals"
@@ -264,7 +265,7 @@
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side
-                     {:choices {:req #(< 0 (get-in [:counter :power] % 0))}
+                     {:choices {:req #(< 0 (get-in % [:counter :power] 0))}
                       :msg (msg "add " c " power counters on " (:title target))
                       :effect (effect (add-counter target :power c))} card nil)))}
 

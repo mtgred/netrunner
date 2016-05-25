@@ -177,7 +177,7 @@
       (run-on state "HQ")
       (core/rez state :corp drac)
       (prompt-choice :corp 4)
-      (is (= 4 (:counter (refresh drac))) "Dracō has 4 power counters")
+      (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
       (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
       (card-ability state :corp drac 0)
       (prompt-choice :corp 0)

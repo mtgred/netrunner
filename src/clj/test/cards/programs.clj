@@ -54,18 +54,18 @@
     (let [ds (get-in @state [:runner :rig :program 0])
           fw (get-ice state :remote1 0)]
       (run-empty-server state "Archives")
-      (is (= 1 (:counter (refresh ds))))
+      (is (= 1 (get-counters (refresh ds) :virus)))
       (run-empty-server state "Archives")
-      (is (= 2 (:counter (refresh ds))))
+      (is (= 2 (get-counters (refresh ds) :virus)))
       (run-on state "Server 1")
       (run-continue state)
       (run-successful state)
-      (is (= 2 (:counter (refresh ds))) "No counter gained, not a central server")
+      (is (= 2 (get-counters (refresh ds) :virus)) "No counter gained, not a central server")
       (run-on state "Server 1")
       (core/rez state :corp fw)
       (is (= 5 (:current-strength (refresh fw))))
       (card-ability state :runner ds 0)
-      (is (= 1 (:counter (refresh ds))) "1 counter spent from Datasucker")
+      (is (= 1 (get-counters (refresh ds) :virus)) "1 counter spent from Datasucker")
       (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
 
 (deftest diwan
@@ -110,7 +110,7 @@
       (let [chak (first (:hosted (refresh djinn)))]
         (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
         ;; manually add 3 counters
-        (core/add-prop state :runner (first (:hosted (refresh djinn))) :counter 3)
+        (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
         (take-credits state :runner 2)
         (core/advance state :corp {:card agenda})
         (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
@@ -157,14 +157,14 @@
     (play-from-hand state :runner "Gravedigger")
     (let [gd (get-in @state [:runner :rig :program 0])]
       (core/trash state :corp (get-content state :remote1 0))
-      (is (= 1 (:counter (refresh gd))) "Gravedigger gained 1 counter")
+      (is (= 1 (get-counters (refresh gd) :virus)) "Gravedigger gained 1 counter")
       (core/trash state :corp (get-content state :remote2 0))
-      (is (= 2 (:counter (refresh gd))) "Gravedigger gained 1 counter")
+      (is (= 2 (get-counters (refresh gd) :virus)) "Gravedigger gained 1 counter")
       (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
       (is (= 2 (count (:deck (get-corp)))))
       (card-ability state :runner gd 0)
-      (is (= 1 (:counter (refresh gd))) "Spent 1 counter from Gravedigger")
+      (is (= 1 (get-counters (refresh gd) :virus)) "Spent 1 counter from Gravedigger")
       (is (= 2 (:click (get-runner))) "Spent 1 click")
       (is (= 1 (count (:deck (get-corp)))))
       (is (= 3 (count (:discard (get-corp)))) "Milled 1 card from R&D"))))
@@ -209,13 +209,13 @@
     (take-credits state :corp)
     (let [ds (get-in @state [:runner :rig :program 0])
           incub (get-in @state [:runner :rig :program 1])]
-      (is (= 1 (:counter (refresh incub))) "Incubator gained 1 virus counter")
+      (is (= 1 (get-counters (refresh incub) :virus)) "Incubator gained 1 virus counter")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 2 (:counter (refresh incub))) "Incubator has 2 virus counters")
+      (is (= 2 (get-counters (refresh incub) :virus)) "Incubator has 2 virus counters")
       (card-ability state :runner incub 0)
       (prompt-select :runner ds)
-      (is (= 2 (:counter (refresh ds))) "Datasucker has 2 virus counters moved from Incubator")
+      (is (= 2 (get-counters (refresh ds) :virus)) "Datasucker has 2 virus counters moved from Incubator")
       (is (= 1 (count (get-in @state [:runner :rig :program]))))
       (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
       (is (= 3 (:click (get-runner)))))))
@@ -360,14 +360,14 @@
       (play-from-hand state :runner "Parasite")
       (prompt-select :runner arch)
       (let [psite (first (:hosted (refresh arch)))]
-        (is (= 1 (:counter (refresh psite))) "Parasite has 1 counter")
+        (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
         (take-credits state :runner)
         (take-credits state :corp)
         (take-credits state :runner)
         (take-credits state :corp)
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 4 (:counter (refresh psite))) "Parasite has 4 counters")
+        (is (= 4 (get-counters (refresh psite) :virus)) "Parasite has 4 counters")
         (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
 
 (deftest parasite-gain-counter
@@ -383,10 +383,10 @@
       (prompt-select :runner wrap)
       (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
       (let [psite (first (:hosted (refresh wrap)))]
-        (is (= 0 (:counter psite)) "Parasite has no counters yet")
+        (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 1 (:counter (refresh psite)))
+        (is (= 1 (get-counters (refresh psite) :virus))
             "Parasite gained 1 virus counter at start of Runner turn")
         (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
 
@@ -406,7 +406,7 @@
       (play-from-hand state :runner "Grimoire")
       (play-from-hand state :runner "Hivemind")
       (let [hive (get-in @state [:runner :rig :program 0])]
-        (is (= 2 (:counter (refresh hive))) "Hivemind has 2 counters")
+        (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind has 2 counters")
         (play-from-hand state :runner "Parasite")
         (prompt-select :runner enig)
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
@@ -426,7 +426,7 @@
       (play-from-hand state :runner "Parasite")
       (prompt-select :runner enig)
       (let [psite (first (:hosted (refresh enig)))]
-        (is (= 1 (:counter (refresh psite))) "Parasite has 1 counter")
+        (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
         (is (= 1 (:current-strength (refresh enig))) "Enigma reduced to 1 strength")
         (take-credits state :runner)
         (take-credits state :corp)
@@ -449,14 +449,14 @@
       (is (= 4 (:memory (get-runner))) "No memory used to host on Progenitor")
       (let [hive (first (:hosted (refresh prog)))]
         (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
-        (is (= 1 (:counter hive)) "Hivemind has 1 counter")
+        (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
         (is (= 0 (:credit (get-runner))) "Full cost to host on Progenitor")
         (take-credits state :runner 1)
         (take-credits state :corp)
         (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
         (prompt-select :runner hive)
-        (is (= 2 (get (refresh hive) :counter 0)) "Hivemind gained 1 counter")
-        (is (= 0 (get (refresh vbg) :counter 0)) "Virus Breeding Ground lost 1 counter")))))
+        (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
+        (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
 
 (deftest progenitor-mu-savings
   "Progenitor - Keep MU the same when hosting or trashing hosted programs"
@@ -512,10 +512,10 @@
           sb (get-in @state [:runner :rig :program 1])]
       (card-ability state :runner sb 0)
       (run-successful state)
-      (is (= 1 (:counter (refresh nerve))))
+      (is (= 1 (get-counters (refresh nerve) :virus)))
       (card-ability state :runner sb 0)
       (run-successful state)
-      (is (= 2 (:counter (refresh nerve)))))))
+      (is (= 2 (get-counters (refresh nerve) :virus))))))
 
 (deftest sneakdoor-ash
   "Sneakdoor Beta - Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits.
