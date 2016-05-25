@@ -87,7 +87,7 @@
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
                  :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?"
-                 :choices :counter
+                 :choices [:counter :credit]
                  :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
                               (register-successful-run state side (:server run))
