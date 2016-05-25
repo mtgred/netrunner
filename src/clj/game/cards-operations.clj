@@ -242,6 +242,11 @@
                                                          cpts-corp (get-agenda-points state :corp c)
                                                          rpts-runner (get-agenda-points state :runner r)
                                                          cpts-runner (get-agenda-points state :runner c)]
+
+                                                     ; Remove end of turn events for swapped out agenda
+                                                     (swap! state update-in [:corp :register :end-turn]
+                                                       (fn [events] (filter #(not (= (:cid c) (get-in % [:card :cid]))) events)))
+
                                                      (swap! state update-in [:corp :scored]
                                                             (fn [coll] (conj (remove-once #(not= (:cid %) (:cid c)) coll) r)))
                                                      (swap! state update-in [:runner :scored]
