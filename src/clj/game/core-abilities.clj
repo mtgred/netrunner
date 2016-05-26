@@ -148,7 +148,8 @@
    {:keys [counter advance-counter] :as card} targets]
   ;; Ensure counter costs can be paid
   (when (and (or (not counter-cost)
-                 (<= (second counter-cost) (get-in card [:counter (first counter-cost)] 0)))
+                 (<= (or (second counter-cost) 0)
+                     (get-in card [:counter (first counter-cost)] 0)))
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid.
