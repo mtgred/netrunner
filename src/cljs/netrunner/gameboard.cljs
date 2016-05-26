@@ -463,10 +463,12 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
-                                    norm-type (lower-case counter-type)
-                                    selector (str "div.darkbg." norm-type "-counter.counter")]
-                                [(keyword selector) counter]))
+         (when counter
+           (map (fn [[type num-counters]]
+                  (when (pos? num-counters)
+                    (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                     [(keyword selector) num-counters])))
+                counter))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
