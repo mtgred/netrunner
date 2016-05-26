@@ -151,6 +151,67 @@
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
 
+(deftest exchange-of-information
+  "Exchange of Information - Swapping agendas works correctly"
+  (do-game
+    (new-game (default-corp [(qty "Exchange of Information" 1) 
+                             (qty "Market Research" 1) 
+                             (qty "Breaking News" 1) 
+                             (qty "Project Beale" 1) 
+                             (qty "Explode-a-palooza" 1)])
+              (default-runner))
+
+      (score-agenda state :corp (find-card "Market Research" (:hand (get-corp))))
+      (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Runner gained 2 tags")
+      (take-credits state :corp)
+      (is (= 0 (:tag (get-runner))) "Runner lost 2 tags")
+
+      (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
+      (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
+      (take-credits state :runner)
+
+      (is (= 4 (:agenda-point (get-runner))))
+      (is (= 3 (:agenda-point (get-corp))))
+
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Exchange of Information")
+
+      (prompt-select :corp (find-card "Project Beale" (:scored (get-runner))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+
+      (is (= 3 (:agenda-point (get-runner))))
+      (is (= 4 (:agenda-point (get-corp))))))
+
+(deftest exchange-of-information-breaking-news
+  "Exchange of Information - Swapping a just scored Breaking News keeps the tags"
+  (do-game
+    (new-game (default-corp [(qty "Exchange of Information" 1) 
+                             (qty "Market Research" 1) 
+                             (qty "Breaking News" 1) 
+                             (qty "Project Beale" 1) 
+                             (qty "Explode-a-palooza" 1)])
+              (default-runner))
+
+      (take-credits state :corp)
+
+      (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
+      (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
+      (take-credits state :runner)
+
+      (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Runner gained 2 tags")
+      (play-from-hand state :corp "Exchange of Information")
+
+      (prompt-select :corp (find-card "Project Beale" (:scored (get-runner))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Still has tags after swap and before end of turn")
+
+      (take-credits state :corp)
+      (is (= 3 (:agenda-point (get-runner))))
+      (is (= 2 (:agenda-point (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Runner does not lose tags at end of turn")))
+
 (deftest election-day
   (do-game
     (new-game (default-corp [(qty "Election Day" 7)])
