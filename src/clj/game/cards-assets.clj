@@ -68,9 +68,12 @@
    "Aggressive Secretary"
    (advance-ambush 2 {:effect
                       (req (let [agg (get-card state card)
+                                 n (:advance-counter agg 0)
                                  ab (-> trash-program
-                                        (assoc-in [:choices :max] (:advance-counter agg))
-                                        (assoc :effect (effect (trash-cards targets))))]
+                                        (assoc-in [:choices :max] n)
+                                        (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
+                                               :effect (effect (trash-cards targets))
+                                               :msg (msg "trash " (join ", " (map :title targets)))))]
                              (resolve-ability state side ab agg nil)))})
 
    "Alix T4LB07"
