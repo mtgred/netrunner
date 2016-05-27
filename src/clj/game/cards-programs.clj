@@ -154,8 +154,11 @@
     :effect (effect (update! (assoc card :named-target target)))
     :leave-play (effect (update! (dissoc card :named-target)))
     :events {:purge {:effect (effect (trash card))}
-             :pre-corp-install {:req (req (let [serv (:server (second targets))]
-                                            (= serv (:named-target card))))
+             :pre-corp-install {:req (req (let [c target
+                                                serv (:server (second targets))]
+                                            (and (= serv (:named-target card))
+                                                 (not (and (is-central? serv)
+                                                           (is-type? c "Upgrade"))))))
                                 :effect (effect (install-cost-bonus [:credit 1]))}}}
 
    "Djinn"
