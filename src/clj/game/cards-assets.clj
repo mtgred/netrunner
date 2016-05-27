@@ -67,7 +67,7 @@
 
    "Aggressive Secretary"
    (advance-ambush 2 {:effect
-                      (req (let [agg card
+                      (req (let [agg (get-card state card)
                                  ab (-> trash-program
                                         (assoc-in [:choices :max] (:advance-counter agg))
                                         (assoc :effect (effect (trash-cards targets))))]
@@ -81,9 +81,9 @@
 
    "Allele Repression"
    {:advanceable :always
-    :abilities [{:label "Swap 1 cards in HQ and Archives for each advancement token"
+    :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
                  :effect (effect (trash card))
-                 :msg (msg "Swap " (:advance-counter card) " cards in HQ and Archives")}]}
+                 :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
    "Aryabhata Tech"
    {:events {:successful-trace {:msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
@@ -118,8 +118,8 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Cerebral Overwriter"
-   (advance-ambush 3 {:msg (msg "do " (:advance-counter card 0) " brain damage")
-                      :effect (effect (damage :brain (:advance-counter card 0) {:card card}))})
+   (advance-ambush 3 {:msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
+                      :effect (effect (damage :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
@@ -342,9 +342,9 @@
     :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
-   (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter card) " tag"
-                                (when (> (:advance-counter card) 1) "s"))
-                      :effect (effect (tag-runner :runner (:advance-counter card)))})
+   (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter (get-card state card) 0) " tag"
+                                (when (> (:advance-counter (get-card state card) 0) 1) "s"))
+                      :effect (effect (tag-runner :runner (:advance-counter (get-card state card) 0)))})
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -371,7 +371,7 @@
                                    :choices (req (filter #(is-type? % type) (:hand runner)))
                                    :effect (effect (trash target))
                                    :msg (msg " trash " (:title target) " from the Runner's Grip")})
-         choose-ability {:label "Trash 1 card in the runner's Grip of a named type"
+         choose-ability {:label "Trash 1 card in the Runner's Grip of a named type"
                          :once :per-turn
                          :req (req (seq (:hand runner)))
                          :prompt "Choose a card type"
@@ -381,8 +381,7 @@
      {:additional-cost [:forfeit]
       :flags {:corp-phase-12 (constantly true)}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
-      :abilities [choose-ability]
-     })
+      :abilities [choose-ability]})
 
    "Indian Union Stock Exchange"
    (let [iuse {:req (req (not= (:faction target) (:faction (:identity corp))))
@@ -662,7 +661,7 @@
      (effect (resolve-ability
               {:prompt "Choose an Agenda in HQ to score"
                :choices {:req #(and (is-type? % "Agenda")
-                                    (<= (:advancementcost %) (:advance-counter card))
+                                    (<= (:advancementcost %) (:advance-counter (get-card state card) 0))
                                     (in-hand? %))}
                :msg (msg "score " (:title target))
                :effect (effect (score (assoc target :advance-counter
@@ -699,8 +698,8 @@
                               (when (= (:counter card) 0) (trash state :corp card)))}]}
 
    "Project Junebug"
-   (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter card 0)) " net damage")
-                      :effect (effect (damage :net (* 2 (:advance-counter card 0))
+   (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
+                      :effect (effect (damage :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
    "Psychic Field"
@@ -829,7 +828,7 @@
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
-   (advance-ambush 1 {:effect (req (let [shat card]
+   (advance-ambush 1 {:effect (req (let [shat (get-card state card)]
                                      (resolve-ability
                                       state side
                                       (-> trash-hardware
@@ -958,7 +957,7 @@
                         :msg "swap it for an asset or agenda from HQ"
                         :effect (req (let [tidx (ice-index state card)
                                            srvcont (get-in @state (cons :corp (:zone card)))
-                                           c (get card :advance-counter 0)
+                                           c (:advance-counter (get-card state card) 0)
                                            newcard (assoc target :zone (:zone card) :advance-counter c)
                                            newcont (apply conj (subvec srvcont 0 tidx) newcard (subvec srvcont tidx))]
                                        (resolve-ability state side
