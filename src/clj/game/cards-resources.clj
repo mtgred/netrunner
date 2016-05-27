@@ -28,7 +28,7 @@
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
                                  :choices {:req #(and (card-is? % :side :runner) (installed? %) (not (card-is? % :cid (:cid card))))}
                                  :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}
-                               card nil))}]}
+                                card nil))}]}
 
    "Akshara Sareen"
    {:in-play [:click 1 :click-per-turn 1]
@@ -43,7 +43,7 @@
 
    "All-nighter"
    {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
-                  :msg "gain [Click][Click]"}]}
+                 :msg "gain [Click][Click]"}]}
 
    "Angel Arena"
    {:prompt "How many power counters?"
@@ -87,7 +87,7 @@
     :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
                  :label "Take any number of [Credits] on Bank Job"
                  :prompt "How many [Credits]?"
-                 :choices [:counter :credit]
+                 :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
                  :effect (req (gain state side :credit target)
                               (register-successful-run state side (:server run))

@@ -785,12 +785,12 @@
                 {:label "Move any number of [Credits] to your credit pool"
                  :cost [:click 1]
                  :prompt "How many [Credits]?"
-                 :choices [:counter :credit]
+                 :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
                  :effect (effect (gain :credit target))}
                 {:label "[Trash]: Move any number of [Credits] to your credit pool"
                  :prompt "How many [Credits]?"
-                 :choices [:counter :credit]
+                 :choices {:counter :credit}
                  :msg (msg "trash it and gain " target " [Credits]")
                  :effect (effect (gain :credit target) (trash card))}]}
 

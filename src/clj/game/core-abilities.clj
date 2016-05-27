@@ -127,12 +127,19 @@
         args {:priority priority :cancel-effect cancel-effect}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
-     (if (:req choices)
+     (cond
+       ;; a counter prompt
+       (:counter choices)
+       (prompt! state s card prompt choices ab args)
        ;; a select prompt
+       (:req choices)
        (show-select state s card ability {:priority priority})
        ;; a :number prompt
+       (:number choices)
        (let [n ((:number choices) state side card targets)]
-         (prompt! state s card prompt {:number n} ab args)))
+         (prompt! state s card prompt {:number n} ab args))
+       ;; unknown choice
+       :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
      (let [cs (if-not (fn? choices)
                 choices ; :credit or :counter

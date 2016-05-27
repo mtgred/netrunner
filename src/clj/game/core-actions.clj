@@ -100,10 +100,10 @@
       ;; The user did not choose "cancel"
       (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
             (pay state side card :credit choice))
-          (when (and (vector? (:choices prompt))
-                     (= (first (:choices prompt)) :counter))
+          (when (and (map? (:choices prompt))
+                     (:counter (:choices prompt)))
             ;; :Counter prompts deduct counters from the card
-            (add-counter state side (:card prompt) (second (:choices prompt)) (- choice)))
+            (add-counter state side (:card prompt) (:counter (:choices prompt)) (- choice)))
           ;; trigger the prompt's effect function
           ((:effect prompt) (or choice card)))
       (when-let [cancel-effect (:cancel-effect prompt)]
