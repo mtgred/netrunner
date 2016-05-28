@@ -355,8 +355,6 @@
    "Surat City Grid"
    {:events
     {:rez {:req (req (and (= (card->server state target) (card->server state card))
-                          (not (and (is-central? (card->server state card))
-                                    (= (card->server state target) (card->server state card))))
                           (not= (:cid target) (:cid card))
                           (seq (filter #(and (not (rezzed? %))
                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))))
