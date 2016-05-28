@@ -220,6 +220,33 @@
       (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
       (is (= 3 (:click (get-runner)))))))
 
+(deftest ixodidae
+  "Ixodidae should not trigger on psi-games"
+  (do-game
+    (new-game (default-corp [(qty "Snowflake" 1)])
+              (default-runner [(qty "Ixodidae" 1) (qty "Lamprey" 1)]))
+    (play-from-hand state :corp "Snowflake" "HQ")
+    (take-credits state :corp)
+    (is (= 7 (:credit (get-corp))) "Corp at 7 credits")
+    (play-from-hand state :runner "Ixodidae")
+    (play-from-hand state :runner "Lamprey")
+    (is (= 3 (:credit (get-runner))) "Runner paid 3 credits to install Ixodidae and Lamprey")
+    (run-on state :hq)
+    (let [s (get-ice state :hq 0)]
+      (core/rez state :corp s)
+      (card-ability state :corp s 0)
+      (is (prompt-is-card? :corp s) "Corp prompt is on Snowflake")
+      (is (prompt-is-card? :runner s) "Runner prompt is on Snowflake")
+      (is (= 6 (:credit (get-corp))) "Corp paid 1 credit to rezz Snowflake")
+      (prompt-choice :corp "1")
+      (prompt-choice :runner "1")
+      (is (= 5 (:credit (get-corp))) "Corp paid 1 credit to psi game")
+      (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game")
+      (run-continue state)
+      (run-successful state)
+      (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
+      (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
+
 (deftest lamprey
   "Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge"
   (do-game
