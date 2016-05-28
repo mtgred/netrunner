@@ -59,14 +59,20 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive] :as options}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)]
+   (let [zone (if host (map to-keyword (:zone host)) zone)
+         src-zone (first zone)
+         target-zone (if (vector? to) (first to) to)
+         same-zone? (= src-zone target-zone)]
      (when (and card (or host
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone)))))
                 (not (seq (get-in @state [side :locked zone]))))
-       (doseq [h (:hosted card)]
-         (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
+       (if (not same-zone?)
+         (doseq [h (:hosted card)]
+           (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
+         nil)
        (let [dest (if (sequential? to) (vec to) [to])
+             hosted (if same-zone? (:hosted card) nil)
              c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
@@ -74,7 +80,7 @@
                         (not (:facedown c)))
                  (deactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
-             moved-card (assoc c :zone dest :host nil :hosted nil :previous-zone (:zone c))
+             moved-card (assoc c :zone dest :host nil :hosted hosted :previous-zone (:zone c))
              moved-card (if (and (:facedown moved-card) (:installed moved-card))
                           (deactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
