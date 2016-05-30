@@ -315,8 +315,8 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:effect (effect (add-counter card :agenda 2))
-    :abilities [{:counter-cost [:agenda 1]
+   {:effect (effect (add-counter card :power 2))
+    :abilities [{:counter-cost [:power 1]
                  :effect (effect (prevent-jack-out))
                  :msg "prevent the Runner from jacking out"}]}
 
