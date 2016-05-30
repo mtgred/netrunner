@@ -437,6 +437,17 @@
    {:effect (effect (add-prop card :counter 3))
     :abilities [{:counter-cost 1 :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
+   "Puppet Master"
+   {:events {:successful-run
+             {:effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
+                           (resolve-ability
+                             state :corp
+                             {:prompt "Choose a card to place 1 advancement token on with Puppet Master" :player :corp
+                              :choices {:req can-be-advanced?}
+                              :msg (msg "place 1 advancement token on " (card-str state target))
+                              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
+                                              (clear-wait-prompt :runner))} card nil))}}}
+
    "Quantum Predictive Model"
    {:steal-req (req (not tagged))
     :access {:req (req tagged)
