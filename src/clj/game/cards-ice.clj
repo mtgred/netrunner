@@ -22,7 +22,7 @@
   "Adds 1 power counter to the card."
   {:label "Add 1 power counter"
    :msg "add 1 power counter"
-   :effect (effect (add-prop card :counter 1))})
+   :effect (effect (add-counter card :power 1))})
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -62,7 +62,7 @@
   [{:keys [label msg] :as ability}]
   (assoc ability :label (str "Hosted power counter: " label)
                  :msg (str msg " using 1 power counter")
-                 :counter-cost 1))
+                 :counter-cost [:power 1]))
 
 (defn do-psi
   "Start a psi game, if not equal do ability"
@@ -405,9 +405,9 @@
    {:prompt "How many power counters?"
     :choices :credit
     :msg (msg "add " target " power counters")
-    :effect (effect (add-prop card :counter target)
+    :effect (effect (add-counter card :power target)
                     (update-ice-strength card))
-    :strength-bonus (req (or (:counter card) 0))
+    :strength-bonus (req (get-in card [:counter :power] 0))
     :abilities [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                   :msg "give the Runner 1 tag and end the run"
                                   :effect (effect (tag-runner :runner 1)
@@ -772,10 +772,10 @@
    "Quicksand"
    {:abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
                  :label "Add 1 power counter"
-                 :effect (effect (add-prop card :counter 1)
+                 :effect (effect (add-counter card :power 1)
                                  (update-all-ice))}
                  end-the-run]
-    :strength-bonus (req (or (:counter card) 0))}
+    :strength-bonus (req (get-in card [:counter :power]))}
 
    "Rainbow"
    {:abilities [end-the-run]}
@@ -860,8 +860,8 @@
    {:abilities [{:req (req (= current-ice card))
                  :label "Reveal all cards in the Runner's Grip"
                  :msg (msg "reveal " (join ", " (map :title (:hand runner))))}
-                {:req (req (> (:counter card 0) 0))
-                 :counter-cost 1
+                {:req (req (> (get-in card [:counter :power] 0) 0))
+                 :counter-cost [:power 1]
                  :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
                  :msg (msg "look at all cards in Grip and trash " (:title target)
                            " using 1 power counter")

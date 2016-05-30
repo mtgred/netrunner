@@ -13,11 +13,11 @@
     (let [ac (get-content state :remote1 0)]
       (core/rez state :corp ac)
       (is (= 1 (get-in @state [:corp :credit])))
-      (is (= 12 (get-in (refresh ac) [:counter])) "12 counters on Adonis")
+      (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 6 (get-in @state [:corp :credit])) "Gain 3 from Adonis")
-      (is (= 9 (get-in (refresh ac) [:counter]))) "9 counter remaining on Adonis")))
+      (is (= 9 (get-counters (refresh ac) :credit))) "9 counter remaining on Adonis")))
 
 (deftest aggressive-secretary
   (do-game
@@ -26,6 +26,7 @@
       (default-runner [(qty "Cache" 3)]))
     (play-from-hand state :corp "Aggressive Secretary" "New remote")
     (let [as (get-content state :remote1 0)]
+      ;; Single advance AggSec
       (core/advance state :corp as)
       (take-credits state :corp)
       ;; Run on AggSec with 3 programs
@@ -35,9 +36,10 @@
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes")
       (is (= 3 (get-in @state [:corp :credit])))
+      ;; Corp can trash one program
       (prompt-select :corp (get-in @state [:runner :rig :program 1]))
       (prompt-choice :corp "Done")
-      ;; There should be one Cache left
+      ;; There should be two Caches left
       (is (= 3 (get-in @state [:corp :credit])))
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))
 
@@ -53,7 +55,7 @@
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (= 2 (get-in (refresh alix) [:counter])) "Two counters on Alix")
+      (is (= 2 (get-counters (refresh alix) :power)) "Two counters on Alix")
       (is (= 4 (get-in @state [:corp :credit])))
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
@@ -267,11 +269,11 @@
     (let [eve (get-content state :remote1 0)]
       (core/rez state :corp eve)
       (is (= 0 (get-in @state [:corp :credit])))
-      (is (= 16 (get-in (refresh eve) [:counter])))
+      (is (= 16 (get-counters (refresh eve) :credit)))
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 4 (get-in @state [:corp :credit])))
-      (is (= 14 (get-in (refresh eve) [:counter]))))))
+      (is (= 14 (get-counters (refresh eve) :credit))))))
 
 (deftest executive-boot-camp-suppress-start-of-turn
   "Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346."
@@ -290,14 +292,14 @@
       (card-ability state :corp ebc 0)
       (prompt-select :corp eve)
       (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
-      (is (= 16 (get-in (refresh eve) [:counter])))
+      (is (= 16 (get-counters (refresh eve) :credit)))
       (core/end-phase-12 state :corp nil)
       (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
-      (is (= 16 (get-in (refresh eve) [:counter])) "Did not take counters from Eve")
+      (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
       (take-credits state :corp)
       (take-credits state :runner)
       (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
-      (is (= 14 (get-in (refresh eve) [:counter])) "Took counters from Eve"))))
+      (is (= 14 (get-counters (refresh eve) :credit)) "Took counters from Eve"))))
 
 (deftest franchise-city
   (do-game
@@ -399,26 +401,26 @@
       (core/rez state :corp wos)
       (card-ability state :corp itd 1)
       (is (= 0 (:click (get-corp))) "Spent 1 click")
-      (is (= 1 (:counter (refresh itd))) "IT Dept has 1 counter")
-      (core/add-prop state :corp (refresh itd) :counter 4)
-      (is (= 5 (:counter (refresh itd))) "IT Dept has 5 counters")
+      (is (= 1 (get-counters (refresh itd) :power)) "IT Dept has 1 counter")
+      (core/add-counter state :corp (refresh itd) :power 4)
+      (is (= 5 (get-counters (refresh itd) :power)) "IT Dept has 5 counters")
       (card-ability state :corp itd 0)
       (prompt-select :corp wos)
       ;; refer to online guides for summary of how this ludicrous formula is calculated
       (is (= 8 (:current-strength (refresh wos))) "Gained 5 strength")
-      (is (= 4 (:counter (refresh itd))) "Spent 1 counter")
+      (is (= 4 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 0)
       (prompt-select :corp wos)
       (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
-      (is (= 3 (:counter (refresh itd))) "Spent 1 counter")
+      (is (= 3 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 0)
       (prompt-select :corp wos)
       (is (= 12 (:current-strength (refresh wos))) "Gained total of 9 strength")
-      (is (= 2 (:counter (refresh itd))) "Spent 1 counter")
+      (is (= 2 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (card-ability state :corp itd 0)
       (prompt-select :corp wos)
       (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
-      (is (= 1 (:counter (refresh itd))) "Spent 1 counter")
+      (is (= 1 (get-counters (refresh itd) :power)) "Spent 1 counter")
       (take-credits state :corp)
       (is (= 3 (:current-strength (refresh wos))) "Back to default strength"))))
 
@@ -447,11 +449,11 @@
     (let [launch (get-content state :remote1 0)]
       (core/rez state :corp launch)
       (is (= 4 (get-in @state [:corp :credit])))
-      (is (= 6 (get-in (refresh launch) [:counter])))
+      (is (= 6 (get-counters (refresh launch) :credit)))
       (take-credits state :corp 2)
       (take-credits state :runner)
       (is (= 8 (get-in @state [:corp :credit])))
-      (is (= 4 (get-in (refresh launch) [:counter]))))))
+      (is (= 4 (get-counters (refresh launch) :credit))))))
 
 (deftest mark-yale
   "Mark Yale - Spend agenda counters or trash himself to gain credits"
@@ -465,23 +467,23 @@
       (score-agenda state :corp firm)
       (core/rez state :corp yale)
       (let [firmscored (get-in @state [:corp :scored 0])]
-        (is (= 3 (get-in (refresh firmscored) [:counter])))
+        (is (= 3 (get-counters (refresh firmscored) :agenda)))
         (card-ability state :corp yale 1)
         (prompt-select :corp firmscored)
         (is (= 7 (:credit (get-corp))) "Gained 3 credits")
-        (is (= 2 (get-in (refresh firmscored) [:counter])))
+        (is (= 2 (get-counters (refresh firmscored) :agenda)))
         (card-ability state :corp yale 1)
         (prompt-select :corp firmscored)
         (is (= 10 (:credit (get-corp))) "Gained 3 credits")
-        (is (= 1 (get-in (refresh firmscored) [:counter])))
+        (is (= 1 (get-counters (refresh firmscored) :agenda)))
         (card-ability state :corp yale 1)
         (prompt-select :corp firmscored)
         (is (= 13 (:credit (get-corp))) "Gained 3 credits")
-        (is (= 0 (get-in (refresh firmscored) [:counter])))
+        (is (= 0 (get-counters (refresh firmscored) :agenda)))
         (card-ability state :corp yale 1)
         (prompt-select :corp firmscored)
         (is (= 13 (:credit (get-corp))) "Gained 0 credits because agenda needs a counter")
-        (is (= 0 (get-in (refresh firmscored) [:counter])))
+        (is (= 0 (get-counters (refresh firmscored) :agenda)))
         (card-ability state :corp yale 0)
         (is (= 15 (:credit (get-corp))) "Gained 2 credits")
         (is (= 1 (count (:discard (get-corp)))) "Mark Yale trashed")))))
@@ -590,11 +592,11 @@
 
       ;; Runner turn 1, creds
       (is (= 2 (:credit (get-corp))))
-      (is (= 3 (get-in (refresh publics1) [:counter])))
+      (is (= 3 (get-counters (refresh publics1) :power)))
       (take-credits state :runner)
 
       ;; Corp turn 2, creds, check if supports are ticking
-      (is (= 2 (get-in (refresh publics1) [:counter])))
+      (is (= 2 (get-counters (refresh publics1) :power)))
       (is (= 0 (:agenda-point (get-corp))))
       (is (nil? (:agendapoints (refresh publics1))))
       (take-credits state :corp)
@@ -606,7 +608,7 @@
       (take-credits state :runner)
 
       ;; Corp turn 3, check how publics1 is doing
-      (is (= 1 (get-in (refresh publics1) [:counter])))
+      (is (= 1 (get-counters (refresh publics1) :power)))
       (is (= 0 (:agenda-point (get-corp))))
       (take-credits state :corp)
 
@@ -707,16 +709,16 @@
       (core/rez state :corp sv)
       (card-ability state :corp sv 0)
       (prompt-choice :corp 8)
-      (is (= 8 (:counter (refresh sv))) "8 credits stored on Sealed Vault")
+      (is (= 8 (get-counters (refresh sv) :credit)) "8 credits stored on Sealed Vault")
       (is (= 0 (:credit (get-corp))))
       (card-ability state :corp sv 1)
       (prompt-choice :corp 8)
-      (is (= 0 (:counter (refresh sv))) "Credits removed from Sealed Vault")
+      (is (= 0 (get-counters (refresh sv) :credit)) "Credits removed from Sealed Vault")
       (is (= 8 (:credit (get-corp))))
       (is (= 0 (:click (get-corp))) "Spent a click")
       (card-ability state :corp sv 0)
       (prompt-choice :corp 7)
-      (is (= 7 (:counter (refresh sv))) "7 credits stored on Sealed Vault")
+      (is (= 7 (get-counters (refresh sv) :credit)) "7 credits stored on Sealed Vault")
       (is (= 0 (:credit (get-corp))))
       (card-ability state :corp sv 2)
       (prompt-choice :corp 7)

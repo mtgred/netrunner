@@ -611,7 +611,7 @@
 
    "Titan Transnational: Investing In Your Future"
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))
-                             :effect (effect (add-prop target :counter 1))}}}
+                             :effect (effect (add-counter target :agenda 1))}}}
 
    "Valencia Estevez: The Angel of Cayambe"
    {:events {:pre-start-game

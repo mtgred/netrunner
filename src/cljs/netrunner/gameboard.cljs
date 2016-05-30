@@ -463,10 +463,12 @@
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
-                                    norm-type (lower-case counter-type)
-                                    selector (str "div.darkbg." norm-type "-counter.counter")]
-                                [(keyword selector) counter]))
+         (when counter
+           (map (fn [[type num-counters]]
+                  (when (pos? num-counters)
+                    (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                     [(keyword selector) num-counters])))
+                counter))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
@@ -885,27 +887,35 @@
                         [:button {:on-click #(send-command "choice"
                                                            {:choice (-> "#credit" js/$ .val js/parseInt)})}
                          "OK"]]
-                       (case (:choices prompt)
-                         "credit" [:div
-                                   [:div.credit-select
-                                    [:select#credit (for [i (range (inc (:credit me)))]
-                                                      [:option {:value i} i])] " credits"]
-                                   [:button {:on-click #(send-command "choice"
-                                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                    "OK"]]
-                         "counter" [:div
-                                    [:div.credit-select
-                                     [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
-                                                       [:option {:value i} i])] " credits"]
-                                    [:button {:on-click #(send-command "choice"
-                                                                       {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                     "OK"]]
-                         (for [c (:choices prompt)]
-                           (if (string? c)
-                             [:button {:on-click #(send-command "choice" {:choice c})}
-                              (for [item (get-message-parts c)] (create-span item))]
-                             (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                               [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
+                        (cond
+                            ;; choice of number of credits
+                            (= (:choices prompt) "credit")
+                            [:div
+                             [:div.credit-select
+                              [:select#credit (for [i (range (inc (:credit me)))]
+                                                [:option {:value i} i])] " credits"]
+                             [:button {:on-click #(send-command "choice"
+                                                                {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                              "OK"]]
+                            ;; choice of specified counters on card
+                            (:counter (:choices prompt))
+                            (let [counter-type (keyword (:counter (:choices prompt)))
+                                  num-counters (get-in prompt [:card :counter counter-type] 0)]
+                              [:div
+                               [:div.credit-select
+                                [:select#credit (for [i (range (inc num-counters))]
+                                                  [:option {:value i} i])] " credits"]
+                               [:button {:on-click #(send-command "choice"
+                                                                  {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                "OK"]])
+                            ;; otherwise choice of all present choices
+                            :else
+                            (for [c (:choices prompt)]
+                              (if (string? c)
+                                [:button {:on-click #(send-command "choice" {:choice c})}
+                                 (for [item (get-message-parts c)] (create-span item))]
+                                (let [[title code] (extract-card-info (add-image-codes (:title c)))]
+                                  [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))

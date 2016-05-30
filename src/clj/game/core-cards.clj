@@ -4,7 +4,7 @@
          has-subtype? register-events remove-from-host remove-icon rezzed?
          trash update-hosted! update-ice-strength unregister-events)
 
-; Functions for loading card information.
+;;; Functions for loading card information.
 (defn card-def
   "Retrieves a card's abilities definition map."
   [card]
@@ -41,7 +41,7 @@
                   (get-in @state (cons (to-keyword side) zones))))))
       card)))
 
-; Functions for updating cards
+;;; Functions for updating cards
 (defn update!
   "Updates the state so that its copy of the given card matches the argument given."
   [state side {:keys [type zone cid host] :as card}]
@@ -134,7 +134,20 @@
   [state side card & args]
   (update! state side (apply assoc (cons card args))))
 
-; Deck-related functions
+(defn add-counter
+  "Adds n counters of the specified type to a card"
+  ([state side card type n] (add-counter state side card type n nil))
+  ([state side card type n {:keys [placed] :as args}]
+   (let [updated-card (if (= type :virus)
+                        (assoc card :added-virus-counter true)
+                        card)]
+     (update! state side (update-in updated-card [:counter type] #(+ (or % 0) n)))
+     (if (= type :advancement)
+       ;; if advancement counter use existing system
+       (add-prop state side card :advancement n args)
+       (trigger-event state side :counter-added (get-card state updated-card))))))
+
+;;; Deck-related functions
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
@@ -149,12 +162,12 @@
     (doseq [p zones]
       (swap! state assoc-in [side p] []))))
 
-; Misc card functions
+;;; Misc card functions
 (defn get-virus-counters
   "Calculate the number of virus countes on the given card, taking Hivemind into account."
   [state side card]
   (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
-    (reduce + (map #(get % :counter 0) (cons card hiveminds)))))
+    (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

@@ -88,8 +88,8 @@
   "Breaker from the dog set"
   [type]
   (auto-icebreaker [type]
-                   {:data {:counter 4}
-                    :abilities [{:counter-cost 1
+                   {:data {:counter {:power 4}}
+                    :abilities [{:counter-cost [:power 1]
                                  :msg (str "break up to 2 " (lower-case type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
@@ -169,9 +169,9 @@
    {:prompt "How many power counters?"
     :choices :credit
     :msg (msg "add " target " power counters")
-    :effect (effect (add-prop card :counter target))
+    :effect (effect (add-counter card :power target))
     :abilities [(break-sub 1 1)]
-    :strength-bonus (req (or (:counter card) 0))
+    :strength-bonus (req (get-in card [:counter :power] 0))
     :events {:counter-added {:req (req (= :cid target) (:cid card))
                              :effect (effect (update-breaker-strength card))}}}
 
@@ -242,8 +242,8 @@
                     {:abilities [(break-sub 1 1 "ice")
                                  (strength-pump 1 1)
                                  {:cost [:click 1] :msg "place 1 virus counter"
-                                  :effect (effect (add-prop card :counter 1))}
-                                 {:counter-cost 1
+                                  :effect (effect (add-counter card :virus 1))}
+                                 {:counter-cost [:virus 1]
                                   :label "Remove 1 hosted virus counter"
                                   :msg "remove 1 virus counter"}]})
 
@@ -269,7 +269,7 @@
                  :cost [:credit 1]
                  :msg "place 1 virus counter"
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (add-prop card :counter 1)
+                 :effect (effect (add-counter card :virus 1)
                                  (update-breaker-strength card))}]
     :strength-bonus (req (or (get-virus-counters state side card) 0))}
 
@@ -408,8 +408,9 @@
 
    "Overmind"
    (auto-icebreaker ["All"]
-                    {:effect (effect (set-prop card :counter (:memory runner)))
-                     :abilities [{:counter-cost 1 :msg "break 1 subroutine"}
+                    {:effect (effect (add-counter card :power (:memory runner)))
+                     :abilities [{:counter-cost [:power 1]
+                                  :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
 
    "Peacock"
@@ -461,9 +462,9 @@
    "Study Guide"
    {:abilities [(break-sub 1 1 "code gate")
                 {:cost [:credit 2] :msg "place 1 power counter"
-                 :effect (effect (add-prop card :counter 1)
+                 :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}]
-    :strength-bonus (req (:counter card 0))}
+    :strength-bonus (req (get-in card [:counter :power] 0))}
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]

@@ -586,7 +586,36 @@
       (core/advance state :corp {:card (refresh atl)})
       (core/score state :corp {:card (refresh atl)})
       (let [scored (get-in @state [:corp :scored 0])]
-        (is (= 1 (:counter scored)) "1 counter added by Titan")))))
+        (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
+
+(deftest titan-corporate-sales-team
+  "Titan, only use one counter of Corporate Sales Team"
+  (do-game
+    (new-game
+      (make-deck "Titan Transnational: Investing In Your Future" [(qty "Corporate Sales Team" 1) (qty "Mark Yale" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Corporate Sales Team" "New remote")
+    (play-from-hand state :corp "Mark Yale" "New remote")
+    (let [cst (get-content state :remote1 0)
+          my (get-content state :remote2 0)]
+      (core/gain state :corp :click 3)
+      (core/advance state :corp {:card (refresh cst)})
+      (core/advance state :corp {:card (refresh cst)})
+      (core/advance state :corp {:card (refresh cst)})
+      (core/advance state :corp {:card (refresh cst)})
+      (core/score state :corp {:card (refresh cst)})
+      (let [scored (get-in @state [:corp :scored 0])]
+        (is (= 1 (get-counters (refresh scored) :agenda)) "1 counter added by Titan")
+        (is (= 10 (get-counters (refresh scored) :credit)) "10 credits from Titan")
+        (core/rez state :corp my)
+        (card-ability state :corp my 1)
+        (prompt-select :corp (refresh scored))
+        (is (= 0 (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
+        (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
+        (card-ability state :corp my 1)
+        (prompt-select :corp (refresh scored))
+        (is (= 0 (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
+        (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
 
 (deftest wyvern-chemically-enhanced
   "Wyvern: Chemically Enhanced - Ability"

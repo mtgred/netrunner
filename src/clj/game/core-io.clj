@@ -87,10 +87,11 @@
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
-(defn command-counter [state side value]
+;; This command will no longer work as specified with rewrite, need to allow for type specifying
+#_(defn command-counter [state side type value]
   (resolve-ability state side
-                   {:effect (effect (set-prop target :counter value)
-                                    (system-msg (str "sets counters to " value " on " (card-str state target))))
+                   {:effect (effect (set-prop target :counter {type value})
+                                    (system-msg (str "sets " (name type) " counters to " value " on " (card-str state target))))
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/counter command"} nil))
 
@@ -134,7 +135,7 @@
                                                                                 (card-str state target) ": " (get-card state target))))
                                                :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/card-info command"} nil)
-        "/counter"    #(command-counter %1 %2 value)
+        ;; "/counter"    #(command-counter %1 %2 type num)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/end-run"    #(when (= %2 :corp) (end-run %1 %2))

@@ -15,7 +15,7 @@
     (prompt-choice :runner 0)
     (is (= 3 (:memory (get-runner))))
     (let [atman (get-in @state [:runner :rig :program 0])]
-      (is (= 0 (:counter atman)) "0 power counters")
+      (is (= 0 (get-counters atman :power)) "0 power counters")
       (is (= 0 (:current-strength atman)) "0 current strength"))))
 
 (deftest atman-install-2
@@ -28,7 +28,7 @@
     (prompt-choice :runner 2)
     (is (= 3 (:memory (get-runner))))
     (let [atman (get-in @state [:runner :rig :program 0])]
-      (is (= 2 (:counter atman)) "2 power counters")
+      (is (= 2 (get-counters atman :power)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
 (deftest chameleon-clonechip
@@ -84,7 +84,7 @@
    (play-from-hand state :runner "Cerberus \"Rex\" H2")
    (is (= 2 (:credit (get-runner))) "2 credits left after install")
    (let [rex (get-in @state [:runner :rig :program 0])]
-     (is (= 4 (:counter rex)) "Start with 4 counters")
+     (is (= 4 (get-counters rex :power)) "Start with 4 counters")
      ;; boost strength
      (card-ability state :runner rex 1)
      (is (= 1 (:credit (get-runner))) "Spend 1 credit to boost")
@@ -92,7 +92,7 @@
      ;; break
      (card-ability state :runner rex 0)
      (is (= 1 (:credit (get-runner))) "No credits spent to break")
-     (is (= 3 (:counter (refresh rex))) "One counter used to break"))))
+     (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
 (deftest faust-pump
   "Faust - Pump by discarding"
@@ -167,7 +167,7 @@
     (play-from-hand state :runner "Overmind")
     (is (= 5 (:memory (get-runner))))
     (let [ov (get-in @state [:runner :rig :program 0])]
-      (is (= 5 (:counter (refresh ov))) "Overmind has 5 counters"))))
+      (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest shiv
   "Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link"
@@ -235,11 +235,11 @@
    (let [sg (get-program state 0)]
      (card-ability state :runner sg 1)
      (is (= 4 (:credit (get-runner))) "Paid 2c")
-     (is (= 1 (:counter (refresh sg))) "Has 1 power counter")
+     (is (= 1 (get-counters (refresh sg) :power)) "Has 1 power counter")
      (is (= 1 (:current-strength (refresh sg))) "1 strength")
      (card-ability state :runner sg 1)
      (is (= 2 (:credit (get-runner))) "Paid 2c")
-     (is (= 2 (:counter (refresh sg))) "Has 2 power counters")
+     (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
      (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
 
 (deftest wyrm

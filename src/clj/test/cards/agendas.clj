@@ -66,14 +66,14 @@
             (should-not-place [from to msg]
               (try-place from to)
               (prompt-choice :corp "Done")
-              (is (= 1 (:counter (refresh from)))
+              (is (= 1 (get-counters (refresh from) :agenda))
                   (str (:title from)" token was not used on " (:title to) msg))
               (is (or (= nil (:advance-counter (refresh to)))
                       (= 0 (:advance-counter (refresh to))))
                   (str "Advancement token not placed on " (:title to) msg)))
             (should-place [from to msg]
               (try-place from to)
-              (is (= 0 (:counter (refresh from)))
+              (is (= 0 (get-counters (refresh from) :agenda))
                   (str (:title from) " token was used on " (:title to) msg))
               (is (= 1 (:advance-counter (refresh to)))
                   (str "Advancement token placed on " (:title to) msg)))]
@@ -107,7 +107,8 @@
       (core/add-prop state :corp bt :advance-counter 7)
       (core/score state :corp {:card (refresh bt)})
       (let [scored-bt (get-in @state [:corp :scored 0])]
-        (is (= 2 (:counter (refresh scored-bt))) "Scored w/ 4 over-advancements; 2 agenda counters")
+        (is (= 2 (get-counters (refresh scored-bt) :agenda))
+            "Scored w/ 4 over-advancements; 2 agenda counters")
         (play-from-hand state :corp "Ichi 1.0" "HQ")
         (core/rez state :corp (get-ice state :hq 0))
         (is (= 2 (:credit (get-corp))) "2c discount to rez Ichi")))))
@@ -224,13 +225,13 @@
           gr (get-content state :remote3 0)]
       (score-agenda state :corp bt1)
       (let [btscored (get-in @state [:corp :scored 0])]
-        (is (= 0 (:counter (refresh btscored))) "No agenda counters on scored Braintrust")
+        (is (= 0 (get-counters (refresh btscored) :agenda)) "No agenda counters on scored Braintrust")
         (score-agenda state :corp gr)
         (prompt-select :corp bt2)
-        (is (nil? (:counter (refresh bt2)))
+        (is (zero? (get-counters (refresh bt2) :agenda))
             "No agenda counters on installed Braintrust; not a valid target")
         (prompt-select :corp btscored)
-        (is (= 1 (:counter (refresh btscored)))
+        (is (= 1 (get-counters (refresh btscored) :agenda))
             "1 agenda counter placed on scored Braintrust")))))
 
 (deftest government-contracts
@@ -254,7 +255,7 @@
     (let [hri (get-content state :remote1 0)]
       (score-agenda state :corp hri)
       (let [hriscored (get-in @state [:corp :scored 0])]
-        (is (= 1 (:counter (refresh hriscored))) "Has 1 agenda counter")
+        (is (= 1 (get-counters (refresh hriscored) :agenda)) "Has 1 agenda counter")
         (take-credits state :corp)
         (is (= 7 (:credit (get-corp))))
         (take-credits state :runner)
@@ -262,7 +263,7 @@
         (card-ability state :corp hriscored 0)
         (is (= 16 (:credit (get-corp))) "Gained 9 credits")
         (is (= 2 (:click (get-corp))) "Spent 1 click")
-        (is (= 0 (:counter (refresh hriscored))) "Spent agenda counter")))))
+        (is (= 0 (get-counters (refresh hriscored) :agenda)) "Spent agenda counter")))))
 
 (deftest hostile-takeover
   "Hostile Takeover - Gain 7 credits and take 1 bad publicity"
@@ -357,7 +358,7 @@
    (play-from-hand state :corp "Nisei MK II" "New remote")
    (score-agenda state :corp (get-content state :remote1 0))
    (let [scored-nisei (get-in @state [:corp :scored 0])]
-     (is (= 1 (:counter scored-nisei)) "Scored Nisei has one counter")
+     (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
      (take-credits state :corp)
 
      (run-on state "HQ")
@@ -365,7 +366,7 @@
      (card-ability state :corp (refresh scored-nisei) 0)
      (prompt-choice :corp "Done") ; close 4.3 corp
      (is (not (:run @state)) "Run ended by using Nisei counter")
-     (is (= 0 (:counter (refresh scored-nisei))) "Scored Nisei has no counters"))))
+     (is (= 0 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
 
 (deftest oaktown-renovation
   "Oaktown Renovation - Installed face up, gain credits with each conventional advancement"
