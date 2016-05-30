@@ -1029,13 +1029,16 @@
                                              (register-run-flag! card :no-agenda-stolen (constantly false)))}
              :run-ends {:req (req (and (run-flag? state side card :no-agenda-stolen)
                                        (#{:hq :rd} target)))
-                        :effect (effect (add-prop card :counter 1))}}
-    :abilities [{:req (req (and (:run @state)
-                                (#{[:hq] [:rd]} (:server run))
-                                (> (:counter card 0) 1)))
-                 :msg "access 1 additional card for the remainder of the run"
-                 :effect (effect (add-prop card :counter -2)
-                                 (access-bonus 1))}]}
+                        :effect (effect (add-prop card :counter 1)
+                                        (unregister-events card)
+                                        (register-events (:events (card-def card)) card))}
+             :successful-run nil}
+    :abilities [{:counter-cost 2
+                 :req (req (:run @state))
+                 :msg "access 1 additional card from HQ or R&D for the remainder of the run"
+                 :effect (effect (register-events
+                                   {:successful-run {:req (req (#{:hq :rd} target))
+                                                     :effect (effect (access-bonus 1))}} card))}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
