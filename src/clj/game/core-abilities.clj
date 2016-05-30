@@ -331,9 +331,9 @@
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (do (clear-wait-prompt state opponent)
-          (lose state opponent :credit opponent-bet)
+          (gain state opponent :credit (- opponent-bet))
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-          (lose state side :credit bet)
+          (gain state side :credit (- bet))
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side :psi-game nil)
           (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
