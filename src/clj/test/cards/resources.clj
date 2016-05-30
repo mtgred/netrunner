@@ -842,10 +842,7 @@
                                (qty "Torch" 1)
                                (qty "Sure Gamble" 2)]))
     (take-credits state :corp)
-    ;; move Gordian back to deck
-    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
     (play-from-hand state :runner "Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
@@ -861,10 +858,7 @@
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 3)]))
     (take-credits state :corp)
-    ;; move Gordian back to deck
-    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler"])
     (play-from-hand state :runner "Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner sp 0)
@@ -885,10 +879,7 @@
                                                                    (qty "Gordian Blade" 1)
                                                                    (qty "Sure Gamble" 2)]))
     (take-credits state :corp)
-    ;; move Gordian back to deck
-    (core/move state :runner (find-card "Gordian Blade" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler"])
     (play-from-hand state :runner "Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       ;; should still be able to afford Gordian w/ Kate discount
@@ -907,10 +898,7 @@
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1) (qty "Corroder" 3)]))
     (take-credits state :corp)
-    ;; move Corroders back to deck
-    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Corroder" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler"])
     (play-from-hand state :runner "Street Peddler")
     (is (= 4 (:memory (get-runner))) "No memory cost for hosting on Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
@@ -927,10 +915,7 @@
    (new-game (default-corp)
              (default-runner [(qty "Street Peddler" 1) (qty "HQ Interface" 3)]))
    (take-credits state :corp)
-   ;; move HQIs back to deck
-   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
-   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
-   (core/move state :runner (find-card "HQ Interface" (:hand (get-runner))) :deck)
+   (starting-hand state :runner ["Street Peddler"])
    (play-from-hand state :runner "Street Peddler")
    (let [sp (get-in @state [:runner :rig :resource 0])]
      (card-ability state :runner sp 0)
@@ -945,10 +930,7 @@
               (default-runner [(qty "Street Peddler" 1) (qty "Parasite" 3)]))
     (play-from-hand state :corp "Pop-up Window" "HQ")
     (take-credits state :corp 2)
-    ;; move Parasites back to deck
-    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler"])
     (core/lose state :runner :credit 4) ; go down to 1 credit
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
     (play-from-hand state :runner "Street Peddler")
@@ -970,8 +952,7 @@
               (default-runner [(qty "Street Peddler" 1)
                                (qty "Tech Trader" 1)]))
     (take-credits state :corp)
-    ;; move Gordian back to deck
-    (core/move state :runner (find-card "Tech Trader" (:hand (get-runner))) :deck)
+    (starting-hand state :runner ["Street Peddler"])
     (play-from-hand state :runner "Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")

@@ -224,6 +224,50 @@
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
+   "Exchange of Information"
+   {:req (req (and tagged
+                   (seq (:scored runner))
+                   (seq (:scored corp))))
+    :effect (req (resolve-ability
+                   state side
+                   {:prompt "Choose a stolen agenda in the Runner's score area to swap"
+                    :choices {:req #(in-runner-scored? state side %)}
+                    :effect (req (let [r target]
+                                   (resolve-ability
+                                     state side
+                                     {:prompt (msg "Choose a scored agenda to swap for " (:title r))
+                                      :choices {:req #(in-corp-scored? state side %)}
+                                      :effect (req (let [c target
+                                                         rpts-corp (get-agenda-points state :corp r)
+                                                         cpts-corp (get-agenda-points state :corp c)
+                                                         rpts-runner (get-agenda-points state :runner r)
+                                                         cpts-runner (get-agenda-points state :runner c)]
+
+                                                     ; Remove end of turn events for swapped out agenda
+                                                     (swap! state update-in [:corp :register :end-turn]
+                                                       (fn [events] (filter #(not (= (:cid c) (get-in % [:card :cid]))) events)))
+
+                                                     (swap! state update-in [:corp :scored]
+                                                            (fn [coll] (conj (remove-once #(not= (:cid %) (:cid c)) coll) r)))
+                                                     (swap! state update-in [:runner :scored]
+                                                            (fn [coll] (conj (remove-once #(not= (:cid %) (:cid r)) coll)
+                                                                             (dissoc c :abilities :events))))
+                                                     (gain-agenda-point state :runner (- cpts-runner rpts-runner))
+                                                     (gain-agenda-point state :corp (- rpts-corp cpts-corp))
+                                                     (let [newc (find-cid (:cid r) (get-in @state [:corp :scored]))]
+                                                       (let [abilities (:abilities (card-def newc))
+                                                             newc (merge newc {:abilities abilities})]
+                                                         (update! state :corp newc)
+                                                         (when-let [events (:events (card-def newc))]
+                                                          (register-events state side events newc))))
+                                                     (let [newr (find-cid (:cid c) (get-in @state [:runner :scored]))]
+                                                       (deactivate state :corp newr))
+                                                     (system-msg state side (str "uses Exchange of Information to swap "
+                                                                                 (:title c) " for " (:title r)))
+                                                     (effect-completed state side card)))}
+                                    card nil)))}
+                  card nil))}
+
    "Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
