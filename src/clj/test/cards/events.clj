@@ -439,6 +439,28 @@
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 1 (:agenda-point (get-runner)))))))
 
+(deftest push-your-luck-correct-guess
+  "Push Your Luck - Corp guesses correctly"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Push Your Luck" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Push Your Luck")
+    (prompt-choice :corp "Odd")
+    (prompt-choice :runner 3)
+    (is (= 0 (:credit (get-runner))) "Corp guessed correctly")))
+
+(deftest push-your-luck-incorrect-guess
+  "Push Your Luck - Corp guesses incorrectly"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Push Your Luck" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Push Your Luck")
+    (prompt-choice :corp "Even")
+    (prompt-choice :runner 3)
+    (is (= 6 (:credit (get-runner))) "Corp guessed incorrectly")))
+
 (deftest retrieval-run
   "Retrieval Run - Run Archives successfully and install a program from Heap for free"
   (do-game

@@ -550,17 +550,21 @@
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
    "Push Your Luck"
-   {:player :corp :prompt "Guess the amount the Runner will spend on Push Your Luck"
-    :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
-    :effect (req (let [guess target]
-                   (resolve-ability
-                     state :runner
-                     {:choices :credit :prompt "How many credits?"
-                      :msg (msg "spend " target " [Credits]. The Corp guessed " guess)
-                      :effect (req (when (or (and (= guess "Even") (odd? target))
-                                             (and (= guess "Odd") (even? target)))
-                                     (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
-                                     (gain state :runner :credit (* 2 target))))} card nil)))}
+   {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
+                    (resolve-ability
+                      {:player :corp :prompt "Guess whether the Runner will spend an Odd or Even number of credits with Push Your Luck"
+                       :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
+                       :effect (req (let [guess target]
+                                      (clear-wait-prompt state :runner)
+                                      (resolve-ability
+                                        state :runner
+                                        {:choices :credit :prompt "How many credits?"
+                                         :msg (msg "spend " target " [Credits]. The Corp guessed " guess)
+                                         :effect (req (when (or (and (= guess "Even") (odd? target))
+                                                                (and (= guess "Odd") (even? target)))
+                                                        (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
+                                                        (gain state :runner :credit (* 2 target))))} card nil)))}
+                      card nil))}
 
    "Quality Time"
    {:msg "draw 5 cards" :effect (effect (draw 5))}
