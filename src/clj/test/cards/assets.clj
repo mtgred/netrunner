@@ -38,6 +38,7 @@
       (is (= 3 (get-in @state [:corp :credit])))
       ;; Corp can trash one program
       (prompt-select :corp (get-in @state [:runner :rig :program 1]))
+      (prompt-choice :corp "Done")
       ;; There should be two Caches left
       (is (= 3 (get-in @state [:corp :credit])))
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))
