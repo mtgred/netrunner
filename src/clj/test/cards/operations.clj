@@ -119,6 +119,55 @@
     (play-from-hand state :corp "Closed Accounts")
     (is (= 0 (:credit (get-runner))) "Runner lost all credits")))
 
+(deftest consulting-visit
+  "Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation"
+  (do-game
+    (new-game (default-corp [(qty "Consulting Visit" 1) 
+                             (qty "Beanstalk Royalties" 2)
+                             (qty "Green Level Clearance" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Hedge Fund" 1)])
+              (default-runner))
+    (is (= 5 (:credit (get-corp))))
+    (starting-hand state :corp ["Consulting Visit"])
+    (play-from-hand state :corp "Consulting Visit")
+
+    (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+
+      (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
+      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (is (= 6 (:credit (get-corp)))))))
+
+(deftest consulting-visit-mumbad
+  "Consulting Visit - Works properly when played with Mumbad City Hall"
+  (do-game
+    (new-game (default-corp [(qty "Mumbad City Hall" 1)
+                             (qty "Beanstalk Royalties" 1)
+                             (qty "Green Level Clearance" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Hedge Fund" 1)
+                             (qty "Consulting Visit" 1)
+                             (qty "Mumba Temple" 1)])
+              (default-runner))
+    (is (= 5 (:credit (get-corp))))
+    (starting-hand state :corp ["Mumbad City Hall"])
+    (play-from-hand state :corp "Mumbad City Hall" "New remote")
+
+    (let [hall (get-content state :remote1 0)
+          get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+
+      (card-ability state :corp hall 0)
+      (is (= (list "Consulting Visit" "Mumba Temple" nil) (prompt-names)))
+
+      (prompt-choice :corp (find-card "Consulting Visit" (:deck (get-corp))))
+      (is (= 3 (:credit (get-corp))))
+      (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
+
+      (prompt-choice :corp (find-card "Green Level Clearance" (:deck (get-corp))))
+      (is (= 5 (:credit (get-corp)))))))
+
 (deftest defective-brainchips
   "Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn"
   (do-game

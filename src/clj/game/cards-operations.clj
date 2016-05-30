@@ -183,6 +183,18 @@
     :choices {:req ice?}
     :effect (final-effect (gain :credit (or (:advance-counter target) 0)))}
 
+   "Consulting Visit"
+   {:prompt  "Choose an Operation from R&D to play"
+    :choices (req (cancellable 
+             (filter #(and (is-type? % "Operation")
+                           (<= (:cost %) (:credit corp)))
+                      (:deck corp))
+             :sorted))
+    :effect  (final-effect (play-instant target) 
+                           (system-msg "shuffles their deck")
+                           (shuffle! :deck))
+    :msg (msg "search R&D for " (:title target) " and play it")}
+
    "Corporate Shuffle"
    {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
     :effect (effect (shuffle-into-deck :hand) (draw 5))}
