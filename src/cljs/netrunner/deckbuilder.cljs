@@ -173,7 +173,7 @@
         ;; checks card ID against list of currently known alliance cards
         has-alliance-subtype? (fn [card]
                                 (case (:code (:card card))
-                                  (list "10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10109")
+                                  (list "10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10094" "10109")
                                   true
                                   false))
         ;; alliance helper, subtracts influence of free ally cards from given influence map
@@ -195,6 +195,7 @@
                                                "10068" ; Raman Rai
                                                "10071" ; Salem's Hospitality
                                                "10072" ; Executive Search Firm
+                                               "10094" ; Consulting Visit
                                                "10109") ; Ibrahim Salem
                                              (default-alliance-free? card)
                                              "10018" ; Mumba Temple
