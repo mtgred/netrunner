@@ -207,7 +207,7 @@
 
    "Fetal AI"
    {:access {:req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
-             :effect (effect (damage :net 2 {:card card}))}
+             :effect (effect (damage eid :net 2 {:card card}))
     :steal-cost-bonus (req [:credit 2])}
 
    "Firmware Updates"
@@ -340,7 +340,7 @@
 
    "Medical Breakthrough"
    {:effect (effect (update-all-advancement-costs))
-    :stolen (effect (update-all-advancement-costs))
+    :stolen {:effect (effect (update-all-advancement-costs))}
     :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
                                                    (concat (:scored corp) (:scored runner))))))}
 

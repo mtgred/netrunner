@@ -5,7 +5,7 @@
    {:req (req (> (count (:scored corp)) 1))
     :additional-cost [:forfeit]
     :effect (req (let [agendas (get-in @state [:corp :scored])]
-                   (resolve-ability state side
+                   (continue-ability state side
                      {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
                       :choices {:req #(and (is-type? % "Agenda")
                                            (= (first (:zone %)) :scored)
@@ -21,18 +21,17 @@
                                    (is-type? % "Operation")
                                    (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
-              :effect (req (when-completed target
-                                           (play-instant state side target {:no-additional-cost true})
+              :effect (req (when-completed (play-instant state side target {:no-additional-cost true})
                                            (when (< i n)
-                                               (resolve-ability state side (ad (inc i) n adcard) adcard nil))))})]
+                                             (continue-ability state side (ad (inc i) n adcard) adcard nil))))})]
      {:effect (req (let [n (count (filter #(is-type? % "Operation")
                                           (take 3 (:deck corp))))]
-(resolve-ability state side
-                 {:msg "look at the top 3 cards of R&D"
-                  :effect (req (doseq [c (take 3 (:deck corp))]
-                                 (move state side c :play-area))
-                               (resolve-ability state side (ad 1 n card) card nil))}
-                 card nil)))})
+                     (continue-ability state side
+                                      {:msg "look at the top 3 cards of R&D"
+                                       :effect (req (doseq [c (take 3 (:deck corp))]
+                                                      (move state side c :play-area))
+                                                    (continue-ability state side (ad 1 n card) card nil))}
+                                      card nil)))})
 
 "Ad Blitz"
 (let [abhelp (fn ab [n total]
@@ -145,7 +144,7 @@
                                                 (host state side agenda (assoc card :zone [:discard]
                                                                                     :seen true :installed true))
                                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))
-                                                (effect-completed state side card)))}
+                                                (effect-completed state side eid card)))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
@@ -208,7 +207,7 @@
     :choices {:req rezzed?}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
     :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
-                 (effect-completed state side card)
+                 (effect-completed state side eid card)
                  (let [tgtcid (:cid target)]
                    (register-turn-flag! state side
                      target :can-score
@@ -276,7 +275,7 @@
                                                        (deactivate state :corp newr))
                                                      (system-msg state side (str "uses Exchange of Information to swap "
                                                                                  (:title c) " for " (:title r)))
-                                                     (effect-completed state side card)))}
+                                                     (effect-completed state side eid card)))}
                                     card nil)))}
                   card nil))}
 
@@ -420,7 +419,7 @@
                          (= (:side %) "Corp")
                          (in-hand? %))}
     :effect (req (corp-install state side (assoc target :advance-counter 3) "New remote")
-                 (effect-completed state side card)
+                 (effect-completed state side eid card)
                  (let [tgtcid (:cid target)]
                    (register-turn-flag! state side
                      card :can-rez
@@ -458,7 +457,7 @@
                        (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost")))
                      (system-msg state side (str "does not find any ICE to install from R&D")))
                    (shuffle! state :corp :deck)
-                   (effect-completed state side card)))}
+                   (effect-completed state side eid card)))}
 
    "Neural EMP"
    {:req (req (:made-run runner-reg))
@@ -541,7 +540,7 @@
                        {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
                       card nil)
                      (swap! state update-in [:bonus] dissoc :trash)
-                     (effect-completed state side card))))}
+                     (effect-completed state side eid card))))}
 
    "Psychographics"
    {:req (req tagged) :choices :credit :prompt "How many credits?"
@@ -565,7 +564,7 @@
                          (= (:zone %) [:discard]))}
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
                    (move state side c :hand))
-                 (effect-completed state side card))}
+                 (effect-completed state side eid card))}
 
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
@@ -627,8 +626,9 @@
 
    "Scorched Earth"
    {:req (req tagged)
+    :delayed-completion true
     :msg "do 4 meat damage"
-    :effect (effect (damage :meat 4 {:card card}))}
+    :effect (effect (damage eid :meat 4 {:card card}))}
 
    "SEA Source"
    {:req (req (:successful-run runner-reg))
@@ -641,7 +641,7 @@
    {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
     :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true}))
-                 (effect-completed state side card))}
+                 (effect-completed state side eid card))}
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph" :priority -1
@@ -651,14 +651,14 @@
                              :effect (req (corp-install state side target nil)
                                           (if (< n 3)
                                             (resolve-ability state side (sh (inc n)) card nil)
-                                            (effect-completed state side card)))})]
+                                            (effect-completed state side eid card)))})]
      {:delayed-completion true
       :effect (effect (resolve-ability (shelper 1) card nil))})
 
    "Shipment from SanSan"
    {:choices ["0", "1", "2"] :prompt "How many advancement tokens?"
     :effect (req (let [c (Integer/parseInt target)]
-                   (resolve-ability
+                   (continue-ability
                      state side
                      {:choices {:req can-be-advanced?}
                       :msg (msg "place " c " advancement tokens on " (card-str state target))
@@ -673,7 +673,7 @@
                                      0 (flatten (seq (:servers corp))))))}
     :req (req tagged)
     :effect (req (doseq [t targets] (rez state side t {:ignore-cost :all-costs}))
-                 (effect-completed state side card))}
+                 (effect-completed state side eid card))}
 
    "Snatch and Grab"
    {:delayed-completion true
@@ -712,12 +712,11 @@
                                    (is-type? % "Operation")
                                    (in-hand? %))}
               :msg (msg "play " (:title target))
-              :effect (req (when-completed target
-                                           (play-instant state side target)
+              :effect (req (when-completed (play-instant state side target)
                                            (when (< i 2)
-                                               (resolve-ability state side (sc (inc i) sccard) sccard nil))))})]
+                                               (continue-ability state side (sc (inc i) sccard) sccard nil))))})]
      {:req (req tagged)
-      :effect (effect (resolve-ability (sc 1 card) card nil))})
+      :effect (effect (continue-ability (sc 1 card) card nil))})
 
    "Subliminal Messaging"
    {:msg "gain 1 [Credits]"
@@ -740,7 +739,7 @@
                              (do (swap-ice state side (first targets) (second targets))
                                  (resolve-ability state side (sun serv) card nil))
                              (system-msg state side "has finished rearranging ICE"))
-                           (effect-completed state side card))})]
+                           (effect-completed state side eid card))})]
      {:prompt "Choose a server"
       :choices (req servers)
       :msg (msg "rearrange ICE protecting " target)

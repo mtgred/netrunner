@@ -73,7 +73,7 @@
                                         (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
                                                :effect (effect (trash-cards targets))
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
-                             (resolve-ability state side ab agg nil)))})
+                             (continue-ability state side ab agg nil)))})
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
@@ -567,12 +567,13 @@
                                                             (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
                  :msg (msg "reveal " (:title target) " from R&D and "
                            (if (= (:type target) "Operation") "play " "install ") " it")
-                 :effect (req (when-completed target
-                                              (if (= (:type target) "Operation")
-                                                (play-instant state side target)
-                                                (corp-install state side target nil))
-                                              (do (system-msg state side "shuffles their deck")
-                                                  (shuffle! state side :deck))))}]}
+                 :effect (req (if (= (:type target) "Operation")
+                                (when-completed (play-instant state side target)
+                                                (do (system-msg state side "shuffles their deck")
+                                                    (shuffle! state side :deck)))
+                                (when-completed (corp-install state side target nil)
+                                                (do (system-msg state side "shuffles their deck")
+                                                    (shuffle! state side :deck)))))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
