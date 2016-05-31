@@ -11,6 +11,7 @@
 (declare get-card get-remote-names register-effect-completed resolve-ability say system-msg trigger-event update!)
 
 (def game-states (atom {}))
+(def all-cards (atom {}))
 
 (load "core-cards")     ; retrieving and updating cards
 (load "core-events")    ; triggering of events
