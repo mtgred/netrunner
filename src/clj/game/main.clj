@@ -3,7 +3,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [game-states system-msg pay gain draw end-run] :as core]
+            [game.core :refer [all-cards game-states system-msg pay gain draw end-run] :as core]
             [environ.core :refer [env]]
             [differ.core :as differ])
   (:gen-class :main true))
@@ -75,23 +75,25 @@
 
 (defn run [socket]
   (while true
-    (let [{:keys [gameid action command side user args text] :as msg} (convert (.recv socket))
+    (let [{:keys [gameid action command side user args text cards] :as msg} (convert (.recv socket))
           state (@game-states gameid)]
       (try
         (case action
+          "initialize" (swap! all-cards (fn [_] (identity cards)))
           "start" (core/init-game msg)
           "remove" (do (swap! game-states dissoc gameid)
                        (swap! last-states dissoc gameid))
           "do" (handle-do user command state side args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-        (if-let [new-state (@game-states gameid)]
-          (do (case action
-                ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
-                (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
-                  (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
-              (swap! last-states assoc gameid (strip @new-state)))
-          (.send socket (generate-string {:action action :gameid gameid :state (strip @state)})))
+        (when-not (= action "initialize")
+          (if-let [new-state (@game-states gameid)]
+            (do (case action
+                  ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
+                  (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
+                    (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
+                (swap! last-states assoc gameid (strip @new-state)))
+            (.send socket (generate-string {:action action :gameid gameid :state (strip @state)}))))
         (catch Exception e
           (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
                    (java.util.Arrays/toString (.getStackTrace e)))

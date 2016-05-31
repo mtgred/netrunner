@@ -83,6 +83,9 @@ getUsername = (socket) ->
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
 requester.connect("tcp://#{clojure_hostname}:1043")
+db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+  requester.send(JSON.stringify({action: "initialize", cards: data}))
+
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action isnt "remove"
