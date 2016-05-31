@@ -2,7 +2,7 @@
 
 (declare clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
-         get-agenda-points gain-agenda-point optional-ability
+         get-agenda-points gain-agenda-point optional-ability7
          get-remote-names card-name can-steal?)
 
 ;;; Steps in the run sequence
@@ -46,19 +46,25 @@
 
 (defn resolve-steal-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
-  [state side c]
-  (let [cdef (card-def c)]
-    (when-let [access-effect (:access cdef)]
-      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-    (trigger-event state side :access c)))
+  ([state side card] (resolve-steal-events state side (make-eid state) card))
+  ([state side eid card]
+   (let [cdef (card-def card)
+         my-eid eid]
+     (if-let [access-effect (:access cdef)]
+       (when-completed (resolve-ability state (to-keyword (:side card)) access-effect card nil)
+                       (do (trigger-event state side :access card)
+                           (effect-completed state side eid card)))
+       (do (trigger-event state side :access card)
+           (effect-completed state side eid card))))))
 
 (defn resolve-steal
   "Finish the stealing of an agenda."
-  [state side c]
-  (let [cdef (card-def c)]
-    (resolve-steal-events state side c)
-    (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-      (steal state :runner c))))
+  ([state side card] (resolve-steal state side card {:eid (make-eid state)}))
+  ([state side card {:keys [eid] :as args}]
+   (let [cdef (card-def card)]
+     (when-completed (resolve-steal-events state side card)
+                     (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+                       (steal state :runner card))))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -70,7 +76,7 @@
   "Gets a vector of costs for stealing the given agenda."
   [state side card]
   (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
-        (costfun state side card nil))
+        (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :steal-cost]))
       merge-costs flatten vec))
 
@@ -85,7 +91,7 @@
   "Gets a vector of costs for accessing the given card."
   [state side card]
   (-> (when-let [costfun (:access-cost-bonus (card-def card))]
-        (costfun state side card nil))
+        (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :access-cost]))
       merge-costs flatten vec))
 
@@ -336,7 +342,7 @@
                                           (and (:access cdef)
                                                (not (get-in cdef [:access :optional]))
                                                (or (not (get-in cdef [:access :req]))
-                                                   ((get-in cdef [:access :req]) state side % nil)))
+                                                   ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
                                           (and (get-in cdef [:access :optional])
                                                (or (not (get-in cdef [:access :optional :req]))
                                                    ((get-in cdef [:access :optional :req]) state side % nil)))))
@@ -411,7 +417,7 @@
           card (:card run-effect)
           replace-effect (:replace-access run-effect)]
       (if (and replace-effect
-               (or (not r) (r state side card [(first server)])))
+               (or (not r) (r state side (make-eid state) card [(first server)])))
         (if (:mandatory replace-effect)
           (replace-access state side replace-effect card)
           (swap! state update-in [side :prompt]

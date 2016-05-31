@@ -111,7 +111,7 @@
         (cancel-effect choice)))
     ;; trigger end-effect if present
     (when-let [end-effect (:end-effect prompt)]
-      (end-effect state side card nil))
+      (end-effect state side (make-eid state) card nil))
 
     ;; remove the prompt from the queue
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))

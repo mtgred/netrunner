@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 (declare corp-trace-prompt optional-ability
-         check-optional check-psi check-trace
+         check-optional check-psi check-trace complete-ability
          can-trigger? do-choices do-ability
-         psi-game resolve-psi resolve-trace show-select)
+         psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
 
 ;;;; Functions for implementing card abilities and prompts
 
@@ -62,36 +62,54 @@
   :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn."
 
   ;; perhaps the most important function in the game logic
-  [state side ability card targets]
-  (when ability
-    ;; Is this an optional ability?
-    (check-optional state side ability card targets)
-    ;; Is this a psi game?
-    (check-psi state side ability card targets)
-    ;; Is this a trace?
-    (check-trace state side ability card targets)
-    ;; Ensure this ability can be triggered more than once per turn,
-    ;; or has not been yet been triggered this turn.
-    (when (can-trigger? state side ability card targets)
-      (if (:choices ability)
-        ;; It's a prompt!
-        (do-choices state side ability card targets)
-        ;; Not a prompt. Trigger the ability.
-        (do-ability state side ability card targets)))))
+  ([state side {:keys [eid] :as ability} card targets]
+   (if eid
+     (resolve-ability-eid state side (assoc ability :eid eid) card targets)
+     (resolve-ability-eid state side (assoc ability :eid (or eid (make-eid state))) card targets)))
+  ([state side eid ability card targets]
+   (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
+(defn- resolve-ability-eid
+  ([state side {:keys [eid] :as ability} card targets]
+   (if (and ability (not eid))
+     (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
+     (when ability
+       ;; Is this an optional ability?
+       (check-optional state side ability card targets)
+       ;; Is this a psi game?
+       (check-psi state side ability card targets)
+       ;; Is this a trace?
+       (check-trace state side ability card targets)
+       ;; Ensure this ability can be triggered more than once per turn,
+       ;; or has not been yet been triggered this turn.
+       (when (can-trigger? state side ability card targets)
+         (if (:choices ability)
+           ;; It's a prompt!
+           (do-choices state side ability card targets)
+           ;; Not a prompt. Trigger the ability.
+           (do-ability state side ability card targets)))
+       (complete-ability state side ability card)))))
 
 ;;; Checking functions for resolve-ability
+(defn- complete-ability
+  [state side {:keys [eid choices delayed-completion] :as ability} card]
+  ;if it doesn't have choices and it doesn't have a true delayed-completion; or
+  ;if it does have choices and has false delayed-completion
+  (when (or (and (not choices) (not delayed-completion))
+            (and choices (false? delayed-completion)))
+    (effect-completed state side eid card)))
+
 (defn- check-req
   "Check if the requirement is fulfilled, or no requirement present"
-  [state side card targets ability]
+  [state side card targets {:keys [eid] :as ability}]
   (if-let [req (:req ability)]
-    (req state side card targets)
+    (req state side eid card targets)
     ;; return true if no requirement present
     true))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [optional (:optional ability)]
     (when (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
                (check-req state side card targets optional))
@@ -99,7 +117,7 @@
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [psi (:psi ability)]
     (when (check-req state side card targets psi)
       (psi-game state side card psi))))
@@ -120,7 +138,7 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt] :as ability}
+  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
@@ -136,14 +154,14 @@
        (show-select state s card ability {:priority priority})
        ;; a :number prompt
        (:number choices)
-       (let [n ((:number choices) state side card targets)]
+       (let [n ((:number choices) state side eid card targets)]
          (prompt! state s card prompt {:number n} ab args))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
      (let [cs (if-not (fn? choices)
                 choices ; :credit or :counter
-                (let [cards (choices state side card targets)] ; a vector of cards or strings
+                (let [cards (choices state side eid card targets)] ; a vector of cards or strings
                   (if not-distinct cards (distinct-by :title cards))))]
        (prompt! state s card prompt cs ab args)))))
 
@@ -184,25 +202,25 @@
 
 (defn- print-msg
   "Prints the ability message"
-  [state side ability card targets cost-str]
+  [state side {:keys [eid] :as ability} card targets cost-str]
   (when-let [msg (:msg ability)]
-    (when-let [desc (if (string? msg) msg (msg state side card targets))]
+    (when-let [desc (if (string? msg) msg (msg state side eid card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
 
 (defn- do-effect
   "Trigger the effect"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [effect (:effect ability)]
-    (effect state side card targets)))
+    (effect state side eid card targets)))
 
 (defn- register-end-turn
   "Register :end-turn effect if present"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [end-turn (:end-turn ability)]
     (swap! state update-in [side :register :end-turn]
-           #(conj % {:ability end-turn :card card :targets targets}))))
+           #(conj % {:ability end-turn :card card :targets targets :eid eid}))))
 
 (defn- register-once
   "Register ability as having happened if :once specified"
@@ -253,7 +271,7 @@
   ([state side card msg choices f] (show-prompt state side card msg choices f nil))
   ([state side card msg choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
-   (let [prompt (if (string? msg) msg (msg state side card nil))
+   (let [prompt (if (string? msg) msg (msg state side nil card nil))
          priority-comp #(case % true 1 nil 0 %)
          newitem {:msg prompt
                   :choices choices
