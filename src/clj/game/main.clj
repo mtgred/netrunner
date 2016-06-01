@@ -86,7 +86,8 @@
           "do" (handle-do user command state side args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-        (when-not (= action "initialize")
+        (if (= action "initialize")
+          (.send socket (generate-string "ok"))
           (if-let [new-state (@game-states gameid)]
             (do (case action
                   ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
