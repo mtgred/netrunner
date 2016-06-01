@@ -60,13 +60,14 @@
    (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'targets1] ~expr)
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
-         th (nth action 3)]
+         totake (if (= 'apply (first action)) 4 3)
+         th (nth action totake)]
      `(let [~'use-eid (and (map? ~th) (:eid ~th))
             ~'new-eid (if ~'use-eid ~th (game.core/make-eid ~'state))]
         (~'register-effect-completed ~'state ~'side ~'new-eid ~'card ~reqmac)
         (if ~'use-eid
-          ~(concat (take 3 action) (list 'new-eid) (drop 4 action))
-          ~(concat (take 3 action) (list 'new-eid) (drop 3 action)))))))
+          ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
+          ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))
 
 (defmacro final-effect [& expr]
   (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'eid 'card)))))
