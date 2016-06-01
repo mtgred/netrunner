@@ -67,12 +67,24 @@
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :runner (vec zone))))
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone)))))
                 (not (seq (get-in @state [side :locked zone]))))
-       (if (not same-zone?)
-         (doseq [h (:hosted card)]
-           (trash state side (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown) {:unpreventable true}))
-         nil)
        (let [dest (if (sequential? to) (vec to) [to])
-             hosted (if same-zone? (:hosted card) nil)
+             trash-hosted (fn [h]
+                             (trash state side
+                               (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown)
+                               {:unpreventable true})
+                               ())
+             update-hosted (fn [h]
+                             (let [newz (flatten (list (if (vector? to) to [to])))
+                                   newh (-> h
+                                      (assoc-in [:zone] '(:onhost))
+                                      (assoc-in [:host :zone] newz))]
+                               (update! state side newh)
+                               (unregister-events state side h)
+                               (register-events state side (:events (card-def newh)) newh)
+                               newh))
+             hosted (seq (flatten (map
+                      (if same-zone? update-hosted trash-hosted)
+                      (:hosted card))))
              c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
