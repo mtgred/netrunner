@@ -48,8 +48,7 @@
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
   ([state side card] (resolve-steal-events state side (make-eid state) card))
   ([state side eid card]
-   (let [cdef (card-def card)
-         my-eid eid]
+   (let [cdef (card-def card)]
      (if-let [access-effect (:access cdef)]
        (when-completed (resolve-ability state (to-keyword (:side card)) access-effect card nil)
                        (do (trigger-event state side :access card)
