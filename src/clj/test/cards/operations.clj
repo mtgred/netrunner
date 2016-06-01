@@ -544,6 +544,21 @@
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
+(deftest subcontract-scorched
+  "Subcontract - Don't allow second operation until damage prevention completes"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 2) (qty "Subcontract" 1)])
+              (default-runner [(qty "Plascrete Carapace" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :runner "Plascrete Carapace")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Scorched Earth" (:hand (get-corp))))
+    (is (empty? (:prompt (get-corp))) "Corp does not have prompt until damage prevention completes")
+    (prompt-choice :runner "Done")
+    (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
+
 (deftest shipment-from-sansan
   "Shipment from SanSan - placing advancements"
   (do-game

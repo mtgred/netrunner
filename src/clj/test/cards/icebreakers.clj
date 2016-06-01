@@ -94,6 +94,24 @@
      (is (= 1 (:credit (get-runner))) "No credits spent to break")
      (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
+(deftest deus-x-multiple-damage
+  "Multiple sources of net damage vs. Deus X"
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Personal Evolution" [(qty "Fetal AI" 1)])
+      (default-runner [(qty "Deus X" 3) (qty "Sure Gamble" 2)]))
+    (play-from-hand state :corp "Fetal AI" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Deus X")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (let [dx (get-program state 0)]
+      (card-ability state :runner dx 1)
+      (prompt-choice :runner "Done")
+      (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
+      (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
+
 (deftest faust-pump
   "Faust - Pump by discarding"
   (do-game

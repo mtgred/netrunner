@@ -321,6 +321,18 @@
     (core/jack-out state :runner nil)
     (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
 
+(deftest jinteki-personal-evolution
+  "Personal Evolution - Prevent runner from running on remotes unless they first run on a central"
+  (do-game
+    (new-game
+      (make-deck "Jinteki: Personal Evolution" [(qty "Braintrust" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
+
 (deftest jinteki-replicating-perfection
   "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
   (do-game
