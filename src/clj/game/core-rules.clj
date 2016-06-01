@@ -156,21 +156,22 @@
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
-  (trigger-event state side :pre-resolve-damage type card n)
-  (when-not (or (get-in @state [:damage :damage-replace])
-                (get-in @state [:damage :damage-choose-runner])
-                (get-in @state [:damage :damage-choose-corp]))
-    (let [n (if (get-defer-damage state side type args) 0 n)]
-      (let [hand (get-in @state [:runner :hand])]
-        (when (< (count hand) n)
-          (flatline state))
-        (when (= type :brain)
-          (swap! state update-in [:runner :brain-damage] #(+ % n))
-          (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-        (doseq [c (take n (shuffle hand))]
-          (trash state side c {:unpreventable true :cause type} type))
-        (trigger-event state side :damage type card))))
-  (effect-completed state side eid card))
+  (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
+                  (do (if-not (or (get-in @state [:damage :damage-replace])
+                                    (get-in @state [:damage :damage-choose-runner])
+                                    (get-in @state [:damage :damage-choose-corp]))
+                        (let [n (if (get-defer-damage state side type args) 0 n)]
+                          (let [hand (get-in @state [:runner :hand])]
+                            (when (< (count hand) n)
+                              (flatline state))
+                            (when (= type :brain)
+                              (swap! state update-in [:runner :brain-damage] #(+ % n))
+                              (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                            (doseq [c (take n (shuffle hand))]
+                              (trash state side c {:unpreventable true :cause type} type))
+                            (trigger-event state side :damage type card))))
+                      ;(swap! state update-in [:damage] dissoc :damage-choose-corp :damage-choose-runner)
+                      (effect-completed state side eid card))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
@@ -259,13 +260,30 @@
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
-(defn resolve-trash
-  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive] :as args} & targets]
+;;(when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
+;; the use of apply here is incompatible with the when-completed macro, so we have to expand the macro by hand.
+;;(let [eid (make-eid state)
+     ;; when-done (fn [state1 side1 eid1 card1 targets1]
+    ;;              ())]
+  ;;(register-effect-completed
+ ;;   state side eid nil
+;;    )
+;;  (apply trigger-event-async state side eid (keyword (str (name side) "-trash")) card cause targets)))
+
+(defn- resolve-trash-end
+  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))))
+
+(defn resolve-trash
+  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+  (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
+    (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
+                    (apply resolve-trash-end state side card args targets))
+    (apply resolve-trash-end state side card args targets)))
 
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."
@@ -278,8 +296,6 @@
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-         (when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-           (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
          (let [prevent (get-in @state [:prevent :trash ktype])]
            ;; Check for prevention effects
            (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))

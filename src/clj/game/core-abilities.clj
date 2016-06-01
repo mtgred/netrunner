@@ -92,11 +92,12 @@
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices delayed-completion] :as ability} card]
+  [state side {:keys [eid choices optional delayed-completion] :as ability} card]
   ;if it doesn't have choices and it doesn't have a true delayed-completion; or
   ;if it does have choices and has false delayed-completion
-  (when (or (and (not choices) (not delayed-completion))
-            (and choices (false? delayed-completion)))
+  (when (or (and (not choices) (not optional) (not delayed-completion))
+            (and choices (false? delayed-completion))
+            (and optional (false? delayed-completion)))
     (effect-completed state side eid card)))
 
 (defn- check-req
@@ -113,7 +114,7 @@
   (when-let [optional (:optional ability)]
     (when (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
                (check-req state side card targets optional))
-      (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))))
+      (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
@@ -231,16 +232,17 @@
 ;;; Optional Ability
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
-  [state side card msg ability targets]
-  (show-prompt state side card msg ["Yes" "No"]
-               #(let [yes-ability (:yes-ability ability)]
+  ([state side card msg ability targets] (optional-ability state side (make-eid state) card msg ability targets))
+  ([state side eid card msg ability targets]
+   (show-prompt state side card msg ["Yes" "No"]
+                #(let [yes-ability (:yes-ability ability)]
                   (if (and (= % "Yes")
                            yes-ability
                            (can-pay? state side (:title card) (:cost yes-ability)))
-                    (resolve-ability state side yes-ability card targets)
+                    (resolve-ability state side (assoc yes-ability :eid eid) card targets)
                     (when-let [no-ability (:no-ability ability)]
-                      (resolve-ability state side no-ability card targets))))
-               ability))
+                      (resolve-ability state side (assoc no-ability :eid eid) card targets))))
+                ability)))
 
 
 ;;; Prompts

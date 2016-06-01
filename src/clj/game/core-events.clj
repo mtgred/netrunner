@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! register-suppress trigger-suppress unregister-suppress)
+(declare effect-completed forfeit prompt! register-suppress trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events
@@ -35,10 +35,36 @@
           (resolve-ability state side ability card targets))))
     (swap! state update-in [:turn-events] #(cons [event targets] %))))
 
+(defn- trigger-event-sync-next
+  [state side eid handlers event & targets]
+  (let [e (first handlers)
+        ability (:ability e)]
+    (if e
+      (if-let [card (get-card state (:card e))]
+        (if (and (not (apply trigger-suppress state side event (cons card targets)))
+                 (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
+          (when-completed (resolve-ability state side ability card targets)
+                          (apply trigger-event-sync-next state side eid (next handlers) event targets))
+          (apply trigger-event-sync-next state side eid (next handlers) event targets))
+        (apply trigger-event-sync-next state side eid (next handlers) event targets))
+      (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+          (effect-completed state side eid nil)))))
+
+(defn trigger-event-sync
+  "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler."
+  [state side eid event & targets]
+  (let [get-side #(-> % :card :side game.utils/to-keyword)
+        is-active-player #(= (:active-player @state) (get-side %))]
+
+    (let [handlers (sort-by (complement is-active-player) (get-in @state [:events event]))
+          card nil]
+      (when-completed (apply trigger-event-sync-next state side handlers event targets)
+                      (effect-completed state side eid nil)))))
+
 (defn trigger-event-async
   "Triggers the given event asynchronously, triggering effect-completed once
   all registered event handlers have completed."
-  [state side event & targets]
+  [state side eid event & targets]
   (let [awaiting (atom #{})]
     (let [get-side #(-> % :card :side game.utils/to-keyword)
           is-active-player #(= (:active-player @state) (get-side %))
@@ -52,6 +78,8 @@
                        (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
               (when-completed (resolve-ability state side ability card targets)
                               (do (swap! awaiting disj eid)
+                                  (when (empty? awaiting)
+                                    (effect-completed state side eid nil))
                                   (prn "awaiting still " @awaiting))))))))))
 
 ;;      (swap! state update-in [:turn-events] #(cons [event targets] %))))

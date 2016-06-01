@@ -363,10 +363,11 @@
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Hostile Infrastructure"
-   {:events {:runner-trash {:req (req (some #(card-is? % :side :corp) targets))
+   {:events {:runner-trash {:delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
                             :msg (msg (str "do " (count (filter #(card-is? % :side :corp) targets))
                                            " net damage"))
-                            :effect (effect (damage :net (count (filter #(card-is? % :side :corp) targets))
+                            :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
     :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
 
