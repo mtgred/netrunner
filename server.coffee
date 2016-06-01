@@ -82,9 +82,12 @@ getUsername = (socket) ->
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
+requester.on 'connect', (fd, ep) ->
+  db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+    requester.send(JSON.stringify({action: "initialize", cards: data}))
+
+requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
-db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
-  requester.send(JSON.stringify({action: "initialize", cards: data}))
 
 requester.on 'message', (data) ->
   response = JSON.parse(data)
