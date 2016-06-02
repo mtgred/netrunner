@@ -92,12 +92,11 @@
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional delayed-completion] :as ability} card]
+  [state side {:keys [eid choices optional delayed-completion psi] :as ability} card]
   ;if it doesn't have choices and it doesn't have a true delayed-completion; or
   ;if it does have choices and has false delayed-completion
-  (when (or (and (not choices) (not optional) (not delayed-completion))
-            (and choices (false? delayed-completion))
-            (and optional (false? delayed-completion)))
+  (when (or (and (not choices) (not optional) (not psi) (not delayed-completion))
+            (and (or optional psi choices) (false? delayed-completion)))
     (effect-completed state side eid card)))
 
 (defn- check-req
@@ -121,7 +120,7 @@
   [state side {:keys [eid] :as ability} card targets]
   (when-let [psi (:psi ability)]
     (when (check-req state side card targets psi)
-      (psi-game state side card psi))))
+      (psi-game state side eid card psi))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
@@ -347,18 +346,19 @@
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
   :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
-  [state side card psi]
-  (swap! state assoc :psi {})
-  (doseq [s [:corp :runner]]
-    (show-prompt state s card (str "Choose an amount to spend for " (:title card))
-                 (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                 #(resolve-psi state s card psi (Integer/parseInt (first (split % #" "))))
-                 {:priority 2})))
+  ([state side card psi] (psi-game state side (make-eid state) card psi))
+  ([state side eid card psi]
+   (swap! state assoc :psi {})
+   (doseq [s [:corp :runner]]
+     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
+                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
+                  #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                  {:priority 2}))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
   resolution ability."
-  [state side card psi bet]
+  [state side eid card psi bet]
   (swap! state assoc-in [:psi side] bet)
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
@@ -369,7 +369,7 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side :psi-game nil)
           (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) ability card nil)))
+            (resolve-ability state (:side card) (assoc ability :eid eid) card nil)))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 

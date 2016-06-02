@@ -37,6 +37,7 @@
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
+  (prn "TRIGGER-EVENT-SYNC-NEXT" eid)
   (let [e (first handlers)
         ability (:ability e)]
     (if e
@@ -44,22 +45,24 @@
         (if (and (not (apply trigger-suppress state side event (cons card targets)))
                  (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
           (when-completed (resolve-ability state side ability card targets)
-                          (apply trigger-event-sync-next state side eid (next handlers) event targets))
+                          (do (prn "ONE SYNCNEXT DONE" eid) (apply trigger-event-sync-next state side eid (next handlers) event targets)))
           (apply trigger-event-sync-next state side eid (next handlers) event targets))
         (apply trigger-event-sync-next state side eid (next handlers) event targets))
-      (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+      (do (prn "FINISHED SYNC" eid)
+          (swap! state update-in [:turn-events] #(cons [event targets] %))
           (effect-completed state side eid nil)))))
 
 (defn trigger-event-sync
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler."
   [state side eid event & targets]
+  (prn "TRIGGER-EVENT-SYNC" eid)
   (let [get-side #(-> % :card :side game.utils/to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
 
     (let [handlers (sort-by (complement is-active-player) (get-in @state [:events event]))
           card nil]
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
-                      (effect-completed state side eid nil)))))
+                      (do (prn "TRIGGER-EVENT-SYNC DONE" eid)(effect-completed state side eid nil))))))
 
 (defn trigger-event-async
   "Triggers the given event asynchronously, triggering effect-completed once

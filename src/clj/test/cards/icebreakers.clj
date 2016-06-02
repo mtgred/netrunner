@@ -94,7 +94,31 @@
      (is (= 1 (:credit (get-runner))) "No credits spent to break")
      (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
-(deftest deus-x-multiple-damage
+(deftest deus-x-multiple-hostile-infrastructure
+  "Multiple Hostile Infrastructure vs. Deus X"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hostile Infrastructure" 3)])
+      (default-runner [(qty "Deus X" 3) (qty "Sure Gamble" 2)]))
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/gain state :corp :credit 10)
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (core/rez state :corp (get-content state :remote3 0))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Deus X")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (let [dx (get-program state 0)]
+      (card-ability state :runner dx 1)
+      (prompt-choice :runner "Done")
+      (prn (:log @state))
+      (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
+
+(deftest deus-x-fetal-jinteki-pe
   "Multiple sources of net damage vs. Deus X"
   (do-game
     (new-game
