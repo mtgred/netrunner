@@ -98,7 +98,7 @@
                   :label "Do 1 net damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 net damage"
-                  :effect (effect (damage :net 1 {:card card}))}]
+                  :effect (effect (damage eid :net 1 {:card card}))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -122,7 +122,7 @@
 
    "Cerebral Overwriter"
    (advance-ambush 3 {:msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
-                      :effect (effect (damage :brain (:advance-counter (get-card state card) 0) {:card card}))})
+                      :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
@@ -189,7 +189,7 @@
                  :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
+                 :msg "do 2 meat damage" :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
 
    "Corporate Town"
    {:additional-cost [:forfeit]
@@ -233,7 +233,7 @@
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
-                                   :effect (effect (damage :meat 2 {:card card}))}}}
+                                   :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
    {:recurring 2}
@@ -268,7 +268,7 @@
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
        (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
-                                    :effect (effect (damage :brain (ice-count state)
+                                    :effect (effect (damage eid :brain (ice-count state)
                                                             {:card card}))}))
 
    "Elizabeth Mills"
@@ -369,7 +369,7 @@
                                            " net damage"))
                             :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Ibrahim Salem"
    (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
@@ -712,7 +712,7 @@
 
    "Project Junebug"
    (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
-                      :effect (effect (damage :net (* 2 (:advance-counter (get-card state card) 0))
+                      :effect (effect (damage eid :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
    "Psychic Field"
@@ -774,7 +774,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
+                 :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
 
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
@@ -873,13 +873,13 @@
                                                    (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds Shi.Kyū to their score area as -1 agenda point")))
-                                                 (do (damage state :corp :net dmg {:card card})
+                                                 (do (damage state :corp eid :net dmg {:card card})
                                                    (system-msg state :corp
                                                     (str "uses Shi.Kyū to do " dmg " net damage"))))))}
                               card targets))}}}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
+   {:access {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
    {:access {:req (req (not= (first (:zone card)) :discard))
@@ -890,7 +890,7 @@
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :effect (effect (damage :net 3 {:card card})
+                                               :effect (effect (damage eid :net 3 {:card card})
                                                                (tag-runner :runner 1))}}}
                                card nil))}}
 

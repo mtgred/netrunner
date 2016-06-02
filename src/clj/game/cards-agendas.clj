@@ -56,7 +56,8 @@
                                       (clear-wait-prompt state :runner))} card nil))}}}
 
    "Ancestral Imager"
-   {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+   {:events {:jack-out {:msg "do 1 net damage"
+                        :effect (effect (damage :net 1))}}}
 
    "AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
@@ -300,7 +301,7 @@
                  :msg "do 1 net damage"
                  :req (req (:run @state))
                  :once :per-run
-                 :effect (effect (damage :net 1 {:card card}))}]}
+                 :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Improved Protein Source"
      {:msg (msg "make the Runner gain 4 [Credits]")

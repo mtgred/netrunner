@@ -113,9 +113,10 @@
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid] :as ability} card targets]
   (when-let [optional (:optional ability)]
-    (when (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
+    (if (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
                (check-req state side card targets optional))
-      (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
+      (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
+      (effect-completed state side eid card))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
@@ -241,8 +242,9 @@
                            yes-ability
                            (can-pay? state side (:title card) (:cost yes-ability)))
                     (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                    (when-let [no-ability (:no-ability ability)]
-                      (resolve-ability state side (assoc no-ability :eid eid) card targets))))
+                    (if-let [no-ability (:no-ability ability)]
+                      (resolve-ability state side (assoc no-ability :eid eid) card targets)
+                      (effect-completed state side eid card))))
                 ability)))
 
 
@@ -321,10 +323,11 @@
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
         curprompt (first (get-in @state [side :prompt]))]
-    (when-not (empty? cards)
-      (doseq [card cards]
-        (update! state side card))
-      (resolve-ability state side (:ability selected) (:card curprompt) cards))
+    (if-not (empty? cards)
+      (do (doseq [card cards]
+            (update! state side card))
+          (resolve-ability state side (:ability selected) (:card curprompt) cards))
+      (effect-completed state side (:eid (:ability selected)) nil))
     (swap! state update-in [side :selected] #(vec (rest %)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))))
 
@@ -370,8 +373,9 @@
           (gain state side :credit (- bet))
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side :psi-game nil)
-          (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)))
+          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
+            (effect-completed state side eid card)))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 

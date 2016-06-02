@@ -61,6 +61,7 @@
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
                       (effect-completed state side eid nil)))))
 
+;; INCOMPLETE
 (defn trigger-event-async
   "Triggers the given event asynchronously, triggering effect-completed once
   all registered event handlers have completed."
@@ -81,9 +82,6 @@
                                   (when (empty? awaiting)
                                     (effect-completed state side eid nil))
                                   (prn "awaiting still " @awaiting))))))))))
-
-;;      (swap! state update-in [:turn-events] #(cons [event targets] %))))
- ;; ))
 
 ; Functions for registering trigger suppression events.
 (defn register-suppress

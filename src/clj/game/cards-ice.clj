@@ -298,7 +298,7 @@
                                   :effect (req (swap! state assoc-in [:run :run-effect :end-run]
                                                       {:req (req (:successful run))
                                                        :msg "do 3 meat damage"
-                                                       :effect (effect (damage :meat 3
+                                                       :effect (effect (damage eid :meat 3
                                                                                {:card card}))})
                                                (swap! state assoc-in [:run :run-effect :card]
                                                       card))})]}
@@ -307,7 +307,7 @@
    {:abilities [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
                                                                           (gain :corp :credit 2))}
                 (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
-                         :effect (effect (damage :net (count (get-in @state [:runner :hand])) {:card card}))
+                         :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))
                          :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
 
    "Chimera"
@@ -341,7 +341,7 @@
              :msg "force the Runner to encounter Chrysalis"
              :optional {:req (req (not= (first (:zone card)) :discard))
                         :prompt "Use Chrysalis to do 2 net damage?"
-                        :yes-ability {:effect (effect (damage :net 2 {:card card}))
+                        :yes-ability {:effect (effect (damage eid :net 2 {:card card}))
                         :msg "do 2 net damage"}}}}
 
    "Chum"
@@ -353,7 +353,7 @@
    "Cortex Lock"
    {:abilities [{:label "Do 1 net damage for each unused memory unit the Runner has"
                  :msg (msg "do " (:memory runner) " net damage")
-                 :effect (effect (damage :net (:memory runner) {:card card}))}]}
+                 :effect (effect (damage eid :net (:memory runner) {:card card}))}]}
 
    "Crick"
    {:abilities [{:label "install a card from Archives"
@@ -388,7 +388,7 @@
 
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
-                 :effect (req (damage state :runner :net 1 {:card card})
+                 :effect (req (damage state :runner eid :net 1 {:card card})
                               (when current-ice
                                 (trash-ice-in-run state))
                               (trash state side card))}]}
@@ -462,7 +462,7 @@
                                                     :choices {:req #(is-type? % "Hardware")}
                                                     :effect (effect (trash target {:cause :subroutine}))}
                                                    card nil)
-                                                  (damage :meat 2 {:unpreventable true
+                                                  (damage eid :meat 2 {:unpreventable true
                                                                    :card card})
                                                   (end-run))})]}
 
@@ -528,7 +528,7 @@
 
    "Heimdall 2.0"
    {:abilities [(do-brain-damage 1)
-                {:msg "do 1 brain damage and end the run" :effect (effect (damage :brain 1 {:card card}) (end-run))}
+                {:msg "do 1 brain damage and end the run" :effect (effect (damage eid :brain 1 {:card card}) (end-run))}
                 end-the-run]}
 
    "Hourglass"
@@ -577,14 +577,14 @@
    {:abilities [trash-program
                 (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                   :msg "give the Runner 1 tag and do 1 brain damage"
-                                  :effect (effect (damage :brain 1 {:card card})
+                                  :effect (effect (damage eid :brain 1 {:card card})
                                                   (tag-runner :runner 1))})]}
 
    "Ichi 2.0"
    {:abilities [trash-program
                 (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                   :msg "give the Runner 1 tag and do 1 brain damage"
-                                  :effect (effect (damage :brain 1 {:card card})
+                                  :effect (effect (damage eid :brain 1 {:card card})
                                                   (tag-runner :runner 1))})]}
 
    "IQ"
@@ -612,7 +612,7 @@
                  :effect (effect (lose :runner :credit 1))}]}
 
    "Its a Trap!"
-   {:expose {:msg "do 2 net damage" :effect (effect (damage :net 2 {:card card}))}
+   {:expose {:msg "do 2 net damage" :effect (effect (damage eid :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
                                                     (when current-ice
                                                       (trash-ice-in-run state))
@@ -737,7 +737,7 @@
    "NEXT Gold"
    {:abilities [{:label "Do 1 net damage for each rezzed NEXT ice"
                  :msg (msg "do " (next-ice-count corp) " net damage")
-                 :effect (effect (damage :net (next-ice-count corp) {:card card}))}
+                 :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
                 trash-program]}
 
    "NEXT Silver"
@@ -846,7 +846,7 @@
                 (trace-ability 2 (do-net-damage 2))
                 (trace-ability 3 {:label "Do 3 net damage and end the run"
                                   :msg "do 3 net damage and end the run"
-                                  :effect (effect (damage :net 3 {:card card}) (end-run))})]}
+                                  :effect (effect (damage eid :net 3 {:card card}) (end-run))})]}
 
    "Shiro"
    {:abilities [{:label "Rearrange the top 3 cards of R&D"

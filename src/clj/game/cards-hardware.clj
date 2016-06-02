@@ -63,7 +63,7 @@
 
    "Brain Cage"
    {:in-play [:hand-size-modification 3]
-    :effect (effect (damage :brain 1 {:card card}))}
+    :effect (effect (damage eid :brain 1 {:card card}))}
 
    "Brain Chip"
    (let [runner-points (fn [s] (max (or (get-in s [:runner :agenda-point]) 0) 0))]
@@ -390,7 +390,7 @@
                           :effect (effect (damage-prevent :meat 1))}}}
 
    "Net-Ready Eyes"
-   {:effect (effect (damage :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
+   {:effect (effect (damage eid :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
     :events {:run {:choices {:req #(and (installed? %)
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
@@ -578,13 +578,13 @@
    {:recurring 1}
 
    "Skulljack"
-   {:effect (effect (damage :brain 1 {:card card}))
+   {:effect (effect (damage eid :brain 1 {:card card}))
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Spinal Modem"
    {:in-play [:memory 1]
     :recurring 2
-    :events {:successful-trace {:req (req run) :effect (effect (damage :brain 1 {:card card}))}}}
+    :events {:successful-trace {:req (req run) :effect (effect (damage eid :brain 1 {:card card}))}}}
 
    "Sports Hopper"
    {:in-play [:link 1]

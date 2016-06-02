@@ -50,7 +50,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (tag-runner state :runner 1) (system-msg state side "takes 1 tag"))
-                             (do (damage state :runner :meat 2 {:unboostable true :card card})
+                             (do (damage state :runner eid :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Armand \"Geist\" Walker: Tech Lord"
@@ -107,28 +107,29 @@
       :effect (req (damage-defer state side :net (last targets))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
-                         (damage state side :net (get-defer-damage state side :net nil)
+                         (damage state side eid :net (get-defer-damage state side :net nil)
                                  {:unpreventable true :card card}))
                      (do (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
-                         (when-completed
-                           (resolve-ability state side
+                           (continue-ability
+                             state side
                              {:optional
                               {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
-                                                      "Grip to select the first card trashed?") :player :corp
-                                         :yes-ability {:prompt (msg "Choose a card to trash")
-                                                       :choices (req (:hand runner)) :not-distinct true
-                                                       :msg (msg "trash " (:title target)
-                                                                 (when (pos? (dec (or (get-defer-damage state side :net nil) 0)))
-                                                                   (str " and deal " (- (get-defer-damage state side :net nil) 1)
-                                                                        " more net damage")))
-                                                       :effect (req (clear-wait-prompt state :runner)
-                                                                    (swap! state update-in [:damage] dissoc :damage-choose-corp)
-                                                                    (trash state side target {:cause :net :unpreventable true})
-                                                                    (let [more (dec (or (get-defer-damage state side :net nil) 0))]
-                                                                      (damage-defer state side :net more)))}
-                                         :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                                   (swap! state update-in [:damage] dissoc :damage-choose-corp))}}} card nil)
-                           (effect-completed state side eid card)))))}}
+                                            "Grip to select the first card trashed?")
+                               :player :corp
+                               :yes-ability {:prompt (msg "Choose a card to trash")
+                                             :choices (req (:hand runner)) :not-distinct true
+                                             :msg (msg "trash " (:title target)
+                                                       (when (pos? (dec (or (get-defer-damage state side :net nil) 0)))
+                                                         (str " and deal " (- (get-defer-damage state side :net nil) 1)
+                                                              " more net damage")))
+                                             :effect (req (clear-wait-prompt state :runner)
+                                                          (swap! state update-in [:damage] dissoc :damage-choose-corp)
+                                                          (trash state side target {:cause :net :unpreventable true})
+                                                          (let [more (dec (or (get-defer-damage state side :net nil) 0))]
+                                                            (damage-defer state side :net more)))}
+                               :no-ability {:effect (req (clear-wait-prompt state :runner)
+                                                         (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
+                             card nil))))}}
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
@@ -287,8 +288,8 @@
                        :effect (effect (tag-prevent 1))}}}
 
    "Jinteki: Personal Evolution"
-   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}
-             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}}
+   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}
+             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Replicating Perfection"
    {:events
@@ -321,7 +322,7 @@
                                 (case flip
                                   "[The Brewery~brewery]"
                                   (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
-                                      (damage state side :net 2 {:card card})
+                                      (damage eid state side :net 2 {:card card})
                                       (update! state side (assoc card :code "brewery")))
                                   "[The Tank~tank]"
                                   (do (system-msg state side "uses [The Tank~tank] to shuffle Archives into R&D")

@@ -165,7 +165,7 @@
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
-                              :effect (req (damage state side :net 1 {:card card}))}}}
+                              :effect (req (damage state side eid :net 1 {:card card}))}}}
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -306,7 +306,7 @@
    "Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
-                 :effect (effect (trash card) (damage :brain 1 {:card card}))}]}
+                 :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
    {:effect (req (when-let [agenda (some #(when (is-type? % "Agenda") %)
@@ -328,7 +328,7 @@
                                 (resolve-ability
                                   state side
                                   {:trace {:base (req (dec (count cards)))
-                                           :effect (effect (damage :net 3 {:card card}))
+                                           :effect (effect (damage eid :net 3 {:card card}))
                                            :msg "do 3 net damage"}} card nil)))}]}
 
    "Shell Corporation"
@@ -409,10 +409,10 @@
                                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                             (clear-wait-prompt state :runner)
                                                             (pay state :corp card :credit 2)
-                                                            (damage state side :brain 1 {:card card}))}
+                                                            (damage state side eid :brain 1 {:card card}))}
                                  :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                            (clear-wait-prompt state :runner)
-                                                           (damage state side :net (get-defer-damage state side :net nil)
+                                                           (damage state side eid :net (get-defer-damage state side :net nil)
                                                                    {:card card}))}}} card nil))}
      :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}

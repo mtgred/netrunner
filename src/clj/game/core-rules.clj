@@ -150,9 +150,6 @@
         (swap! state update-in [:damage] dissoc :damage-choose-runner)
         (swap! state update-in [:damage] dissoc :damage-choose-corp)))))
 
-(defn apply-damage
-  [state side eid type n {:keys [unpreventable unboostable card] :as args}])
-
 (defn resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."

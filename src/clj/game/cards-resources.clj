@@ -908,7 +908,7 @@
    {:events {:runner-turn-begins
              {:effect (req (if (>= (get-in card [:counter :power] 0) 2)
                              (do (add-counter state side card :power (- (get-in card [:counter :power] 0)))
-                                 (damage state side :brain 1 {:unpreventable true :card card})
+                                 (damage state side eid :brain 1 {:unpreventable true :card card})
                                  (system-msg state side "takes 1 brain damage from Stim Dealer"))
                              (do (add-counter state side card :power 1)
                                  (gain state side :click 1)
@@ -1079,7 +1079,7 @@
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :leave-play (effect (damage :meat 3 {:unboostable true :card card}))}
+    :leave-play (effect (damage eid :meat 3 {:unboostable true :card card}))}
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
