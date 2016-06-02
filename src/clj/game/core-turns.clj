@@ -15,7 +15,7 @@
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
-                 :rid 0 :turn 0
+                 :rid 0 :turn 0 :eid 0
                  :corp {:user (:user corp) :identity corp-identity
                         :deck (zone :deck (drop 5 corp-deck))
                         :hand (zone :hand (take 5 corp-deck))
@@ -65,6 +65,10 @@
   [state]
   (get-in (swap! state update-in [:rid] inc) [:rid]))
 
+(defn make-eid
+  [state]
+  {:eid (:eid (swap! state update-in [:eid] inc))})
+
 ;; Appears to be unused???
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0
@@ -80,7 +84,7 @@
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
-        (mul state side card nil))))
+        (mul state side (make-eid state) card nil))))
   (swap! state assoc-in [side :keep] true)
   (system-msg state side "takes a mulligan")
   (trigger-event state side :pre-first-turn)

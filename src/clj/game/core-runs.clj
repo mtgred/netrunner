@@ -2,7 +2,7 @@
 
 (declare clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
-         get-agenda-points gain-agenda-point optional-ability
+         get-agenda-points gain-agenda-point optional-ability7
          get-remote-names card-name can-steal?)
 
 ;;; Steps in the run sequence
@@ -46,19 +46,24 @@
 
 (defn resolve-steal-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
-  [state side c]
-  (let [cdef (card-def c)]
-    (when-let [access-effect (:access cdef)]
-      (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-    (trigger-event state side :access c)))
+  ([state side card] (resolve-steal-events state side (make-eid state) card))
+  ([state side eid card]
+   (let [cdef (card-def card)]
+     (if-let [access-effect (:access cdef)]
+       (when-completed (resolve-ability state (to-keyword (:side card)) access-effect card nil)
+                       (do (trigger-event state side :access card)
+                           (effect-completed state side eid card)))
+       (do (trigger-event state side :access card)
+           (effect-completed state side eid card))))))
 
 (defn resolve-steal
   "Finish the stealing of an agenda."
-  [state side c]
-  (let [cdef (card-def c)]
-    (resolve-steal-events state side c)
-    (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner c nil))
-      (steal state :runner c))))
+  ([state side card] (resolve-steal state side card {:eid (make-eid state)}))
+  ([state side card {:keys [eid] :as args}]
+   (let [cdef (card-def card)]
+     (when-completed (resolve-steal-events state side card)
+                     (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+                       (steal state :runner card))))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -70,7 +75,7 @@
   "Gets a vector of costs for stealing the given agenda."
   [state side card]
   (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
-        (costfun state side card nil))
+        (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :steal-cost]))
       merge-costs flatten vec))
 
@@ -85,9 +90,33 @@
   "Gets a vector of costs for accessing the given card."
   [state side card]
   (-> (when-let [costfun (:access-cost-bonus (card-def card))]
-        (costfun state side card nil))
+        (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :access-cost]))
       merge-costs flatten vec))
+
+(defn- access-non-agenda
+  [state side c]
+  (trigger-event state side :access c)
+  (trigger-event state side :pre-trash c)
+  (when (not= (:zone c) [:discard]) ; if not accessing in Archives
+    (if-let [trash-cost (trash-cost state side c)]
+      ;; The card has a trash cost (Asset, Upgrade)
+      (let [card (assoc c :seen true)]
+        (if (and (get-in @state [:runner :register :force-trash])
+                 (can-pay? state :runner name :credit trash-cost))
+          ;; If the runner is forced to trash this card (Neutralize All Threats)
+          (resolve-ability state :runner {:cost [:credit trash-cost]
+                                          :effect (effect (trash card)
+                                                          (system-msg (str "is forced to pay " trash-cost
+                                                                           " [Credits] to trash " (:title card))))} card nil)
+          ;; Otherwise, show the option to pay to trash the card.
+          (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+                            {:yes-ability {:cost [:credit trash-cost]
+                                           :effect (effect (trash card)
+                                                           (system-msg (str "pays " trash-cost " [Credits] to trash "
+                                                                            (:title card))))}} nil)))
+      ;; The card does not have a trash cost
+      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
 
 (defn handle-access
   "Apply game rules for accessing the given list of cards (which generally only contains 1 card.)"
@@ -101,7 +130,8 @@
     (trigger-event state side :pre-access-card c)
     (let [acost (access-cost state side c)
           ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-          anon-card (dissoc c :title)]
+          anon-card (dissoc c :title)
+          card c]
       (if (or (empty? acost) (pay state side anon-card acost))
         ;; Either there were no access costs, or the runner could pay them.
         (let [cdef (card-def c)
@@ -132,29 +162,10 @@
                                          {:prompt (str "You access " name) :choices ["Steal"]
                                           :effect (req (resolve-steal state :runner c))} c nil)))))
               ;; Accessing a non-agenda
-              (do (when-let [access-effect (:access cdef)]
-                    (resolve-ability state (to-keyword (:side c)) access-effect c nil))
-                  (trigger-event state side :access c)
-                  (trigger-event state side :pre-trash c)
-                  (when (not= (:zone c) [:discard]) ; if not accessing in Archives
-                    (if-let [trash-cost (trash-cost state side c)]
-                      ;; The card has a trash cost (Asset, Upgrade)
-                      (let [card (assoc c :seen true)]
-                        (if (and (get-in @state [:runner :register :force-trash])
-                                 (can-pay? state :runner name :credit trash-cost))
-                          ;; If the runner is forced to trash this card (Neutralize All Threats)
-                          (resolve-ability state :runner {:cost [:credit trash-cost]
-                                                          :effect (effect (trash card)
-                                                                          (system-msg (str "is forced to pay " trash-cost
-                                                                                           " [Credits] to trash " (:title card))))} card nil)
-                          ;; Otherwise, show the option to pay to trash the card.
-                          (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
-                                            {:yes-ability {:cost [:credit trash-cost]
-                                                           :effect (effect (trash card)
-                                                                           (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                                            (:title card))))}} nil)))
-                      ;; The card does not have a trash cost
-                      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {})))))))
+              (do (if-let [access-effect (:access cdef)]
+                    (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                    (access-non-agenda state side c))
+                    (access-non-agenda state side c))))))
         ;; The runner cannot afford the cost to access the card
         (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))))
 
@@ -336,7 +347,7 @@
                                           (and (:access cdef)
                                                (not (get-in cdef [:access :optional]))
                                                (or (not (get-in cdef [:access :req]))
-                                                   ((get-in cdef [:access :req]) state side % nil)))
+                                                   ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
                                           (and (get-in cdef [:access :optional])
                                                (or (not (get-in cdef [:access :optional :req]))
                                                    ((get-in cdef [:access :optional :req]) state side % nil)))))
@@ -392,10 +403,13 @@
 
 
 ;;; Ending runs.
-(defn register-successful-run [state side server]
-  (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
-  (swap! state assoc-in [:run :successful] true)
-  (trigger-event state side :successful-run (first server)))
+(defn register-successful-run
+  ([state side server] (register-successful-run state side (make-eid state) server))
+  ([state side eid server]
+   (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
+   (swap! state assoc-in [:run :successful] true)
+   (when-completed (trigger-event-sync state side :successful-run (first server))
+                   (effect-completed state side eid nil))))
 
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
@@ -405,23 +419,23 @@
                                                  (get-in @state [:run :run-effect :card]))))
       (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
   (let [server (get-in @state [:run :server])]
-    (register-successful-run state side server)
-    (let [run-effect (get-in @state [:run :run-effect])
-          r (:req run-effect)
-          card (:card run-effect)
-          replace-effect (:replace-access run-effect)]
-      (if (and replace-effect
-               (or (not r) (r state side card [(first server)])))
-        (if (:mandatory replace-effect)
-          (replace-access state side replace-effect card)
-          (swap! state update-in [side :prompt]
-                 (fn [p]
-                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
-                                  :choices ["Run ability" "Access"]
-                                  :effect #(if (= % "Run ability")
-                                            (replace-access state side replace-effect card)
-                                            (do-access state side server))}))))
-        (do-access state side server)))))
+    (when-completed (register-successful-run state side server)
+                    (let [run-effect (get-in @state [:run :run-effect])
+                          r (:req run-effect)
+                          card (:card run-effect)
+                          replace-effect (:replace-access run-effect)]
+                      (if (and replace-effect
+                               (or (not r) (r state side (make-eid state) card [(first server)])))
+                        (if (:mandatory replace-effect)
+                          (replace-access state side replace-effect card)
+                          (swap! state update-in [side :prompt]
+                                 (fn [p]
+                                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
+                                                  :choices ["Run ability" "Access"]
+                                                  :effect #(if (= % "Run ability")
+                                                            (replace-access state side replace-effect card)
+                                                            (do-access state side server))}))))
+                        (do-access state side server))))))
 
 (defn successful-run
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."

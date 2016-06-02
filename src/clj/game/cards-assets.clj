@@ -73,7 +73,7 @@
                                         (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
                                                :effect (effect (trash-cards targets))
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
-                             (resolve-ability state side ab agg nil)))})
+                             (continue-ability state side ab agg nil)))})
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
@@ -98,7 +98,7 @@
                   :label "Do 1 net damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 net damage"
-                  :effect (effect (damage :net 1 {:card card}))}]
+                  :effect (effect (damage eid :net 1 {:card card}))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -122,7 +122,7 @@
 
    "Cerebral Overwriter"
    (advance-ambush 3 {:msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
-                      :effect (effect (damage :brain (:advance-counter (get-card state card) 0) {:card card}))})
+                      :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
@@ -189,7 +189,7 @@
                  :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :msg "do 2 meat damage" :effect (effect (trash card) (damage :meat 2 {:card card}))}]}
+                 :msg "do 2 meat damage" :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
 
    "Corporate Town"
    {:additional-cost [:forfeit]
@@ -233,7 +233,7 @@
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
-                                   :effect (effect (damage :meat 2 {:card card}))}}}
+                                   :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
    {:recurring 2}
@@ -268,7 +268,7 @@
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
        (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
-                                    :effect (effect (damage :brain (ice-count state)
+                                    :effect (effect (damage eid :brain (ice-count state)
                                                             {:card card}))}))
 
    "Elizabeth Mills"
@@ -363,12 +363,13 @@
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Hostile Infrastructure"
-   {:events {:runner-trash {:req (req (some #(card-is? % :side :corp) targets))
+   {:events {:runner-trash {:delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
                             :msg (msg (str "do " (count (filter #(card-is? % :side :corp) targets))
                                            " net damage"))
-                            :effect (effect (damage :net (count (filter #(card-is? % :side :corp) targets))
+                            :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}]}
+    :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Ibrahim Salem"
    (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
@@ -567,12 +568,13 @@
                                                             (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
                  :msg (msg "reveal " (:title target) " from R&D and "
                            (if (= (:type target) "Operation") "play " "install ") " it")
-                 :effect (req (when-completed target
-                                              (if (= (:type target) "Operation")
-                                                (play-instant state side target)
-                                                (corp-install state side target nil))
-                                              (do (system-msg state side "shuffles their deck")
-                                                  (shuffle! state side :deck))))}]}
+                 :effect (req (if (= (:type target) "Operation")
+                                (when-completed (play-instant state side target)
+                                                (do (system-msg state side "shuffles their deck")
+                                                    (shuffle! state side :deck)))
+                                (when-completed (corp-install state side target nil)
+                                                (do (system-msg state side "shuffles their deck")
+                                                    (shuffle! state side :deck)))))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -710,13 +712,13 @@
 
    "Project Junebug"
    (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
-                      :effect (effect (damage :net (* 2 (:advance-counter (get-card state card) 0))
+                      :effect (effect (damage eid :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (effect (damage :net (count (:hand runner)) {:card card}))}}}]
+                               :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
    "Public Support"
@@ -772,7 +774,7 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (trash card) (damage :net 3 {:card card}))}]}
+                 :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
 
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
@@ -871,13 +873,13 @@
                                                    (gain-agenda-point state :runner -1)
                                                    (system-msg state side
                                                     (str "adds Shi.Kyū to their score area as -1 agenda point")))
-                                                 (do (damage state :corp :net dmg {:card card})
+                                                 (do (damage state :corp eid :net dmg {:card card})
                                                    (system-msg state :corp
                                                     (str "uses Shi.Kyū to do " dmg " net damage"))))))}
                               card targets))}}}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage" :effect (effect (damage :net 1 {:card card}))}}
+   {:access {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
    {:access {:req (req (not= (first (:zone card)) :discard))
@@ -888,7 +890,7 @@
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :effect (effect (damage :net 3 {:card card})
+                                               :effect (effect (damage eid :net 3 {:card card})
                                                                (tag-runner :runner 1))}}}
                                card nil))}}
 

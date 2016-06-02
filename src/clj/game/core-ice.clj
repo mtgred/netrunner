@@ -14,7 +14,7 @@
   "Gets the modified strength of the given ice."
   [state side {:keys [strength] :as card}]
   (+ (if-let [strfun (:strength-bonus (card-def card))]
-       (+ strength (strfun state side card nil))
+       (+ strength (strfun state side (make-eid state) card nil))
        strength)
      (or (get-in @state [:bonus :ice-strength]) 0)))
 
@@ -71,7 +71,7 @@
     ;; the effects of per-encounter and per-run strength pumps,
     ;; and miscellaneous increases registered by third parties (Dinosaurus, others).
     (+ (if-let [strfun (:strength-bonus (card-def card))]
-         (+ strength (strfun state side card nil))
+         (+ strength (strfun state side (make-eid state) card nil))
          strength)
        (get-in card [:pump :encounter] 0)
        (get-in card [:pump :all-run] 0)

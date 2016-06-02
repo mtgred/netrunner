@@ -182,7 +182,7 @@
     (update! state side id)
     (unregister-events state side id)
     (when-let [leave-play (:leave-play (card-def id))]
-      (leave-play state side id nil))))
+      (leave-play state side (make-eid state) id nil))))
 
 (defn enable-identity
   "Enables the side's identity"
@@ -192,6 +192,6 @@
         events (:events cdef)]
     (update! state side id)
     (when-let [eff (:effect cdef)]
-      (eff state side id nil))
+      (eff state side (make-eid state) id nil))
     (when events
       (register-events state side events id))))

@@ -15,7 +15,7 @@
   [state side card flag-key value]
   (let [cdef (card-def card)
         func (get-in cdef [:flags flag-key])]
-    (and func (= (func state side card nil) value))))
+    (and func (= (func state side (make-eid state) card nil) value))))
 
 (defn is-tagged?
   "Returns true if the runner is tagged."

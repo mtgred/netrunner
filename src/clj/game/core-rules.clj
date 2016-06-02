@@ -9,23 +9,27 @@
 ;;; Playing cards.
 (defn play-instant
   "Plays an Event or Operation."
-  ([state side card] (play-instant state side card nil))
-  ([state side {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
+  ([state side card] (play-instant state side (make-eid state) card nil))
+  ([state side eid? card?] (if (:eid eid?)
+                             (play-instant state side eid? card? nil)
+                             (play-instant state side (make-eid state) eid? card?)))
+  ([state side eid {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
            additional-cost (if (and (has-subtype? card "Double")
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
-                             (:additional-cost cdef))]
+                             (:additional-cost cdef))
+           eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
        (if (and (if-let [req (:req cdef)]
-                    (req state side card targets) true) ; req is satisfied
-                  (not (and (has-subtype? card "Current")
-                            (get-in @state [side :register :cannot-play-current])))
-                  (not (and (has-subtype? card "Run")
-                            (get-in @state [side :register :cannot-run])))
-                  (not (and (has-subtype? card "Priority")
-                            (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
+                  (req state side eid card targets) true) ; req is satisfied
+                (not (and (has-subtype? card "Current")
+                          (get-in @state [side :register :cannot-play-current])))
+                (not (and (has-subtype? card "Run")
+                          (get-in @state [side :register :cannot-run])))
+                (not (and (has-subtype? card "Priority")
+                          (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
          (if-let [cost-str (pay state side card :credit (:cost card) extra-cost
                                   (when-not no-additional-cost additional-cost))] ; play cost can be paid
            (let [c (move state side (assoc card :seen true) :play-area)]
@@ -38,17 +42,15 @@
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
                      (card-init state side moved-card)))
-               (do (resolve-ability state side cdef card nil)
+               (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))
-                   (when (or (false? (:delayed-completion cdef)) (not (:choices cdef)))
-                     (effect-completed state side card))
                    (when (has-subtype? card "Terminal")
                      (lose state side :click (-> @state side :click))))))
            ;; could not pay the card's price; mark the effect as being over.
-           (effect-completed state side card))
+           (effect-completed state side eid card))
          ;; card's req was not satisfied; mark the effect as being over.
-         (effect-completed state side card))))))
+         (effect-completed state side eid card))))))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
@@ -151,29 +153,30 @@
 (defn resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
-  [state side type n {:keys [unpreventable unboostable card] :as args}]
+  [state side eid type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
-  (trigger-event state side :pre-resolve-damage type card n)
-  (when-not (or (get-in @state [:damage :damage-replace])
-                (get-in @state [:damage :damage-choose-runner])
-                (get-in @state [:damage :damage-choose-corp]))
-    (let [n (if (get-defer-damage state side type args) 0 n)]
-      (let [hand (get-in @state [:runner :hand])]
-        (when (< (count hand) n)
-          (flatline state))
-        (when (= type :brain)
-          (swap! state update-in [:runner :brain-damage] #(+ % n))
-          (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-        (doseq [c (take n (shuffle hand))]
-          (trash state side c {:unpreventable true :cause type} type))
-        (trigger-event state side :damage type card)))))
+  (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
+                  (do (if-not (or (get-in @state [:damage :damage-replace]))
+                        (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
+                          (let [hand (get-in @state [:runner :hand])]
+                            (when (< (count hand) n)
+                              (flatline state))
+                            (when (= type :brain)
+                              (swap! state update-in [:runner :brain-damage] #(+ % n))
+                              (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                            (doseq [c (take n (shuffle hand))]
+                              (trash state side c {:unpreventable true :cause type} type))
+                            (trigger-event state side :damage type card))))
+                      (swap! state update-in [:damage :defer-damage] dissoc type)
+                      (effect-completed state side eid card))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
   prevention/boosting process and eventually resolves the damage."
-  ([state side type n] (damage state side type n nil))
-  ([state side type n {:keys [unpreventable unboostable card] :as args}]
+  ([state side type n] (damage state side (make-eid state) type n nil))
+  ([state side type n args] (damage state side (make-eid state) type n args))
+  ([state side eid type n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
@@ -194,9 +197,9 @@
                                  (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                           " " (name type) " damage")
                                  "will not prevent damage"))
-                   (resolve-damage state side type (max 0 (- n (or prevent 0))) args)))
+                   (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
-         (resolve-damage state side type n args))))))
+         (resolve-damage state side eid type n args))))))
 
 
 ;;; Tagging
@@ -255,13 +258,30 @@
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
-(defn resolve-trash
-  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive] :as args} & targets]
+;;(when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
+;; the use of apply here is incompatible with the when-completed macro, so we have to expand the macro by hand.
+;;(let [eid (make-eid state)
+     ;; when-done (fn [state1 side1 eid1 card1 targets1]
+    ;;              ())]
+  ;;(register-effect-completed
+ ;;   state side eid nil
+;;    )
+;;  (apply trigger-event-async state side eid (keyword (str (name side) "-trash")) card cause targets)))
+
+(defn- resolve-trash-end
+  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (resolve-ability state side trash-effect moved-card (cons cause targets)))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))))
+
+(defn resolve-trash
+  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+  (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
+    (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
+                    (apply resolve-trash-end state side card args targets))
+    (apply resolve-trash-end state side card args targets)))
 
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."
@@ -274,8 +294,6 @@
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-         (when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-           (apply trigger-event state side (keyword (str (name side) "-trash")) card cause targets))
          (let [prevent (get-in @state [:prevent :trash ktype])]
            ;; Check for prevention effects
            (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))
@@ -316,9 +334,9 @@
         runner-fn (:agendapoints-runner (card-def card))
         corp-fn (:agendapoints-corp (card-def card))]
     (if (and (= side :runner) (not (nil? runner-fn)))
-      (runner-fn state side card nil)
+      (runner-fn state side (make-eid state) card nil)
       (if (and (= side :corp) (not  (nil? corp-fn)))
-        (corp-fn state side card nil)
+        (corp-fn state side (make-eid state) card nil)
         base-points))))
 
 (defn advancement-cost-bonus
@@ -331,7 +349,7 @@
   (if (nil? advancementcost)
     nil
     (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
-          (+ advancementcost (costfun state side card nil))
+          (+ advancementcost (costfun state side (make-eid state) card nil))
           advancementcost)
         (+ (or (get-in @state [:bonus :advancement-cost]) 0))
         (max 0))))

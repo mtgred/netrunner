@@ -22,6 +22,54 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest bernice-mai
+  "Bernice Mai - successful and unsuccessful"
+  (do-game
+    (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Hedge Fund" 3) (qty "Wall of Static" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Bernice Mai" "Bernice Mai" "Bernice Mai"])
+    (play-from-hand state :corp "Bernice Mai" "New remote")
+    (play-from-hand state :corp "Bernice Mai" "New remote")
+    (play-from-hand state :corp "Bernice Mai" "R&D")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (core/rez state :corp (get-content state :rd 0))
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:tag (get-runner))))
+    (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
+    (core/gain state :runner :credit 20)
+    (run-empty-server state :remote2)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 10)
+    (is (not (get-content state :remote2 0)) "Bernice auto-trashed from unsuccessful trace")
+    (is (not (:run @state)) "Run ended when Bernice was trashed from server")
+    (run-empty-server state :rd)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 10)
+    (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
+
+(deftest bernice-mai-drt
+  "Bernice Mai - interaction with Dedicated Response Team"
+  (do-game
+    (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Dedicated Response Team" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Bernice Mai" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:tag (get-runner))))
+    (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
+    (is (= 2 (count (:discard (get-runner)))) "Runner took 1 meat damage")))
+
 (deftest breaker-bay-grid
   "Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits"
   (do-game

@@ -335,6 +335,7 @@
     (prompt-select :runner (find-card "Titanium Ribs" (:hand (get-runner))))
     (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
     (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")
+
     (is (= 2 (count (:discard (get-runner)))) "2 cards trashed for Ribs installation meat damage")
     (run-on state "HQ")
     (let [pup (get-ice state :hq 0)]

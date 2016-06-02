@@ -575,6 +575,22 @@
       (prompt-choice :runner "0 [Credits]")
       (is (= 6 (count (:discard (get-runner)))) "Suffered 3 net damage on access and psi loss"))))
 
+(deftest psychic-field-neutralize-all-threats
+  "Psychic Field - Interaction with Neutralize All Threats and Hostile Infrastructure, #1208"
+  (do-game
+    (new-game (default-corp [(qty "Psychic Field" 3) (qty "Hostile Infrastructure" 3)])
+              (default-runner [(qty "Neutralize All Threats" 1) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Neutralize All Threats")
+    (run-empty-server state :remote1)
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (is (not (get-content state :remote1)) "Psychic Field trashed by Neutralize All Threats")
+    (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
 (deftest public-support
   "Public support scoring and trashing"
   ;; TODO could also test for NOT triggering "when scored" events

@@ -280,6 +280,25 @@
       (prompt-choice :runner 5) ; match trace
       (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
 
+(deftest gemini-chronos-protocol
+  "Gemini - Interaction with Chronos Protocol and kicker"
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
+              (default-runner [(qty "Sure Gamble" 1) (qty "Dirty Laundry" 2)]))
+    (play-from-hand state :corp "Gemini" "HQ")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (let [gem (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp gem)
+      (card-ability state :corp gem 0)
+      (prompt-choice :corp 3) ; boost to trace strength 5
+      (prompt-choice :runner 0)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
+
 (deftest iq
   "IQ - Rez cost and strength equal to cards in HQ"
   (do-game

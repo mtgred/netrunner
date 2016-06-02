@@ -1,7 +1,7 @@
 (ns game.macros)
 
 (defmacro effect [& expr]
-  `(fn ~['state 'side 'card 'targets]
+  `(fn ~['state 'side 'eid 'card 'targets]
      ~(let [actions (map #(if (#{:runner :corp} (second %))
                             (concat [(first %) 'state (second %)] (drop 2 %))
                             (concat [(first %) 'state 'side] (rest %)))
@@ -16,7 +16,7 @@
            ~@actions))))
 
 (defmacro req [& expr]
-  `(fn ~['state 'side 'card 'targets]
+  `(fn ~['state 'side 'eid 'card 'targets]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
             'run '(:run @state)
@@ -44,7 +44,7 @@
         ~@expr)))
 
 (defmacro msg [& expr]
-  `(fn ~['state 'side 'card 'targets]
+  `(fn ~['state 'side 'eid 'card 'targets]
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
             'corp-reg '(get-in @state [:corp :register])
@@ -57,13 +57,21 @@
 
 (defmacro when-completed
   ([action expr]
-   (let [reqmac (macroexpand (list (quote req) expr))]
-     `(do (~'register-effect-completed ~'state ~'side ~'card ~reqmac)
-          ~action)))
-  ([card action expr]
-   (let [reqmac (macroexpand (list (quote req) expr))]
-     `(do (~'register-effect-completed ~'state ~'side ~card ~reqmac)
-          ~action))))
+   (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'targets1] ~expr)
+   ;; this creates a five-argument function to be resolved later,
+   ;; without overriding any local variables name state, card, etc.
+         totake (if (= 'apply (first action)) 4 3)
+         th (nth action totake)]
+     `(let [~'use-eid (and (map? ~th) (:eid ~th))
+            ~'new-eid (if ~'use-eid ~th (game.core/make-eid ~'state))]
+        (~'register-effect-completed ~'state ~'side ~'new-eid ~(if (resolve 'card) ~'card nil) ~reqmac)
+        (if ~'use-eid
+          ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
+          ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))
 
 (defmacro final-effect [& expr]
-  (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'card)))))
+  (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'eid 'card)))))
+
+(defmacro continue-ability
+  [state side ability card targets]
+  `(game.core/resolve-ability ~state ~side (assoc ~ability :eid ~'eid) ~card ~targets))

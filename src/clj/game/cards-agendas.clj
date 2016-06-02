@@ -56,7 +56,8 @@
                                       (clear-wait-prompt state :runner))} card nil))}}}
 
    "Ancestral Imager"
-   {:events {:jack-out {:msg "do 1 net damage" :effect (effect (damage :net 1))}}}
+   {:events {:jack-out {:msg "do 1 net damage"
+                        :effect (effect (damage :net 1))}}}
 
    "AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
@@ -206,8 +207,9 @@
                  :effect (effect (forfeit card) (lose :runner :click 2))}]}
 
    "Fetal AI"
-   {:access {:req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
-             :effect (effect (damage :net 2 {:card card}))}
+   {:access {:delayed-completion true
+             :req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
+             :effect (effect (damage eid :net 2 {:card card}))}
     :steal-cost-bonus (req [:credit 2])}
 
    "Firmware Updates"
@@ -299,7 +301,7 @@
                  :msg "do 1 net damage"
                  :req (req (:run @state))
                  :once :per-run
-                 :effect (effect (damage :net 1 {:card card}))}]}
+                 :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Improved Protein Source"
      {:msg (msg "make the Runner gain 4 [Credits]")
@@ -340,7 +342,7 @@
 
    "Medical Breakthrough"
    {:effect (effect (update-all-advancement-costs))
-    :stolen (effect (update-all-advancement-costs))
+    :stolen {:effect (effect (update-all-advancement-costs))}
     :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
                                                    (concat (:scored corp) (:scored runner))))))}
 
@@ -394,7 +396,7 @@
    "Philotic Entanglement"
    {:req (req (> (count (:scored runner)) 0))
     :msg (msg "do " (count (:scored runner)) " net damage")
-    :effect (effect (damage :net (count (:scored runner)) {:card card}))}
+    :effect (effect (damage eid :net (count (:scored runner)) {:card card}))}
 
    "Posted Bounty"
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
@@ -407,7 +409,7 @@
     :effect (effect (rez target {:ignore-cost :all-costs}))}
 
    "Private Security Force"
-   {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage :meat 1 {:card card}))
+   {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage eid :meat 1 {:card card}))
                  :msg "do 1 meat damage"}]}
 
    "Profiteering"
@@ -512,7 +514,7 @@
 
    "Sentinel Defense Program"
    {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
-                      :effect (effect (damage :net 1 {:card card})) }}}
+                      :effect (effect (damage eid :net 1 {:card card})) }}}
 
    "Superior Cyberwalls"
    {:msg (msg "gain " (reduce (fn [c server]
@@ -580,6 +582,7 @@
                                                   (add-counter (dissoc card :vmi-count) :agenda (- (:vmi-count card))))}}}
 
    "Vulcan Coverup"
-   {:msg "do 2 meat damage" :effect (effect (damage :meat 2 {:card card}))
+   {:msg "do 2 meat damage"
+    :effect (effect (damage eid :meat 2 {:card card}))
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain :corp :bad-publicity 1))}}})

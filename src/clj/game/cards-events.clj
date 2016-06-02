@@ -13,7 +13,7 @@
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
-    :effect (effect (gain :click 3) (damage :brain 1 {:unpreventable true :card card}))}
+    :effect (effect (gain :click 3) (damage eid :brain 1 {:unpreventable true :card card}))}
 
    "Apocalypse"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -701,7 +701,7 @@
     :effect (effect (gain-run-credits 9)
                     (run target {:end-run
                                  {:msg " take 1 brain damage"
-                                  :effect (effect (damage :brain 1 {:unpreventable true :card card}))}}
+                                  :effect (effect (damage eid :brain 1 {:unpreventable true :card card}))}}
                       card))}
 
    "Sure Gamble"
