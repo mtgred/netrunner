@@ -64,7 +64,7 @@
          th (nth action totake)]
      `(let [~'use-eid (and (map? ~th) (:eid ~th))
             ~'new-eid (if ~'use-eid ~th (game.core/make-eid ~'state))]
-        (~'register-effect-completed ~'state ~'side ~'new-eid ~'card ~reqmac)
+        (~'register-effect-completed ~'state ~'side ~'new-eid ~(if (resolve 'card) ~'card nil) ~reqmac)
         (if ~'use-eid
           ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))

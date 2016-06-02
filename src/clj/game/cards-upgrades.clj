@@ -50,7 +50,9 @@
    "Bernice Mai"
    {:events {:successful-run {:req (req this-server)
                               :trace {:base 5 :msg "give the Runner 1 tag"
-                                      :effect (effect (tag-runner :runner 1))}}}}
+                                      :effect (effect (tag-runner :runner 1))
+                                      :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
+                                                                     (trash card))}}}}}
 
    "Breaker Bay Grid"
    {:events {:pre-rez-cost {:req (req (and (is-remote? (second (:zone card)))

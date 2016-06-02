@@ -94,11 +94,11 @@
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional delayed-completion psi] :as ability} card]
+  [state side {:keys [eid choices optional delayed-completion psi trace] :as ability} card]
   ;if it doesn't have choices and it doesn't have a true delayed-completion; or
   ;if it does have choices and has false delayed-completion
-  (when (or (and (not choices) (not optional) (not psi) (not delayed-completion))
-            (and (or optional psi choices) (false? delayed-completion)))
+  (when (or (and (not choices) (not optional) (not psi) (not trace) (not delayed-completion))
+            (and (or optional psi choices trace) (false? delayed-completion)))
     (effect-completed state side eid card)))
 
 (defn- check-req
@@ -129,7 +129,7 @@
   [state side ability card targets]
   (when-let [trace (:trace ability)]
     (when (check-req state side card targets trace)
-      (corp-trace-prompt state card trace))))
+      (corp-trace-prompt state card (assoc trace :eid (:eid ability))))))
 
 (defn- can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -379,7 +379,7 @@
 ;;; Traces
 (defn init-trace
   "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
-  [state side card {:keys [base] :as ability} boost]
+  [state side card {:keys [base eid] :as ability} boost]
   (clear-wait-prompt state :runner)
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (trigger-event state side :pre-init-trace card)
@@ -392,13 +392,13 @@
                                  (when (pos? bonus) (str " + " bonus " bonus"))
                                  " + " boost " [Credits]) (" (make-label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
-    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %) {:priority 2})
+    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side eid %) {:priority 2})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
 (defn resolve-trace
   "Compares trace strength and link strength and triggers the appropriate effects."
-  [state side boost]
+  [state side eid boost]
   (clear-wait-prompt state :corp)
   (let [runner (:runner @state)
         {:keys [strength ability card]} (:trace @state)]
@@ -410,7 +410,8 @@
                       (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
                           (when-let [kicker (:kicker ability)]
                             (when (>= strength (:min kicker))
-                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)]))))))))
+                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
+                          (effect-completed state side eid nil))))))
 
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."

@@ -405,10 +405,13 @@
 
 
 ;;; Ending runs.
-(defn register-successful-run [state side server]
-  (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
-  (swap! state assoc-in [:run :successful] true)
-  (trigger-event state side :successful-run (first server)))
+(defn register-successful-run
+  ([state side server] (register-successful-run state side (make-eid state) server))
+  ([state side eid server]
+   (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
+   (swap! state assoc-in [:run :successful] true)
+   (when-completed (trigger-event-sync state side :successful-run (first server))
+                   (effect-completed state side eid nil))))
 
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
@@ -418,23 +421,23 @@
                                                  (get-in @state [:run :run-effect :card]))))
       (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
   (let [server (get-in @state [:run :server])]
-    (register-successful-run state side server)
-    (let [run-effect (get-in @state [:run :run-effect])
-          r (:req run-effect)
-          card (:card run-effect)
-          replace-effect (:replace-access run-effect)]
-      (if (and replace-effect
-               (or (not r) (r state side (make-eid state) card [(first server)])))
-        (if (:mandatory replace-effect)
-          (replace-access state side replace-effect card)
-          (swap! state update-in [side :prompt]
-                 (fn [p]
-                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
-                                  :choices ["Run ability" "Access"]
-                                  :effect #(if (= % "Run ability")
-                                            (replace-access state side replace-effect card)
-                                            (do-access state side server))}))))
-        (do-access state side server)))))
+    (when-completed (register-successful-run state side server)
+                    (let [run-effect (get-in @state [:run :run-effect])
+                          r (:req run-effect)
+                          card (:card run-effect)
+                          replace-effect (:replace-access run-effect)]
+                      (if (and replace-effect
+                               (or (not r) (r state side (make-eid state) card [(first server)])))
+                        (if (:mandatory replace-effect)
+                          (replace-access state side replace-effect card)
+                          (swap! state update-in [side :prompt]
+                                 (fn [p]
+                                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
+                                                  :choices ["Run ability" "Access"]
+                                                  :effect #(if (= % "Run ability")
+                                                            (replace-access state side replace-effect card)
+                                                            (do-access state side server))}))))
+                        (do-access state side server))))))
 
 (defn successful-run
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
