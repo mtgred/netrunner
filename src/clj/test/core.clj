@@ -4,15 +4,29 @@
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [game.core :as core]
-            [test.utils :refer [load-card qty default-corp default-runner
+            [test.utils :refer [load-card load-cards qty default-corp default-runner
                                 make-deck]]
             [test.macros :refer [do-game]]
             [clojure.test :refer :all]))
 
+;;; Click action functions
+(defn take-credits
+  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
+  If all clicks are used up, end turn and start the opponent's turn."
+  ([state side] (take-credits state side nil))
+  ([state side n]
+    (let  [remaining-clicks (get-in @state [side :click])
+           n (or n remaining-clicks)
+           other (if (= side :corp) :runner :corp)]
+      (dotimes [i n] (core/click-credit state side nil))
+      (if (= (get-in @state [side :click]) 0)
+        (do (core/end-turn state side nil)
+            (core/start-turn state other nil))))))
+
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([corp runner] (new-game corp runner nil))
-  ([corp runner {:keys [mulligan] :as args}]
+  ([corp runner {:keys [mulligan start-as] :as args}]
     (let [states (core/init-game
                    {:gameid 1
                     :players [{:side "Corp"
@@ -29,8 +43,12 @@
         (core/resolve-prompt state :runner {:choice "Mulligan"})
         (core/resolve-prompt state :runner {:choice "Keep"}))
       (core/start-turn state :corp nil)
+      (if (= start-as :runner) (take-credits state :corp))
       state)))
 
+(defn load-all-cards []
+  (swap! game.core/all-cards (fn [x] (map #(assoc % :cid (make-cid)) (load-cards)))))
+(load-all-cards)
 
 ;;; Card related functions
 (defn find-card
@@ -77,20 +95,6 @@
   "Get number of counters of specified type."
   [card type]
   (get-in card [:counter type] 0))
-
-;;; Click action functions
-(defn take-credits
-  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
-  If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-    (let  [remaining-clicks (get-in @state [side :click])
-           n (or n remaining-clicks)
-           other (if (= side :corp) :runner :corp)]
-      (dotimes [i n] (core/click-credit state side nil))
-      (if (= (get-in @state [side :click]) 0)
-        (do (core/end-turn state side nil)
-            (core/start-turn state other nil))))))
 
 (defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate

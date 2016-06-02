@@ -488,6 +488,70 @@
     (prompt-choice :runner 3)
     (is (= 6 (:credit (get-runner))) "Corp guessed incorrectly")))
 
+;; Rebirth
+(let [choose-runner (fn [name state prompt-map]
+                      (let [kate-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
+                        (core/resolve-prompt state :runner {:choice kate-choice})))
+
+      kate "Kate \"Mac\" McCaffrey: Digital Tinker"
+      kit "Rielle \"Kit\" Peddler: Transhuman"
+      professor "The Professor: Keeper of Knowledge"
+      jamie "Jamie \"Bzzz\" Micken: Techno Savant"
+      whizzard "Whizzard: Master Gamer"
+      reina "Reina Roja: Freedom Fighter"]
+
+  (deftest rebirth-kate
+    "Rebirth - Kate's discount applies after rebirth"
+    (do-game 
+      (new-game (default-corp) (default-runner ["Magnum Opus" "Rebirth"]) {:start-as :runner})
+
+      (play-from-hand state :runner "Rebirth")
+      (is (every?   #(some #{%} (prompt-titles :runner))
+                    [kate kit]))
+      (is (not-any? #(some #{%} (prompt-titles :runner))
+                    [professor whizzard jamie]))
+
+      (choose-runner kate state prompt-map)
+
+      (is (= kate (-> (get-runner) :identity :title)))
+      (is (= 1 (:link (get-runner))) "1 link")
+
+      (is (= 0 (count (:discard (get-runner)))))
+      (is (= "Rebirth" (-> (get-runner) :rfg first :title)))
+
+      (is (changes-credits (get-runner) -4
+        (play-from-hand state :runner "Magnum Opus")))))
+
+  (deftest-pending rebirth-kate-twice
+    "Rebirth - Kate's discount does not after rebirth if something already installed"
+    (do-game
+      (new-game (default-corp) (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"]) {:start-as :runner})
+
+      (play-from-hand state :runner "Clone Chip")
+      (play-from-hand state :runner "Rebirth")
+      (choose-runner kate state prompt-map)
+
+      (is (changes-credits (get-corp) -1
+        (play-from-hand state :runner "Akamatsu Mem Chip"))
+        "Discount not applied for 2nd install")))
+
+  (deftest rebirth-whizzard
+    "Rebirth - Whizzard works after rebirth"
+    (do-game
+      (new-game (default-corp ["Ice Wall"]) (make-deck reina ["Rebirth"]))
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+
+      (play-from-hand state :runner "Rebirth")
+      (choose-runner whizzard state prompt-map)
+
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (= 6 (:credit (get-runner))) "Took a Whizzard credit")
+
+      (is (changes-credits (get-corp) -1
+        (core/rez state :corp (get-ice state :rd 0))) 
+        "Reina is no longer active"))))
+
 (deftest retrieval-run
   "Retrieval Run - Run Archives successfully and install a program from Heap for free"
   (do-game

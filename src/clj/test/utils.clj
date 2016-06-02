@@ -10,11 +10,21 @@
     (mg/disconnect conn)
     ret))
 
-(defn make-deck [identity deck]
-  {:identity identity :deck deck})
+(defn load-cards []
+  (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
+        db (mg/get-db conn "netrunner")
+        cards (mc/find-maps db "cards")
+        ret (take 99999 cards)]
+    (count ret)
+    (mg/disconnect conn)
+    ret))
 
 (defn qty [card amt]
   {:card (if (string? card) (load-card card) card) :qty amt})
+
+(defn make-deck [identity deck]
+  {:identity identity 
+   :deck (map #(if (string? %) (qty % 1) %) deck)})
 
 (defn default-corp
   ([] (default-corp [(qty "Hedge Fund" 3)]))
