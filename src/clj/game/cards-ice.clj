@@ -40,15 +40,17 @@
   "Do specified amount of net-damage."
   [dmg]
   {:label (str "Do " dmg " net damage")
+   :delayed-completion true
    :msg (str "do " dmg " net damage")
-   :effect (effect (damage :net dmg {:card card}))})
+   :effect (effect (damage eid :net dmg {:card card}))})
 
 (defn do-brain-damage
   "Do specified amount of brain damage."
   [dmg]
   {:label (str "Do " dmg " brain damage")
+   :delayed-completion true
    :msg (str "do " dmg " brain damage")
-   :effect (effect (damage :brain dmg {:card card}))})
+   :effect (effect (damage eid :brain dmg {:card card}))})
 
 (defn gain-credits
   "Gain specified amount of credits"

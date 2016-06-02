@@ -717,8 +717,7 @@
 
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
-                   :not-equal {:delayed-completion true
-                               :msg (msg "do " (count (:hand runner)) " net damage")
+                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
                                :effect (req (prn "START PSYCHIC FIELD" eid)
                                             (when-completed (damage state side :net (count (:hand runner)) {:card card})
                                                             (do (prn "FINISH PSYCHIC FIELD")
