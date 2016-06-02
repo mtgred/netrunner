@@ -621,7 +621,8 @@
    "Titanium Ribs"
    {:events
     {:pre-resolve-damage
-     {:req (req (and (> (last targets) 0)
+     {:delayed-completion true
+      :req (req (and (> (last targets) 0)
                      (runner-can-choose-damage? state)
                      (not (get-in @state [:damage :damage-replace]))))
       :effect (req (let [dtype target
@@ -632,20 +633,23 @@
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
                        (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
-                     (resolve-ability state side
+                     (continue-ability state side
                        {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
                         :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
                         :msg (msg "trash " (join ", " (map :title targets)))
                         :effect (req (clear-wait-prompt state :corp)
                                      (doseq [c targets]
                                        (trash state side c {:cause dtype :unpreventable true}))
-                                     (trigger-event state side :damage-chosen))}
+                                     (trigger-event state side :damage-chosen)
+                                     (damage-defer state side :meat 0)
+                                     (effect-completed state side eid card))}
                       card nil)
                       (trigger-event state side :damage dtype nil)))}
      :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
+    :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage :meat 2 {:card card}))
+                    (damage eid :meat 2 {:card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Turntable"

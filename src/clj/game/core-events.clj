@@ -130,6 +130,7 @@
 
 (defn effect-completed
   [state side eid card]
+  ;(prn "EFFECT-COMPLETED" eid)
   (doseq [handler (get-in @state [:effect-completed eid])]
     ((:effect handler) state side eid (:card card) nil))
   (swap! state update-in [:effect-completed] dissoc eid))

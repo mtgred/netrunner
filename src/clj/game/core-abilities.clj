@@ -71,24 +71,26 @@
 
 (defn- resolve-ability-eid
   ([state side {:keys [eid] :as ability} card targets]
-   (if (and ability (not eid))
-     (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
-     (when ability
-       ;; Is this an optional ability?
-       (check-optional state side ability card targets)
-       ;; Is this a psi game?
-       (check-psi state side ability card targets)
-       ;; Is this a trace?
-       (check-trace state side ability card targets)
-       ;; Ensure this ability can be triggered more than once per turn,
-       ;; or has not been yet been triggered this turn.
-       (when (can-trigger? state side ability card targets)
-         (if (:choices ability)
-           ;; It's a prompt!
-           (do-choices state side ability card targets)
-           ;; Not a prompt. Trigger the ability.
-           (do-ability state side ability card targets)))
-       (complete-ability state side ability card)))))
+   (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
+     (effect-completed state side eid card)
+     (if (and ability (not eid))
+       (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
+       (when ability
+         ;; Is this an optional ability?
+         (check-optional state side ability card targets)
+         ;; Is this a psi game?
+         (check-psi state side ability card targets)
+         ;; Is this a trace?
+         (check-trace state side ability card targets)
+         ;; Ensure this ability can be triggered more than once per turn,
+         ;; or has not been yet been triggered this turn.
+         (when (can-trigger? state side ability card targets)
+           (if (:choices ability)
+             ;; It's a prompt!
+             (do-choices state side ability card targets)
+             ;; Not a prompt. Trigger the ability.
+             (do-ability state side ability card targets)))
+         (complete-ability state side ability card))))))
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
@@ -369,7 +371,7 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side :psi-game nil)
           (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) (assoc ability :eid eid) card nil)))
+            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
@@ -403,12 +405,12 @@
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
     (let [succesful (> strength (+ (:link runner) boost))
-          ability (if succesful ability (:unsuccessful ability))]
-      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)])
-      (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace)))
-    (when-let [kicker (:kicker ability)]
-      (when (>= strength (:min kicker))
-        (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
+          which-ability (if succesful ability (:unsuccessful ability))]
+      (when-completed (resolve-ability state :corp which-ability card [strength (+ (:link runner) boost)])
+                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
+                          (when-let [kicker (:kicker ability)]
+                            (when (>= strength (:min kicker))
+                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)]))))))))
 
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."
