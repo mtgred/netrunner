@@ -115,7 +115,6 @@
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
-      (prn (:log @state))
       (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
 
 (deftest deus-x-fetal-jinteki-pe

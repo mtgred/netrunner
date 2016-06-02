@@ -332,7 +332,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Titanium Ribs")
-    (prn (:prompt (get-runner)))
     (prompt-select :runner (find-card "Titanium Ribs" (:hand (get-runner))))
     (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
     (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")

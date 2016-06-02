@@ -718,10 +718,7 @@
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :effect (req (prn "START PSYCHIC FIELD" eid)
-                                            (when-completed (damage state side :net (count (:hand runner)) {:card card})
-                                                            (do (prn "FINISH PSYCHIC FIELD")
-                                                                (effect-completed state side eid nil))))}}}]
+                               :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
    "Public Support"

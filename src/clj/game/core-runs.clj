@@ -162,11 +162,9 @@
                                          {:prompt (str "You access " name) :choices ["Steal"]
                                           :effect (req (resolve-steal state :runner c))} c nil)))))
               ;; Accessing a non-agenda
-              (do (prn "ACCESSING NON AGENDA")
-                  (if-let [access-effect (:access cdef)]
+              (do (if-let [access-effect (:access cdef)]
                     (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                    (do (prn "ACCESS EFFECT FINISHED")
-                                    (access-non-agenda state side c)))
+                                    (access-non-agenda state side c))
                     (access-non-agenda state side c))))))
         ;; The runner cannot afford the cost to access the card
         (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))))

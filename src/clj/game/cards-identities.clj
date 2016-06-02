@@ -109,8 +109,7 @@
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
                          (damage state side :net (get-defer-damage state side :net nil)
                                  {:unpreventable true :card card}))
-                     (do (prn "STARTING CHRONOS" eid)
-                         (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
+                     (do (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
                          (when-completed
                            (resolve-ability state side
                              {:optional
@@ -122,8 +121,7 @@
                                                                  (when (pos? (dec (or (get-defer-damage state side :net nil) 0)))
                                                                    (str " and deal " (- (get-defer-damage state side :net nil) 1)
                                                                         " more net damage")))
-                                                       :effect (req ;(prn "CHRONOS-PROTOCOL " eid)
-                                                                    (clear-wait-prompt state :runner)
+                                                       :effect (req (clear-wait-prompt state :runner)
                                                                     (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                                     (trash state side target {:cause :net :unpreventable true})
                                                                     (let [more (dec (or (get-defer-damage state side :net nil) 0))]

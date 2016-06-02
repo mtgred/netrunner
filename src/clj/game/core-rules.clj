@@ -157,12 +157,10 @@
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
-  (prn "RESOLVE-DAMAGE" n eid)
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
   (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
-                  (do (prn "LET'S GO " eid)
-                      (if-not (or (get-in @state [:damage :damage-replace]))
+                  (do (if-not (or (get-in @state [:damage :damage-replace]))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
                           (let [hand (get-in @state [:runner :hand])]
                             (when (< (count hand) n)
@@ -170,12 +168,9 @@
                             (when (= type :brain)
                               (swap! state update-in [:runner :brain-damage] #(+ % n))
                               (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-                            (prn "TAKING " n " FROM HAND" eid)
                             (doseq [c (take n (shuffle hand))]
                               (trash state side c {:unpreventable true :cause type} type))
-                            (trigger-event state side :damage type card)))
-                        (prn "DAMAGE BEING CHOSEN" eid)
-                        )
+                            (trigger-event state side :damage type card))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))
 
@@ -185,7 +180,6 @@
   ([state side type n] (damage state side (make-eid state) type n nil))
   ([state side type n args] (damage state side (make-eid state) type n args))
   ([state side eid type n {:keys [unpreventable unboostable card] :as args}]
-   (prn "TOLD TO DO " n " DAMAGE FROM " (:title card) eid)
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
@@ -287,7 +281,6 @@
 
 (defn resolve-trash
   [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
-  (prn "TOLD TO TRASH " (:title card) (:cid card))
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
                     (apply resolve-trash-end state side card args targets))

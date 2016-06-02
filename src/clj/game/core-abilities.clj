@@ -405,8 +405,9 @@
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
     (let [succesful (> strength (+ (:link runner) boost))
-          which-ability (if succesful ability (:unsuccessful ability))]
-      (when-completed (resolve-ability state :corp which-ability card [strength (+ (:link runner) boost)])
+          which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
+      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
+                                       card [strength (+ (:link runner) boost)])
                       (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
                           (when-let [kicker (:kicker ability)]
                             (when (>= strength (:min kicker))

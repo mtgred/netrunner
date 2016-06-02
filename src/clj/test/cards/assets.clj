@@ -589,7 +589,6 @@
     (prompt-choice :corp "0 [Credits]")
     (prompt-choice :runner "1 [Credits]")
     (is (not (get-content state :remote1)) "Psychic Field trashed by Neutralize All Threats")
-    (prn (:log @state))
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
 (deftest public-support
