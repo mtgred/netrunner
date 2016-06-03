@@ -595,6 +595,40 @@
       (is (= 2 (:click (get-runner))) "Runner was charged 1click")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest surat-city-grid
+  "Surat City Grid - Trigger on rez of a card in/protecting same server to rez another card at 2c discount"
+  (do-game
+    (new-game (default-corp [(qty "Surat City Grid" 2) (qty "Cyberdex Virus Suite" 2)
+                             (qty "Enigma" 1) (qty "Wraparound" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 15 :click 8)
+    (play-from-hand state :corp "Surat City Grid" "New remote")
+    (play-from-hand state :corp "Wraparound" "Server 1")
+    (play-from-hand state :corp "Cyberdex Virus Suite" "Server 1")
+    (let [scg1 (get-content state :remote1 0)
+          cvs1 (get-content state :remote1 1)
+          wrap (get-ice state :remote1 0)]
+      (core/rez state :corp scg1)
+      (core/rez state :corp cvs1)
+      (is (= 15 (:credit (get-corp))))
+      (is (= (:cid scg1) (-> (get-corp) :prompt first :card :cid)) "Surat City Grid triggered from upgrade in same remote")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp wrap)
+      (is (get-in (refresh wrap) [:rezzed]) "Wraparound is rezzed")
+      (is (= 15 (:credit (get-corp))) "Wraparound rezzed for free with 2c discount from SCG")
+      (play-from-hand state :corp "Surat City Grid" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
+      (let [scg2 (get-content state :hq 0)
+            cvs2 (get-content state :hq 1)
+            enig (get-ice state :hq 0)]
+        (core/rez state :corp scg2)
+        (core/rez state :corp cvs2)
+        (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
+        (core/derez state :corp (refresh wrap))
+        (core/rez state :corp enig)
+        (is (= (:cid scg2) (-> (get-corp) :prompt first :card :cid)) "SCG did trigger for ICE protecting HQ")))))
+
 (deftest tori-hanzo
   "Tori Hanzō - Pay to do 1 brain damage instead of net damage"
   (do-game
