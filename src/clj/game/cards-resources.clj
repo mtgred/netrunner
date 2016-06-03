@@ -818,14 +818,16 @@
    "Salsette Slums"
    {:events {:runner-install
              {:req (req (= card target))
-             :effect (effect (update! (assoc card :slums-active true)))}
+              :effect (effect (update! (assoc card :slums-active true)))}
              :runner-turn-begins
              {:effect (effect (update! (assoc card :slums-active true)))}
              :pre-trash
-             {:req (req (toast state :runner (str "Click Salsette Slums to remove " (:title target) " from the game") "info" {:prevent-duplicates true})
-                     (and (:slums-active card)
-                       (= (:side target) "Corp"))) }}
-    :abilities [{:label "Remove the current card from the game instead of trashing it."
+             {:req (req (and (:slums-active card)
+                             (:trash target)
+                             (= (:side target) "Corp")))
+              :effect (req (toast state :runner (str "Click Salsette Slums to remove " (:title target)
+                                                     " from the game") "info" {:prevent-duplicates true}))}}
+    :abilities [{:label "Remove the currently accessed card from the game instead of trashing it"
                  :req (req (let [c (:card (first (get-in @state [:runner :prompt])))]
                              (if-let [trash-cost (trash-cost state side c)]
                                (if (can-pay? state :runner nil :credit trash-cost)
@@ -837,6 +839,7 @@
                  :msg (msg (let [c (:card (first (get-in @state [:runner :prompt])))]
                              (str "pay " (trash-cost state side c) " [Credits] and remove " (:title c) " from the game")))
                  :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
+                                (deactivate state side c)
                                 (move state :corp c :rfg)
                                 (pay state :runner card :credit (trash-cost state side c))
                                 (update! state side (dissoc card :slums-active))
@@ -844,7 +847,7 @@
                                  (when-let [run (:run @state)]
                                    (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
                                      (handle-end-run state :runner)))))}
-                {:label "Remove a card trashed this turn from the game."
+                {:label "Remove a card trashed this turn from the game"
                  :req (req (if (:slums-active card)
                              true
                              ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false)))
@@ -853,7 +856,8 @@
                                     :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
                                                           (map first (turn-events state side :runner-trash)))}
                                     :msg (msg "remove " (:title target) " from the game")
-                                    :effect (req (move state :corp target :rfg)
+                                    :effect (req (deactivate state side target)
+                                                 (move state :corp target :rfg)
                                                  (update! state side (dissoc card :slums-active))
                                                  (swap! state update-in [side :prompt] rest)
                                                  (when-let [run (:run @state)]
