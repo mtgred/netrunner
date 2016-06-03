@@ -513,8 +513,9 @@
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run
-             {:req (req (= target :hq)) :once :per-turn
-              :effect (effect (resolve-ability {:choices {:req installed?}
+             {:delayed-completion true
+              :req (req (= target :hq)) :once :per-turn
+              :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
                                                 :effect (effect (expose target)) :msg "expose 1 card"}
                                                card nil))}}}
 
