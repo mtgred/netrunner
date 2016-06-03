@@ -573,6 +573,32 @@
       (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
       (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
 
+(deftest snitch
+  "Snitch - Only works on rezzed ice"
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 2)])
+              (default-runner [(qty "Snitch" 1)]))
+    (play-from-hand state :corp "Quandary" "R&D")
+    (play-from-hand state :corp "Quandary" "HQ")
+    (let [hqice (get-ice state :hq 0)]
+      (core/rez state :corp hqice))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Snitch")
+    (let [snitch (get-in @state [:runner :rig :program 0])]
+      ;unrezzed ice scenario
+      (run-on state "R&D")
+      (card-ability state :runner snitch 0)
+      (is (prompt-is-card? :runner snitch) "Option to jack out")
+      (prompt-choice :runner "Yes")
+      ;rezzed ice scenario
+      (run-on state "HQ")
+      (card-ability state :runner snitch 0)
+      (is (empty? (get-in @state [:runner :prompt])) "No option to jack out")
+      ;no ice scenario
+      (run-on state "Archives")
+      (card-ability state :runner snitch 0)
+      (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
+
 (deftest surfer
   "Surfer - Swap position with ice before or after when encountering a barrier ice"
   (do-game
