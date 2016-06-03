@@ -596,7 +596,7 @@
                                              (not (= "Draft" (:setname c)))
                                              (not (= (:title c) (-> @state :runner :identity :title)))))
                         swappable-ids (filter is-swappable @all-cards)]
-                        (cancellable swappable-ids)))
+                        (cancellable swappable-ids :sorted)))
 
      :effect (req
                (move state side (last (:discard runner)) :rfg)

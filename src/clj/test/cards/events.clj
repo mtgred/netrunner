@@ -497,6 +497,7 @@
       kit "Rielle \"Kit\" Peddler: Transhuman"
       professor "The Professor: Keeper of Knowledge"
       jamie "Jamie \"Bzzz\" Micken: Techno Savant"
+      chaos "Chaos Theory: Wünderkind"
       whizzard "Whizzard: Master Gamer"
       reina "Reina Roja: Freedom Fighter"]
 
@@ -506,6 +507,7 @@
       (new-game (default-corp) (default-runner ["Magnum Opus" "Rebirth"]) {:start-as :runner})
 
       (play-from-hand state :runner "Rebirth")
+      (is (= (first (prompt-titles :runner)) chaos) "List is sorted")
       (is (every?   #(some #{%} (prompt-titles :runner))
                     [kate kit]))
       (is (not-any? #(some #{%} (prompt-titles :runner))
@@ -516,7 +518,7 @@
       (is (= kate (-> (get-runner) :identity :title)))
       (is (= 1 (:link (get-runner))) "1 link")
 
-      (is (= 0 (count (:discard (get-runner)))))
+      (is (empty? (:discard (get-runner))))
       (is (= "Rebirth" (-> (get-runner) :rfg first :title)))
 
       (is (changes-credits (get-runner) -4

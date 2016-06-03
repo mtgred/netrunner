@@ -15,6 +15,7 @@
         db (mg/get-db conn "netrunner")
         cards (mc/find-maps db "cards")
         ret (take 99999 cards)]
+    ;; Doing this to materialize the list. I'm sure there's a better way. The take above might be useless.
     (count ret)
     (mg/disconnect conn)
     ret))
