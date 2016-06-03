@@ -359,10 +359,9 @@
 
    "Surat City Grid"
    {:events
-    {:rez {:req (req (and (= (card->server state target) (card->server state card))
-                          (not (and (is-central? (card->server state card))
-                                    (= (card->server state target) (card->server state card))
-                                    (is-type? target "Upgrade")))
+    {:rez {:req (req (and (= (second (:zone target)) (second (:zone card)))
+                          (not (and (is-type? target "Upgrade")
+                                    (is-central? (second (:zone target)))))
                           (not= (:cid target) (:cid card))
                           (seq (filter #(and (not (rezzed? %))
                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))))
