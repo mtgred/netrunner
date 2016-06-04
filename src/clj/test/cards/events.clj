@@ -340,8 +340,64 @@
       (prompt-select :runner fs)
       (prompt-select :runner nat)
       (prompt-choice :runner "Done")
-      (is (= 4 (count (:hand (get-runner)))) "Trashing 2 cards draws 2 card"))
-    ))
+      (is (= 4 (count (:hand (get-runner)))) "Trashing 2 cards draws 2 card"))))
+
+
+(deftest information-sifting
+  "Information Sifting - complicated interactions with damage prevention"
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping"
+                         [(qty "Snare!" 1) (qty "PAD Campaign" 1) (qty "Hostile Infrastructure" 1)
+                          (qty "Braintrust" 1) (qty "Hedge Fund" 1) (qty "Power Shutdown" 1)])
+              (default-runner [(qty "Information Sifting" 2) (qty "Deus X" 2) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+
+    (core/gain state :corp :credit 10)
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/gain state :runner :credit 10)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Deus X")
+    (play-from-hand state :runner "Deus X")
+    (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+    (prompt-select :corp (find-card "Snare!" (:hand (get-corp))))
+    (prompt-select :corp (find-card "PAD Campaign" (:hand (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp is waiting for Runner selection")
+    (prompt-choice :runner "Pile 1")
+    (prompt-choice :runner "Card from Pile 1")
+    ; the cards are selected randomly :(
+    (letfn [(prevent-snare [existing-dmg]
+              (prompt-choice :corp "Yes")
+              (card-ability state :runner (get-program state 0) 1)
+              (prompt-choice :runner "Done")
+              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
+              (prompt-choice :runner "Yes")
+              (prompt-choice :runner "Done") ; don't prevent Hostile dmg
+              ; chronos prompt
+              (prompt-choice :corp "Yes")
+              (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
+              (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
+            (allow-pad [existing-dmg]
+              (prompt-choice :runner "Yes")
+              (card-ability state :runner (get-program state 0) 1)
+              (prompt-choice :runner "Done")
+              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf"))]
+      (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
+        ; prevent the damage
+        (do (prevent-snare (count (:discard (get-runner))))
+            (prompt-choice :runner "Card from Pile 1")
+            (allow-pad (count (:discard (get-runner)))))
+        (do (allow-pad (count (:discard (get-runner))))
+            (prompt-choice :runner "Card from Pile 1")
+            (prevent-snare (count (:discard (get-runner)))))))
+    (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+    (prompt-select :corp (find-card "Power Shutdown" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Selecting max cards closed the selection prompt")
+    (prompt-choice :runner "Pile 2")
+    (prompt-choice :runner "Card from Pile 2")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (count (:scored (get-runner)))) "Runner stole agenda")))
 
 (deftest inject
   "Inject - Draw 4 cards from Stack and gain 1 credit per trashed program"
