@@ -574,7 +574,7 @@
       (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
 
 (deftest snitch
-  "Snitch - Only works on rezzed ice"
+  "Snitch - Only works on unrezzed ice"
   (do-game
     (new-game (default-corp [(qty "Quandary" 2)])
               (default-runner [(qty "Snitch" 1)]))
