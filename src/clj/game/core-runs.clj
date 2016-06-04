@@ -58,12 +58,13 @@
 
 (defn resolve-steal
   "Finish the stealing of an agenda."
-  ([state side card] (resolve-steal state side card {:eid (make-eid state)}))
-  ([state side card {:keys [eid] :as args}]
+  ([state side card] (resolve-steal state side (make-eid state) card))
+  ([state side eid card]
    (let [cdef (card-def card)]
      (when-completed (resolve-steal-events state side card)
-                     (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
-                       (steal state :runner card))))))
+                     (do (when (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+                           (steal state :runner card))
+                         (effect-completed state side eid nil))))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -95,7 +96,7 @@
       merge-costs flatten vec))
 
 (defn- access-non-agenda
-  [state side c]
+  [state side eid c]
   (trigger-event state side :access c)
   (trigger-event state side :pre-trash c)
   (when (not= (:zone c) [:discard]) ; if not accessing in Archives
@@ -106,69 +107,81 @@
         (if (and (get-in @state [:runner :register :force-trash])
                  (can-pay? state :runner name :credit trash-cost))
           ;; If the runner is forced to trash this card (Neutralize All Threats)
-          (resolve-ability state :runner {:cost [:credit trash-cost]
-                                          :effect (effect (trash card)
-                                                          (system-msg (str "is forced to pay " trash-cost
-                                                                           " [Credits] to trash " name)))} card nil)
+          (resolve-ability state :runner eid
+                           {:cost [:credit trash-cost]
+                            :effect (effect (trash card)
+                                            (system-msg (str "is forced to pay " trash-cost
+                                                             " [Credits] to trash " name)))} card nil)
           ;; Otherwise, show the option to pay to trash the card.
-          (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
+          (optional-ability state :runner eid card (str "Pay " trash-cost "[Credits] to trash " name "?")
                             {:yes-ability {:cost [:credit trash-cost]
                                            :effect (effect (trash card)
                                                            (system-msg (str "pays " trash-cost
                                                                             " [Credits] to trash " name)))}} nil)))
       ;; The card does not have a trash cost
-      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
+      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))))
+
+(defn- access-agenda
+  [state side eid c]
+  (trigger-event state side :pre-steal-cost c)
+  (if-not (can-steal? state side c)
+    ;; The runner cannot steal this agenda.
+    (do (resolve-steal-events state side c)
+        (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))
+    ;; The runner can potentially steal this agenda.
+    (let [cost (steal-cost state side c)
+          name (:title c)]
+      ;; Steal costs are additional costs and can be denied by the runner.
+      (if-not (empty? cost)
+        ;; Ask if the runner will pay the additional cost to steal.
+        (optional-ability
+          state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+          {:eid eid
+           :yes-ability
+                {:delayed-completion true
+                 :effect (req (if (can-pay? state side name cost)
+                                (do (pay state side nil cost)
+                                    (system-msg state side (str "pays " (costs-to-symbol cost)
+                                                                " to steal " name))
+                                    (resolve-steal state side eid c))
+                                (resolve-steal-events state side eid c)))}
+           :no-ability {:delayed-completion true
+                        :effect (effect (resolve-steal-events eid c))}}
+          nil)
+        ;; Otherwise, show the "You access" prompt with the single option to Steal.
+        (resolve-ability state :runner
+                         {:prompt (str "You access " name) :choices ["Steal"]
+                          :effect (req (resolve-steal state :runner c))} c nil)))))
 
 (defn handle-access
   "Apply game rules for accessing the given list of cards (which generally only contains 1 card.)"
-  [state side cards]
-  (swap! state assoc :access true)
-  (doseq [c cards]
-    ;; Reset counters for increasing costs of trash, steal, and access.
-    (swap! state update-in [:bonus] dissoc :trash)
-    (swap! state update-in [:bonus] dissoc :steal-cost)
-    (swap! state update-in [:bonus] dissoc :access-cost)
-    (trigger-event state side :pre-access-card c)
-    (let [acost (access-cost state side c)
-          ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-          anon-card (dissoc c :title)
-          card c]
-      (if (or (empty? acost) (pay state side anon-card acost))
-        ;; Either there were no access costs, or the runner could pay them.
-        (let [cdef (card-def c)
-              c (assoc c :seen true)]
-          (when-let [name (:title c)]
-            (if (is-type? c "Agenda") ; accessing an agenda
-              (do (trigger-event state side :pre-steal-cost c)
-                  (if-not (can-steal? state side c)
-                    ;; The runner cannot steal this agenda.
-                    (do (resolve-steal-events state side c)
-                        (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {}))
-                    ;; The runner can potentially steal this agenda.
-                    (let [cost (steal-cost state side c)]
-                      ;; Steal costs are additional costs and can be denied by the runner.
-                      (if-not (empty? cost)
-                        ;; Ask if the runner will pay the additional cost to steal.
-                        (optional-ability state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-                                          {:yes-ability
-                                           {:effect (req (if (can-pay? state side name cost)
-                                                           (do (pay state side nil cost)
-                                                               (system-msg state side (str "pays " (costs-to-symbol cost)
-                                                                                           " to steal " name))
-                                                               (resolve-steal state side c))
-                                                           (resolve-steal-events state side c)))}
-                                           :no-ability {:effect (effect (resolve-steal-events c))}} nil)
-                        ;; Otherwise, show the "You access" prompt with the single option to Steal.
-                        (resolve-ability state :runner
-                                         {:prompt (str "You access " name) :choices ["Steal"]
-                                          :effect (req (resolve-steal state :runner c))} c nil)))))
-              ;; Accessing a non-agenda
-              (do (if-let [access-effect (:access cdef)]
-                    (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                    (access-non-agenda state side c))
-                    (access-non-agenda state side c))))))
-        ;; The runner cannot afford the cost to access the card
-        (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))))
+  ([state side cards] (handle-access state side (make-eid state) cards))
+  ([state side eid cards]
+   (swap! state assoc :access true)
+   (doseq [c cards]
+     ;; Reset counters for increasing costs of trash, steal, and access.
+     (swap! state update-in [:bonus] dissoc :trash)
+     (swap! state update-in [:bonus] dissoc :steal-cost)
+     (swap! state update-in [:bonus] dissoc :access-cost)
+     (trigger-event state side :pre-access-card c)
+     (let [acost (access-cost state side c)
+           ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
+           anon-card (dissoc c :title)
+           card c]
+       (if (or (empty? acost) (pay state side anon-card acost))
+         ;; Either there were no access costs, or the runner could pay them.
+         (let [cdef (card-def c)
+               c (assoc c :seen true)]
+           (when-let [name (:title c)]
+             (if (is-type? c "Agenda") ; accessing an agenda
+               (access-agenda state side eid c)
+               ;; Accessing a non-agenda
+               (do (if-let [access-effect (:access cdef)]
+                     (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                     (access-non-agenda state side eid c))
+                     (access-non-agenda state side eid c))))))
+         ;; The runner cannot afford the cost to access the card
+         (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {}))))))
 
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
@@ -397,8 +410,8 @@
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
   [state side ability card]
-  (resolve-ability state side ability card nil)
-  (run-cleanup state side))
+  (when-completed (resolve-ability state side ability card nil)
+                  (run-cleanup state side)))
 
 ;;;; OLDER ACCESS ROUTINES. DEPRECATED.
 
