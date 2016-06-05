@@ -58,6 +58,7 @@
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/discard #n"] " - Discard card number n from your hand"]
                         [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
+                        [:li [:code "/rfg"] " - Select a card to remove from the game"]
                         [:li [:code "/end-run"] " - End the run (Corp only)"]
                         [:li [:code "/jack-out"] " - Jack out (Runner only)"]
                         [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
