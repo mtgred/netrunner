@@ -97,6 +97,8 @@
                (when (= (last (:server run)) (last z))
                  (handle-end-run state side)))
              (swap! state dissoc-in z)))
+         (when-let [card-moved (:move-zone (card-def c))]
+           (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
          (when-let [icon-card (get-in moved-card [:icon :card])]
            ;; remove icon if card moved to :discard or :hand
