@@ -244,7 +244,8 @@
                             roomname " (" (count-games room) ")"])]
             [:div.rooms
              (room-tab "competitive" "Competitive")
-             (room-tab "casual" "Casual")])]
+             (room-tab "casual" "Casual")
+             (room-tab "beginner" "Beginner")])]
          (game-list cursor owner)]
 
         [:div.game-panel
