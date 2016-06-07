@@ -556,7 +556,8 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Subcontract")
     (prompt-select :corp (find-card "Scorched Earth" (:hand (get-corp))))
-    (is (empty? (:prompt (get-corp))) "Corp does not have prompt until damage prevention completes")
+    (is (and (= 1 (count (:prompt (get-corp)))) (= :waiting (-> (get-corp) :prompt first :prompt-type)))
+        "Corp does not have Subcontract prompt until damage prevention completes")
     (prompt-choice :runner "Done")
     (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
 

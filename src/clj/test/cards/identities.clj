@@ -75,25 +75,6 @@
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
 
-(deftest argus-security
-  "Argus Security - Runner chooses to take 1 tag or 2 meat damage when stealing an agenda"
-  (do-game
-    (new-game
-      (make-deck "Argus Security: Protection Guaranteed" [(qty "Hostile Takeover" 2)])
-      (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (take-credits state :corp)
-    (let [ht1 (get-content state :remote1 0)
-          ht2 (get-content state :remote2 0)]
-      (run-empty-server state "Server 1")
-      (prompt-choice :runner "Steal")
-      (prompt-choice :runner "1 tag")
-      (is (= 1 (:tag (get-runner))) "Took 1 tag from stealing an agenda")
-      (run-empty-server state "Server 2")
-      (prompt-choice :runner "Steal")
-      (prompt-choice :runner "2 meat damage")
-      (is (= 2 (count (:discard (get-runner)))) "Took 2 meat damage from stealing an agenda"))))
 
 (deftest cerebral-imaging-max-hand-size
   "Cerebral Imaging - Maximum hand size equal to credits"
@@ -215,10 +196,8 @@
     (take-credits state :runner)
     (play-from-hand state :corp "15 Minutes" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
-    (let [gs (get-in @state [:runner :rig :resource 0])]
-      (card-ability state :runner gs 0)
-      (prompt-choice :runner "Steal")
-      (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn"))))
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
 
 (deftest haarpsichord-studios-employee-strike
   "Haarpsichord Studios - Interactions with Employee Strike. Issue #1313."
@@ -401,6 +380,36 @@
     (prompt-choice :runner "Run ability")
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
+
+(deftest leela-gang-sign-complicated
+  "Leela Patel - complicated interaction with mutiple Gang Sign"
+  (do-game
+    (new-game
+      (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 1)
+                                                                  (qty "Hostile Takeover" 1)
+                                                                  (qty "Geothermal Fracking" 1)])
+      (make-deck "Leela Patel: Trained Pragmatist" [(qty "Gang Sign" 2)]))
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Geothermal Fracking" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (play-from-hand state :runner "Gang Sign")
+    (take-credits state :runner)
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :runner "Leela Patel: Trained Pragmatist")
+    (prompt-select :runner (get-content state :remote2 0))
+    (is (find-card "Hostile Takeover" (:hand (get-corp))) "Hostile Takeover returned to hand")
+    (prompt-choice :runner "Gang Sign")
+    (prompt-choice :runner "Card from hand")
+    (prompt-choice :runner "Steal")
+    (is (find-card "Hostile Takeover" (:scored (get-runner))) "Hostile Takeover stolen with Gang Sign")
+    (prompt-select :runner (get-content state :remote3 0))
+    (is (find-card "Geothermal Fracking" (:hand (get-corp))) "Geothermal Fracking returned to hand")
+    (prompt-choice :runner "Card from hand")
+    (prompt-choice :runner "Steal")
+    (is (find-card "Hostile Takeover" (:scored (get-runner))) "Geothermal Fracking stolen with Gang Sign")
+    (prompt-choice :runner "Done")))
 
 (deftest maxx-wyldside-start-of-turn
   "MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click"
