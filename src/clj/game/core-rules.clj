@@ -185,10 +185,10 @@
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
          ;; runner can prevent the damage.
-         (do (system-msg state :runner "has the option to prevent damage")
+         (do (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
              (show-prompt
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
-               (fn [choice]
+               (fn [_]
                  (let [prevent (get-in @state [:damage :damage-prevent type])]
                    (when prevent
                      (trigger-event state side :prevented-damage type prevent))
@@ -197,6 +197,7 @@
                                  (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                           " " (name type) " damage")
                                  "will not prevent damage"))
+                   (clear-wait-prompt state :corp)
                    (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
          (resolve-damage state side eid type n args))))))
@@ -257,16 +258,6 @@
 
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
-
-;;(when (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-;; the use of apply here is incompatible with the when-completed macro, so we have to expand the macro by hand.
-;;(let [eid (make-eid state)
-     ;; when-done (fn [state1 side1 eid1 card1 targets1]
-    ;;              ())]
-  ;;(register-effect-completed
- ;;   state side eid nil
-;;    )
-;;  (apply trigger-event-async state side eid (keyword (str (name side) "-trash")) card cause targets)))
 
 (defn- resolve-trash-end
   [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
