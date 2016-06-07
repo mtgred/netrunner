@@ -2,7 +2,7 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare card-str can-rez? can-advance? corp-install enforce-msg gain-agenda-point get-remote-names
+(declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
          can-run-server? can-score?)
@@ -106,9 +106,10 @@
             (add-counter state side (:card prompt) (:counter (:choices prompt)) (- choice)))
           ;; trigger the prompt's effect function
           ((:effect prompt) (or choice card)))
-      (when-let [cancel-effect (:cancel-effect prompt)]
+      (if-let [cancel-effect (:cancel-effect prompt)]
         ;; the user chose "cancel" -- trigger the cancel effect.
-        (cancel-effect choice)))
+        (cancel-effect choice)
+        (effect-completed state side (:eid prompt) nil)))
     ;; trigger end-effect if present
     (when-let [end-effect (:end-effect prompt)]
       (end-effect state side (make-eid state) card nil))
@@ -244,18 +245,21 @@
     (when (can-score? state side card)
       (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
                  (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+
+        ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
         (let [moved-card (move state :corp card :scored)
-              c (card-init state :corp moved-card)
-              points (get-agenda-points state :corp c)]
-          (system-msg state :corp (str "scores " (:title c) " and gains " points
-                                       " agenda point" (when (> points 1) "s")))
-          (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-          (gain-agenda-point state :corp points)
-          (set-prop state :corp c :advance-counter 0)
-          (trigger-event state :corp :agenda-scored (assoc c :advance-counter 0))
-          (when-let [current (first (get-in @state [:runner :current]))]
-            (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-            (trash state side current)))))))
+              c (card-init state :corp moved-card false)]
+          (when-completed (trigger-event-async state :corp :agenda-scored (card-as-handler c) c)
+                          (let [c (get-card state c)
+                                points (get-agenda-points state :corp c)]
+                            (set-prop state :corp (get-card state moved-card) :advance-counter 0)
+                            (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                                         " agenda point" (when (> points 1) "s")))
+                            (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                            (gain-agenda-point state :corp points)
+                            (when-let [current (first (get-in @state [:runner :current]))]
+                              (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                              (trash state side current)))))))))
 
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
