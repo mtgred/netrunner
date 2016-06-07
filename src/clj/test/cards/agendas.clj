@@ -421,8 +421,8 @@
     (play-from-hand state :corp "Profiteering" "New remote")
     (let [prof (get-content state :remote1 0)]
       (score-agenda state :corp prof)
-      (is (= 1 (:agenda-point (get-corp))))
       (prompt-choice :corp "3")
+      (is (= 1 (:agenda-point (get-corp))))
       (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
       (is (= 20 (:credit (get-corp))) "Gained 15 credits"))))
 

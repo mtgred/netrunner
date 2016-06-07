@@ -359,6 +359,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (core/score state :corp (refresh prof))
+        (prompt-choice :corp "0")
         (is (= 1 (:agenda-point (get-corp))) "Profiteering was able to be scored")))))
 
 (deftest neural-emp
