@@ -329,14 +329,12 @@
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:effect (req (toast state :runner "Click on Gang Sign to access 1 card from HQ" "info")
-                                          (update! state side (assoc card :access-hq true)))}}
-    :abilities [{:req (req (:access-hq card))
-                 :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
-                           (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
-                 :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                (resolve-ability state :runner (choose-access c '(:hq)) card nil)
-                                (update! state side (dissoc (get-card state card) :access-hq))))}]}
+   {:events {:agenda-scored {:delayed-completion true
+                             :interactive (req true)
+                             :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
+                                       (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
+                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
+                                            (continue-ability state :runner (choose-access c '(:hq)) card nil)))}}}
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -897,7 +895,8 @@
     :abilities [ability]})
 
    "Spoilers"
-   {:events {:agenda-scored {:msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
+   {:events {:agenda-scored {:interactive (req true)
+                             :msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
 
    "Starlight Crusade Funding"
    {:msg "ignore additional costs on Double events"
