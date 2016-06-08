@@ -64,7 +64,7 @@
 
 ;; INCOMPLETE
 (defn- trigger-event-simult-player
-  [state side eid event handlers targets]
+  [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
               (let [cards (map :card handlers)
@@ -76,24 +76,24 @@
                   (let [to-resolve (first handlers)]
                     {:delayed-completion true
                      :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
-                                                                   (:card to-resolve) targets)
+                                                                   (:card to-resolve) event-targets)
                                                   (if (< 1 (count handlers))
                                                     (continue-ability state side
-                                                                      (choose-handler (next handlers)) nil targets)
+                                                                      (choose-handler (next handlers)) nil event-targets)
                                                     (effect-completed state side eid nil))))})
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
                    :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
                                    (when-completed (resolve-ability state side (:ability to-resolve)
-                                                                    (:card to-resolve) targets)
+                                                                    (:card to-resolve) event-targets)
                                                    (if (< 1 (count handlers))
                                                      (continue-ability state side
                                                                        (choose-handler (remove-once #(not= target (:title (:card %))) handlers))
-                                                                       nil targets)
+                                                                       nil event-targets)
                                                      (effect-completed state side eid nil)))))})))]
 
-      (continue-ability state side (choose-handler handlers) nil targets))
+      (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid nil)))
 
 (defn ability-as-handler
