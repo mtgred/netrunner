@@ -295,8 +295,7 @@
    {:events {:agenda-scored {:interactive (req true)
                              :delayed-completion true
                              :msg "do 1 net damage"
-                             :effect (effect ((fn [_ _] (prn "JPE " eid)))
-                                             (damage eid :net 1 {:card card}))}
+                             :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Replicating Perfection"
