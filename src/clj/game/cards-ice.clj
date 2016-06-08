@@ -1055,7 +1055,8 @@
    (space-ice)
 
    "Wotan"
-   {:abilities [end-the-run]}
+   {:abilities [end-the-run
+                (do-brain-damage 1)]}
 
    "Wraparound"
    {:abilities [end-the-run]
