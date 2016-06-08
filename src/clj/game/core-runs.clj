@@ -142,9 +142,8 @@
       (if-not (empty? cost)
         ;; Ask if the runner will pay the additional cost to steal.
         (optional-ability
-          state :runner c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-          {:eid eid
-           :yes-ability
+          state :runner eid c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
+          {:yes-ability
                 {:delayed-completion true
                  :effect (req (if (can-pay? state side name cost)
                                 (do (pay state side nil cost)
