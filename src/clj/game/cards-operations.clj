@@ -83,10 +83,15 @@
     :effect (effect (draw 3))}
 
    "Archived Memories"
-   {:prompt "Choose a card from Archives to add to HQ" :show-discard true
-    :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
-    :effect (final-effect (move target :hand)
-                          (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
+   {:effect (req (let [cid (:cid card)]
+                   (resolve-ability state side
+                     {:prompt "Choose a card from Archives to add to HQ" :show-discard true
+                      :choices {:req #(and (not= (:cid %) cid)
+                                           (= (:side %) "Corp")
+                                           (= (:zone %) [:discard]))}
+                      :effect (final-effect (move target :hand)
+                                            (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
+                    card nil)))}
 
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash"
