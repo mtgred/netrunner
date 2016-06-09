@@ -572,7 +572,7 @@
                                 (when-completed (play-instant state side target)
                                                 (do (system-msg state side "shuffles their deck")
                                                     (shuffle! state side :deck)))
-                                (when-completed (corp-install state side target nil)
+                                (when-completed (corp-install state side target nil nil)
                                                 (do (system-msg state side "shuffles their deck")
                                                     (shuffle! state side :deck)))))}]}
 
