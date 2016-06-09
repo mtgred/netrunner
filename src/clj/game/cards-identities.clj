@@ -110,26 +110,28 @@
                          (damage state side eid :net (get-defer-damage state side :net nil)
                                  {:unpreventable true :card card}))
                      (do (show-wait-prompt state :runner "Corp to use Chronos Protocol: Selective Mind-mapping")
-                           (continue-ability
-                             state side
-                             {:optional
-                              {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
-                                            "Grip to select the first card trashed?")
-                               :player :corp
-                               :yes-ability {:prompt (msg "Choose a card to trash")
-                                             :choices (req (:hand runner)) :not-distinct true
-                                             :msg (msg "trash " (:title target)
-                                                       (when (pos? (dec (or (get-defer-damage state side :net nil) 0)))
-                                                         (str " and deal " (- (get-defer-damage state side :net nil) 1)
-                                                              " more net damage")))
-                                             :effect (req (clear-wait-prompt state :runner)
-                                                          (swap! state update-in [:damage] dissoc :damage-choose-corp)
-                                                          (trash state side target {:cause :net :unpreventable true})
-                                                          (let [more (dec (or (get-defer-damage state side :net nil) 0))]
-                                                            (damage-defer state side :net more)))}
-                               :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                         (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
-                             card nil))))}}
+                         (continue-ability
+                           state side
+                           {:optional
+                            {:prompt (str "Use Chronos Protocol: Selective Mind-mapping to reveal the Runner's "
+                                          "Grip to select the first card trashed?")
+                             :priority 10
+                             :player :corp
+                             :yes-ability {:prompt (msg "Choose a card to trash")
+                                           :choices (req (:hand runner)) :not-distinct true
+                                           :priority 10
+                                           :msg (msg "trash " (:title target)
+                                                     (when (pos? (dec (or (get-defer-damage state side :net nil) 0)))
+                                                       (str " and deal " (- (get-defer-damage state side :net nil) 1)
+                                                            " more net damage")))
+                                           :effect (req (clear-wait-prompt state :runner)
+                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp)
+                                                        (trash state side target {:cause :net :unpreventable true})
+                                                        (let [more (dec (or (get-defer-damage state side :net nil) 0))]
+                                                          (damage-defer state side :net more)))}
+                             :no-ability {:effect (req (clear-wait-prompt state :runner)
+                                                       (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
+                           card nil))))}}
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"

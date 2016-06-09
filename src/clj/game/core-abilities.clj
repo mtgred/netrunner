@@ -84,12 +84,13 @@
          (check-trace state side ability card targets)
          ;; Ensure this ability can be triggered more than once per turn,
          ;; or has not been yet been triggered this turn.
-         (when (can-trigger? state side ability card targets)
+         (if (can-trigger? state side ability card targets)
            (if (:choices ability)
              ;; It's a prompt!
              (do-choices state side ability card targets)
              ;; Not a prompt. Trigger the ability.
-             (do-ability state side ability card targets)))
+             (do-ability state side ability card targets))
+           (effect-completed state side eid card))
          (complete-ability state side ability card))))))
 
 ;;; Checking functions for resolve-ability
@@ -122,15 +123,17 @@
   "Checks if a psi-game is to be resolved"
   [state side {:keys [eid] :as ability} card targets]
   (when-let [psi (:psi ability)]
-    (when (check-req state side card targets psi)
-      (psi-game state side eid card psi))))
+    (if (check-req state side card targets psi)
+      (psi-game state side eid card psi)
+      (effect-completed state side eid card))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
-    (when (check-req state side card targets trace)
-      (corp-trace-prompt state card (assoc trace :eid (:eid ability))))))
+    (if (check-req state side card targets trace)
+      (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
+      (effect-completed state side eid card))))
 
 (defn- can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -303,7 +306,7 @@
   ([state side card ability {:keys [priority] :as args}]
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
-   (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side card nil) %))]
+   (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
      (swap! state update-in [side :selected]
             #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
                             :max (get-in ability [:choices :max])}))
