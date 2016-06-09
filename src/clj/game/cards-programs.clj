@@ -646,7 +646,8 @@
                                   card))}]}
 
    "Snitch"
-   {:abilities [{:once :per-run :req (req current-ice) :msg (msg "expose " (:title current-ice))
+   {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+                 :msg (msg "expose " (:title current-ice))
                  :effect (effect (expose current-ice)
                                  (resolve-ability {:optional {:prompt "Jack out?"
                                                               :yes-ability {:msg "jack out"
