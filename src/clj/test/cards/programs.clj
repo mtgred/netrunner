@@ -433,6 +433,40 @@
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
+
+(deftest parasite-builder-moved
+  "Parasite - Should stay on hosted card moved by Builder"
+  (do-game
+    (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
+              (default-runner [(qty "Parasite" 3)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Builder" "Archives")
+    (let [builder (get-ice state :archives 0)
+          _ (core/rez state :corp builder)
+          _ (take-credits state :corp)
+          _ (play-from-hand state :runner "Parasite")
+          _ (prompt-select :runner builder)
+          psite (first (:hosted (refresh builder)))
+          _ (take-credits state :runner)
+          _ (take-credits state :corp)
+          _ (is (= 3 (:current-strength (refresh builder))) "Builder reduced to 3 strength")
+          _ (is (= 1 (:counter (refresh psite))) "Parasite has 1 counter")
+          _ (take-credits state :runner)
+          orig-builder (refresh builder)
+          _ (card-ability state :corp builder 0)
+          _ (prompt-choice :corp "HQ")
+          moved-builder (get-ice state :hq 1)
+          _ (is (= (:current-strength orig-builder) (:current-strength moved-builder)) "Builder's state is maintained")
+          orig-psite (dissoc (first (:hosted orig-builder)) :host)
+          moved-psite (dissoc (first (:hosted moved-builder)) :host)
+          _ (is (= orig-psite moved-psite) "Hosted Parasite is maintained")
+          _ (take-credits state :corp)
+          updated-builder (refresh moved-builder)
+          updated-psite (first (:hosted updated-builder))
+          _ (is (= 2 (:current-strength updated-builder)) "Builder strength still reduced")
+          _ (is (= 2 (:counter updated-psite)) "Parasite counters still incremented")]
+        )))
+
 (deftest progenitor-host-hivemind
   "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"
   (do-game
