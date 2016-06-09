@@ -694,7 +694,7 @@
          {:req (req (not (empty? (:hosted card))))
           :once :per-turn
           :msg (msg "remove 1 counter from " (:title target)) :choices {:req #(:host %)}
-          :effect (req (if (<= (get-in card [:counter :power]) 1)
+          :effect (req (if (<= (get-in target [:counter :power]) 1)
                          (runner-install state side (dissoc target :counter) {:no-cost true})
                          (add-counter state side target :power -1)))}]
      {:flags {:drip-economy true}
