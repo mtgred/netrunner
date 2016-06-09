@@ -411,6 +411,20 @@
     (is (find-card "Hostile Takeover" (:scored (get-runner))) "Geothermal Fracking stolen with Gang Sign")
     (prompt-choice :runner "Done")))
 
+(deftest leela-lingering-successful-run-prompt
+  "Leela Patel - issues with lingering successful run prompt"
+  (do-game
+    (new-game
+      (make-deck "NBN: Making News" [(qty "Breaking News" 1) (qty "SanSan City Grid" 1)])
+      (make-deck "Leela Patel: Trained Pragmatist" []))
+    (starting-hand state :corp ["SanSan City Grid"])
+    (play-from-hand state :corp "SanSan City Grid" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (prompt-choice :runner "Steal")
+    (prompt-select :runner (get-content state :remote1 0))
+    (is (not (:run @state)) "Run is over")))
+
 (deftest maxx-wyldside-start-of-turn
   "MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click"
   (do-game
@@ -474,6 +488,26 @@
       (is (= 3 (:credit (get-runner))) "Pay 3 to install Xanadu")
       (card-ability state :runner nasir 0)
       (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu"))))
+
+(deftest new-angeles-sol-on-steal
+  "New Angeles Sol - interaction with runner stealing agendas"
+  (do-game
+    (new-game
+      (make-deck "New Angeles Sol: Your News" [(qty "Paywall Implementation" 2) (qty "Breaking News" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Paywall Implementation")
+    (take-credits state :corp)
+    (is (= 6 (:credit (get-corp))))
+    (run-empty-server state :remote1)
+    (is (= 7 (:credit (get-corp))) "Corp gained 1cr from successful run")
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (is (find-card "Paywall Implementation" (:discard (get-corp))) "Paywall trashed before Sol triggers")
+    (prompt-select :corp (find-card "Paywall Implementation" (:hand (get-corp))))
+    (is (not (:run @state)) "Run ended")
+    (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
+
 
 (deftest nisei-division
   "Nisei Division - Gain 1 credit from every psi game"
