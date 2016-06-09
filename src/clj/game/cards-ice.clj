@@ -171,12 +171,23 @@
 ;;;; Card definitions
 (def cards-ice
   {"Archangel"
-   {:access {:optional
-             {:req (req (not= (first (:zone card)) :discard))
-              :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
-              :yes-ability {:cost [:credit 3]
-                            :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel"))}
-              :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel"))}}}
+   {:access
+    {:req (req (not= (first (:zone card)) :discard))
+     :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
+                     (resolve-ability
+                       {:optional
+                        {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
+                         :yes-ability {:cost [:credit 3]
+                                       :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
+                                                    (clear-wait-prompt state :runner)
+                                                    (resolve-ability state :runner
+                                                      {:optional
+                                                       {:player :runner
+                                                        :prompt "Allow Archangel trace to fire?" :priority 1
+                                                        :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                     card nil))}
+                         :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
+                                                   (clear-wait-prompt state :runner))}}} card nil))}
     :abilities [(trace-ability 6 {:choices {:req installed?}
                                   :label "Add 1 installed card to the Runner's Grip"
                                   :msg "add 1 installed card to the Runner's Grip"
