@@ -304,17 +304,27 @@
 (defn trash-cards [state side cards]
   (doseq [c cards] (trash state side c)))
 
+(defn- resolve-trash-no-cost
+  [state side eid card]
+  (trash state side card)
+  (swap! state update-in [side :prompt] rest)
+  (effect-completed state side eid nil)
+  (when-let [run (:run @state)]
+    (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+      (handle-end-run state :runner))))
+
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
   [state side]
-  (when-let [card (:card (first (get-in @state [side :prompt])))]
-    (when (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
-      (resolve-steal-events state side card))
-    (trash state side card)
-    (swap! state update-in [side :prompt] rest)
-    (when-let [run (:run @state)]
-      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-        (handle-end-run state :runner)))))
+  (let [prompt (-> @state side :prompt first)
+             card (:card prompt)
+             eid (:eid prompt)]
+    (when card
+      (if (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
+        (when-completed (resolve-steal-events state side card)
+                        (resolve-trash-no-cost state side eid card))
+        (resolve-trash-no-cost state side eid card)))))
+
 
 ;;; Agendas
 (defn get-agenda-points
