@@ -818,7 +818,7 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
     (if (> (count (:hand me)) max-size)
-      (toast (str "Discard to " max-size " cards") "warning" nil)
+      (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
       (send-command "end-turn"))))
 
 (defn runnable-servers
