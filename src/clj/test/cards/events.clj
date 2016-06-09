@@ -17,7 +17,7 @@
     (prompt-choice :runner "Run ability")
     (is (= 2 (:tag (get-runner))) "Runner took 2 tags")
     (is (= 15 (:credit (get-runner))) "Runner gained 10 credits")
-    (is (= 3 (:credit (get-corp))))) "Corp lost 5 credits")
+    (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
 
 (deftest account-siphon-access
   "Account Siphon - Access"
