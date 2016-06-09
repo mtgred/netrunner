@@ -370,7 +370,7 @@
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
   [state side card n]
-  (move state side (assoc card :agendapoints n) :scored)
+  (move state side (assoc (deactivate state side card) :agendapoints n) :scored)
   (gain-agenda-point state side n))
 
 (defn forfeit
