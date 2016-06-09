@@ -95,7 +95,7 @@
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional delayed-completion psi trace] :as ability} card]
+  [state side {:keys [eid choices optional prompt delayed-completion psi trace] :as ability} card]
   ;if it doesn't have choices and it doesn't have a true delayed-completion; or
   ;if it does have choices and has false delayed-completion
   (when (or (and (not choices) (not optional) (not psi) (not trace) (not delayed-completion))
@@ -267,8 +267,8 @@
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
   ([state side card msg choices ability args]
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side card [%])) args)))]
-       (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) kw)))]
+       (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
                     (-> args
                         (wrap-function :cancel-effect)
                         (wrap-function :end-effect))))))
@@ -276,12 +276,14 @@
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
-  ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f
+  ([state side card msg choices f] (show-prompt state side (make-eid state) card msg choices f nil))
+  ([state side card msg choices f args] (show-prompt state side (make-eid state) card msg choices f args))
+  ([state side eid card msg choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
    (let [prompt (if (string? msg) msg (msg state side nil card nil))
          priority-comp #(case % true 1 nil 0 %)
-         newitem {:msg prompt
+         newitem {:eid eid
+                  :msg prompt
                   :choices choices
                   :effect f
                   :card card

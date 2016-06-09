@@ -368,9 +368,8 @@
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
         (is (= 0 (:agenda-point (get-runner))) "Stole Domestic Sleepers")
-        (is (= true (:swap (core/get-card state tt)))) ; Turntable ability enabled by steal
-        (card-ability state :runner tt 0)
         ;; Turntable prompt should be active
+        (prompt-choice :runner "Yes")
         (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
         (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
@@ -391,8 +390,7 @@
       (let [tt (get-in @state [:runner :rig :hardware 0])]
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
-        (is (= 2 (:agenda-point (get-runner))) "Stole Project Vitruvius")
-        (card-ability state :runner tt 0)
+        (prompt-choice :runner "Yes") ;; Turntable optional prompt
         (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
         (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
         (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))

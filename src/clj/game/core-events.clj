@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare effect-completed forfeit prompt! register-suppress trigger-suppress unregister-suppress)
+(declare clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
+         show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events
@@ -62,26 +63,86 @@
                       (effect-completed state side eid nil)))))
 
 ;; INCOMPLETE
-(defn trigger-event-async
+(defn- trigger-event-simult-player
+  [state side eid event handlers event-targets]
+  (if (pos? (count handlers))
+    (letfn [(choose-handler [handlers]
+              (let [cards (map :card handlers)
+                    titles (map :title cards)
+                    interactive (filter #(let [interactive-fn (:interactive (:ability %))]
+                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) nil)))
+                                        handlers)]
+                (if (or (= 1 (count handlers)) (empty? interactive))
+                  (let [to-resolve (first handlers)]
+                    {:delayed-completion true
+                     :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
+                                                                   (:card to-resolve) event-targets)
+                                                  (if (< 1 (count handlers))
+                                                    (continue-ability state side
+                                                                      (choose-handler (next handlers)) nil event-targets)
+                                                    (effect-completed state side eid nil))))})
+                  {:prompt  "Select a trigger to resolve"
+                   :choices titles
+                   :delayed-completion true
+                   :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
+                                   (when-completed (resolve-ability state side (:ability to-resolve)
+                                                                    (:card to-resolve) event-targets)
+                                                   (if (< 1 (count handlers))
+                                                     (continue-ability state side
+                                                                       (choose-handler (remove-once #(not= target (:title (:card %))) handlers))
+                                                                       nil event-targets)
+                                                     (effect-completed state side eid nil)))))})))]
+
+      (continue-ability state side (choose-handler handlers) nil event-targets))
+    (effect-completed state side eid nil)))
+
+(defn ability-as-handler
+  [card ability]
+  {:card card :ability ability})
+
+(defn card-as-handler
+  [card]
+  (let [{:keys [effect prompt choices psi optional trace] :as cdef} (card-def card)]
+    (when (or effect prompt choices psi optional trace)
+      (ability-as-handler card cdef))))
+
+(defn effect-as-handler
+  [card effect]
+  (ability-as-handler card {:effect effect}))
+
+(defn trigger-event-simult
   "Triggers the given event asynchronously, triggering effect-completed once
   all registered event handlers have completed."
-  [state side eid event & targets]
-  (let [awaiting (atom #{})]
-    (let [get-side #(-> % :card :side game.utils/to-keyword)
-          is-active-player #(= (:active-player @state) (get-side %))
-          handlers (map #([% (make-eid state)]) (sort-by (complement is-active-player) (get-in @state [:events event])))]
-      (doseq [h handlers]
-        (let [e (first h)
-              eid (second h)
-              ability (:ability e)]
-          (when-let [card (get-card state (:card e))]
-            (when (and (not (apply trigger-suppress state side event (cons card targets)))
-                       (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-              (when-completed (resolve-ability state side ability card targets)
-                              (do (swap! awaiting disj eid)
-                                  (when (empty? awaiting)
-                                    (effect-completed state side eid nil))
-                                  (prn "awaiting still " @awaiting))))))))))
+  ([state side eid event card-ability & targets]
+   (let [awaiting (atom #{})]
+     (let [get-side #(-> % :card :side game.utils/to-keyword)
+           get-ability-side #(-> % :ability :side)
+           active-player (:active-player @state)
+           opponent (other-side (:active-player @state))
+           is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
+           active-player-events (filter is-active-player (get-in @state [:events event]))
+           active-player-events (if (= (:active-player @state) (get-side card-ability))
+                                  (cons card-ability active-player-events)
+                                  active-player-events)
+           opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
+           opponent-events (if (= opponent (get-side card-ability))
+                                  (cons card-ability opponent-events)
+                                  opponent-events)
+           handlers (map #([% (make-eid state)]) (sort-by (complement is-active-player) (get-in @state [:events event])))]
+
+       ; let active player activate their events first
+       (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                         {:priority -1})
+       (when-completed (trigger-event-simult-player state side event active-player-events targets)
+                       (do (clear-wait-prompt state opponent)
+                           (show-wait-prompt state active-player
+                                             (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                             {:priority -1})
+                           (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
+                                           (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+                                               (clear-wait-prompt state active-player)
+                                               (effect-completed state side eid nil)))))))))
+
 
 ; Functions for registering trigger suppression events.
 (defn register-suppress

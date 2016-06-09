@@ -511,9 +511,8 @@
     (play-from-hand state :runner "Turntable")
     (run-empty-server state "HQ")
     (prompt-choice :runner "Steal")
-    (is (= 1 (:agenda-point (get-runner))) "Chronos Project stolen")
     (let [tt (get-in @state [:runner :rig :hardware 0])]
-      (card-ability state :runner tt 0)
+      (prompt-choice :runner "Yes")
       (prompt-select :runner (find-card "Breaking News" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 0 (:agenda-point (get-runner))))

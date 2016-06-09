@@ -906,19 +906,15 @@
                                                  (gain state :corp :credit 2)))}}}
 
    "Team Sponsorship"
-   {:events {:agenda-scored {:effect (req (toast state :corp (str "Click Team Sponsorship "
-                                                                  "to install a card from "
-                                                                  "Archives or HQ.") "info")
-                                          (update! state side (assoc card :ts-active true)))}}
-    :abilities [{:label "Install a card from Archives or HQ"
-                 :req (req (:ts-active card))
-                 :prompt "Choose a card from Archives or HQ to install"
-                 :show-discard true
-                 :choices {:req #(and (not (is-type? % "Operation"))
-                                      (#{[:hand] [:discard]} (:zone %)))}
-                 :msg (msg (corp-install-msg target))
-                 :effect (effect (corp-install target nil {:no-install-cost true})
-                                 (update! (dissoc (get-card state card) :ts-active)))}]}
+   {:events {:agenda-scored {:label "Install a card from Archives or HQ"
+                             :prompt "Choose a card from Archives or HQ to install"
+                             :show-discard true
+                             :interactive (req true)
+                             :delayed-completion true
+                             :choices {:req #(and (not (is-type? % "Operation"))
+                                                  (#{[:hand] [:discard]} (:zone %)))}
+                             :msg (msg (corp-install-msg target))
+                             :effect (effect (corp-install eid target nil {:no-install-cost true}))}}}
 
    "Tech Startup"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

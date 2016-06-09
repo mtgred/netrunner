@@ -49,7 +49,9 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (tag-runner state :runner 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state :runner 1)
+                                 (system-msg state side "takes 1 tag")
+                                 (effect-completed state side eid nil))
                              (do (damage state :runner eid :meat 2 {:unboostable true :card card})
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
@@ -290,7 +292,10 @@
                        :effect (effect (tag-prevent 1))}}}
 
    "Jinteki: Personal Evolution"
-   {:events {:agenda-scored {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}
+   {:events {:agenda-scored {:interactive (req true)
+                             :delayed-completion true
+                             :msg "do 1 net damage"
+                             :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Replicating Perfection"
@@ -375,21 +380,14 @@
                  :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
 
    "Leela Patel: Trained Pragmatist"
+   (let [leela {:interactive (req true)
+                :prompt  "Select an unrezzed card to return to HQ"
+                :choices {:req #(and (not (:rezzed %)) (card-is? % :side :corp))}
+                :msg     (msg "add " (card-str state target) " to HQ")
+                :effect  (final-effect (move :corp target :hand))}]
    {:flags {:slow-hq-access (req true)}
-    :events {:agenda-scored
-             {:effect (req (toast state :runner
-                                  (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
-                           (update! state :runner (update-in card [:bounce-hq] #(inc (or % 0)))))}
-             :agenda-stolen
-             {:effect (req (toast state :runner
-                                  (str "Click Leela Patel: Trained Pragmatist to add 1 unrezzed card to HQ.") "info")
-                           (update! state :runner (update-in card [:bounce-hq] #(inc (or % 0)))))}}
-    :abilities [{:req (req (pos? (:bounce-hq card 0)))
-                 :choices {:req #(and (not (:rezzed %)) (= (:side %) "Corp"))} :player :runner
-                 :priority true
-                 :msg (msg "add " (card-str state target) " to HQ")
-                 :effect (effect (move :corp target :hand)
-                                 (update! (update-in (get-card state card) [:bounce-hq] dec)))}]}
+    :events {:agenda-scored leela
+             :agenda-stolen leela}})
 
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
@@ -449,7 +447,7 @@
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}
                                :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
-                               :effect (effect (play-instant target))}}}]
+                               :effect (effect (play-instant eid target))}}}]
      {:events {:agenda-scored nasol :agenda-stolen nasol}})
 
    "NEXT Design: Guarding the Net"
@@ -617,7 +615,7 @@
 
    "Titan Transnational: Investing In Your Future"
    {:events {:agenda-scored {:msg (msg "add 1 agenda counter to " (:title target))
-                             :effect (effect (add-counter target :agenda 1))}}}
+                             :effect (effect (add-counter (get-card state target) :agenda 1))}}}
 
    "Valencia Estevez: The Angel of Cayambe"
    {:events {:pre-start-game

@@ -839,14 +839,11 @@
           tsp (get-content state :remote1 0)]
       (core/rez state :corp tsp)
       (score-agenda state :corp ag1)
-      (is (= (:ts-active (refresh tsp)) true) "Team Sponsorship ability enabled")
-      (card-ability state :corp tsp 0)
       (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
       (prompt-choice :corp "New remote")
       (is (= "Adonis Campaign" (:title (get-content state :remote3 0)))
           "Adonis installed by Team Sponsorship")
-      (is (nil? (find-card "Adonis Campaign" (:hand (get-corp)))) "No Adonis in hand")
-      (is (nil? (:ts-active (refresh tsp))) "Team Sponsorship ability disabled"))))
+      (is (nil? (find-card "Adonis Campaign" (:hand (get-corp)))) "No Adonis in hand"))))
 
 (deftest team-sponsorship-archives
   "Team Sponsorship - Install from Archives"
@@ -862,14 +859,11 @@
           tsp (get-content state :remote1 0)]
       (core/rez state :corp tsp)
       (score-agenda state :corp ag1)
-      (is (= (:ts-active (refresh tsp)) true) "Team Sponsorship ability enabled")
-      (card-ability state :corp tsp 0)
       (prompt-select :corp (find-card "Adonis Campaign" (:discard (get-corp))))
       (prompt-choice :corp "New remote")
       (is (= "Adonis Campaign" (:title (get-content state :remote3 0)))
           "Adonis installed by Team Sponsorship")
-      (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard")
-      (is (nil? (:ts-active (refresh tsp))) "Team Sponsorship ability disabled"))))
+      (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard"))))
 
 (deftest team-sponsorship-multiple
   "Team Sponsorship - Multiple installed"
@@ -888,20 +882,52 @@
       (core/rez state :corp tsp1)
       (core/rez state :corp tsp2)
       (score-agenda state :corp ag1)
-      (is (= (:ts-active (refresh tsp1)) true) "Team Sponsorship 1 ability enabled")
-      (is (= (:ts-active (refresh tsp2)) true) "Team Sponsorship 2 ability enabled")
-      (card-ability state :corp tsp1 0)
+      (prompt-choice :corp "Team Sponsorship")
       (prompt-select :corp (find-card "Adonis Campaign" (:discard (get-corp))))
       (prompt-choice :corp "New remote")
-      (card-ability state :corp tsp2 0)
       (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
       (prompt-choice :corp "New remote")
       (is (= "Adonis Campaign" (:title (get-content state :remote4 0)))
           "Adonis installed by Team Sponsorship")
       (is (= "Adonis Campaign" (:title (get-content state :remote5 0)))
-          "Adonis installed by Team Sponsorship")
-      (is (nil? (:ts-active (refresh tsp1))) "Team Sponsorship 1 ability disabled")
-      (is (nil? (:ts-active (refresh tsp2))) "Team Sponsorship 2 ability disabled"))))
+          "Adonis installed by Team Sponsorship"))))
+
+(deftest team-sponsorship-one-window
+  "Team Sponsorship - Score 5 points in one window"
+  (do-game
+    (new-game (default-corp [(qty "AstroScript Pilot Program" 3)
+                             (qty "Team Sponsorship" 1)
+                             (qty "Breaking News" 1)
+                             (qty "SanSan City Grid" 1)])
+              (default-runner))
+    (play-from-hand state :corp "SanSan City Grid" "New remote")
+    (core/gain state :corp :credit 100 :click 5)
+    (core/rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (play-from-hand state :corp "AstroScript Pilot Program" "Server 1")
+    (play-from-hand state :corp "Team Sponsorship" "New remote")
+    (core/rez state :corp (get-content state :remote3 0))
+    (score-agenda state :corp (get-content state :remote1 1))
+    (prompt-choice :corp "Team Sponsorship")
+    (prompt-select :corp (find-card "AstroScript Pilot Program" (:hand (get-corp))))
+    (is (= 0 (get-counters (second (:scored (get-corp))) :agenda)) "AstroScript not resolved yet")
+    (prompt-choice :corp "Server 1")
+    (is (= 1 (get-counters (second (:scored (get-corp))) :agenda)) "AstroScript not resolved yet")
+    (card-ability state :corp (first (:scored (get-corp))) 0)
+    (prompt-select :corp (get-content state :remote1 1))
+    (card-ability state :corp (second (:scored (get-corp))) 0)
+    (prompt-select :corp (get-content state :remote1 1))
+    (core/score state :corp {:card (get-content state :remote1 1)})
+    (prompt-choice :corp "Team Sponsorship")
+    (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+    (prompt-choice :corp "Server 1")
+    (card-ability state :corp (second (next (:scored (get-corp)))) 0)
+    (prompt-select :corp (get-content state :remote1 1))
+    (core/score state :corp {:card (get-content state :remote1 1)})
+    (prompt-choice :corp "Team Sponsorship")
+    (prompt-choice :corp "Done")
+    (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
 
 (deftest the-root
   "The Root - recurring credits refill at Step 1.2"

@@ -654,43 +654,46 @@
 
    "Turntable"
    {:in-play [:memory 1]
-    :events {:agenda-stolen {:req (req (not (empty? (:scored corp))))
-                             :effect (req (toast state :runner "Click Turntable to swap for a scored Corp agenda." "info")
-                                          (update! state side (assoc card :swap true)))}
-             :runner-spent-click {:req (req (:swap card))
-                                  :effect (effect (update! (dissoc card :swap)))}}
-    :abilities [{:req (req (:swap card))
-                 :effect (req (let [st (last (get-in runner [:scored]))]
-                                (resolve-ability
-                                  state side
-                                  {:req (req (is-type? st "Agenda"))
-                                   :prompt (msg "Choose a scored Corp agenda to swap for " (:title st))
-                                   :priority true
-                                   :choices {:req #(in-corp-scored? state side %)}
-                                   :effect (req (let [sw target
-                                                      stpts-corp (get-agenda-points state :corp st)
-                                                      swpts-corp (get-agenda-points state :corp sw)
-                                                      stpts-runner (get-agenda-points state :runner st)
-                                                      swpts-runner (get-agenda-points state :runner sw)]
-                                                  (swap! state update-in [:corp :scored]
-                                                    (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
-                                                  (swap! state update-in [:runner :scored]
-                                                    (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
-                                                                     (dissoc sw :abilities :events))))
-                                                  (gain-agenda-point state :runner (- swpts-runner stpts-runner))
-                                                  (gain-agenda-point state :corp (- stpts-corp swpts-corp))
-                                                  (let [c (find-cid (:cid st) (get-in @state [:corp :scored]))]
-                                                    (let [abilities (:abilities (card-def c))
-                                                          c (merge c {:abilities abilities})]
-                                                      (update! state :corp c)
-                                                      (when-let [events (:events (card-def c))]
-                                                        (register-events state side events c))))
-                                                  (let [r (find-cid (:cid sw) (get-in @state [:runner :scored]))]
-                                                    (deactivate state :corp r))
-                                                  (system-msg state side (str "uses Turntable to swap "
-                                                                              (:title st) " for " (:title sw)))
-                                                  (update! state side (dissoc (get-card state card) :swap))))}
-                                 card nil)))}]}
+    :events {:agenda-stolen
+             {:interactive (req true)
+              :req (req (not (empty? (:scored corp))))
+              :delayed-completion true
+              :effect (req (let [st target]
+                             (continue-ability
+                               state side
+                               {:optional {:prompt (msg "Swap " (:title st) " for an agenda in the Corp's score area?")
+                                           :yes-ability
+                                                   {:delayed-completion true
+                                                    :effect
+                                                    (req (continue-ability
+                                                           state side
+                                                           {:prompt (str "Choose a scored Corp agenda to swap with " (:title st))
+                                                            :choices {:req #(in-corp-scored? state side %)}
+                                                            :effect (req (let [sw target
+                                                                               stpts-corp (get-agenda-points state :corp st)
+                                                                               swpts-corp (get-agenda-points state :corp sw)
+                                                                               stpts-runner (get-agenda-points state :runner st)
+                                                                               swpts-runner (get-agenda-points state :runner sw)]
+                                                                           (swap! state update-in [:corp :scored]
+                                                                                  (fn [coll] (conj (remove-once #(not= (:cid %) (:cid sw)) coll) st)))
+                                                                           (swap! state update-in [:runner :scored]
+                                                                                  (fn [coll] (conj (remove-once #(not= (:cid %) (:cid st)) coll)
+                                                                                                   (dissoc sw :abilities :events))))
+                                                                           (gain-agenda-point state :runner (- swpts-runner stpts-runner))
+                                                                           (gain-agenda-point state :corp (- stpts-corp swpts-corp))
+                                                                           (let [c (find-cid (:cid st) (get-in @state [:corp :scored]))]
+                                                                             (let [abilities (:abilities (card-def c))
+                                                                                   c (merge c {:abilities abilities})]
+                                                                               (update! state :corp c)
+                                                                               (when-let [events (:events (card-def c))]
+                                                                                 (register-events state side events c))))
+                                                                           (let [r (find-cid (:cid sw) (get-in @state [:runner :scored]))]
+                                                                             (deactivate state :corp r))
+                                                                           (system-msg state side (str "uses Turntable to swap "
+                                                                                                       (:title st) " for " (:title sw)))
+                                                                           (effect-completed state side eid card)))}
+                                                           card targets))}}}
+                               card targets)))}}}
 
    "Unregistered S&W 35"
    {:abilities

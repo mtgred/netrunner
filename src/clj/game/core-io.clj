@@ -167,3 +167,11 @@
         credits (get-in @state [side :credit])
         text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
+
+(defn event-title
+  "Gets a string describing the internal engine event keyword"
+  [event]
+  (case event
+    :agenda-scored "agenda-scored"
+    :agenda-stolen "agenda-stolen"
+    (str event)))
