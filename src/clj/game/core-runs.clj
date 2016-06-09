@@ -101,20 +101,21 @@
   (when (not= (:zone c) [:discard]) ; if not accessing in Archives
     (if-let [trash-cost (trash-cost state side c)]
       ;; The card has a trash cost (Asset, Upgrade)
-      (let [card (assoc c :seen true)]
+      (let [card (assoc c :seen true)
+            name (:title card)]
         (if (and (get-in @state [:runner :register :force-trash])
                  (can-pay? state :runner name :credit trash-cost))
           ;; If the runner is forced to trash this card (Neutralize All Threats)
           (resolve-ability state :runner {:cost [:credit trash-cost]
                                           :effect (effect (trash card)
                                                           (system-msg (str "is forced to pay " trash-cost
-                                                                           " [Credits] to trash " (:title card))))} card nil)
+                                                                           " [Credits] to trash " name)))} card nil)
           ;; Otherwise, show the option to pay to trash the card.
           (optional-ability state :runner card (str "Pay " trash-cost "[Credits] to trash " name "?")
                             {:yes-ability {:cost [:credit trash-cost]
                                            :effect (effect (trash card)
-                                                           (system-msg (str "pays " trash-cost " [Credits] to trash "
-                                                                            (:title card))))}} nil)))
+                                                           (system-msg (str "pays " trash-cost
+                                                                            " [Credits] to trash " name)))}} nil)))
       ;; The card does not have a trash cost
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {}))))
 
