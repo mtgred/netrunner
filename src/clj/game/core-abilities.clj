@@ -239,7 +239,7 @@
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
   ([state side card msg ability targets] (optional-ability state side (make-eid state) card msg ability targets))
   ([state side eid card msg ability targets]
-   (show-prompt state side card msg ["Yes" "No"]
+   (show-prompt state side eid card msg ["Yes" "No"]
                 #(let [yes-ability (:yes-ability ability)]
                   (if (and (= % "Yes")
                            yes-ability
@@ -328,13 +328,13 @@
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
         curprompt (first (get-in @state [side :prompt]))]
+    (swap! state update-in [side :selected] #(vec (rest %)))
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))
     (if-not (empty? cards)
       (do (doseq [card cards]
             (update! state side card))
           (resolve-ability state side (:ability selected) (:card curprompt) cards))
-      (effect-completed state side (:eid (:ability selected)) nil))
-    (swap! state update-in [side :selected] #(vec (rest %)))
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))))
+      (effect-completed state side (:eid (:ability selected)) nil))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
