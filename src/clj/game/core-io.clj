@@ -147,6 +147,10 @@
                                                 :choices {:req (fn [t] (card-is? t :side %2))}}
                                          {:title "/rez command"} nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
+        "/rfg"        #(resolve-ability %1 %2 {:prompt "Select a card to remove from the game"
+                                               :effect (effect (move target :rfg))
+                                               :choices {:req (fn [t] (card-is? t :side %2))}}
+                                        {:title "/rfg command"} nil)
         nil))))
 
 (defn corp-install-msg

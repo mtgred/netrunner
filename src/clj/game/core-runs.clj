@@ -8,15 +8,18 @@
 ;;; Steps in the run sequence
 (defn run
   "Starts a run on the given server, with the given card as the cause."
-  ([state side server] (run state side server nil nil))
-  ([state side server run-effect card]
+  ([state side server] (run state side (make-eid state) server nil nil))
+  ([state side eid server] (run state side eid server nil nil))
+  ([state side server run-effect card] (run state side (make-eid state) server run-effect card))
+  ([state side eid server run-effect card]
    (when-not (get-in @state [:runner :register :cannot-run])
      (let [s [(if (keyword? server) server (last (server->zone state server)))]
            ices (get-in @state (concat [:corp :servers] s [:ices]))]
        ;; s is a keyword for the server, like :hq or :remote1
        (swap! state assoc :per-run nil
               :run {:server s :position (count ices) :ices ices :access-bonus 0
-                    :run-effect (assoc run-effect :card card)})
+                    :run-effect (assoc run-effect :card card)
+                    :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
@@ -496,7 +499,8 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [server (get-in @state [:run :server])]
+  (let [server (get-in @state [:run :server])
+        eid (get-in @state [:run :eid])]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends (first server))
     (when (get-in @state [:run :successful])
@@ -509,12 +513,13 @@
       (update-breaker-strength state side p))
     (let [run-effect (get-in @state [:run :run-effect])]
       (when-let [end-run-effect (:end-run run-effect)]
-        (resolve-ability state side end-run-effect (:card run-effect) [(first server)]))))
-  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-  (swap! state assoc-in [:runner :run-credit] 0)
-  (swap! state assoc :run nil)
-  (update-all-ice state side)
-  (clear-run-register! state))
+        (resolve-ability state side end-run-effect (:card run-effect) [(first server)])))
+    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap! state assoc-in [:runner :run-credit] 0)
+    (swap! state assoc :run nil)
+    (update-all-ice state side)
+    (clear-run-register! state)
+    (effect-completed state side eid nil)))
 
 (defn handle-end-run
   "Initiate run resolution."
