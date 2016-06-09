@@ -249,7 +249,9 @@
         ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
         (let [moved-card (move state :corp card :scored)
               c (card-init state :corp moved-card false)]
-          (when-completed (trigger-event-simult state :corp :agenda-scored (card-as-handler c) c)
+          (when-completed (trigger-event-simult state :corp :agenda-scored
+                                                nil
+                                                (card-as-handler c) c)
                           (let [c (get-card state c)
                                 points (get-agenda-points state :corp c)]
                             (set-prop state :corp (get-card state moved-card) :advance-counter 0)
