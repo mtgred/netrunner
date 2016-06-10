@@ -111,9 +111,20 @@
   (ability-as-handler card {:effect effect}))
 
 (defn trigger-event-simult
-  "Triggers the given event asynchronously, triggering effect-completed once
-  all registered event handlers have completed."
-  ([state side eid event card-ability & targets]
+  "Triggers the given event by showing a prompt of all handlers for the event, allowing manual resolution of
+  simultaneous trigger handlers. effect-completed is fired once all registered event handlers have completed.
+  Parameters:
+  state, side: as usual
+  eid: the eid of the entire triggering sequence, which will be completed when all handlers are completed
+  event: the event keyword to trigger handlers for
+  first-ability: an ability map (fed to resolve-ability) that should be resolved after the list of handlers is determined
+                 but before any of them is actually fired. Typically used for core rules that happen in the same window
+                 as triggering handlers, such as trashing a corp Current when an agenda is stolen. Necessary for
+                 interaction with New Angeles Sol and Employee Strike
+  card-ability:  a card's ability that triggers at the same time as the event trigger, but is coded as a card ability
+                 and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
+  targets:       a varargs list of targets to the event, as usual"
+  ([state side eid event first-ability card-ability & targets]
    (let [awaiting (atom #{})]
      (let [get-side #(-> % :card :side game.utils/to-keyword)
            get-ability-side #(-> % :ability :side)
@@ -126,22 +137,23 @@
                                   active-player-events)
            opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
            opponent-events (if (= opponent (get-side card-ability))
-                                  (cons card-ability opponent-events)
-                                  opponent-events)
-           handlers (map #([% (make-eid state)]) (sort-by (complement is-active-player) (get-in @state [:events event])))]
-
+                             (cons card-ability opponent-events)
+                             opponent-events)]
        ; let active player activate their events first
-       (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                         {:priority -1})
-       (when-completed (trigger-event-simult-player state side event active-player-events targets)
-                       (do (clear-wait-prompt state opponent)
-                           (show-wait-prompt state active-player
-                                             (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                             {:priority -1})
-                           (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
-                                           (do (swap! state update-in [:turn-events] #(cons [event targets] %))
-                                               (clear-wait-prompt state active-player)
-                                               (effect-completed state side eid nil)))))))))
+       (when-completed
+         (resolve-ability state side first-ability nil nil)
+         (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                               {:priority -1})
+             (when-completed
+               (trigger-event-simult-player state side event active-player-events targets)
+               (do (clear-wait-prompt state opponent)
+                   (show-wait-prompt state active-player
+                                     (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                     {:priority -1})
+                   (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
+                                   (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+                                       (clear-wait-prompt state active-player)
+                                       (effect-completed state side eid nil)))))))))))
 
 
 ; Functions for registering trigger suppression events.
@@ -185,7 +197,8 @@
   (swap! state update-in [:effect-completed eid] #(conj % {:card card :effect effect})))
 
 (defn effect-completed
-  [state side eid card]
-  (doseq [handler (get-in @state [:effect-completed eid])]
-    ((:effect handler) state side eid (:card card) nil))
-  (swap! state update-in [:effect-completed] dissoc eid))
+  ([state side eid] (effect-completed state side eid nil))
+  ([state side eid card]
+   (doseq [handler (get-in @state [:effect-completed eid])]
+     ((:effect handler) state side eid (:card card) nil))
+   (swap! state update-in [:effect-completed] dissoc eid)))

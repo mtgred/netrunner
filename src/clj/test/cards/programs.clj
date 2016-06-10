@@ -434,7 +434,7 @@
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
 
-(deftest parasite-builder-moved
+(deftest-pending parasite-builder-moved
   "Parasite - Should stay on hosted card moved by Builder"
   (do-game
     (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
