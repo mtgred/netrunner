@@ -670,8 +670,8 @@
    (let [ability {:prompt "Choose a server for Patron" :choices (req servers)
                   :msg (msg "target " target)
                   :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
-   {:events {:runner-turn-begins ability
-             :successful-run
+   {:flags {:runner-phase-12 (req true)}
+    :events {:successful-run
              {:req (req (= (get-in @state [:run :server]) (:patron-target (get-card state card))))
               :once :per-turn
               :effect (req (let [st card]
