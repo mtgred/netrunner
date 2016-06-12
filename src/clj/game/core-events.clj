@@ -52,7 +52,8 @@
           (effect-completed state side eid nil)))))
 
 (defn trigger-event-sync
-  "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler."
+  "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
+  give the user a choice of what order to resolve handlers."
   [state side eid event & targets]
   (let [get-side #(-> % :card :side game.utils/to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
@@ -62,8 +63,11 @@
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
                       (effect-completed state side eid nil)))))
 
-;; INCOMPLETE
 (defn- trigger-event-simult-player
+  "Triggers the simultaneous event handlers for the given event trigger and player.
+  If none of the handlers require interaction, then they are all resolved automatically, each waiting for the previous
+  to fully resolve as in trigger-event-sync. If at least one requires interaction, then a menu is shown to manually
+  choose the order of resolution."
   [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
@@ -83,33 +87,40 @@
                                                                         (choose-handler (next handlers)) nil event-targets)
                                                       (effect-completed state side eid nil))))}
                       {:delayed-completion true
-                       :effect (effect (continue-ability (choose-handler (next handlers)) nil event-targets))}))
+                       :effect (req (if (< 1 (count handlers))
+                                      (continue-ability state side (choose-handler (next handlers)) nil event-targets)
+                                      (effect-completed state side eid nil)))}))
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
                    :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
-                                   (when-completed (resolve-ability state side (:ability to-resolve)
-                                                                    (:card to-resolve) event-targets)
-                                                   (if (< 1 (count handlers))
-                                                     (continue-ability state side
-                                                                       (choose-handler (remove-once #(not= target (:title (:card %))) handlers))
-                                                                       nil event-targets)
-                                                     (effect-completed state side eid nil)))))})))]
+                                   (when-completed
+                                     (resolve-ability state side (:ability to-resolve)
+                                                      (:card to-resolve) event-targets)
+                                     (if (< 1 (count handlers))
+                                       (continue-ability state side
+                                                         (choose-handler
+                                                           (remove-once #(not= target (:title (:card %))) handlers))
+                                                         nil event-targets)
+                                       (effect-completed state side eid nil)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid nil)))
 
 (defn ability-as-handler
+  "Wraps a card ability as an event handler."
   [card ability]
   {:card card :ability ability})
 
 (defn card-as-handler
+  "Wraps a card's definition as an event handler."
   [card]
   (let [{:keys [effect prompt choices psi optional trace] :as cdef} (card-def card)]
     (when (or effect prompt choices psi optional trace)
       (ability-as-handler card cdef))))
 
 (defn effect-as-handler
+  "Wraps a five-argument function as an event handler."
   [card effect]
   (ability-as-handler card {:effect effect}))
 
