@@ -307,10 +307,10 @@
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Improved Protein Source"
-     {:msg (msg "make the Runner gain 4 [Credits]")
-      :effect (effect (gain :runner :credit 4))
-      :stolen {:msg "make the Runner gain 4 [Credits]"
-               :effect (effect (gain :credit 4))}}
+   {:msg "make the Runner gain 4 [Credits]"
+    :effect (effect (gain :runner :credit 4))
+    :stolen {:msg "make the Runner gain 4 [Credits]"
+             :effect (effect (gain :runner :credit 4))}}
 
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
