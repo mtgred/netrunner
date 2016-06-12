@@ -248,14 +248,15 @@
 
         ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
         (let [moved-card (move state :corp card :scored)
-              c (card-init state :corp moved-card false)]
+              c (card-init state :corp moved-card false)
+              points (get-agenda-points state :corp c)]
           (when-completed (trigger-event-simult state :corp :agenda-scored
                                                 {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
                                                                 (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                                                 (trash state side current)))}
                                                 (card-as-handler c) c)
                           (let [c (get-card state c)
-                                points (get-agenda-points state :corp c)]
+                                points (or (get-agenda-points state :corp c) points)]
                             (set-prop state :corp (get-card state moved-card) :advance-counter 0)
                             (system-msg state :corp (str "scores " (:title c) " and gains " points
                                                          " agenda point" (when (> points 1) "s")))

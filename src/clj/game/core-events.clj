@@ -74,13 +74,16 @@
                                         handlers)]
                 (if (or (= 1 (count handlers)) (empty? interactive))
                   (let [to-resolve (first handlers)]
-                    {:delayed-completion true
-                     :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
-                                                                   (:card to-resolve) event-targets)
-                                                  (if (< 1 (count handlers))
-                                                    (continue-ability state side
-                                                                      (choose-handler (next handlers)) nil event-targets)
-                                                    (effect-completed state side eid nil))))})
+                    (if-let [the-card (get-card state (:card to-resolve))]
+                      {:delayed-completion true
+                       :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
+                                                                     the-card event-targets)
+                                                    (if (< 1 (count handlers))
+                                                      (continue-ability state side
+                                                                        (choose-handler (next handlers)) nil event-targets)
+                                                      (effect-completed state side eid nil))))}
+                      {:delayed-completion true
+                       :effect (effect (continue-ability (choose-handler (next handlers)) nil event-targets))}))
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
