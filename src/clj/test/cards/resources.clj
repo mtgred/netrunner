@@ -627,9 +627,7 @@
     (let [p (get-in @state [:runner :rig :resource 0])]
       (take-credits state :runner 3)
       (take-credits state :corp)
-      (card-ability state :runner p 0)
       (prompt-choice :runner "Server 1")
-      (core/end-phase-12 state :runner nil)
       (is (= 4 (count (:hand (get-runner)))) "Starts with 4 cards")
       (run-empty-server state "Server 1")
       (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
@@ -639,9 +637,7 @@
       (play-from-hand state :runner "Easy Mark")
       (take-credits state :runner)
       (take-credits state :corp)
-      (card-ability state :runner p 0)
       (prompt-choice :runner "Server 1")
-      (core/end-phase-12 state :runner nil)
       (run-empty-server state "Archives")
       (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
 
