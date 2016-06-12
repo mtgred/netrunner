@@ -329,7 +329,7 @@
                                 (case flip
                                   "[The Brewery~brewery]"
                                   (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
-                                      (damage eid state side :net 2 {:card card})
+                                      (damage state side eid :net 2 {:card card})
                                       (update! state side (assoc card :code "brewery")))
                                   "[The Tank~tank]"
                                   (do (system-msg state side "uses [The Tank~tank] to shuffle Archives into R&D")

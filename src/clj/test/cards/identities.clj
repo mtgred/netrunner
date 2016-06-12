@@ -300,6 +300,18 @@
     (core/jack-out state :runner nil)
     (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
 
+(deftest jinteki-biotech-brewery
+  "Jinteki Biotech - Brewery net damage"
+  (do-game
+    (new-game
+      (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
+      (default-runner)
+      {:dont-start true})
+    (prompt-choice :corp "[The Brewery~brewery]")
+    (core/start-turn state :corp nil)
+    (card-ability state :corp (:identity (get-corp)) 1)
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
+
 (deftest jinteki-personal-evolution
   "Personal Evolution - Prevent runner from running on remotes unless they first run on a central"
   (do-game
