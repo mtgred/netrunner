@@ -186,6 +186,9 @@
                      (handle-abilities card owner))
                    (send-command "play" {:card card}))
           ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
+          ("servers") (when (= type "ICE")
+                        ;; ICE that should show list of abilities that send messages to fire sub
+                        (-> (om/get-node owner "runner-abilities") js/$ .toggle))
           nil)
         ;; Corp side
         (= side :corp)
@@ -508,6 +511,21 @@
                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
                      label])
                   servers)]))
+        (when (= type "ICE")
+          (let [div-map (map (fn [ab]
+                               [:div {:on-click #(do (send-command "system-message"
+                                                                   {:msg (str "indicates to fire the \"" (:label ab)
+                                                                              "\" subroutine on " title)}))}
+                                (str "Let fire: \"" (:label ab) "\"")])
+                             abilities)]
+            (js/console.log (clj->js div-map)))
+          [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
+           (map (fn [ab]
+                  [:div {:on-click #(send-command "system-msg"
+                                                  {:msg (str "indicates to fire the \"" (:label ab)
+                                                             "\" subroutine on " title)})}
+                   (str "Let fire: \"" (:label ab) "\"")])
+                abilities)])
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
                     (= (first actions) "derez"))

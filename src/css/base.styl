@@ -1289,7 +1289,7 @@ nav ul
     height: 16px
     width: auto
 
-  .abilities, .servers-menu, .menu
+  .abilities, .servers-menu, .menu, .runner-abilities
     display: none
     position: absolute
     z-index: 10
@@ -1572,7 +1572,7 @@ nav ul
                 .counters
                   transform(rotate(-90deg))
 
-                .abilities
+                .abilities, .runner-abilities
                   transform(rotate(0))
 
             .counter
@@ -1590,6 +1590,11 @@ nav ul
               top: -73px
               left: 12px
 
+            .runner-abilities
+              transform(rotate(-90deg))
+              top: -73px
+              left: 12px
+
           .content.center
             left: -13px
 
@@ -1603,7 +1608,7 @@ nav ul
 
             .card
               margin: 0 -40px 0 0
-              .abilities
+              .abilities, .runner-abilities
                 left: -145px
                 bottom: 85px
                 top: auto
