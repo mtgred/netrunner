@@ -323,7 +323,7 @@
   "NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement"
   (do-game
     (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
-                             (qty "Shipment from SanSan" 1)])
+                             (qty "Shipment from SanSan" 1) (qty "Ice Wall" 1)])
               (default-runner))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
@@ -337,7 +337,12 @@
       (is (= 4 (:credit (get-corp))) "Gained 1 credit")
       (core/advance state :corp {:card (refresh nis)})
       (is (= 3 (:advance-counter (refresh nis))) "3 advancements on agenda")
-      (is (= 3 (:credit (get-corp))) "No credit gained"))))
+      (is (= 3 (:credit (get-corp))) "No credit gained")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
+      (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
 (deftest off-the-grid
   "Off the Grid run ability - and interaction with RP"
