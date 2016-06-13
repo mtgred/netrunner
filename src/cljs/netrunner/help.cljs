@@ -64,8 +64,11 @@
                         [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
                         [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
-                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only)"]
-                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only)"]
+                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
+                        [:li [:code "/counter type n"] " - set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", "
+                         [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"]
+                         ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."]
+                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
                         [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
