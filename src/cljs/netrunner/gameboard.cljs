@@ -170,29 +170,36 @@
                                  root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
-      (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
+      (cond
+        ;; Selecting card
+        (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
         (send-command "select" {:card card})
-        (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
-          (handle-abilities card owner)
-          (if (= side :runner)
-            (case (first zone)
-              "hand" (if (:host card)
-                       (when (:installed card)
-                         (handle-abilities card owner))
-                       (send-command "play" {:card card}))
-              ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
-              nil)
-            (case (first zone)
-              "hand" (case type
-                       ("Upgrade" "ICE") (if root
-                                           (send-command "play" {:card card :server root})
-                                           (-> (om/get-node owner "servers") js/$ .toggle))
-                       ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
-                                            (send-command "play" {:card card :server "New remote"})
-                                            (-> (om/get-node owner "servers") js/$ .toggle))
-                       (send-command "play" {:card card}))
-              ("servers" "scored" "current" "onhost") (handle-abilities card owner)
-              nil)))))))
+        ;; Card is an identity of player's side
+        (and (= (:type card) "Identity")
+             (= side (keyword (.toLowerCase (:side card)))))
+        (handle-abilities card owner)
+        ;; Runner side
+        (= side :runner)
+        (case (first zone)
+          "hand" (if (:host card)
+                   (when (:installed card)
+                     (handle-abilities card owner))
+                   (send-command "play" {:card card}))
+          ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
+          nil)
+        ;; Corp side
+        (= side :corp)
+        (case (first zone)
+          "hand" (case type
+                   ("Upgrade" "ICE") (if root
+                                       (send-command "play" {:card card :server root})
+                                       (-> (om/get-node owner "servers") js/$ .toggle))
+                   ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
+                                        (send-command "play" {:card card :server "New remote"})
+                                        (-> (om/get-node owner "servers") js/$ .toggle))
+                   (send-command "play" {:card card}))
+          ("servers" "scored" "current" "onhost") (handle-abilities card owner)
+          nil)))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
