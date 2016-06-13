@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare close-access-prompt)
+
 (def cards-resources
   {"Access to Globalsec"
    {:in-play [:link 1]}
@@ -314,11 +316,10 @@
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
-                                (swap! state update-in [side :prompt] rest)
-                                (when-let [run (:run @state)]
-                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)
-                                    (swap! state dissoc :access)))))
+                                (close-access-prompt state side)
+                                (effect-completed state side eid nil)
+                                (when-not (:run @state)
+                                  (swap! state dissoc :access))))
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))

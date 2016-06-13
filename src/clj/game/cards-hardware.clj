@@ -342,10 +342,8 @@
                                   (resolve-steal-events state side c))
                                 (move state :corp c :deck)
                                 (tag-runner state :runner 1)
-                                (swap! state update-in [side :prompt] rest)
-                                (when-let [run (:run @state)]
-                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)))))}
+                                (close-access-prompt state side)
+                                (effect-completed state side eid card)))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
