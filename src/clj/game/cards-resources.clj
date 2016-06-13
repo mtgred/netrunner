@@ -504,7 +504,7 @@
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
                  :effect (req (if (not (empty? (:scored corp)))
-                                (do (show-wait-prompt :runner "Corp to decide whether or not to prevent Liberated Chela")
+                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
                                       state side
                                       {:prompt (msg "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?")
