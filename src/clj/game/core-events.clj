@@ -71,7 +71,7 @@
   [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
-              (let [cards (map :card handlers)
+              (let [cards (map :card (filter #(not (:silent (:ability %))) handlers))
                     titles (map :title cards)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
                                           (and interactive-fn (interactive-fn state side (make-eid state) (:card %) nil)))

@@ -100,7 +100,8 @@
                     (cond advance (do (set-prop state side target :advance-counter value)
                                       (system-msg state side (str "sets advancement counters to " value " on "
                                                                   (card-str state target))))
-                          (not c-type) (toast state side "You need to specify a counter type for that card." "error")
+                          (not c-type) (toast state side "You need to specify a counter type for that card." "error"
+                                              {:time-out 0 :close-button true})
                           :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
                                     (system-msg state side (str "sets " (name c-type) " counters to " value " on "
                                                                 (card-str state target)))))))
