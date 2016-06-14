@@ -139,35 +139,34 @@
                  and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
   targets:       a varargs list of targets to the event, as usual"
   ([state side eid event first-ability card-ability & targets]
-   (let [awaiting (atom #{})]
-     (let [get-side #(-> % :card :side game.utils/to-keyword)
-           get-ability-side #(-> % :ability :side)
-           active-player (:active-player @state)
-           opponent (other-side (:active-player @state))
-           is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
-           active-player-events (filter is-active-player (get-in @state [:events event]))
-           active-player-events (if (= (:active-player @state) (get-side card-ability))
-                                  (cons card-ability active-player-events)
-                                  active-player-events)
-           opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
-           opponent-events (if (= opponent (get-side card-ability))
-                             (cons card-ability opponent-events)
-                             opponent-events)]
-       ; let active player activate their events first
-       (when-completed
-         (resolve-ability state side first-ability nil nil)
-         (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                               {:priority -1})
-             (when-completed
-               (trigger-event-simult-player state side event active-player-events targets)
-               (do (clear-wait-prompt state opponent)
-                   (show-wait-prompt state active-player
-                                     (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                     {:priority -1})
-                   (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
-                                   (do (swap! state update-in [:turn-events] #(cons [event targets] %))
-                                       (clear-wait-prompt state active-player)
-                                       (effect-completed state side eid nil)))))))))))
+   (let [get-side #(-> % :card :side game.utils/to-keyword)
+         get-ability-side #(-> % :ability :side)
+         active-player (:active-player @state)
+         opponent (other-side (:active-player @state))
+         is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
+         active-player-events (filter is-active-player (get-in @state [:events event]))
+         active-player-events (if (= (:active-player @state) (get-side card-ability))
+                                (cons card-ability active-player-events)
+                                active-player-events)
+         opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
+         opponent-events (if (= opponent (get-side card-ability))
+                           (cons card-ability opponent-events)
+                           opponent-events)]
+     ; let active player activate their events first
+     (when-completed
+       (resolve-ability state side first-ability nil nil)
+       (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                             {:priority -1})
+           (when-completed
+             (trigger-event-simult-player state side event active-player-events targets)
+             (do (clear-wait-prompt state opponent)
+                 (show-wait-prompt state active-player
+                                   (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                   {:priority -1})
+                 (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
+                                 (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+                                     (clear-wait-prompt state active-player)
+                                     (effect-completed state side eid nil))))))))))
 
 
 ; Functions for registering trigger suppression events.

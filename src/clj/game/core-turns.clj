@@ -111,12 +111,12 @@
   [state side args]
   (turn-message state side true)
   (gain state side :click (get-in @state [side :click-per-turn]))
-  (trigger-event state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-  (when (= side :corp)
-    (draw state side))
-  (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-  (when (= side :corp)
-    (update-all-advancement-costs state side)))
+  (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
+                  (do (when (= side :corp)
+                        (draw state side))
+                      (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+                      (when (= side :corp)
+                        (update-all-advancement-costs state side)))))
 
 (defn start-turn
   "Start turn."

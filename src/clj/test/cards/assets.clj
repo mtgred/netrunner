@@ -60,6 +60,28 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest bio-ethics-multiple
+  "Bio-Ethics Association: preventing damage from multiple copies"
+  (do-game
+    (new-game
+      (default-corp [(qty "Bio-Ethics Association" 2)])
+      (default-runner [(qty "Feedback Filter" 1) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+    (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (take-credits state :runner)
+    (let [filter (get-hardware state 0)]
+      (is (= 1 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
+      (card-ability state :runner filter 0)
+      (prompt-choice :runner "Done")
+      (is (= 0 (count (:discard (get-runner)))) "Runner prevented damage")
+      (is (= 1 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
+      (prompt-choice :runner "Done")
+      (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
+
 (deftest brain-taping-warehouse
   "Brain-Taping Warehouse - Lower rez cost of bioroid ICE by 1 for each unspent Runner click"
   (do-game
