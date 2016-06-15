@@ -241,6 +241,26 @@
         (is (not (:run @state)) "Run is ended")
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))))
 
+(deftest maya-multi-access
+  "Maya - Does not interrupt multi-access."
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
+              (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3) (qty "R&D Interface" 1)]))
+    (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Maya")
+    (play-from-hand state :runner "R&D Interface")
+    (let [maya (get-in @state [:runner :rig :hardware 0])
+          accessed (first (:deck (get-corp)))]
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Card from deck")
+      (is (= (:cid accessed) (:cid (:card (first (:prompt (get-runner)))))) "Accessing the top card of R&D")
+      (card-ability state :runner maya 0)
+      (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
+      (is (:prompt (get-runner)) "Runner has next access prompt"))))
+
 (deftest plascrete
   "Plascrete Carapace - Prevent meat damage"
   (do-game

@@ -581,3 +581,14 @@
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
+
+(defn close-access-prompt
+  "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."
+  [state side]
+  (let [prompt (-> @state side :prompt first)
+        eid (:eid prompt)]
+    (swap! state update-in [side :prompt] rest)
+    (effect-completed state side eid nil)
+    (when-let [run (:run @state)]
+      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+        (handle-end-run state :runner)))))

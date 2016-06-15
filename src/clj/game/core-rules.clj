@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare card-init card-str deactivate effect-completed enforce-msg gain-agenda-point get-agenda-points
-         handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         in-corp-scored? update-all-ice win win-decked prevent-draw)
+(declare card-init card-str close-access-prompt deactivate effect-completed enforce-msg gain-agenda-point
+         get-agenda-points handle-end-run is-type? in-corp-scored? prevent-draw resolve-steal-events show-prompt
+         untrashable-while-rezzed? update-all-ice win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -305,13 +305,9 @@
   (doseq [c cards] (trash state side c)))
 
 (defn- resolve-trash-no-cost
-  [state side eid card]
+  [state side card]
   (trash state side card)
-  (swap! state update-in [side :prompt] rest)
-  (effect-completed state side eid nil)
-  (when-let [run (:run @state)]
-    (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-      (handle-end-run state :runner))))
+  (close-access-prompt state side))
 
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
@@ -322,8 +318,8 @@
     (when card
       (if (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
         (when-completed (resolve-steal-events state side card)
-                        (resolve-trash-no-cost state side eid card))
-        (resolve-trash-no-cost state side eid card)))))
+                        (resolve-trash-no-cost state side card))
+        (resolve-trash-no-cost state side card)))))
 
 
 ;;; Agendas
