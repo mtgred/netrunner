@@ -267,7 +267,7 @@
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
   ([state side card msg choices ability args]
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) kw)))]
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
        (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
                     (-> args
                         (wrap-function :cancel-effect)

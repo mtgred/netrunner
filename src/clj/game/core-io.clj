@@ -87,13 +87,48 @@
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
-;; This command will no longer work as specified with rewrite, need to allow for type specifying
-#_(defn command-counter [state side type value]
-  (resolve-ability state side
-                   {:effect (effect (set-prop target :counter {type value})
-                                    (system-msg (str "sets " (name type) " counters to " value " on " (card-str state target))))
-                    :choices {:req (fn [t] (card-is? t :side side))}}
-                   {:title "/counter command"} nil))
+(defn command-counter-smart [state side args]
+  (resolve-ability
+    state side
+    {:effect (req (let [existing (:counter target)
+                        value (if-let [n (string->num (first args))] n 0)
+                        c-type (cond (= 1 (count existing)) (first (keys existing))
+                                     (can-be-advanced? target) :advance-counter
+                                     (and (is-type? target "Agenda") (is-scored? state target)) :agenda
+                                     (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
+                        advance (= :advance-counter c-type)]
+                    (cond advance (do (set-prop state side target :advance-counter value)
+                                      (system-msg state side (str "sets advancement counters to " value " on "
+                                                                  (card-str state target))))
+                          (not c-type) (toast state side "You need to specify a counter type for that card." "error"
+                                              {:time-out 0 :close-button true})
+                          :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
+                                    (system-msg state side (str "sets " (name c-type) " counters to " value " on "
+                                                                (card-str state target)))))))
+     :choices {:req (fn [t] (card-is? t :side side))}}
+    {:title "/counter command"} nil))
+
+(defn command-counter [state side args]
+  (if (= 1 (count args))
+    (command-counter-smart state side args)
+    (let [typestr (.toLowerCase (first args))
+          value (if-let [n (string->num (second args))] n 0)
+          one-letter (if (<= 1 (.length typestr)) (.substring typestr 0 1) "")
+          two-letter (if (<= 2 (.length typestr)) (.substring typestr 0 2) one-letter)
+          c-type (cond (= "v" one-letter) :virus
+                       (= "p" one-letter) :power
+                       (= "c" one-letter) :credit
+                       (= "ag" two-letter) :agenda
+                       :else :advance-counter)
+          advance (= :advance-counter c-type)]
+      (if advance
+        (command-adv-counter state side value)
+        (resolve-ability state side
+                       {:effect (effect (set-prop target :counter (merge (:counter target) {c-type value}))
+                                        (system-msg (str "sets " (name c-type) " counters to " value " on "
+                                                         (card-str state target))))
+                        :choices {:req (fn [t] (card-is? t :side side))}}
+                       {:title "/counter command"} nil)))))
 
 (defn command-rezall [state side value]
   (resolve-ability state side
@@ -109,7 +144,7 @@
   (let [[command & args] (split text #" ");"
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
-    (when (<= (count args) 1)
+    (when (<= (count args) 2)
       (case command
         "/draw"       #(draw %1 %2 (max 0 value))
         "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
@@ -135,7 +170,7 @@
                                                                                 (card-str state target) ": " (get-card state target))))
                                                :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/card-info command"} nil)
-        ;; "/counter"    #(command-counter %1 %2 type num)
+        "/counter"    #(command-counter %1 %2 args)
         "/adv-counter" #(command-adv-counter %1 %2 value)
         "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
         "/end-run"    #(when (= %2 :corp) (end-run %1 %2))

@@ -95,6 +95,7 @@
 
    "Bio-Ethics Association"
    (let [ability {:req (req unprotected)
+                  :delayed-completion true
                   :label "Do 1 net damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 net damage"

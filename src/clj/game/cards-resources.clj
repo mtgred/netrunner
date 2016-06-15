@@ -505,7 +505,7 @@
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
                  :effect (req (if (not (empty? (:scored corp)))
-                                (do (show-wait-prompt :runner "Corp to decide whether or not to prevent Liberated Chela")
+                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
                                       state side
                                       {:prompt (msg "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?")
@@ -1052,23 +1052,21 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   {:events {:run {:req (req (#{:hq :rd} target))
-                   :effect (effect (register-run-flag! card :no-agenda-stolen (constantly true)))}
-             :agenda-stolen {:req (req (#{[:hq] [:rd]} (:server run)))
-                             :effect (effect (clear-run-flag! card :no-agenda-stolen)
-                                             (register-run-flag! card :no-agenda-stolen (constantly false)))}
-             :run-ends {:req (req (and (run-flag? state side card :no-agenda-stolen)
+   {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
+             :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+                             :silent true}
+             :successful-run {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
+                              :effect (effect (access-bonus (:counters-spent card 0)))
+                              :silent true}
+             :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)
-                                        (unregister-events card)
-                                        (register-events (:events (card-def card)) card))}
-             :successful-run nil}
+                                        (system-msg (str "adds a power counter to " (:title card))))
+                        :silent true}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))
                  :msg "access 1 additional card from HQ or R&D for the remainder of the run"
-                 :effect (effect (register-events
-                                   {:successful-run {:req (req (#{:hq :rd} target))
-                                                     :effect (effect (access-bonus 1))}} card))}]}
+                 :effect (effect (update! (update-in card [:counters-spent] #(inc (or % 0)))))}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)
