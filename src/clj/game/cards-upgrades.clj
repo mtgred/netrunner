@@ -236,7 +236,9 @@
                                                              " with " (card-str state target)))))}]}
 
    "NeoTokyo Grid"
-   (let [ng {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
+   (let [ng {:req (req (and (= (second (:zone target)) (second (:zone card)))
+                            (#{:content} (last (:zone target)))
+                            (is-remote? (second (:zone card))))) :once :per-turn
              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
      {:events {:advance ng :advancement-placed ng}})
 
