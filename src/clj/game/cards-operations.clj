@@ -348,7 +348,7 @@
                       card nil))}
 
    "Housekeeping"
-   {:events {:runner-install {:req (req (= side :runner))
+   {:events {:runner-install {:player :runner
                               :choices {:req #(and (in-hand? %)
                                                    (= (:side %) "Runner"))}
                               :prompt "Choose a card from your Grip to trash for Housekeeping" :once :per-turn

@@ -98,7 +98,8 @@
   [type]
   (cloud-icebreaker {:abilities [{:msg (str "break up to 3 " (lower-case type) " subroutines")
                                   :effect (effect (trash card {:cause :ability-cost}))}]
-                      :events (let [cloud {:req (req (has-subtype? target "Icebreaker"))
+                      :events (let [cloud {:silent (req true)
+                                           :req (req (has-subtype? target "Icebreaker"))
                                            :effect (effect (update-breaker-strength card))}]
                                 {:runner-install cloud :trash cloud :card-moved cloud})
                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")

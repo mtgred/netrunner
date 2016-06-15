@@ -250,7 +250,8 @@
     :events {:pre-install {:req (req (and (not (zero? (get-in  card [:counter :power])))
                                           (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (effect (install-cost-bonus [:credit (get-in card [:counter :power])]))}
-             :runner-install {:req (req (and (not (zero? (get-in card [:counter :power])))
+             :runner-install {:silent (req true)
+                              :req (req (and (not (zero? (get-in card [:counter :power])))
                                              (not (get-in @state [:per-turn (:cid card)]))))
                               :msg (msg "increase the install cost of " (:title target) " by " (get-in card [:counter :power]) " [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}

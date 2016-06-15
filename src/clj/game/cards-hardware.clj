@@ -25,7 +25,8 @@
                               :effect (effect (draw :runner))}}}
 
    "Autoscripter"
-   {:events {:runner-install {:req (req (and (is-type? target "Program")
+   {:events {:runner-install {:silent (req true)
+                              :req (req (and (is-type? target "Program")
                                              (= (:active-player @state) :runner)
                                              ;; only trigger when played a programm from grip
                                              (some #{:hand} (:previous-zone target))
@@ -208,6 +209,7 @@
    {:in-play [:memory 1]
     :events {:runner-install
              {:req (req (= card target))
+              :silent (req true)
               :effect (effect (update! (assoc card :dopp-active true)))}
              :runner-turn-begins
              {:effect (effect (update! (assoc card :dopp-active true)))}
@@ -282,7 +284,8 @@
 
    "Grimoire"
    {:in-play [:memory 2]
-    :events {:runner-install {:req (req (has-subtype? target "Virus"))
+    :events {:runner-install {:silent (req true)
+                              :req (req (has-subtype? target "Virus"))
                               :effect (effect (add-counter target :virus 1))}}}
 
    "Heartbeat"
@@ -312,7 +315,8 @@
                                 (update-breaker-strength state side
                                                          (find-cid (:cid c) (all-installed state :runner))))))}]
        {:runner-turn-ends llds :corp-turn-ends llds
-        :runner-install {:req (req (has-subtype? target "Icebreaker"))
+        :runner-install {:silent (req true)
+                         :req (req (has-subtype? target "Icebreaker"))
                          :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                          (update-breaker-strength target))}
         :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
@@ -535,8 +539,12 @@
 
    "Replicator"
    {:events {:runner-install
-             {:optional {:req (req (is-type? target "Hardware"))
-                         :prompt "Use Replicator to add a copy?"
+             {:interactive (req (and (is-type? target "Hardware")
+                                     (some #(= (:title %) (:title target)) (:deck runner))))
+              :silent (req (not (and (is-type? target "Hardware")
+                                     (some #(= (:title %) (:title target)) (:deck runner)))))
+              :optional {:prompt "Use Replicator to add a copy?"
+                         :req (req (and (is-type? target "Hardware") (some #(= (:title %) (:title target)) (:deck runner))))
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
                                        :effect (effect (trigger-event :searched-stack nil)
                                                        (move (some #(when (= (:title %) (:title target)) %)
