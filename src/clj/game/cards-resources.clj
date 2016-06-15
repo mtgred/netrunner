@@ -668,7 +668,8 @@
                                                                 (vec)))
                                                  card nil))}}})
    "Patron"
-   (let [ability {:prompt "Choose a server for Patron" :choices (req servers)
+   (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
+                  :req (req (not= "No server" target))
                   :msg (msg "target " target)
                   :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
    {:events {:runner-turn-begins ability
