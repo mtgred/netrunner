@@ -216,18 +216,20 @@
 (defn runner-install
   "Installs specified runner card if able
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
-  ([state side card] (runner-install state side card nil))
-  ([state side card {:keys [host-card facedown] :as params}]
-   (when (empty? (get-in @state [side :locked (-> card :zone first)]))
+  ([state side card] (runner-install state side (make-eid state) card nil))
+  ([state side card params] (runner-install state side (make-eid state) card params))
+  ([state side eid card {:keys [host-card facedown] :as params}]
+   (if (empty? (get-in @state [side :locked (-> card :zone first)]))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
-       (resolve-ability state side
-                        {:choices hosting
-                         :effect (effect (runner-install card (assoc params :host-card target)))}
-                        card nil)
+       (continue-ability state side
+                         {:choices hosting
+                          :prompt (str "Choose a card to host " (:title card) " on")
+                          :effect (effect (runner-install eid card (assoc params :host-card target)))}
+                         card nil)
        (do (trigger-event state side :pre-install card)
            (let [cost (runner-get-cost state side card params)]
-             (when (runner-can-install? state side card facedown)
-               (when-let [cost-str (pay state side card cost)]
+             (if (runner-can-install? state side card facedown)
+               (if-let [cost-str (pay state side card cost)]
                  (let [c (if host-card
                            (host state side host-card card)
                            (move state side card
@@ -238,9 +240,14 @@
                                         (card-init state side c true))]
                    (runner-install-message state side (:title card) cost-str params)
                    (handle-virus-counter-flag state side installed-card)
-                   (trigger-event state side :runner-install installed-card)
+                   (when (is-type? card "Resource")
+                     (swap! state assoc-in [:runner :register :installed-resource] true))
                    (when (has-subtype? c "Icebreaker")
-                     (update-breaker-strength state side c))))))
-           (when (is-type? card "Resource")
-             (swap! state assoc-in [:runner :register :installed-resource] true))
-           (clear-install-cost-bonus state side))))))
+                     (update-breaker-strength state side c))
+                   (trigger-event-simult state side eid :runner-install
+                                         nil nil
+                                         installed-card))
+                 (effect-completed state side eid))
+               (effect-completed state side eid)))
+           (clear-install-cost-bonus state side)))
+     (effect-completed state side eid))))

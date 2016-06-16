@@ -237,6 +237,27 @@
       (is (zero? (virus-counters (find-card "Medium" (get-in @state [:runner :rig :program]))))
           "Medium has no counters"))))
 
+(deftest cyberdex-virus-suite-archives-access
+  "Cyberdex Virus Suite - Don't interrupt archives access. Issue #1647."
+  (do-game
+    (new-game (default-corp [(qty "Cyberdex Virus Suite" 1) (qty "Braintrust" 1)])
+              (default-runner [(qty "Cache" 1)]))
+    (trash-from-hand state :corp "Cyberdex Virus Suite")
+    (trash-from-hand state :corp "Braintrust")
+    (take-credits state :corp)
+    ;; runner's turn
+    ;; install cache
+    (play-from-hand state :runner "Cache")
+    (let [cache (get-program state 0)]
+      (is (= 3 (get-counters (refresh cache) :virus)))
+      (run-empty-server state "Archives")
+      (prompt-choice :runner "Cyberdex Virus Suite")
+      (prompt-choice :corp "Yes")
+      (is (pos? (count (:prompt (get-runner)))) "CVS purge did not interrupt archives access")
+      ;; purged counters
+      (is (zero? (get-counters (refresh cache) :virus))
+          "Cache has no counters"))))
+
 (deftest ghost-branch-dedicated-response-team
   "Ghost Branch - with Dedicated Response Team"
   (do-game

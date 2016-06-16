@@ -299,6 +299,37 @@
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
 
+(deftest replicator-bazaar
+  "Replicator - interaction with Bazaar. Issue #1511."
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Replicator" 1) (qty "Bazaar" 1) (qty "Spy Camera" 6)]))
+    (letfn [(count-spy [n] (= n (count (filter #(= "Spy Camera" (:title %)) (-> (get-runner) :rig :hardware)))))]
+      (take-credits state :corp)
+      (starting-hand state :runner ["Replicator" "Bazaar" "Spy Camera"])
+      (play-from-hand state :runner "Replicator")
+      (play-from-hand state :runner "Bazaar")
+      (play-from-hand state :runner "Spy Camera") ;; 1 installed
+      (is (count-spy 1) "1 Spy Cameras installed")
+      (prompt-choice :runner "Yes") ;; for now, choosing Replicator then shows its optional Yes/No
+      (prompt-choice :runner "Yes") ;; Bazaar triggers, 2 installed
+      (is (count-spy 2) "2 Spy Cameras installed")
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 3 installed
+      (is (count-spy 3) "3 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 4 installed
+      (is (count-spy 4) "4 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 5 installed
+      (is (count-spy 5) "5 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 6 installed
+      (is (count-spy 6) "6 Spy Cameras installed"))))
+
 (deftest spinal-modem
   "Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run"
   (do-game

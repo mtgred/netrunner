@@ -71,20 +71,28 @@
   [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
-              (let [cards (map :card (filter #(not (:silent (:ability %))) handlers))
+              (let [non-silent (filter #(not (and (:silent (:ability %))
+                                                  (let [ans ((:silent (:ability %)) state side (make-eid state) (:card %) event-targets)]
+                                                    ans)))
+                                       handlers)
+                    cards (map :card non-silent)
                     titles (map :title cards)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
-                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) nil)))
+                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
                                         handlers)]
-                (if (or (= 1 (count handlers)) (empty? interactive))
-                  (let [to-resolve (first handlers)]
+                ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
+                (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
+                  (let [to-resolve (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                        others (if (= 1 (count non-silent))
+                                 (remove-once #(not= (:cid (:card to-resolve)) (:cid (:card %))) handlers)
+                                 (next handlers))]
                     (if-let [the-card (get-card state (:card to-resolve))]
                       {:delayed-completion true
                        :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
                                                                      the-card event-targets)
                                                     (if (< 1 (count handlers))
                                                       (continue-ability state side
-                                                                        (choose-handler (next handlers)) nil event-targets)
+                                                                        (choose-handler others) nil event-targets)
                                                       (effect-completed state side eid nil))))}
                       {:delayed-completion true
                        :effect (req (if (< 1 (count handlers))

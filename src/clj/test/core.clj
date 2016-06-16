@@ -83,8 +83,9 @@
 
 (defn get-hardware
   "Get hardware by position."
-  [state pos]
-  (get-in @state [:runner :rig :hardware pos]))
+  ([state] (get-in @state [:runner :rig :hardware]))
+  ([state pos]
+   (get-in @state [:runner :rig :hardware pos])))
 
 (defn get-resource
   "Get non-hosted resource by position."

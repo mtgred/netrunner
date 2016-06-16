@@ -101,15 +101,21 @@
    "Bazaar"
    {:events
     {:runner-install
-     {:req (req (is-type? target "Hardware"))
+     {:interactive (req (and (is-type? target "Hardware")
+                             (some #(= (:title %) (:title target)) (:hand runner))))
+      :silent (req (not (and (is-type? target "Hardware")
+                             (some #(= (:title %) (:title target)) (:hand runner)))))
+      :delayed-completion true
+      :req (req (is-type? target "Hardware"))
       :effect (req (let [hw (:title target)]
-                     (resolve-ability state side
+                     (continue-ability state side
                        {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                    :prompt (msg "Install another copy of " hw "?")
                                    :msg (msg "install another copy of " hw)
-                                   :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) hw) %)
-                                                                                 (:hand runner))]
-                                                                 (runner-install state side c)))}}} card nil)))}}}
+                                   :yes-ability {:delayed-completion true
+                                                 :effect (req (if-let [c (some #(when (= (:title %) hw) %)
+                                                                               (:hand runner))]
+                                                                (runner-install state side eid c nil)))}}} card nil)))}}}
 
    "Beach Party"
    {:in-play [:hand-size-modification 5]
@@ -639,7 +645,8 @@
              :corp-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
                                 :effect (req (gain state :runner :credit 1)
                                              (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :runner-install {:req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
+             :runner-install {:silent (req (pos? (:credit runner)))
+                              :req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
                               :effect (req (gain state :runner :credit 1)
                                            (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
@@ -661,7 +668,8 @@
                                                                                  " cop" (if (> (int target) 1) "ies" "y")
                                                                                  " of " title))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
-                                :effect (effect (resolve-ability
+                                :delayed-completion true
+                                :effect (effect (continue-ability
                                                  (pphelper (:title target)
                                                            (->> (:deck runner)
                                                                 (filter #(has? % :title (:title target)))
@@ -818,6 +826,7 @@
    "Salsette Slums"
    {:events {:runner-install
              {:req (req (= card target))
+              :silent (req true)
               :effect (effect (update! (assoc card :slums-active true)))}
              :runner-turn-begins
              {:effect (effect (update! (assoc card :slums-active true)))}
@@ -977,7 +986,8 @@
                             :effect (effect (gain :credit 1))}}}
 
    "Technical Writer"
-   {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
+   {:events {:runner-install {:silent (req true)
+                              :req (req (some #(= % (:type target)) '("Hardware" "Program")))
                               :effect (effect (add-counter :runner card :credit 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1]
@@ -1055,15 +1065,15 @@
    "The Turning Wheel"
    {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
              :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
-                             :silent true}
+                             :silent (req true)}
              :successful-run {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
                               :effect (effect (access-bonus (:counters-spent card 0)))
-                              :silent true}
+                              :silent (req true)}
              :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)
                                         (system-msg (str "adds a power counter to " (:title card))))
-                        :silent true}}
+                        :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))
                  :msg "access 1 additional card from HQ or R&D for the remainder of the run"

@@ -234,17 +234,25 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from your Grip?")
-                         :req (req (and (first-event state side :runner-install)
-                                        (some #(is-type? % (:type target)) (:hand runner))))
-                         :yes-ability {:effect (req (let [type (:type target)]
-                                              (resolve-ability
-                                               state side
-                                               {:prompt (msg "Choose another " type " to install from your grip")
-                                                :choices {:req #(and (is-type? % type)
-                                                                     (in-hand? %))}
-                                                :msg (msg "install " (:title target))
-                                                :effect (effect (runner-install target))} card nil)))}}}}}
+             {:silent (req (not (and (first-event state side :runner-install)
+                                     (some #(is-type? % (:type target)) (:hand runner)))))
+              :req (req (and (first-event state side :runner-install)
+                             (some #(is-type? % (:type target)) (:hand runner))))
+              :once :per-turn
+              :delayed-completion true
+              :effect
+              (req (let [itarget target
+                         type (:type itarget)]
+                     (continue-ability
+                       state side
+                       {:optional {:prompt (msg "Install another " type " from your Grip?")
+                                  :yes-ability
+                                  {:prompt (msg "Choose another " type " to install from your grip")
+                                   :choices {:req #(and (is-type? % type)
+                                                        (in-hand? %))}
+                                   :msg (msg "install " (:title target))
+                                   :effect (effect (runner-install eid target nil))}}}
+                       card nil)))}}}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
@@ -354,6 +362,7 @@
                            :effect (effect (install-cost-bonus [:credit -1]))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                              (not (get-in @state [:per-turn (:cid card)]))))
+                              :silent (req true)
                               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 

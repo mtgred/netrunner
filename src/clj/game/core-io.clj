@@ -209,4 +209,5 @@
   (case event
     :agenda-scored "agenda-scored"
     :agenda-stolen "agenda-stolen"
+    :runner-install "runner-install"
     (str event)))
