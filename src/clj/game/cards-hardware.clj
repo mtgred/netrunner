@@ -5,19 +5,21 @@
    {:in-play [:memory 1]}
 
    "Archives Interface"
-   {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
-                                      (update! state side (assoc card :ai-active true)))
-                         :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
-    :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
-                 :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                              (resolve-ability
-                                state side
-                                {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                 :choices (req (:discard corp))
-                                 :msg (msg "remove " (:title target) " from the game")
-                                 :effect (req (move state :corp target :rfg)
-                                              (update! state side (dissoc (get-card state card) :ai-active)))}
-                               card nil))}]}
+   {:events {:successful-run
+             {:delayed-completion true
+              :req (req (= target :archives))
+              :effect (effect (continue-ability
+                                {:optional
+                                 {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                                  :yes-ability
+                                  {:effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                                                (continue-ability
+                                                  state side
+                                                  {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                                   :choices (req (:discard corp))
+                                                   :msg (msg "remove " (:title target) " from the game")
+                                                   :effect (req (move state :corp target :rfg))}
+                                                 card nil))}}} card nil))}}}
 
    "Astrolabe"
    {:in-play [:memory 1]
