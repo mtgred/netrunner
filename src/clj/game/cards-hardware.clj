@@ -190,8 +190,7 @@
                                       (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (update-breaker-strength target))}
+                                 (update! (assoc (get-card state card) :dino-breaker (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
@@ -199,9 +198,9 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target)
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (gain :memory (:memoryunits target)))}]
+                 :effect (req (update-breaker-strength state side (host state side card target))
+                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target)))
+                              (gain state side :memory (:memoryunits target)))}]
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (:dino-breaker (get-card state card))))
