@@ -671,6 +671,23 @@
    "Lycan"
    (morph-ice "Sentry" "Code Gate" trash-program)
 
+   "Magnet"
+   {:delayed-completion true
+    :effect (req (let [magnet card]
+                   (continue-ability
+                     state side
+                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                       (remove-once #(not= (:cid %) (:cid magnet)) (all-installed state corp))))
+                       :prompt "Select a Program to host on Magnet"
+                       :choices {:req #(and (card-is? % :type "Program")
+                                            (ice? (:host %))
+                                            (not= (:cid (:host %)) (:cid magnet)))}
+                       :effect (req (let [hosted (host state side card target)]
+                                      (unregister-events state side hosted)
+                                      (update! state side (dissoc hosted :abilities))))}
+                      card nil)))
+    :abilities [end-the-run]}
+
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))
                 (do-net-damage 1)
