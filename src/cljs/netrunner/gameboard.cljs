@@ -186,7 +186,7 @@
                      (handle-abilities card owner))
                    (send-command "play" {:card card}))
           ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
-          ("servers") (when (= type "ICE")
+          ("servers") (when (and (= type "ICE") (:rezzed card))
                         ;; ICE that should show list of abilities that send messages to fire sub
                         (-> (om/get-node owner "runner-abilities") js/$ .toggle))
           nil)
@@ -461,7 +461,7 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon new]
+                         side rec-counter facedown named-target icon new runner-abilities]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -512,20 +512,28 @@
                      label])
                   servers)]))
         (when (= type "ICE")
-          (let [div-map (map (fn [ab]
-                               [:div {:on-click #(do (send-command "system-message"
-                                                                   {:msg (str "indicates to fire the \"" (:label ab)
-                                                                              "\" subroutine on " title)}))}
-                                (str "Let fire: \"" (:label ab) "\"")])
-                             abilities)]
-            (js/console.log (clj->js div-map)))
+          (js/console.log title)
+          (js/console.log (clj->js runner-abilities))
+          (js/console.log (clj->js (count abilities)))
           [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
+           (when runner-abilities
+             (map-indexed
+               (fn [i ab]
+                 [:div {:on-click #(do (send-command "runner-ability" {:card @cursor
+                                                                       :ability i}))
+                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+               runner-abilities))
+           (when (> 0 (count abilities))
+             [:div {:on-click #(send-command "system-msg"
+                                             {:msg (str "indicates to fire all subroutines on " title)})}
+              "Let all subroutines fire"])
            (map (fn [ab]
                   [:div {:on-click #(send-command "system-msg"
                                                   {:msg (str "indicates to fire the \"" (:label ab)
                                                              "\" subroutine on " title)})}
                    (str "Let fire: \"" (:label ab) "\"")])
-                abilities)])
+                abilities)]
+          )
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
                     (= (first actions) "derez"))

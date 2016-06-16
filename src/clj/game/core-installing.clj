@@ -60,6 +60,12 @@
     (for [ab abilities]
       (assoc (select-keys ab [:cost :pump :breaks]) :label (make-label ab)))))
 
+(defn- runner-ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (for [ab (:runner-abilities cdef)]
+    (assoc (select-keys ab [:cost :pump :breaks]) :label (make-label ab))))
+
 (defn card-init
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card true))
@@ -67,7 +73,8 @@
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          abilities (ability-init cdef)
-         c (merge card (:data cdef) {:abilities abilities})
+         run-abs (runner-ability-init cdef)
+         c (merge card (:data cdef) {:abilities abilities :runner-abilities run-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
      (when recurring

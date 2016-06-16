@@ -4,6 +4,14 @@
 
 ;;;; Helper functions specific for ICE
 
+;;; Runner abilites for breaking subs
+(defn runner-break
+  "Ability to break a subroutine by spending a resource (bioroids, Negotiator, Turing etc)"
+  [cost subs]
+  {:cost cost
+   :label (str "break " subs " subroutine" (when (> 1 subs) "s"))
+   :msg (str "break " subs " subroutine" (when (> 1 subs) "s"))})
+
 ;;; General subroutines
 (def end-the-run
   "Basic ETR subroutine"
@@ -181,11 +189,11 @@
                                        :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
                                                     (clear-wait-prompt state :runner)
                                                     (resolve-ability state :runner
-                                                      {:optional
-                                                       {:player :runner
-                                                        :prompt "Allow Archangel trace to fire?" :priority 1
-                                                        :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
-                                                     card nil))}
+                                                                     {:optional
+                                                                      {:player :runner
+                                                                       :prompt "Allow Archangel trace to fire?" :priority 1
+                                                                       :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                                     card nil))}
                          :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
                                                    (clear-wait-prompt state :runner))}}} card nil))}
     :abilities [(trace-ability 6 {:choices {:req installed?}
@@ -246,7 +254,7 @@
                                    {:successful-run {:effect (effect (lose :runner :tag 1))
                                                      :msg "make the Runner lose 1 tag"}
                                     :run-ends {:effect (effect (unregister-events card))}}
-                                  card))}]
+                                   card))}]
     :events {:successful-run nil :run-ends nil}}
 
    "Bastion"
@@ -277,16 +285,16 @@
                          :effect (req (let [dest (server->zone state target)]
                                         (swap! state update-in [:run]
                                                #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                       :server (rest dest))))
+                                                         :server (rest dest))))
                                       (move state side card
                                             (conj (server->zone state target) :ices))
                                       (update-run-ice state side))})]}
 
    "Burke Bugs"
    {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
-                                        :player :runner
-                                        :msg "force the Runner to trash a program"
-                                        :label "Force the Runner to trash a program"))]}
+                                                      :player :runner
+                                                      :msg "force the Runner to trash a program"
+                                                      :label "Force the Runner to trash a program"))]}
 
    "Caduceus"
    {:abilities [(trace-ability 3 (gain-credits 3))
@@ -328,9 +336,9 @@
       :choices ["Barrier" "Code Gate" "Sentry"]
       :msg (msg "make it gain " target " until the end of the turn")
       :effect (effect (update! (assoc card :subtype
-                                      (->> (vec (.split (:subtype card) " - "))
-                                           (concat [target])
-                                           (join " - "))))
+                                           (->> (vec (.split (:subtype card) " - "))
+                                                (concat [target])
+                                                (join " - "))))
                       (update-ice-strength card))
       :events {:runner-turn-ends ab
                :corp-turn-ends ab}
@@ -353,7 +361,7 @@
              :optional {:req (req (not= (first (:zone card)) :discard))
                         :prompt "Use Chrysalis to do 2 net damage?"
                         :yes-ability {:effect (effect (damage eid :net 2 {:card card}))
-                        :msg "do 2 net damage"}}}}
+                                      :msg "do 2 net damage"}}}}
 
    "Chum"
    {:abilities [(do-net-damage 3)]}
@@ -427,7 +435,8 @@
                                                   (end-run))})]}
 
    "Eli 1.0"
-   {:abilities [end-the-run]}
+   {:abilities [end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -438,7 +447,8 @@
                  :choices {:req #(has-subtype? % "Console")}}
                 {:msg "trash all virtual resources"
                  :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-installed state :runner))]
-                                (trash state side c)))}]}
+                                (trash state side c)))}]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Enigma"
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
@@ -467,14 +477,14 @@
    {:abilities [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
                                   :msg "trash 1 hardware, do 2 meat damage, and end the run"
                                   :effect (effect (resolve-ability
-                                                   {:prompt "Choose a piece of hardware to trash"
-                                                    :label "Trash a piece of hardware"
-                                                    :msg (msg "trash " (:title target))
-                                                    :choices {:req #(is-type? % "Hardware")}
-                                                    :effect (effect (trash target {:cause :subroutine}))}
-                                                   card nil)
+                                                    {:prompt "Choose a piece of hardware to trash"
+                                                     :label "Trash a piece of hardware"
+                                                     :msg (msg "trash " (:title target))
+                                                     :choices {:req #(is-type? % "Hardware")}
+                                                     :effect (effect (trash target {:cause :subroutine}))}
+                                                    card nil)
                                                   (damage eid :meat 2 {:unpreventable true
-                                                                   :card card})
+                                                                       :card card})
                                                   (end-run))})]}
 
    "Galahad"
@@ -525,7 +535,7 @@
                                                     (trash state :runner c))
                                                   (system-msg state :runner
                                                               (str "trashes " (join ", " (map :title targets)))))}
-                                   card nil))))}]}
+                                    card nil))))}]}
 
    "Himitsu-Bako"
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
@@ -535,12 +545,14 @@
 
    "Heimdall 1.0"
    {:abilities [(do-brain-damage 1)
-                end-the-run]}
+                end-the-run]
+    :runner-abilities [(runner-break "[click]" 1)]}
 
    "Heimdall 2.0"
    {:abilities [(do-brain-damage 1)
                 {:msg "do 1 brain damage and end the run" :effect (effect (damage eid :brain 1 {:card card}) (end-run))}
-                end-the-run]}
+                end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Hourglass"
    {:abilities [{:msg "force the Runner to lose 1 [Click] if able"
@@ -549,33 +561,34 @@
    "Howler"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
                                                       (get-in @state (cons :corp (:zone i))))))]
-   {:abilities
-    [{:label "Install a piece of Bioroid ICE from HQ or Archives"
-      :prompt "Install ICE from HQ or Archives?"
-      :choices ["HQ" "Archives"]
-      :effect (req (let [fr target]
-                     (resolve-ability state side
-                       {:prompt "Choose a Bioroid ICE to install"
-                        :choices (req (filter #(and (ice? %)
-                                                    (has-subtype? % "Bioroid"))
-                                              ((if (= fr "HQ") :hand :discard) corp)))
-                        :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
-                                           hndx (ice-index state card)
-                                           ices (get-in @state (cons :corp (:zone card)))
-                                           newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
-                                       (swap! state assoc-in (cons :corp (:zone card)) newices)
-                                       (swap! state update-in (cons :corp (:zone target))
-                                              (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                       (update! state side (assoc card :howler-target newice))
-                                       (card-init state side newice false)
-                                       (trigger-event state side :corp-install newice)))} card nil)))}]
-    :events {:run-ends {:req (req (:howler-target card))
-                        :effect (effect (trash card {:cause :self-trash})
-                                        (derez (get-card state (:howler-target card))))}}})
+     {:abilities
+      [{:label "Install a piece of Bioroid ICE from HQ or Archives"
+        :prompt "Install ICE from HQ or Archives?"
+        :choices ["HQ" "Archives"]
+        :effect (req (let [fr target]
+                       (resolve-ability state side
+                                        {:prompt "Choose a Bioroid ICE to install"
+                                         :choices (req (filter #(and (ice? %)
+                                                                     (has-subtype? % "Bioroid"))
+                                                               ((if (= fr "HQ") :hand :discard) corp)))
+                                         :effect (req (let [newice (assoc target :zone (:zone card) :rezzed true)
+                                                            hndx (ice-index state card)
+                                                            ices (get-in @state (cons :corp (:zone card)))
+                                                            newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
+                                                        (swap! state assoc-in (cons :corp (:zone card)) newices)
+                                                        (swap! state update-in (cons :corp (:zone target))
+                                                               (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                        (update! state side (assoc card :howler-target newice))
+                                                        (card-init state side newice false)
+                                                        (trigger-event state side :corp-install newice)))} card nil)))}]
+      :events {:run-ends {:req (req (:howler-target card))
+                          :effect (effect (trash card {:cause :self-trash})
+                                          (derez (get-card state (:howler-target card))))}}})
 
    "Hudson 1.0"
    {:abilities [{:msg "prevent the Runner from accessing more than 1 card during this run"
-                 :effect (effect (max-access 1))}]}
+                 :effect (effect (max-access 1))}]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Hunter"
    {:abilities [(tag-trace 3)]}
@@ -589,22 +602,24 @@
                 (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                   :msg "give the Runner 1 tag and do 1 brain damage"
                                   :effect (effect (damage eid :brain 1 {:card card})
-                                                  (tag-runner :runner 1))})]}
+                                                  (tag-runner :runner 1))})]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Ichi 2.0"
    {:abilities [trash-program
                 (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                   :msg "give the Runner 1 tag and do 1 brain damage"
                                   :effect (effect (damage eid :brain 1 {:card card})
-                                                  (tag-runner :runner 1))})]}
+                                                  (tag-runner :runner 1))})]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
-                   (fn [k ref old new]
-                     (let [handsize (count (get-in new [:corp :hand]))]
-                       (when (not= (count (get-in old [:corp :hand])) handsize)
-                         (update! ref side (assoc (get-card ref card) :strength-bonus handsize))
-                         (update-ice-strength ref side (get-card ref card)))))))
+                            (fn [k ref old new]
+                              (let [handsize (count (get-in new [:corp :hand]))]
+                                (when (not= (count (get-in old [:corp :hand])) handsize)
+                                  (update! ref side (assoc (get-card ref card) :strength-bonus handsize))
+                                  (update-ice-strength ref side (get-card ref card)))))))
     :abilities [end-the-run]
     :strength-bonus (req (count (:hand corp)))
     :rez-cost-bonus (req (count (:hand corp)))
@@ -632,7 +647,8 @@
                                                     (trash state side card)))]}
 
    "Janus 1.0"
-   {:abilities [(do-brain-damage 1)]}
+   {:abilities [(do-brain-damage 1)]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Kitsune"
    {:abilities [{:prompt "Choose a card in HQ to force access"
@@ -696,7 +712,8 @@
                 (do-psi add-power-counter)]}
 
    "Markus 1.0"
-   {:abilities [trash-installed end-the-run]}
+   {:abilities [trash-installed end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Matrix Analyzer"
    {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
@@ -744,7 +761,8 @@
 
    "Negotiator"
    {:abilities [(gain-credits 2)
-                trash-program]}
+                trash-program]
+    :runner-abilities [(runner-break [:credit 2] 1)]}
 
    "Neural Katana"
    {:abilities [(do-net-damage 3)]}
@@ -773,9 +791,9 @@
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(and (is-type? % "ICE")
-                                                           (has-subtype? % "NEXT")
-                                                           (rezzed? %))
-                                                     (all-installed state :corp))) " subroutines")}
+                                                        (has-subtype? % "NEXT")
+                                                        (rezzed? %))
+                                                  (all-installed state :corp))) " subroutines")}
                 end-the-run]}
 
    "Orion"
@@ -793,7 +811,8 @@
 
    "Pop-up Window"
    {:abilities [(gain-credits 1)
-                end-the-run]}
+                end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)]}
 
    "Pup"
    {:abilities [(do-net-damage 1)]}
@@ -818,17 +837,17 @@
                  :effect (effect (register-events
                                    {:pre-ice-strength {:effect (effect (ice-strength-bonus 3 target))}
                                     :run-ends {:effect (effect (unregister-events card))}}
-                                  card)
+                                   card)
                                  (update-all-ice))}]
     :events {:pre-ice-strength nil :run-ends nil}}
 
    "Resistor"
    {:effect (req (add-watch state (keyword (str "resistor" (:cid card)))
-                   (fn [k ref old new]
-                     (let [tags (get-in new [:runner :tag])]
-                       (when (not= (get-in old [:runner :tag]) tags)
-                         (update! ref side (assoc (get-card ref card) :strength-bonus tags))
-                         (update-ice-strength ref side (get-card ref card)))))))
+                            (fn [k ref old new]
+                              (let [tags (get-in new [:runner :tag])]
+                                (when (not= (get-in old [:runner :tag]) tags)
+                                  (update! ref side (assoc (get-card ref card) :strength-bonus tags))
+                                  (update-ice-strength ref side (get-card ref card)))))))
     :strength-bonus (req (:tag runner))
     :leave-play (req (remove-watch state (keyword (str "resistor" (:cid card)))))
     :abilities [(trace-ability 4 end-the-run)]}
@@ -868,7 +887,8 @@
                          :choices {:req #(and (installed? %)
                                               (is-type? % "Program"))}
                          :msg (msg "add " (:title target) " to the top of Stack")
-                         :effect (effect (move :runner target :deck {:front true}))}}]}
+                         :effect (effect (move :runner target :deck {:front true}))}}]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Shinobi"
    {:effect take-bad-pub
@@ -958,7 +978,7 @@
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(and (is-type? % "Asset") (rezzed? %))
-                                                     (all-installed state :corp))) " subroutines")}
+                                                  (all-installed state :corp))) " subroutines")}
                 end-the-run]}
 
    "Troll"
@@ -1020,16 +1040,19 @@
 
    "Vikram 1.0"
    {:abilities [{:msg "prevent the Runner from using programs for the remainder of this run"}
-                (trace-ability 4 (do-brain-damage 1))]}
+                (trace-ability 4 (do-brain-damage 1))]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Viktor 1.0"
    {:abilities [(do-brain-damage 1)
-                end-the-run]}
+                end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Viktor 2.0"
    {:abilities [(power-counter-ability (do-brain-damage 1))
                 (trace-ability 2 add-power-counter)
-                end-the-run]}
+                end-the-run]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Viper"
    {:abilities [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
@@ -1052,7 +1075,7 @@
                                                        state side
                                                        {:msg (msg "trash " (:title c))
                                                         :effect (effect (trash c))}
-                                                      card nil)))))})]}
+                                                       card nil)))))})]}
 
    "Wall of Static"
    {:abilities [end-the-run]}
@@ -1086,7 +1109,9 @@
 
    "Wotan"
    {:abilities [end-the-run
-                (do-brain-damage 1)]}
+                (do-brain-damage 1)]
+    :runner-abilities [(runner-break [:click 2] 1)
+                       (runner-break [:credit 3] 1)]}
 
    "Wraparound"
    {:abilities [end-the-run]
@@ -1107,4 +1132,5 @@
                                                           (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
-   {:abilities [(do-brain-damage 1)]}})
+   {:abilities [(do-brain-damage 1)]
+    :runner-abilities [(runner-break [:click 1] 1)]}})
