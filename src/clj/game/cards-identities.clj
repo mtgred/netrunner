@@ -371,22 +371,15 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:no-action {:effect (req (toast state :runner "Click Laramy Fisk: Savvy Investor to force the Corp to draw a card." "info"))
-                         :req (req (and run
-                                        (is-central? (:server run))
-                                        (not current-ice)
-                                        (not (get-in @state [:per-turn (:cid card)]))
-                                        (empty? (let [successes (turn-events state side :successful-run)]
-                                                  (filter #(is-central? %) successes)))))}}
-    :abilities [{:msg "force the Corp to draw 1 card"
-                 :req (req (and run
-                                (is-central? (:server run))
-                                (:no-action run)
-                                (not current-ice)
-                                (not (get-in @state [:per-turn (:cid card)]))
-                                (empty? (let [successes (turn-events state side :successful-run)]
-                                          (filter #(is-central? %) successes)))))
-                 :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
+   {:events {:successful-run {:delayed-completion true
+                              :req (req (and (is-central? (:server run))
+                                             (empty? (let [successes (turn-events state side :successful-run)]
+                                                       (filter #(is-central? %) successes)))))
+                              :effect (effect (continue-ability
+                                                {:optional
+                                                 {:prompt "Force the Corp to draw a card?"
+                                                  :yes-ability {:msg "force the Corp to draw 1 card"
+                                                                :effect (effect (draw :corp))}}} card nil))}}}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
