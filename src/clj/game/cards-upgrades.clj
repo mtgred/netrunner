@@ -212,9 +212,7 @@
                                        (update-run-ice state side)))} card nil)))}]}
 
    "Mumbad City Grid"
-   {:abilities [{:req (req (and this-server
-                                (< (:position run) (count (:ices run)))
-                                (> (count (:ices run)) 1)))
+   {:abilities [{:req (req this-server)
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
                  :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
                                                                                 (:position run))
