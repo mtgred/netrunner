@@ -238,9 +238,9 @@
    "Mumbad Virtual Tour"
    {:access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)]
-                            (when (seq (filter #(and (= "Imp" (:title %))
-                                                     (pos? (get-in % [:counter :virus] 0)))
-                                               (all-installed state :runner)))
+                            (when (some #(and (= "Imp" (:title %))
+                                              (pos? (get-in % [:counter :virus] 0)))
+                                        (all-installed state :runner))
                               (toast state :runner (str "You must trash Mumbad Virtual Tour by paying its "
                                                         "trash cost or using an Imp counter, if able")))
                             (if (and (can-pay? state :runner nil :credit trash-cost)
