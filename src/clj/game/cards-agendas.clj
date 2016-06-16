@@ -6,6 +6,7 @@
 
   {"15 Minutes"
      {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
+                   :label "Shuffle 15 Minutes into R&D"
                    :effect (req (let [corp-agendas (get-in corp [:scored])
                                       agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]
                                   (gain-agenda-point state agenda-owner (- (:agendapoints card))))
