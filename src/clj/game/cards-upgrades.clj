@@ -1,4 +1,5 @@
 (in-ns 'game.core)
+(declare expose-prevent)
 
 (def cards-upgrades
   {"Akitaro Watanabe"
@@ -424,6 +425,11 @@
                                 (has-subtype? current-ice "Bioroid")))
                  :effect (effect (trash card))
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
+
+   "Underway Grid"
+   {:events {:pre-expose {:req (req (= (take 2 (:zone target)) (take 2 (:zone card))))
+                          :msg "prevent 1 card from being exposed"
+                          :effect (effect (expose-prevent 1))}}}
 
    "Valley Grid"
    {:abilities [{:req (req this-server)

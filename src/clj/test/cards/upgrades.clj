@@ -686,6 +686,21 @@
       (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest underway-grid
+  "Underway Grid - prevent expose of cards in server"
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1)
+                             (qty "Underway Grid" 1)])
+              (default-runner [(qty "Drive By" 1)]))
+    (play-from-hand state :corp "Underway Grid" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "Server 1")
+    (take-credits state :corp)
+    (core/rez state :corp (get-content state :remote1 0))
+    (let [eve1 (get-content state :remote1 1)]
+      (play-from-hand state :runner "Drive By")
+      (prompt-select :runner eve1)
+      (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
+
 (deftest valley-grid-trash
   "Valley Grid - Reduce Runner max hand size and restore it even if trashed"
   (do-game
@@ -704,3 +719,4 @@
       (prompt-choice :runner "Yes") ; pay to trash
       (take-credits state :runner 3)
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+
