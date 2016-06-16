@@ -14,15 +14,16 @@
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
-   {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                 :trace {:base 4
-                         :effect (req (max-access state side 0)
-                                      (let [ash card]
-                                        (swap! state update-in [:run :run-effect]
-                                               #(assoc % :replace-access
-                                                         {:mandatory true
-                                                          :effect (effect (handle-access [ash])) :card ash}))))
-                         :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
+   {:events {:successful-run {:req (req this-server)
+                              :trace {:base 4
+                                      :effect (req (max-access state side 0)
+                                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                     (let [ash card]
+                                                       (swap! state update-in [:run :run-effect]
+                                                              #(assoc % :replace-access
+                                                                        {:mandatory true
+                                                                         :effect (effect (handle-access [ash])) :card ash})))))
+                                      :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
