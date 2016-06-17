@@ -252,13 +252,14 @@
                                             (let [n (count (filter #(= (:title card) (:title %)) (:hand runner)))]
                                               (if (> n 0)
                                                 (continue-ability state side
-                                                  {:optional
-                                                   {:prompt "Reveal copies of Fear the Masses?"
-                                                    :yes-ability {:prompt "Reveal how many copies?"
-                                                                  :choices {:number (req n)}
-                                                                  :msg (msg "reveal " target " copies and force the Corp to "
-                                                                            "trash " target " cards from the top of R&D")
-                                                                  :effect (effect (mill :corp target))}}}
+                                                  {:prompt "Reveal how many copies of Fear the Masses?"
+                                                   :choices {:number (req n)}
+                                                   :effect (req (when (> target 0)
+                                                                  (mill state :corp target)
+                                                                  (system-msg state side
+                                                                              (str "reveals " target " copies of Fear the Masses,"
+                                                                                   " forcing the Corp to trash " target " cards"
+                                                                                   " from the top of R&D"))))}
                                                  card nil)
                                                 (effect-completed state side eid card))))}} card))}
 
