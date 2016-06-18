@@ -296,7 +296,7 @@
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :priority 50
-                 :effect (effect (trash target {:cause :ability-cost})
+                 :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
