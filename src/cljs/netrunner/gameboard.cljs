@@ -35,7 +35,8 @@
           "showEasing" "swing"
           "hideEasing" "linear"
           "showMethod" "fadeIn"
-          "hideMethod" "fadeOut"))
+          "hideMethod" "fadeOut"
+          "tapToDismiss" (:tap-to-dismiss options true)))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -117,14 +118,27 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn build-exception-msg [msg error]
+  (letfn [(build-report-url [error]
+            (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
+                            error
+                            "\n```")))]
+    (str "<div>"
+         msg
+         "<br/>"
+         "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
+         "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
+         (build-report-url error)
+         "');\">Report on GitHub</button></div>")))
+
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
   [msg type options]
   (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg))
-  (send-command "toast"))
+  (let [f (aget js/toastr (if (= "exception" type) "error" type))]
+    (f (if (= "exception" type) (build-exception-msg msg (:last-error @game-state)) msg))
+    (send-command "toast")))
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
