@@ -235,6 +235,23 @@
                                  (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
                                                              " with " (card-str state target)))))}]}
 
+   "Mumbad Virtual Tour"
+   {:access {:req (req installed)
+             :effect (req (let [trash-cost (trash-cost state side card)]
+                            (when (some #(and (= "Imp" (:title %))
+                                              (pos? (get-in % [:counter :virus] 0)))
+                                        (all-installed state :runner))
+                              (toast state :runner (str "You must trash Mumbad Virtual Tour by paying its "
+                                                        "trash cost or using an Imp counter, if able")))
+                            (if (and (can-pay? state :runner nil :credit trash-cost)
+                                     (empty? (filter #(and (= "Imp" (:title %))
+                                                           (pos? (get-in % [:counter :virus] 0)))
+                                                     (all-installed state :runner))))
+                              (swap! state assoc-in [:runner :register :force-trash] true)
+                              (toast state :runner (str "You must use any credit sources (Whizzard, Scrubber, "
+                                                        "Ghost Runner, Net Celebrity) to trash Mumbad Virtual Tour, if able")))))}
+    :trash-effect {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
+
    "NeoTokyo Grid"
    (let [ng {:req (req (and (= (second (:zone target)) (second (:zone card)))
                             (#{:content} (last (:zone target)))
