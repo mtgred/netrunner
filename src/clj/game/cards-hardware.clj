@@ -5,19 +5,22 @@
    {:in-play [:memory 1]}
 
    "Archives Interface"
-   {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
-                                      (update! state side (assoc card :ai-active true)))
-                         :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
-    :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
-                 :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                              (resolve-ability
-                                state side
-                                {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                 :choices (req (:discard corp))
-                                 :msg (msg "remove " (:title target) " from the game")
-                                 :effect (req (move state :corp target :rfg)
-                                              (update! state side (dissoc (get-card state card) :ai-active)))}
-                               card nil))}]}
+   {:events
+    {:successful-run
+     {:delayed-completion true
+      :req (req (= target :archives))
+      :effect (effect (continue-ability
+                        {:optional
+                         {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                          :yes-ability
+                          {:delayed-completion true
+                           :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                                        (continue-ability
+                                          state side
+                                          {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                           :choices (req (:discard corp))
+                                           :msg (msg "remove " (:title target) " from the game")
+                                           :effect (effect (move :corp target :rfg))} card nil))}}} card nil))}}}
 
    "Astrolabe"
    {:in-play [:memory 1]
@@ -187,8 +190,7 @@
                                       (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (update-breaker-strength target))}
+                                 (update! (assoc (get-card state card) :dino-breaker (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
@@ -196,9 +198,9 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target)
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (gain :memory (:memoryunits target)))}]
+                 :effect (req (update-breaker-strength state side (host state side card target))
+                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target)))
+                              (gain state side :memory (:memoryunits target)))}]
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (:dino-breaker (get-card state card))))
@@ -294,7 +296,7 @@
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :priority 50
-                 :effect (effect (trash target {:cause :ability-cost})
+                 :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}

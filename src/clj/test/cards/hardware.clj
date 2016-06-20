@@ -15,14 +15,11 @@
     (core/move state :corp (find-card "Shock!" (:hand (get-corp))) :discard)
     (core/move state :corp (find-card "Launch Campaign" (:hand (get-corp))) :discard)
     (play-from-hand state :runner "Archives Interface")
-    (let [archint (get-hardware state 0)]
-      (run-on state :archives)
-      (core/no-action state :corp nil)
-      (card-ability state :runner archint 0)
-      (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
-      (core/successful-run state :runner nil)
-      (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
-      (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken"))))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
+    (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
+    (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken")))
 
 (deftest astrolabe-memory
   "Astrolabe - Gain 1 memory"

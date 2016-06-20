@@ -168,7 +168,7 @@
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :effect (req (if (= target "1 tag")
                                      (tag-runner state side 1)
-                                     (damage eid state side :brain 1 {:card card})))}}}
+                                     (damage state side eid :brain 1 {:card card})))}}}
 
    "Cerebral Static"
    {:msg "disable the Runner's identity"

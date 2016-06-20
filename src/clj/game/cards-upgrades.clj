@@ -14,15 +14,16 @@
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
-   {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                 :trace {:base 4
-                         :effect (req (max-access state side 0)
-                                      (let [ash card]
-                                        (swap! state update-in [:run :run-effect]
-                                               #(assoc % :replace-access
-                                                         {:mandatory true
-                                                          :effect (effect (handle-access [ash])) :card ash}))))
-                         :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
+   {:events {:successful-run {:req (req this-server)
+                              :trace {:base 4
+                                      :effect (req (max-access state side 0)
+                                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                     (let [ash card]
+                                                       (swap! state update-in [:run :run-effect]
+                                                              #(assoc % :replace-access
+                                                                        {:mandatory true
+                                                                         :effect (effect (handle-access [ash])) :card ash})))))
+                                      :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
@@ -212,9 +213,7 @@
                                        (update-run-ice state side)))} card nil)))}]}
 
    "Mumbad City Grid"
-   {:abilities [{:req (req (and this-server
-                                (< (:position run) (count (:ices run)))
-                                (> (count (:ices run)) 1)))
+   {:abilities [{:req (req this-server)
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
                  :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
                                                                                 (:position run))

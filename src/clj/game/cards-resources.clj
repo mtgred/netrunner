@@ -523,7 +523,7 @@
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
                                                                                   (clear-wait-prompt :runner))}
-                                                                 {:effect (effect (as-agenda :runner 2)
+                                                                 {:effect (effect (as-agenda :runner card 2)
                                                                                   (clear-wait-prompt :runner))
                                                                   :msg "add it to their score area as an agenda worth 2 points"})
                                                               card nil))} card nil))
