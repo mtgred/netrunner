@@ -247,6 +247,27 @@
     :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
     :effect (effect (move target :hand) (shuffle! :deck))}
 
+   "Fear the Masses"
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
+                              {:delayed-completion true
+                               :mandatory true
+                               :msg "force the Corp to trash the top card of R&D"
+                               :effect (req (mill state :corp)
+                                            (let [n (count (filter #(= (:title card) (:title %)) (:hand runner)))]
+                                              (if (> n 0)
+                                                (continue-ability state side
+                                                  {:prompt "Reveal how many copies of Fear the Masses?"
+                                                   :choices {:number (req n)}
+                                                   :effect (req (when (> target 0)
+                                                                  (mill state :corp target)
+                                                                  (system-msg state side
+                                                                              (str "reveals " target " copies of Fear the Masses,"
+                                                                                   " forcing the Corp to trash " target " cards"
+                                                                                   " from the top of R&D"))))}
+                                                 card nil)
+                                                (effect-completed state side eid card))))}} card))}
+
    "Feint"
    {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
