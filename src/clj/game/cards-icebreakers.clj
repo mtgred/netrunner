@@ -364,13 +364,24 @@
                                  (strength-pump 2 1 :all-run)]})
 
    "Knight"
-   {:abilities [{:label "Host Knight on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (ice? %)
-                                      (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                 (:hosted %))))}
-                 :msg (msg "host it on " (card-str state target))
-                 :effect (effect (host target card))}
+   {:abilities [{:cost [:click 1] :label "Host Knight on a piece of ICE"
+                 :effect (req (let [k (get-card state card)
+                                    hosted? (ice? (:host k))
+                                    icepos (ice-index state (get-card state (:host k)))]
+                                (resolve-ability state side
+                                 {:prompt (msg "Host Knight on a piece of ICE" (when hosted? " not before or after the current host ICE"))
+                                  :choices {:req #(if hosted?
+                                                    (and (or (when (= (:zone %) (:zone (:host k)))
+                                                               (not= 1 (abs (- (ice-index state %) icepos))))
+                                                             (not= (:zone %) (:zone (:host k))))
+                                                         (ice? %)
+                                                         (installed? %)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                    (and (ice? %)
+                                                         (installed? %)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))} card nil)))}
                 {:cost [:credit 2] :msg "break 1 subroutine on the host ICE"}]}
 
    "Leviathan"
