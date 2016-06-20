@@ -734,6 +734,32 @@
                         :choices (req (filter #(is-type? % "Program") (:discard runner)))
                         :effect (effect (runner-install target {:no-cost true}))}} card))}
 
+   "Rigged Results"
+   (letfn [(choose-ice []
+             {:prompt "Choose a piece of ice to bypass"
+              :choices {:req #(ice? %)}
+              :effect (final-effect (system-msg :runner (str "chooses to bypass " (card-str state target)))
+                                    (run (second (:zone target))))})
+           (corp-choice [spent]
+             {:prompt "Guess how many credits were spent"
+              :choices ["0" "1" "2"]
+              :delayed-completion true
+              :effect (req (system-msg state :runner (str "spends " spent "[Credit]. "
+                                       (-> corp :user :username) " guesses " target "[Credit]."))
+                           (clear-wait-prompt state :runner)
+                           (if (not= (str spent) target)
+                             (continue-ability state :runner (choose-ice) card nil)
+                             (effect-completed state side eid)))})
+           (runner-choice [cr]
+             {:prompt "Spend how many credits?"
+              :choices (take cr ["0" "1" "2"])
+              :delayed-completion true
+              :effect (effect (show-wait-prompt :runner "Corp to guess")
+                              (clear-wait-prompt :corp)
+                              (continue-ability :corp (corp-choice (Integer/parseInt target)) card nil))})]
+   {:effect (effect (show-wait-prompt :corp "Runner to spend credits")
+                    (continue-ability (runner-choice (inc (min 2 (:credit runner)))) card nil))})
+
    "Run Amok"
    {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
