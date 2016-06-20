@@ -3,7 +3,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [all-cards game-states system-msg pay gain draw end-run] :as core]
+            [game.core :refer [all-cards game-states system-msg pay gain draw end-run toast show-error-toast] :as core]
             [environ.core :refer [env]]
             [differ.core :as differ])
   (:gen-class :main true))
@@ -64,7 +64,7 @@
 
 (defn not-spectator? [state user]
   "Returns true if the specified user in the specified state is not a spectator"
-  (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user))
+  (and state (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user)))
 
 (defn handle-do [user command state side args]
   "Ensures the user is allowed to do command they are trying to do"
@@ -86,21 +86,23 @@
           "do" (handle-do user command state side args)
           "notification" (when state
                            (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-        (if (= action "initialize")
-          (.send socket (generate-string "ok"))
-          (if-let [new-state (@game-states gameid)]
-            (do (case action
-                  ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
-                  (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
-                    (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
-                (swap! last-states assoc gameid (strip @new-state)))
-            (.send socket (generate-string {:action action :gameid gameid :state (strip @state)}))))
         (catch Exception e
-          (println "Error " action command (get-in args [:card :title]) e "\nStack trace:"
-                   (java.util.Arrays/toString (.getStackTrace e)))
-          (if (and state (#{"do" "start"} action))
-            (.send socket (generate-string state))
-            (.send socket (generate-string "error"))))))))
+          (do (println "Error " action command (get-in args [:card :title]) e)
+              (when state
+                (show-error-toast state (keyword side))
+                (swap! state assoc :last-error (pr-str e)))))
+        (finally
+          (try (do (if (= action "initialize")
+                     (.send socket (generate-string "ok"))
+                     (if-let [new-state (@game-states gameid)]
+                       (do
+                         (case action
+                           ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
+                           (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
+                             (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
+                         (swap! last-states assoc gameid (strip @new-state)))
+                       (.send socket (generate-string {:action action :gameid gameid :state (strip @state)})))))
+               (catch Exception e (.send socket (generate-string "error")))))))))
 
 (def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 

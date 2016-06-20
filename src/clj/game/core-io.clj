@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare ice-index parse-command)
+(declare ice-index parse-command show-error-toast)
 
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
@@ -186,6 +186,7 @@
                                                :effect (effect (move target :rfg))
                                                :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/rfg command"} nil)
+        "/error"      #(show-error-toast %1 %2)
         nil))))
 
 (defn corp-install-msg
@@ -211,3 +212,13 @@
     :agenda-stolen "agenda-stolen"
     :runner-install "runner-install"
     (str event)))
+
+(defn show-error-toast
+  [state side]
+  (toast state side
+         (str "Your last action caused a game error on the server. You can keep playing, but there "
+              "may be errors in the game's current state. Please click the button below to submit a report "
+              "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
+         "exception"
+         {:time-out 0 :close-button true}))
+
