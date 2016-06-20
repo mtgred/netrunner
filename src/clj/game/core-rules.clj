@@ -414,14 +414,40 @@
      (swap! state update-in [side :discard] #(concat % milled)))
    (swap! state update-in [side :deck] (partial drop n))))
 
+;; Exposing
+(defn expose-prevent
+  [state side n]
+  (swap! state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
+
+(defn- resolve-expose
+  [state side eid target args]
+  (system-msg state side (str "exposes " (card-str state target {:visible true})))
+  (if-let [ability (:expose (card-def target))]
+    (when-completed (resolve-ability state side ability target nil)
+                    (trigger-event-sync state side eid :expose target))
+    (trigger-event-sync state side (make-result eid true) :expose target)))
+
 (defn expose
   "Exposes the given card."
-  [state side target]
-  (system-msg state side
-              (str "exposes " (card-str state target {:visible true})))
-  (when-let [ability (:expose (card-def target))]
-    (resolve-ability state side ability target nil))
-  (trigger-event state side :expose target))
+  ([state side target] (expose state side (make-eid state) target))
+  ([state side eid target] (expose state side eid target nil))
+  ([state side eid target {:keys [unpreventable] :as args}]
+   (swap! state update-in [:expose] dissoc :expose-prevent)
+   (when-completed (trigger-event-sync state side :pre-expose target)
+                   (let [prevent (get-in @state [:prevent :expose :all])]
+                     (if (and (not unpreventable) (pos? (count prevent)))
+                       (do (system-msg state :corp "has the option to prevent a card from being exposed")
+                           (show-prompt state :corp nil
+                                        (str "Prevent " (:title target) " from being exposed?") ["Done"]
+                                        (fn [_]
+                                          (if-let [_ (get-in @state [:expose :expose-prevent])]
+                                            (effect-completed state side (make-result eid false)) ;; ??
+                                            (do (system-msg state :corp "will not prevent a card from being exposed")
+                                                (resolve-expose state side eid target args))))
+                                        {:priority 10}))
+                       (if-not (get-in @state [:expose :expose-prevent])
+                         (resolve-expose state side eid target args)
+                         (effect-completed state side (make-result eid false))))))))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."

@@ -215,11 +215,11 @@
 ;;; Effect completion triggers
 (defn register-effect-completed
   [state side eid card effect]
-  (swap! state update-in [:effect-completed eid] #(conj % {:card card :effect effect})))
+  (swap! state update-in [:effect-completed (:eid eid)] #(conj % {:card card :effect effect})))
 
 (defn effect-completed
   ([state side eid] (effect-completed state side eid nil))
   ([state side eid card]
-   (doseq [handler (get-in @state [:effect-completed eid])]
+   (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
      ((:effect handler) state side eid (:card card) nil))
-   (swap! state update-in [:effect-completed] dissoc eid)))
+   (swap! state update-in [:effect-completed] dissoc (:eid eid))))

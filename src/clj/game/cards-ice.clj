@@ -623,7 +623,9 @@
                  :effect (effect (lose :runner :credit 1))}]}
 
    "Its a Trap!"
-   {:expose {:msg "do 2 net damage" :effect (effect (damage eid :net 2 {:card card}))}
+   {:expose {:msg "do 2 net damage"
+             :delayed-completion true
+             :effect (effect (damage eid :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
                                                     (when current-ice
                                                       (trash-ice-in-run state))

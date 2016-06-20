@@ -787,11 +787,10 @@
                                                  (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}
                                  card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
-    :abilities [{:label "Expose 1 card"
-                 :effect (effect (resolve-ability
-                                   {:choices {:req installed?}
-                                    :effect (effect (expose target) (trash card {:cause :ability-cost}))
-                                    :msg (msg "expose " (:title target))} card nil))}]}
+    :abilities [{:msg "expose 1 card"
+                 :choices {:req installed?}
+                 :delayed-completion true
+                 :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Rolodex"
    {:msg "look at the top 5 cards of their Stack"

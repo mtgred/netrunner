@@ -69,6 +69,10 @@
   [state]
   {:eid (:eid (swap! state update-in [:eid] inc))})
 
+(defn make-result
+  [eid result]
+  (assoc eid :result result))
+
 ;; Appears to be unused???
 (def reset-value
   {:corp {:credit 5 :bad-publicity 0
