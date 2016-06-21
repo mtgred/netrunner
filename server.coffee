@@ -23,7 +23,9 @@ cache = require('memory-cache')
 # MongoDB connection
 appName = 'netrunner'
 mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
+mongoGameDBUrl = process.env['MONGO_GAMEDB_URL'] || "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
+dbGame = mongoskin.db(mongoGameDBUrl)
 
 # Game lobby
 games = {}
@@ -91,7 +93,10 @@ requester.connect("tcp://#{clojure_hostname}:1043")
 
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  if response.action isnt "remove"
+  if response.action is "remove"
+    dbGame.collection('games').update {gameid: response.gameid}, {$set: {state: response.state}}, (err) ->
+      throw err if err
+   else
     if response.diff
       lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
     else
@@ -205,6 +210,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "start"
         game = games[socket.gameid]
         if game
+          dbGame.collection('games').insert game, (err, data) ->
+            console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"
