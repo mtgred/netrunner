@@ -628,13 +628,15 @@
     :effect (final-effect (move target :deck) (shuffle! :deck))}
 
    "Salems Hospitality"
-   {:msg "name a card. The Runner reveals their Grip and must trash all copies of the named card"
-    :effect (req (show-wait-prompt state :corp "Runner to reveal their Grip")
-                 (prompt! state :runner card (str "Reveal your Grip after the Corp has named a card")
-                                                  ["Reveal Grip"]
-                                                  {:msg (msg "reveal the Runner's Grip: "
-                                                             (join ", " (map :title (:hand runner))))
-                                                   :effect (effect (clear-wait-prompt :corp))}))}
+   {:prompt "Name a Runner card"
+    :choices {:card-title (req (and (card-is? target :side "Runner")
+                                    (not (card-is? target :type "Identity"))))}
+    :effect (req (system-msg state side
+                             (str "uses Salem's Hospitality to reveal the Runner's grip ("
+                                  (join ", " (map :title (:hand runner)))
+                                  " ) and trash any copies of " target))
+                 (doseq [c (filter #(= target (:title %)) (:hand runner))]
+                   (trash state side c)))}
 
    "Scorched Earth"
    {:req (req tagged)
@@ -785,20 +787,16 @@
     :msg (msg "gain " (count (:hand runner)) " [Credits]")}
 
    "Targeted Marketing"
-   {:abilities [{:req (req (= (:zone card) [:current]))
-                 :label "Gain 10 [Credits] because the Runner installed the named card"
-                 :prompt "Choose the card you named in the Runner's rig"
-                 :choices {:req #(and (= (:side %) "Runner")
-                                      (not (:facedown %))
-                                      (not= (first (:zone %)) :discard)
-                                      (not (is-type? % "Identity")))}
-                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title target))
-                 :effect (effect (gain :credit 10))}
-                {:req (req (and (= (:zone card) [:current])
-                                (is-type? (last (:discard runner)) "Event")))
-                 :label "Gain 10 [Credits] because the Runner played the named Event"
-                 :msg (msg "gain 10 [Credits] from the Runner playing " (:title (last (:discard runner))))
-                 :effect (effect (gain :credit 10))}]}
+   (let [gaincr {:req (req (= (:title target) (:marketing-target card)))
+                 :effect (effect (gain :corp :credit 10))
+                 :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
+   {:prompt "Name a Runner card"
+    :choices {:card-title (req (and (card-is? target :side "Runner")
+                                    (not (card-is? target :type "Identity"))))}
+    :effect (effect (update! (assoc card :marketing-target target))
+                    (system-msg (str "uses Targeted Marketing to name " target)))
+    :events {:runner-install gaincr
+             :play-event gaincr}})
 
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
