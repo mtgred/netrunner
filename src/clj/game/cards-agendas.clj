@@ -132,6 +132,38 @@
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
+   "Dedicated Neural Net"
+     (letfn [(access-hq [cards]
+               {:prompt "Select a card to access."
+                :player :runner
+                :choices [(str "Card from HQ")]
+                :effect (req (system-msg state side (str "accesses " (:title (first cards))))
+                             (when-completed
+                               (handle-access state side [(first cards)])
+                               (do (if (< 1 (count cards))
+                                     (continue-ability state side (access-hq (next cards)) card nil)
+                                     (effect-completed state side eid card)))))})]
+       (let [psi-effect
+             {:delayed-completion true
+              :mandatory true
+              :effect (req (if (not-empty (:hand corp))
+                             (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
+                                 (continue-ability
+                                   state :corp
+                                   {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
+                                    :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
+                                              :max (req (access-count state side :hq-access))}
+                                    :effect (effect (clear-wait-prompt :runner)
+                                                    (continue-ability :runner (access-hq (shuffle targets)) card nil))}
+                                   card nil))
+                             (effect-completed state side eid card)))}]
+         {:events {:successful-run {:req (req (= target :hq))
+                                    :once :per-turn
+                                    :psi {:not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                                     (swap! state update-in [:run :run-effect]
+                                                                            #(assoc % :replace-access psi-effect)))
+                                                                   (effect-completed state side eid))}}}}}))
+
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
                               :show-discard true
@@ -468,11 +500,13 @@
 
    "Puppet Master"
    {:events {:successful-run
-             {:effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
+             {:delayed-completion true
+              :effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
                            (continue-ability
                              state :corp
                              {:prompt "Choose a card to place 1 advancement token on with Puppet Master" :player :corp
                               :choices {:req can-be-advanced?}
+                              :cancel-effect (final-effect (clear-wait-prompt :runner))
                               :msg (msg "place 1 advancement token on " (card-str state target))
                               :effect (final-effect (add-prop :corp target :advance-counter 1 {:placed true})
                                                     (clear-wait-prompt :runner))} card nil))}}}

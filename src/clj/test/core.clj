@@ -187,4 +187,9 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
+(defn accessing
+  "Checks to see if the runner has a prompt accessing the given card title"
+  [state title]
+  (= title (-> @state :runner :prompt first :card :title)))
+
 (load "core-game")

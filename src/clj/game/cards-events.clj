@@ -407,7 +407,7 @@
    (letfn [(access-pile [cards pile]
              {:prompt "Select a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
-              :effect (req (system-msg state side "accesses " (:title (first cards)))
+              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
                            (when-completed
                              (handle-access state side [(first cards)])
                              (do (if (< 1 (count cards))

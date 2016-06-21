@@ -154,6 +154,31 @@
     (score-agenda state :corp (get-content state :remote2 0))
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
+(deftest dedicated-neural-net
+  "Dedicated Neural Net"
+  (do-game
+    (new-game (default-corp [(qty "Dedicated Neural Net" 2) (qty "Snare!" 1) (qty "Hedge Fund" 3)])
+              (default-runner [(qty "HQ Interface" 1)]))
+    (play-from-hand state :corp "Dedicated Neural Net" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "0")
+    (prompt-choice :corp "1")
+    (is (-> @state :run :run-effect :replace-access) "Replace-access tiggered")
+    (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (prompt-choice :runner "Card from HQ")
+    (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)) "Run completed")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "HQ Interface")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "0")
+    (prompt-choice :corp "1")
+    (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+
 (deftest eden-fragment
   "Test that Eden Fragment ignores the install cost of the first ice"
   (do-game
@@ -449,6 +474,18 @@
           (core/advance state :corp {:card (refresh pb2)})
           (core/score state :corp {:card (refresh pb2)})
           (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
+
+(deftest puppet-master
+  "Puppet Master - game progresses if no valid targets. Issue #1661."
+  (do-game
+    (new-game (default-corp [(qty "Puppet Master" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Puppet Master" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :corp "Done")
+    (is (empty? (:prompt (get-runner))) "Runner's waiting prompt resolved")))
 
 (deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"
