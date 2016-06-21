@@ -858,6 +858,8 @@
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default"))
+      (when (= "card-title" (get-in cursor [side :prompt 0 :prompt-type]))
+        (-> "#card-title" js/$ .focus))
       (doseq [{:keys [msg type options]} (get-in cursor [side :toast])]
         (toast msg type options)))
 
@@ -912,6 +914,16 @@
                                                                 {:choice (-> "#credit" js/$ .val js/parseInt)})}
                               "OK"]]
                             ;; choice of specified counters on card
+                            (:card-title (:choices prompt))
+                            [:div
+                             [:div.credit-select
+                              [:input#card-title {:placeholder "Enter a card title"}]]
+                             [:button {:on-click #(send-command "choice"
+                                                                {:choice (-> "#card-title" js/$ .val)})}
+                              "OK"]
+                             (when-let [autocomp (:autocomplete (:choices prompt))]
+                               (-> "#card-title" js/$ (.autocomplete (clj->js {"source" autocomp})))
+                               nil)]
                             (:counter (:choices prompt))
                             (let [counter-type (keyword (:counter (:choices prompt)))
                                   num-counters (get-in prompt [:card :counter counter-type] 0)]

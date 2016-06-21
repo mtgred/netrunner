@@ -161,6 +161,12 @@
        (:number choices)
        (let [n ((:number choices) state side eid card targets)]
          (prompt! state s card prompt {:number n} ab args))
+       (:card-title choices)
+       (prompt!
+         state s card prompt
+         (assoc choices :autocomplete
+                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%]) @all-cards))))
+         ab (assoc args :prompt-type :card-title))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
@@ -293,6 +299,7 @@
                   :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
                (:number choices)
+               (:card-title choices)
                (#{:credit :counter} choices)
                (pos? (count choices)))
        (swap! state update-in [side :prompt]

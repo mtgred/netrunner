@@ -88,6 +88,20 @@
   (system-msg state side "concedes")
   (win state (if (= side :corp) :runner :corp) "Concede"))
 
+(defn- finish-prompt
+  [state side prompt card]
+  (when-let [end-effect (:end-effect prompt)]
+    (end-effect state side (make-eid state) card nil))
+
+  ;; remove the prompt from the queue
+  (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+  ;; This is a dirty hack to end the run when the last access prompt is resolved.
+  (when (empty? (get-in @state [:runner :prompt]))
+    (when-let [run (:run @state)]
+      (when (:ended run)
+        (handle-end-run state :runner)))
+    (swap! state dissoc :access)))
+
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -98,30 +112,32 @@
                  choice)]
     (if (not= choice "Cancel")
       ;; The user did not choose "cancel"
-      (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
-            (pay state side card :credit choice))
-          (when (and (map? (:choices prompt))
-                     (:counter (:choices prompt)))
-            ;; :Counter prompts deduct counters from the card
-            (add-counter state side (:card prompt) (:counter (:choices prompt)) (- choice)))
-          ;; trigger the prompt's effect function
-          ((:effect prompt) (or choice card)))
-      (if-let [cancel-effect (:cancel-effect prompt)]
-        ;; the user chose "cancel" -- trigger the cancel effect.
-        (cancel-effect choice)
-        (effect-completed state side (:eid prompt) nil)))
-    ;; trigger end-effect if present
-    (when-let [end-effect (:end-effect prompt)]
-      (end-effect state side (make-eid state) card nil))
+      (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
+        (let [title-fn (:card-title (:choices prompt))
+              found (some #(when (= (lower-case choice) (lower-case (:title %))) %) @all-cards)]
+          (if found
+            (if (title-fn state side (make-eid state) (:card prompt) [found])
+              (do ((:effect prompt) (or choice card))
+                  (finish-prompt state side prompt card))
+              (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
+            (toast state side (str "Could not find a card named " choice ".") "warning")))
+        (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
+              (pay state side card :credit choice))
+            (when (and (map? (:choices prompt))
+                       (:counter (:choices prompt)))
+              ;; :Counter prompts deduct counters from the card
+              (add-counter state side (:card prompt) (:counter (:choices prompt)) (- choice)))
+            ;; trigger the prompt's effect function
+            ((:effect prompt) (or choice card))
+            (finish-prompt state side prompt card)))
+      (do (if-let [cancel-effect (:cancel-effect prompt)]
+            ;; the user chose "cancel" -- trigger the cancel effect.
+            (cancel-effect choice)
+            (effect-completed state side (:eid prompt) nil))
+          (finish-prompt state side prompt card))
+      ;; trigger end-effect if present
 
-    ;; remove the prompt from the queue
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
-    ;; This is a dirty hack to end the run when the last access prompt is resolved.
-    (when (empty? (get-in @state [:runner :prompt]))
-      (when-let [run (:run @state)]
-        (when (:ended run)
-          (handle-end-run state :runner)))
-      (swap! state dissoc :access))))
+      )))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
