@@ -122,12 +122,19 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
-  socket.on 'netrunner', (msg) ->
+  socket.on 'netrunner', (msg, fn) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title.substring(0,30), allowspectator: msg.allowspectator, room: msg.room,\
-                players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
+        game =
+          date: new Date()
+          gameid: gameid
+          title: msg.title.substring(0,30)
+          allowspectator: msg.allowspectator
+          password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
+          room: msg.room
+          players: [{user: socket.request.user, id: socket.id, side: msg.side}]
+          spectators: []
         games[gameid] = game
         socket.join(gameid)
         socket.gameid = gameid
@@ -152,12 +159,18 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify(msg))
 
       when "join"
-        joinGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          notification: "ting"
-          text: "#{getUsername(socket)} joined the game."
+        game = games[msg.gameid]
+
+        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+          fn("join ok")
+          joinGame(socket, msg.gameid)
+          socket.broadcast.to(msg.gameid).emit 'netrunner',
+            type: "say"
+            user: "__system__"
+            notification: "ting"
+            text: "#{getUsername(socket)} joined the game."
+        else
+          fn("invalid password")
 
       when "watch"
         game = games[msg.gameid]
@@ -201,7 +214,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         updateMsg = {"update" : {}}
         updateMsg["update"][socket.gameid] = games[socket.gameid]
         lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
-        
+
       when "start"
         game = games[socket.gameid]
         if game

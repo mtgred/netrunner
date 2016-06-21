@@ -1000,6 +1000,9 @@ nav ul
   width: 995px
   display-flex()
 
+  .games
+    position: relative
+
   .games, .game-panel
     flex(1)
     display-flex()
@@ -1013,9 +1016,11 @@ nav ul
       margin-right: 10px
       margin-bottom: 5px
 
-    .flash-message
-      margin: 6px 0 0 15px
-      float: left
+    section
+      margin-bottom: 16px
+
+    p
+      margin: 4px 0
 
   .side
     margin-left: 5px
@@ -1048,7 +1053,6 @@ nav ul
     flex(1)
 
   .gameline
-    position: relative
     min-height: 53px
     border: 1px solid white
     border-radius: 4px
@@ -1065,9 +1069,21 @@ nav ul
       &:last-child:after
         display: none
 
-    button
+    > button
       float: right
       margin-top: 7px
+
+    .password-prompt
+      position: absolute
+      z-index: 50
+      top: 0
+      left: 100%
+      margin-left: 15px
+      border-radius: 4px
+
+      button
+        text-transform: capitalize
+        margin-right: 12px
 
   .game-panel
     position: relative
