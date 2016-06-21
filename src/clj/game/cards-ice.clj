@@ -623,7 +623,9 @@
                  :effect (effect (lose :runner :credit 1))}]}
 
    "Its a Trap!"
-   {:expose {:msg "do 2 net damage" :effect (effect (damage eid :net 2 {:card card}))}
+   {:expose {:msg "do 2 net damage"
+             :delayed-completion true
+             :effect (effect (damage eid :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
                                                     (when current-ice
                                                       (trash-ice-in-run state))
@@ -670,6 +672,23 @@
 
    "Lycan"
    (morph-ice "Sentry" "Code Gate" trash-program)
+
+   "Magnet"
+   {:delayed-completion true
+    :effect (req (let [magnet card]
+                   (continue-ability
+                     state side
+                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                       (remove-once #(not= (:cid %) (:cid magnet)) (all-installed state corp))))
+                       :prompt "Select a Program to host on Magnet"
+                       :choices {:req #(and (card-is? % :type "Program")
+                                            (ice? (:host %))
+                                            (not= (:cid (:host %)) (:cid magnet)))}
+                       :effect (req (let [hosted (host state side card target)]
+                                      (unregister-events state side hosted)
+                                      (update! state side (dissoc hosted :abilities))))}
+                      card nil)))
+    :abilities [end-the-run]}
 
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))
@@ -1073,7 +1092,8 @@
    {:abilities [end-the-run]
     :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-installed state :runner))
                            0 7))
-    :events (let [wr {:req (req (and (not= (:cid target) (:cid card))
+    :events (let [wr {:silent (req true)
+                      :req (req (and (not= (:cid target) (:cid card))
                                      (has-subtype? target "Fracter")))
                       :effect (effect (update-ice-strength card))}]
               {:runner-install wr :trash wr :card-moved wr})}

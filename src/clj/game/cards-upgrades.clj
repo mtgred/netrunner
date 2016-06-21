@@ -1,4 +1,5 @@
 (in-ns 'game.core)
+(declare expose-prevent)
 
 (def cards-upgrades
   {"Akitaro Watanabe"
@@ -14,15 +15,16 @@
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
-   {:abilities [{:label "Trace 4 - Prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                 :trace {:base 4
-                         :effect (req (max-access state side 0)
-                                      (let [ash card]
-                                        (swap! state update-in [:run :run-effect]
-                                               #(assoc % :replace-access
-                                                         {:mandatory true
-                                                          :effect (effect (handle-access [ash])) :card ash}))))
-                         :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}]}
+   {:events {:successful-run {:req (req this-server)
+                              :trace {:base 4
+                                      :effect (req (max-access state side 0)
+                                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                     (let [ash card]
+                                                       (swap! state update-in [:run :run-effect]
+                                                              #(assoc % :replace-access
+                                                                        {:mandatory true
+                                                                         :effect (effect (handle-access [ash])) :card ash})))))
+                                      :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
    {:abilities [{:label "Host a piece of bioroid ICE"
@@ -212,9 +214,7 @@
                                        (update-run-ice state side)))} card nil)))}]}
 
    "Mumbad City Grid"
-   {:abilities [{:req (req (and this-server
-                                (< (:position run) (count (:ices run)))
-                                (> (count (:ices run)) 1)))
+   {:abilities [{:req (req this-server)
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
                  :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
                                                                                 (:position run))
@@ -235,8 +235,27 @@
                                  (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
                                                              " with " (card-str state target)))))}]}
 
+   "Mumbad Virtual Tour"
+   {:access {:req (req installed)
+             :effect (req (let [trash-cost (trash-cost state side card)]
+                            (when (some #(and (= "Imp" (:title %))
+                                              (pos? (get-in % [:counter :virus] 0)))
+                                        (all-installed state :runner))
+                              (toast state :runner (str "You must trash Mumbad Virtual Tour by paying its "
+                                                        "trash cost or using an Imp counter, if able")))
+                            (if (and (can-pay? state :runner nil :credit trash-cost)
+                                     (empty? (filter #(and (= "Imp" (:title %))
+                                                           (pos? (get-in % [:counter :virus] 0)))
+                                                     (all-installed state :runner))))
+                              (swap! state assoc-in [:runner :register :force-trash] true)
+                              (toast state :runner (str "You must use any credit sources (Whizzard, Scrubber, "
+                                                        "Ghost Runner, Net Celebrity) to trash Mumbad Virtual Tour, if able")))))}
+    :trash-effect {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
+
    "NeoTokyo Grid"
-   (let [ng {:req (req (= (butlast (:zone target)) (butlast (:zone card)))) :once :per-turn
+   (let [ng {:req (req (and (= (second (:zone target)) (second (:zone card)))
+                            (#{:content} (last (:zone target)))
+                            (is-remote? (second (:zone card))))) :once :per-turn
              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
      {:events {:advance ng :advancement-placed ng}})
 
@@ -422,6 +441,11 @@
                                 (has-subtype? current-ice "Bioroid")))
                  :effect (effect (trash card))
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
+
+   "Underway Grid"
+   {:events {:pre-expose {:req (req (= (take 2 (:zone target)) (take 2 (:zone card))))
+                          :msg "prevent 1 card from being exposed"
+                          :effect (effect (expose-prevent 1))}}}
 
    "Valley Grid"
    {:abilities [{:req (req this-server)

@@ -234,17 +234,25 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:optional {:prompt (msg "Install another " (:type target) " from your Grip?")
-                         :req (req (and (first-event state side :runner-install)
-                                        (some #(is-type? % (:type target)) (:hand runner))))
-                         :yes-ability {:effect (req (let [type (:type target)]
-                                              (resolve-ability
-                                               state side
-                                               {:prompt (msg "Choose another " type " to install from your grip")
-                                                :choices {:req #(and (is-type? % type)
-                                                                     (in-hand? %))}
-                                                :msg (msg "install " (:title target))
-                                                :effect (effect (runner-install target))} card nil)))}}}}}
+             {:silent (req (not (and (first-event state side :runner-install)
+                                     (some #(is-type? % (:type target)) (:hand runner)))))
+              :req (req (and (first-event state side :runner-install)
+                             (some #(is-type? % (:type target)) (:hand runner))))
+              :once :per-turn
+              :delayed-completion true
+              :effect
+              (req (let [itarget target
+                         type (:type itarget)]
+                     (continue-ability
+                       state side
+                       {:optional {:prompt (msg "Install another " type " from your Grip?")
+                                  :yes-ability
+                                  {:prompt (msg "Choose another " type " to install from your grip")
+                                   :choices {:req #(and (is-type? % type)
+                                                        (in-hand? %))}
+                                   :msg (msg "install " (:title target))
+                                   :effect (effect (runner-install eid target nil))}}}
+                       card nil)))}}}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
@@ -329,7 +337,7 @@
                                 (case flip
                                   "[The Brewery~brewery]"
                                   (do (system-msg state side "uses [The Brewery~brewery] to do 2 net damage")
-                                      (damage eid state side :net 2 {:card card})
+                                      (damage state side eid :net 2 {:card card})
                                       (update! state side (assoc card :code "brewery")))
                                   "[The Tank~tank]"
                                   (do (system-msg state side "uses [The Tank~tank] to shuffle Archives into R&D")
@@ -354,6 +362,7 @@
                            :effect (effect (install-cost-bonus [:credit -1]))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                              (not (get-in @state [:per-turn (:cid card)]))))
+                              :silent (req true)
                               :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
@@ -362,22 +371,15 @@
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:no-action {:effect (req (toast state :runner "Click Laramy Fisk: Savvy Investor to force the Corp to draw a card." "info"))
-                         :req (req (and run
-                                        (is-central? (:server run))
-                                        (not current-ice)
-                                        (not (get-in @state [:per-turn (:cid card)]))
-                                        (empty? (let [successes (turn-events state side :successful-run)]
-                                                  (filter #(is-central? %) successes)))))}}
-    :abilities [{:msg "force the Corp to draw 1 card"
-                 :req (req (and run
-                                (is-central? (:server run))
-                                (:no-action run)
-                                (not current-ice)
-                                (not (get-in @state [:per-turn (:cid card)]))
-                                (empty? (let [successes (turn-events state side :successful-run)]
-                                          (filter #(is-central? %) successes)))))
-                 :effect (req (draw state :corp) (swap! state assoc-in [:per-turn (:cid card)] true))}]}
+   {:events {:successful-run {:delayed-completion true
+                              :req (req (and (is-central? (:server run))
+                                             (empty? (let [successes (turn-events state side :successful-run)]
+                                                       (filter #(is-central? %) successes)))))
+                              :effect (effect (continue-ability
+                                                {:optional
+                                                 {:prompt "Force the Corp to draw a card?"
+                                                  :yes-ability {:msg "force the Corp to draw 1 card"
+                                                                :effect (effect (draw :corp))}}} card nil))}}}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)

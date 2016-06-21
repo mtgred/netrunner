@@ -52,7 +52,8 @@
           (effect-completed state side eid nil)))))
 
 (defn trigger-event-sync
-  "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler."
+  "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
+  give the user a choice of what order to resolve handlers."
   [state side eid event & targets]
   (let [get-side #(-> % :card :side game.utils/to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
@@ -62,54 +63,72 @@
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
                       (effect-completed state side eid nil)))))
 
-;; INCOMPLETE
 (defn- trigger-event-simult-player
+  "Triggers the simultaneous event handlers for the given event trigger and player.
+  If none of the handlers require interaction, then they are all resolved automatically, each waiting for the previous
+  to fully resolve as in trigger-event-sync. If at least one requires interaction, then a menu is shown to manually
+  choose the order of resolution."
   [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
-              (let [cards (map :card handlers)
+              (let [non-silent (filter #(not (and (:silent (:ability %))
+                                                  (let [ans ((:silent (:ability %)) state side (make-eid state) (:card %) event-targets)]
+                                                    ans)))
+                                       handlers)
+                    cards (map :card non-silent)
                     titles (map :title cards)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
-                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) nil)))
+                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
                                         handlers)]
-                (if (or (= 1 (count handlers)) (empty? interactive))
-                  (let [to-resolve (first handlers)]
+                ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
+                (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
+                  (let [to-resolve (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                        others (if (= 1 (count non-silent))
+                                 (remove-once #(not= (:cid (:card to-resolve)) (:cid (:card %))) handlers)
+                                 (next handlers))]
                     (if-let [the-card (get-card state (:card to-resolve))]
                       {:delayed-completion true
                        :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
                                                                      the-card event-targets)
                                                     (if (< 1 (count handlers))
                                                       (continue-ability state side
-                                                                        (choose-handler (next handlers)) nil event-targets)
+                                                                        (choose-handler others) nil event-targets)
                                                       (effect-completed state side eid nil))))}
                       {:delayed-completion true
-                       :effect (effect (continue-ability (choose-handler (next handlers)) nil event-targets))}))
+                       :effect (req (if (< 1 (count handlers))
+                                      (continue-ability state side (choose-handler (next handlers)) nil event-targets)
+                                      (effect-completed state side eid nil)))}))
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
                    :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
-                                   (when-completed (resolve-ability state side (:ability to-resolve)
-                                                                    (:card to-resolve) event-targets)
-                                                   (if (< 1 (count handlers))
-                                                     (continue-ability state side
-                                                                       (choose-handler (remove-once #(not= target (:title (:card %))) handlers))
-                                                                       nil event-targets)
-                                                     (effect-completed state side eid nil)))))})))]
+                                   (when-completed
+                                     (resolve-ability state side (:ability to-resolve)
+                                                      (:card to-resolve) event-targets)
+                                     (if (< 1 (count handlers))
+                                       (continue-ability state side
+                                                         (choose-handler
+                                                           (remove-once #(not= target (:title (:card %))) handlers))
+                                                         nil event-targets)
+                                       (effect-completed state side eid nil)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid nil)))
 
 (defn ability-as-handler
+  "Wraps a card ability as an event handler."
   [card ability]
   {:card card :ability ability})
 
 (defn card-as-handler
+  "Wraps a card's definition as an event handler."
   [card]
   (let [{:keys [effect prompt choices psi optional trace] :as cdef} (card-def card)]
     (when (or effect prompt choices psi optional trace)
       (ability-as-handler card cdef))))
 
 (defn effect-as-handler
+  "Wraps a five-argument function as an event handler."
   [card effect]
   (ability-as-handler card {:effect effect}))
 
@@ -128,35 +147,34 @@
                  and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
   targets:       a varargs list of targets to the event, as usual"
   ([state side eid event first-ability card-ability & targets]
-   (let [awaiting (atom #{})]
-     (let [get-side #(-> % :card :side game.utils/to-keyword)
-           get-ability-side #(-> % :ability :side)
-           active-player (:active-player @state)
-           opponent (other-side (:active-player @state))
-           is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
-           active-player-events (filter is-active-player (get-in @state [:events event]))
-           active-player-events (if (= (:active-player @state) (get-side card-ability))
-                                  (cons card-ability active-player-events)
-                                  active-player-events)
-           opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
-           opponent-events (if (= opponent (get-side card-ability))
-                             (cons card-ability opponent-events)
-                             opponent-events)]
-       ; let active player activate their events first
-       (when-completed
-         (resolve-ability state side first-ability nil nil)
-         (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                               {:priority -1})
-             (when-completed
-               (trigger-event-simult-player state side event active-player-events targets)
-               (do (clear-wait-prompt state opponent)
-                   (show-wait-prompt state active-player
-                                     (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                     {:priority -1})
-                   (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
-                                   (do (swap! state update-in [:turn-events] #(cons [event targets] %))
-                                       (clear-wait-prompt state active-player)
-                                       (effect-completed state side eid nil)))))))))))
+   (let [get-side #(-> % :card :side game.utils/to-keyword)
+         get-ability-side #(-> % :ability :side)
+         active-player (:active-player @state)
+         opponent (other-side (:active-player @state))
+         is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
+         active-player-events (filter is-active-player (get-in @state [:events event]))
+         active-player-events (if (= (:active-player @state) (get-side card-ability))
+                                (cons card-ability active-player-events)
+                                active-player-events)
+         opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
+         opponent-events (if (= opponent (get-side card-ability))
+                           (cons card-ability opponent-events)
+                           opponent-events)]
+     ; let active player activate their events first
+     (when-completed
+       (resolve-ability state side first-ability nil nil)
+       (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                             {:priority -1})
+           (when-completed
+             (trigger-event-simult-player state side event active-player-events targets)
+             (do (clear-wait-prompt state opponent)
+                 (show-wait-prompt state active-player
+                                   (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                   {:priority -1})
+                 (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
+                                 (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+                                     (clear-wait-prompt state active-player)
+                                     (effect-completed state side eid nil))))))))))
 
 
 ; Functions for registering trigger suppression events.
@@ -197,11 +215,11 @@
 ;;; Effect completion triggers
 (defn register-effect-completed
   [state side eid card effect]
-  (swap! state update-in [:effect-completed eid] #(conj % {:card card :effect effect})))
+  (swap! state update-in [:effect-completed (:eid eid)] #(conj % {:card card :effect effect})))
 
 (defn effect-completed
   ([state side eid] (effect-completed state side eid nil))
   ([state side eid card]
-   (doseq [handler (get-in @state [:effect-completed eid])]
+   (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
      ((:effect handler) state side eid (:card card) nil))
-   (swap! state update-in [:effect-completed] dissoc eid)))
+   (swap! state update-in [:effect-completed] dissoc (:eid eid))))

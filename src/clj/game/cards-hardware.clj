@@ -5,19 +5,22 @@
    {:in-play [:memory 1]}
 
    "Archives Interface"
-   {:events {:no-action {:effect (req (toast state :runner "Click Archives Interface to remove 1 card in Archives from the game instead of accessing it" "info")
-                                      (update! state side (assoc card :ai-active true)))
-                         :req (req (and run (= [:archives] (:server run)) (not current-ice)))}}
-    :abilities [{:req (req (and run (= [:archives] (:server run)) (not current-ice) (:ai-active card)))
-                 :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                              (resolve-ability
-                                state side
-                                {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                 :choices (req (:discard corp))
-                                 :msg (msg "remove " (:title target) " from the game")
-                                 :effect (req (move state :corp target :rfg)
-                                              (update! state side (dissoc (get-card state card) :ai-active)))}
-                               card nil))}]}
+   {:events
+    {:successful-run
+     {:delayed-completion true
+      :req (req (= target :archives))
+      :effect (effect (continue-ability
+                        {:optional
+                         {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                          :yes-ability
+                          {:delayed-completion true
+                           :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                                        (continue-ability
+                                          state side
+                                          {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                           :choices (req (:discard corp))
+                                           :msg (msg "remove " (:title target) " from the game")
+                                           :effect (effect (move :corp target :rfg))} card nil))}}} card nil))}}}
 
    "Astrolabe"
    {:in-play [:memory 1]
@@ -25,7 +28,8 @@
                               :effect (effect (draw :runner))}}}
 
    "Autoscripter"
-   {:events {:runner-install {:req (req (and (is-type? target "Program")
+   {:events {:runner-install {:silent (req true)
+                              :req (req (and (is-type? target "Program")
                                              (= (:active-player @state) :runner)
                                              ;; only trigger when played a programm from grip
                                              (some #{:hand} (:previous-zone target))
@@ -186,8 +190,7 @@
                                       (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (update-breaker-strength target))}
+                                 (update! (assoc (get-card state card) :dino-breaker (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
@@ -195,9 +198,9 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target)
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target)))
-                                 (gain :memory (:memoryunits target)))}]
+                 :effect (req (update-breaker-strength state side (host state side card target))
+                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target)))
+                              (gain state side :memory (:memoryunits target)))}]
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (:dino-breaker (get-card state card))))
@@ -208,6 +211,7 @@
    {:in-play [:memory 1]
     :events {:runner-install
              {:req (req (= card target))
+              :silent (req true)
               :effect (effect (update! (assoc card :dopp-active true)))}
              :runner-turn-begins
              {:effect (effect (update! (assoc card :dopp-active true)))}
@@ -282,7 +286,8 @@
 
    "Grimoire"
    {:in-play [:memory 2]
-    :events {:runner-install {:req (req (has-subtype? target "Virus"))
+    :events {:runner-install {:silent (req true)
+                              :req (req (has-subtype? target "Virus"))
                               :effect (effect (add-counter target :virus 1))}}}
 
    "Heartbeat"
@@ -291,7 +296,7 @@
     :abilities [{:msg "prevent 1 damage"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :priority 50
-                 :effect (effect (trash target {:cause :ability-cost})
+                 :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
@@ -301,7 +306,7 @@
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
-                 :choices {:req installed?} :effect (effect (expose target))
+                 :choices {:req installed?} :effect (effect (expose eid target))
                  :msg "expose 1 card"}]}
 
    "LLDS Processor"
@@ -312,7 +317,8 @@
                                 (update-breaker-strength state side
                                                          (find-cid (:cid c) (all-installed state :runner))))))}]
        {:runner-turn-ends llds :corp-turn-ends llds
-        :runner-install {:req (req (has-subtype? target "Icebreaker"))
+        :runner-install {:silent (req true)
+                         :req (req (has-subtype? target "Icebreaker"))
                          :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                          (update-breaker-strength target))}
         :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
@@ -342,10 +348,8 @@
                                   (resolve-steal-events state side c))
                                 (move state :corp c :deck)
                                 (tag-runner state :runner 1)
-                                (swap! state update-in [side :prompt] rest)
-                                (when-let [run (:run @state)]
-                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)))))}
+                                (close-access-prompt state side)
+                                (effect-completed state side eid card)))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
@@ -506,9 +510,11 @@
 
    "Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
-    :abilities [{:effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+    :abilities [{:req (req (not-empty (:deck runner)))
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose how much damage to prevent" :priority 50
+                                  {:prompt "Choose how much damage to prevent"
+                                   :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
                                    :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)
@@ -535,8 +541,12 @@
 
    "Replicator"
    {:events {:runner-install
-             {:optional {:req (req (is-type? target "Hardware"))
-                         :prompt "Use Replicator to add a copy?"
+             {:interactive (req (and (is-type? target "Hardware")
+                                     (some #(= (:title %) (:title target)) (:deck runner))))
+              :silent (req (not (and (is-type? target "Hardware")
+                                     (some #(= (:title %) (:title target)) (:deck runner)))))
+              :optional {:prompt "Use Replicator to add a copy?"
+                         :req (req (and (is-type? target "Hardware") (some #(= (:title %) (:title target)) (:deck runner))))
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
                                        :effect (effect (trigger-event :searched-stack nil)
                                                        (move (some #(when (= (:title %) (:title target)) %)

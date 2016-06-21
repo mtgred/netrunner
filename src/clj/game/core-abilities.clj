@@ -267,7 +267,7 @@
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
   ([state side card msg choices ability args]
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) kw)))]
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
        (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
                     (-> args
                         (wrap-function :cancel-effect)
@@ -393,7 +393,7 @@
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (trigger-event state side :pre-init-trace card)
   (let [bonus (or (get-in @state [:bonus :trace]) 0)
-        base (if (fn? base) (base state side card nil) base)
+        base (if (fn? base) (base state side  (make-eid state) card nil) base)
         total (+ base boost bonus)]
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total

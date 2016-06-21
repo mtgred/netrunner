@@ -580,13 +580,26 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "Rook"
-   {:abilities [{:label "Host Rook on a piece of ICE" :cost [:click 1]
-                 :choices {:req #(and (ice? %)
-                                      (= (last (:zone %)) :ices)
-                                      (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                 (:hosted %))))}
-                 :msg (msg "host it on " (card-str state target))
-                 :effect (effect (host target card))}]
+   {:abilities [{:cost [:click 1]
+                 :effect (req (let [r (get-card state card)
+                                    hosted? (ice? (:host r))
+                                    icepos (ice-index state (get-card state (:host r)))]
+                                (resolve-ability state side
+                                 {:prompt (if hosted?
+                                            (msg "Host Rook on a piece of ICE protecting this server or at position "
+                                              icepos " of a different server")
+                                            (msg "Host Rook on a piece of ICE protecting any server"))
+                                  :choices {:req #(if hosted?
+                                                    (and (or (= (:zone %) (:zone (:host r)))
+                                                             (= (ice-index state %) icepos))
+                                                         (= (last (:zone %)) :ices)
+                                                         (ice? %)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                    (and (ice? %)
+                                                         (= (last (:zone %)) :ices)
+                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))} card nil)))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
                             :effect (effect (rez-cost-bonus 2))}}}
 
@@ -647,12 +660,14 @@
 
    "Snitch"
    {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
-                 :msg (msg "expose " (:title current-ice))
-                 :effect (effect (expose current-ice)
-                                 (resolve-ability {:optional {:prompt "Jack out?"
-                                                              :yes-ability {:msg "jack out"
-                                                                            :effect (effect (jack-out nil))}}}
-                                                  card nil))}]}
+                 :delayed-completion true
+                 :effect (req (when-completed (expose state side current-ice)
+                                              (continue-ability
+                                                state side
+                                                {:optional {:prompt "Jack out?"
+                                                            :yes-ability {:msg "jack out"
+                                                                          :effect (effect (jack-out nil))}}}
+                                                card nil)))}]}
 
    "Surfer"
    (letfn [(surf [state cice]

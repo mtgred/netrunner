@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare close-access-prompt)
+
 (def cards-resources
   {"Access to Globalsec"
    {:in-play [:link 1]}
@@ -99,15 +101,21 @@
    "Bazaar"
    {:events
     {:runner-install
-     {:req (req (is-type? target "Hardware"))
+     {:interactive (req (and (is-type? target "Hardware")
+                             (some #(= (:title %) (:title target)) (:hand runner))))
+      :silent (req (not (and (is-type? target "Hardware")
+                             (some #(= (:title %) (:title target)) (:hand runner)))))
+      :delayed-completion true
+      :req (req (is-type? target "Hardware"))
       :effect (req (let [hw (:title target)]
-                     (resolve-ability state side
+                     (continue-ability state side
                        {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                    :prompt (msg "Install another copy of " hw "?")
                                    :msg (msg "install another copy of " hw)
-                                   :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) hw) %)
-                                                                                 (:hand runner))]
-                                                                 (runner-install state side c)))}}} card nil)))}}}
+                                   :yes-ability {:delayed-completion true
+                                                 :effect (req (if-let [c (some #(when (= (:title %) hw) %)
+                                                                               (:hand runner))]
+                                                                (runner-install state side eid c nil)))}}} card nil)))}}}
 
    "Beach Party"
    {:in-play [:hand-size-modification 5]
@@ -314,11 +322,10 @@
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
-                                (swap! state update-in [side :prompt] rest)
-                                (when-let [run (:run @state)]
-                                  (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                    (handle-end-run state :runner)
-                                    (swap! state dissoc :access)))))
+                                (close-access-prompt state side)
+                                (effect-completed state side eid nil)
+                                (when-not (:run @state)
+                                  (swap! state dissoc :access))))
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
@@ -504,7 +511,7 @@
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
                  :effect (req (if (not (empty? (:scored corp)))
-                                (do (show-wait-prompt :runner "Corp to decide whether or not to prevent Liberated Chela")
+                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
                                       state side
                                       {:prompt (msg "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?")
@@ -516,7 +523,7 @@
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
                                                                                   (clear-wait-prompt :runner))}
-                                                                 {:effect (effect (as-agenda :runner 2)
+                                                                 {:effect (effect (as-agenda :runner card 2)
                                                                                   (clear-wait-prompt :runner))
                                                                   :msg "add it to their score area as an agenda worth 2 points"})
                                                               card nil))} card nil))
@@ -638,7 +645,8 @@
              :corp-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
                                 :effect (req (gain state :runner :credit 1)
                                              (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :runner-install {:req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
+             :runner-install {:silent (req (pos? (:credit runner)))
+                              :req (req (and (= target card) (= (:credit runner) 0))) :msg "gain 1 [Credits]"
                               :effect (req (gain state :runner :credit 1)
                                            (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
@@ -660,14 +668,16 @@
                                                                                  " cop" (if (> (int target) 1) "ies" "y")
                                                                                  " of " title))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
-                                :effect (effect (resolve-ability
+                                :delayed-completion true
+                                :effect (effect (continue-ability
                                                  (pphelper (:title target)
                                                            (->> (:deck runner)
                                                                 (filter #(has? % :title (:title target)))
                                                                 (vec)))
                                                  card nil))}}})
    "Patron"
-   (let [ability {:prompt "Choose a server for Patron" :choices (req servers)
+   (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
+                  :req (req (not= "No server" target))
                   :msg (msg "target " target)
                   :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
    {:events {:runner-turn-begins ability
@@ -777,11 +787,10 @@
                                                  (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}
                                  card nil)))))
     :leave-play (req (remove-watch state :raymond-flint))
-    :abilities [{:label "Expose 1 card"
-                 :effect (effect (resolve-ability
-                                   {:choices {:req installed?}
-                                    :effect (effect (expose target) (trash card {:cause :ability-cost}))
-                                    :msg (msg "expose " (:title target))} card nil))}]}
+    :abilities [{:msg "expose 1 card"
+                 :choices {:req installed?}
+                 :delayed-completion true
+                 :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Rolodex"
    {:msg "look at the top 5 cards of their Stack"
@@ -816,6 +825,7 @@
    "Salsette Slums"
    {:events {:runner-install
              {:req (req (= card target))
+              :silent (req true)
               :effect (effect (update! (assoc card :slums-active true)))}
              :runner-turn-begins
              {:effect (effect (update! (assoc card :slums-active true)))}
@@ -975,7 +985,8 @@
                             :effect (effect (gain :credit 1))}}}
 
    "Technical Writer"
-   {:events {:runner-install {:req (req (some #(= % (:type target)) '("Hardware" "Program")))
+   {:events {:runner-install {:silent (req true)
+                              :req (req (some #(= % (:type target)) '("Hardware" "Program")))
                               :effect (effect (add-counter :runner card :credit 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1]
@@ -1051,23 +1062,21 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   {:events {:run {:req (req (#{:hq :rd} target))
-                   :effect (effect (register-run-flag! card :no-agenda-stolen (constantly true)))}
-             :agenda-stolen {:req (req (#{[:hq] [:rd]} (:server run)))
-                             :effect (effect (clear-run-flag! card :no-agenda-stolen)
-                                             (register-run-flag! card :no-agenda-stolen (constantly false)))}
-             :run-ends {:req (req (and (run-flag? state side card :no-agenda-stolen)
+   {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
+             :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+                             :silent (req true)}
+             :successful-run {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
+                              :effect (effect (access-bonus (:counters-spent card 0)))
+                              :silent (req true)}
+             :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)
-                                        (unregister-events card)
-                                        (register-events (:events (card-def card)) card))}
-             :successful-run nil}
+                                        (system-msg (str "adds a power counter to " (:title card))))
+                        :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))
                  :msg "access 1 additional card from HQ or R&D for the remainder of the run"
-                 :effect (effect (register-events
-                                   {:successful-run {:req (req (#{:hq :rd} target))
-                                                     :effect (effect (access-bonus 1))}} card))}]}
+                 :effect (effect (update! (update-in card [:counters-spent] #(inc (or % 0)))))}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all)

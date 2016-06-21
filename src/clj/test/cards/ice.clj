@@ -452,6 +452,25 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest searchlight
+  "Searchlight - Trace bace equal to advancement counters"
+  (do-game
+    (new-game (default-corp [(qty "Searchlight" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Searchlight" "HQ")
+    (let [searchlight (get-ice state :hq 0)]
+      (core/rez state :corp searchlight)
+      (card-ability state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
+      (core/advance state :corp {:card (refresh searchlight)})
+      (card-ability state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
+
+
 (deftest sherlock
   "Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack"
   (do-game

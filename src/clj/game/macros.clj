@@ -57,7 +57,9 @@
 
 (defmacro when-completed
   ([action expr]
-   (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'targets1] ~expr)
+   (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'target1]
+                   (let [~'async-result (:result ~'eid1)]
+                     ~expr))
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
          totake (if (= 'apply (first action)) 4 3)

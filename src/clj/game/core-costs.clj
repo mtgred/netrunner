@@ -6,6 +6,7 @@
   "Deduct the value from the player's attribute."
   [state side [attr value]]
   (swap! state update-in [side attr] (if (or (= attr :memory)
+                                             (= attr :agenda-point)
                                              (= attr :hand-size-modification))
                                        ;; Memory or hand size mod may be negative
                                        #(- % value)

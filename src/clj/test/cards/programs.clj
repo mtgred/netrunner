@@ -565,10 +565,9 @@
           ash (get-content state :hq 0)]
       (core/rez state :corp ash)
       (card-ability state :runner sb 0)
-      (card-ability state :corp ash 0)
+      (run-successful state)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (run-successful state)
       (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
       (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
       (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))

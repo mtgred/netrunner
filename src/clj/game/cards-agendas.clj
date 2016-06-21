@@ -6,6 +6,7 @@
 
   {"15 Minutes"
      {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
+                   :label "Shuffle 15 Minutes into R&D"
                    :effect (req (let [corp-agendas (get-in corp [:scored])
                                       agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]
                                   (gain-agenda-point state agenda-owner (- (:agendapoints card))))
@@ -158,10 +159,9 @@
    "Domestic Sleepers"
    {:agendapoints-runner (req (do 0))
     :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
-                 :effect (req (when (zero? (:agenda (:counter card)))
-                                (gain-agenda-point state side 1))
-                              (add-counter state side card :agenda 1)
-                              (set-prop state side card :agendapoints 1))}]}
+                 :req (req (not (:counter card)))
+                 :effect (effect (gain-agenda-point 1)
+                                 (set-prop card :counter {:agenda 1} :agendapoints 1))}]}
 
    "Eden Fragment"
    {:events {:pre-corp-install

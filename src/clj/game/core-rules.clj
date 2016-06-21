@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare card-init card-str deactivate effect-completed enforce-msg gain-agenda-point get-agenda-points
-         handle-end-run is-type? resolve-steal-events show-prompt untrashable-while-rezzed?
-         in-corp-scored? update-all-ice win win-decked prevent-draw)
+(declare card-init card-str close-access-prompt deactivate effect-completed enforce-msg gain-agenda-point
+         get-agenda-points handle-end-run is-type? in-corp-scored? prevent-draw resolve-steal-events show-prompt
+         untrashable-while-rezzed? update-all-ice win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -305,13 +305,9 @@
   (doseq [c cards] (trash state side c)))
 
 (defn- resolve-trash-no-cost
-  [state side eid card]
+  [state side card]
   (trash state side card)
-  (swap! state update-in [side :prompt] rest)
-  (effect-completed state side eid nil)
-  (when-let [run (:run @state)]
-    (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-      (handle-end-run state :runner))))
+  (close-access-prompt state side))
 
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
@@ -322,8 +318,8 @@
     (when card
       (if (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
         (when-completed (resolve-steal-events state side card)
-                        (resolve-trash-no-cost state side eid card))
-        (resolve-trash-no-cost state side eid card)))))
+                        (resolve-trash-no-cost state side card))
+        (resolve-trash-no-cost state side card)))))
 
 
 ;;; Agendas
@@ -409,18 +405,49 @@
   "Force the discard of n cards from :deck to :discard."
   ([state side] (mill state side 1))
   ([state side n]
-   (let [milled (zone :discard (take n (get-in @state [side :deck])))]
+   (let [milltargets (take n (get-in @state [side :deck]))
+         milled (zone :discard milltargets)]
+     (doseq [c milltargets]
+       (when-let [mill (:mill-effect (card-def c))]
+         (resolve-ability state side mill c nil)
+         (trigger-event state side :mill-effect c)))
      (swap! state update-in [side :discard] #(concat % milled)))
    (swap! state update-in [side :deck] (partial drop n))))
 
+;; Exposing
+(defn expose-prevent
+  [state side n]
+  (swap! state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
+
+(defn- resolve-expose
+  [state side eid target args]
+  (system-msg state side (str "exposes " (card-str state target {:visible true})))
+  (if-let [ability (:expose (card-def target))]
+    (when-completed (resolve-ability state side ability target nil)
+                    (trigger-event-sync state side eid :expose target))
+    (trigger-event-sync state side (make-result eid true) :expose target)))
+
 (defn expose
   "Exposes the given card."
-  [state side target]
-  (system-msg state side
-              (str "exposes " (card-str state target {:visible true})))
-  (when-let [ability (:expose (card-def target))]
-    (resolve-ability state side ability target nil))
-  (trigger-event state side :expose target))
+  ([state side target] (expose state side (make-eid state) target))
+  ([state side eid target] (expose state side eid target nil))
+  ([state side eid target {:keys [unpreventable] :as args}]
+   (swap! state update-in [:expose] dissoc :expose-prevent)
+   (when-completed (trigger-event-sync state side :pre-expose target)
+                   (let [prevent (get-in @state [:prevent :expose :all])]
+                     (if (and (not unpreventable) (pos? (count prevent)))
+                       (do (system-msg state :corp "has the option to prevent a card from being exposed")
+                           (show-prompt state :corp nil
+                                        (str "Prevent " (:title target) " from being exposed?") ["Done"]
+                                        (fn [_]
+                                          (if-let [_ (get-in @state [:expose :expose-prevent])]
+                                            (effect-completed state side (make-result eid false)) ;; ??
+                                            (do (system-msg state :corp "will not prevent a card from being exposed")
+                                                (resolve-expose state side eid target args))))
+                                        {:priority 10}))
+                       (if-not (get-in @state [:expose :expose-prevent])
+                         (resolve-expose state side eid target args)
+                         (effect-completed state side (make-result eid false))))))))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."

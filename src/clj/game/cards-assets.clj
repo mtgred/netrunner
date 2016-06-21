@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare expose-prevent)
+
 ;;; Asset-specific helpers
 (defn installed-access-trigger
   "Effect for triggering ambush on access.
@@ -95,6 +97,7 @@
 
    "Bio-Ethics Association"
    (let [ability {:req (req unprotected)
+                  :delayed-completion true
                   :label "Do 1 net damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 net damage"
@@ -249,7 +252,8 @@
     :events {:pre-install {:req (req (and (not (zero? (get-in  card [:counter :power])))
                                           (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (effect (install-cost-bonus [:credit (get-in card [:counter :power])]))}
-             :runner-install {:req (req (and (not (zero? (get-in card [:counter :power])))
+             :runner-install {:silent (req true)
+                              :req (req (and (not (zero? (get-in card [:counter :power])))
                                              (not (get-in @state [:per-turn (:cid card)]))))
                               :msg (msg "increase the install cost of " (:title target) " by " (get-in card [:counter :power]) " [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
@@ -1011,6 +1015,27 @@
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
                               (when (:rezzed (last (:hosted (get-card state card))))
                                 (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
+
+   "Zaibatsu Loyalty"
+   {:prevent {:expose [:all]}
+    :derezzed-events
+    {:pre-expose
+     {:delayed-completion true
+      :effect (req (let [etarget target]
+                     (continue-ability state side
+                       {:optional {:req (req (not (rezzed? card)))
+                                   :player :corp
+                                   :prompt (msg "The Runner is about to expose " (:title etarget) ". Rez Zaibatsu Loyalty?")
+                                   :yes-ability {:effect (effect (rez card))}}}
+                       card nil)))}}
+    :abilities [{:msg "prevent 1 card from being exposed"
+                 :cost [:credit 1]
+                 :effect (effect (expose-prevent 1))}
+                {:msg "prevent 1 card from being exposed"
+                 :label "[Trash]: Prevent 1 card from being exposed"
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (expose-prevent 1))}]}
+
    "Zealous Judge"
    {:rez-req (req tagged)
     :abilities [{:label "Give the Runner 1 tag"

@@ -237,6 +237,27 @@
       (is (zero? (virus-counters (find-card "Medium" (get-in @state [:runner :rig :program]))))
           "Medium has no counters"))))
 
+(deftest cyberdex-virus-suite-archives-access
+  "Cyberdex Virus Suite - Don't interrupt archives access. Issue #1647."
+  (do-game
+    (new-game (default-corp [(qty "Cyberdex Virus Suite" 1) (qty "Braintrust" 1)])
+              (default-runner [(qty "Cache" 1)]))
+    (trash-from-hand state :corp "Cyberdex Virus Suite")
+    (trash-from-hand state :corp "Braintrust")
+    (take-credits state :corp)
+    ;; runner's turn
+    ;; install cache
+    (play-from-hand state :runner "Cache")
+    (let [cache (get-program state 0)]
+      (is (= 3 (get-counters (refresh cache) :virus)))
+      (run-empty-server state "Archives")
+      (prompt-choice :runner "Cyberdex Virus Suite")
+      (prompt-choice :corp "Yes")
+      (is (pos? (count (:prompt (get-runner)))) "CVS purge did not interrupt archives access")
+      ;; purged counters
+      (is (zero? (get-counters (refresh cache) :virus))
+          "Cache has no counters"))))
+
 (deftest ghost-branch-dedicated-response-team
   "Ghost Branch - with Dedicated Response Team"
   (do-game
@@ -323,7 +344,7 @@
   "NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement"
   (do-game
     (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
-                             (qty "Shipment from SanSan" 1)])
+                             (qty "Shipment from SanSan" 1) (qty "Ice Wall" 1)])
               (default-runner))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
@@ -337,7 +358,12 @@
       (is (= 4 (:credit (get-corp))) "Gained 1 credit")
       (core/advance state :corp {:card (refresh nis)})
       (is (= 3 (:advance-counter (refresh nis))) "3 advancements on agenda")
-      (is (= 3 (:credit (get-corp))) "No credit gained"))))
+      (is (= 3 (:credit (get-corp))) "No credit gained")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
+      (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
 (deftest off-the-grid
   "Off the Grid run ability - and interaction with RP"
@@ -660,6 +686,21 @@
       (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest underway-grid
+  "Underway Grid - prevent expose of cards in server"
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 1)
+                             (qty "Underway Grid" 1)])
+              (default-runner [(qty "Drive By" 1)]))
+    (play-from-hand state :corp "Underway Grid" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "Server 1")
+    (take-credits state :corp)
+    (core/rez state :corp (get-content state :remote1 0))
+    (let [eve1 (get-content state :remote1 1)]
+      (play-from-hand state :runner "Drive By")
+      (prompt-select :runner eve1)
+      (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
+
 (deftest valley-grid-trash
   "Valley Grid - Reduce Runner max hand size and restore it even if trashed"
   (do-game
@@ -678,3 +719,4 @@
       (prompt-choice :runner "Yes") ; pay to trash
       (take-credits state :runner 3)
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+

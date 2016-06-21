@@ -8,7 +8,7 @@
             [clojure.string :refer [split-lines split join lower-case]]
             [clojure.core.match :refer [match]]))
 
-(declare get-card get-remote-names make-eid register-effect-completed resolve-ability say system-msg trigger-event update!)
+(declare get-card get-remote-names make-eid make-result register-effect-completed resolve-ability say system-msg trigger-event update!)
 
 (def game-states (atom {}))
 (def all-cards (atom {}))

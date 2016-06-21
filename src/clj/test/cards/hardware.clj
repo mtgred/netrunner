@@ -15,14 +15,11 @@
     (core/move state :corp (find-card "Shock!" (:hand (get-corp))) :discard)
     (core/move state :corp (find-card "Launch Campaign" (:hand (get-corp))) :discard)
     (play-from-hand state :runner "Archives Interface")
-    (let [archint (get-hardware state 0)]
-      (run-on state :archives)
-      (core/no-action state :corp nil)
-      (card-ability state :runner archint 0)
-      (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
-      (core/successful-run state :runner nil)
-      (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
-      (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken"))))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
+    (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
+    (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken")))
 
 (deftest astrolabe-memory
   "Astrolabe - Gain 1 memory"
@@ -241,6 +238,26 @@
         (is (not (:run @state)) "Run is ended")
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))))
 
+(deftest maya-multi-access
+  "Maya - Does not interrupt multi-access."
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
+              (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3) (qty "R&D Interface" 1)]))
+    (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Maya")
+    (play-from-hand state :runner "R&D Interface")
+    (let [maya (get-in @state [:runner :rig :hardware 0])
+          accessed (first (:deck (get-corp)))]
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Card from deck")
+      (is (= (:cid accessed) (:cid (:card (first (:prompt (get-runner)))))) "Accessing the top card of R&D")
+      (card-ability state :runner maya 0)
+      (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
+      (is (:prompt (get-runner)) "Runner has next access prompt"))))
+
 (deftest plascrete
   "Plascrete Carapace - Prevent meat damage"
   (do-game
@@ -278,6 +295,37 @@
     (is (= 3 (count (get-in @state [:runner :rig :hardware]))))
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
+
+(deftest replicator-bazaar
+  "Replicator - interaction with Bazaar. Issue #1511."
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Replicator" 1) (qty "Bazaar" 1) (qty "Spy Camera" 6)]))
+    (letfn [(count-spy [n] (= n (count (filter #(= "Spy Camera" (:title %)) (-> (get-runner) :rig :hardware)))))]
+      (take-credits state :corp)
+      (starting-hand state :runner ["Replicator" "Bazaar" "Spy Camera"])
+      (play-from-hand state :runner "Replicator")
+      (play-from-hand state :runner "Bazaar")
+      (play-from-hand state :runner "Spy Camera") ;; 1 installed
+      (is (count-spy 1) "1 Spy Cameras installed")
+      (prompt-choice :runner "Yes") ;; for now, choosing Replicator then shows its optional Yes/No
+      (prompt-choice :runner "Yes") ;; Bazaar triggers, 2 installed
+      (is (count-spy 2) "2 Spy Cameras installed")
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 3 installed
+      (is (count-spy 3) "3 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 4 installed
+      (is (count-spy 4) "4 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 5 installed
+      (is (count-spy 5) "5 Spy Cameras installed")
+
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Yes")  ;; 6 installed
+      (is (count-spy 6) "6 Spy Cameras installed"))))
 
 (deftest spinal-modem
   "Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run"

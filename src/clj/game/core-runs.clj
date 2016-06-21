@@ -106,7 +106,7 @@
   [state side eid c]
   (trigger-event state side :access c)
   (trigger-event state side :pre-trash c)
-  (when (not= (:zone c) [:discard]) ; if not accessing in Archives
+  (if (not= (:zone c) [:discard]) ; if not accessing in Archives
     (if-let [trash-cost (trash-cost state side c)]
       ;; The card has a trash cost (Asset, Upgrade)
       (let [card (assoc c :seen true)
@@ -130,7 +130,8 @@
                                                              " [Credits] to trash " name)))}}}
             card nil)))
       ;; The card does not have a trash cost
-      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))))
+      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
+    (effect-completed state side eid)))
 
 (defn- access-agenda
   [state side eid c]
@@ -311,6 +312,7 @@
 
 (defn access-helper-rd [cards]
   {:prompt "Select a card to access."
+   :delayed-completion true
    :choices (concat (when (some #(= (first (:zone %)) :deck) cards) ["Card from deck"])
                     (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in R&D")
                          (filter #(= (last (:zone %)) :content) cards)))
@@ -365,6 +367,7 @@
 
 (defn access-helper-archives [cards]
   {:prompt "Select a card to access. You must access all cards."
+   :delayed-completion true
    :choices (map #(if (= (last (:zone %)) :content)
                    (if (rezzed? %) (:title %) "Unrezzed upgrade in Archives")
                    (:title %)) cards)
@@ -401,7 +404,7 @@
                       (when-completed (handle-access state side [(some #(when (= (:title %) target) %) cards)])
                                       (if (< 1 (count cards))
                                         (continue-ability state side (access-helper-archives
-                                                                      (remove-once #(not= (:title %) target) cards))
+                                                                       (remove-once #(not= (:title %) target) cards))
                                                          card nil)
                                         (effect-completed state side eid nil))))))})
 
@@ -581,3 +584,14 @@
   (if-not (empty? (get-in @state [:runner :prompt]))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
+
+(defn close-access-prompt
+  "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."
+  [state side]
+  (let [prompt (-> @state side :prompt first)
+        eid (:eid prompt)]
+    (swap! state update-in [side :prompt] rest)
+    (effect-completed state side eid nil)
+    (when-let [run (:run @state)]
+      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+        (handle-end-run state :runner)))))

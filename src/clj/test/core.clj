@@ -26,7 +26,7 @@
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([corp runner] (new-game corp runner nil))
-  ([corp runner {:keys [mulligan start-as] :as args}]
+  ([corp runner {:keys [mulligan start-as dont-start] :as args}]
     (let [states (core/init-game
                    {:gameid 1
                     :players [{:side "Corp"
@@ -42,8 +42,8 @@
       (if (#{:both :runner} mulligan)
         (core/resolve-prompt state :runner {:choice "Mulligan"})
         (core/resolve-prompt state :runner {:choice "Keep"}))
-      (core/start-turn state :corp nil)
-      (if (= start-as :runner) (take-credits state :corp))
+      (when (not dont-start) (core/start-turn state :corp nil))
+      (when (= start-as :runner) (take-credits state :corp))
       state)))
 
 (defn load-all-cards []
@@ -83,8 +83,9 @@
 
 (defn get-hardware
   "Get hardware by position."
-  [state pos]
-  (get-in @state [:runner :rig :hardware pos]))
+  ([state] (get-in @state [:runner :rig :hardware]))
+  ([state pos]
+   (get-in @state [:runner :rig :hardware pos])))
 
 (defn get-resource
   "Get non-hosted resource by position."
