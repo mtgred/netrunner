@@ -917,9 +917,12 @@
                             (:card-title (:choices prompt))
                             [:div
                              [:div.credit-select
-                              [:input#card-title {:placeholder "Enter a card title"}]]
-                             [:button {:on-click #(send-command "choice"
-                                                                {:choice (-> "#card-title" js/$ .val)})}
+                              [:input#card-title {:placeholder "Enter a card title"
+                                                  :onKeyUp #(when (= 13 (.-keyCode %))
+                                                             (-> "#card-submit" js/$ .click)
+                                                             (.stopPropagation %))}]]
+                             [:button#card-submit {:on-click #(send-command "choice"
+                                                                            {:choice (-> "#card-title" js/$ .val)})}
                               "OK"]
                              (when-let [autocomp (:autocomplete (:choices prompt))]
                                (-> "#card-title" js/$ (.autocomplete (clj->js {"source" autocomp})))
