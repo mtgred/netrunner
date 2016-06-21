@@ -157,7 +157,7 @@
        (prompt! state s card prompt choices ab args)
        ;; a select prompt
        (:req choices)
-       (show-select state s card ability {:priority priority})
+       (show-select state s card ability args)
        ;; a :number prompt
        (:number choices)
        (let [n ((:number choices) state side eid card targets)]
@@ -305,10 +305,12 @@
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
   ([state side card ability] (show-select state side card ability nil))
-  ([state side card ability {:keys [priority] :as args}]
+  ([state side card ability args]
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
-   (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
+   (letfn [(wrap-function [args kw]
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
      (swap! state update-in [side :selected]
             #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
                             :max (get-in ability [:choices :max])}))
@@ -319,7 +321,9 @@
                       (str "Select up to " m " targets for " (:title card))
                       (str "Select a target for " (:title card))))
                   ["Done"] (fn [choice] (resolve-select state side))
-                  (assoc args :prompt-type :select :show-discard (:show-discard ability))))))
+                  (-> args
+                      (assoc :prompt-type :select :show-discard (:show-discard ability))
+                      (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
@@ -334,7 +338,9 @@
       (do (doseq [card cards]
             (update! state side card))
           (resolve-ability state side (:ability selected) (:card curprompt) cards))
-      (effect-completed state side (:eid (:ability selected)) nil))))
+      (if-let [cancel-effect (:cancel-effect curprompt)]
+        (cancel-effect nil)
+        (effect-completed state side (:eid (:ability selected)) nil)))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.

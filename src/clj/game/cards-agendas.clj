@@ -468,11 +468,13 @@
 
    "Puppet Master"
    {:events {:successful-run
-             {:effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
+             {:delayed-completion true
+              :effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
                            (continue-ability
                              state :corp
                              {:prompt "Choose a card to place 1 advancement token on with Puppet Master" :player :corp
                               :choices {:req can-be-advanced?}
+                              :cancel-effect (final-effect (clear-wait-prompt :runner))
                               :msg (msg "place 1 advancement token on " (card-str state target))
                               :effect (final-effect (add-prop :corp target :advance-counter 1 {:placed true})
                                                     (clear-wait-prompt :runner))} card nil))}}}

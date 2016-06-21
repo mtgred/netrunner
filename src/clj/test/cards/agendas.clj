@@ -450,6 +450,18 @@
           (core/score state :corp {:card (refresh pb2)})
           (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
 
+(deftest puppet-master
+  "Puppet Master - game progresses if no valid targets. Issue #1661."
+  (do-game
+    (new-game (default-corp [(qty "Puppet Master" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Puppet Master" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :corp "Done")
+    (is (empty? (:prompt (get-runner))) "Runner's waiting prompt resolved")))
+
 (deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"
   (do-game
