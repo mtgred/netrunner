@@ -382,7 +382,8 @@
   "Gain n agenda points and check for winner."
   [state side n]
   (gain state side :agenda-point n)
-  (when (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+  (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+             (not (get-in @state [side :cannot-win-on-points])))
     (win state side "Agenda")))
 
 
