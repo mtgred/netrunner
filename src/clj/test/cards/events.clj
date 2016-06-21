@@ -606,8 +606,26 @@
       (is (= 6 (:credit (get-runner))) "Took a Whizzard credit")
 
       (is (changes-credits (get-corp) -1
-        (core/rez state :corp (get-ice state :rd 0))) 
+        (core/rez state :corp (get-ice state :rd 0)))
         "Reina is no longer active"))))
+
+(deftest rigged-results
+  "Rigged Results - success and failure"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Rigged Results" 3)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigged Results")
+    (prompt-choice :runner "0")
+    (prompt-choice :corp "0")
+    (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
+    (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")
+    (play-from-hand state :runner "Rigged Results")
+    (prompt-choice :runner "0")
+    (prompt-choice :corp "1")
+    (prompt-select :runner (get-ice state :hq 0))
+    (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")))
 
 (deftest retrieval-run
   "Retrieval Run - Run Archives successfully and install a program from Heap for free"
