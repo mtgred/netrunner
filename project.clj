@@ -42,6 +42,7 @@
                   :optimizations :advanced
                   :pretty-print false
                   :externs ["resources/public/lib/jquery/jquery.min.js"
+                            "resources/public/lib/jqueryui/jquery-ui.min.js"
                             "resources/public/lib/react/react.min.js"
                             "resources/public/lib/moment/min/moment.min.js"
                             "resources/public/lib/bootstrap/dist/js/bootstrap.min.js"
