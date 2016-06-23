@@ -1078,9 +1078,9 @@
    {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
              :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}
-             :successful-run {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
-                              :effect (effect (access-bonus (:counters-spent card 0)))
-                              :silent (req true)}
+             :pre-access {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
+                          :effect (effect (access-bonus (:counters-spent card 0)))
+                          :silent (req true)}
              :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)

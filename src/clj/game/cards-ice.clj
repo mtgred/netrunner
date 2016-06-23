@@ -807,7 +807,7 @@
                  :effect (effect (add-counter card :power 1)
                                  (update-all-ice))}
                  end-the-run]
-    :strength-bonus (req (get-in card [:counter :power]))}
+    :strength-bonus (req (get-in card [:counter :power] 0))}
 
    "Rainbow"
    {:abilities [end-the-run]}
