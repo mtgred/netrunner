@@ -91,7 +91,18 @@ requester.connect("tcp://#{clojure_hostname}:1043")
 
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  if response.action isnt "remove"
+  if response.action is "remove"
+    g = {
+      winner: response.state.winner
+      reason: response.state.reason
+      endDate: response.state["end-time"]
+      turn: response.state.turn
+      runnerAgenda: response.state.runner["agenda-point"]
+      corpAgenda: response.state.corp["agenda-point"]
+    }
+    db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
+      throw err if err
+  else
     if response.diff
       lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
     else
@@ -218,6 +229,21 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "start"
         game = games[socket.gameid]
         if game
+          if game.players.length is 2
+            corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
+            runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
+            g = {
+              gameid: socket.gameid
+              startDate: (new Date()).toISOString()
+              title: game.title
+              room: game.room
+              corp: corp.user.username
+              runner: runner.user.username
+              corpIdentity: corp["deck"]["identity"]["title"]
+              runnerIdentity: runner["deck"]["identity"]["title"]
+            }
+            db.collection('gamestats').insert g, (err, data) ->
+              console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"
