@@ -171,11 +171,17 @@
     :events {:runner-install
              {:optional
               {:req (req (has-subtype? target "Caïssa"))
+               :delayed-completion true
                :prompt "Use Deep Red to trigger the [Click] ability of the installed Caïssa?"
-               :yes-ability {:effect (req (let [caissa (first (map last (turn-events state :runner :runner-install)))]
-                                            (system-msg state side (str "uses Deep Red to trigger the [Click] ability of " (:title caissa)))
-                                            (gain state :runner :click 1)
-                                            (play-ability state side {:card (get-card state caissa) :ability 0})))}}}}}
+               :yes-ability {:effect (req (let [cid (:cid (first (map last (turn-events state :runner :pre-install))))
+                                                caissa (find-cid cid (all-installed state :runner))]
+                                            (continue-ability state side
+                                              {:msg (msg "trigger the [Click] ability of " (:title caissa)
+                                                         " without spending [Click]")
+                                               :effect (effect (gain :click 1)
+                                                               (play-ability {:card (get-card state caissa) :ability 0}))}
+                                             card nil)))}
+               :no-ability {:effect (req (effect-completed state side eid card))}}}}}
 
    "Desperado"
    {:in-play [:memory 1]
