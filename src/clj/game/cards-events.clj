@@ -783,7 +783,8 @@
                                    (expose state side eid card2))))}
 
    "Scavenge"
-   {:req (req (pos? (count (filter #(is-type? % "Program") (all-installed state :runner)))))
+   {:req (req (and (some #(is-type? % "Program") (all-installed state :runner))
+                   (some #(is-type? % "Program") (concat (:hand runner) (:discard runner)))))
     :prompt "Choose an installed program to trash"
     :choices {:req #(and (is-type? % "Program")
                          (installed? %))}
@@ -791,7 +792,7 @@
                    (trash state side trashed)
                    (resolve-ability
                      state side
-                     {:prompt "Choose a program to install from your grip or heap"
+                     {:prompt "Choose a program to install from your Grip or Heap"
                       :show-discard true
                       :choices {:req #(and (is-type? % "Program")
                                            (#{[:hand] [:discard]} (:zone %))
