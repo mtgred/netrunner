@@ -795,7 +795,8 @@
   "Test Run - Make sure program remains installed if Scavenged"
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Test Run" 1) (qty "Morning Star" 1) (qty "Scavenge" 1)]))
+              (default-runner [(qty "Test Run" 1) (qty "Morning Star" 1)
+                               (qty "Scavenge" 1) (qty "Inti" 1)]))
     (take-credits state :corp)
     (core/move state :runner (find-card "Morning Star" (:hand (get-runner))) :discard)
     (play-from-hand state :runner "Test Run")

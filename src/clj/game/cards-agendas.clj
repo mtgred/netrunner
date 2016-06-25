@@ -228,7 +228,7 @@
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
    "Executive Retreat"
-   {:effect (effect (add-prop card :counter 1)
+   {:effect (effect (add-counter card :agenda 1)
                     (shuffle-into-deck :hand))
     :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :msg "draw 5 cards" :effect (effect (draw 5))}]}
 

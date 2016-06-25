@@ -190,7 +190,7 @@
   "Trashing a card should remove it from [:per-turn] - Issue #1345"
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3)])
-              (default-runner [(qty "Imp" 1) (qty "Scavenge" 1)]))
+              (default-runner [(qty "Imp" 2) (qty "Scavenge" 1)]))
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
