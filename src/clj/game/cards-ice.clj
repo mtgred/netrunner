@@ -8,9 +8,11 @@
 (defn runner-break
   "Ability to break a subroutine by spending a resource (bioroids, Negotiator, Turing etc)"
   [cost subs]
-  {:cost cost
-   :label (str "break " subs " subroutine" (when (> 1 subs) "s"))
-   :msg (str "break " subs " subroutine" (when (> 1 subs) "s"))})
+  (let [cost-str (build-cost-str [cost])
+        subs-str (str subs " subroutine" (when (< 1 subs) "s"))]
+    {:cost cost
+     :label (str "break " subs-str)
+     :effect (req (system-msg state :runner (str "spends " cost-str " to break " subs-str " on " (:title card))))}))
 
 ;;; General subroutines
 (def end-the-run
@@ -546,7 +548,7 @@
    "Heimdall 1.0"
    {:abilities [(do-brain-damage 1)
                 end-the-run]
-    :runner-abilities [(runner-break "[click]" 1)]}
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Heimdall 2.0"
    {:abilities [(do-brain-damage 1)
