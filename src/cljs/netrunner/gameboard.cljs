@@ -523,7 +523,7 @@
                                                                        :ability i}))
                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
                runner-abilities))
-           (when (> 0 (count abilities))
+           (when (> (count abilities) 0)
              [:div {:on-click #(send-command "system-msg"
                                              {:msg (str "indicates to fire all subroutines on " title)})}
               "Let all subroutines fire"])

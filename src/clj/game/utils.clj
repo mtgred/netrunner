@@ -7,7 +7,7 @@
   (swap! cid inc))
 
 (defn abs [n] (max n (- n)))
-  
+
 (defn merge-costs [costs]
   (vec (reduce #(let [key (first %2) value (last %2)]
               (assoc %1 key (+ (or (key %1) 0) value)))
@@ -100,7 +100,27 @@
      (conj (vec (sort-by :title choices)) "Cancel")
      (conj (vec choices) "Cancel"))))
 
+(defn cost-names
+  "Converts a cost (value attribute pair) to a string for printing"
+  [value attr]
+  (when (pos? value)
+    (case attr
+      :credit (str value " [$]")
+      :click  (->> "[Click]" repeat (take value) (apply str))
+      nil)))
+
+(defn build-cost-str
+  "Gets the complete cost-str for specified costs"
+  [costs]
+  (prn costs)
+  #_(->> costs
+       (map #(cost-names (first %) (second %)))
+       (filter some?)
+       (interpose " and ")
+       (apply str)))
+
 (defn build-spend-msg
+  "Constructs the spend message for specified cost-str and verb(s)."
   ([cost-str verb] (build-spend-msg cost-str verb nil))
   ([cost-str verb verb2]
    (if (or (not (instance? String cost-str))
@@ -108,20 +128,13 @@
      (str (or verb2 (str verb "s")) " ")
      (str "spends " cost-str " to " verb " "))))
 
-(defn cost-names [value attr]
-  (when (pos? value)
-    (case attr
-      :credit (str value " [$]")
-      :click  (->> "[Click]" repeat (take value) (apply str))
-      nil)))
-
 (defn other-side [side]
   (if (= side :corp) :runner :corp))
 
 (defn side-str [side]
   (if (= side :corp) "Corp" "Runner"))
 
-; Functions for working with zones.
+;;; Functions for working with zones.
 (defn remote->name [zone]
   "Converts a remote zone to a string"
   (let [kw (if (keyword? zone) zone (last zone))
