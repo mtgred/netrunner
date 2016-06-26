@@ -112,9 +112,8 @@
 (defn build-cost-str
   "Gets the complete cost-str for specified costs"
   [costs]
-  (prn costs)
-  #_(->> costs
-       (map #(cost-names (first %) (second %)))
+  (->> costs
+       (map #(cost-names (second %) (first %)))
        (filter some?)
        (interpose " and ")
        (apply str)))
