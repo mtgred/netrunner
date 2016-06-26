@@ -512,9 +512,6 @@
                      label])
                   servers)]))
         (when (= type "ICE")
-          (js/console.log title)
-          (js/console.log (clj->js runner-abilities))
-          (js/console.log (clj->js (count abilities)))
           [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
            (when runner-abilities
              (map-indexed
