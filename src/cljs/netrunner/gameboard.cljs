@@ -461,7 +461,7 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon new runner-abilities]
+                         side rec-counter facedown named-target icon new runner-abilities subroutines]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -520,19 +520,18 @@
                                                                        :ability i}))
                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
                runner-abilities))
-           (when (> (count abilities) 0)
+           (when (> (count subroutines) 0)
              [:div {:on-click #(send-command "system-msg"
                                              {:msg (str "indicates to fire all subroutines on " title)})}
               "Let all subroutines fire"])
-           (map (fn [ab]
+           (map (fn [sub]
                   [:div {:on-click #(send-command "system-msg"
-                                                  {:msg (str "indicates to fire the \"" (:label ab)
+                                                  {:msg (str "indicates to fire the \"" (:label sub)
                                                              "\" subroutine on " title)})}
-                   (str "Let fire: \"" (:label ab) "\"")])
-                abilities)]
-          )
+                   (str "Let fire: \"" (:label sub) "\"")])
+                subroutines)])
         (let [actions (action-list cursor)]
-          (when (or (> (+ (count actions) (count abilities)) 1)
+          (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                     (= (first actions) "derez"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
@@ -548,7 +547,13 @@
                                                                             (dec i) i)})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-              abilities)]))
+              abilities)
+             (map-indexed
+               (fn [i sub]
+                 [:div {:on-click #(do (send-command "subroutine" {:card @cursor :subroutine i})
+                                       (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
+               subroutines)]))
         (when (= (first zone) "servers")
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))

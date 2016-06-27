@@ -234,7 +234,7 @@
     (run-on state :hq)
     (let [s (get-ice state :hq 0)]
       (core/rez state :corp s)
-      (card-ability state :corp s 0)
+      (card-subroutine state :corp s 0)
       (is (prompt-is-card? :corp s) "Corp prompt is on Snowflake")
       (is (prompt-is-card? :runner s) "Runner prompt is on Snowflake")
       (is (= 6 (:credit (get-corp))) "Corp paid 1 credit to rezz Snowflake")

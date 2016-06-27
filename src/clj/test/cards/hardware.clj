@@ -162,7 +162,7 @@
       (let [ff (get-in @state [:runner :rig :hardware 0])]
         (run-on state "Server 1")
         (core/rez state :corp dm)
-        (card-ability state :corp dm 0)
+        (card-subroutine state :corp dm 0)
         (card-ability state :runner ff 0)
         (prompt-choice :runner "Done")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
@@ -341,7 +341,7 @@
       (is (= 2 (:rec-counter (refresh sm))))
       (run-on state :hq)
       (core/rez state :corp cad)
-      (card-ability state :corp cad 0)
+      (card-subroutine state :corp cad 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
@@ -388,7 +388,7 @@
     (run-on state "HQ")
     (let [pup (get-ice state :hq 0)]
       (core/rez state :corp pup)
-      (card-ability state :corp pup 0)
+      (card-subroutine state :corp pup 0)
       (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner)))) ; Ribs takes precedence over CP on Runner turn
       (is (= 3 (count (:discard (get-runner)))) "Chose card lost from 1 net damage")
       (run-jack-out state)
