@@ -417,6 +417,27 @@
     (is (= 6 (:credit (get-runner)))
         "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
 
+(deftest ive-had-worse
+  "I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined"
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 3) (qty "Pup" 3)])
+              (default-runner [(qty "I've Had Worse" 2) (qty "Sure Gamble" 3) (qty "Imp" 2)]))
+    (core/gain state :runner :tag 1)
+    (core/gain state :corp :credit 5)
+    (starting-hand state :runner ["I've Had Worse"])
+    (play-from-hand state :corp "Pup" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
+    (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+    (is (= :corp (:winner @state)) "Corp wins")
+    (is (= "Flatline" (:reason @state)) "Win condition reports flatline")
+    (is (= 4 (count (:discard (get-runner)))) "All 3 cards in Grip trashed by Scorched Earth")
+    (is (= 3 (count (:deck (get-runner)))) "No cards drawn from I've Had Worse")))
+
 (deftest lawyer-up
   "Lawyer Up - Lose 2 tags and draw 3 cards"
   (do-game
@@ -558,7 +579,7 @@
 
   (deftest rebirth-kate
     "Rebirth - Kate's discount applies after rebirth"
-    (do-game 
+    (do-game
       (new-game (default-corp) (default-runner ["Magnum Opus" "Rebirth"]) {:start-as :runner})
 
       (play-from-hand state :runner "Rebirth")
