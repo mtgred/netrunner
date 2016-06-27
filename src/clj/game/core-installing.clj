@@ -64,7 +64,7 @@
   "Gets abilities associated with the card"
   [cdef]
   (for [ab (:runner-abilities cdef)]
-    (assoc (select-keys ab [:cost :pump :breaks]) :label (make-label ab))))
+    (assoc (select-keys ab [:cost]) :label (make-label ab))))
 
 (defn- subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"

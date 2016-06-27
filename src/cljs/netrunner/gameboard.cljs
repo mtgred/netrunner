@@ -511,24 +511,23 @@
                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
                      label])
                   servers)]))
-        (when (= type "ICE")
+        (when (pos? (+ (count runner-abilities) (count subroutines)))
           [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
-           (when runner-abilities
-             (map-indexed
-               (fn [i ab]
-                 [:div {:on-click #(do (send-command "runner-ability" {:card @cursor
-                                                                       :ability i}))
-                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
-               runner-abilities))
-           (when (> (count subroutines) 0)
+           (map-indexed
+             (fn [i ab]
+               [:div {:on-click #(do (send-command "runner-ability" {:card @cursor
+                                                                     :ability i}))
+                      :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+             runner-abilities)
+           (when (> (count subroutines) 1)
              [:div {:on-click #(send-command "system-msg"
                                              {:msg (str "indicates to fire all subroutines on " title)})}
               "Let all subroutines fire"])
            (map (fn [sub]
                   [:div {:on-click #(send-command "system-msg"
                                                   {:msg (str "indicates to fire the \"" (:label sub)
-                                                             "\" subroutine on " title)})}
-                   (str "Let fire: \"" (:label sub) "\"")])
+                                                             "\" subroutine on " title)})
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
                 subroutines)])
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
