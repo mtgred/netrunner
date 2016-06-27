@@ -122,7 +122,7 @@
 (deftest consulting-visit
   "Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation"
   (do-game
-    (new-game (default-corp [(qty "Consulting Visit" 1) 
+    (new-game (default-corp [(qty "Consulting Visit" 1)
                              (qty "Beanstalk Royalties" 2)
                              (qty "Green Level Clearance" 1)
                              (qty "Breaking News" 1)
@@ -179,10 +179,10 @@
     (run-on state :hq)
     (let [vik (get-ice state :hq 0)]
       (core/rez state :corp vik)
-      (card-ability state :corp vik 0)
+      (card-subroutine state :corp vik 0)
       (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
-      (card-ability state :corp vik 0)
+      (card-subroutine state :corp vik 0)
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
@@ -203,10 +203,10 @@
 (deftest exchange-of-information
   "Exchange of Information - Swapping agendas works correctly"
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1) 
-                             (qty "Market Research" 1) 
-                             (qty "Breaking News" 1) 
-                             (qty "Project Beale" 1) 
+    (new-game (default-corp [(qty "Exchange of Information" 1)
+                             (qty "Market Research" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
 
@@ -235,10 +235,10 @@
 (deftest exchange-of-information-breaking-news
   "Exchange of Information - Swapping a just scored Breaking News keeps the tags"
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1) 
-                             (qty "Market Research" 1) 
-                             (qty "Breaking News" 1) 
-                             (qty "Project Beale" 1) 
+    (new-game (default-corp [(qty "Exchange of Information" 1)
+                             (qty "Market Research" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
 

@@ -1016,11 +1016,11 @@
      (play-from-hand state :runner "Synthetic Blood")
      (run-on state "HQ")
      (core/rez state :corp first-dm)
-     (card-ability state :corp first-dm 0)
+     (card-subroutine state :corp first-dm 0)
      (is (= 4 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
      (run-continue state)
      (core/rez state :corp second-dm)
-     (card-ability state :corp second-dm 0)
+     (card-subroutine state :corp second-dm 0)
      (is (= 3 (count (:hand (get-runner)))) "no card drawn when receiving damage (2nd time)"))))
 
 (deftest synthetic-blood-gcs
@@ -1039,11 +1039,11 @@
      (play-from-hand state :runner "Gene Conditioning Shoppe")
      (run-on state "HQ")
      (core/rez state :corp first-dm)
-     (card-ability state :corp first-dm 0)
+     (card-subroutine state :corp first-dm 0)
      (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (1st time)")
      (run-continue state)
      (core/rez state :corp second-dm)
-     (card-ability state :corp second-dm 0)
+     (card-subroutine state :corp second-dm 0)
      (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (2nd time)"))))
 
 (deftest technical-writer

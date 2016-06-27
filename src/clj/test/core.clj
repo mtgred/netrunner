@@ -64,6 +64,13 @@
    (core/play-ability state side {:card (core/get-card state card)
                                   :ability ability :targets targets})))
 
+(defn card-subroutine
+  "Trigger a piece of ice's subroutine with the 0-based index."
+  ([state side card ability] (card-subroutine state side card ability nil))
+  ([state side card ability targets]
+   (core/play-subroutine state side {:card (core/get-card state card)
+                                     :subroutine ability :targets targets})))
+
 (defn get-ice
   "Get installed ice protecting server by position."
   [state server pos]
