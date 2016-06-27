@@ -113,9 +113,12 @@
                           (= :face-up install-state)
                           (:rezzed card))
                     (:title card)
-                    (if (ice? card) "ICE" "a card"))]
+                    (if (ice? card) "ICE" "a card"))
+        server-name (if (= server "New remote")
+                      (str (remote-num->name (get-in @state [:rid])) " (new remote)")
+                      server)]
     (system-msg state side (str (build-spend-msg cost-str "install") card-name
-                                (if (ice? card) " protecting " " in ") server))))
+                                (if (ice? card) " protecting " " in ") server-name))))
 
 (defn corp-install
   ([state side card server] (corp-install state side (make-eid state) card server nil))
