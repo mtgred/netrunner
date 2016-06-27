@@ -264,7 +264,8 @@
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (resolve-ability state side trash-effect moved-card (cons cause targets)))
+      (when (or (= (:side card) "Runner") (:rezzed card))
+        (resolve-ability state side trash-effect moved-card (cons cause targets))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))))
 
 (defn resolve-trash
