@@ -428,7 +428,7 @@
                                      (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
                        {:label "Take 1 tag"
                         :effect (req (tag-runner state :runner 1)
-                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]}
+                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Dracō"
