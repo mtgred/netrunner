@@ -317,7 +317,9 @@
                          (in-hand? %))}
     :msg (msg "trash " (join ", " (map :title targets)) " and gain "
               (* 2 (count targets)) " [Credits]")
-    :effect (effect (trash-cards targets) (gain :credit (* 2 (count targets))))}
+    :effect (req (doseq [c targets]
+                   (trash state side c {:unpreventable true}))
+                 (gain state side :credit (* 2 (count targets))))}
 
    "Game Day"
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
@@ -693,7 +695,7 @@
    "Rebirth"
    {:msg "change identities"
     :prompt "Choose an identity to become"
-    :choices (req (let [is-swappable (fn [c] (and (= "Identity" (:type c)) 
+    :choices (req (let [is-swappable (fn [c] (and (= "Identity" (:type c))
                                              (= (-> @state :runner :identity :faction) (:faction c))
                                              (not (= "Draft" (:setname c)))
                                              (not (= (:title c) (-> @state :runner :identity :title)))))
@@ -705,21 +707,21 @@
                (disable-identity state side)
 
                ;; Manually change the runner's link
-               (swap! state update-in [side :link] 
-                 (fn [old-link] 
+               (swap! state update-in [side :link]
+                 (fn [old-link]
                    (let [old-id-link (-> @state :runner :identity :baselink)
                          new-id-link (:baselink target)
                          link-change (- new-id-link old-id-link)]
                       (+ old-link link-change))))
 
                ;; Move the selected ID to [:runner :identity] and set the zone
-               (swap! state update-in [side :identity] 
+               (swap! state update-in [side :identity]
                   (fn [x] (assoc target :zone [:identity])))
 
                ;; enable-identity does not do everything that card-init does
                (card-init state side (get-in @state [:runner :identity]))
-               (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire 
-                if their once per turn condition was met this turn before Rebirth was played. 
+               (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
+                if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary"))}
 
    "Recon"
