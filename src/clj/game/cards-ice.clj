@@ -422,7 +422,13 @@
    "Data Raven"
    {:abilities [give-tag
                 (power-counter-ability give-tag)
-                (trace-ability 3 add-power-counter)]}
+                (trace-ability 3 add-power-counter)]
+    :runner-abilities [{:label "End the run"
+                        :effect (req (end-run state :runner)
+                                     (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
+                       {:label "Take 1 tag"
+                        :effect (req (tag-runner state :runner 1)
+                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]}
 
    "Dracō"
    {:prompt "How many power counters?"
