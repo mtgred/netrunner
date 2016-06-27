@@ -449,8 +449,8 @@
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
 
-(defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
-                         advanceable rezzed strength current-strength title remotes selected hosted
+(defn card-view [{:keys [zone code type abilities subroutines counter advance-counter advancementcost current-cost
+                         subtype advanceable rezzed strength current-strength title remotes selected hosted
                          side rec-counter facedown named-target icon new]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
@@ -502,7 +502,7 @@
                      label])
                   servers)]))
         (let [actions (action-list cursor)]
-          (when (or (> (+ (count actions) (count abilities)) 1)
+          (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                     (= (first actions) "derez"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
@@ -518,7 +518,13 @@
                                                                             (dec i) i)})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-              abilities)]))
+              abilities)
+             (map-indexed
+               (fn [i sub]
+                 [:div {:on-click #(do (send-command "subroutine" {:card @cursor :subroutine i})
+                                       (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
+               subroutines)]))
         (when (= (first zone) "servers")
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
