@@ -17,7 +17,7 @@
            ices (get-in @state (concat [:corp :servers] s [:ices]))]
        ;; s is a keyword for the server, like :hq or :remote1
        (swap! state assoc :per-run nil
-              :run {:server s :position (count ices) :ices ices :access-bonus 0
+              :run {:server s :position (count ices) :access-bonus 0
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
@@ -595,3 +595,7 @@
     (when-let [run (:run @state)]
       (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
         (handle-end-run state :runner)))))
+
+(defn get-run-ices
+  [state]
+  (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))

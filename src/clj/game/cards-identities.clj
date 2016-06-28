@@ -509,7 +509,6 @@
                                                              {:effect (effect (update! (assoc ice :subtype stypes))
                                                                               (unregister-events card))}} card)
                                 (update-ice-strength state side ice)
-                                (update-run-ice state side)
                                 (trigger-event state side :ice-subtype-changed)))}]
     :events {:run-ends nil}}
 

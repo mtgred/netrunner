@@ -37,16 +37,7 @@
   "Updates all installed ice."
   [state side]
   (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server)))
-  (update-run-ice state :corp))
-
-(defn update-run-ice
-  "Updates the :run :ices key with an updated copy of all ice in the run's server."
-  [state side]
-  (when (get-in @state [:run])
-    (let [s (get-in @state [:run :server])
-          ices (get-in @state (concat [:corp :servers] s [:ices]))]
-      (swap! state assoc-in [:run :ices] ices))))
+    (update-ice-in-server state side (second server))))
 
 (defn trash-ice-in-run
   "Decreases the position of each ice in the run. For when an ice is trashed mid-run."

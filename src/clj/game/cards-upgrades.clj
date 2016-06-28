@@ -210,8 +210,7 @@
                                        (swap! state update-in [:corp :hand]
                                               (fn [coll] (remove-once #(not= (:cid %) (:cid hqice)) coll)))
                                        (trigger-event state side :corp-install newice)
-                                       (move state side c :hand)
-                                       (update-run-ice state side)))} card nil)))}]}
+                                       (move state side c :hand)))} card nil)))}]}
 
    "Mumbad City Grid"
    {:abilities [{:req (req this-server)
@@ -398,7 +397,7 @@
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
                  :req (req (and this-server
-                                (> (count (:ices run)) (:position run))
+                                (> (count (get-run-ices state)) (:position run))
                                 (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
                  :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
                                 (resolve-ability
