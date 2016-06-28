@@ -224,7 +224,7 @@
                              card :can-rez
                              (fn [state side card]
                                (if (and (ice? card)
-                                        (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)))))
+                                        (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
                                            (inc (ice-index state card))))
                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
                                  true)))
