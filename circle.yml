@@ -13,6 +13,7 @@ dependencies:
 
 test:
   override:
+    - lein compile game.main
     - lein test test.core
     - lein test test.cards.agendas
     - lein test test.cards.assets
