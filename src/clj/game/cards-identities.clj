@@ -308,11 +308,7 @@
 
    "Jinteki: Replicating Perfection"
    {:events
-    {:runner-turn-begins {:req (req (let [runs (turn-events state side :run)]
-                                      (empty? (filter #(is-central? %) runs))))
-                          :effect (req (apply prevent-run-on-server
-                                              state card (map first (get-remotes @state))))}
-     :runner-phase-12 {:effect (req (apply prevent-run-on-server
+    {:runner-phase-12 {:effect (req (apply prevent-run-on-server
                                            state card (map first (get-remotes @state))))}
      :run {:once :per-turn
            :req (req (is-central? (:server run)))
