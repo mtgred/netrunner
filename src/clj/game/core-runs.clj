@@ -420,7 +420,7 @@
                                                    ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
                                           (and (get-in cdef [:access :optional])
                                                (or (not (get-in cdef [:access :optional :req]))
-                                                   ((get-in cdef [:access :optional :req]) state side % nil)))))
+                                                   ((get-in cdef [:access :optional :req]) state side (make-eid state) % nil)))))
                                     cards)]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
