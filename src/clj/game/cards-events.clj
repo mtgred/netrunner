@@ -814,9 +814,10 @@
    {:effect (effect (run :rd
                       {:replace-access
                        {:msg "access cards from the bottom of R&D"
+                        :delayed-completion true
                         :effect (req (swap! state assoc-in [:corp :deck]
                                             (rseq (into [] (get-in @state [:corp :deck]))))
-                                     (do-access state side (:server run))
+                                     (do-access state side eid (:server run))
                                      (swap! state assoc-in [:corp :deck]
                                             (rseq (into [] (get-in @state [:corp :deck])))))}} card))}
 
