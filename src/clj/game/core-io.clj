@@ -94,7 +94,7 @@
                         value (if-let [n (string->num (first args))] n 0)
                         c-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
-                                     (and (is-type? target "Agenda") (is-scored? state target)) :agenda
+                                     (and (is-type? target "Agenda") (is-scored? target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter c-type)]
                     (cond advance (do (set-prop state side target :advance-counter value)
