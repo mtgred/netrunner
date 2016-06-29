@@ -160,14 +160,16 @@
                   (do (if-not (or (get-in @state [:damage :damage-replace]))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
                           (let [hand (get-in @state [:runner :hand])]
-                            (when (< (count hand) n)
-                              (flatline state))
                             (when (= type :brain)
                               (swap! state update-in [:runner :brain-damage] #(+ % n))
                               (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-                            (doseq [c (take n (shuffle hand))]
-                              (trash state side c {:unpreventable true :cause type} type))
-                            (trigger-event state side :damage type card))))
+                            (if (< (count hand) n)
+                              (do (flatline state)
+                                  (doseq [c (take n (shuffle hand))]
+                                    (trash state side c {:unpreventable true} type)))
+                              (do (doseq [c (take n (shuffle hand))]
+                                    (trash state side c {:unpreventable true :cause type} type))
+                                  (trigger-event state side :damage type card))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))
 
