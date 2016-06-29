@@ -481,6 +481,20 @@
                               :effect (effect (mill :corp))
                               :req (req (has-subtype? target "Virus"))}}}
 
+   "Null: Whistleblower"
+   {:abilities [{:once :per-turn
+                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :prompt "Choose a card in your Grip to trash"
+                 :choices {:req in-hand?}
+                 :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
+                           " by 2 for the remainder of the run")
+                 :effect (effect (register-events
+                                   {:pre-ice-strength {:effect (effect (ice-strength-bonus -2 current-ice))}
+                                    :run-ends {:effect (effect (unregister-events card))}}
+                                  card)
+                                 (update-all-ice))}]
+    :events {:pre-ice-strength nil :run-ends nil}}
+
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"
                            :once :per-turn
