@@ -140,8 +140,7 @@
   (update! state side (assoc card :subtype
                              (->> (remove #(= old %) (.split (:subtype card) " - "))
                                   vec (concat [new]) distinct (join " - "))))
-  (update-ice-strength state side card)
-  (update-run-ice state side))
+  (update-ice-strength state side card))
 
 (defn morph-effect
   "Creates morph effect for ICE. Morphs from base type to other type"
@@ -279,8 +278,7 @@
                                                #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                        :server (rest dest))))
                                       (move state side card
-                                            (conj (server->zone state target) :ices))
-                                      (update-run-ice state side))})]}
+                                            (conj (server->zone state target) :ices)))})]}
 
    "Burke Bugs"
    {:abilities [(trace-ability 0 (assoc trash-program :not-distinct true
@@ -921,8 +919,7 @@
                  :msg "make the Runner continue the run on Archives"
                  :effect (req (swap! state update-in [:run]
                                      #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                               :server [:archives]))
-                              (update-run-ice state side))}]}
+                                               :server [:archives])))}]}
 
    "Swarm"
    {:effect take-bad-pub

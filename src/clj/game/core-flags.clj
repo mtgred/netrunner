@@ -214,7 +214,7 @@
    (and (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez)
         (if-let [rez-req (:rez-req (card-def card))]
-          (rez-req state side card nil)
+          (rez-req state side (make-eid state) card nil)
           true))))
 
 (defn can-steal?

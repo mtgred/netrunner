@@ -3,7 +3,7 @@
 ;; These functions are called by main.clj in response to commands sent by users.
 
 (declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
-         jack-out move name-zone play-instant purge resolve-select run has-subtype?
+         get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
          can-run-server? can-score?)
 
@@ -225,8 +225,7 @@
                       Please rez prior to clicking Start Turn in the future." "warning"
                       {:time-out 0 :close-button true}))
              (when (ice? card)
-               (update-ice-strength state side card)
-               (update-run-ice state side))
+               (update-ice-strength state side card))
              (trigger-event state side :rez card))))
        (swap! state update-in [:bonus] dissoc :cost)))))
 
@@ -286,7 +285,7 @@
   (system-msg state side "has no further action")
   (trigger-event state side :no-action)
   (when-let [pos (get-in @state [:run :position])]
-    (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+    (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-run-ices state) (dec pos))))]
       (when (:rezzed ice)
         (trigger-event state side :encounter-ice ice)
         (update-ice-strength state side ice)))))
@@ -315,7 +314,7 @@
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
   (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((:ices run) (dec (:position run)))))
+        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((get-run-ices state) (dec (:position run)))))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
@@ -331,7 +330,7 @@
   [state side args]
   (when (get-in @state [:run :no-action])
     (when-let [pos (get-in @state [:run :position])]
-      (do (if-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-in @state [:run :ices]) (dec pos))))]
+      (do (if-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-run-ices state) (dec pos))))]
             (trigger-event state side :pass-ice ice)
             (trigger-event state side :pass-ice nil))
           (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))))
@@ -339,10 +338,10 @@
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state side "continues the run")
     (let [pos (get-in @state [:run :position])]
-      (when (> (count (get-in @state [:run :ices])) 0)
-        (update-ice-strength state side (nth (get-in @state [:run :ices]) pos)))
+      (when (not-empty (get-run-ices state))
+        (update-ice-strength state side (nth (get-run-ices state) pos)))
       (when (> pos 0)
-        (let [ice (get-card state (nth (get-in @state [:run :ices]) (dec pos)))]
+        (let [ice (get-card state (nth (get-run-ices state) (dec pos)))]
           (trigger-event state side :approach-ice ice))))
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))

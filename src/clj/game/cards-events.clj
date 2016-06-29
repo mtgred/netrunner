@@ -110,7 +110,7 @@
                                                           (= (last (:zone %)) :ices))}
                                      :effect (req (rez state :corp target nil))}
                        :no-ability {:effect (req (swap! state assoc :per-run nil
-                                                        :run {:server runtgt :position (count ices) :ices ices
+                                                        :run {:server runtgt :position (count ices)
                                                               :access-bonus 0 :run-effect nil})
                                                  (gain-run-credits state :runner (:bad-publicity corp))
                                                  (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
@@ -814,9 +814,10 @@
    {:effect (effect (run :rd
                       {:replace-access
                        {:msg "access cards from the bottom of R&D"
+                        :delayed-completion true
                         :effect (req (swap! state assoc-in [:corp :deck]
                                             (rseq (into [] (get-in @state [:corp :deck]))))
-                                     (do-access state side (:server run))
+                                     (do-access state side eid (:server run))
                                      (swap! state assoc-in [:corp :deck]
                                             (rseq (into [] (get-in @state [:corp :deck])))))}} card))}
 
@@ -915,7 +916,7 @@
                     :effect (req (let [runtgt [(last (server->zone state target))]
                                        ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
                                    (swap! state assoc :per-run nil
-                                                      :run {:server runtgt :position (count ices) :ices ices
+                                                      :run {:server runtgt :position (count ices)
                                                             :access-bonus 0 :run-effect nil})
                                    (gain-run-credits state :runner (:bad-publicity corp))
                                    (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))

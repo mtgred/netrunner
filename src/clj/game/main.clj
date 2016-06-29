@@ -102,7 +102,9 @@
                              (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
                          (swap! last-states assoc gameid (strip @new-state)))
                        (.send socket (generate-string {:action action :gameid gameid :state (strip @state)})))))
-               (catch Exception e (.send socket (generate-string "error")))))))))
+               (catch Exception e
+                 (do (println "Inner Error " action command (get-in args [:card :title]) e)
+                     (.send socket (generate-string "error"))))))))))
 
 (def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 

@@ -103,7 +103,8 @@
                                  card nil)))}]}
 
    "Crescentus"
-   {:abilities [{:req (req (rezzed? current-ice)) :msg (msg "derez " (:title current-ice))
+   {:abilities [{:req (req (rezzed? current-ice))
+                 :msg (msg "derez " (:title current-ice))
                  :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
    "D4v1d"
@@ -208,16 +209,15 @@
                                            (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
-   {:abilities [{:req (req (and (:run @state)
-                                (< (:position run) (count (:ices run)))
-                                (not (:rezzed (nth (get-in @state
-                                                     (vec (concat [:corp :servers] (:server run) [:ices]))) (:position run))))))
+   {:abilities [{:req (req (and run
+                                (< (:position run) (count run-ices))
+                                (not (rezzed? current-ice))))
                  :msg "make the Corp rez the passed ICE or add it to HQ"
                  :effect (req (let [s (:server run)
                                     ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))
                                     icename (:title ice)
                                     icecost (rez-cost state side ice)]
-                                (resolve-ability
+                                (continue-ability
                                   state side
                                   {:prompt (msg "Rez " icename " or add it to HQ?") :player :corp
                                    :choices (req (if (< (:credit corp) icecost)
@@ -653,7 +653,6 @@
                                                   ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
                                                   (swap! state dissoc-in [:run :run-effect :req])
                                                   (trigger-event state :corp :no-action)
-                                                  (update-run-ice state side)
                                                   (system-msg state side
                                                               (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
                                   card))}]}
@@ -685,7 +684,6 @@
                                     #(assoc % cidx target))
                              (swap! state update-in [:run] #(assoc % :position (inc tgtndx)))
                              (update-all-ice state side)
-                             (update-run-ice state side)
                              (trigger-event state side :approach-ice current-ice)))})]
      {:abilities [{:cost [:credit 2]
                    :req (req (and (:run @state)
