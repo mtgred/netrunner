@@ -215,10 +215,11 @@
 
 (defn show-error-toast
   [state side]
-  (toast state side
-         (str "Your last action caused a game error on the server. You can keep playing, but there "
-              "may be errors in the game's current state. Please click the button below to submit a report "
-              "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
-         "exception"
-         {:time-out 0 :close-button true}))
+  (when state
+    (toast state side
+           (str "Your last action caused a game error on the server. You can keep playing, but there "
+                "may be errors in the game's current state. Please click the button below to submit a report "
+                "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
+           "exception"
+           {:time-out 0 :close-button true})))
 
