@@ -854,10 +854,7 @@
                                 (move state :corp c :rfg)
                                 (pay state :runner card :credit (trash-cost state side c))
                                 (update! state side (dissoc card :slums-active))
-                                (swap! state update-in [side :prompt] rest)
-                                 (when-let [run (:run @state)]
-                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
-                                     (handle-end-run state :runner)))))}
+                                (close-access-prompt state side)))}
                 {:label "Remove a card trashed this turn from the game"
                  :req (req (if (:slums-active card)
                              true
@@ -869,11 +866,8 @@
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (deactivate state side target)
                                                  (move state :corp target :rfg)
-                                                 (update! state side (dissoc card :slums-active))
-                                                 (swap! state update-in [side :prompt] rest)
-                                                 (when-let [run (:run @state)]
-                                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
-                                                     (handle-end-run state :runner))))} card nil))}]}
+                                                 (update! state side (dissoc card :slums-active)))}
+                                   card nil))}]}
 
    "Same Old Thing"
    {:abilities [{:cost [:click 2]

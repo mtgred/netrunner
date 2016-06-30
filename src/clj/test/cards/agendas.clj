@@ -172,8 +172,7 @@
     (prompt-choice :runner "OK")
     (is (not (:run @state)) "Run completed")
     (run-empty-server state :hq)
-    (prn (:prompt (get-runner)))
-
+    (prompt-choice :runner "OK")
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "HQ Interface")
