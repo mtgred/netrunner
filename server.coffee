@@ -10,12 +10,15 @@ crypto = require('crypto')
 bcrypt = require('bcrypt')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
+uuid = require('node-uuid')
 jwt = require('jsonwebtoken')
 zmq = require('zmq')
 cors = require('cors')
 async = require('async');
-nodemailer = require('nodemailer');
-moment = require('moment');
+nodemailer = require('nodemailer')
+moment = require('moment')
+trello = require('node-trello')
+cache = require('memory-cache')
 
 # MongoDB connection
 appName = 'netrunner'
@@ -23,15 +26,19 @@ mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
 
 # Game lobby
-gameid = 0
 games = {}
 lobbyUpdate = false
+lobbyUpdates = {"create" : {}, "update" : {}, "delete" : {}}
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
 
-refreshLobby = () ->
+refreshLobby = (type, gameid) ->
   lobbyUpdate = true
+  if type is "delete"
+    lobbyUpdates[type][gameid] = "0"
+  else
+    lobbyUpdates[type][gameid] = games[gameid]
 
 removePlayer = (socket) ->
   game = games[socket.gameid]
@@ -47,11 +54,17 @@ removePlayer = (socket) ->
     if game.players.length is 0 and game.spectators.length is 0
       delete games[socket.gameid]
       requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
+      refreshLobby("delete", socket.gameid)
+    else
+      refreshLobby("update", socket.gameid)
     socket.leave(socket.gameid)
     socket.gameid = false
-    refreshLobby()
+
   for k, v of games
-    delete games[k] if v.players.length < 2 and (new Date() - v.date) > 3600000
+    if (not v.started or v.players.length < 2) and (new Date() - v.date) > 3600000
+
+      delete games[k]
+      refreshLobby("delete", v.gameid)
 
 joinGame = (socket, gameid) ->
   game = games[gameid]
@@ -61,7 +74,7 @@ joinGame = (socket, gameid) ->
     socket.join(gameid)
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
-    refreshLobby()
+    refreshLobby("update", gameid)
 
 getUsername = (socket) ->
   ((socket.request || {}).user || {}).username
@@ -69,10 +82,27 @@ getUsername = (socket) ->
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
+requester.on 'connect', (fd, ep) ->
+  db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+    requester.send(JSON.stringify({action: "initialize", cards: data}))
+
+requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
+
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  unless response is "ok"
+  if response.action is "remove"
+    g = {
+      winner: response.state.winner
+      reason: response.state.reason
+      endDate: response.state["end-time"]
+      turn: response.state.turn
+      runnerAgenda: response.state.runner["agenda-point"]
+      corpAgenda: response.state.corp["agenda-point"]
+    }
+    db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
+      throw err if err
+  else
     if response.diff
       lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
     else
@@ -93,7 +123,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
     db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
-  refreshLobby()
+  socket.emit("netrunner", {type: "games", games: games})
 
   socket.on 'disconnect', () ->
     gid = socket.gameid
@@ -103,16 +133,24 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
-  socket.on 'netrunner', (msg) ->
+  socket.on 'netrunner', (msg, fn) ->
     switch msg.action
       when "create"
-        game = {date: new Date(), gameid: ++gameid, title: msg.title, allowspectator: msg.allowspectator,\
-                players: [{user: socket.request.user, id: socket.id, side: "Corp"}], spectators: []}
+        gameid = uuid.v1()
+        game =
+          date: new Date()
+          gameid: gameid
+          title: msg.title.substring(0,30)
+          allowspectator: msg.allowspectator
+          password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
+          room: msg.room
+          players: [{user: socket.request.user, id: socket.id, side: msg.side}]
+          spectators: []
         games[gameid] = game
         socket.join(gameid)
         socket.gameid = gameid
         socket.emit("netrunner", {type: "game", gameid: gameid})
-        refreshLobby()
+        refreshLobby("create", gameid)
 
       when "leave-lobby"
         gid = socket.gameid
@@ -128,13 +166,22 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} left the game."}))
           removePlayer(socket)
 
+      when "concede"
+        requester.send(JSON.stringify(msg))
+
       when "join"
-        joinGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          notification: "ting"
-          text: "#{getUsername(socket)} joined the game."
+        game = games[msg.gameid]
+
+        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+          fn("join ok")
+          joinGame(socket, msg.gameid)
+          socket.broadcast.to(msg.gameid).emit 'netrunner',
+            type: "say"
+            user: "__system__"
+            notification: "ting"
+            text: "#{getUsername(socket)} joined the game."
+        else
+          fn("invalid password")
 
       when "watch"
         game = games[msg.gameid]
@@ -143,7 +190,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           socket.join(msg.gameid)
           socket.gameid = msg.gameid
           socket.emit("netrunner", {type: "game", gameid: msg.gameid, started: game.started})
-          refreshLobby()
+          refreshLobby("update", msg.gameid)
           if game.started
             requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
           else
@@ -165,26 +212,48 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         for player in games[socket.gameid].players
           player.side = swapSide(player.side)
           player.deck = null
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
+        updateMsg = {"update" : {}}
+        updateMsg["update"][socket.gameid] = games[socket.gameid]
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
+        refreshLobby("update", msg.gameid)
 
       when "deck"
         for player in games[socket.gameid].players
           if player.user.username is getUsername(socket)
             player.deck = msg.deck
             break
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", games: games})
+        updateMsg = {"update" : {}}
+        updateMsg["update"][socket.gameid] = games[socket.gameid]
+        lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
 
       when "start"
         game = games[socket.gameid]
         if game
+          if game.players.length is 2
+            corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
+            runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
+            g = {
+              gameid: socket.gameid
+              startDate: (new Date()).toISOString()
+              title: game.title
+              room: game.room
+              corp: corp.user.username
+              runner: runner.user.username
+              corpIdentity: corp["deck"]["identity"]["title"]
+              runnerIdentity: runner["deck"]["identity"]["title"]
+            }
+            db.collection('gamestats').insert g, (err, data) ->
+              console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
           for player in game.players
+            player.faction = player["deck"]["identity"]["faction"]
+            player.identity = player["deck"]["identity"]["title"]
             delete player["deck"]
-          refreshLobby()
+          refreshLobby("update", msg.gameid)
 
       when "do"
         try
@@ -194,8 +263,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
 sendLobby = () ->
   if lobby and lobbyUpdate
-    lobby.emit('netrunner', {type: "games", games: games})
+    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates})
     lobbyUpdate = false
+    lobbyUpdates["create"] = {}
+    lobbyUpdates["update"] = {}
+    lobbyUpdates["delete"] = {}
 
 setInterval(sendLobby, 1000)
 
@@ -249,15 +321,17 @@ app.get '/logout', (req, res) ->
   res.redirect('/')
 
 app.post '/register', (req, res) ->
-  db.collection('users').findOne username: req.body.username, (err, user) ->
+  db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.send {message: 'Username taken'}, 422
+    else if req.body.username.length < 4 or req.body.username.length > 16
+      res.send {message: 'Username too short/too long'}, 423
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
       req.body.registrationDate = new Date()
       req.body.lastConnection = new Date()
-      bcrypt.hash req.body.password, 3, (err, hash) ->
+      hashPassword req.body.password, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
@@ -297,8 +371,8 @@ app.post '/forgot', (req, res) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
-          user: 'jinteki-user',
-          pass: 'jinteki-user1'
+          user: process.env['SENDGRID_USER'] || "",
+          pass: process.env['SENDGRID_PASSWORD'] || ""
         }
       }
       mailOptions = {
@@ -344,7 +418,7 @@ app.post '/reset/:token', (req, res) ->
         #if (req.body.password != req.body.confirm)
         #  res.send {message: 'Password does not match Confirm'}, 412
 
-        bcrypt.hash req.body.password, 3, (err, hash) ->
+        hashPassword req.body.password, (err, hash) ->
           password = hash
           resetPasswordToken = undefined;
           resetPasswordExpires = undefined
@@ -356,8 +430,8 @@ app.post '/reset/:token', (req, res) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
         auth: {
-          user: 'jinteki-user',
-          pass: 'jinteki-user1'
+          user: process.env['SENDGRID_USER'] || "",
+          pass: process.env['SENDGRID_PASSWORD'] || ""
         }
       }
       mailOptions = {
@@ -374,6 +448,9 @@ app.post '/reset/:token', (req, res) ->
   ], (err) ->
     throw err if err
     res.redirect('/')
+
+hashPassword = (password, cb) ->
+    bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
@@ -421,25 +498,40 @@ app.get '/data/donators', (req, res) ->
     res.json(200, (d.username or d.name for d in data))
 
 app.get '/data/news', (req, res) ->
-  db.collection('news').find().sort({_id: -1}).toArray (err, data) ->
-    for d in data
-      d.date = moment(d._id.getTimestamp().toISOString()).format("MM/DD/YYYY HH:mm");
-      delete d._id
-    res.json(200, data)
+  if process.env['TRELLO_API_KEY']
+    cached = cache.get('news')
+    if not cached
+      t = new trello(process.env['TRELLO_API_KEY'])
+      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name,labels'}, (err, data) ->
+        throw err if err
+        data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
+          for d in data when d.labels.length == 0)
+        cache.put('news', data, 60000) # 60 seconds timeout
+        res.json(200, data)
+    else
+      res.json(200, cached)
+  else
+    res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
-  db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
-    throw err if err
-    delete d._id for d in data
-    res.json(200, data)
+  if req.params.collection != 'users' && req.params.collection != 'games'
+    db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
+      throw err if err
+      delete d._id for d in data
+      res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
 
 app.get '/data/:collection/:field/:value', (req, res) ->
-  filter = {}
-  filter[req.params.field] = req.params.value
-  db.collection(req.params.collection).find(filter).toArray (err, data) ->
-    console.error(err) if err
-    delete d._id for d in data
-    res.json(200, data)
+  if req.params.collection != 'users' && req.params.collection != 'games'
+    filter = {}
+    filter[req.params.field] = req.params.value
+    db.collection(req.params.collection).find(filter).toArray (err, data) ->
+      console.error(err) if err
+      delete d._id for d in data
+      res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
 
 app.configure 'development', ->
   console.log "Dev environment"

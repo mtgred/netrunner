@@ -2,8 +2,8 @@
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-3196"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.7.228"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.zeromq/jeromq "0.3.4"]
                  [cheshire "5.4.0"]
@@ -15,13 +15,15 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.2.1"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.3.7"]]}}
+  :profiles {:dev {:dependencies [[figwheel "0.5.2"]
+                                  [figwheel-sidecar "0.5.0-6"]
+                                  [com.cemerick/piggieback "0.2.1"]]}}
 
   :main game.main
   :aot :all
 
-  :plugins [[lein-cljsbuild "1.0.6"]
-            [lein-figwheel "0.3.7"]]
+  :plugins [[lein-cljsbuild "1.1.3"]
+            [lein-figwheel "0.5.2"]]
 
   :source-paths ["src/clj" "src/cljs"]
 
@@ -40,6 +42,7 @@
                   :optimizations :advanced
                   :pretty-print false
                   :externs ["resources/public/lib/jquery/jquery.min.js"
+                            "resources/public/lib/jqueryui/jquery-ui.min.js"
                             "resources/public/lib/react/react.min.js"
                             "resources/public/lib/moment/min/moment.min.js"
                             "resources/public/lib/bootstrap/dist/js/bootstrap.min.js"

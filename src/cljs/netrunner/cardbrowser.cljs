@@ -10,7 +10,7 @@
 
 (go (swap! app-state assoc :sets (:json (<! (GET "/data/sets")))))
 
-(go (let [cards (:json (<! (GET "/data/cards")))]
+(go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
       (put! cards-channel cards)))
 

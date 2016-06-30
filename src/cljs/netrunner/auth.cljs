@@ -57,12 +57,14 @@
                 401 (om/set-state! owner :flash-message "Invalid login or password")
                 421 (om/set-state! owner :flash-message "No account with that email address exists")
                 422 (om/set-state! owner :flash-message "Username taken")
+                423 (om/set-state! owner :flash-message "Username too short/too long")
                 (-> js/document .-location (.reload true))))))))
 
 (defn check-username [event owner]
   (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]
-        (if (= (:status response) 422)
-          (om/set-state! owner :flash-message "Username taken")
+        (case (:status response)
+          422 (om/set-state! owner :flash-message "Username taken")
+          423 (om/set-state! owner :flash-message "Username too short/too long")
           (om/set-state! owner :flash-message "")))))
 
 (defn check-email [event owner]
@@ -79,6 +81,8 @@
     (cond
       (empty? email) (om/set-state! owner :flash-message "Email can't be empty")
       (empty? username) (om/set-state! owner :flash-message "Username can't be empty")
+      (> 4 (count username)) (om/set-state! owner :flash-message "Username must be 4 characters or longer")
+      (< 16 (count username)) (om/set-state! owner :flash-message "Username must be 16 characters or shorter")
       (empty? password) (om/set-state! owner :flash-message "Password can't be empty")
       :else (handle-post event owner "/register" "register-form"))))
 
@@ -97,7 +101,7 @@
          [:form {:on-submit #(register % owner)}
           [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email"}]]
           [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username"
-                       :on-blur #(check-username % owner)}]]
+                       :on-blur #(check-username % owner) :maxLength "16"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]

@@ -1,21 +1,23 @@
+[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
+
 Play Android: Netrunner in the browser.
 
 ## Live server
 
 http://www.jinteki.net
 
-Gameplay video: https://www.youtube.com/watch?v=EO0O12s0tr8&list=PL_qsBCj4eFZHUZpEwGbW0y9IwnDDvULwX&index=2
+[Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
 
 ![screenshot](https://dl.dropboxusercontent.com/u/5601199/screenshot.jpg)
 
 
 ## Development status
 
-The deck builder implements all the deck building constraints. It is optimised for fast deck edition. It is possible for instance to copy & paste a decklist from a forum and it will be parsed.
+The deck builder implements all the deck building constraints. It is optimised for fast deck editing. It is possible for instance to copy & paste a decklist from a forum and it will be parsed.
 
-The implemention of the game rules is in progress. About 95% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
+The implementation of the game rules is in progress. About 95% of the cards are currently automated. For the cards that aren't, it is possible to resolve them manually most of the time.
 
-[Card rules implementation status](https://www.dropbox.com/s/rpkhxafgile5spp/Cards%20status.xlsx).
+[Card rules implementation status](https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml)
 
 
 ## Dependencies
@@ -52,7 +54,7 @@ $ coffee fetch.coffee
 Compile and watch client side Clojurescript files:
 
 ```
-$ lein cljsbuild auto dev
+$ lein figwheel
 ```
 
 Compile server side Clojure files:
@@ -73,4 +75,22 @@ Launch the Node server:
 $ coffee server.coffee
 ```
 
+## Tests
+
+To run all tests:
+
+```
+$ lein test test.all
+```
+
+To run a single test file:
+```
+$ lein test test.cards.agendas
+```
+
+
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+## License
+
+Jinteki.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).
