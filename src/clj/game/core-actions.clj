@@ -284,11 +284,13 @@
   (swap! state assoc-in [:run :no-action] true)
   (system-msg state side "has no further action")
   (trigger-event state side :no-action)
-  (when-let [pos (get-in @state [:run :position])]
-    (when-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-run-ices state) (dec pos))))]
-      (when (:rezzed ice)
-        (trigger-event state side :encounter-ice ice)
-        (update-ice-strength state side ice)))))
+  (let [run-ice (get-run-ices state)
+        pos (get-in @state [:run :position])
+        ice (when (and pos (pos? pos) (<= pos (count run-ice)))
+              (get-card state (nth run-ice (dec pos))))]
+    (when (rezzed? ice)
+      (trigger-event state side :encounter-ice ice)
+      (update-ice-strength state side ice))))
 
 ;;; Runner actions
 (defn click-run
@@ -329,20 +331,21 @@
   "The runner decides to approach the next ice, or the server itself."
   [state side args]
   (when (get-in @state [:run :no-action])
-    (when-let [pos (get-in @state [:run :position])]
-      (do (if-let [ice (when (and pos (> pos 0)) (get-card state (nth (get-run-ices state) (dec pos))))]
-            (trigger-event state side :pass-ice ice)
-            (trigger-event state side :pass-ice nil))
-          (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))))
-    (swap! state update-in [:run :position] dec)
-    (swap! state assoc-in [:run :no-action] false)
-    (system-msg state side "continues the run")
-    (let [pos (get-in @state [:run :position])]
-      (when (not-empty (get-run-ices state))
-        (update-ice-strength state side (nth (get-run-ices state) pos)))
-      (when (> pos 0)
-        (let [ice (get-card state (nth (get-run-ices state) (dec pos)))]
-          (trigger-event state side :approach-ice ice))))
-    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
-      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-      (update-breaker-strength state side p))))
+    (let [run-ice (get-run-ices state)
+          pos (get-in @state [:run :position])
+          cur-ice (when (and pos (pos? pos) (<= pos (count run-ice)))
+                    (get-card state (nth run-ice (dec pos))))
+          next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
+                     (get-card state (nth run-ice (- pos 2))))]
+      (trigger-event state side :pass-ice cur-ice)
+      (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+      (swap! state update-in [:run :position] dec)
+      (swap! state assoc-in [:run :no-action] false)
+      (system-msg state side "continues the run")
+      (when cur-ice
+        (update-ice-strength state side cur-ice))
+      (when next-ice
+        (trigger-event state side :approach-ice next-ice))
+      (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+        (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+        (update-breaker-strength state side p)))))
