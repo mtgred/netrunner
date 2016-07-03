@@ -2,13 +2,13 @@
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by abs string->num safe-split
                                 dissoc-in cancellable card-is? side-str build-spend-msg cost-names
-                                remote->name remote-num->name central->name zone->name central->zone
+                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
                                 is-remote? is-central? get-server-type other-side]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case]]
             [clojure.core.match :refer [match]]))
 
-(declare get-card get-remote-names make-eid make-result register-effect-completed resolve-ability say system-msg trigger-event update!)
+(declare get-card get-zones get-runnable-zones get-remote-names make-eid make-result register-effect-completed resolve-ability say system-msg trigger-event update!)
 
 (def game-states (atom {}))
 (def all-cards (atom {}))
