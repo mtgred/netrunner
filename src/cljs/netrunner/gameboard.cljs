@@ -412,9 +412,9 @@
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
-    :hq -3
+    :archives -3
     :rd -2
-    :archives -1
+    :hq -1
     (js/parseInt
       (last (clojure.string/split (str zone) #":remote")))))
 
@@ -501,10 +501,10 @@
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when named-target [:div.darkbg.named-target named-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-          (let [centrals ["HQ" "R&D" "Archives"]
-                remotes (conj (remote-list remotes) "New remote")
+          (let [centrals ["Archives" "R&D" "HQ"]
+                remotes (concat (remote-list remotes) ["New remote"])
                 servers (case type
-                          ("Upgrade" "ICE") (concat remotes centrals)
+                          ("Upgrade" "ICE") (concat centrals remotes)
                           ("Agenda" "Asset") remotes)]
             [:div.blue-shade.panel.servers-menu {:ref "servers"}
              (map (fn [label]

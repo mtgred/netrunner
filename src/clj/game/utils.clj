@@ -148,9 +148,9 @@
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
-    :hq -3
+    :archives -3
     :rd -2
-    :archives -1
+    :hq -1
     (string->num
       (last (safe-split (str zone) #":remote")))))
 

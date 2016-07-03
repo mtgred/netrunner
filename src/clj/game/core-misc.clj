@@ -56,10 +56,11 @@
   (zones->sorted-names (get-remote-zones state)))
 
 (defn server-list [state card]
-  (cons "New remote"
+  (concat
     (if (#{"Asset" "Agenda"} (:type card))
       (get-remote-names @state)
-      (zones->sorted-names (get-zones @state)))))
+      (zones->sorted-names (get-zones @state)))
+    ["New remote"]))
 
 (defn server->zone [state server]
   (if (sequential? server)
