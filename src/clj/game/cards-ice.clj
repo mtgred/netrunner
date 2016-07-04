@@ -564,7 +564,7 @@
    {:subroutines [(do-brain-damage 1)
                   {:msg "do 1 brain damage and end the run" :effect (effect (damage eid :brain 1 {:card card}) (end-run))}
                   end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
@@ -1013,7 +1013,8 @@
 
    "Turing"
    {:subroutines [end-the-run]
-    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))}
+    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))
+    :runner-abilities [(runner-break [:click 3] 1)]}
 
    "Turnpike"
    {:abilities [{:msg "force the Runner to lose 1 [Credits]"
