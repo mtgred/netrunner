@@ -47,7 +47,7 @@ cardFields = [
 baseurl = "http://netrunnerdb.com/api/"
 
 selectFields = (fields, objectList) ->
-  ((fields.reduce ((newObj, key) -> newObj[key] = obj[key] if typeof(obj[key]) isnt "undefined"; newObj), {}) for obj in objectList)
+  ((fields.reduce ((newObj, key) -> newObj[key] = obj[key] if typeof(obj[key]) isnt "undefined"; obj.cost = 0 if obj.cost is "X"; newObj), {}) for obj in objectList)
 
 fetchSets = (callback) ->
   request.get baseurl + "sets", (error, response, body) ->

@@ -67,10 +67,31 @@
   but not including 'inactive hosting' like Personal Workshop."
   [state side]
   (if (= side :runner)
-    (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))]
-      (concat installed (filter :installed (mapcat :hosted installed))))
-    (let [servers (->> (:corp @state) :servers seq flatten)]
-      (concat (mapcat :content servers) (mapcat :ices servers)))))
+    (let [top-level-cards (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))
+          hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
+      (loop [unchecked (concat top-level-cards (filter #(= (:side %) "Runner") hosted-on-ice)) installed ()]
+        (if (empty? unchecked)
+          (filter :installed installed)
+          (let [[card & remaining] unchecked]
+            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))
+    (let [servers (->> (:corp @state) :servers seq flatten)
+          content (mapcat :content servers)
+          ice (mapcat :ices servers)
+          top-level-cards (concat ice content)]
+      (loop [unchecked top-level-cards installed ()]
+        (if (empty? unchecked)
+          (filter #(= (:side %) "Corp") installed)
+          (let [[card & remaining] unchecked]
+            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))))
+
+(defn all-active
+  "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
+  or the corp's scored area."
+  [state side]
+  (if (= side :runner)
+    (cons (get-in @state [:runner :identity]) (all-installed state side))
+    (cons (get-in @state [:corp :identity]) (concat (all-installed state side)
+                                                    (get-in @state [:corp :scored])))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"

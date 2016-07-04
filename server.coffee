@@ -82,10 +82,27 @@ getUsername = (socket) ->
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
+requester.on 'connect', (fd, ep) ->
+  db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+    requester.send(JSON.stringify({action: "initialize", cards: data}))
+
+requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
+
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  if response.action isnt "remove"
+  if response.action is "remove"
+    g = {
+      winner: response.state.winner
+      reason: response.state.reason
+      endDate: response.state["end-time"]
+      turn: response.state.turn
+      runnerAgenda: response.state.runner["agenda-point"]
+      corpAgenda: response.state.corp["agenda-point"]
+    }
+    db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
+      throw err if err
+  else
     if response.diff
       lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
     else
@@ -116,12 +133,19 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
-  socket.on 'netrunner', (msg) ->
+  socket.on 'netrunner', (msg, fn) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title.substring(0,30), allowspectator: msg.allowspectator, room: msg.room,\
-                players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
+        game =
+          date: new Date()
+          gameid: gameid
+          title: msg.title.substring(0,30)
+          allowspectator: msg.allowspectator
+          password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
+          room: msg.room
+          players: [{user: socket.request.user, id: socket.id, side: msg.side}]
+          spectators: []
         games[gameid] = game
         socket.join(gameid)
         socket.gameid = gameid
@@ -146,12 +170,18 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify(msg))
 
       when "join"
-        joinGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          notification: "ting"
-          text: "#{getUsername(socket)} joined the game."
+        game = games[msg.gameid]
+
+        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+          fn("join ok")
+          joinGame(socket, msg.gameid)
+          socket.broadcast.to(msg.gameid).emit 'netrunner',
+            type: "say"
+            user: "__system__"
+            notification: "ting"
+            text: "#{getUsername(socket)} joined the game."
+        else
+          fn("invalid password")
 
       when "watch"
         game = games[msg.gameid]
@@ -195,10 +225,25 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         updateMsg = {"update" : {}}
         updateMsg["update"][socket.gameid] = games[socket.gameid]
         lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
-        
+
       when "start"
         game = games[socket.gameid]
         if game
+          if game.players.length is 2
+            corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
+            runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
+            g = {
+              gameid: socket.gameid
+              startDate: (new Date()).toISOString()
+              title: game.title
+              room: game.room
+              corp: corp.user.username
+              runner: runner.user.username
+              corpIdentity: corp["deck"]["identity"]["title"]
+              runnerIdentity: runner["deck"]["identity"]["title"]
+            }
+            db.collection('gamestats').insert g, (err, data) ->
+              console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"

@@ -101,7 +101,7 @@
          [:form {:on-submit #(register % owner)}
           [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email"}]]
           [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username"
-                       :on-blur #(check-username % owner) :maxlength "16"}]]
+                       :on-blur #(check-username % owner) :maxLength "16"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"}]]
           [:p [:button "Sign up"]
               [:button {:data-dismiss "modal"} "Cancel"]]]

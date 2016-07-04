@@ -1,4 +1,10 @@
-(in-ns 'test.core)
+(ns test.games.scenarios
+  (:require [game.core :as core]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest minigame-prevent-netdmg-resourcetrash
   "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
@@ -81,10 +87,9 @@
       (is (= 1 (:credit (get-runner))))
       (run-on state "HQ")
       (core/rez state :corp ash)
-      (card-ability state :corp ash 0)
+      (run-successful state)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (run-successful state)
       (is (and (= 2 (:credit (get-runner))) (= 7 (:credit (get-corp))))
           "Desperado paid 1 to Runner, Lamprey took 1 from Corp")
       (prompt-choice :runner "No") ; can't afford to trash Ash
@@ -95,11 +100,9 @@
       (take-credits state :corp 1)
       (is (= 3 (:credit (get-runner))) "Gained 1 from Data Folding")
       (core/gain state :runner :click 2)
-      (run-on state "HQ")
-      (card-ability state :corp ash 0)
+      (run-empty-server state "HQ")
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (run-successful state)
       (prompt-choice :runner "Yes") ; trash Ash
       (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
       (core/gain state :runner :credit 1)
@@ -122,7 +125,7 @@
         (run-on state "Server 1") ; letting Runner in this time to use Caprice
         (core/rez state :corp cap)
         (run-continue state)
-        (card-ability state :corp cap 0) ; psi game
+        ;; Caprice psi game started automatically
         (prompt-choice :corp "1 [Credits]")
         (prompt-choice :runner "2 [Credits]")
         (is (not (:run @state)) "Corp won Caprice psi game and ended the run")))))

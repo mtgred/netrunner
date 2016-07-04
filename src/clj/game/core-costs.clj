@@ -6,6 +6,7 @@
   "Deduct the value from the player's attribute."
   [state side [attr value]]
   (swap! state update-in [side attr] (if (or (= attr :memory)
+                                             (= attr :agenda-point)
                                              (= attr :hand-size-modification))
                                        ;; Memory or hand size mod may be negative
                                        #(- % value)
@@ -75,7 +76,7 @@
 (defn rez-cost [state side {:keys [cost] :as card}]
   (when-not (nil? cost)
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
-          (+ cost (rezfun state side card nil))
+          (+ cost (rezfun state side (make-eid state) card nil))
           cost)
         (+ (or (get-in @state [:bonus :cost]) 0))
         (max 0))))
@@ -106,7 +107,7 @@
   (vec (map #(if (keyword? %) % (max % 0))
             (-> (concat (get-in @state [:bonus :install-cost]) all-cost
                         (when-let [instfun (:install-cost-bonus (card-def card))]
-                          (instfun state side card nil)))
+                          (instfun state side (make-eid state) card nil)))
                 merge-costs flatten))))
 
 (defn modified-install-cost

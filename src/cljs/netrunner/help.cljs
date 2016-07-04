@@ -51,18 +51,24 @@
                         [:li [:code "/bp n"] " - Set your bad publicity to n"]
                         [:li [:code "/link n"] " - Set your link to n"]
                         [:li [:code "/handsize n"] " - Set your handsize to n"]
+                        [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
+                        [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
                         [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/discard #n"] " - Discard card number n from your hand"]
                         [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
+                        [:li [:code "/rfg"] " - Select a card to remove from the game"]
                         [:li [:code "/end-run"] " - End the run (Corp only)"]
                         [:li [:code "/jack-out"] " - Jack out (Runner only)"]
                         [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
                         [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
-                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only)"]
-                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only)"]
+                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
+                        [:li [:code "/counter type n"] " - set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", "
+                         [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"]
+                         ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."]
+                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
                         [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
@@ -110,7 +116,8 @@
             {:id "avatar"
              :title "How do I change my avatar?"
              :content [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
-                       " and create an account with the same email as the one used to register on Jinteki.net."]}
+                       " and create an account with the same email as the one used to register on Jinteki.net. Please note that "
+                       "it can sometimes take up to a few hours for the new avatar to be visible on the site."]}
             {:id "bestbrowser"
              :title "What is the best supported browser?"
              :content '([:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too."]
@@ -186,9 +193,9 @@
             {:id "weird"
              :title "The site is behaving weird."
              :content [:p "The server code may have been freshly updated and you don't have the latest Javascript code. "
-                       "First step in every troubleshooting should be a forced refresh of your browser by doing a force refresh ("
-                       [:code "Ctrl + F5"] " on Windows). Also read the announcements on the main page, something about server problems "
-                       "may be written there."]}
+                       "First step in every troubleshooting should be a forced refresh of your browser by doing a "
+                       [:a {:href "http://refreshyourcache.com/en/cache/"} "force refresh"] " (" [:code "Ctrl + F5"] " on Windows). "
+                       "Also read the announcements on the main page, something about server problems may be written there."]}
             {:id "touchproblems"
              :title "The website doesn't work well on my touchscreen device."
              :content [:p "Touchscreen devices are currently not supported. See answer to " [:a {:href "#bestbrowser"} "this question"]

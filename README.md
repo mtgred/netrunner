@@ -1,3 +1,5 @@
+[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
+
 Play Android: Netrunner in the browser.
 
 ## Live server
@@ -73,4 +75,22 @@ Launch the Node server:
 $ coffee server.coffee
 ```
 
+## Tests
+
+To run all tests:
+
+```
+$ lein test test.all
+```
+
+To run a single test file:
+```
+$ lein test test.cards.agendas
+```
+
+
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+## License
+
+Jinteki.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).

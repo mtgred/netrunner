@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 (declare corp-trace-prompt optional-ability
-         check-optional check-psi check-trace
+         check-optional check-psi check-trace complete-ability
          can-trigger? do-choices do-ability
-         psi-game resolve-psi resolve-trace show-select)
+         psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
 
 ;;;; Functions for implementing card abilities and prompts
 
@@ -62,54 +62,77 @@
   :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn."
 
   ;; perhaps the most important function in the game logic
-  [state side ability card targets]
-  (when ability
-    ;; Is this an optional ability?
-    (check-optional state side ability card targets)
-    ;; Is this a psi game?
-    (check-psi state side ability card targets)
-    ;; Is this a trace?
-    (check-trace state side ability card targets)
-    ;; Ensure this ability can be triggered more than once per turn,
-    ;; or has not been yet been triggered this turn.
-    (when (can-trigger? state side ability card targets)
-      (if (:choices ability)
-        ;; It's a prompt!
-        (do-choices state side ability card targets)
-        ;; Not a prompt. Trigger the ability.
-        (do-ability state side ability card targets)))))
+  ([state side {:keys [eid] :as ability} card targets]
+   (if eid
+     (resolve-ability-eid state side (assoc ability :eid eid) card targets)
+     (resolve-ability-eid state side (assoc ability :eid (or eid (make-eid state))) card targets)))
+  ([state side eid ability card targets]
+   (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
+(defn- resolve-ability-eid
+  ([state side {:keys [eid] :as ability} card targets]
+   (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
+     (effect-completed state side eid card)
+     (if (and ability (not eid))
+       (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
+       (when ability
+         ;; Is this an optional ability?
+         (check-optional state side ability card targets)
+         ;; Is this a psi game?
+         (check-psi state side ability card targets)
+         ;; Is this a trace?
+         (check-trace state side ability card targets)
+         ;; Ensure this ability can be triggered more than once per turn,
+         ;; or has not been yet been triggered this turn.
+         (if (can-trigger? state side ability card targets)
+           (if (:choices ability)
+             ;; It's a prompt!
+             (do-choices state side ability card targets)
+             ;; Not a prompt. Trigger the ability.
+             (do-ability state side ability card targets))
+           (effect-completed state side eid card))
+         (complete-ability state side ability card))))))
 
 ;;; Checking functions for resolve-ability
+(defn- complete-ability
+  [state side {:keys [eid choices optional prompt delayed-completion psi trace] :as ability} card]
+  ;if it doesn't have choices and it doesn't have a true delayed-completion; or
+  ;if it does have choices and has false delayed-completion
+  (when (or (and (not choices) (not optional) (not psi) (not trace) (not delayed-completion))
+            (and (or optional psi choices trace) (false? delayed-completion)))
+    (effect-completed state side eid card)))
+
 (defn- check-req
   "Check if the requirement is fulfilled, or no requirement present"
-  [state side card targets ability]
+  [state side card targets {:keys [eid] :as ability}]
   (if-let [req (:req ability)]
-    (req state side card targets)
+    (req state side eid card targets)
     ;; return true if no requirement present
     true))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [optional (:optional ability)]
-    (when (and (not (get-in @state [(:once optional) (or (:once-key optional) (:cid card))]))
-               (check-req state side card targets optional))
-      (optional-ability state (or (:player optional) side) card (:prompt optional) optional targets))))
+    (if (can-trigger? state side optional card targets)
+      (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
+      (effect-completed state side eid card))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [psi (:psi ability)]
-    (when (check-req state side card targets psi)
-      (psi-game state side card psi))))
+    (if (can-trigger? state side psi card targets)
+      (psi-game state side eid card psi)
+      (effect-completed state side eid card))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
-    (when (check-req state side card targets trace)
-      (corp-trace-prompt state card trace))))
+    (if (can-trigger? state side trace card targets)
+      (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
+      (effect-completed state side eid card))))
 
 (defn- can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
@@ -120,23 +143,36 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt] :as ability}
+  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
         args {:priority priority :cancel-effect cancel-effect}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
-     (if (:req choices)
+     (cond
+       ;; a counter prompt
+       (:counter choices)
+       (prompt! state s card prompt choices ab args)
        ;; a select prompt
-       (show-select state s card ability {:priority priority})
+       (:req choices)
+       (show-select state s card ability args)
        ;; a :number prompt
-       (let [n ((:number choices) state side card targets)]
-         (prompt! state s card prompt {:number n} ab args)))
+       (:number choices)
+       (let [n ((:number choices) state side eid card targets)]
+         (prompt! state s card prompt {:number n} ab args))
+       (:card-title choices)
+       (prompt!
+         state s card prompt
+         (assoc choices :autocomplete
+                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%]) @all-cards))))
+         ab (assoc args :prompt-type :card-title))
+       ;; unknown choice
+       :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
      (let [cs (if-not (fn? choices)
                 choices ; :credit or :counter
-                (let [cards (choices state side card targets)] ; a vector of cards or strings
+                (let [cards (choices state side eid card targets)] ; a vector of cards or strings
                   (if not-distinct cards (distinct-by :title cards))))]
        (prompt! state s card prompt cs ab args)))))
 
@@ -148,14 +184,19 @@
    {:keys [counter advance-counter] :as card} targets]
   ;; Ensure counter costs can be paid
   (when (and (or (not counter-cost)
-                 (<= counter-cost (or counter 0)))
+                 (<= (or (second counter-cost) 0)
+                     (get-in card [:counter (first counter-cost)] 0)))
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid.
     (when-let [cost-str (apply pay (concat [state side card] cost))]
-      (let [c (-> card
-                  (update-in [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                  (update-in [:counter] #(- (or % 0) (or counter-cost 0))))]
+      (let [c (if counter-cost
+                (update-in card [:counter (first counter-cost)]
+                           #(- (or % 0) (or (second counter-cost) 0)))
+                card)
+            c (if advance-counter-cost
+                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                  c)]
         ;; Remove any counters.
         (when (or counter-cost advance-counter-cost)
           (update! state side c)
@@ -172,25 +213,25 @@
 
 (defn- print-msg
   "Prints the ability message"
-  [state side ability card targets cost-str]
+  [state side {:keys [eid] :as ability} card targets cost-str]
   (when-let [msg (:msg ability)]
-    (when-let [desc (if (string? msg) msg (msg state side card targets))]
+    (when-let [desc (if (string? msg) msg (msg state side eid card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
 
 (defn- do-effect
   "Trigger the effect"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [effect (:effect ability)]
-    (effect state side card targets)))
+    (effect state side eid card targets)))
 
 (defn- register-end-turn
   "Register :end-turn effect if present"
-  [state side ability card targets]
+  [state side {:keys [eid] :as ability} card targets]
   (when-let [end-turn (:end-turn ability)]
     (swap! state update-in [side :register :end-turn]
-           #(conj % {:ability end-turn :card card :targets targets}))))
+           #(conj % {:ability end-turn :card card :targets targets :eid eid}))))
 
 (defn- register-once
   "Register ability as having happened if :once specified"
@@ -201,16 +242,18 @@
 ;;; Optional Ability
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
-  [state side card msg ability targets]
-  (show-prompt state side card msg ["Yes" "No"]
-               #(let [yes-ability (:yes-ability ability)]
+  ([state side card msg ability targets] (optional-ability state side (make-eid state) card msg ability targets))
+  ([state side eid card msg ability targets]
+   (show-prompt state side eid card msg ["Yes" "No"]
+                #(let [yes-ability (:yes-ability ability)]
                   (if (and (= % "Yes")
                            yes-ability
                            (can-pay? state side (:title card) (:cost yes-ability)))
-                    (resolve-ability state side yes-ability card targets)
-                    (when-let [no-ability (:no-ability ability)]
-                      (resolve-ability state side no-ability card targets))))
-               ability))
+                    (resolve-ability state side (assoc yes-ability :eid eid) card targets)
+                    (if-let [no-ability (:no-ability ability)]
+                      (resolve-ability state side (assoc no-ability :eid eid) card targets)
+                      (effect-completed state side eid card))))
+                ability)))
 
 
 ;;; Prompts
@@ -229,8 +272,8 @@
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
   ([state side card msg choices ability args]
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side card [%])) args)))]
-       (show-prompt state side card msg choices #(resolve-ability state side ability card [%])
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+       (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
                     (-> args
                         (wrap-function :cancel-effect)
                         (wrap-function :end-effect))))))
@@ -238,12 +281,14 @@
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
-  ([state side card msg choices f] (show-prompt state side card msg choices f nil))
-  ([state side card msg choices f
+  ([state side card msg choices f] (show-prompt state side (make-eid state) card msg choices f nil))
+  ([state side card msg choices f args] (show-prompt state side (make-eid state) card msg choices f args))
+  ([state side eid card msg choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
-   (let [prompt (if (string? msg) msg (msg state side card nil))
+   (let [prompt (if (string? msg) msg (msg state side nil card nil))
          priority-comp #(case % true 1 nil 0 %)
-         newitem {:msg prompt
+         newitem {:eid eid
+                  :msg prompt
                   :choices choices
                   :effect f
                   :card card
@@ -254,6 +299,7 @@
                   :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
                (:number choices)
+               (:card-title choices)
                (#{:credit :counter} choices)
                (pos? (count choices)))
        (swap! state update-in [side :prompt]
@@ -265,10 +311,12 @@
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
   ([state side card ability] (show-select state side card ability nil))
-  ([state side card ability {:keys [priority] :as args}]
+  ([state side card ability args]
    ;; if :max is a function, call it and assoc its return value as the new :max number of cards
    ;; that can be selected.
-   (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side card nil) %))]
+   (letfn [(wrap-function [args kw]
+             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
      (swap! state update-in [side :selected]
             #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
                             :max (get-in ability [:choices :max])}))
@@ -279,7 +327,9 @@
                       (str "Select up to " m " targets for " (:title card))
                       (str "Select a target for " (:title card))))
                   ["Done"] (fn [choice] (resolve-select state side))
-                  (assoc args :prompt-type :select :show-discard (:show-discard ability))))))
+                  (-> args
+                      (assoc :prompt-type :select :show-discard (:show-discard ability))
+                      (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
@@ -288,12 +338,15 @@
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
         curprompt (first (get-in @state [side :prompt]))]
-    (when-not (empty? cards)
-      (doseq [card cards]
-        (update! state side card))
-      (resolve-ability state side (:ability selected) (:card curprompt) cards))
     (swap! state update-in [side :selected] #(vec (rest %)))
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))))
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))
+    (if-not (empty? cards)
+      (do (doseq [card cards]
+            (update! state side card))
+          (resolve-ability state side (:ability selected) (:card curprompt) cards))
+      (if-let [cancel-effect (:cancel-effect curprompt)]
+        (cancel-effect nil)
+        (effect-completed state side (:eid (:ability selected)) nil)))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
@@ -308,36 +361,38 @@
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
-  (when (= :waiting (-> @state side :prompt first :prompt-type))
-    (swap! state update-in [side :prompt] rest)))
+  (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (-> @state side :prompt))]
+    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
   :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
-  [state side card psi]
-  (swap! state assoc :psi {})
-  (doseq [s [:corp :runner]]
-    (show-prompt state s card (str "Choose an amount to spend for " (:title card))
-                 (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                 #(resolve-psi state s card psi (Integer/parseInt (first (split % #" "))))
-                 {:priority 2})))
+  ([state side card psi] (psi-game state side (make-eid state) card psi))
+  ([state side eid card psi]
+   (swap! state assoc :psi {})
+   (doseq [s [:corp :runner]]
+     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
+                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
+                  #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                  {:priority 2}))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
   resolution ability."
-  [state side card psi bet]
+  [state side eid card psi bet]
   (swap! state assoc-in [:psi side] bet)
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (do (clear-wait-prompt state opponent)
-          (lose state opponent :credit opponent-bet)
+          (gain state opponent :credit (- opponent-bet))
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-          (lose state side :credit bet)
+          (gain state side :credit (- bet))
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side :psi-game nil)
-          (when-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) ability card nil)))
+          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
+            (effect-completed state side eid card)))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
@@ -345,38 +400,40 @@
 ;;; Traces
 (defn init-trace
   "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
-  [state side card {:keys [base] :as ability} boost]
+  [state side card {:keys [base eid] :as ability} boost]
   (clear-wait-prompt state :runner)
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (trigger-event state side :pre-init-trace card)
   (let [bonus (or (get-in @state [:bonus :trace]) 0)
-        base (if (fn? base) (base state side card nil) base)
+        base (if (fn? base) (base state side  (make-eid state) card nil) base)
         total (+ base boost bonus)]
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total
                                  " (" base
                                  (when (pos? bonus) (str " + " bonus " bonus"))
-                                 " + " boost " [Credits]) (" (:label ability) ")"))
+                                 " + " boost " [Credits]) (" (make-label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
-    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side %) {:priority 2})
+    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side eid %) {:priority 2})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
 (defn resolve-trace
   "Compares trace strength and link strength and triggers the appropriate effects."
-  [state side boost]
+  [state side eid boost]
   (clear-wait-prompt state :corp)
   (let [runner (:runner @state)
         {:keys [strength ability card]} (:trace @state)]
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
     (let [succesful (> strength (+ (:link runner) boost))
-          ability (if succesful ability (:unsuccessful ability))]
-      (resolve-ability state :corp ability card [strength (+ (:link runner) boost)])
-      (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace)))
-    (when-let [kicker (:kicker ability)]
-      (when (>= strength (:min kicker))
-        (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))))
+          which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
+      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
+                                       card [strength (+ (:link runner) boost)])
+                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
+                          (when-let [kicker (:kicker ability)]
+                            (when (>= strength (:min kicker))
+                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
+                          (effect-completed state side eid nil))))))
 
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."

@@ -86,6 +86,11 @@
       m)
     (dissoc m k)))
 
+(defn make-label
+  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
+  [ability]
+  (or (:label ability) (and (string? (:msg ability)) (capitalize (:msg ability))) ""))
+
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
   with Cancel always last."
@@ -113,14 +118,20 @@
 (defn other-side [side]
   (if (= side :corp) :runner :corp))
 
+(defn side-str [side]
+  (if (= side :corp) "Corp" "Runner"))
+
 ; Functions for working with zones.
+(defn remote-num->name [num]
+  (str "Server " num))
+
 (defn remote->name [zone]
   "Converts a remote zone to a string"
   (let [kw (if (keyword? zone) zone (last zone))
         s (str kw)]
     (if (.startsWith s ":remote")
       (let [num (last (split s #":remote"))]
-        (str "Server " num)))))
+        (remote-num->name num)))))
 
 (defn central->name [zone]
   "Converts a central zone keyword to a string."

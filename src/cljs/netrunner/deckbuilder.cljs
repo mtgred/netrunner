@@ -89,14 +89,14 @@
 
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
-  [card {:keys [side faction title] :as identity}]
+  [card {:keys [side faction setname code] :as identity}]
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
            (= (:faction card) "Neutral")
            (= (:faction card) faction)
-           (= title "The Shadow: Pulling the Strings"))
-       (or (not= title "Custom Biotics: Engineered for Success")
+           (= setname "Draft"))
+       (or (not= code "03002") ; Custom Biotics: Engineered for Success
            (not= (:faction card) "Jinteki"))))
 
 (defn load-decks [decks]
@@ -173,7 +173,7 @@
         ;; checks card ID against list of currently known alliance cards
         has-alliance-subtype? (fn [card]
                                 (case (:code (:card card))
-                                  (list "10013" "10018" "10019" "10067" "10068" "10071" "10072" "10076" "10109")
+                                  (list "10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10094" "10109")
                                   true
                                   false))
         ;; alliance helper, subtracts influence of free ally cards from given influence map
@@ -190,16 +190,20 @@
                                            (case (:code (:card card))
                                              (list
                                                "10013" ; Heritage Committee
+                                               "10029" ; Product Recall
                                                "10067" ; Jeeves Model Bioroids
                                                "10068" ; Raman Rai
                                                "10071" ; Salem's Hospitality
                                                "10072" ; Executive Search Firm
+                                               "10094" ; Consulting Visit
                                                "10109") ; Ibrahim Salem
                                              (default-alliance-free? card)
                                              "10018" ; Mumba Temple
                                              (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
                                              "10019" ; Museum of History
                                              (<= 50 (card-count cards))
+                                             "10038" ; PAD Factory
+                                             (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
                                              "10076" ; Mumbad Virtual Tour
                                              (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
                                              false))
@@ -268,10 +272,12 @@
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [card]
-  (let [cid (js/parseInt (:code card))]
-    ;; Cards up to Kala Ghoda are currently released
-    (and cid (<= cid 10019))))
+  [{:keys [setname] :as card}]
+  (let [date (some #(when (= (:name %) setname)
+                           (:available %))
+                   (:sets @app-state))]
+    (and (not= date "")
+         (< date (.toJSON (js/Date.))))))
 
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
@@ -292,15 +298,44 @@
   (go (<! (timeout 500))
       (-> owner (om/get-node "deckname") js/$ .select)))
 
-(defn new-deck [side owner]
-  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
-  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-  (edit-deck owner))
-
 (defn end-edit [owner]
   (om/set-state! owner :edit false)
   (om/set-state! owner :query "")
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
+
+(defn handle-edit [owner]
+  (let [text (.-value (om/get-node owner "deck-edit"))]
+    (om/set-state! owner :deck-edit text)
+    (om/set-state! owner
+                   [:deck :cards]
+                   (parse-deck (om/get-state owner [:deck :identity :side])
+                               text))))
+
+(defn delete-deck [owner]
+  (om/set-state! owner :delete true)
+  (deck->str owner)
+  (-> owner (om/get-node "viewport") js/$ (.addClass "delete"))
+  (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e)))
+
+(defn end-delete [owner]
+  (om/set-state! owner :delete false)
+  (-> owner (om/get-node "viewport") js/$ (.removeClass "delete")))
+
+(defn handle-delete [cursor owner]
+  (authenticated
+   (fn [user]
+     (let [deck (om/get-state owner :deck)]
+       (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
+       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
+       (do
+         (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
+         (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))
+         (end-delete owner))))))
+
+(defn new-deck [side owner]
+  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
+  (edit-deck owner))
 
 (defn save-deck [cursor owner]
   (authenticated
@@ -317,30 +352,6 @@
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)))))))
 
-(defn match [identity query]
-  (if (empty? query)
-    []
-    (let [cards (->> (:cards @app-state)
-                     (filter #(and (allowed? % identity)
-                                   (not= "Special" (:setname %))
-                                   (alt-art? %)))
-                     (distinct-by :title))]
-      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
-
-(defn handle-edit [owner]
-  (let [text (.-value (om/get-node owner "deck-edit"))]
-    (om/set-state! owner :deck-edit text)
-    (om/set-state! owner [:deck :cards] (parse-deck (om/get-state owner [:deck :identity :side]) text))))
-
-(defn handle-delete [cursor owner]
-  (authenticated
-   (fn [user]
-     (let [deck (om/get-state owner :deck)]
-       (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
-       (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
-       (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))))))
-
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
@@ -353,12 +364,18 @@
 (defn influence-dots
   "Returns a string with UTF-8 full circles representing influence."
   [num]
-  (join (conj (repeat num "&#9679;&#8203;") ""))) ; &#8203; is a zero-width space to allow wrapping
+  (let [dot "&#9679;&#8203;"] ; &#8203; is a zero-width space to allow wrapping
+    (if (<= 20 num)
+      (str num dot)
+      (join (conj (repeat num dot) "")))))
 
 (defn restricted-dots
   "Returns a string with UTF-8 empty circles representing MWL restricted cards."
   [num]
-  (join (conj (repeat num "&#9675;&#8203;") "")))
+  (let [dot "&#9675;&#8203;"]
+    (if (<= 20 num)
+      (str num dot)
+      (join (conj (repeat num dot) "")))))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
@@ -422,6 +439,16 @@
         blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
     (.createObjectURL js/URL blob)))
 
+(defn match [identity query]
+  (if (empty? query)
+    []
+    (let [cards (->> (:cards @app-state)
+                     (filter #(and (allowed? % identity)
+                                   (not= "Special" (:setname %))
+                                   (alt-art? %)))
+                     (distinct-by :title))]
+      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
+
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
         matches (om/get-state owner :matches)]
@@ -479,7 +506,7 @@
               (for [i (range (count matches))]
                 [:div {:class (if (= i (:selected state)) "selected" "")
                        :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
-                                         (om/set-state! owner :query (.. e -target -innerHTML))
+                                         (om/set-state! owner :query (.. e -target -textContent))
                                          (om/set-state! owner :selected i))}
                  (:title (nth matches i))])]))]]))))
 
@@ -547,16 +574,23 @@
           [:div.decklist
            (when-let [deck (:deck state)]
              (let [identity (:identity deck)
-                   cards (:cards deck)]
+                   cards (:cards deck)
+                   edit? (:edit state)
+                   delete? (:delete state)]
                [:div
-                (if (:edit state)
-                  [:div.button-bar
-                   [:button {:on-click #(save-deck cursor owner)} "Save"]
-                   [:button {:on-click #(end-edit owner)} "Cancel"]]
-                  [:div.button-bar
-                   [:button {:on-click #(edit-deck owner)} "Edit"]
-                   [:button {:on-click #(handle-delete cursor owner)} "Delete"]
-                   [:a.button {:href (octgn-link owner) :download (str (:name deck) ".o8d")} "OCTGN Export"]])
+                (cond
+                  edit? [:div.button-bar
+                         [:button {:on-click #(save-deck cursor owner)} "Save"]
+                         [:button {:on-click #(end-edit owner)} "Cancel"]]
+                  delete? [:div.button-bar
+                           [:button {:on-click #(handle-delete cursor owner)} "Confirm Delete"]
+                           [:button {:on-click #(end-delete owner)} "Cancel"]]
+                  :else [:div.button-bar
+                         [:button {:on-click #(edit-deck owner)} "Edit"]
+                         [:button {:on-click #(delete-deck owner)} "Delete"]
+                         [:a.button {:href (octgn-link owner)
+                                     :download (str (:name deck) ".o8d")}
+                          "OCTGN Export"]])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]

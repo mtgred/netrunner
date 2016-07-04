@@ -63,12 +63,14 @@
      [:div.float-right
       (let [c (count (:games cursor))]
         (str c " Game" (when (not= c 1) "s")))]
-     (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
+     (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          [:div.float-right
           (when (not= (:side @app-state) :spectator)
             [:a.concede-button {:on-click #(netrunner.gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
-          [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
+          [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]])
+       (when (= (:side @app-state) :spectator)
+         [:div.float-right [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          (let [c (count (:spectators game))]
