@@ -427,7 +427,7 @@
     (starting-hand state :runner ["I've Had Worse"])
     (play-from-hand state :corp "Pup" "HQ")
     (core/rez state :corp (get-ice state :hq 0))
-    (card-ability state :corp (get-ice state :hq 0) 0)
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
     (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
