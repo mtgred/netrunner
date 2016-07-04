@@ -224,7 +224,8 @@
                              card :can-rez
                              (fn [state side card]
                                (if (and (ice? card)
-                                        (= (count (get-in @state [:run :ices])) (get-in @state [:run :position])))
+                                        (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
+                                           (inc (ice-index state card))))
                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
@@ -454,14 +455,16 @@
 
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
-                  :prompt "Choose a server"
+                  :prompt "Choose a server to run with Jak Sinclair"
+                  :once :per-turn
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :effect (effect (run target))}]
-   {:install-cost-bonus (req [:credit (* -1 (:link runner))])
+   {:flags {:runner-phase-12 (req true)}
+    :install-cost-bonus (req [:credit (* -1 (:link runner))])
     :events {:runner-turn-begins
-              {:optional {:prompt "Use Jak Sinclair to make a run?"
-                          :once :per-turn
+              {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))
+                          :prompt "Use Jak Sinclair to make a run?"
                           :yes-ability ability}}}
     :abilities [ability]})
 

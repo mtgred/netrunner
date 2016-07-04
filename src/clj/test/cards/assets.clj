@@ -27,7 +27,7 @@
     (play-from-hand state :corp "Aggressive Secretary" "New remote")
     (let [as (get-content state :remote1 0)]
       ;; Single advance AggSec
-      (core/advance state :corp as)
+      (core/advance state :corp {:card (refresh as)})
       (take-credits state :corp)
       ;; Run on AggSec with 3 programs
       (play-from-hand state :runner "Cache")
@@ -38,7 +38,6 @@
       (is (= 3 (get-in @state [:corp :credit])))
       ;; Corp can trash one program
       (prompt-select :corp (get-in @state [:runner :rig :program 1]))
-      (prompt-choice :corp "Done")
       ;; There should be two Caches left
       (is (= 3 (get-in @state [:corp :credit])))
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))

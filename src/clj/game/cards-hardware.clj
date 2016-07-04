@@ -490,14 +490,15 @@
     :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (lose :click 1)
-                                 (update! (assoc card :qianju-active true)))
-                 :msg "avoid the first tag received until their next turn"}]
-    :events {:corp-turn-ends {:effect (effect (update! (dissoc card :qianju-active)))}}
+                 :effect (effect (update! (assoc card :qianju-active true)))
+                 :msg "lose [Click] and avoid the first tag received until their next turn"}]
+    :events {:corp-turn-ends {:effect (effect (update! (dissoc card :qianju-active)))}
+             :runner-turn-begins {:req (req (:qianju-active card))
+                                  :effect (effect (lose :click 1))}
              :pre-tag {:req (req (:qianju-active card))
-                       :msg "to avoid the first tag received"
+                       :msg "avoid the first tag received"
                        :effect (effect (tag-prevent 1)
-                                       (update! (dissoc card :qianju-active)))}}
+                                       (update! (dissoc card :qianju-active)))}}}
 
    "R&D Interface"
    {:in-play [:rd-access 1]}

@@ -10,8 +10,12 @@
                 'corp '(:corp @state)
                 'corp-reg '(get-in @state [:corp :register])
                 'runner-reg '(get-in @state [:runner :register])
-                'current-ice '(when-let [run (:run @state)]
-                                (when (> (or (:position run) 0) 0) ((:ices run) (dec (:position run)))))
+                'run-server '(when (:run @state)
+                               (get-in @state (concat [:corp :servers] (:server (:run @state)))))
+                'run-ices '(:ices run-server)
+                'current-ice '(when-let [run-pos (:position (:run @state))]
+                                (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
+                                  (nth (:ices run-server) (dec run-pos))))
                 'target '(first targets)]
            ~@actions))))
 
@@ -20,7 +24,12 @@
      (let ~['runner '(:runner @state)
             'corp '(:corp @state)
             'run '(:run @state)
-            'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
+            'run-server '(when (:run @state)
+                           (get-in @state (concat [:corp :servers] (:server (:run @state)))))
+            'run-ices '(:ices run-server)
+            'current-ice '(when-let [run-pos (:position (:run @state))]
+                            (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
+                              (nth (:ices run-server) (dec run-pos))))
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
@@ -50,7 +59,12 @@
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'run '(:run @state)
-            'current-ice '(when (and run (> (or (:position run) 0) 0)) ((:ices run) (dec (:position run))))
+            'run-server '(when (:run @state)
+                           (get-in @state (concat [:corp :servers] (:server (:run @state)))))
+            'run-ices '(:ices run-server)
+            'current-ice '(when-let [run-pos (:position (:run @state))]
+                            (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
+                              (nth (:ices run-server) (dec run-pos))))
             'target '(first targets)
             'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))]
        (str ~@expr))))

@@ -85,12 +85,15 @@
                :pre-start-game {:effect draft-points-target}})}
 
    "Cerebral Imaging: Infinite Frontiers"
-   {:effect (req (add-watch state :cerebral-imaging
+   {:effect (req (when (> (:turn @state) 1)
+                   (swap! state assoc-in [:corp :hand-size-base] (:credit corp)))
+                 (add-watch state :cerebral-imaging
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
                                   (swap! ref assoc-in [:corp :hand-size-base] credit))))))
-    :leave-play (effect (remove-watch state :cerebral-imaging))}
+    :leave-play (req (remove-watch state :cerebral-imaging)
+                     (swap! state assoc-in [:corp :hand-size-base] 5))}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))
@@ -308,8 +311,8 @@
 
    "Jinteki: Replicating Perfection"
    {:events
-    {:runner-turn-begins {:effect (req (apply prevent-run-on-server
-                                              state card (map first (get-remotes @state))))}
+    {:runner-phase-12 {:effect (req (apply prevent-run-on-server
+                                           state card (map first (get-remotes @state))))}
      :run {:once :per-turn
            :req (req (is-central? (:server run)))
            :effect (req (apply enable-run-on-server
@@ -478,6 +481,20 @@
                               :effect (effect (mill :corp))
                               :req (req (has-subtype? target "Virus"))}}}
 
+   "Null: Whistleblower"
+   {:abilities [{:once :per-turn
+                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :prompt "Choose a card in your Grip to trash"
+                 :choices {:req in-hand?}
+                 :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
+                           " by 2 for the remainder of the run")
+                 :effect (effect (register-events
+                                   {:pre-ice-strength {:effect (effect (ice-strength-bonus -2 current-ice))}
+                                    :run-ends {:effect (effect (unregister-events card))}}
+                                  card)
+                                 (update-all-ice))}]
+    :events {:pre-ice-strength nil :run-ends nil}}
+
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"
                            :once :per-turn
@@ -509,7 +526,6 @@
                                                              {:effect (effect (update! (assoc ice :subtype stypes))
                                                                               (unregister-events card))}} card)
                                 (update-ice-strength state side ice)
-                                (update-run-ice state side)
                                 (trigger-event state side :ice-subtype-changed)))}]
     :events {:run-ends nil}}
 

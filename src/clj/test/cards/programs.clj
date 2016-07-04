@@ -146,6 +146,31 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest false-echo
+  "False Echo - choice for Corp"
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 3)])
+              (default-runner [(qty "False Echo" 3)]))
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "False Echo")
+    (play-from-hand state :runner "False Echo")
+    (run-on state "Archives")
+    (run-continue state)
+    (let [echo1 (get-program state 0)
+          echo2 (get-program state 1)]
+      (card-ability state :runner echo1 0)
+      (prompt-choice :corp "Add to HQ")
+      (is (= 2 (count (:hand (get-corp)))) "Ice Wall added to HQ")
+      (is (= 1 (count (:discard (get-runner)))) "False Echo trashed")
+      (run-continue state)
+      (card-ability state :runner echo2 0)
+      (prompt-choice :corp "Rez")
+      (is (:rezzed (get-ice state :archives 0)) "Ice Wall rezzed")
+      (is (= 2 (count (:discard (get-runner)))) "False Echo trashed"))))
+
+
 (deftest gravedigger
   "Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp"
   (do-game
@@ -581,7 +606,7 @@
     (trash-from-hand state :corp "Priority Requisition")
     (take-credits state :corp)
     (play-from-hand state :runner "Sneakdoor Beta")
-    (let [sb (get-in @state [:runner :rig :program 0])
+    (let [sb (get-program state 0)
           cr (get-content state :archives 0)]
       (core/rez state :corp cr)
       (card-ability state :runner sb 0)

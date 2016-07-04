@@ -403,10 +403,10 @@
                              :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
                                        " and rez it, ignoring all costs"))
                              :effect (req (if (>= (:advance-counter (get-card state card)) 5)
-                                            (do (corp-install state side eid target "New remote"
+                                            (do (corp-install state side target "New remote"
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
-                                            (corp-install state side eid target "New remote")))}}}}}
+                                            (corp-install state side target "New remote")))}}}}}
 
    "Nisei MK II"
    {:effect (effect (add-counter card :agenda 1))

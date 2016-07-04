@@ -204,7 +204,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "DDoS")
     (let [ddos (get-in @state [:runner :rig :resource 0])
-          iwall (get-ice state :hq 0)]
+          iwall (get-ice state :hq 1)]
       (card-ability state :runner ddos 0)
       (is (= (:title ddos) (get-in @state [:runner :discard 0 :title])))
       (run-on state "HQ")

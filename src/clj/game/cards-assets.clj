@@ -67,7 +67,8 @@
                                       (= (:side %) "Corp"))}}]}
 
    "Aggressive Secretary"
-   (advance-ambush 2 {:effect
+   (advance-ambush 2 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :effect
                       (req (let [agg (get-card state card)
                                  n (:advance-counter agg 0)
                                  ab (-> trash-program
@@ -124,7 +125,8 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Cerebral Overwriter"
-   (advance-ambush 3 {:msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
+   (advance-ambush 3 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
@@ -351,7 +353,8 @@
     :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
-   (advance-ambush 0 {:msg (msg "give the Runner " (:advance-counter (get-card state card) 0) " tag"
+   (advance-ambush 0 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :msg (msg "give the Runner " (:advance-counter (get-card state card) 0) " tag"
                                 (when (> (:advance-counter (get-card state card) 0) 1) "s"))
                       :effect (effect (tag-runner :runner (:advance-counter (get-card state card) 0)))})
 
@@ -673,7 +676,8 @@
    "Plan B"
    (advance-ambush
     0
-    {:effect
+    {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+     :effect
      (effect (resolve-ability
               {:prompt "Choose an Agenda in HQ to score"
                :choices {:req #(and (is-type? % "Agenda")
@@ -715,7 +719,8 @@
                               (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
 
    "Project Junebug"
-   (advance-ambush 1 {:msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
+   (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
                       :effect (effect (damage eid :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
@@ -851,14 +856,15 @@
 
    "Shattered Remains"
    (advance-ambush 1 {:effect (req (let [shat (get-card state card)]
-                                     (resolve-ability
-                                      state side
-                                      (-> trash-hardware
-                                          (assoc-in [:choices :max] (:advance-counter shat))
-                                          (assoc :prompt (msg "Choose " (:advance-counter shat) " pieces of hardware to trash")
-                                                 :effect (effect (trash-cards targets))
-                                                 :msg (msg "trash " (join ", " (map :title targets)))))
-                                      shat nil)))})
+                                     (when (< 0 (:advance-counter shat 0))
+                                       (resolve-ability
+                                         state side
+                                         (-> trash-hardware
+                                             (assoc-in [:choices :max] (:advance-counter shat))
+                                             (assoc :prompt (msg "Choose " (:advance-counter shat) " pieces of hardware to trash")
+                                                    :effect (effect (trash-cards targets))
+                                                    :msg (msg "trash " (join ", " (map :title targets)))))
+                                        shat nil))))})
 
    "Shi.Kyū"
    {:access

@@ -94,7 +94,7 @@
                         value (if-let [n (string->num (first args))] n 0)
                         c-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
-                                     (and (is-type? target "Agenda") (is-scored? state target)) :agenda
+                                     (and (is-type? target "Agenda") (is-scored? target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter c-type)]
                     (cond advance (do (set-prop state side target :advance-counter value)
@@ -215,10 +215,11 @@
 
 (defn show-error-toast
   [state side]
-  (toast state side
-         (str "Your last action caused a game error on the server. You can keep playing, but there "
-              "may be errors in the game's current state. Please click the button below to submit a report "
-              "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
-         "exception"
-         {:time-out 0 :close-button true}))
+  (when state
+    (toast state side
+           (str "Your last action caused a game error on the server. You can keep playing, but there "
+                "may be errors in the game's current state. Please click the button below to submit a report "
+                "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
+           "exception"
+           {:time-out 0 :close-button true})))
 

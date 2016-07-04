@@ -134,13 +134,16 @@
   (if (= side :corp) "Corp" "Runner"))
 
 ;;; Functions for working with zones.
+(defn remote-num->name [num]
+  (str "Server " num))
+
 (defn remote->name [zone]
   "Converts a remote zone to a string"
   (let [kw (if (keyword? zone) zone (last zone))
         s (str kw)]
     (if (.startsWith s ":remote")
       (let [num (last (split s #":remote"))]
-        (str "Server " num)))))
+        (remote-num->name num)))))
 
 (defn central->name [zone]
   "Converts a central zone keyword to a string."

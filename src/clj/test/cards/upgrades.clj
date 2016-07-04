@@ -506,10 +506,10 @@
     (play-from-hand state :corp "Red Herrings" "New remote")
     (play-from-hand state :corp "House of Knives" "Server 1")
     (take-credits state :corp 1)
-
     (core/gain state :runner :credit 1)
     (let [rh (get-content state :remote1 0)
           hok (get-content state :remote1 1)]
+      (core/rez state :corp rh)
       (run-empty-server state "Server 1")
       ;; runner now chooses which to access.
       (prompt-select :runner rh)
@@ -719,4 +719,3 @@
       (prompt-choice :runner "Yes") ; pay to trash
       (take-credits state :runner 3)
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
-

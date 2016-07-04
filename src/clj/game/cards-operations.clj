@@ -12,7 +12,8 @@
                                            (= (first (:zone %)) :scored)
                                            (:abilities %))}
                       :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                      :effect (final-effect (resolve-ability (dissoc (card-def target) :end-turn) target nil))}
+                      :delayed-completion true
+                      :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
                     card nil)))}
 
    "Accelerated Diagnostics"
@@ -22,6 +23,7 @@
                                    (is-type? % "Operation")
                                    (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
+              :delayed-completion true
               :effect (req (when-completed (play-instant state side target {:no-additional-cost true})
                                            (when (< i n)
                                              (continue-ability state side (ad (inc i) n adcard) adcard nil))))})]
@@ -30,6 +32,7 @@
                                           (take 3 (:deck corp))))]
                      (continue-ability state side
                                        {:msg "look at the top 3 cards of R&D"
+                                        :delayed-completion true
                                         :effect (req (doseq [c (take 3 (:deck corp))]
                                                        (move state side c :play-area))
                                                      (continue-ability state side (ad 1 n card) card nil))}
@@ -38,15 +41,21 @@
 "Ad Blitz"
 (let [abhelp (fn ab [n total]
                {:prompt "Select an advertisement to install and rez" :show-discard true
+                :delayed-completion true
                 :choices {:req #(and (= (:side %) "Corp")
                                      (has-subtype? % "Advertisement")
                                      (or (in-hand? %)
                                          (= (:zone %) [:discard])))}
-                :effect (req (corp-install state side target nil {:install-state :rezzed})
-                             (when (< n total)
-                               (continue-ability state side (ab (inc n) total) card nil)))})]
-  {:prompt "How many advertisements?" :choices :credit :msg (msg "install and rez " target " advertisements")
-    :effect (effect (continue-ability (abhelp 1 target) card nil))})
+                :effect (req (when-completed
+                               (corp-install state side target nil {:install-state :rezzed})
+                               (if (< n total)
+                                 (continue-ability state side (ab (inc n) total) card nil)
+                                 (effect-completed state side eid))))})]
+  {:prompt "How many advertisements?"
+   :delayed-completion true
+   :choices :credit
+   :msg (msg "install and rez " target " advertisements")
+   :effect (effect (continue-ability (abhelp 1 target) card nil))})
 
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
@@ -69,7 +78,7 @@
                                                             (= serv "Archives") [:archives])
                                                         ices (get-in @state (concat [:corp :servers] s [:ices]))]
                                                     (swap! state assoc :per-run nil
-                                                           :run {:server s :position (count ices) :ices ices
+                                                           :run {:server s :position (count ices)
                                                                  :access-bonus 0 :run-effect nil})
                                                     (gain-run-credits state :runner (:bad-publicity corp))
                                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
@@ -138,6 +147,7 @@
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
                          (in-hand? %))}
+    :delayed-completion true
     :effect (req (let [agenda target]
                    (continue-ability
                      state side {:prompt (str "Choose a server to install " (:title agenda))
@@ -150,8 +160,7 @@
                                                 ; we need (host) to look for it in discard.
                                                 (host state side agenda (assoc card :zone [:discard]
                                                                                     :seen true :installed true))
-                                                (system-msg state side (str "hosts Casting Call on " (:title agenda)))
-                                                (effect-completed state side eid card)))}
+                                                (system-msg state side (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
@@ -251,6 +260,7 @@
                    state side
                    {:prompt "Choose a stolen agenda in the Runner's score area to swap"
                     :choices {:req #(in-runner-scored? state side %)}
+                    :delayed-completion true
                     :effect (req (let [r target]
                                    (continue-ability
                                      state side
@@ -282,8 +292,7 @@
                                                      (let [newr (find-cid (:cid c) (get-in @state [:runner :scored]))]
                                                        (deactivate state :corp newr))
                                                      (system-msg state side (str "uses Exchange of Information to swap "
-                                                                                 (:title c) " for " (:title r)))
-                                                     (effect-completed state side eid card)))}
+                                                                                 (:title c) " for " (:title r)))))}
                                     card nil)))}
                   card nil))}
 
@@ -344,7 +353,7 @@
                        :choices {:req #(and (in-hand? %)
                                             (= (:side %) "Corp"))}
                        :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
-                       :effect (final-effect (move target :deck {:front true}))}
+                       :effect (effect (move target :deck {:front true}))}
                       card nil))}
 
    "Housekeeping"
@@ -383,16 +392,18 @@
     :effect (effect (gain :credit 4)
                     (continue-ability {:player :corp
                                        :prompt "Choose a card to install"
+                                       :delayed-completion true
                                        :choices {:req #(and (not (is-type? % "Operation"))
                                                             (:side % "Corp")
                                                             (in-hand? %))}
-                                       :effect (final-effect (corp-install target nil))
+                                       :effect (effect (corp-install eid target nil nil))
                                        :msg (msg (corp-install-msg target))}
                                       card nil))}
 
    "Localized Product Line"
    {:prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
+    :delayed-completion true
     :effect (req (let [c (:title target)
                        cs (filter #(= (:title %) c) (:deck corp))]
                    (continue-ability
@@ -402,8 +413,7 @@
                      :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
                      :effect (req (doseq [c (take target cs)]
                                     (move state side c :hand))
-                                  (shuffle! state :corp :deck)
-                                  (effect-completed state side eid card))}
+                                  (shuffle! state :corp :deck))}
                     card nil)))}
 
    "Manhunt"
@@ -504,12 +514,13 @@
    "Power Grid Overload"
    {:trace {:base 2
             :msg "trash 1 piece of hardware"
+            :delayed-completion true
             :effect (req (let [max-cost (- target (second targets))]
                            (continue-ability state side
                                              {:choices {:req #(and (is-type? % "Hardware")
                                                                    (<= (:cost %) max-cost))}
                                               :msg (msg "trash " (:title target))
-                                              :effect (final-effect (trash target))}
+                                              :effect (effect (trash target))}
                                              card nil))
                          (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
@@ -518,6 +529,7 @@
     :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (count (:deck corp)))}
     :msg (msg "trash " target " cards from the top of R&D")
+    :delayed-completion true
     :effect (req (mill state :corp target)
                  (let [n target]
                    (continue-ability state :runner
@@ -525,7 +537,7 @@
                                       :choices {:req #(and (#{"Hardware" "Program"} (:type %))
                                                            (<= (:cost %) n))}
                                       :msg (msg "trash " (:title target))
-                                      :effect (final-effect (trash target))}
+                                      :effect (effect (trash target))}
                                     card nil)))}
 
    "Precognition"
@@ -556,12 +568,13 @@
    {:req (req tagged)
     :choices :credit
     :prompt "How many credits?"
+    :delayed-completion true
     :effect (req (let [c (min target (:tag runner))]
                    (continue-ability state side
                                      {:msg (msg "place " c " advancement tokens on "
                                                 (card-str state target))
                                       :choices {:req can-be-advanced?}
-                                      :effect (final-effect (add-prop target :advance-counter c {:placed true}))}
+                                      :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                      card nil)))}
 
    "Punitive Counterstrike"
@@ -585,14 +598,18 @@
                      :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
+                     :delayed-completion true
                      :effect (req (move state side target :hand)
                                   (continue-ability
                                     state side
                                     (rt total (dec left) (cons (:title target) selected))
                                     card nil))}
-                    {:effect (final-effect (shuffle! :corp :deck))
+                    {:effect (effect (shuffle! :corp :deck))
                      :msg (msg "shuffle R&D")}))]
-   {:prompt "How many sysops?" :choices :credit :msg (msg "search for " target " sysops")
+   {:prompt "How many sysops?"
+    :delayed-completion true
+    :choices :credit
+    :msg (msg "search for " target " sysops")
     :effect (effect (continue-ability (rthelp target target []) card nil))})
 
    "Restoring Face"
@@ -617,8 +634,8 @@
                                                   (in-hand? %))}
                       :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
                                 " and gain " (* 2 (count targets)) " [Credits]")
-                      :effect (final-effect (trash-cards targets)
-                                            (gain :credit (* 2 (count targets))))} card nil)))}
+                      :effect (effect (trash-cards targets)
+                                      (gain :credit (* 2 (count targets))))} card nil)))}
 
    "Rework"
    {:prompt "Choose a card from HQ to shuffle into R&D"
@@ -658,26 +675,30 @@
                  (effect-completed state side eid card))}
 
    "Shipment from MirrorMorph"
-   (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph" :priority -1
+   (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
+                             :priority -1
+                             :delayed-completion true
                              :choices {:req #(and (:side % "Corp")
                                                   (not (is-type? % "Operation"))
                                                   (in-hand? %))}
-                             :effect (req (corp-install state side target nil)
-                                          (if (< n 3)
-                                            (continue-ability state side (sh (inc n)) card nil)
-                                            (effect-completed state side eid card)))})]
+                             :effect (req (when-completed
+                                            (corp-install state side target nil nil)
+                                            (if (< n 3)
+                                              (continue-ability state side (sh (inc n)) card nil)
+                                              (effect-completed state side eid card))))})]
      {:delayed-completion true
       :effect (effect (continue-ability (shelper 1) card nil))})
 
    "Shipment from SanSan"
    {:choices ["0", "1", "2"]
     :prompt "How many advancement tokens?"
+    :delayed-completion true
     :effect (req (let [c (Integer/parseInt target)]
                    (continue-ability
                      state side
                      {:choices {:req can-be-advanced?}
                       :msg (msg "place " c " advancement tokens on " (card-str state target))
-                      :effect (final-effect (add-prop :corp target :advance-counter c {:placed true}))}
+                      :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}
 
    "Shoot the Moon"
@@ -694,11 +715,13 @@
    {:trace {:msg "trash a connection"
             :base 3
             :choices {:req #(has-subtype? % "Connection")}
+            :delayed-completion true
             :effect (req (let [c target]
                            (continue-ability
                              state side
                              {:prompt (msg "Take 1 tag to prevent " (:title c) " from being trashed?")
                               :choices ["Yes" "No"] :player :runner
+                              :delayed-completion true
                               :effect (effect (continue-ability
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
@@ -711,13 +734,13 @@
    "Sub Boost"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-    :effect (final-effect (update! (assoc target :subtype
-                                                 (->> (vec (.split (:subtype target) " - "))
-                                                      (concat ["Barrier"])
-                                                      distinct
-                                                      (join " - "))))
-                          (update-ice-strength target)
-                          (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
+    :effect (effect (update! (assoc target :subtype
+                                           (->> (vec (.split (:subtype target) " - "))
+                                                (concat ["Barrier"])
+                                                distinct
+                                                (join " - "))))
+                    (update-ice-strength target)
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -725,10 +748,12 @@
               :choices {:req #(and (= (:side %) "Corp")
                                    (is-type? % "Operation")
                                    (in-hand? %))}
+              :delayed-completion true
               :msg (msg "play " (:title target))
               :effect (req (when-completed (play-instant state side target)
-                                           (when (< i 2)
-                                               (continue-ability state side (sc (inc i) sccard) sccard nil))))})]
+                                           (if (< i 2)
+                                               (continue-ability state side (sc (inc i) sccard) sccard nil)
+                                               (effect-completed state side eid))))})]
      {:req (req tagged)
       :delayed-completion true
       :effect (effect (continue-ability (sc 1 card) card nil))})
@@ -771,13 +796,15 @@
              {:prompt "Select two pieces of ICE to swap positions"
               :choices {:req #(and (= serv (rest (butlast (:zone %)))) (ice? %))
                         :max 2}
+              :delayed-completion true
               :effect (req (if (= (count targets) 2)
                              (do (swap-ice state side (first targets) (second targets))
                                  (continue-ability state side (sun serv) card nil))
-                             (system-msg state side "has finished rearranging ICE"))
-                           (effect-completed state side eid card))})]
+                             (do (system-msg state side "has finished rearranging ICE")
+                                 (effect-completed state side eid card))))})]
      {:prompt "Choose a server"
       :choices (req servers)
+      :delayed-completion true
       :msg (msg "rearrange ICE protecting " target)
       :effect (req (let [serv (next (server->zone state target))]
                      (continue-ability state side (sun serv) card nil)))})
@@ -825,21 +852,23 @@
 
    "Trick of Light"
    {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
+    :delayed-completion true
     :effect (req (let [fr target tol card]
                    (continue-ability
                      state side
                      {:prompt "Move how many advancement tokens?"
                       :choices (take (inc (:advance-counter fr)) ["0" "1" "2"])
+                      :delayed-completion true
                       :effect (req (let [c (Integer/parseInt target)]
                                      (continue-ability
                                        state side
                                        {:prompt  "Move to where?"
                                         :choices {:req #(and (not= (:cid fr) (:cid %))
                                                              (can-be-advanced? %))}
-                                        :effect  (final-effect (add-prop :corp target :advance-counter c {:placed true})
-                                                               (add-prop :corp fr :advance-counter (- c) {:placed true})
-                                                               (system-msg (str "moves " c " advancement tokens from "
-                                                                                (card-str state fr) " to " (card-str state target))))}
+                                        :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
+                                                         (add-prop :corp fr :advance-counter (- c) {:placed true})
+                                                         (system-msg (str "moves " c " advancement tokens from "
+                                                                          (card-str state fr) " to " (card-str state target))))}
                                        tol nil)))}
                      card nil)))}
 

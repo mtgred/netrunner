@@ -547,6 +547,32 @@
       (prompt-choice :runner "1 [Credits]")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
 
+(deftest null-ability
+  "Null ability - once per turn"
+  (do-game
+    (new-game
+      (default-corp [(qty "Wraparound" 3)])
+      (make-deck "Null: Whistleblower" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [null (get-in @state [:runner :identity])
+          wrap1 (get-ice state :hq 0)
+          wrap2 (get-ice state :hq 1)]
+      (card-ability state :runner null 0)
+      (is (empty? (:prompt (get-runner))) "Ability won't work on unrezzed ICE")
+      (core/rez state :corp wrap2)
+      (card-ability state :runner null 0)
+      (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 5 (:current-strength (refresh wrap2))) "Wraparound reduced to 5 strength")
+      (run-continue state)
+      (core/rez state :corp wrap1)
+      (card-ability state :runner null 0)
+      (is (empty? (:prompt (get-runner))) "Ability already used this turn")
+      (run-jack-out state)
+      (is (= 7 (:current-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
+
 (deftest quetzal-ability
   "Quetzal ability- once per turn"
   (do-game
