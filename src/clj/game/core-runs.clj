@@ -567,7 +567,7 @@
                   (let [prevent (get-in @state [:prevent :jack-out])]
                     (if (pos? (count prevent))
                       (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
-                          (show-wait-prompt state :runner "Corp to decide to prevent the jack out" {:priority 10})
+                          (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
                           (show-prompt state :corp nil
                                        (str "Prevent the Runner from jacking out?") ["Done"]
                                        (fn [_]

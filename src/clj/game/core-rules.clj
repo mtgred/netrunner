@@ -187,7 +187,8 @@
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
          ;; runner can prevent the damage.
-         (do (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
+         (do (system-msg state :runner "has the option to avoid damage")
+             (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
              (show-prompt
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                (fn [_]
@@ -197,7 +198,7 @@
                    (system-msg state :runner
                                (if prevent
                                  (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                          " " (name type) " damage")
+                                      " " (name type) " damage")
                                  "will not prevent damage"))
                    (clear-wait-prompt state :corp)
                    (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
@@ -238,15 +239,17 @@
      (let [prevent (get-in @state [:prevent :tag :all])]
        (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
          (do (system-msg state :runner "has the option to avoid tags")
+             (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
              (show-prompt
                state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
-               (fn [choice]
+               (fn [_]
                  (let [prevent (get-in @state [:tag :tag-prevent])]
                    (system-msg state :runner
                                (if prevent
                                  (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                       (if (< 1 prevent) " tags" " tag"))
                                  "will not avoid tags"))
+                   (clear-wait-prompt state :corp)
                    (resolve-tag state side (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
          (resolve-tag state side n args))))))
@@ -292,10 +295,12 @@
            ;; Check for prevention effects
            (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))
              (do (system-msg state :runner "has the option to prevent trash effects")
+                 (show-wait-prompt state :corp "Runner to prevent trash effects" {:priority 10})
                  (show-prompt state :runner nil
                               (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                              (fn [choice]
-                                (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                              (fn [_]
+                                (clear-wait-prompt state :corp)
+                                (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
                                   (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
                                       (swap! state update-in [:trash :trash-prevent] dissoc ktype))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
@@ -441,9 +446,11 @@
                    (let [prevent (get-in @state [:prevent :expose :all])]
                      (if (and (not unpreventable) (pos? (count prevent)))
                        (do (system-msg state :corp "has the option to prevent a card from being exposed")
+                           (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
                            (show-prompt state :corp nil
                                         (str "Prevent " (:title target) " from being exposed?") ["Done"]
                                         (fn [_]
+                                          (clear-wait-prompt state :runner)
                                           (if-let [_ (get-in @state [:expose :expose-prevent])]
                                             (effect-completed state side (make-result eid false)) ;; ??
                                             (do (system-msg state :corp "will not prevent a card from being exposed")
