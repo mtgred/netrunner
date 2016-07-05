@@ -301,6 +301,53 @@
       (is (= 12 (:credit (get-corp))) "Gain 7 credits")
       (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
 
+(deftest labyrinthine-servers
+  "Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter"
+  (do-game
+    (new-game (default-corp [(qty "Labyrinthine Servers" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
+    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (let [ls1 (get-in @state [:corp :scored 0])
+          ls2 (get-in @state [:corp :scored 1])]
+      (is (= 2 (get-counters (refresh ls1) :power)))
+      (is (= 2 (get-counters (refresh ls2) :power)))
+      ;don't use token
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (:run @state) "Jack out prevent prompt")
+      (prompt-choice :corp "Done")
+      (is (not (:run @state)) "Corp does not prevent the jack out, run ends")
+      ;use token
+      (run-on state "HQ")
+      (run-jack-out state)
+      (card-ability state :corp ls1 0)
+      (card-ability state :corp ls2 0)
+      (card-ability state :corp ls1 0)
+      (prompt-choice :corp "Done")
+      (is (:run @state) "Jack out prevented, run is still ongoing")
+      (is (true? (get-in @state [:run :cannot-jack-out])) "Cannot jack out flag is in effect")
+      (run-successful state)
+      (is (not (:run @state)))
+      ;one Labyrinthine is empty but the other still has one token, ensure prompt still occurs
+      (is (= 0 (get-counters (refresh ls1) :power)))
+      (is (= 1 (get-counters (refresh ls2) :power)))
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (:run @state))
+      (card-ability state :corp ls2 0)
+      (prompt-choice :corp "Done")
+      (is (true? (get-in @state [:run :cannot-jack-out])))
+      (run-successful state)
+      (is (not (:run @state)))
+      ;no more tokens
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (not (:run @state)) "No jack out prevent prompt"))))
+
 (deftest medical-breakthrough
   "Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy"
   (do-game
