@@ -3,7 +3,8 @@
 (declare clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability7
-         get-remote-names card-name can-steal?)
+         get-remote-names card-name can-steal?
+         prevent-jack-out)
 
 ;;; Steps in the run sequence
 (defn run
@@ -546,12 +547,38 @@
     (handle-end-run state side)
     (trigger-event state side :unsuccessful-run)))
 
-(defn jack-out
-  "The runner decides to jack out."
-  [state side args]
+(defn jack-out-prevent
+  [state side]
+  (swap! state update-in [:jack-out :jack-out-prevent] #(+ (or % 0) 1))
+  (prevent-jack-out state side))
+
+(defn- resolve-jack-out
+  [state side eid]
   (end-run state side)
   (system-msg state side "jacks out")
-  (trigger-event state side :jack-out))
+  (trigger-event-sync state side (make-result eid true) :jack-out))
+
+(defn jack-out
+  "The runner decides to jack out."
+  ([state side] (jack-out state side (make-eid state)))
+  ([state side eid]
+  (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
+  (when-completed (trigger-event-sync state side :pre-jack-out)
+                  (let [prevent (get-in @state [:prevent :jack-out])]
+                    (if (pos? (count prevent))
+                      (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
+                          (show-wait-prompt state :runner "Corp to decide to prevent the jack out" {:priority 10})
+                          (show-prompt state :corp nil
+                                       (str "Prevent the Runner from jacking out?") ["Done"]
+                                       (fn [_]
+                                         (clear-wait-prompt state :runner)
+                                         (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
+                                           (effect-completed state side (make-result eid false))
+                                           (do (system-msg state :corp "will not prevent the Runner from jacking out")
+                                               (resolve-jack-out state side eid))))
+                                       {:priority 10}))
+                      (do (resolve-jack-out state side eid)
+                          (effect-completed state side (make-result eid false))))))))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
