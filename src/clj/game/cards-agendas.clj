@@ -481,8 +481,8 @@
 
    "Project Beale"
    {:agendapoints-runner (req (do 2))
-    :effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2))
-                    (set-prop card :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
+    :effect (req (let [n (quot (- (:advance-counter card) 3) 2)]
+                    (set-prop state side card :counter {:agenda n} :agendapoints (+ 2 n))))}
 
    "Project Vitruvius"
    {:effect (effect (add-counter card :agenda (- (:advance-counter card) 3)))
