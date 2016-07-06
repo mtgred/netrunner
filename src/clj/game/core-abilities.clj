@@ -389,6 +389,8 @@
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
           (gain state side :credit (- bet))
           (system-msg state side (str "spends " bet " [Credits]"))
+          (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
+          (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
           (trigger-event state side :psi-game nil)
           (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
             (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)

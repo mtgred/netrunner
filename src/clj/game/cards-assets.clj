@@ -378,6 +378,11 @@
                                                     {:card card}))}}
     :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
 
+   "Hyoubu Research Facility"
+   {:events {:psi-bet-corp {:once :per-turn
+                            :msg (msg "gain " target " [Credits]")
+                            :effect (effect (gain :corp :credit target))}}}
+
    "Ibrahim Salem"
    (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
                                    :prompt (str "Choose a " type " to trash")
@@ -785,6 +790,18 @@
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
 
+   "Sandburg"
+   {:effect (req (add-watch state :sandburg
+                            (fn [k ref old new]
+                              (let [credit (get-in new [:corp :credit])]
+                                (when (not= (get-in old [:corp :credit]) credit)
+                                  (update-all-ice ref side))))))
+    :events {:pre-ice-strength {:req (req (and (ice? target)
+                                               (>= (:credit corp) 10)))
+                                :effect (effect (ice-strength-bonus (quot (:credit corp) 5) target))}}
+    :leave-play (req (remove-watch state :sandburg)
+                     (update-all-ice state side))}
+
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
                  :cost [:credit 1]
@@ -1006,6 +1023,12 @@
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
     :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+
+   "Watchdog"
+   {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
+                       :effect (effect (rez-cost-bonus (- (:tag runner))))}
+             :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
+                              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"

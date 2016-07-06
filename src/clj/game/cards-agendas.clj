@@ -132,6 +132,16 @@
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
+   "Crisis Management"
+   (let [ability {:req (req tagged)
+                  :delayed-completion true
+                  :label "Do 1 meat damage (start of turn)"
+                  :once :per-turn
+                  :msg "do 1 meat damage"
+                  :effect (effect (damage eid :meat 1 {:card card}))}]
+     {:events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Dedicated Neural Net"
      (letfn [(access-hq [cards]
                {:prompt "Select a card to access."
