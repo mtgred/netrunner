@@ -29,6 +29,21 @@
                                             (qty "Always Be Running" 1) (qty "Bank Job" 3)]))
     (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
 
+(deftest adam-advanceable-traps
+  "Adam - Neutralize All Threats interaction with advanceable traps."
+  (do-game
+    (new-game
+      (default-corp [(qty "Cerebral Overwriter" 3)])
+      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 1) (qty "Safety First" 1)
+                                            (qty "Always Be Running" 1) (qty "Bank Job" 3)]))
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (advance state (get-content state :remote1 0) 2)
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :corp "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+    (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
+
 (deftest andromeda
   "Andromeda - 9 card starting hand, 1 link"
   (do-game

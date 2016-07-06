@@ -166,11 +166,9 @@
                             (if (< (count hand) n)
                               (do (flatline state)
                                   (trash-cards state side (make-eid state) (take n (shuffle hand))
-                                               {:unpreventable true} type))
-                                  ;(doseq [c (take n (shuffle hand))]
-;                                    (trash state side (make-eid state) c {:unpreventable true} type)))
+                                               {:unpreventable true}))
                               (do (trash-cards state side (make-eid state) (take n (shuffle hand))
-                                               {:unpreventable true} type)
+                                               {:unpreventable true :cause type})
                                   (trigger-event state side :damage type card))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))

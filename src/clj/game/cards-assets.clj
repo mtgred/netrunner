@@ -14,8 +14,9 @@
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
    {:access {:req (req (and installed (>= (:credit corp) cost)))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner (str "Corp to use " (:title card)))
-                             (resolve-ability
+                             (continue-ability
                               {:optional
                                {:prompt prompt
                                 :yes-ability ability
@@ -68,13 +69,15 @@
 
    "Aggressive Secretary"
    (advance-ambush 2 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :delayed-completion true
                       :effect
                       (req (let [agg (get-card state card)
                                  n (:advance-counter agg 0)
                                  ab (-> trash-program
                                         (assoc-in [:choices :max] n)
                                         (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
-                                               :effect (effect (trash-cards targets))
+                                               :delayed-completion true
+                                               :effect (effect (trash-cards eid targets nil))
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
                              (continue-ability state side ab agg nil)))})
 
@@ -127,6 +130,7 @@
    "Cerebral Overwriter"
    (advance-ambush 3 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
+                      :delayed-completion true
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
@@ -721,6 +725,7 @@
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
+                      :delayed-completion true
                       :effect (effect (damage eid :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
@@ -855,9 +860,10 @@
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
-   (advance-ambush 1 {:effect (req (let [shat (get-card state card)]
+   (advance-ambush 1 {:delayed-completion true
+                      :effect (req (let [shat (get-card state card)]
                                      (when (< 0 (:advance-counter shat 0))
-                                       (resolve-ability
+                                       (continue-ability
                                          state side
                                          (-> trash-hardware
                                              (assoc-in [:choices :max] (:advance-counter shat))
