@@ -487,6 +487,17 @@
                      (do (move state side c :hand)
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
+   "Injection Attack"
+   {:prompt "Choose a server"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :effect (effect (run target nil card)
+                    (continue-ability
+                      {:prompt "Choose an icebreaker"
+                       :choices {:req #(and (installed? %) (has-subtype? % "Icebreaker"))}
+                       :effect (effect (pump target 2 :all-run))}
+                      card nil))}
+
    "Inside Job"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 

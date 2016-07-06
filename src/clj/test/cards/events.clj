@@ -451,6 +451,25 @@
     (is (= 6 (:credit (get-runner)))
         "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
 
+(deftest injection-attack
+  "Injection Attack"
+  (do-game
+    (new-game (default-corp [(qty "Paper Wall" 1)])
+              (default-runner [(qty "Injection Attack" 1) (qty "Corroder" 1)]))
+    (play-from-hand state :corp "Paper Wall" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Injection Attack")
+    (prompt-choice :runner "Archives")
+    (is (= 2 (:current-strength (get-program state 0))) "Corroder at 2 strength")
+    (prompt-select :runner (get-program state 0))
+    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (run-continue state)
+    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (run-continue state)
+    (run-successful state)
+    (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+
 (deftest ive-had-worse
   "I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined"
   (do-game
