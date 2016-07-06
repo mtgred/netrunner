@@ -164,7 +164,7 @@
     :effect (req (when-completed (expose state side target) ;; would be nice if this could return a value on completion
                                  (if async-result ;; expose was successful
                                    (if (#{"Asset" "Upgrade"} (:type target))
-                                     (do (system-msg state :runner (str "trash " (:title target)))
+                                     (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
                                          (trash state side (assoc target :seen true))
                                          (effect-completed state side eid))
                                      (effect-completed state side eid))
