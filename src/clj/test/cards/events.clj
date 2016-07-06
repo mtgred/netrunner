@@ -192,6 +192,40 @@
       (take-credits state :corp)
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
+(deftest deuces-wild
+  "Deuces Wild"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)
+                             (qty "The Future Perfect" 1)])
+              (default-runner [(qty "Deuces Wild" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Wraparound" "New remote")
+    (take-credits state :corp)
+    (starting-hand state :runner ["Deuces Wild" "Deuces Wild"])
+    (play-from-hand state :runner "Deuces Wild")
+    (prompt-choice :runner "Gain 3 [Credits]")
+    (is (= 6 (:credit (get-runner))) "Gained 1 net credit")
+    (prompt-choice :runner "Draw 2 cards")
+    (is (= 3 (count (:hand (get-runner)))) "Drew 2 cards")
+    (is (empty? (:prompt (get-runner))) "Deuces Wild not showing a third choice option")
+
+    (play-from-hand state :runner "Deuces Wild")
+    (prompt-choice :runner "Expose 1 ice and make a run")
+    (prompt-select :runner (get-ice state :remote1 0))
+    (prompt-choice :runner "HQ")
+    (is (empty? (:prompt (get-runner))) "Deuces prompt not queued")
+    (run-continue state)
+    (run-successful state)
+    (is (= 1 (count (:prompt (get-runner)))) "Deuces prompt not queued")
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "0")
+    (prompt-choice :runner "0")
+    (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
+
+    (core/gain state :runner :tag 1)
+    (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+    (prompt-choice :runner "Remove 1 tag")
+    (is (= 0 (:tag (get-runner))))))
+
 (deftest demolition-run
   "Demolition Run - Trash at no cost"
   (do-game
