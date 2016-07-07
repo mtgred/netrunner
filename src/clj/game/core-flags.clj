@@ -211,7 +211,8 @@
 (defn can-rez?
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
-   (and (run-flag? state side card :can-rez)
+   (and (same-side? side (:side card))
+        (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez)
         (if-let [rez-req (:rez-req (card-def card))]
           (rez-req state side (make-eid state) card nil)

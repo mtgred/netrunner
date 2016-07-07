@@ -73,7 +73,7 @@
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     ;; allow moving from play-area always, otherwise only when same side
     (when (or (= last-zone :play-area)
-              (= (side-str side) (:side card)))
+              (same-side? side (:side card)))
       (prn (str "Side " (side-str side) ", card " (:side card)))
       (prn (str "Last zone " last-zone))
       (when-not (= src server)
