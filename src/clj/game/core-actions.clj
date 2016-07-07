@@ -71,23 +71,22 @@
                 (:title c)
                 "a card")
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
-    ;; allow moving from play-area always, otherwise only when same side
-    (when (or (= last-zone :play-area)
-              (same-side? side (:side card)))
-      (prn (str "Side " (side-str side) ", card " (:side card)))
-      (prn (str "Last zone " last-zone))
-      (when-not (= src server)
-        (case server
-          ("Heap" "Archives")
-          (do (trash state s c {:unpreventable true})
-              (system-msg state side (str "trashes " label from-str)))
-          ("HQ" "Grip")
-          (do (move state s (dissoc c :seen :rezzed) :hand)
-              (system-msg state side (str "moves " label from-str " to " server)))
-          ("Stack" "R&D")
-          (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
-              (system-msg state side (str "moves " label from-str " to the top of " server)))
-          nil)))))
+    ;; allow moving from play-area always, otherwise only when same side, and to valid zone
+    (when (and (not= src server)
+               (same-side? s (:side card))
+               (or (= last-zone :play-area)
+                   (same-side? side (:side card))))
+      (case server
+        ("Heap" "Archives")
+        (do (trash state s c {:unpreventable true})
+            (system-msg state side (str "trashes " label from-str)))
+        ("Grip" "HQ")
+        (do (move state s (dissoc c :seen :rezzed) :hand)
+            (system-msg state side (str "moves " label from-str " to " server)))
+        ("Stack" "R&D")
+        (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
+            (system-msg state side (str "moves " label from-str " to the top of " server)))
+        nil))))
 
 (defn concede [state side args]
   (system-msg state side "concedes")
