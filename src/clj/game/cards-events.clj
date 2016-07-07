@@ -743,7 +743,7 @@
                                              (= (-> @state :runner :identity :faction) (:faction c))
                                              (not (= "Draft" (:setname c)))
                                              (not (= (:title c) (-> @state :runner :identity :title)))))
-                        swappable-ids (filter is-swappable @all-cards)]
+                        swappable-ids (filter is-swappable (vals @all-cards))]
                         (cancellable swappable-ids :sorted)))
 
      :effect (req
