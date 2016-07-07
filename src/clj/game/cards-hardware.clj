@@ -385,6 +385,18 @@
    "MemStrips"
    {:in-play [:memory 3]}
 
+   "Mirror"
+   {:in-play [:memory 2]
+    :events {:successful-run
+             {:delayed-completion true
+              :req (req (= target :rd))
+              :effect (effect (continue-ability
+                                {:prompt "Choose a card and replace 1 spent [Recurring Credits] on it"
+                                 :choices {:req #(< (:rec-counter % 0) (:recurring (card-def %) 0))}
+                                 :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
+                                 :effect (effect (add-prop target :rec-counter 1))}
+                               card nil))}}}
+
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
                              :choices {:req #(and (is-type? % "Program")
