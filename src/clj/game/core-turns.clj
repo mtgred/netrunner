@@ -49,16 +49,17 @@
     @game-states))
 
 (defn create-deck
-  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards."
+  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
+  Loads card data from server-side @all-cards map if available."
   [deck]
   (shuffle (mapcat #(map (fn [card]
-                           (let [c (assoc card :cid (make-cid))
+                           (let [c (or (@all-cards (:title card)) card)
+                                 c (assoc c :cid (make-cid))
                                  c (dissoc c :setname :text :_id :influence :number :influencelimit
                                            :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
                    (:cards deck))))
-
 
 (defn make-rid
   "Returns a progressively-increasing integer to identify a new remote server."
