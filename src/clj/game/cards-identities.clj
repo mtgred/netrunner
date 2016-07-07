@@ -423,6 +423,25 @@
                                                               " [Credits] from the rez of " (:title current-ice)))
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
 
+   "NBN: Controlling the Message"
+   {:events {:runner-trash
+             {:delayed-completion true
+              :once :per-turn
+              :req (req (and (card-is? target :side :corp)
+                             (installed? target)))
+              :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
+                           (continue-ability
+                             state :corp
+                             {:optional
+                              {:delayed-completion true
+                               :prompt "Trace the Runner with NBN: Controlling the Message?"
+                               :yes-ability {:trace {:base 4
+                                                     :msg "give the Runner 1 tag"
+                                                     :effect (effect (tag-runner :runner 1 {:unpreventable true})
+                                                                     (clear-wait-prompt :runner))}}
+                               :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                            card nil))}}}
+
    "NBN: Making News"
    {:recurring 2}
 

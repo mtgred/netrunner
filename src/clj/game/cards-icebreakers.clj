@@ -262,6 +262,12 @@
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 5)]})
 
+   "Dai V"
+   (auto-icebreaker ["All"]
+                    {:abilities [{:cost [:credit 2]
+                                  :msg "break all ICE subroutines (using stealth [Credits])"}
+                                 (strength-pump 1 1)]})
+
    "Darwin"
    {:flags {:runner-phase-12 (req true)}
     :events {:purge {:effect (effect (update-breaker-strength card))}}

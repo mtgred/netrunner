@@ -154,6 +154,21 @@
     (score-agenda state :corp (get-content state :remote2 0))
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
+(deftest crisis-management
+  "Crisis Management - Do 1 meat damage at turn start if Runner is tagged"
+  (do-game
+    (new-game (default-corp [(qty "Crisis Management" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Crisis Management" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (count (:hand (get-runner)))) "No damage done, Runner not tagged")
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (take-credits state :runner)
+    (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
+
 (deftest dedicated-neural-net
   "Dedicated Neural Net"
   (do-game

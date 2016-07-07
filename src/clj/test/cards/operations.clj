@@ -122,7 +122,7 @@
 (deftest consulting-visit
   "Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation"
   (do-game
-    (new-game (default-corp [(qty "Consulting Visit" 1) 
+    (new-game (default-corp [(qty "Consulting Visit" 1)
                              (qty "Beanstalk Royalties" 2)
                              (qty "Green Level Clearance" 1)
                              (qty "Breaking News" 1)
@@ -203,10 +203,10 @@
 (deftest exchange-of-information
   "Exchange of Information - Swapping agendas works correctly"
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1) 
-                             (qty "Market Research" 1) 
-                             (qty "Breaking News" 1) 
-                             (qty "Project Beale" 1) 
+    (new-game (default-corp [(qty "Exchange of Information" 1)
+                             (qty "Market Research" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
 
@@ -235,10 +235,10 @@
 (deftest exchange-of-information-breaking-news
   "Exchange of Information - Swapping a just scored Breaking News keeps the tags"
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1) 
-                             (qty "Market Research" 1) 
-                             (qty "Breaking News" 1) 
-                             (qty "Project Beale" 1) 
+    (new-game (default-corp [(qty "Exchange of Information" 1)
+                             (qty "Market Research" 1)
+                             (qty "Breaking News" 1)
+                             (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
 
@@ -573,6 +573,23 @@
       (prompt-select :corp iwall)
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (:advance-counter (refresh iwall)))))))
+
+(deftest stock-buy-back
+  "Stock Buy-Back - Gain 3c for every agenda in Runner's area"
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Stock Buy-Back" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+    (is (= 2 (count (:scored (get-runner)))))
+    (play-from-hand state :corp "Stock Buy-Back")
+    (is (= 11 (:credit (get-corp))))))
 
 (deftest subliminal-messaging
   "Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand"

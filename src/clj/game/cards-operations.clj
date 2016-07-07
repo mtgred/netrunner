@@ -200,12 +200,12 @@
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
-    :choices (req (cancellable 
+    :choices (req (cancellable
              (filter #(and (is-type? % "Operation")
                            (<= (:cost %) (:credit corp)))
                       (:deck corp))
              :sorted))
-    :effect  (final-effect (play-instant target) 
+    :effect  (final-effect (play-instant target)
                            (system-msg "shuffles their deck")
                            (shuffle! :deck))
     :msg (msg "search R&D for " (:title target) " and play it")}
@@ -730,6 +730,10 @@
                                                   {:effect (final-effect (trash c)) :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
+
+   "Stock Buy-Back"
+   {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
+    :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
    {:choices {:req #(and (ice? %) (rezzed? %))}
