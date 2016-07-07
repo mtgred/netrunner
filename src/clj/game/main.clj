@@ -79,7 +79,7 @@
   caught), or false if an error string should."
   [{:keys [gameid action command side user args text cards] :as msg} state]
   (try (do (case action
-             "initialize" (swap! all-cards (fn [_] (identity cards)))
+             "initialize" (reset! all-cards (into {} (map (juxt :title identity) cards))) ;; creates a map from card title to card data
              "start" (core/init-game msg)
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! last-states dissoc gameid))
