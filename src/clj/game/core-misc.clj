@@ -39,18 +39,28 @@
           leave-effect (:leave-play source-def)]
       (when-not (nil? leave-effect) (leave-effect state side card nil)))))
 
+(defn get-zones [state]
+  (keys (get-in state [:corp :servers])))
+
+(defn get-remote-zones [state]
+  (filter is-remote? (get-zones state)))
+
+(defn get-runnable-zones [state]
+  (let [restricted-zones (keys (get-in state [:runner :register :cannot-run-on-server]))]
+    (remove (set restricted-zones) (get-zones state))))
 
 (defn get-remotes [state]
-  (filter #(-> % first is-remote?) (get-in state [:corp :servers])))
+  (select-keys (get-in state [:corp :servers]) (get-remote-zones state)))
 
 (defn get-remote-names [state]
-  (->> state get-remotes (map (comp zone->name first)) sort))
+  (zones->sorted-names (get-remote-zones state)))
 
 (defn server-list [state card]
-  (let [remotes (cons "New remote" (get-remote-names @state))]
+  (concat
     (if (#{"Asset" "Agenda"} (:type card))
-      remotes
-      (concat ["HQ" "R&D" "Archives"] remotes))))
+      (get-remote-names @state)
+      (zones->sorted-names (get-zones @state)))
+    ["New remote"]))
 
 (defn server->zone [state server]
   (if (sequential? server)

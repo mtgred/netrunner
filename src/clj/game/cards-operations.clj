@@ -65,7 +65,7 @@
 
    "An Offer You Cant Refuse"
    {:delayed-completion false
-    :prompt "Choose a server" :choices ["HQ" "R&D" "Archives"]
+    :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]
     :effect (req (let [serv target]
                    (continue-ability
                      state side

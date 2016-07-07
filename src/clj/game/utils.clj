@@ -146,6 +146,17 @@
   (or (central->name zone)
       (remote->name zone)))
 
+(defn zone->sort-key [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :archives -3
+    :rd -2
+    :hq -1
+    (string->num
+      (last (safe-split (str zone) #":remote")))))
+
+(defn zones->sorted-names [zones]
+  (->> zones (sort-by zone->sort-key) (map zone->name)))
+
 (defn is-remote? [zone]
   "Returns true if the zone is for a remote server"
   (not (nil? (remote->name zone))))
