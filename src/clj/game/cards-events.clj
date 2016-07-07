@@ -609,7 +609,15 @@
     :msg "add it to their score area and gain 1 agenda point"}
 
    "Out of the Ashes"
-   (letfn [(ashes-run []
+   (letfn [(ashes-flag []
+             {:runner-phase-12 {:priority -1
+                                :once :per-turn
+                                :once-key :out-of-ashes
+                                :effect (effect (continue-ability
+                                                  (ashes-recur (count (filter #(= "Out of the Ashes" (:title %))
+                                                                              (:discard runner))))
+                                                  card nil))}})
+           (ashes-run []
              {:prompt "Choose a server"
               :choices (req runnable-servers)
               :delayed-completion true
@@ -629,16 +637,9 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run eid target nil card))
+    :mill-effect {:effect (effect (register-events (ashes-flag) (assoc card :zone [:discard])))}
     :move-zone (req (if (= [:discard] (:zone card))
-                      (register-events state side
-                        {:runner-phase-12 {:priority -1
-                                           :once :per-turn
-                                           :once-key :out-of-ashes
-                                           :effect (effect (continue-ability
-                                                             (ashes-recur (count (filter #(= "Out of the Ashes" (:title %))
-                                                                                         (:discard runner))))
-                                                             card nil))}}
-                        (assoc card :zone [:discard]))
+                      (register-events state side (ashes-flag) (assoc card :zone [:discard]))
                       (unregister-events state side card)))
     :events {:runner-phase-12 nil}})
 

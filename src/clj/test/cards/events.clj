@@ -567,6 +567,51 @@
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
+(deftest out-of-the-ashes
+  "Out of the Ashes - ensure card works when played/trashed/milled"
+  (do-game
+    (new-game (default-corp [(qty "Kala Ghoda Real TV" 1) (qty "Underway Renovation" 1)])
+              (default-runner [(qty "Out of the Ashes" 6)]))
+    (play-from-hand state :corp "Underway Renovation" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Out of the Ashes")
+    (prompt-choice :runner "Archives")
+    (is (:run @state))
+    (run-successful state)
+    (trash-from-hand state :runner "Out of the Ashes")
+    (trash-from-hand state :runner "Out of the Ashes")
+    (trash-from-hand state :runner "Out of the Ashes")
+    (trash-from-hand state :runner "Out of the Ashes")
+    (is (= 0 (count (:hand (get-runner)))))
+    (is (= 5 (count (:discard (get-runner)))))
+    (take-credits state :runner)
+    (let [underway (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh underway)}))
+    (is (= 6 (count (:discard (get-runner)))))
+    (take-credits state :corp)
+    ;remove 5 Out of the Ashes from the game
+    (loop [x 5]
+      (when (pos? x)
+        (do (is (not (empty? (get-in @state [:runner :prompt]))))
+            (prompt-choice :runner "Yes")
+            (prompt-choice :runner "Archives")
+            (is (:run @state))
+            (run-successful state)
+            (recur (dec x)))))
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 5 (count (:rfg (get-runner)))))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    ;ensure that if you decline the rfg, game will still ask the next turn
+    (is (not (empty? (get-in @state [:runner :prompt]))))
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Archives")
+    (is (:run @state))
+    (run-successful state)
+    (is (= 0 (count (:discard (get-runner)))))
+    (is (= 6 (count (:rfg (get-runner)))))))
+
 (deftest political-graffiti
   "Political Graffiti - swapping with Turntable works / purging viruses restores points"
   (do-game
