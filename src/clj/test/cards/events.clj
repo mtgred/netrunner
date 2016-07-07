@@ -192,6 +192,40 @@
       (take-credits state :corp)
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
+(deftest deuces-wild
+  "Deuces Wild"
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)
+                             (qty "The Future Perfect" 1)])
+              (default-runner [(qty "Deuces Wild" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Wraparound" "New remote")
+    (take-credits state :corp)
+    (starting-hand state :runner ["Deuces Wild" "Deuces Wild"])
+    (play-from-hand state :runner "Deuces Wild")
+    (prompt-choice :runner "Gain 3 [Credits]")
+    (is (= 6 (:credit (get-runner))) "Gained 1 net credit")
+    (prompt-choice :runner "Draw 2 cards")
+    (is (= 3 (count (:hand (get-runner)))) "Drew 2 cards")
+    (is (empty? (:prompt (get-runner))) "Deuces Wild not showing a third choice option")
+
+    (play-from-hand state :runner "Deuces Wild")
+    (prompt-choice :runner "Expose 1 ice and make a run")
+    (prompt-select :runner (get-ice state :remote1 0))
+    (prompt-choice :runner "HQ")
+    (is (empty? (:prompt (get-runner))) "Deuces prompt not queued")
+    (run-continue state)
+    (run-successful state)
+    (is (= 1 (count (:prompt (get-runner)))) "Deuces prompt not queued")
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "0")
+    (prompt-choice :runner "0")
+    (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
+
+    (core/gain state :runner :tag 1)
+    (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+    (prompt-choice :runner "Remove 1 tag")
+    (is (= 0 (:tag (get-runner))))))
+
 (deftest demolition-run
   "Demolition Run - Trash at no cost"
   (do-game
@@ -416,6 +450,25 @@
         "2 programs in Heap")
     (is (= 6 (:credit (get-runner)))
         "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
+
+(deftest injection-attack
+  "Injection Attack"
+  (do-game
+    (new-game (default-corp [(qty "Paper Wall" 1)])
+              (default-runner [(qty "Injection Attack" 1) (qty "Corroder" 1)]))
+    (play-from-hand state :corp "Paper Wall" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Injection Attack")
+    (prompt-choice :runner "Archives")
+    (is (= 2 (:current-strength (get-program state 0))) "Corroder at 2 strength")
+    (prompt-select :runner (get-program state 0))
+    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (run-continue state)
+    (is (= 4 (:current-strength (get-program state 0))) "Corroder at 4 strength")
+    (run-continue state)
+    (run-successful state)
+    (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
 
 (deftest ive-had-worse
   "I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined"
