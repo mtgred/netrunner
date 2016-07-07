@@ -226,6 +226,29 @@
     (prompt-choice :corp "Yes")
     (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
 
+(deftest explode-ttw
+  "Explode-a-palooza - Interaction with The Turning Wheel. Issue #1717."
+  (do-game
+    (new-game (default-corp [(qty "Explode-a-palooza" 3)])
+              (default-runner [(qty "The Turning Wheel" 1)]))
+    (starting-hand state :corp ["Explode-a-palooza" "Explode-a-palooza"])
+    (play-from-hand state :corp "Explode-a-palooza" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Turning Wheel")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (let [ttw (get-resource state 0)]
+      (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+      (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+      (is (= 12 (:credit (get-corp))) "Gained 5 credits")
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+      (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+      (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
+
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
   (do-game

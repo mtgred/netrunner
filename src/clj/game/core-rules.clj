@@ -2,7 +2,7 @@
 
 (declare card-init card-str close-access-prompt deactivate effect-completed enforce-msg gain-agenda-point
          get-agenda-points handle-end-run is-type? in-corp-scored? prevent-draw resolve-steal-events show-prompt
-         untrashable-while-rezzed? update-all-ice win win-decked)
+         trash-cards untrashable-while-rezzed? update-all-ice win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -165,10 +165,10 @@
                               (swap! state update-in [:runner :hand-size-modification] #(- % n)))
                             (if (< (count hand) n)
                               (do (flatline state)
-                                  (doseq [c (take n (shuffle hand))]
-                                    (trash state side c {:unpreventable true} type)))
-                              (do (doseq [c (take n (shuffle hand))]
-                                    (trash state side c {:unpreventable true :cause type} type))
+                                  (trash-cards state side (make-eid state) (take n (shuffle hand))
+                                               {:unpreventable true}))
+                              (do (trash-cards state side (make-eid state) (take n (shuffle hand))
+                                               {:unpreventable true :cause type})
                                   (trigger-event state side :damage type card))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))
@@ -262,28 +262,33 @@
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- resolve-trash-end
-  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+  [state side eid {:keys [zone type] :as card}
+   {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (when (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect))
         (resolve-ability state side trash-effect moved-card (cons cause targets))))
-    (swap! state update-in [:per-turn] dissoc (:cid moved-card))))
+    (swap! state update-in [:per-turn] dissoc (:cid moved-card))
+    (effect-completed state side eid)))
 
-(defn resolve-trash
-  [state side {:keys [zone type] :as card} {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+(defn- resolve-trash
+  [state side eid {:keys [zone type] :as card}
+   {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
-                    (apply resolve-trash-end state side card args targets))
-    (apply resolve-trash-end state side card args targets)))
+                    (apply resolve-trash-end state side eid card args targets))
+    (apply resolve-trash-end state side eid card args targets)))
 
 (defn trash
   "Attempts to trash the given card, allowing for boosting/prevention effects."
-  ([state side {:keys [zone type] :as card}] (trash state side card nil))
-  ([state side {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
-   (when (not (some #{:discard} zone))
+  ([state side card] (trash state side (make-eid state) card nil))
+  ([state side card args] (trash state side (make-eid state) card args))
+  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
+   (if (not (some #{:discard} zone))
      (if (untrashable-while-rezzed? card)
-       (enforce-msg state card "cannot be trashed while installed")
+       (do (enforce-msg state card "cannot be trashed while installed")
+           (effect-completed state side eid))
        ;; Card is not enforced untrashable
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
@@ -294,18 +299,27 @@
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-prompt state :runner nil
                               (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                              (fn [choice]
-                                (if-let [prevent (get-in @state [:trash :trash-prevent ktype])]
+                              (fn [_]
+                                (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
                                   (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
+                                      (effect-completed state side eid))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                      (apply resolve-trash state side card args targets))))
+                                      (apply resolve-trash state side eid card args targets))))
                               {:priority 10}))
              ;; No prevention effects; resolve the trash.
-             (apply resolve-trash state side card args targets))))))))
+             (apply resolve-trash state side eid card args targets)))))
+     (effect-completed state side eid))))
 
-(defn trash-cards [state side cards]
-  (doseq [c cards] (trash state side c)))
+(defn trash-cards
+  ([state side cards] (trash-cards state side (make-eid state) cards nil))
+  ([state side eid cards args & targets]
+   (letfn [(trashrec [cs]
+             (if (not-empty cs)
+               (when-completed (apply trash state side (first cs) args targets)
+                               (trashrec (next cs)))
+               (effect-completed state side eid)))]
+     (trashrec cards))))
 
 (defn- resolve-trash-no-cost
   [state side card]

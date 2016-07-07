@@ -167,6 +167,13 @@
     (core/score state :corp {:card (core/get-card state card)})
     (is (find-card title (get-in @state [:corp :scored]))))))
 
+(defn advance
+  "Advance the given card."
+  ([state card] (advance state card 1))
+  ([state card n]
+   (dotimes [_ n]
+     (core/advance state :corp {:card (core/get-card state card)}))))
+
 (defn last-log-contains?
   [state content]
   (not (nil?

@@ -243,9 +243,15 @@
     :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
-                       :yes-ability {:msg "gain 5 [Credits]"
-                                     :effect (final-effect (gain :corp :credit 5))}}}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Explode-a-palooza")
+                             (continue-ability
+                               {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
+                                           :yes-ability {:msg "gain 5 [Credits]"
+                                                         :effect (effect (gain :corp :credit 5)
+                                                                         (clear-wait-prompt :runner))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
