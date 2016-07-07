@@ -132,7 +132,8 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "City Surveillance"
    {:events {:runner-turn-begins
@@ -245,7 +246,8 @@
 
    "Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2]
@@ -954,7 +956,8 @@
                           (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :leave-play (effect (gain :runner :agenda-point
                               (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
     :events {:agenda-stolen {:req (req (> (get-agenda-points state :runner target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
@@ -1005,7 +1008,8 @@
 
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
