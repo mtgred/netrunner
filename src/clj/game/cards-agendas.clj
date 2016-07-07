@@ -167,9 +167,9 @@
                                                     (continue-ability :runner (access-hq (shuffle targets)) card nil))}
                                    card nil))
                              (effect-completed state side eid card)))}]
-         {:events {:successful-run {:req (req (= target :hq))
-                                    :once :per-turn
-                                    :psi {:not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
+         {:events {:successful-run {:psi {:req (req (= target :hq))
+                                          :once :per-turn
+                                          :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
                                                                      (swap! state update-in [:run :run-effect]
                                                                             #(assoc % :replace-access psi-effect)))
                                                                    (effect-completed state side eid))}}}}}))

@@ -172,7 +172,7 @@
 (deftest dedicated-neural-net
   "Dedicated Neural Net"
   (do-game
-    (new-game (default-corp [(qty "Dedicated Neural Net" 2) (qty "Snare!" 1) (qty "Hedge Fund" 3)])
+    (new-game (default-corp [(qty "Dedicated Neural Net" 1) (qty "Scorched Earth" 3) (qty "Hedge Fund" 1)])
               (default-runner [(qty "HQ Interface" 1)]))
     (play-from-hand state :corp "Dedicated Neural Net" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
@@ -186,6 +186,8 @@
     (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")
     (prompt-choice :runner "OK")
     (is (not (:run @state)) "Run completed")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "OK")
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "HQ Interface")

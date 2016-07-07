@@ -371,6 +371,7 @@
   ([state side card psi] (psi-game state side (make-eid state) card psi))
   ([state side eid card psi]
    (swap! state assoc :psi {})
+   (register-once state psi card)
    (doseq [s [:corp :runner]]
      (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                   (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
