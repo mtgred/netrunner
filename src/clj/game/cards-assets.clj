@@ -14,8 +14,9 @@
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
    {:access {:req (req (and installed (>= (:credit corp) cost)))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner (str "Corp to use " (:title card)))
-                             (resolve-ability
+                             (continue-ability
                               {:optional
                                {:prompt prompt
                                 :yes-ability ability
@@ -68,13 +69,15 @@
 
    "Aggressive Secretary"
    (advance-ambush 2 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+                      :delayed-completion true
                       :effect
                       (req (let [agg (get-card state card)
                                  n (:advance-counter agg 0)
                                  ab (-> trash-program
                                         (assoc-in [:choices :max] n)
                                         (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
-                                               :effect (effect (trash-cards targets))
+                                               :delayed-completion true
+                                               :effect (effect (trash-cards eid targets nil))
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
                              (continue-ability state side ab agg nil)))})
 
@@ -127,12 +130,14 @@
    "Cerebral Overwriter"
    (advance-ambush 3 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
+                      :delayed-completion true
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "City Surveillance"
    {:events {:runner-turn-begins
@@ -245,7 +250,8 @@
 
    "Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2]
@@ -377,6 +383,11 @@
                             :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
     :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
+
+   "Hyoubu Research Facility"
+   {:events {:psi-bet-corp {:once :per-turn
+                            :msg (msg "gain " target " [Credits]")
+                            :effect (effect (gain :corp :credit target))}}}
 
    "Ibrahim Salem"
    (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
@@ -721,6 +732,7 @@
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "do " (* 2 (:advance-counter (get-card state card) 0)) " net damage")
+                      :delayed-completion true
                       :effect (effect (damage eid :net (* 2 (:advance-counter (get-card state card) 0))
                                               {:card card}))})
 
@@ -784,6 +796,18 @@
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
                  :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
+
+   "Sandburg"
+   {:effect (req (add-watch state :sandburg
+                            (fn [k ref old new]
+                              (let [credit (get-in new [:corp :credit])]
+                                (when (not= (get-in old [:corp :credit]) credit)
+                                  (update-all-ice ref side))))))
+    :events {:pre-ice-strength {:req (req (and (ice? target)
+                                               (>= (:credit corp) 10)))
+                                :effect (effect (ice-strength-bonus (quot (:credit corp) 5) target))}}
+    :leave-play (req (remove-watch state :sandburg)
+                     (update-all-ice state side))}
 
    "Sealed Vault"
    {:abilities [{:label "Store any number of [Credits] on Sealed Vault"
@@ -855,9 +879,10 @@
                  :effect (effect (move target :deck) (trash card {:cause :ability-cost}))}]}
 
    "Shattered Remains"
-   (advance-ambush 1 {:effect (req (let [shat (get-card state card)]
+   (advance-ambush 1 {:delayed-completion true
+                      :effect (req (let [shat (get-card state card)]
                                      (when (< 0 (:advance-counter shat 0))
-                                       (resolve-ability
+                                       (continue-ability
                                          state side
                                          (-> trash-hardware
                                              (assoc-in [:choices :max] (:advance-counter shat))
@@ -954,7 +979,8 @@
                           (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
     :leave-play (effect (gain :runner :agenda-point
                               (count (filter #(> (get-agenda-points state :runner %) 0) (:scored runner)))))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}
     :events {:agenda-stolen {:req (req (> (get-agenda-points state :runner target) 0))
                              :effect (effect (lose :runner :agenda-point 1))}}}
 
@@ -1005,7 +1031,14 @@
 
    "Victoria Jenkins"
    {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
-    :trash-effect {:req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+
+   "Watchdog"
+   {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
+                       :effect (effect (rez-cost-bonus (- (:tag runner))))}
+             :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
+                              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"

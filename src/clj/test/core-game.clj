@@ -372,3 +372,24 @@
     (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
     (is (= (:zone (refresh publics2) :scored)))
     (is (= 12 (:credit (get-corp))) "twice Adonis money and 2xmoney turn, no third Adonis"))))
+
+(deftest run-bad-publicity-credits
+  "Should not lose BP credits until a run is completely over. Issue #1721."
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
+    (starting-hand state :corp ["PAD Campaign" "PAD Campaign"])
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")
+    (core/gain state :runner :credit 3)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")
+    (core/gain state :runner :credit 3)
+    (run-empty-server state :rd)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")))

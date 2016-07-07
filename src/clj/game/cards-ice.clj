@@ -470,6 +470,17 @@
    {:subroutines [{:label "The Runner cannot make another run this turn"
                    :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
 
+   "Fairchild 1.0"
+   {:subroutines [{:label "Force the Runner to pay 1 [Credits] or trash an installed card"
+                   :msg "force the Runner to pay 1 [Credits] or trash an installed card"
+                   :player :runner
+                   :prompt "Choose one"
+                   :choices ["Pay 1 [Credits]" "Trash an installed card"]
+                   :effect (req (if (= target "Pay 1 [Credits]")
+                                  (do (pay state side card :credit 1)
+                                      (system-msg state side "pays 1 [Credits]"))
+                                  (resolve-ability state :runner trash-installed card nil)))}]}
+
    "Fenris"
    {:effect take-bad-pub
     :subroutines [(do-brain-damage 1)
@@ -893,13 +904,24 @@
     :strength-bonus advance-counters}
 
    "Sherlock 1.0"
-   {:subroutines [{:label "Trace 4 - Add an installed program to the top of Stack"
+   {:subroutines [{:label "Trace 4 - Add an installed program to the top of the Runner's Stack"
                    :trace {:base 4
                            :choices {:req #(and (installed? %)
                                                 (is-type? % "Program"))}
-                           :msg (msg "add " (:title target) " to the top of Stack")
+                           :msg (msg "add " (:title target) " to the top of the Runner's Stack")
                            :effect (effect (move :runner target :deck {:front true}))}}]
     :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Sherlock 2.0"
+   {:subroutines [{:label "Trace 4 - Add an installed program to the bottom of the Runner's Stack"
+                   :trace {:base 4
+                           :choices {:req #(and (installed? %)
+                                                (is-type? % "Program"))}
+                           :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                           :effect (effect (move :runner target :deck))}}
+                  {:label "Give the Runner 1 tag"
+                   :effect (effect (tag-runner :runner 1))}]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Shinobi"
    {:effect take-bad-pub

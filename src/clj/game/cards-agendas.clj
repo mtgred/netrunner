@@ -132,6 +132,16 @@
      :events {:runner-turn-begins e
               :corp-turn-begins   e}})
 
+   "Crisis Management"
+   (let [ability {:req (req tagged)
+                  :delayed-completion true
+                  :label "Do 1 meat damage (start of turn)"
+                  :once :per-turn
+                  :msg "do 1 meat damage"
+                  :effect (effect (damage eid :meat 1 {:card card}))}]
+     {:events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Dedicated Neural Net"
      (letfn [(access-hq [cards]
                {:prompt "Select a card to access."
@@ -157,9 +167,9 @@
                                                     (continue-ability :runner (access-hq (shuffle targets)) card nil))}
                                    card nil))
                              (effect-completed state side eid card)))}]
-         {:events {:successful-run {:req (req (= target :hq))
-                                    :once :per-turn
-                                    :psi {:not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
+         {:events {:successful-run {:psi {:req (req (= target :hq))
+                                          :once :per-turn
+                                          :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
                                                                      (swap! state update-in [:run :run-effect]
                                                                             #(assoc % :replace-access psi-effect)))
                                                                    (effect-completed state side eid))}}}}}))
@@ -233,9 +243,15 @@
     :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :msg "draw 5 cards" :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
-                       :yes-ability {:msg "gain 5 [Credits]"
-                                     :effect (final-effect (gain :corp :credit 5))}}}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Explode-a-palooza")
+                             (continue-ability
+                               {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
+                                           :yes-ability {:msg "gain 5 [Credits]"
+                                                         :effect (effect (gain :corp :credit 5)
+                                                                         (clear-wait-prompt :runner))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}}
 
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
@@ -352,9 +368,14 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:effect (effect (add-counter card :power 2))
-    :abilities [{:counter-cost [:power 1]
-                 :effect (effect (prevent-jack-out))
+   {:prevent {:jack-out [:all]}
+    :effect (effect (add-counter card :power 2))
+    :abilities [{:req (req (:run @state))
+                 :counter-cost [:power 1]
+                 :effect (req (let [ls (filter #(= "Labyrinthine Servers" (:title %)) (:scored corp))]
+                                (jack-out-prevent state side)
+                                (when (zero? (reduce + (for [c ls] (get-in c [:counter :power]))))
+                                  (swap! state update-in [:prevent] dissoc :jack-out))))
                  :msg "prevent the Runner from jacking out"}]}
 
    "License Acquisition"
@@ -481,8 +502,8 @@
 
    "Project Beale"
    {:agendapoints-runner (req (do 2))
-    :effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2))
-                    (set-prop card :agendapoints (+ 2 (quot (- (:advance-counter card) 3) 2))))}
+    :effect (req (let [n (quot (- (:advance-counter card) 3) 2)]
+                    (set-prop state side card :counter {:agenda n} :agendapoints (+ 2 n))))}
 
    "Project Vitruvius"
    {:effect (effect (add-counter card :agenda (- (:advance-counter card) 3)))

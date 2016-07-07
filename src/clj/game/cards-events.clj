@@ -148,6 +148,38 @@
                      card nil))
     :events {:run-ends nil}}
 
+   "Deuces Wild"
+   (let [all [{:effect (effect (gain :credit 3))
+               :msg "gain 3 [Credits]"}
+              {:effect (effect (draw 2))
+               :msg "draw 2 cards"}
+              {:effect (effect (lose :tag 1))
+               :msg "remove 1 tag"}
+              {:prompt "Select 1 piece of ice to expose"
+               :msg "expose 1 ice and make a run"
+               :choices {:req #(and (installed? %) (ice? %))}
+               :delayed-completion true
+               :effect (req (when-completed (expose state side target)
+                                            (continue-ability
+                                              state side
+                                              {:prompt "Choose a server"
+                                               :choices (req runnable-servers)
+                                               :delayed-completion true
+                                               :effect (effect (game.core/run eid target))}
+                                              card nil)))}]
+         choice (fn choice [abis]
+                  {:prompt "Choose an ability to resolve"
+                   :choices (map #(capitalize (:msg %)) abis)
+                   :delayed-completion true
+                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
+                                  (when-completed
+                                    (resolve-ability state side chosen card nil)
+                                    (if (= (count abis) 4)
+                                      (continue-ability state side (choice (remove-once #(not= % chosen) abis)) card nil)
+                                      (effect-completed state side eid)))))})]
+     {:delayed-completion true
+      :effect (effect (continue-ability (choice all) card nil))})
+
    "Diesel"
    {:msg "draw 3 cards" :effect (effect (draw 3))}
 
@@ -164,7 +196,7 @@
     :effect (req (when-completed (expose state side target) ;; would be nice if this could return a value on completion
                                  (if async-result ;; expose was successful
                                    (if (#{"Asset" "Upgrade"} (:type target))
-                                     (do (system-msg state :runner (str "trash " (:title target)))
+                                     (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
                                          (trash state side (assoc target :seen true))
                                          (effect-completed state side eid))
                                      (effect-completed state side eid))
@@ -334,8 +366,8 @@
    "High-Stakes Job"
    {:prompt "Choose a server"
     :choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))
-                        ok-servs (filter unrezzed-ice (get-in @state [:corp :servers]))]
-                    (filter #(can-run-server? state %) (map (comp zone->name first) ok-servs))))
+                        bad-zones (keys (filter (complement unrezzed-ice) (get-in @state [:corp :servers])))]
+                    (zones->sorted-names (remove (set bad-zones) (get-runnable-zones @state)))))
     :effect (effect (run target {:end-run {:req (req (:successful run)) :msg " gain 12 [Credits]"
                                            :effect (effect (gain :runner :credit 12))}} card))}
 
@@ -455,6 +487,17 @@
                      (do (move state side c :hand)
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
 
+   "Injection Attack"
+   {:prompt "Choose a server"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :effect (effect (run target nil card)
+                    (continue-ability
+                      {:prompt "Choose an icebreaker"
+                       :choices {:req #(and (installed? %) (has-subtype? % "Icebreaker"))}
+                       :effect (effect (pump target 2 :all-run))}
+                      card nil))}
+
    "Inside Job"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
@@ -566,7 +609,15 @@
     :msg "add it to their score area and gain 1 agenda point"}
 
    "Out of the Ashes"
-   (letfn [(ashes-run []
+   (letfn [(ashes-flag []
+             {:runner-phase-12 {:priority -1
+                                :once :per-turn
+                                :once-key :out-of-ashes
+                                :effect (effect (continue-ability
+                                                  (ashes-recur (count (filter #(= "Out of the Ashes" (:title %))
+                                                                              (:discard runner))))
+                                                  card nil))}})
+           (ashes-run []
              {:prompt "Choose a server"
               :choices (req runnable-servers)
               :delayed-completion true
@@ -586,16 +637,9 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run eid target nil card))
+    :mill-effect {:effect (effect (register-events (ashes-flag) (assoc card :zone [:discard])))}
     :move-zone (req (if (= [:discard] (:zone card))
-                      (register-events state side
-                        {:runner-phase-12 {:priority -1
-                                           :once :per-turn
-                                           :once-key :out-of-ashes
-                                           :effect (effect (continue-ability
-                                                             (ashes-recur (count (filter #(= "Out of the Ashes" (:title %))
-                                                                                         (:discard runner))))
-                                                             card nil))}}
-                        (assoc card :zone [:discard]))
+                      (register-events state side (ashes-flag) (assoc card :zone [:discard]))
                       (unregister-events state side card)))
     :events {:runner-phase-12 nil}})
 

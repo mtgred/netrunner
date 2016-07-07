@@ -154,10 +154,25 @@
     (score-agenda state :corp (get-content state :remote2 0))
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
+(deftest crisis-management
+  "Crisis Management - Do 1 meat damage at turn start if Runner is tagged"
+  (do-game
+    (new-game (default-corp [(qty "Crisis Management" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Crisis Management" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (count (:hand (get-runner)))) "No damage done, Runner not tagged")
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (take-credits state :runner)
+    (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
+
 (deftest dedicated-neural-net
   "Dedicated Neural Net"
   (do-game
-    (new-game (default-corp [(qty "Dedicated Neural Net" 2) (qty "Snare!" 1) (qty "Hedge Fund" 3)])
+    (new-game (default-corp [(qty "Dedicated Neural Net" 1) (qty "Scorched Earth" 3) (qty "Hedge Fund" 1)])
               (default-runner [(qty "HQ Interface" 1)]))
     (play-from-hand state :corp "Dedicated Neural Net" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
@@ -171,6 +186,8 @@
     (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")
     (prompt-choice :runner "OK")
     (is (not (:run @state)) "Run completed")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "OK")
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "HQ Interface")
@@ -210,6 +227,29 @@
     (prompt-choice :runner "Steal")
     (prompt-choice :corp "Yes")
     (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
+
+(deftest explode-ttw
+  "Explode-a-palooza - Interaction with The Turning Wheel. Issue #1717."
+  (do-game
+    (new-game (default-corp [(qty "Explode-a-palooza" 3)])
+              (default-runner [(qty "The Turning Wheel" 1)]))
+    (starting-hand state :corp ["Explode-a-palooza" "Explode-a-palooza"])
+    (play-from-hand state :corp "Explode-a-palooza" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Turning Wheel")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (let [ttw (get-resource state 0)]
+      (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+      (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+      (is (= 12 (:credit (get-corp))) "Gained 5 credits")
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+      (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+      (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
 
 (deftest fetal-ai-damage
   "Fetal AI - damage on access"
@@ -300,6 +340,53 @@
       (score-agenda state :corp ht)
       (is (= 12 (:credit (get-corp))) "Gain 7 credits")
       (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
+
+(deftest labyrinthine-servers
+  "Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter"
+  (do-game
+    (new-game (default-corp [(qty "Labyrinthine Servers" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
+    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (let [ls1 (get-in @state [:corp :scored 0])
+          ls2 (get-in @state [:corp :scored 1])]
+      (is (= 2 (get-counters (refresh ls1) :power)))
+      (is (= 2 (get-counters (refresh ls2) :power)))
+      ;don't use token
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (:run @state) "Jack out prevent prompt")
+      (prompt-choice :corp "Done")
+      (is (not (:run @state)) "Corp does not prevent the jack out, run ends")
+      ;use token
+      (run-on state "HQ")
+      (run-jack-out state)
+      (card-ability state :corp ls1 0)
+      (card-ability state :corp ls2 0)
+      (card-ability state :corp ls1 0)
+      (prompt-choice :corp "Done")
+      (is (:run @state) "Jack out prevented, run is still ongoing")
+      (is (true? (get-in @state [:run :cannot-jack-out])) "Cannot jack out flag is in effect")
+      (run-successful state)
+      (is (not (:run @state)))
+      ;one Labyrinthine is empty but the other still has one token, ensure prompt still occurs
+      (is (= 0 (get-counters (refresh ls1) :power)))
+      (is (= 1 (get-counters (refresh ls2) :power)))
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (:run @state))
+      (card-ability state :corp ls2 0)
+      (prompt-choice :corp "Done")
+      (is (true? (get-in @state [:run :cannot-jack-out])))
+      (run-successful state)
+      (is (not (:run @state)))
+      ;no more tokens
+      (run-on state "HQ")
+      (run-jack-out state)
+      (is (not (:run @state)) "No jack out prevent prompt"))))
 
 (deftest medical-breakthrough
   "Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy"

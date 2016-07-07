@@ -35,15 +35,11 @@
             'target '(first targets)
             'installed '(#{:rig :servers} (first (:zone card)))
             'remotes '(get-remote-names @state)
-            'servers '(concat ["HQ" "R&D" "Archives"] remotes)
+            'servers '(zones->sorted-names (get-zones @state))
             'unprotected '(let [server (second (:zone (if (:host card)
                                                         (get-card state (:host card)) card)))]
                             (empty? (get-in @state [:corp :servers server :ices])))
-            'runnable-servers '(let [servers (map zone->name
-                                                  (keys (get-in @state [:corp :servers])))
-                                     restricted (map zone->name
-                                                     (keys (get-in @state [:runner :register :cannot-run-on-server])))]
-                                 (remove (set restricted) (set servers)))
+            'runnable-servers '(zones->sorted-names (get-runnable-zones @state))
             'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))
             'has-bad-pub '(or (> (:bad-publicity corp) 0) (> (:has-bad-pub corp) 0))
             'this-server '(let [s (-> card :zone rest butlast)

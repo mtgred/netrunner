@@ -371,6 +371,7 @@
   ([state side card psi] (psi-game state side (make-eid state) card psi))
   ([state side eid card psi]
    (swap! state assoc :psi {})
+   (register-once state psi card)
    (doseq [s [:corp :runner]]
      (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                   (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
@@ -389,6 +390,8 @@
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
           (gain state side :credit (- bet))
           (system-msg state side (str "spends " bet " [Credits]"))
+          (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
+          (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
           (trigger-event state side :psi-game nil)
           (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
             (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)

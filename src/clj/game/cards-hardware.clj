@@ -290,6 +290,18 @@
                 {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
+   "GPI Net Tap"
+   {:abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+                 :delayed-completion true
+                 :effect (req (when-completed (expose state side current-ice)
+                                              (continue-ability
+                                                state side
+                                                {:optional {:prompt "Trash GPI Net Tap to jack out?"
+                                                            :yes-ability {:msg "trash it and jack out"
+                                                                          :effect (effect (trash card {:unpreventable true})
+                                                                                          (jack-out nil))}}}
+                                                card nil)))}]}
+
    "Grimoire"
    {:in-play [:memory 2]
     :events {:runner-install {:silent (req true)
@@ -372,6 +384,18 @@
 
    "MemStrips"
    {:in-play [:memory 3]}
+
+   "Mirror"
+   {:in-play [:memory 2]
+    :events {:successful-run
+             {:delayed-completion true
+              :req (req (= target :rd))
+              :effect (effect (continue-ability
+                                {:prompt "Choose a card and replace 1 spent [Recurring Credits] on it"
+                                 :choices {:req #(< (:rec-counter % 0) (:recurring (card-def %) 0))}
+                                 :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
+                                 :effect (effect (add-prop target :rec-counter 1))}
+                               card nil))}}}
 
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Choose a program to install"

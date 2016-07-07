@@ -166,17 +166,18 @@
       "Weyland Consortium" (icon-span "weyland")
       [:span.side "(Unknown)"])))
 
-(defn player-view [cursor]
+(defn player-view [{:keys [player game] :as args}]
   (om/component
    (sab/html
     [:span.player
-     (om/build avatar (:user cursor) {:opts {:size 22}})
-     (get-in cursor [:user :username])
-     (let [side (:side cursor)
-           faction (:faction cursor)
-           identity (:identity cursor)]
+     (om/build avatar (:user player) {:opts {:size 22}})
+     (get-in player [:user :username])
+     (let [side (:side player)
+           faction (:faction player)
+           identity (:identity player)
+           specs (:allowspectator game)]
        (cond
-         (and (some? faction) (not= "Neutral" faction)) (faction-icon faction identity)
+         (and (some? faction) (not= "Neutral" faction) specs) (faction-icon faction identity)
          side [:span.side (str "(" side ")")]))])))
 
 (defn chat-view [messages owner]
@@ -229,7 +230,7 @@
                      (:title game)
                      (when (pos? c)
                        (str  " (" c " spectator" (when (> c 1) "s") ")")))])
-         [:div (om/build-all player-view (:players game))]
+         [:div (om/build-all player-view (map (fn [%] {:player % :game game}) (:players game)))]
          (when-let [prompt (om/get-state owner :prompt)]
            [:div.password-prompt
             [:h3 (str "Password for " title)]
@@ -342,7 +343,7 @@
                  [:div.players
                   (for [player (:players game)]
                     [:div
-                     (om/build player-view player)
+                     (om/build player-view {:player player})
                      (when-let [deck (:deck player)]
                        [:span {:class (deck-status-label deck)}
                         [:span.label
@@ -359,7 +360,7 @@
                     (let [c (count (:spectators game))]
                       [:h3 (str c " Spectator" (when (> c 1) "s"))])
                     (for [spectator (:spectators game)]
-                      (om/build player-view spectator))])]
+                      (om/build player-view {:player spectator}))])]
                 (om/build chat-view messages {:state state})])))]
         (om/build deckselect-modal cursor)]))))
 

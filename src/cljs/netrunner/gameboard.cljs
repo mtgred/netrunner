@@ -420,13 +420,24 @@
   (or (central->name zone)
       (remote->name zone)))
 
+(defn zone->sort-key [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :archives -3
+    :rd -2
+    :hq -1
+    (js/parseInt
+      (last (clojure.string/split (str zone) #":remote")))))
+
+(defn zones->sorted-names [zones]
+  (->> zones (sort-by zone->sort-key) (map zone->name)))
+
 (defn get-remotes [servers]
- (->> servers
-     (filter #(not (#{:hq :rd :archives} (first %))))
-     (sort-by #(remote->num (first %)))))
+  (->> servers
+       (filter #(not (#{:hq :rd :archives} (first %))))
+       (sort-by #(zone->sort-key (first %)))))
 
 (defn remote-list [remotes]
-  (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
+  (->> remotes (map first) zones->sorted-names))
 
 (defn card-counter-type [card]
   (let [counter-type (:counter-type card)]
@@ -500,10 +511,10 @@
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when named-target [:div.darkbg.named-target named-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-          (let [centrals ["HQ" "R&D" "Archives"]
-                remotes (conj (remote-list remotes) "New remote")
+          (let [centrals ["Archives" "R&D" "HQ"]
+                remotes (concat (remote-list remotes) ["New remote"])
                 servers (case type
-                          ("Upgrade" "ICE") (concat remotes centrals)
+                          ("Upgrade" "ICE") (concat centrals remotes)
                           ("Agenda" "Asset") remotes)]
             [:div.blue-shade.panel.servers-menu {:ref "servers"}
              (map (fn [label]
@@ -875,7 +886,7 @@
   (let [servers (keys (get-in @state [:corp :servers]))
         restricted-servers (keys (get-in @state [:runner :register :cannot-run-on-server]))]
     ;; remove restricted servers from all servers to just return allowed servers
-    (remove (set restricted-servers) (set servers))))
+    (remove (set restricted-servers) servers)))
 
 (defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
   (reify
@@ -1027,7 +1038,7 @@
                                                              js/$
                                                              .fadeOut))}
                                     label])
-                                 (map zone->name (runnable-servers cursor)))]]])
+                                 (zones->sorted-names (runnable-servers cursor)))]]])
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)
