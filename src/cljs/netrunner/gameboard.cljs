@@ -472,8 +472,7 @@
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
-   (when code
-     (sab/html
+    (sab/html
       [:div.card-frame
        [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
                               :draggable (when (not-spectator? game-state app-state) true)
@@ -484,11 +483,11 @@
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
                                                          (= (:side @game-state) (keyword (.toLowerCase side))))
-                                                 (put! zoom-channel cursor))
+                                                (put! zoom-channel cursor))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click @cursor owner)}
         (when-let [url (image-url cursor)]
-          (if (or flipped facedown)
+          (if (or (not code) flipped facedown)
             [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
             [:div
              [:span.cardname title]
@@ -498,12 +497,12 @@
            (map (fn [[type num-counters]]
                   (when (pos? num-counters)
                     (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                     [(keyword selector) num-counters])))
+                      [(keyword selector) num-counters])))
                 counter))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
-              current-strength [:div.darkbg.strength current-strength])
+          current-strength [:div.darkbg.strength current-strength])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when server-target [:div.darkbg.server-target server-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
@@ -527,16 +526,16 @@
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
                   actions)
              (map-indexed
-              (fn [i ab]
-                (if (:auto-pump ab)
-                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
-                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
-                  [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                            (dec i) i)})
-                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-              abilities)]))
+               (fn [i ab]
+                 (if (:auto-pump ab)
+                   [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                   [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                  :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                             (dec i) i)})
+                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+               abilities)]))
         (when (= (first zone) "servers")
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
@@ -549,7 +548,7 @@
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
        (when (pos? (count hosted))
          [:div.hosted
-          (om/build-all card-view hosted {:key :cid})])]))))
+          (om/build-all card-view hosted {:key :cid})])])))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
