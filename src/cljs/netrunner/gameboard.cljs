@@ -142,8 +142,6 @@
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
       (#(if (or (and (= type "Agenda")
                      (= (first zone) "servers"))
                 (= advanceable "always")
@@ -152,6 +150,8 @@
                 (and (not rezzed)
                      (= advanceable "while-unrezzed")))
           (cons "advance" %) %))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
+         (cons "score" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
