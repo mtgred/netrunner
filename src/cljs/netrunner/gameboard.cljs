@@ -156,15 +156,16 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
+(defn handle-abilities [{:keys [abilities facedown side type] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when-not (and (= side "Runner") facedown)
       (cond
         ;; Open panel
         (or (> c 1)
-            (= (first actions) "derez")
-            (= (first actions) "advance"))
+            (some #{"derez" "advance"} actions)
+            (and (= type "ICE")
+                 (not (:run @game-state))))                        ; Horrible hack to check if currently in a run
         (-> (om/get-node owner "abilities") js/$ .toggle)
         ;; Trigger first (and only) ability / action
         (= c 1)
@@ -519,8 +520,8 @@
                   servers)]))
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
-                    (= (first actions) "derez")
-                    (= (first actions) "advance"))
+                    (some #{"derez" "advance"} actions)
+                    (= type "ICE"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
