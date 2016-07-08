@@ -692,7 +692,9 @@
                                       {:mandatory true
                                        :effect (effect (resolve-ability
                                                          {:msg "draw 2 cards instead of accessing"
-                                                          :effect (effect (draw 2))} st nil))})))}
+                                                          :effect (effect (draw 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
@@ -897,7 +899,9 @@
                                       {:mandatory true
                                        :effect (effect (resolve-ability
                                                          {:msg "gain 2 [Credits] instead of accessing"
-                                                          :effect (effect (gain :credit 2))} st nil))})))}
+                                                          :effect (effect (gain :credit 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
