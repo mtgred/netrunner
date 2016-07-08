@@ -922,6 +922,11 @@
     :choices {:req #(and (has-subtype? % "Virus") (:added-virus-counter %))}
     :effect (req (add-counter state :runner target :virus 2))}
 
+   "System Outage"
+   {:events {:corp-draw {:req (req (not (first-event state side :corp-draw)))
+                         :msg "force the Corp to lose 1 [Credits]"
+                         :effect (effect (lose :corp :credit 1))}}}
+
    "Test Run"
    {:prompt "Install a program from your Stack or Heap?"
     :choices (cancellable ["Stack" "Heap"])
