@@ -514,7 +514,8 @@
                   servers)]))
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
-                    (= (first actions) "derez"))
+                    (= (first actions) "derez")
+                    (= (first actions) "advance"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
