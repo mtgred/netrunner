@@ -160,14 +160,19 @@
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when-not (and (= side "Runner") facedown)
-      (cond (or (> c 1)
-                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
-            (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+      (cond
+        ;; Open panel
+        (or (> c 1)
+            (= (first actions) "derez")
+            (= (first actions) "advance"))
+        (-> (om/get-node owner "abilities") js/$ .toggle)
+        ;; Trigger first (and only) ability / action
+        (= c 1)
+        (if (= (count abilities) 1)
+          (send-command "ability" {:card card :ability 0})
+          (send-command (first actions) {:card card}))))))
 
-(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
-                                 root] :as card} owner]
+(defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
       (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
