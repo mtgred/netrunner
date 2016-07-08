@@ -682,6 +682,7 @@
    (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
                   :req (req (not= "No server" target))
                   :msg (msg "target " target)
+                  :once :per-turn
                   :effect (effect (update! (assoc card :server-target target)))}]
      {:events {:runner-turn-begins ability
                :successful-run
