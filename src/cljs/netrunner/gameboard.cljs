@@ -462,7 +462,7 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon new]
+                         side rec-counter facedown server-target icon new]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -499,7 +499,7 @@
         (when (and current-strength (not= strength current-strength))
               current-strength [:div.darkbg.strength current-strength])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
-        (when named-target [:div.darkbg.named-target named-target])
+        (when server-target [:div.darkbg.server-target server-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
           (let [centrals ["Archives" "R&D" "HQ"]
                 remotes (concat (remote-list remotes) ["New remote"])
