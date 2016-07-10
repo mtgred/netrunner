@@ -550,6 +550,20 @@
     (is (= 11 (:credit (get-corp))) "Gained 6 credits")
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
+(deftest salems-hospitality
+  "Salem's Hospitality - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Salem's Hospitality" 3)])
+              (default-runner [(qty "I've Had Worse" 3) (qty "Faust" 1)
+                               (qty "Levy AR Lab Access" 1)]))
+    (play-from-hand state :corp "Salem's Hospitality")
+    (is (= 5 (count (:hand (get-runner)))))
+    (prompt-choice :corp "I've Had Worse")
+    (is (= 2 (count (:hand (get-runner)))))
+    (play-from-hand state :corp "Salem's Hospitality")
+    (prompt-choice :corp "Plascrete Carapace")
+    (is (= 2 (count (:hand (get-runner)))))))
+
 (deftest scorched-earth
   "Scorched Earth - burn 'em"
   (do-game
