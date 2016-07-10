@@ -665,7 +665,7 @@
     :choices {:card-title (req (and (card-is? target :side "Runner")
                                     (not (card-is? target :type "Identity"))))}
     :effect (req (system-msg state side
-                             (str "uses Salem's Hospitality to reveal the Runner's grip ("
+                             (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
                                   (join ", " (map :title (:hand runner)))
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
