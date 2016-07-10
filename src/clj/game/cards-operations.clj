@@ -38,25 +38,25 @@
                                                      (continue-ability state side (ad 1 n card) card nil))}
                                        card nil)))})
 
-"Ad Blitz"
-(let [abhelp (fn ab [n total]
-               {:prompt "Select an advertisement to install and rez" :show-discard true
-                :delayed-completion true
-                :choices {:req #(and (= (:side %) "Corp")
-                                     (has-subtype? % "Advertisement")
-                                     (or (in-hand? %)
-                                         (= (:zone %) [:discard])))}
-                :effect (req (when-completed
-                               (corp-install state side target nil {:install-state :rezzed})
-                               (if (< n total)
-                                 (continue-ability state side (ab (inc n) total) card nil)
-                                 (effect-completed state side eid))))})]
-  {:prompt "How many advertisements?"
-   :delayed-completion true
-   :choices :credit
-   :msg (msg "install and rez " target " advertisements")
-   :effect (effect (continue-ability (abhelp 1 target) card nil))})
-
+   "Ad Blitz"
+   (let [abhelp (fn ab [n total]
+                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                   :delayed-completion true
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (has-subtype? % "Advertisement")
+                                        (or (in-hand? %)
+                                            (= (:zone %) [:discard])))}
+                   :effect (req (when-completed
+                                  (corp-install state side target nil {:install-state :rezzed})
+                                  (if (< n total)
+                                    (continue-ability state side (ab (inc n) total) card nil)
+                                    (effect-completed state side eid))))})]
+     {:prompt "How many advertisements?"
+      :delayed-completion true
+      :choices :credit
+      :msg (msg "install and rez " target " advertisements")
+      :effect (effect (continue-ability (abhelp 1 target) card nil))})
+   
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
