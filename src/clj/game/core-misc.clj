@@ -2,43 +2,6 @@
 
 (declare set-prop)
 
-; Stuff that doesn't go in other files.
-
-; No idea what these are for. @justinliew?
-(defn copy-events [state side dest source]
-  (let [source-def (card-def source)
-        source-events (or (:events source-def) {})
-        dest-card (merge dest {:events source-events})]
-    (update! state side dest-card)
-    (register-events state side (:events dest-card) dest-card)))
-
-(defn copy-abilities [state side dest source]
-  (let [source-def (card-def source)
-        source-abilities (or (:abilities source-def) ())
-        ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
-        source-abilities (for [ab source-abilities]
-                           (assoc (select-keys ab [:cost :pump :breaks])
-                             :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
-                             :dynamic :copy))
-        dest-card (merge dest {:abilities source-abilities :source source})]
-    (update! state side dest-card)))
-
-; I'm making the assumption that we only copy effects if there is a :leave-play effect, as these are persistent effects as opposed to a one-time scored effect.
-; think Mandatory Upgrades vs. Improved Tracers
-(defn copy-leave-play-effects [state side dest source]
-  (let [source-def (card-def source)]
-    (when-let [source-leave-play (:leave-play source-def)]
-      (let [source-effect (:effect source-def)
-            dest-card (merge dest {:source-leave-play source})]
-        (when-not (nil? source-effect) (source-effect state side source nil))
-        (update! state side dest-card)))))
-
-(defn fire-leave-play-effects [state side card]
-  (when-let [source-leave-play (:source-leave-play card)]
-    (let [source-def (card-def source-leave-play)
-          leave-effect (:leave-play source-def)]
-      (when-not (nil? leave-effect) (leave-effect state side card nil)))))
-
 (defn get-zones [state]
   (keys (get-in state [:corp :servers])))
 
@@ -120,6 +83,37 @@
         base (get side' :hand-size-base 0)
         mod (get side' :hand-size-modification 0)]
     (+ base mod)))
+
+(defn swap-agendas
+  "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
+  [state side scored stolen]
+  (let [corp-ap-stolen (get-agenda-points state :corp stolen)
+        corp-ap-scored (get-agenda-points state :corp scored)
+        runner-ap-stolen (get-agenda-points state :runner stolen)
+        runner-ap-scored (get-agenda-points state :runner scored)
+        corp-ap-change (- corp-ap-stolen corp-ap-scored)
+        runner-ap-change (- runner-ap-scored runner-ap-stolen)]
+    ;; Remove end of turn events for swapped out agenda
+    (swap! state update-in [:corp :register :end-turn]
+           (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
+    ;; Move agendas
+    (swap! state update-in [:corp :scored]
+           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
+    (swap! state update-in [:runner :scored]
+           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
+                            (dissoc scored :abilities :events))))
+    ;; Update agenda points
+    (gain-agenda-point state :runner runner-ap-change)
+    (gain-agenda-point state :corp corp-ap-change)
+    ;; Set up abilities and events
+    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))]
+      (let [abilities (:abilities (card-def new-scored))
+            new-scored (merge new-scored {:abilities abilities})]
+        (update! state :corp new-scored)
+        (when-let [events (:events (card-def new-scored))]
+          (register-events state side events new-scored))))
+    (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
+      (deactivate state :corp new-stolen))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon
