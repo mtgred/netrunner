@@ -38,24 +38,24 @@
                                                      (continue-ability state side (ad 1 n card) card nil))}
                                        card nil)))})
 
-"Ad Blitz"
-(let [abhelp (fn ab [n total]
-               {:prompt "Select an advertisement to install and rez" :show-discard true
-                :delayed-completion true
-                :choices {:req #(and (= (:side %) "Corp")
-                                     (has-subtype? % "Advertisement")
-                                     (or (in-hand? %)
-                                         (= (:zone %) [:discard])))}
-                :effect (req (when-completed
-                               (corp-install state side target nil {:install-state :rezzed})
-                               (if (< n total)
-                                 (continue-ability state side (ab (inc n) total) card nil)
-                                 (effect-completed state side eid))))})]
-  {:prompt "How many advertisements?"
-   :delayed-completion true
-   :choices :credit
-   :msg (msg "install and rez " target " advertisements")
-   :effect (effect (continue-ability (abhelp 1 target) card nil))})
+   "Ad Blitz"
+   (let [abhelp (fn ab [n total]
+                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                   :delayed-completion true
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (has-subtype? % "Advertisement")
+                                        (or (in-hand? %)
+                                            (= (:zone %) [:discard])))}
+                   :effect (req (when-completed
+                                  (corp-install state side target nil {:install-state :rezzed})
+                                  (if (< n total)
+                                    (continue-ability state side (ab (inc n) total) card nil)
+                                    (effect-completed state side eid))))})]
+     {:prompt "How many advertisements?"
+      :delayed-completion true
+      :choices :credit
+      :msg (msg "install and rez " target " advertisements")
+      :effect (effect (continue-ability (abhelp 1 target) card nil))})
 
    "Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
@@ -355,11 +355,27 @@
     :msg (msg (corp-install-msg target))}
 
    "Invasion of Privacy"
-   {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"
-            :effect (req (doseq [c (:hand runner)]
-                           (move state side c :play-area))
-                           (system-msg state :corp (str "reveals the Runner's Grip and can trash up to " (- target (second targets)) " resources or events")))
-            :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}}
+   (letfn [(iop [x]
+             {:delayed-completion true
+              :req (req (pos? (count (filter #(or (is-type? % "Resource")
+                                                  (is-type? % "Event")) (:hand runner)))))
+              :prompt "Choose a resource or event to trash"
+              :msg (msg "trash " (:title target))
+              :choices (req (cancellable
+                              (filter #(or (is-type? % "Resource")
+                                           (is-type? % "Event")) (:hand runner)) :sorted))
+              :effect (req (trash state side target)
+                           (if (pos? x)
+                             (continue-ability state side (iop (dec x)) card nil)
+                             (effect-completed state side eid card)))})]
+     {:trace {:base 2 :msg "reveal the Runner's Grip and trash up to X resources or events"
+              :effect (req (let [x (- target (second targets))]
+                             (system-msg state :corp
+                                         (str "reveals the Runner's Grip ( "
+                                              (join ", " (map :title (:hand runner)))
+                                              " ) and can trash up to " x " resources or events"))
+                             (continue-ability state side (iop (dec x)) card nil)))
+              :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}})
 
    "Lag Time"
    {:effect (effect (update-all-ice))
@@ -629,7 +645,7 @@
     :choices {:card-title (req (and (card-is? target :side "Runner")
                                     (not (card-is? target :type "Identity"))))}
     :effect (req (system-msg state side
-                             (str "uses Salem's Hospitality to reveal the Runner's grip ("
+                             (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
                                   (join ", " (map :title (:hand runner)))
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
