@@ -142,8 +142,6 @@
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
       (#(if (or (and (= type "Agenda")
                      (= (first zone) "servers"))
                 (= advanceable "always")
@@ -152,22 +150,30 @@
                 (and (not rezzed)
                      (= advanceable "while-unrezzed")))
           (cons "advance" %) %))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
+         (cons "score" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
+(defn handle-abilities [{:keys [abilities facedown side type] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when-not (and (= side "Runner") facedown)
-      (cond (or (> c 1)
-                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
-            (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+      (cond
+        ;; Open panel
+        (or (> c 1)
+            (some #{"derez" "advance"} actions)
+            (and (= type "ICE")
+                 (not (:run @game-state))))                        ; Horrible hack to check if currently in a run
+        (-> (om/get-node owner "abilities") js/$ .toggle)
+        ;; Trigger first (and only) ability / action
+        (= c 1)
+        (if (= (count abilities) 1)
+          (send-command "ability" {:card card :ability 0})
+          (send-command (first actions) {:card card}))))))
 
-(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
-                                 root] :as card} owner]
+(defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
       (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
@@ -514,7 +520,8 @@
                   servers)]))
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
-                    (= (first actions) "derez"))
+                    (some #{"derez" "advance"} actions)
+                    (= type "ICE"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
