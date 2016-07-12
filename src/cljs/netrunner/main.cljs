@@ -64,7 +64,9 @@
          (let [c (count (:spectators game))]
             (when (pos? c)
               [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
-               [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view (:spectators game))]]))))])))
+               [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view
+                                                         (map (fn [%] {:player % :game game})
+                                                              (:spectators game)))]]))))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
