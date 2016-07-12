@@ -682,19 +682,21 @@
    (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
                   :req (req (not= "No server" target))
                   :msg (msg "target " target)
-                  :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
-   {:events {:runner-turn-begins ability
-             :successful-run
-             {:req (req (= (get-in @state [:run :server]) (:patron-target (get-card state card))))
-              :once :per-turn
-              :effect (req (let [st card]
-                             (swap! state assoc-in [:run :run-effect :replace-access]
-                                    {:mandatory true
-                                     :effect (effect (resolve-ability
-                                                       {:msg "draw 2 cards instead of accessing"
-                                                        :effect (effect (draw 2))} st nil))})))}
-             :runner-turn-ends {:effect (effect (update! (dissoc card :patron-target)))}}
-    :abilities [ability]})
+                  :effect (effect (update! (assoc card :server-target target)))}]
+     {:events {:runner-turn-begins ability
+               :successful-run
+               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+                :once :per-turn
+                :effect (req (let [st card]
+                               (swap! state assoc-in [:run :run-effect :replace-access]
+                                      {:mandatory true
+                                       :effect (effect (resolve-ability
+                                                         {:msg "draw 2 cards instead of accessing"
+                                                          :effect (effect (draw 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+      :abilities [ability]})
 
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
@@ -887,19 +889,21 @@
    "Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing" :choices (req servers)
                   :msg (msg "target " target)
-                  :effect (effect (update! (assoc card :testing-target (vec (next (server->zone state target))))))}]
-   {:events {:runner-turn-begins ability
-             :successful-run
-             {:req (req (= (get-in @state [:run :server]) (:testing-target (get-card state card))))
-              :once :per-turn
-              :effect (req (let [st card]
-                             (swap! state assoc-in [:run :run-effect :replace-access]
-                                    {:mandatory true
-                                     :effect (effect (resolve-ability
-                                                       {:msg "gain 2 [Credits] instead of accessing"
-                                                        :effect (effect (gain :credit 2))} st nil))})))}
-             :runner-turn-ends {:effect (effect (update! (dissoc card :testing-target)))}}
-    :abilities [ability]})
+                  :effect (effect (update! (assoc card :server-target target)))}]
+     {:events {:runner-turn-begins ability
+               :successful-run
+               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+                :once :per-turn
+                :effect (req (let [st card]
+                               (swap! state assoc-in [:run :run-effect :replace-access]
+                                      {:mandatory true
+                                       :effect (effect (resolve-ability
+                                                         {:msg "gain 2 [Credits] instead of accessing"
+                                                          :effect (effect (gain :credit 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+      :abilities [ability]})
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
