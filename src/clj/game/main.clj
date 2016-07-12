@@ -49,7 +49,9 @@
    "ability" core/play-ability
    "trash-resource" core/trash-resource
    "auto-pump" core/auto-pump
-   "toast" core/toast})
+   "toast" core/toast
+   "view-deck" core/view-deck
+   "close-deck" core/close-deck})
 
 (defn convert [args]
   (try
@@ -100,12 +102,17 @@
         s
         (recur (update-in s (first z) #(private-card-vector state :corp %)) (next z))))))
 
+(defn- make-private-deck [state side deck]
+  (if (:view-deck (side @state))
+    deck
+    (private-card-vector state side deck)))
+
 (defn- private-states [state]
   ;; corp, runner, spectator
   (let [corp-private (make-private-corp state)
         runner-private (make-private-runner state)
-        corp-deck (update-in (:corp @state) [:deck] #(map private-card %))
-        runner-deck (update-in (:runner @state) [:deck] #(map private-card %))]
+        corp-deck (update-in (:corp @state) [:deck] #(make-private-deck state :corp %))
+        runner-deck (update-in (:runner @state) [:deck] #(make-private-deck state :runner %))]
     [(assoc @state :runner runner-private
                    :corp corp-deck)
      (assoc @state :corp corp-private
@@ -117,6 +124,7 @@
   back across the socket (if the command was successful or a resolvable exception was
   caught), or false if an error string should."
   [{:keys [gameid action command side user args text cards] :as msg} state]
+
   (try (do (case action
              "initialize" (reset! all-cards (into {} (map (juxt :title identity) cards))) ;; creates a map from card title to card data
              "start" (core/init-game msg)

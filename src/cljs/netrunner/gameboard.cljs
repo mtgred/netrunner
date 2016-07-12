@@ -587,14 +587,15 @@
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  (send-command "system-msg" {:msg "looks at their deck"}))
+  ;(send-command "system-msg" {:msg "looks at their deck"})
+  (send-command "view-deck"))
 
-(defn close-popup [event owner ref msg shuffle?]
+(defn close-popup [event owner ref msg shuffle? deck?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
-  (when shuffle?
-    (send-command "shuffle" {:close "true"}))
-  (when msg
-    (send-command "system-msg" {:msg msg}))
+  (cond
+    shuffle? (send-command "shuffle" {:close "true"})
+    deck? (send-command "close-deck")
+    msg (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
 
 (defmulti deck-view #(get-in % [:identity :side]))
@@ -614,9 +615,9 @@
      (when (= (:side @game-state) :runner)
        [:div.panel.blue-shade.popup {:ref "stack-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false true)}
           "Close"]
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true true)}
           "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
@@ -638,8 +639,8 @@
      (when (= (:side @game-state) :corp)
        [:div.panel.blue-shade.popup {:ref "rd-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false)} "Close"]
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true)} "Close & Shuffle"]]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false true)} "Close"]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true true)} "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
        [:img.card.bg {:src "/img/corp.png"}])])))
@@ -654,7 +655,7 @@
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
       [:div
-       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
+       [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -674,7 +675,7 @@
 
       [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
        [:div
-        [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]
+        [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
         [:label (let [total (count discard)
                       face-up (count (filter faceup? discard))]
                   (str total " cards, " (- total face-up) " face-down."))]]

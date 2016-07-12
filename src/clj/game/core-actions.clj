@@ -23,7 +23,9 @@
   [state side {:keys [close] :as args}]
   (swap! state update-in [side :deck] shuffle)
   (if close
-    (system-msg state side "stops looking at their deck and shuffles it")
+    (do
+      (swap! state update-in [side] dissoc :view-deck)
+      (system-msg state side "stops looking at their deck and shuffles it"))
     (system-msg state side "shuffles their deck")))
 
 (defn click-draw
@@ -357,3 +359,15 @@
       (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
         (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
         (update-breaker-strength state side p)))))
+
+(defn view-deck
+  "Allows the player to view their deck by making the cards in the deck public."
+  [state side args]
+  (system-msg state side "looks at their deck")
+  (swap! state assoc-in [side :view-deck] true))
+
+(defn close-deck
+  "Closes the deck view and makes cards in deck private again."
+  [state side args]
+  (system-msg state side "stops looking at their deck")
+  (swap! state update-in [side] dissoc :view-deck))
