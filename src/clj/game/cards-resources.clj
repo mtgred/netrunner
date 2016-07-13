@@ -106,7 +106,7 @@
       :silent (req (not (and (is-type? target "Hardware")
                              (some #(= (:title %) (:title target)) (:hand runner)))))
       :delayed-completion true
-      :req (req (is-type? target "Hardware"))
+      :req (req (and (is-type? target "Hardware") (= [:hand] (:previous-zone target))))
       :effect (req (let [hw (:title target)]
                      (continue-ability state side
                        {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
