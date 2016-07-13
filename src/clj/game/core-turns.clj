@@ -6,7 +6,7 @@
 ;;; Functions for the creation of games and the progression of turns.
 (defn init-game
   "Initializes a new game with the given players vector."
-  [{:keys [players gameid] :as game}]
+  [{:keys [players gameid spectatorhands] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp))
@@ -16,6 +16,7 @@
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
                  :rid 0 :turn 0 :eid 0
+                 :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
                         :deck (zone :deck (drop 5 corp-deck))
                         :hand (zone :hand (take 5 corp-deck))

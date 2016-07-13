@@ -117,7 +117,10 @@
                    :corp corp-deck)
      (assoc @state :corp corp-private
                    :runner runner-deck)
-     (assoc @state :corp corp-private :runner runner-private)]))
+     (if (get-in @state [:options :spectatorhands])
+       (assoc @state :corp (assoc-in corp-private [:hand] (get-in @state [:corp :hand]))
+                     :runner (assoc-in runner-private [:hand] (get-in @state [:runner :hand])))
+       (assoc @state :corp corp-private :runner runner-private))]))
 
 (defn- handle-command
   "Apply the given command to the given state. Return true if the state should be sent
