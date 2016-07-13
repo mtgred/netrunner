@@ -59,7 +59,7 @@
                                            :factioncost)]
                              (if-let [init (:init (card-def c))] (merge c init) c)))
                          (repeat (:qty %) (:card %)))
-                   (:cards deck))))
+                   (shuffle (vec (:cards deck))))))
 
 (defn make-rid
   "Returns a progressively-increasing integer to identify a new remote server."
