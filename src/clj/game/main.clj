@@ -63,7 +63,7 @@
       (println "Convert error " e))))
 
 (defn strip [state]
-  (dissoc state :events :turn-events :per-turn :prevent :damage))
+  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed))
 
 (defn not-spectator? [state user]
   "Returns true if the specified user in the specified state is not a spectator"
