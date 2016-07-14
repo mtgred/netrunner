@@ -96,6 +96,22 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest bazaar-grip-only
+  "Bazaar - Only triggers when installing from Grip"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Bazaar" 1)
+                               (qty "Spy Camera" 6)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
+    (play-from-hand state :runner "Bazaar")
+    (play-from-hand state :runner "Street Peddler")
+    (let [peddler (get-resource state 1)]
+      (card-ability state :runner peddler 0)
+      (prompt-card :runner (first (:hosted peddler)))
+      (is (empty? (:prompt (get-runner))) "No Bazaar prompt from install off Peddler"))))
+
 (deftest beach-party
   "Beach Party - Lose 1 click when turn begins; hand size increased by 5"
   (do-game
