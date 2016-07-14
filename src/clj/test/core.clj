@@ -47,7 +47,7 @@
       state)))
 
 (defn load-all-cards []
-  (swap! game.core/all-cards (fn [x] (map #(assoc % :cid (make-cid)) (load-cards)))))
+  (reset! game.core/all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
 (load-all-cards)
 
 ;;; Card related functions

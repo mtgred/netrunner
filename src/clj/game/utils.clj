@@ -188,3 +188,5 @@
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 
+(defn private-card [card]
+  (select-keys card [:zone :cid :side :new :host]))

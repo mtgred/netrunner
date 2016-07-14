@@ -11,18 +11,21 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
-  (case (:type card)
-    ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
-    ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
-    ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
-  (trigger-event state side :play card))
+  (let [card (get-card state card)]
+    (case (:type card)
+      ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
+      ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
+      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
+    (trigger-event state side :play card)))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
   [state side {:keys [close] :as args}]
   (swap! state update-in [side :deck] shuffle)
   (if close
-    (system-msg state side "stops looking at their deck and shuffles it")
+    (do
+      (swap! state update-in [side] dissoc :view-deck)
+      (system-msg state side "stops looking at their deck and shuffles it"))
     (system-msg state side "shuffles their deck")))
 
 (defn click-draw
@@ -55,7 +58,7 @@
 (defn move-card
   "Called when the user drags a card from one zone to another."
   [state side {:keys [card server]}]
-  (let [c (update-in card [:zone] #(map to-keyword %))
+  (let [c (get-card state card)
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
         from-str (when-not (nil? src) (str " from their " src))
@@ -110,7 +113,8 @@
   "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
-  (let [prompt (first (get-in @state [side :prompt]))
+  (let [card (get-card state card)
+        prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
@@ -118,7 +122,7 @@
       ;; The user did not choose "cancel"
       (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
         (let [title-fn (:card-title (:choices prompt))
-              found (some #(when (= (lower-case choice) (lower-case (:title %))) %) @all-cards)]
+              found (some #(when (= (lower-case choice) (lower-case (:title %))) %) (vals @all-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
               (do ((:effect prompt) (or choice card))
@@ -138,16 +142,14 @@
             ;; the user chose "cancel" -- trigger the cancel effect.
             (cancel-effect choice)
             (effect-completed state side (:eid prompt) nil))
-          (finish-prompt state side prompt card))
-      ;; trigger end-effect if present
-
-      )))
+          (finish-prompt state side prompt card)))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
   [state side {:keys [card] :as args}]
-  (let [r (get-in @state [side :selected 0 :req])]
+  (let [card (get-card state card)
+        r (get-in @state [side :selected 0 :req])]
     (when (or (not r) (r card))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
@@ -163,7 +165,8 @@
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
   [state side {:keys [card ability targets] :as args}]
-  (let [cdef (card-def card)
+  (let [card (get-card state card)
+        cdef (card-def card)
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
@@ -203,64 +206,67 @@
   "Rez a corp card."
   ([state side card] (rez state side card nil))
   ([state side card {:keys [ignore-cost no-warning] :as args}]
-   (if (can-rez? state side card)
-     (do
-       (trigger-event state side :pre-rez card)
-       (when (or (#{"Asset" "ICE" "Upgrade"} (:type card))
-                 (:install-rezzed (card-def card)))
-         (trigger-event state side :pre-rez-cost card)
-         (let [cdef (card-def card)
-               cost (rez-cost state side card)
-               costs (concat (when-not ignore-cost [:credit cost])
-                             (when (not= ignore-cost :all-costs) (:additional-cost cdef)))]
-           (when-let [cost-str (apply pay state side card costs)]
-             ;; Deregister the derezzed-events before rezzing card
-             (when (:derezzed-events cdef)
-               (unregister-events state side card))
-             (card-init state side (assoc card :rezzed true))
-             (doseq [h (:hosted card)]
-               (update! state side (-> h
-                                       (update-in [:zone] #(map to-keyword %))
-                                       (update-in [:host :zone] #(map to-keyword %)))))
-             (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                         (:title card) (when ignore-cost " at no cost")))
-             (when (and (not no-warning) (:corp-phase-12 @state))
-               (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+   (let [card (get-card state card)]
+     (if (can-rez? state side card)
+       (do
+         (trigger-event state side :pre-rez card)
+         (when (or (#{"Asset" "ICE" "Upgrade"} (:type card))
+                   (:install-rezzed (card-def card)))
+           (trigger-event state side :pre-rez-cost card)
+           (let [cdef (card-def card)
+                 cost (rez-cost state side card)
+                 costs (concat (when-not ignore-cost [:credit cost])
+                               (when (not= ignore-cost :all-costs) (:additional-cost cdef)))]
+             (when-let [cost-str (apply pay state side card costs)]
+               ;; Deregister the derezzed-events before rezzing card
+               (when (:derezzed-events cdef)
+                 (unregister-events state side card))
+               (card-init state side (assoc card :rezzed true))
+               (doseq [h (:hosted card)]
+                 (update! state side (-> h
+                                         (update-in [:zone] #(map to-keyword %))
+                                         (update-in [:host :zone] #(map to-keyword %)))))
+               (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
+                                           (:title card) (when ignore-cost " at no cost")))
+               (when (and (not no-warning) (:corp-phase-12 @state))
+                 (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                       Please rez prior to clicking Start Turn in the future." "warning"
-                      {:time-out 0 :close-button true}))
-             (when (ice? card)
-               (update-ice-strength state side card))
-             (trigger-event state side :rez card))))
-       (swap! state update-in [:bonus] dissoc :cost)))))
+                        {:time-out 0 :close-button true}))
+               (when (ice? card)
+                 (update-ice-strength state side card))
+               (trigger-event state side :rez card))))
+         (swap! state update-in [:bonus] dissoc :cost))))))
 
 (defn derez
   "Derez a corp card."
   [state side card]
-  (system-msg state side (str "derezzes " (:title card)))
-  (update! state :corp (deactivate state :corp card true))
-  (let [cdef (card-def card)]
-    (when-let [derez-effect (:derez-effect cdef)]
-      (resolve-ability state side derez-effect (get-card state card) nil))
-    (when-let [dre (:derezzed-events cdef)]
-      (register-events state side dre card)))
-  (trigger-event state side :derez card))
+  (let [card (get-card state card)]
+    (system-msg state side (str "derezzes " (:title card)))
+    (update! state :corp (deactivate state :corp card true))
+    (let [cdef (card-def card)]
+      (when-let [derez-effect (:derez-effect cdef)]
+        (resolve-ability state side derez-effect (get-card state card) nil))
+      (when-let [dre (:derezzed-events cdef)]
+        (register-events state side dre card)))
+    (trigger-event state side :derez card)))
 
 (defn advance
   "Advance a corp card that can be advanced."
   [state side {:keys [card]}]
-  (when (can-advance? state side card)
-    (when-let [cost (pay state side card :click 1 :credit 1)]
-      (let [spent   (build-spend-msg cost "advance")
-            card    (card-str state card)
-            message (str spent card)]
-        (system-msg state side message))
-      (update-advancement-cost state side card)
-      (add-prop state side (get-card state card) :advance-counter 1))))
+  (let [card (get-card state card)]
+    (when (can-advance? state side card)
+      (when-let [cost (pay state side card :click 1 :credit 1)]
+        (let [spent   (build-spend-msg cost "advance")
+              card    (card-str state card)
+              message (str spent card)]
+          (system-msg state side message))
+        (update-advancement-cost state side card)
+        (add-prop state side (get-card state card) :advance-counter 1)))))
 
 (defn score
   "Score an agenda."
   [state side args]
-  (let [card (or (:card args) args)]
+  (let [card (get-card state (or (:card args) args))]
     (when (can-score? state side card)
       (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
                  (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
@@ -353,3 +359,15 @@
       (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
         (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
         (update-breaker-strength state side p)))))
+
+(defn view-deck
+  "Allows the player to view their deck by making the cards in the deck public."
+  [state side args]
+  (system-msg state side "looks at their deck")
+  (swap! state assoc-in [side :view-deck] true))
+
+(defn close-deck
+  "Closes the deck view and makes cards in deck private again."
+  [state side args]
+  (system-msg state side "stops looking at their deck")
+  (swap! state update-in [side] dissoc :view-deck))
