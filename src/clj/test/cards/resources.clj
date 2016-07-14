@@ -690,7 +690,7 @@
       (is (= 1 (:agenda-point (get-runner))))
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
-(deftest patron-testing
+(deftest patron
   "Patron - Ability"
   (do-game
     (new-game (default-corp [(qty "Jackson Howard" 1)])
@@ -714,6 +714,27 @@
       (prompt-choice :runner "Server 1")
       (run-empty-server state "Archives")
       (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
+
+(deftest patron-manual
+  "Patron - Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744."
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Patron" 3) (qty "Jak Sinclair" 3)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (starting-hand state :runner ["Patron" "Jak Sinclair"])
+    (play-from-hand state :runner "Patron")
+    (play-from-hand state :runner "Jak Sinclair")
+    (take-credits state :runner)
+    (let [p (get-resource state 0)
+          j (get-resource state 1)]
+      (take-credits state :corp)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (card-ability state :runner p 0)
+      (prompt-choice :runner "Archives")
+      (core/end-phase-12 state :runner nil)
+      (prompt-choice :runner "No")
+      (is (empty? (:prompt (get-runner))) "No second prompt for Patron"))))
 
 (deftest professional-contacts
   "Professional Contacts - Click to gain 1 credit and draw 1 card"
@@ -865,6 +886,23 @@
       (prompt-choice :runner "Server 1")
       (run-empty-server state "Archives")
       (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
+
+(deftest security-testing-multiple
+  "Security Testing - multiple copies"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Security Testing" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (play-from-hand state :runner "Security Testing")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "Archives")
+    (prompt-choice :runner "R&D")
+    (run-empty-server state "Archives")
+    (is (= 9 (:credit (get-runner))) "Gained 2 credits")
+    (run-empty-server state "R&D")
+    (is (= 11 (:credit (get-runner))))))
 
 (deftest spoilers
   "Spoilers - Mill the Corp when it scores an agenda"
