@@ -397,22 +397,27 @@
    "Immolation Script"
    {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
                                                               (assoc card :zone '(:discard))))
-    :events {:successful-run-ends
+    :events {:successful-run
              {:req (req (= target :archives))
-              :effect (effect (resolve-ability
-                                {:prompt "Choose a piece of ICE in Archives"
-                                 :choices (req (filter ice? (:discard corp)))
-                                 :effect (req (let [icename (:title target)]
-                                                (resolve-ability
-                                                  state side
-                                                  {:prompt (msg "Choose a rezzed copy of " icename " to trash")
-                                                   :choices {:req #(and (ice? %)
-                                                                        (rezzed? %)
-                                                                        (= (:title %) icename))}
-                                                   :msg (msg "trash " (card-str state target))
-                                                   :effect (req (trash state :corp target))} card nil)))}
-                               card nil)
-                              (unregister-events card))}}}
+              :effect (req (when-completed
+                             (resolve-ability state side
+                               {:delayed-completion true
+                                :prompt "Choose a piece of ICE in Archives"
+                                :choices (req (filter ice? (:discard corp)))
+                                :effect (req (let [icename (:title target)]
+                                               (continue-ability
+                                                 state side
+                                                 {:delayed-completion true
+                                                  :prompt (msg "Choose a rezzed copy of " icename " to trash")
+                                                  :choices {:req #(and (ice? %)
+                                                                       (rezzed? %)
+                                                                       (= (:title %) icename))}
+                                                  :msg (msg "trash " (card-str state target))
+                                                  :effect (req (trash state :corp target)
+                                                               (unregister-events state side card)
+                                                               (effect-completed state side eid card))} card nil)))}
+                              card nil)
+                             (do-access state side eid (:server run))))}}}
 
    "Independent Thinking"
    (let [cards-to-draw (fn [ts] (* (count ts) (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) ts) 2 1)))]

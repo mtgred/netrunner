@@ -96,6 +96,64 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest bank-job-manhunt
+  "Bank Job - Manhunt trace happens first"
+  (do-game
+    (new-game (default-corp [(qty "Manhunt" 1) (qty "PAD Campaign" 1)])
+              (default-runner [(qty "Bank Job" 1)]))
+    (play-from-hand state :corp "Manhunt")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bank Job")
+    (run-empty-server state "Server 1")
+    (prompt-choice :corp 2) ; Manhunt trace active
+    (prompt-choice :runner 0)
+    (prompt-choice :runner "Run ability")
+    (is (= "Bank Job" (:title (:card (first (get-in @state [:runner :prompt])))))
+        "Bank Job prompt active")
+    (prompt-choice :runner 8)
+    (is (empty? (get-in @state [:runner :rig :resource])) "Bank Job trashed after all credits taken")
+    (is (= 1 (count (:discard (get-runner)))))))
+
+(deftest bank-job-multiple-copies
+  "Bank Job - Choose which to use when 2+ copies are installed"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 1)])
+                (default-runner [(qty "Bank Job" 2)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bank Job")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner 4)
+      (play-from-hand state :runner "Bank Job")
+      (let [bj1 (get-resource state 0)
+            bj2 (get-resource state 1)]
+        (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
+        (run-empty-server state "Server 1")
+        (prompt-choice :runner "Run ability")
+        (prompt-select :runner bj2)
+        (prompt-choice :runner 6)
+        (is (= 13 (:credit (get-runner))))
+        (is (= 2 (get-counters (refresh bj2) :credit)) "2 credits remaining on 2nd copy"))))
+
+(deftest bank-job-sectesting
+  "Bank Job - Security Testing takes priority"
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Bank Job" 1) (qty "Security Testing" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (play-from-hand state :runner "Bank Job")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "Server 1")
+    (is (= 6 (:credit (get-runner))))
+    (run-empty-server state "Server 1")
+    (is (empty? (:prompt (get-runner))) "No Bank Job replacement choice")
+    (is (= 8 (:credit (get-runner))) "Security Testing paid 2c")))
+
 (deftest bazaar-grip-only
   "Bazaar - Only triggers when installing from Grip"
   (do-game
