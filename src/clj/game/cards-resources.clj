@@ -680,9 +680,10 @@
                                                  card nil))}}})
    "Patron"
    (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
-                  :req (req (not= "No server" target))
+                  :req (req (not (:server-target card)))
                   :msg (msg "target " target)
-                  :effect (effect (update! (assoc card :server-target target)))}]
+                  :effect (req (when (not= target "No server")
+                                 (update! state side (assoc card :server-target target))))}]
      {:events {:runner-turn-begins ability
                :successful-run
                {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
@@ -889,6 +890,7 @@
    "Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing" :choices (req servers)
                   :msg (msg "target " target)
+                  :req (req (not (:server-target card)))
                   :effect (effect (update! (assoc card :server-target target)))}]
      {:events {:runner-turn-begins ability
                :successful-run
