@@ -579,7 +579,10 @@
                                                           (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
-                       (if (or (= (:user player) (:user @app-state)) (:openhand player))
+                       (if (or (= (:user player) (:user @app-state))
+                               (:openhand player)
+                               (and (get-in @game-state [:options :spectatorhands])
+                                    (not (not-spectator? game-state app-state))))
                          (om/build card-view (assoc card :remotes remotes))
                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                     (:hand player))]))))
