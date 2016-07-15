@@ -113,12 +113,15 @@
   "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
-  (let [card (get-card state card)
+  (let [servercard (get-card state card)
+        card (if (not= (:title card) (:title servercard))
+               (@all-cards (:title card))
+               servercard)
         prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
-    (if (not= choice "Cancel")
+    (if (not= choice "Can cel")
       ;; The user did not choose "cancel"
       (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
         (let [title-fn (:card-title (:choices prompt))

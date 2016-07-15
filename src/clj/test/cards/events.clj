@@ -665,7 +665,7 @@
 ;; Rebirth
 (let [choose-runner (fn [name state prompt-map]
                       (let [kate-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
-                        (core/resolve-prompt state :runner {:choice kate-choice})))
+                        (core/resolve-prompt state :runner {:card kate-choice})))
 
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
