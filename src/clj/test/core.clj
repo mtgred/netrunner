@@ -3,7 +3,7 @@
                                 costs-to-symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
-            [game.core :as core]
+            [game.core :as core :refer [all-cards]]
             [test.utils :refer [load-card load-cards qty default-corp default-runner
                                 make-deck]]
             [test.macros :refer [do-game]]
@@ -30,10 +30,10 @@
     (let [states (core/init-game
                    {:gameid 1
                     :players [{:side "Corp"
-                               :deck {:identity (load-card (:identity corp))
+                               :deck {:identity (@all-cards (:identity corp))
                                       :cards (:deck corp)}}
                               {:side "Runner"
-                               :deck {:identity (load-card (:identity runner))
+                               :deck {:identity (@all-cards (:identity runner))
                                       :cards (:deck runner)}}]})
           state (second (last states))]
       (if (#{:both :corp} mulligan)
