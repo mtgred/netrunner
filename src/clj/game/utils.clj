@@ -189,4 +189,4 @@
   (or (#{:hq :rd :archives} zone) :remote))
 
 (defn private-card [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter]))
+  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted]))
