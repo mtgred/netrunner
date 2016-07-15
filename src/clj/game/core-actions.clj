@@ -59,6 +59,9 @@
   "Called when the user drags a card from one zone to another."
   [state side {:keys [card server]}]
   (let [c (get-card state card)
+        ;; hack: if dragging opponent's card from play-area (Indexing), the previous line will fail
+        ;; to find the card. the next line will search in the other player's play-area.
+        c (or c (get-card state (assoc card :side (other-side (to-keyword (:side card))))))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
         from-str (when-not (nil? src) (str " from their " src))
