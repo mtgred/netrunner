@@ -1103,7 +1103,7 @@
              :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)
-                                        (system-msg (str "adds a power counter to " (:title card))))
+                                        (system-msg :runner (str "places a power counter on " (:title card))))
                         :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))
