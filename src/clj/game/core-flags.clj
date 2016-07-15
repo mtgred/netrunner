@@ -257,14 +257,16 @@
     ;; public runner cards: in hand and :openhand is true;
     ;; or installed/hosted and not facedown;
     ;; or scored or current or in heap
-    (or (and (:openhand (:runner @state)) (in-hand? card))
+    (or (card-is? card :side :corp)
+        (and (:openhand (:runner @state)) (in-hand? card))
         (and (or (installed? card) (:host card)) (not (facedown? card)))
         (#{:scored :discard :current} (last zone)))
     ;; public corp cards: in hand and :openhand;
     ;; or installed and rezzed;
     ;; or in :discard and :seen
     ;; or scored or current
-    (or (and (:openhand (:corp @state)) (in-hand? card))
+    (or (card-is? card :side :runner)
+        (and (:openhand (:corp @state)) (in-hand? card))
         (and (installed? card) (rezzed? card))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
