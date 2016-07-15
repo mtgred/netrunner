@@ -426,12 +426,37 @@
       :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
 
    "Indexing"
-   {:effect (effect (run :rd {:replace-access
-                              {:msg "rearrange the top 5 cards of R&D"
-                               :effect (req (prompt! state side card
-                                                     (str "Drag cards from the Temporary Zone back onto R&D") ["OK"] {})
-                                            (doseq [c (take 5 (:deck corp))]
-                                              (move state side c :play-area)))}} card))}
+   (letfn [(index-final [chosen original]
+             {:prompt (str "The top 5 cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid))
+                             (continue-ability state side (index-choice original '() (count original) original)
+                                               card nil)))})
+           (index-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto R&D"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (index-choice (remove-once #(not= target %) remaining)
+                                                               chosen n original)
+                                                 card nil)
+                               (continue-ability state side (index-final chosen original) card nil))))})]
+     {:delayed-completion true
+      :effect (effect
+                (run :rd
+                     {:replace-access
+                      {:msg "rearrange the top 5 cards of R&D"
+                       :delayed-completion true
+                       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
+                                    (let [from (take 5 (:deck corp))]
+                                      (continue-ability state side (index-choice from '() (count from) from) card nil)))}}
+                     card))})
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -575,9 +600,43 @@
     :effect (effect (gain :credit 9))}
 
    "Making an Entrance"
-   {:msg "look at and trash or rearrange the top 6 cards of their Stack"
-    :effect (req (toast state :runner "Drag remaining untrashed cards from the Temporary Zone back onto your Stack" "info")
-                 (doseq [c (take 6 (:deck runner))] (move state side c :play-area)))}
+   (letfn [(entrance-final [chosen original]
+             {:prompt (str "The top cards of your stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid))
+                             (continue-ability state side (entrance-choice original '() (count original) original)
+                                               card nil)))})
+           (entrance-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto your stack"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (entrance-choice (remove-once #(not= target %) remaining)
+                                                                  chosen n original)
+                                                 card nil)
+                               (continue-ability state side (entrance-final chosen original) card nil))))})
+           (entrance-trash [cards]
+             {:prompt "Choose a card to trash"
+              :choices (cons "None" cards)
+              :delayed-completion true
+              :effect (req (if (= target "None")
+                             (if (not-empty cards)
+                               (continue-ability state side (entrance-choice cards '() (count cards) cards) card nil)
+                               (effect-completed state side eid))
+                             (do (trash state side target {:unpreventable true})
+                                 (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
+                                                   card nil))))})]
+     {:msg "look at and trash or rearrange the top 6 cards of their Stack"
+      :delayed-completion true
+      :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
+                   (let [from (take 6 (:deck runner))]
+                     (continue-ability state side (entrance-trash from) card nil)))})
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
