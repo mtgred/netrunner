@@ -249,7 +249,8 @@
                               (swap! state assoc-in [:runner :register :force-trash] true)
                               (toast state :runner (str "You must use any credit sources (Whizzard, Scrubber, "
                                                         "Ghost Runner, Net Celebrity) to trash Mumbad Virtual Tour, if able")))))}
-    :trash-effect {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
+    :trash-effect {:when-unrezzed true
+                   :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "NeoTokyo Grid"
    (let [ng {:req (req (and (= (second (:zone target)) (second (:zone card)))
