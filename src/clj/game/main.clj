@@ -152,37 +152,36 @@
   "Main thread for handling commands from the UI server. Attempts to apply a command,
   then returns the resulting game state, or another message as appropriate."
   (while true
-
-    (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))
-          state (@game-states (:gameid msg))
-          old-state (when state @state)
-          [old-corp old-runner old-spect] (when old-state (private-states state))]
+    (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))]
       ;; Attempt to handle the command. If true is returned, then generate a successful
       ;; message. Otherwise generate an error message.
-      (try (if (handle-command msg state)
-             (if (= action "initialize")
-               (.send socket (generate-string "ok"))
-               (if-let [new-state (@game-states gameid)]
-                 (let [[new-corp new-runner new-spect] (private-states new-state)]
-                   (do
-                     (if (#{"start" "reconnect" "notification"} action)
-                       ;; send the whole state, not a diff
-                       (.send socket (generate-string {:action      action
-                                                       :runnerstate (strip new-runner)
-                                                       :corpstate   (strip new-corp)
-                                                       :spectstate  (strip new-spect)
-                                                       :gameid      gameid}))
-                       ;; send a diff
-                       (let [runner-diff (differ/diff (strip old-runner) (strip new-runner))
-                             corp-diff (differ/diff (strip old-corp) (strip new-corp))
-                             spect-diff (differ/diff (strip old-spect) (strip new-spect))]
-                         (.send socket (generate-string {:action     action
-                                                         :runnerdiff runner-diff
-                                                         :corpdiff   corp-diff
-                                                         :spectdiff  spect-diff
-                                                         :gameid     gameid}))))))
-                 (.send socket (generate-string "error"))))
-             (.send socket (generate-string "error")))
+      (try (let [state (@game-states (:gameid msg))
+                 old-state (when state @state)
+                 [old-corp old-runner old-spect] (when old-state (private-states state))]
+             (if (handle-command msg state)
+               (if (= action "initialize")
+                 (.send socket (generate-string "ok"))
+                 (if-let [new-state (@game-states gameid)]
+                   (let [[new-corp new-runner new-spect] (private-states new-state)]
+                     (do
+                       (if (#{"start" "reconnect" "notification"} action)
+                         ;; send the whole state, not a diff
+                         (.send socket (generate-string {:action      action
+                                                         :runnerstate (strip new-runner)
+                                                         :corpstate   (strip new-corp)
+                                                         :spectstate  (strip new-spect)
+                                                         :gameid      gameid}))
+                         ;; send a diff
+                         (let [runner-diff (differ/diff (strip old-runner) (strip new-runner))
+                               corp-diff (differ/diff (strip old-corp) (strip new-corp))
+                               spect-diff (differ/diff (strip old-spect) (strip new-spect))]
+                           (.send socket (generate-string {:action     action
+                                                           :runnerdiff runner-diff
+                                                           :corpdiff   corp-diff
+                                                           :spectdiff  spect-diff
+                                                           :gameid     gameid}))))))
+                   (.send socket (generate-string "error"))))
+               (.send socket (generate-string "error"))))
            (catch Exception e
              (try (do (println "Inner Error " action command (get-in args [:card :title]) e)
                       (.send socket (generate-string "error")))
