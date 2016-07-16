@@ -59,6 +59,9 @@
   "Called when the user drags a card from one zone to another."
   [state side {:keys [card server]}]
   (let [c (get-card state card)
+        ;; hack: if dragging opponent's card from play-area (Indexing), the previous line will fail
+        ;; to find the card. the next line will search in the other player's play-area.
+        c (or c (get-card state (assoc card :side (other-side (to-keyword (:side card))))))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
         from-str (when-not (nil? src) (str " from their " src))
@@ -113,12 +116,15 @@
   "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
-  (let [card (get-card state card)
+  (let [servercard (get-card state card)
+        card (if (not= (:title card) (:title servercard))
+               (@all-cards (:title card))
+               servercard)
         prompt (first (get-in @state [side :prompt]))
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
-    (if (not= choice "Cancel")
+    (if (not= choice "Can cel")
       ;; The user did not choose "cancel"
       (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
         (let [title-fn (:card-title (:choices prompt))
