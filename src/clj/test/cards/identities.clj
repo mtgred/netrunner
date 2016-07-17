@@ -609,6 +609,30 @@
       (run-jack-out state)
       (is (= 7 (:current-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
 
+(deftest null-trashed
+  "Null ability - does not affect next ice when current is trashed. Issue #1788."
+  (do-game
+    (new-game
+      (default-corp [(qty "Wraparound" 1) (qty "Spiderweb" 1)])
+      (make-deck "Null: Whistleblower" [(qty "Parasite" 3)]))
+    (play-from-hand state :corp "Spiderweb" "HQ")
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (take-credits state :corp)
+    (core/gain state :corp :credit 10)
+    (let [null (get-in @state [:runner :identity])
+          spider (get-ice state :hq 0)
+          wrap (get-ice state :hq 1)]
+      (core/rez state :corp spider)
+      (core/rez state :corp wrap)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner (refresh spider))
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner null 0)
+      (prompt-select :runner (first (:hand (get-runner))))
+      (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
+      (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Null"))))
+
 (deftest quetzal-ability
   "Quetzal ability- once per turn"
   (do-game
