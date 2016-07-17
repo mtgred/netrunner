@@ -1,54 +1,29 @@
 (in-ns 'game.core)
 
-; Stuff that doesn't go in other files.
+(declare set-prop)
 
-; No idea what these are for. @justinliew?
-(defn copy-events [state side dest source]
-  (let [source-def (card-def source)
-        source-events (or (:events source-def) {})
-        dest-card (merge dest {:events source-events})]
-    (update! state side dest-card)
-    (register-events state side (:events dest-card) dest-card)))
+(defn get-zones [state]
+  (keys (get-in state [:corp :servers])))
 
-(defn copy-abilities [state side dest source]
-  (let [source-def (card-def source)
-        source-abilities (or (:abilities source-def) ())
-        ; i think this just copies some bare minimum of info, and relies on the card-def to supply the actual data. We may have to copy the entire thing and conj {:dynamic :something} into it so we handle it as a full dynamic ability
-        source-abilities (for [ab source-abilities]
-                           (assoc (select-keys ab [:cost :pump :breaks])
-                             :label (or (:label ab) (and (string? (:msg ab)) (capitalize (:msg ab))) "")
-                             :dynamic :copy))
-        dest-card (merge dest {:abilities source-abilities :source source})]
-    (update! state side dest-card)))
+(defn get-remote-zones [state]
+  (filter is-remote? (get-zones state)))
 
-; I'm making the assumption that we only copy effects if there is a :leave-play effect, as these are persistent effects as opposed to a one-time scored effect.
-; think Mandatory Upgrades vs. Improved Tracers
-(defn copy-leave-play-effects [state side dest source]
-  (let [source-def (card-def source)]
-    (when-let [source-leave-play (:leave-play source-def)]
-      (let [source-effect (:effect source-def)
-            dest-card (merge dest {:source-leave-play source})]
-        (when-not (nil? source-effect) (source-effect state side source nil))
-        (update! state side dest-card)))))
-
-(defn fire-leave-play-effects [state side card]
-  (when-let [source-leave-play (:source-leave-play card)]
-    (let [source-def (card-def source-leave-play)
-          leave-effect (:leave-play source-def)]
-      (when-not (nil? leave-effect) (leave-effect state side card nil)))))
-
+(defn get-runnable-zones [state]
+  (let [restricted-zones (keys (get-in state [:runner :register :cannot-run-on-server]))]
+    (remove (set restricted-zones) (get-zones state))))
 
 (defn get-remotes [state]
-  (filter #(-> % first is-remote?) (get-in state [:corp :servers])))
+  (select-keys (get-in state [:corp :servers]) (get-remote-zones state)))
 
 (defn get-remote-names [state]
-  (->> state get-remotes (map (comp zone->name first)) sort))
+  (zones->sorted-names (get-remote-zones state)))
 
 (defn server-list [state card]
-  (let [remotes (cons "New remote" (get-remote-names @state))]
+  (concat
     (if (#{"Asset" "Agenda"} (:type card))
-      remotes
-      (concat ["HQ" "R&D" "Archives"] remotes))))
+      (get-remote-names @state)
+      (zones->sorted-names (get-zones @state)))
+    ["New remote"]))
 
 (defn server->zone [state server]
   (if (sequential? server)
@@ -65,10 +40,31 @@
   but not including 'inactive hosting' like Personal Workshop."
   [state side]
   (if (= side :runner)
-    (let [installed (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))]
-      (concat installed (filter :installed (mapcat :hosted installed))))
-    (let [servers (->> (:corp @state) :servers seq flatten)]
-      (concat (mapcat :content servers) (mapcat :ices servers)))))
+    (let [top-level-cards (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))
+          hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
+      (loop [unchecked (concat top-level-cards (filter #(= (:side %) "Runner") hosted-on-ice)) installed ()]
+        (if (empty? unchecked)
+          (filter :installed installed)
+          (let [[card & remaining] unchecked]
+            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))
+    (let [servers (->> (:corp @state) :servers seq flatten)
+          content (mapcat :content servers)
+          ice (mapcat :ices servers)
+          top-level-cards (concat ice content)]
+      (loop [unchecked top-level-cards installed ()]
+        (if (empty? unchecked)
+          (filter #(= (:side %) "Corp") installed)
+          (let [[card & remaining] unchecked]
+            (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))))
+
+(defn all-active
+  "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
+  or the corp's scored area."
+  [state side]
+  (if (= side :runner)
+    (cons (get-in @state [:runner :identity]) (all-installed state side))
+    (cons (get-in @state [:corp :identity]) (concat (all-installed state side)
+                                                    (get-in @state [:corp :scored])))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
@@ -87,3 +83,51 @@
         base (get side' :hand-size-base 0)
         mod (get side' :hand-size-modification 0)]
     (+ base mod)))
+
+(defn swap-agendas
+  "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
+  [state side scored stolen]
+  (let [corp-ap-stolen (get-agenda-points state :corp stolen)
+        corp-ap-scored (get-agenda-points state :corp scored)
+        runner-ap-stolen (get-agenda-points state :runner stolen)
+        runner-ap-scored (get-agenda-points state :runner scored)
+        corp-ap-change (- corp-ap-stolen corp-ap-scored)
+        runner-ap-change (- runner-ap-scored runner-ap-stolen)]
+    ;; Remove end of turn events for swapped out agenda
+    (swap! state update-in [:corp :register :end-turn]
+           (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
+    ;; Move agendas
+    (swap! state update-in [:corp :scored]
+           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
+    (swap! state update-in [:runner :scored]
+           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
+                            (dissoc scored :abilities :events))))
+    ;; Update agenda points
+    (gain-agenda-point state :runner runner-ap-change)
+    (gain-agenda-point state :corp corp-ap-change)
+    ;; Set up abilities and events
+    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))]
+      (let [abilities (:abilities (card-def new-scored))
+            new-scored (merge new-scored {:abilities abilities})]
+        (update! state :corp new-scored)
+        (when-let [events (:events (card-def new-scored))]
+          (register-events state side events new-scored))))
+    (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
+      (deactivate state :corp new-stolen))))
+
+;;; Functions for icons associated with special cards - e.g. Femme Fatale
+(defn add-icon
+  "Adds an icon to a card. E.g. a Femme Fatale token.
+  Card is the card adding the icon, target is card receiving the icon."
+  [state side card target char color]
+  ;; add icon
+  (set-prop state side target :icon {:char char :color color :card card})
+  ;; specify icon target on card
+  (set-prop state side card :icon-target target))
+
+(defn remove-icon
+  "Remove the icon associated with the card and target."
+  ([state side card] (remove-icon state side card (get-card state (:icon-target card))))
+  ([state side card target]
+   (set-prop state side target :icon nil)
+   (set-prop state side card :icon-target nil)))

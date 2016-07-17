@@ -9,7 +9,7 @@
   (atom {:active-page "/"
          :user (js->clj js/user :keywordize-keys true)
          :cards [] :sets []
-         :decks []
+         :decks [] :decks-loaded false
          :games [] :gameid nil :messages []}))
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/about" "/account"])
@@ -51,19 +51,23 @@
     [:div
      [:div.float-right
       (let [c (count (:games cursor))]
-        (str c " Game" (when (> c 1) "s")))]
-     (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
+        (str c " Game" (when (not= c 1) "s")))]
+     (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          [:div.float-right
           (when (not= (:side @app-state) :spectator)
             [:a.concede-button {:on-click #(netrunner.gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
-          [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
+          [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]])
+       (when (= (:side @app-state) :spectator)
+         [:div.float-right [:a {:on-click #(netrunner.gamelobby/leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          (let [c (count (:spectators game))]
             (when (pos? c)
               [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
-               [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view (:spectators game))]]))))])))
+               [:div.blue-shade.spectators (om/build-all netrunner.gamelobby/player-view
+                                                         (map (fn [%] {:player % :game game})
+                                                              (:spectators game)))]]))))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})

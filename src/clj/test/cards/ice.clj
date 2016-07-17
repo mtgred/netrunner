@@ -1,4 +1,11 @@
-(in-ns 'test.core)
+(ns test.cards.ice
+  (:require [game.core :as core]
+            [game.utils :refer :all]
+            [test.core :refer :all]
+            [test.utils :refer :all]
+            [test.macros :refer :all]
+            [clojure.test :refer :all]))
+
 
 (deftest end-the-run
   "Since all ETR ice share a common ability, we only need one test"
@@ -67,6 +74,47 @@
       (run-jack-out state)
       (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
 
+(deftest bullfrog
+  "Bullfrog - Win psi to move to outermost position of another server and continue run there"
+  (do-game
+    (new-game (default-corp [(qty "Bullfrog" 1) (qty "Pup" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Bullfrog" "HQ")
+    (play-from-hand state :corp "Pup" "R&D")
+    (play-from-hand state :corp "Pup" "R&D")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [frog (get-ice state :hq 0)]
+      (core/rez state :corp frog)
+      (is (= :hq (first (get-in @state [:run :server]))))
+      (card-ability state :corp frog 0)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (prompt-choice :corp "R&D")
+      (is (= :rd (first (get-in @state [:run :server]))) "Run redirected to R&D")
+      (is (= 2 (get-in @state [:run :position])) "Passed Bullfrog")
+      (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
+
+(deftest cell-portal
+  "Cell Portal - Bounce Runner to outermost position and derez itself"
+  (do-game
+    (new-game (default-corp [(qty "Cell Portal" 1) (qty "Paper Wall" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 5)
+    (play-from-hand state :corp "Cell Portal" "HQ")
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue state)
+    (run-continue state)
+    (is (= 1 (get-in @state [:run :position])))
+    (let [cp (get-ice state :hq 0)]
+      (core/rez state :corp cp)
+      (card-ability state :corp cp 0)
+      (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
+      (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
+
 (deftest cortex-lock
   "Cortex Lock - Do net damage equal to Runner's unused memory"
   (do-game
@@ -81,6 +129,26 @@
       (core/rez state :corp cort)
       (card-ability state :corp cort 0)
       (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 net damage"))))
+
+(deftest crick
+  "Crick - Strength boost when protecting Archives; installs a card from Archives"
+  (do-game
+    (new-game (default-corp [(qty "Crick" 2) (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Crick" "HQ")
+    (play-from-hand state :corp "Crick" "Archives")
+    (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :discard)
+    (take-credits state :corp)
+    (let [cr1 (get-ice state :hq 0)
+          cr2 (get-ice state :archives 0)]
+      (core/rez state :corp cr1)
+      (core/rez state :corp cr2)
+      (is (= 3 (:current-strength (refresh cr1))) "Normal strength over HQ")
+      (is (= 6 (:current-strength (refresh cr2))) "+3 strength over Archives")
+      (card-ability state :corp cr2 0)
+      (prompt-select :corp (find-card "Ice Wall" (:discard (get-corp))))
+      (prompt-choice :corp "HQ")
+      (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd ICE over HQ"))))
 
 (deftest curtain-wall
   "Curtain Wall - Strength boost when outermost ICE"
@@ -109,7 +177,7 @@
       (run-on state "HQ")
       (core/rez state :corp drac)
       (prompt-choice :corp 4)
-      (is (= 4 (:counter (refresh drac))) "Dracō has 4 power counters")
+      (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
       (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
       (card-ability state :corp drac 0)
       (prompt-choice :corp 0)
@@ -131,6 +199,26 @@
       (card-ability state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
+(deftest excalibur
+  "Excalibur - Prevent Runner from making another run this turn"
+  (do-game
+    (new-game (default-corp [(qty "Excalibur" 1)])
+              (default-runner [(qty "Stimhack" 1)]))
+    (play-from-hand state :corp "Excalibur" "HQ")
+    (take-credits state :corp)
+    (let [excal (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp excal)
+      (card-ability state :corp excal 0)
+      (run-jack-out state)
+      (run-on state "R&D")
+      (is (not (:run @state)) "No run initiated")
+      (is (= 3 (:click (get-runner))))
+      (play-from-hand state :runner "Stimhack")
+      (is (not (:run @state)) "No run initiated")
+      (is (= 3 (:click (get-runner))))
+      (is (empty? (:discard (get-runner))) "Card not played from Grip"))))
+
 (deftest fenris
   "Fenris - Illicit ICE give Corp 1 bad publicity when rezzed"
   (do-game
@@ -146,6 +234,30 @@
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (core/hand-size state :runner))))))
+
+(deftest flare
+  "Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run"
+  (do-game
+    (new-game (default-corp [(qty "Flare" 1)])
+              (default-runner [(qty "Plascrete Carapace" 1) (qty "Clone Chip" 1) (qty "Cache" 3)]))
+    (play-from-hand state :corp "Flare" "HQ")
+    (core/gain state :corp :credit 2)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Plascrete Carapace")
+    (play-from-hand state :runner "Clone Chip")
+    (let [flare (get-ice state :hq 0)
+          cc (get-hardware state 1)]
+      (run-on state :hq)
+      (core/rez state :corp flare)
+      (card-ability state :corp flare 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp cc)
+      (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Clone Chip trashed")
+      (is (empty? (:prompt (get-runner))) "Plascrete didn't try peventing meat damage")
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest gemini-kicker
   "Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success"
@@ -167,6 +279,45 @@
       (prompt-choice :corp 3) ; boost to trace strength 5
       (prompt-choice :runner 5) ; match trace
       (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
+
+(deftest gemini-chronos-protocol
+  "Gemini - Interaction with Chronos Protocol and kicker"
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
+              (default-runner [(qty "Sure Gamble" 1) (qty "Dirty Laundry" 2)]))
+    (play-from-hand state :corp "Gemini" "HQ")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (let [gem (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp gem)
+      (card-ability state :corp gem 0)
+      (prompt-choice :corp 3) ; boost to trace strength 5
+      (prompt-choice :runner 0)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
+
+(deftest iq
+  "IQ - Rez cost and strength equal to cards in HQ"
+  (do-game
+    (new-game (default-corp [(qty "IQ" 3) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "IQ" "R&D")
+    (let [iq1 (get-ice state :rd 0)]
+      (core/rez state :corp iq1)
+      (is (and (= 4 (count (:hand (get-corp))))
+               (= 4 (:current-strength (refresh iq1)))
+               (= 5 (:credit (get-corp)))) "4 cards in HQ: paid 4 to rez, has 4 strength")
+      (play-from-hand state :corp "IQ" "HQ")
+      (let [iq2 (get-ice state :hq 0)]
+        (core/rez state :corp iq2)
+        (is (and (= 3 (count (:hand (get-corp))))
+                 (= 3 (:current-strength (refresh iq1)))
+                 (= 3 (:current-strength (refresh iq2)))
+                 (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
 
 (deftest lockdown
   "Lockdown - Prevent Runner from drawing cards for the rest of the turn"
@@ -217,6 +368,21 @@
       (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased")
       (take-credits state :corp 2)
       (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
+
+(deftest minelayer
+  "Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost"
+  (do-game
+    (new-game (default-corp [(qty "Minelayer" 1) (qty "Fire Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Minelayer" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (core/rez state :corp (get-ice state :hq 0))
+    (is (= 6 (:credit (get-corp))))
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (prompt-select :corp (find-card "Fire Wall" (:hand (get-corp))))
+    (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
+    (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second ICE")))
 
 (deftest morph-ice-subtype-changing
   "Morph ice gain and lose subtypes from normal advancements and placed advancements"
@@ -269,6 +435,77 @@
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice")
       (is (= 3 (:current-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
+
+(deftest resistor
+  "Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag"
+  (do-game
+    (new-game (default-corp [(qty "Resistor" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Resistor" "HQ")
+    (let [resistor (get-ice state :hq 0)]
+      (core/rez state :corp resistor)
+      (is (= 0 (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
+      (core/tag-runner state :runner 2)
+      (is (= 2 (:tag (get-runner))))
+      (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
+      (take-credits state :corp)
+      (core/remove-tag state :runner 1)
+      (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
+
+(deftest searchlight
+  "Searchlight - Trace bace equal to advancement counters"
+  (do-game
+    (new-game (default-corp [(qty "Searchlight" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Searchlight" "HQ")
+    (let [searchlight (get-ice state :hq 0)]
+      (core/rez state :corp searchlight)
+      (card-ability state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
+      (core/advance state :corp {:card (refresh searchlight)})
+      (card-ability state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
+
+
+(deftest sherlock
+  "Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack"
+  (do-game
+    (new-game (default-corp [(qty "Sherlock 1.0" 1)])
+              (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Sherlock 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gordian Blade")
+    (run-on state :hq)
+    (core/rez state :corp (get-ice state :hq 0))
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-in @state [:runner :rig :program 0]))
+    (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
+    (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+
+(deftest snowflake
+  "Snowflake - Win a psi game to end the run"
+  (do-game
+    (new-game (default-corp [(qty "Snowflake" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Snowflake" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [sf (get-ice state :hq 0)]
+      (core/rez state :corp sf)
+      (card-ability state :corp sf 0)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (:run @state) "Runner won psi, run continues")
+      (card-ability state :corp sf 0)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest special-offer-trash-ice-during-run
   "Special Offer trashes itself and updates the run position"

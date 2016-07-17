@@ -1,10 +1,12 @@
+[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
+
 Play Android: Netrunner in the browser.
 
 ## Live server
 
 http://www.jinteki.net
 
-Gameplay video: https://www.youtube.com/watch?v=EO0O12s0tr8&list=PL_qsBCj4eFZHUZpEwGbW0y9IwnDDvULwX&index=2
+[Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
 
 ![screenshot](https://dl.dropboxusercontent.com/u/5601199/screenshot.jpg)
 
@@ -52,7 +54,7 @@ $ coffee fetch.coffee
 Compile and watch client side Clojurescript files:
 
 ```
-$ lein cljsbuild auto dev
+$ lein figwheel
 ```
 
 Compile server side Clojure files:
@@ -73,4 +75,22 @@ Launch the Node server:
 $ coffee server.coffee
 ```
 
+## Tests
+
+To run all tests:
+
+```
+$ lein test test.all
+```
+
+To run a single test file:
+```
+$ lein test test.cards.agendas
+```
+
+
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+## License
+
+Jinteki.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).

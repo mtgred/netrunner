@@ -14,22 +14,29 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-(def toastr-options (js-obj
-                     "closeButton" false
-                     "debug" false
-                     "newestOnTop" false
-                     "progressBar" false
-                     "positionClass" "toast-card"
-                     "preventDuplicates" true
-                     "onclick" nil
-                     "showDuration" 300
-                     "hideDuration" 3000
-                     "timeOut" 3000
-                     "extendedTimeOut" 1000
-                     "showEasing" "swing"
-                     "hideEasing" "linear"
-                     "showMethod" "fadeIn"
-                     "hideMethod" "fadeOut"))
+(defn toastr-options
+  "Function that generates the correct toastr options for specified settings"
+  [options]
+  (js-obj "closeButton" (:close-button options false)
+          "debug" false
+          "newestOnTop" false
+          "progressBar" false
+          "positionClass" "toast-card"
+          ;; preventDuplicates - identical toasts don't stack when the property is set to true.
+          ;; Duplicates are matched to the previous toast based on their message content.
+          "preventDuplicates" (:prevent-duplicates options true)
+          "onclick" nil
+          "showDuration" 300
+          "hideDuration" 1000
+          ;; timeOut - how long the toast will display without user interaction
+          "timeOut" (:time-out options 3000)
+          ;; extendedTimeOut - how long the toast will display after a user hovers over it
+          "extendedTimeOut" (:time-out options 1000)
+          "showEasing" "swing"
+          "hideEasing" "linear"
+          "showMethod" "fadeIn"
+          "hideMethod" "fadeOut"
+          "tapToDismiss" (:tap-to-dismiss options true)))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -43,7 +50,7 @@
   "Send a notification to the chat, and a toast to the current player of the specified severity"
   [text severity]
   (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity))
+  (toast text severity nil))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -111,19 +118,30 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn build-exception-msg [msg error]
+  (letfn [(build-report-url [error]
+            (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
+                            error
+                            "\n```")))]
+    (str "<div>"
+         msg
+         "<br/>"
+         "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
+         "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
+         (build-report-url error)
+         "');\">Report on GitHub</button></div>")))
+
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
-  [msg type]
-  (set! (.-options js/toastr) toastr-options)
-  (let [f (aget js/toastr type)] 
-    (f msg))
-  (send-command "toast"))
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr (if (= "exception" type) "error" type))]
+    (f (if (= "exception" type) (build-exception-msg msg (:last-error @game-state)) msg))
+    (send-command "toast")))
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
       (#(if (or (and (= type "Agenda")
                      (= (first zone) "servers"))
                 (= advanceable "always")
@@ -132,22 +150,30 @@
                 (and (not rezzed)
                      (= advanceable "while-unrezzed")))
           (cons "advance" %) %))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
+         (cons "score" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
+(defn handle-abilities [{:keys [abilities facedown side type] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when-not (and (= side "Runner") facedown)
-      (cond (or (> c 1)
-                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
-            (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+      (cond
+        ;; Open panel
+        (or (> c 1)
+            (some #{"derez" "advance"} actions)
+            (and (= type "ICE")
+                 (not (:run @game-state))))                        ; Horrible hack to check if currently in a run
+        (-> (om/get-node owner "abilities") js/$ .toggle)
+        ;; Trigger first (and only) ability / action
+        (= c 1)
+        (if (= (count abilities) 1)
+          (send-command "ability" {:card card :ability 0})
+          (send-command (first actions) {:card card}))))))
 
-(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
-                                 root] :as card} owner]
+(defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
       (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
@@ -188,14 +214,18 @@
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
               (pos? (:click me))))))
 
+(def ci-open "\u2664")
+(def ci-seperator "\u2665")
+(def ci-close "\u2666")
+
 (defn is-card-item [item]
-  (and (> (.indexOf item "~") -1)
-       (= 0 (.indexOf item "["))))
+  (and (> (.indexOf item ci-seperator) -1)
+       (= 0 (.indexOf item ci-open))))
 
 (defn extract-card-info [item]
   (if (is-card-item item)
-    [(.substring item 1 (.indexOf item "~"))
-     (.substring item (inc (.indexOf item "~")) (dec (count item)))]))
+    [(.substring item 1 (.indexOf item ci-seperator))
+     (.substring item (inc (.indexOf item ci-seperator)) (dec (count item)))]))
 
 (defn create-span-impl [item]
   (if (= "[hr]" item)
@@ -208,14 +238,14 @@
     [:span {:class "fake-link" :id code} title]
     [:span item])))))
 
-(defn get-alt-art [[title cards]]
-  (let [s (sort-by #(not= (:setname %) "Alternates") cards)]
+(defn get-non-alt-art [[title cards]]
+  (let [s (sort-by #(= (:setname %) "Alternates") cards)]
     {:title title :code (:code (first s))}))
 
 (defn prepare-cards []
  (->> (:cards @app-state)
       (group-by :title)
-      (map get-alt-art)
+      (map get-non-alt-art)
       (sort-by #(count (:title %1)))
       (reverse)))
 
@@ -223,14 +253,30 @@
 
 (def create-span (memoize create-span-impl))
 
+(defn find-card-regex-impl [title]
+  (str "(^|[^" ci-open "\\S])" title "(?![" ci-seperator "\\w]|([^" ci-open "]+" ci-close "))"))
+
+(def find-card-regex (memoize find-card-regex-impl))
+
+(defn card-image-token-impl [title code]
+  (str "$1" ci-open title ci-seperator code ci-close))
+
+(def card-image-token (memoize card-image-token-impl))
+
+(defn card-image-reducer [text card]
+  (.replace text (js/RegExp. (find-card-regex (:title card)) "g") (card-image-token (:title card) (:code card))))
+
 (defn add-image-codes-impl [text]
-  (reduce #(.replace %1 (js/RegExp. (str "(^|[^\\[\\S])" (:title %2) "(?![~\\w])") "g") (str "$1" "[" (:title %2) "~" (:code %2) "]")) text (prepared-cards)))
+  (reduce card-image-reducer text (prepared-cards)))
 
 (def add-image-codes (memoize add-image-codes-impl))
 
 (defn get-message-parts-impl [text]
-  (let [with-image-codes (add-image-codes (if (nil? text) "" text))]
-      (.split with-image-codes (js/RegExp. "(\\[[^\\]]*])" "g"))))
+  (let [with-image-codes (add-image-codes (if (nil? text) "" text))
+        splitted (.split with-image-codes (js/RegExp. (str "(" ci-open "[^" ci-close "]*" ci-close ")") "g"))
+        oldstyle (for [i splitted]
+                   (seq (.split i (js/RegExp. (str "([1-3]\\[mu\\]|\\[[^\\]]*\\])") "g"))))]
+    (flatten oldstyle)))
 
 (def get-message-parts (memoize get-message-parts-impl))
 
@@ -255,6 +301,11 @@
         (when (or (zero? scrolltop)
                   (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
           (aset div "scrollTop" height))))
+
+
+    om/IDidMount
+    (did-mount [this]
+      (-> ".log" js/$ (.resizable #js {:handles "w"})))
 
     om/IRenderState
     (render-state [this state]
@@ -283,6 +334,59 @@
         side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
     (send-command "move" {:card card :server server})))
 
+(defn abs [n] (max n (- n)))
+
+;; touch support
+(defonce touchmove (atom {}))
+
+(defn release-touch [card]
+  (-> card (.removeClass "disable-transition"))
+  (-> card (.css "position" ""))
+  (-> card (.css "top" "")))
+
+(defn update-card-position [card touch]
+  (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
+  (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
+
+(defn get-card [e server]
+  (-> e .-target js/$ (.closest ".card-wrapper")))
+
+(defn get-server-from-touch [touch]
+  (let [cX (.. touch -clientX)
+        cY (.. touch -clientY)
+        server (-> (js/document.elementFromPoint cX cY)
+                   js/$
+                   (.closest "[data-server]")
+                   (.attr "data-server"))]
+    [server (> (+ (abs (- (:x @touchmove) cX))
+                  (abs (- (:y @touchmove) cY)))
+               30)]))
+
+(defn handle-touchstart [e cursor]
+  (let [touch (aget (.. e -targetTouches) 0)
+        [server _] (get-server-from-touch touch)
+        card (get-card e server)]
+    (-> card (.addClass "disable-transition"))
+    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
+                       :x (.. touch -clientX)
+                       :y (.. touch -clientY)
+                       :start-server server})))
+
+(defn handle-touchmove [e]
+  (let [touch (aget (.. e -targetTouches) 0)
+        card (get-card e (:start-server @touchmove))]
+    (-> card (.css "position" "fixed"))
+    (update-card-position card touch)))
+
+(defn handle-touchend [e]
+  (let [touch (aget (.. e -changedTouches) 0)
+        card (get-card e (:start-server @touchmove))
+        [server moved-enough] (get-server-from-touch touch)]
+    (release-touch card)
+    (when (and server moved-enough (not= server (:start-server @touchmove)))
+      (let [cardinfo (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
+        (send-command "move" {:card cardinfo :server server})))))
+
 (defn ability-costs [ab]
   (when-let [cost (:cost ab)]
     (str (clojure.string/join
@@ -299,13 +403,37 @@
   (let [num (remote->num server)]
     (str "Server " num)))
 
+(defn central->name [zone]
+  "Converts a central zone keyword to a string."
+  (case (if (keyword? zone) zone (last zone))
+    :hq "HQ"
+    :rd "R&D"
+    :archives "Archives"
+    nil))
+
+(defn zone->name [zone]
+  "Converts a zone to a string."
+  (or (central->name zone)
+      (remote->name zone)))
+
+(defn zone->sort-key [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :archives -3
+    :rd -2
+    :hq -1
+    (js/parseInt
+      (last (clojure.string/split (str zone) #":remote")))))
+
+(defn zones->sorted-names [zones]
+  (->> zones (sort-by zone->sort-key) (map zone->name)))
+
 (defn get-remotes [servers]
- (->> servers 
-     (filter #(not (#{:hq :rd :archives} (first %))))
-     (sort-by #(remote->num (first %)))))
+  (->> servers
+       (filter #(not (#{:hq :rd :archives} (first %))))
+       (sort-by #(zone->sort-key (first %)))))
 
 (defn remote-list [remotes]
-  (->> remotes (map #(remote->name (first %))) (sort-by #(remote->num (first %)))))
+  (->> remotes (map first) zones->sorted-names))
 
 (defn card-counter-type [card]
   (let [counter-type (:counter-type card)]
@@ -320,6 +448,7 @@
       ;; Assume uninstalled cards with counters are hosted on Personal
       ;; Workshop.
       (not (:installed card)) "Power"
+      (not (:subtype card)) "Power"
       (> (.indexOf (:subtype card) "Virus") -1) "Virus"
       :else "Power")))
 
@@ -330,7 +459,7 @@
    (when code
      (sab/html
       [:div.card-frame
-       [:div.blud-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
+       [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
         (when-let [url (image-url cursor)]
           [:div
@@ -339,43 +468,48 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target]
+                         side rec-counter facedown server-target icon new]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
-   (when code
-     (sab/html
+    (sab/html
       [:div.card-frame
-       [:div.blue-shade.card {:class (when selected "selected")
+       [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
                               :draggable (when (not-spectator? game-state app-state) true)
+                              :on-touch-start #(handle-touchstart % cursor)
+                              :on-touch-end   #(handle-touchend %)
+                              :on-touch-move  #(handle-touchmove %)
                               :on-drag-start #(handle-dragstart % cursor)
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
                                                          (= (:side @game-state) (keyword (.toLowerCase side))))
-                                                 (put! zoom-channel cursor))
+                                                (put! zoom-channel cursor))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click @cursor owner)}
         (when-let [url (image-url cursor)]
-          (if (or flipped facedown)
+          (if (or (not code) flipped facedown)
             [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
             [:div
              [:span.cardname title]
              [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
         [:div.counters
-         (when (pos? counter) (let [counter-type (or (card-counter-type @cursor) "")
-                                    norm-type (lower-case counter-type)
-                                    selector (str "div.darkbg." norm-type "-counter.counter")]
-                                [(keyword selector) counter]))
+         (when counter
+           (map (fn [[type num-counters]]
+                  (when (pos? num-counters)
+                    (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                      [(keyword selector) num-counters])))
+                counter))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
-              current-strength [:div.darkbg.strength current-strength])
-        (when named-target [:div.darkbg.named-target named-target])
+          current-strength [:div.darkbg.strength current-strength])
+        (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
+        (when server-target [:div.darkbg.server-target server-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-          (let [centrals ["HQ" "R&D" "Archives"]
-                remotes (conj (remote-list remotes) "New remote")
+          (let [centrals ["Archives" "R&D" "HQ"]
+                remotes (concat (remote-list remotes) ["New remote"])
                 servers (case type
-                          ("Upgrade" "ICE") (concat remotes centrals)
+                          ("Upgrade" "ICE") (concat centrals remotes)
                           ("Agenda" "Asset") remotes)]
             [:div.blue-shade.panel.servers-menu {:ref "servers"}
              (map (fn [label]
@@ -385,22 +519,23 @@
                   servers)]))
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities)) 1)
-                    (= (first actions) "derez"))
+                    (some #{"derez" "advance"} actions)
+                    (= type "ICE"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
                   actions)
              (map-indexed
-              (fn [i ab]
-                (if (:auto-pump ab)
-                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
-                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
-                  [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                            (dec i) i)})
-                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-              abilities)]))
+               (fn [i ab]
+                 (if (:auto-pump ab)
+                   [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                   [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                  :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                             (dec i) i)})
+                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+               abilities)]))
         (when (= (first zone) "servers")
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
@@ -413,13 +548,14 @@
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
        (when (pos? (count hosted))
          [:div.hosted
-          (om/build-all card-view hosted {:key :cid})])]))))
+          (om/build-all card-view hosted {:key :cid})])])))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
                :on-drag-enter #(-> % .-target js/$ (.addClass "dragover"))
                :on-drag-leave #(-> % .-target js/$ (.removeClass "dragover"))
-               :on-drag-over #(.preventDefault %)}))
+               :on-drag-over #(.preventDefault %)
+               :data-server server}))
 
 (defn label [cursor owner opts]
   (om/component
@@ -439,10 +575,14 @@
        (om/build label (:hand player) {:opts {:name name}})
        (map-indexed (fn [i card]
                       [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                                          (= (:user player) (:user @app-state))
                                                           (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
-                       (if (= (:user player) (:user @app-state))
+                       (if (or (= (:user player) (:user @app-state))
+                               (:openhand player)
+                               (and (get-in @game-state [:options :spectatorhands])
+                                    (not (not-spectator? game-state app-state))))
                          (om/build card-view (assoc card :remotes remotes))
                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                     (:hand player))]))))
@@ -450,14 +590,15 @@
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  (send-command "system-msg" {:msg "looks at their deck"}))
+  ;(send-command "system-msg" {:msg "looks at their deck"})
+  (send-command "view-deck"))
 
-(defn close-popup [event owner ref msg shuffle?]
+(defn close-popup [event owner ref msg shuffle? deck?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
-  (when shuffle?
-    (send-command "shuffle" {:close "true"}))
-  (when msg
-    (send-command "system-msg" {:msg msg}))
+  (cond
+    shuffle? (send-command "shuffle" {:close "true"})
+    deck? (send-command "close-deck")
+    msg (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
 
 (defmulti deck-view #(get-in % [:identity :side]))
@@ -477,9 +618,9 @@
      (when (= (:side @game-state) :runner)
        [:div.panel.blue-shade.popup {:ref "stack-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false true)}
           "Close"]
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true true)}
           "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
@@ -501,8 +642,8 @@
      (when (= (:side @game-state) :corp)
        [:div.panel.blue-shade.popup {:ref "rd-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false)} "Close"]
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true)} "Close & Shuffle"]]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false true)} "Close"]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true true)} "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
        [:img.card.bg {:src "/img/corp.png"}])])))
@@ -517,7 +658,7 @@
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
       [:div
-       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
+       [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -525,28 +666,36 @@
 (defmethod discard-view "Corp" [{:keys [discard servers] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
-     (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                  :on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
-     (om/build label discard {:opts {:name "Archives"}})
+    (let [faceup? #(or (:seen %) (:rezzed %))]
+     [:div.panel.blue-shade.discard
+      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
+                                   :on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+      (om/build label discard {:opts {:name "Archives"
+                                      :fn (fn [cursor] (let [total (count cursor)
+                                                             face-up (count (filter faceup? cursor))]
+                                                         ;; use non-breaking space to keep counts on same line.
+                                                         (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
-     [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
-      [:div
-       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
-      (for [c discard]
-        (if (or (:seen c) (:rezzed c))
-          (om/build card-view c)
-          (if (not= (:side @game-state) :corp)
-            [:img.card {:src "/img/corp.png"}]
-            [:div.unseen (om/build card-view c)])))]
-
-     (when-not (empty? discard)
-       (let [c (last discard)]
-         (if (= (:side @game-state) :corp)
+      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
+       [:div
+        [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
+        [:label (let [total (count discard)
+                      face-up (count (filter faceup? discard))]
+                  (str total " cards, " (- total face-up) " face-down."))]]
+       (for [c discard]
+         (if (faceup? c)
            (om/build card-view c)
-           (if (or (:seen c) (:rezzed c))
-             (om/build card-view c)
-             [:img.card {:src "/img/corp.png"}]))))])))
+           (if (not= (:side @game-state) :corp)
+             [:img.card {:src "/img/corp.png"}]
+             [:div.unseen (om/build card-view c)])))]
+
+      (when-not (empty? discard)
+        (let [c (last discard)]
+          (if (= (:side @game-state) :corp)
+            (om/build card-view c)
+            (if (faceup? c)
+              (om/build card-view c)
+              [:img.card {:src "/img/corp.png"}]))))]))))
 
 (defn rfg-view [{:keys [cards name] :as cursor}]
   (om/component
@@ -597,39 +746,39 @@
 
 (defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag
                                         brain-damage agenda-point tagged hand-size-base
-                                        hand-size-modification]} owner]
+                                        hand-size-modification active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
-      [:div.stats.panel.blue-shade {}
+      [:div.stats.panel.blue-shade {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
-       [:div (str credit " Credit" (if (> credit 1) "s" "")
+       [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (not= credit 1) "s" "")
                   (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 0) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
-       [:div (str link " Link" (if (> link 1) "s" "")) (when me? (controls :link))]
-       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+       [:div (str memory " Memory Unit" (if (not= memory 1) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
+       [:div (str link " Link Strength") (when me? (controls :link))]
+       [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str tag " Tag" (if (> tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
-       [:div (str brain-damage " Brain Damage" (if (> brain-damage 1) "s" ""))
+       [:div (str tag " Tag" (if (not= tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
+       [:div (str brain-damage " Brain Damage")
         (when me? (controls :brain-damage))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity
-                                      hand-size-base hand-size-modification]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
+                                      hand-size-base hand-size-modification active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
-      [:div.stats.panel.blue-shade {}
+      [:div.stats.panel.blue-shade {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
-       [:div (str click " Click" (if (> click 1) "s" "")) (when me? (controls :click))]
-       [:div (str credit " Credit" (if (> credit 1) "s" "")) (when me? (controls :credit))]
-       [:div (str agenda-point " Agenda Point" (when (> agenda-point 1) "s"))
+       [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
+       [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
+       [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
-       [:div (str bad-publicity " Bad Publicit" (if (> bad-publicity 1) "ies" "y"))
+       [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
         (when me? (controls :bad-publicity))]
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
@@ -677,7 +826,7 @@
 (defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
    (sab/html
-    [:div.runner-board
+    [:div.runner-board {:class (when-not (= (:side @game-state) :runner) "opponent")}
      (for [zone [:program :hardware :resource :facedown]]
        [:div (for [c (zone (:rig player))]
                [:div.card-wrapper {:class (when (playable? c) "playable")}
@@ -704,10 +853,18 @@
   (let [me ((:side @game-state) @game-state)
         max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
     (if (> (count (:hand me)) max-size)
-      (toast (str "Discard to " max-size " cards") "warning")
+      (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
       (send-command "end-turn"))))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn] :as cursor} owner]
+(defn runnable-servers
+  "List of servers the runner can run on."
+  [state]
+  (let [servers (keys (get-in @state [:corp :servers]))
+        restricted-servers (keys (get-in @state [:runner :register :cannot-run-on-server]))]
+    ;; remove restricted servers from all servers to just return allowed servers
+    (remove (set restricted-servers) servers)))
+
+(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
   (reify
     om/IWillMount
     (will-mount [this]
@@ -722,15 +879,17 @@
       (if (= "select" (get-in cursor [side :prompt 0 :prompt-type]))
         (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
         (set! (.-cursor (.-style (.-body js/document))) "default"))
-      (doseq [{:keys [msg type]} (get-in cursor [side :toast])]
-        (toast msg type)))
+      (when (= "card-title" (get-in cursor [side :prompt 0 :prompt-type]))
+        (-> "#card-title" js/$ .focus))
+      (doseq [{:keys [msg type options]} (get-in cursor [side :toast])]
+        (toast msg type options)))
 
     om/IRenderState
     (render-state [this state]
       (sab/html
        (when side
-         (let [me ((if (= side :runner) :runner :corp) cursor)
-               opponent ((if (= side :runner) :corp :runner) cursor)]
+         (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
+               opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
             [:div.gameboard-bg {:class (:background (:user @app-state))}]
             [:div.mainpane
@@ -766,27 +925,48 @@
                         [:button {:on-click #(send-command "choice"
                                                            {:choice (-> "#credit" js/$ .val js/parseInt)})}
                          "OK"]]
-                       (case (:choices prompt)
-                         "credit" [:div
-                                   [:div.credit-select
-                                    [:select#credit (for [i (range (inc (:credit me)))]
-                                                      [:option {:value i} i])] " credits"]
-                                   [:button {:on-click #(send-command "choice"
-                                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                    "OK"]]
-                         "counter" [:div
-                                    [:div.credit-select
-                                     [:select#credit (for [i (range (inc (get-in prompt [:card :counter])))]
-                                                       [:option {:value i} i])] " credits"]
-                                    [:button {:on-click #(send-command "choice"
-                                                                       {:choice (-> "#credit" js/$ .val js/parseInt)})}
-                                     "OK"]]
-                         (for [c (:choices prompt)]
-                           (if (string? c)
-                             [:button {:on-click #(send-command "choice" {:choice c})}
-                              (for [item (get-message-parts c)] (create-span item))]
-                             (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                               [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
+                        (cond
+                            ;; choice of number of credits
+                            (= (:choices prompt) "credit")
+                            [:div
+                             [:div.credit-select
+                              [:select#credit (for [i (range (inc (:credit me)))]
+                                                [:option {:value i} i])] " credits"]
+                             [:button {:on-click #(send-command "choice"
+                                                                {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                              "OK"]]
+                            ;; choice of specified counters on card
+                            (:card-title (:choices prompt))
+                            [:div
+                             [:div.credit-select
+                              [:input#card-title {:placeholder "Enter a card title"
+                                                  :onKeyUp #(when (= 13 (.-keyCode %))
+                                                             (-> "#card-submit" js/$ .click)
+                                                             (.stopPropagation %))}]]
+                             [:button#card-submit {:on-click #(send-command "choice"
+                                                                            {:choice (-> "#card-title" js/$ .val)})}
+                              "OK"]
+                             (when-let [autocomp (:autocomplete (:choices prompt))]
+                               (-> "#card-title" js/$ (.autocomplete (clj->js {"source" autocomp})))
+                               nil)]
+                            (:counter (:choices prompt))
+                            (let [counter-type (keyword (:counter (:choices prompt)))
+                                  num-counters (get-in prompt [:card :counter counter-type] 0)]
+                              [:div
+                               [:div.credit-select
+                                [:select#credit (for [i (range (inc num-counters))]
+                                                  [:option {:value i} i])] " credits"]
+                               [:button {:on-click #(send-command "choice"
+                                                                  {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                "OK"]])
+                            ;; otherwise choice of all present choices
+                            :else
+                            (for [c (:choices prompt)]
+                              (if (string? c)
+                                [:button {:on-click #(send-command "choice" {:choice c})}
+                                 (for [item (get-message-parts c)] (create-span item))]
+                                (let [[title code] (extract-card-info (add-image-codes (:title c)))]
+                                  [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))]
                     (if run
                       (let [s (:server run)
                             kw (keyword (first s))
@@ -802,14 +982,21 @@
                            (cond-button "Jack Out" (not (get-in cursor [:run :cannot-jack-out]))
                                         #(send-command "jack-out"))]
                           [:div.panel.blue-shade
+                           (when (zero? (:position run))
+                             (cond-button "Action before access" (not (:no-action run))
+                                          #(send-command "corp-phase-43")))
                            (cond-button "No more action" (not (:no-action run))
                                         #(send-command "no-action"))]))
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
-                         (when (and (zero? (:click me)) (not end-turn))
-                           [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
+                         (when (and (zero? (:click me)) (not end-turn) (not runner-phase-12) (not corp-phase-12))
+                               [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
+                       (when (and (= (keyword active-player) side)
+                                  (or runner-phase-12 corp-phase-12))
+                           [:button {:on-click #(send-command "end-phase-12")}
+                            (if (= side :corp) "Mandatory Draw" "Take Clicks")])
                        (when (= side :runner)
                          [:div
                           (cond-button "Remove Tag"
@@ -821,14 +1008,14 @@
                            (cond-button "Run" (and (pos? (:click me))
                                                    (not (get-in me [:register :cannot-run])))
                                         #(-> (om/get-node owner "servers") js/$ .toggle))
-                           (let [remotes (get-remotes (get-in cursor [:corp :servers]))
-                                 servers (concat (remote-list remotes) ["HQ" "R&D" "Archives"])]
-                             [:div.blue-shade.panel.servers-menu {:ref "servers"}
-                              (map (fn [label]
-                                     [:div {:on-click #(do (send-command "run" {:server label})
-                                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                                      label])
-                                   servers)])]])
+                           [:div.blue-shade.panel.servers-menu {:ref "servers"}
+                            (map (fn [label]
+                                   [:div {:on-click #(do (send-command "run" {:server label})
+                                                         (-> (om/get-node owner "servers")
+                                                             js/$
+                                                             .fadeOut))}
+                                    label])
+                                 (zones->sorted-names (runnable-servers cursor)))]]])
                        (when (= side :corp)
                          (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
                        (when (= side :corp)

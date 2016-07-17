@@ -6,6 +6,7 @@
   "Deduct the value from the player's attribute."
   [state side [attr value]]
   (swap! state update-in [side attr] (if (or (= attr :memory)
+                                             (= attr :agenda-point)
                                              (= attr :hand-size-modification))
                                        ;; Memory or hand size mod may be negative
                                        #(- % value)
@@ -75,7 +76,7 @@
 (defn rez-cost [state side {:keys [cost] :as card}]
   (when-not (nil? cost)
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
-          (+ cost (rezfun state side card nil))
+          (+ cost (rezfun state side (make-eid state) card nil))
           cost)
         (+ (or (get-in @state [:bonus :cost]) 0))
         (max 0))))
@@ -92,10 +93,21 @@
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
 
+(defn ignore-install-cost [state side b]
+  (swap! state assoc-in [:bonus :ignore-install-cost] b))
+
+(defn ignore-install-cost? [state side]
+  (get-in @state [:bonus :ignore-install-cost]))
+
+(defn clear-install-cost-bonus [state side]
+  (swap! state update-in [:bonus] dissoc :install-cost)
+  (swap! state update-in [:bonus] dissoc :ignore-install-cost))
+
 (defn install-cost [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
             (-> (concat (get-in @state [:bonus :install-cost]) all-cost
-                        (when-let [instfun (:install-cost-bonus (card-def card))] (instfun state side card nil)))
+                        (when-let [instfun (:install-cost-bonus (card-def card))]
+                          (instfun state side (make-eid state) card nil)))
                 merge-costs flatten))))
 
 (defn modified-install-cost
@@ -107,4 +119,5 @@
    (trigger-event state side :pre-install card)
    (let [cost (install-cost state side card (merge-costs (concat additional [:credit (:cost card)])))]
      (swap! state update-in [:bonus] dissoc :install-cost)
+     (swap! state update-in [:bonus] dissoc :ignore-install-cost)
      cost)))

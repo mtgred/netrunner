@@ -14,7 +14,7 @@
   "Gets the modified strength of the given ice."
   [state side {:keys [strength] :as card}]
   (+ (if-let [strfun (:strength-bonus (card-def card))]
-       (+ strength (strfun state side card nil))
+       (+ strength (strfun state side (make-eid state) card nil))
        strength)
      (or (get-in @state [:bonus :ice-strength]) 0)))
 
@@ -37,16 +37,7 @@
   "Updates all installed ice."
   [state side]
   (doseq [server (get-in @state [:corp :servers])]
-    (update-ice-in-server state side (second server)))
-  (update-run-ice state :corp))
-
-(defn update-run-ice
-  "Updates the :run :ices key with an updated copy of all ice in the run's server."
-  [state side]
-  (when (get-in @state [:run])
-    (let [s (get-in @state [:run :server])
-          ices (get-in @state (concat [:corp :servers] s [:ices]))]
-      (swap! state assoc-in [:run :ices] ices))))
+    (update-ice-in-server state side (second server))))
 
 (defn trash-ice-in-run
   "Decreases the position of each ice in the run. For when an ice is trashed mid-run."
@@ -71,7 +62,7 @@
     ;; the effects of per-encounter and per-run strength pumps,
     ;; and miscellaneous increases registered by third parties (Dinosaurus, others).
     (+ (if-let [strfun (:strength-bonus (card-def card))]
-         (+ strength (strfun state side card nil))
+         (+ strength (strfun state side (make-eid state) card nil))
          strength)
        (get-in card [:pump :encounter] 0)
        (get-in card [:pump :all-run] 0)
@@ -80,7 +71,8 @@
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
   [state side breaker]
-  (let [breaker (get-card state breaker) oldstren (or (:current-strength breaker) (:strength breaker))]
+  (let [breaker (get-card state breaker)
+        oldstren (or (:current-strength breaker) (:strength breaker))]
     (swap! state update-in [:bonus] dissoc :breaker-strength)
     (trigger-event state side :pre-breaker-strength breaker)
     (update! state side (assoc breaker :current-strength (breaker-strength state side breaker)))
@@ -89,7 +81,7 @@
 (defn pump
   "Increase a breaker's strength by n for the given duration of :encounter or :all-run"
   ([state side card n] (pump state side card n :encounter))
-  ([state side {:keys [strength current-strength] :as card} n duration]
+  ([state side card n duration]
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
    (update-breaker-strength state side (get-card state card))))
 

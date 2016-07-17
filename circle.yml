@@ -1,7 +1,6 @@
 dependencies:
   cache_directories:
     - mongodb-linux-x86_64-2.6.4
-    - data
     - resources/public/img/cards
   pre:
     - if [[ ! -d mongodb-linux-x86_64-2.6.4 ]]; then wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-2.6.4.tgz && tar xvzf mongodb-linux-x86_64-2.6.4.tgz; fi
@@ -14,4 +13,16 @@ dependencies:
 
 test:
   override:
+    - lein compile game.main
     - lein test test.core
+    - lein test test.cards.agendas
+    - lein test test.cards.assets
+    - lein test test.cards.events
+    - lein test test.cards.hardware
+    - lein test test.cards.ice
+    - lein test test.cards.icebreakers
+    - lein test test.cards.identities
+    - lein test test.cards.operations
+    - lein test test.cards.programs
+    - lein test test.cards.resources
+    - lein test test.cards.upgrades

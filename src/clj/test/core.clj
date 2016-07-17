@@ -3,29 +3,52 @@
                                 costs-to-symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
-            [game.core :as core]
-            [test.utils :refer [load-card qty default-corp default-runner
+            [game.core :as core :refer [all-cards]]
+            [test.utils :refer [load-card load-cards qty default-corp default-runner
                                 make-deck]]
             [test.macros :refer [do-game]]
             [clojure.test :refer :all]))
 
+;;; Click action functions
+(defn take-credits
+  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
+  If all clicks are used up, end turn and start the opponent's turn."
+  ([state side] (take-credits state side nil))
+  ([state side n]
+    (let  [remaining-clicks (get-in @state [side :click])
+           n (or n remaining-clicks)
+           other (if (= side :corp) :runner :corp)]
+      (dotimes [i n] (core/click-credit state side nil))
+      (if (= (get-in @state [side :click]) 0)
+        (do (core/end-turn state side nil)
+            (core/start-turn state other nil))))))
+
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  [corp runner]
-  (let [states (core/init-game
-                 {:gameid 1
-                  :players [{:side "Corp"
-                             :deck {:identity (load-card (:identity corp))
-                                    :cards (:deck corp)}}
-                            {:side "Runner"
-                             :deck {:identity (load-card (:identity runner))
-                                    :cards (:deck runner)}}]})
-        state (second (last states))]
-    (core/resolve-prompt state :corp {:choice "Keep"})
-    (core/resolve-prompt state :runner {:choice "Keep"})
-    (core/start-turn state :corp nil)
-    state))
+  ([corp runner] (new-game corp runner nil))
+  ([corp runner {:keys [mulligan start-as dont-start] :as args}]
+    (let [states (core/init-game
+                   {:gameid 1
+                    :players [{:side "Corp"
+                               :deck {:identity (@all-cards (:identity corp))
+                                      :cards (:deck corp)}}
+                              {:side "Runner"
+                               :deck {:identity (@all-cards (:identity runner))
+                                      :cards (:deck runner)}}]})
+          state (second (last states))]
+      (if (#{:both :corp} mulligan)
+        (core/resolve-prompt state :corp {:choice "Mulligan"})
+        (core/resolve-prompt state :corp {:choice "Keep"}))
+      (if (#{:both :runner} mulligan)
+        (core/resolve-prompt state :runner {:choice "Mulligan"})
+        (core/resolve-prompt state :runner {:choice "Keep"}))
+      (when (not dont-start) (core/start-turn state :corp nil))
+      (when (= start-as :runner) (take-credits state :corp))
+      state)))
 
+(defn load-all-cards []
+  (reset! game.core/all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
+(load-all-cards)
 
 ;;; Card related functions
 (defn find-card
@@ -53,20 +76,26 @@
   ([state server pos]
    (get-in @state [:corp :servers server :content pos])))
 
+(defn get-program
+  "Get non-hosted program by position."
+  [state pos]
+  (get-in @state [:runner :rig :program pos]))
 
-;;; Click action functions
-(defn take-credits
-  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
-  If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-    (let  [remaining-clicks (get-in @state [side :click])
-           n (or n remaining-clicks)
-           other (if (= side :corp) :runner :corp)]
-      (dotimes [i n] (core/click-credit state side nil))
-      (if (= (get-in @state [side :click]) 0)
-        (do (core/end-turn state side nil)
-            (core/start-turn state other nil))))))
+(defn get-hardware
+  "Get hardware by position."
+  ([state] (get-in @state [:runner :rig :hardware]))
+  ([state pos]
+   (get-in @state [:runner :rig :hardware pos])))
+
+(defn get-resource
+  "Get non-hosted resource by position."
+  [state pos]
+  (get-in @state [:runner :rig :resource pos]))
+
+(defn get-counters
+  "Get number of counters of specified type."
+  [card type]
+  (get-in card [:counter type] 0))
 
 (defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
@@ -101,6 +130,12 @@
   (core/no-action state :corp nil)
   (core/continue state :runner nil))
 
+(defn run-phase-43
+  "Ask for triggered abilities phase 4.3"
+  [state]
+  (core/corp-phase-43 state :corp nil)
+  (core/successful-run state :runner nil))
+
 (defn run-successful
   "No action from corp and successful run for runner."
   [state]
@@ -132,6 +167,13 @@
     (core/score state :corp {:card (core/get-card state card)})
     (is (find-card title (get-in @state [:corp :scored]))))))
 
+(defn advance
+  "Advance the given card."
+  ([state card] (advance state card 1))
+  ([state card n]
+   (dotimes [_ n]
+     (core/advance state :corp {:card (core/get-card state card)}))))
+
 (defn last-log-contains?
   [state content]
   (not (nil?
@@ -143,5 +185,18 @@
   [state side title]
   (core/trash state side (find-card title (get-in @state [side :hand]))))
 
+(defn starting-hand
+  "Moves all cards in the player's hand to their draw pile, then moves the specified card names
+  back into the player's hand."
+  [state side cards]
+  (doseq [c (get-in @state [side :hand])]
+    (core/move state side c :deck))
+  (doseq [ctitle cards]
+    (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
+
+(defn accessing
+  "Checks to see if the runner has a prompt accessing the given card title"
+  [state title]
+  (= title (-> @state :runner :prompt first :card :title)))
+
 (load "core-game")
-(load "cards")

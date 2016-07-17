@@ -51,18 +51,24 @@
                         [:li [:code "/bp n"] " - Set your bad publicity to n"]
                         [:li [:code "/link n"] " - Set your link to n"]
                         [:li [:code "/handsize n"] " - Set your handsize to n"]
+                        [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
+                        [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
                         [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/discard #n"] " - Discard card number n from your hand"]
                         [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
+                        [:li [:code "/rfg"] " - Select a card to remove from the game"]
                         [:li [:code "/end-run"] " - End the run (Corp only)"]
                         [:li [:code "/jack-out"] " - Jack out (Runner only)"]
-                        [:li [:code "/trace n"] " - Start trace with base strength n (Corp only)"]
+                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
                         [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
-                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only)"]
-                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only)"]
+                        [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
+                        [:li [:code "/counter type n"] " - set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", "
+                         [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"]
+                         ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."]
+                        [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
                         [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
@@ -80,7 +86,9 @@
                              ", too."]
                             [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
                              "the official FAQ on "
-                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] "."])}
+                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
+                             "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
+                             "of rulings (also unofficial) regarding various cards and game situations."])}
             {:id "firstgame"
              :title "Can I play my first game on jinteki.net even though I'm a total beginner and never played in meatspace?"
              :content [:p "Sure! Many players will be happy to play/teach a beginner if they know what they're getting into beforehand. "
@@ -108,15 +116,39 @@
             {:id "avatar"
              :title "How do I change my avatar?"
              :content [:p "Go to " [:a {:href "http://gravatar.com" :target "_blank"} "gravatar.com"]
-                       " and create an account with the same email as the one used to register on Jinteki.net."]}
+                       " and create an account with the same email as the one used to register on Jinteki.net. Please note that "
+                       "it can sometimes take up to a few hours for the new avatar to be visible on the site."]}
             {:id "bestbrowser"
              :title "What is the best supported browser?"
-             :content [:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too. "
-                       "Touchscreen devices (smartphones, tablets etc.) are currently not supported."]}
+             :content '([:p "Google Chrome or Firefox on a desktop or laptop is recommended. Safari should work fine too."]
+                        [:p "There is limited support for tablet browsers. If you have too many cards to fit on the screen you might not able to see all of them."]
+                        [:p "Using a phone is not recommended. The screen will most likely be too small to fit the gameboard."])}
+            {:id "fullscreen"
+             :title "How to use jinteki.net in fullscreen mode on a tablet?"
+             :content [:p "Add jinteki.net to your homescreen as described "
+                       [:a {:href "http://www.howtogeek.com/196087/how-to-add-websites-to-the-home-screen-on-any-smartphone-or-tablet/"} "here"]
+                       ". If you tap on the homescreen icon, you will be in fullscreen."]}
             {:id "privatemsgs"
              :title "How do I send a private message / add someone to friendlist?"
              :content [:p "The community management issues such as private messages or friendlist are currently not implemented. "
                        "They are planned, but no specific date is set, as all of our code is written by volunteers."]}
+            {:id "competitive"
+             :title "What is the point of the \"Competitive\" room in lobby? How does it differ from \"Casual\"?"
+             :content (list [:p "Different rooms in lobby are meant to help people with similar expectations about the game find each other. "
+                             "In general, competitive room is for games with players intending to play competitively. "
+                             "This may mean something different to each of them... However, since it's a non-default room, "
+                             "going there and creating or joining a game usually isn't accidental and is a declaration of some kind of competitive intent."]
+                            [:p "Some recommendations for playing in the competitive room:"
+                             [:ul
+                              [:li "a decent knowledge of the game's rules"]
+                              [:li "familiarity with the site's interface"]
+                              [:li "a " [:span.legal "tournament legal"] " deck"]
+                              [:li "enough time reserved for a full game and no distractions"]]]
+                            [:p "Games with players not able or willing to follow above recommendations are probably better suited to the Casual room. "
+                             "Some examples would be: learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
+                             "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
+                             "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
+
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"
@@ -136,21 +168,24 @@
                        "put one copy of each directive in the deck in addition to your normal deck. Yes, that means that "
                        "minimal Adam decksize on Jinteki.net is 48."]}
             {:id "napdmwl"
-             :title "What is MWL? Why is my deck marked as \"Casual play only\"?"
+             :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
              :content (list
                         [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
                          "of restricted cards introduced by FFG to tournament play. Each of the cards on the list reduces "
                          "the influence printed on the ID by 1, with a minimum of 1 (so Professor is unaffected). For "
                          "more information about the MWL read Tournament Rules from "
                          [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
-                        [:p "Decks that are valid and fit within tournament restrictions are marked \"Tournament legal\". "
+                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
                          "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked \"Casual play only\". Decks that do not fit basic deckbuilding rules are marked \"Invalid\"."])}
-            {:id "rezaccess"
-             :title "How do I rez cards as Corp in the 4.3 run timing window?"
-             :content [:p "Sadly, this window is currently unimplemented - you need to ask the Runner manually. "
-                       "See " [:a {:href "https://github.com/mtgred/netrunner/issues/334"} "the discussion on GitHub"]
-                       " about this issue."]}
+                         "are marked " [:span.casual "Casual play only"] ". Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Invalid"] "."]
+                        [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
+                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
+                         "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."])}
+            {:id "altarts"
+             :title "How do I change my decks to use alternative art versions of cards (or promotional ones)?"
+             :content [:p "Alternative art cards are enabled for the " [:a {:href "#donations"} "donators"] " and "
+                       [:a {:href "#devs"} "developers"] " of the site. If you belong to one of the aforementioned groups and you feel like you should have them enabled, "
+                       "but you don't, " [:a {:href "/about"} "contact us"] "."]}
              )}
     {:id "troubleshooting"
      :title "Troubleshooting"
@@ -158,9 +193,9 @@
             {:id "weird"
              :title "The site is behaving weird."
              :content [:p "The server code may have been freshly updated and you don't have the latest Javascript code. "
-                       "First step in every troubleshooting should be a forced refresh of your browser by doing a force refresh ("
-                       [:code "Ctrl + F5"] " on Windows). Also read the announcements on the main page, something about server problems "
-                       "may be written there."]}
+                       "First step in every troubleshooting should be a forced refresh of your browser by doing a "
+                       [:a {:href "http://refreshyourcache.com/en/cache/"} "force refresh"] " (" [:code "Ctrl + F5"] " on Windows). "
+                       "Also read the announcements on the main page, something about server problems may be written there."]}
             {:id "touchproblems"
              :title "The website doesn't work well on my touchscreen device."
              :content [:p "Touchscreen devices are currently not supported. See answer to " [:a {:href "#bestbrowser"} "this question"]
@@ -216,16 +251,16 @@
 (def help-contents
   "Takes help-data and translates it to HTML tags."
   (for [{:keys [id title sub] :as section} help-data]
-    (list [:h3 {:id id} title]
+    (list [:h2 {:id id} title]
           (for [{:keys [id title content] :as question} sub]
-            (list [:h4 {:id id} title]
+            (list [:h3 {:id id} title]
                   content)))))
 
 (defn help [cursor owner]
   (om/component
     (sab/html
       [:div.help.panel.blue-shade
-       [:h3 "Help Topics"]
+       [:h2 "Help Topics"]
        help-toc
        help-contents])))
 

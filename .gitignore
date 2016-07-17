@@ -12,6 +12,7 @@ pom.xml
 .lein-plugins/
 .repl
 .nrepl-port
+.nrepl-history
 
 /resources/public/js/
 /resources/public/cljs/

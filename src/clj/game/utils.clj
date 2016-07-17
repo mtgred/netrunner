@@ -7,7 +7,7 @@
   (swap! cid inc))
 
 (defn abs [n] (max n (- n)))
-  
+
 (defn merge-costs [costs]
   (vec (reduce #(let [key (first %2) value (last %2)]
               (assoc %1 key (+ (or (key %1) 0) value)))
@@ -86,6 +86,11 @@
       m)
     (dissoc m k)))
 
+(defn make-label
+  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
+  [ability]
+  (or (:label ability) (and (string? (:msg ability)) (capitalize (:msg ability))) ""))
+
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
   with Cancel always last."
@@ -111,16 +116,34 @@
       nil)))
 
 (defn other-side [side]
-  (if (= side :corp) :runner :corp))
+  (cond (= side :corp) :runner
+        (= side :runner) :corp))
+
+(defn side-str
+  "Converts kw into str. If str is passed same str is returned."
+  [side]
+  (cond
+    (= side :corp) "Corp"
+    (= side "Corp") "Corp"
+    (= side :runner) "Runner"
+    (= side "Runner") "Runner"))
+
+(defn same-side?
+  "Checks if two supplied sides are the same side. Accepts both keyword and str."
+  [side1 side2]
+  (= (side-str side1) (side-str side2)))
 
 ; Functions for working with zones.
+(defn remote-num->name [num]
+  (str "Server " num))
+
 (defn remote->name [zone]
   "Converts a remote zone to a string"
   (let [kw (if (keyword? zone) zone (last zone))
         s (str kw)]
     (if (.startsWith s ":remote")
       (let [num (last (split s #":remote"))]
-        (str "Server " num)))))
+        (remote-num->name num)))))
 
 (defn central->name [zone]
   "Converts a central zone keyword to a string."
@@ -134,6 +157,17 @@
   "Converts a zone to a string."
   (or (central->name zone)
       (remote->name zone)))
+
+(defn zone->sort-key [zone]
+  (case (if (keyword? zone) zone (last zone))
+    :archives -3
+    :rd -2
+    :hq -1
+    (string->num
+      (last (safe-split (str zone) #":remote")))))
+
+(defn zones->sorted-names [zones]
+  (->> zones (sort-by zone->sort-key) (map zone->name)))
 
 (defn is-remote? [zone]
   "Returns true if the zone is for a remote server"
@@ -154,3 +188,5 @@
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 
+(defn private-card [card]
+  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted]))

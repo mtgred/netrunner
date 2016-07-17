@@ -82,14 +82,49 @@ getUsername = (socket) ->
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
+requester.on 'connect', (fd, ep) ->
+  db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+    requester.send(JSON.stringify({action: "initialize", cards: data}))
+
+requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
+
+sendGameResponse = (game, response) ->
+  diffs = response.runnerdiff
+
+  for player in game.players
+    socket = io.sockets.connected[player.id]
+    if player.side is "Corp"
+      # The response will either have a diff or a state. we don't actually send both,
+      # whichever is null will not be sent over the socket.
+      lobby.to(player.id).emit("netrunner", {type: response.action,\
+                                                   diff: response.corpdiff, \
+                                                   state: response.corpstate})
+    else if player.side is "Runner"
+      lobby.to(player.id).emit("netrunner", {type: response.action, \
+                                                   diff: response.runnerdiff, \
+                                                   state: response.runnerstate})
+  for spect in game.spectators
+    lobby.to(spect.id).emit("netrunner", {type: response.action,\
+                                                diff: response.spectdiff, \
+                                                state: response.spectstate})
+
 requester.on 'message', (data) ->
   response = JSON.parse(data)
-  if response.action isnt "remove"
-    if response.diff
-      lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
-    else
-      lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response.state})
+  if response.action is "remove"
+    g = {
+      winner: response.state.winner
+      reason: response.state.reason
+      endDate: response.state["end-time"]
+      turn: response.state.turn
+      runnerAgenda: response.state.runner["agenda-point"]
+      corpAgenda: response.state.corp["agenda-point"]
+    }
+    db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
+      throw err if er
+  else
+    if (games[response.gameid])
+      sendGameResponse(games[response.gameid], response)
 
 # Socket.io
 io.set("heartbeat timeout", 30000)
@@ -116,12 +151,20 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify({action: "notification", gameid: gid, text: "#{getUsername(socket)} disconnected."}))
       removePlayer(socket)
 
-  socket.on 'netrunner', (msg) ->
+  socket.on 'netrunner', (msg, fn) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
-        game = {date: new Date(), gameid: gameid, title: msg.title, allowspectator: msg.allowspectator,\
-                players: [{user: socket.request.user, id: socket.id, side: msg.side}], spectators: []}
+        game =
+          date: new Date()
+          gameid: gameid
+          title: msg.title.substring(0,30)
+          allowspectator: msg.allowspectator
+          spectatorhands: msg.spectatorhands
+          password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
+          room: msg.room
+          players: [{user: socket.request.user, id: socket.id, side: msg.side}]
+          spectators: []
         games[gameid] = game
         socket.join(gameid)
         socket.gameid = gameid
@@ -146,12 +189,18 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         requester.send(JSON.stringify(msg))
 
       when "join"
-        joinGame(socket, msg.gameid)
-        socket.broadcast.to(msg.gameid).emit 'netrunner',
-          type: "say"
-          user: "__system__"
-          notification: "ting"
-          text: "#{getUsername(socket)} joined the game."
+        game = games[msg.gameid]
+
+        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+          fn("join ok")
+          joinGame(socket, msg.gameid)
+          socket.broadcast.to(msg.gameid).emit 'netrunner',
+            type: "say"
+            user: "__system__"
+            notification: "ting"
+            text: "#{getUsername(socket)} joined the game."
+        else
+          fn("invalid password")
 
       when "watch"
         game = games[msg.gameid]
@@ -195,16 +244,33 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         updateMsg = {"update" : {}}
         updateMsg["update"][socket.gameid] = games[socket.gameid]
         lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
-        
+
       when "start"
         game = games[socket.gameid]
         if game
+          if game.players.length is 2
+            corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
+            runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
+            g = {
+              gameid: socket.gameid
+              startDate: (new Date()).toISOString()
+              title: game.title
+              room: game.room
+              corp: corp.user.username
+              runner: runner.user.username
+              corpIdentity: corp["deck"]["identity"]["title"]
+              runnerIdentity: runner["deck"]["identity"]["title"]
+            }
+            db.collection('gamestats').insert g, (err, data) ->
+              console.log(err) if err
           game.started = true
           msg = games[socket.gameid]
           msg.action = "start"
           msg.gameid = socket.gameid
           requester.send(JSON.stringify(msg))
           for player in game.players
+            player.faction = player["deck"]["identity"]["faction"]
+            player.identity = player["deck"]["identity"]["title"]
             delete player["deck"]
           refreshLobby("update", msg.gameid)
 
@@ -274,15 +340,17 @@ app.get '/logout', (req, res) ->
   res.redirect('/')
 
 app.post '/register', (req, res) ->
-  db.collection('users').findOne username: req.body.username, (err, user) ->
+  db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.send {message: 'Username taken'}, 422
+    else if req.body.username.length < 4 or req.body.username.length > 16
+      res.send {message: 'Username too short/too long'}, 423
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
       req.body.registrationDate = new Date()
       req.body.lastConnection = new Date()
-      bcrypt.hash req.body.password, 3, (err, hash) ->
+      hashPassword req.body.password, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
           res.send "error: #{err}" if err
@@ -369,7 +437,7 @@ app.post '/reset/:token', (req, res) ->
         #if (req.body.password != req.body.confirm)
         #  res.send {message: 'Password does not match Confirm'}, 412
 
-        bcrypt.hash req.body.password, 3, (err, hash) ->
+        hashPassword req.body.password, (err, hash) ->
           password = hash
           resetPasswordToken = undefined;
           resetPasswordExpires = undefined
@@ -407,6 +475,9 @@ app.post '/update-profile', (req, res) ->
       res.send {message: 'OK', background: req.body.background}, 200
   else
     res.send {message: 'Unauthorized'}, 401
+
+hashPassword = (password, cb) ->
+    bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
