@@ -60,12 +60,13 @@
                        {:name "Dyson Mem Chip" :ref "cardbrowser-bg"}
                        {:name "Fast Track"     :ref "about-bg"}
                        {:name "Logos"          :ref "reset-bg"}]] 
-           [:label [:input {:type "radio"
-                            :name "background"
-                            :value (:ref option)
-                            :on-change #(om/set-state! owner :background (.. % -target -value))
-                            :checked (= (om/get-state owner :background) (:ref option))}]
-            (:name option)])
+           [:div.radio
+             [:label [:input {:type "radio"
+                              :name "background"
+                              :value (:ref option)
+                              :on-change #(om/set-state! owner :background (.. % -target -value))
+                              :checked (= (om/get-state owner :background) (:ref option))}]
+              (:name option)]])
          [:hr]
          [:div.button-bar
           [:button "Update Profile"]]]]]
