@@ -6,7 +6,8 @@
   "Prints a message to the log as coming from the given username. The special user string
   __system__ shows no user name."
   [state side {:keys [user text]}]
-  (let [author (or user (get-in @state [side :user]))]
+  (let [author (or user (get-in @state [side :user]))
+        text (if (= (.trim text) "null") " null" text)]
     (if-let [command (parse-command text)]
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
