@@ -507,12 +507,13 @@
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
                            " by 2 for the remainder of the run")
-                 :effect (effect (register-events
-                                   {:pre-ice-strength {:effect (effect (ice-strength-bonus -2 current-ice))}
-                                    :run-ends {:effect (effect (unregister-events card))}}
-                                  card)
-                                 (update-all-ice))}]
-    :events {:pre-ice-strength nil :run-ends nil}}
+                 :effect (effect (update! (assoc card :null-target current-ice))
+                                 (update-ice-strength current-ice))}]
+    :events {:pre-ice-strength
+             {:req (req (= (:cid target) (get-in card [:null-target :cid])))
+              :effect (effect (ice-strength-bonus -2 target))}
+             :run-ends
+             {:effect (effect (update! (dissoc card :null-target)))}}}
 
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"

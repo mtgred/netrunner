@@ -68,6 +68,32 @@
       (is (= 1 (get-counters (refresh ds) :virus)) "1 counter spent from Datasucker")
       (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
 
+(deftest datasucker-trashed
+  "Datasucker - does not affect next ice when current is trashed. Issue #1788."
+  (do-game
+    (new-game
+      (default-corp [(qty "Wraparound" 1) (qty "Spiderweb" 1)])
+      (default-corp [(qty "Datasucker" 1) (qty "Parasite" 1)]))
+    (play-from-hand state :corp "Spiderweb" "HQ")
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (take-credits state :corp)
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :runner "Datasucker")
+    (let [sucker (get-program state 0)
+          spider (get-ice state :hq 0)
+          wrap (get-ice state :hq 1)]
+      (core/add-counter state :runner sucker :virus 2)
+      (core/rez state :corp spider)
+      (core/rez state :corp wrap)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner (refresh spider))
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (refresh sucker) 0)
+      (card-ability state :runner (refresh sucker) 0)
+      (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
+      (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
+
 (deftest diwan
   "Diwan - Full test"
   (do-game
