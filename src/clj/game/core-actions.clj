@@ -124,7 +124,7 @@
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
-    (if (not= choice "Can cel")
+    (if (not= choice "Cancel")
       ;; The user did not choose "cancel"
       (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
         (let [title-fn (:card-title (:choices prompt))
