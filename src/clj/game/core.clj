@@ -8,10 +8,12 @@
             [clojure.string :refer [split-lines split join lower-case]]
             [clojure.core.match :refer [match]]))
 
-(declare get-card get-zones get-runnable-zones get-remote-names make-eid make-result register-effect-completed resolve-ability say system-msg trigger-event update!)
+(declare get-card get-zones get-runnable-zones get-remote-names make-eid make-result register-effect-completed
+         resolve-ability say server-card system-msg trigger-event update!)
 
 (def game-states (atom {}))
 (def all-cards (atom {}))
+(def all-cards-alt (atom {}))
 
 (load "core-cards")     ; retrieving and updating cards
 (load "core-events")    ; triggering of events

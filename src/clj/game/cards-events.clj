@@ -824,7 +824,8 @@
 
                ;; Move the selected ID to [:runner :identity] and set the zone
                (swap! state update-in [side :identity]
-                  (fn [x] (assoc target :zone [:identity])))
+                  (fn [x] (assoc (server-card (:title target) (get-in @state [:runner :user]))
+                            :zone [:identity])))
 
                ;; enable-identity does not do everything that card-init does
                (card-init state side (get-in @state [:runner :identity]))
