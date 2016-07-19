@@ -3,7 +3,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [all-cards game-states system-msg pay gain draw end-run toast show-error-toast
+            [game.core :refer [all-cards all-cards-alt game-states system-msg pay gain draw end-run toast show-error-toast
                                card-is-public?] :as core]
             [game.utils :refer [card-is? private-card]]
             [environ.core :refer [env]]
@@ -122,6 +122,18 @@
                      :runner (assoc-in runner-private [:hand] (get-in @state [:runner :hand])))
        (assoc @state :corp corp-private :runner runner-private))]))
 
+(defn- reset-all-cards
+  [cards]
+  (let [;; split the cards into regular cards and alt-art cards
+        [regular alt] ((juxt filter remove) #(not= "Alternates" (:setname %)) cards)
+        regular (into {} (map (juxt :title identity) regular))
+        alt (into {} (map (juxt :title identity)
+                          ;; take the regular version of this card and change its code to the alt code
+                          (map #(assoc (regular (:title %))
+                                 :code (:code %)) alt)))]
+    (reset! all-cards regular)
+    (reset! all-cards-alt alt)))
+
 (defn- handle-command
   "Apply the given command to the given state. Return true if the state should be sent
   back across the socket (if the command was successful or a resolvable exception was
@@ -129,7 +141,7 @@
   [{:keys [gameid action command side user args text cards] :as msg} state]
 
   (try (do (case action
-             "initialize" (reset! all-cards (into {} (map (juxt :title identity) cards))) ;; creates a map from card title to card data
+             "initialize" (reset-all-cards cards);; creates a map from card title to card data
              "start" (core/init-game msg)
              "remove" (swap! game-states dissoc gameid)
              "do" (handle-do user command state side args)
