@@ -137,6 +137,25 @@
    {:in-play [:hand-size-modification 5]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
+   "Beth Kilrain-Chang"
+   (let [ability {:once :per-turn
+                  :label "Gain 1 [Credits], draw 1 card, or gain [Click] (start of turn)"
+                  :req (req (:runner-phase-12 @state))
+                  :effect (req (let [c (:credit corp)
+                                 b (:title card)]
+                             (when (<= 5 c 9)
+                               (do (gain state side :credit 1)
+                                   (system-msg state side (str "uses " b " to gain 1 [Credits]"))))
+                             (when (<= 10 c 14)
+                               (do (draw state side 1)
+                                   (system-msg state side (str "uses " b " to draw 1 card"))))
+                             (when (<= 15 c)
+                               (do (gain state side :click 1)
+                                   (system-msg state side (str "uses " b " to gain [Click]"))))))}]
+     {:flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability}})
+
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
 
@@ -1023,6 +1042,21 @@
                  :req (req (= (:active-player @state) :runner))
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
+
+   "Temüjin Contract"
+   {:data {:counter {:credit 20}}
+    :prompt "Choose a server for Temüjin Contract" :choices (req servers)
+    :msg (msg "target " target)
+    :req (req (not (:server-target card)))
+    :effect (effect (update! (assoc card :server-target target)))
+    :events {:successful-run
+             {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+              :msg "gain 4 [Credits]"
+              :effect (req (let [creds (get-in card [:counter :credit])]
+                             (gain state side :credit 4)
+                             (set-prop state side card :counter {:credit (- creds 4)})
+                             (when (= 0 (get-in (get-card state card) [:counter :credit]))
+                               (trash state side card {:unpreventable true}))))}}}
 
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
