@@ -143,7 +143,7 @@
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
       (#(if (or (and (= type "Agenda")
-                     (= (first zone) "servers"))
+                     (#{"servers" "onhost"} (first zone)))
                 (= advanceable "always")
                 (and rezzed
                      (= advanceable "while-rezzed"))
@@ -466,6 +466,13 @@
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
 
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation") (not rezzed))
+    facedown))
+
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
                          side rec-counter facedown server-target icon new]
@@ -536,7 +543,7 @@
                                          (-> (om/get-node owner "abilities") js/$ .fadeOut))
                           :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
                abilities)]))
-        (when (= (first zone) "servers")
+        (when (#{"servers" "onhost"} (first zone))
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
@@ -548,7 +555,9 @@
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
        (when (pos? (count hosted))
          [:div.hosted
-          (om/build-all card-view hosted {:key :cid})])])))
+          (for [card hosted]
+            (om/build card-view card {:opts {:flipped (and (not= (:type card) "Operation")
+                                                           (not (:rezzed card)))}}))])])))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)

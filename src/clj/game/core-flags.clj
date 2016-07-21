@@ -267,6 +267,7 @@
     ;; or scored or current
     (or (card-is? card :side :runner)
         (and (:openhand (:corp @state)) (in-hand? card))
-        (and (installed? card) (rezzed? card))
+        (and (or (installed? card) (:host card))
+             (or (is-type? card "Operation") (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
