@@ -537,6 +537,25 @@
     (prompt-choice :runner "Yes")
     (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
 
+
+(deftest nbn-controlling-the-message-drt
+  "NBN: Controlling the Message - Interaction with Dedicated Response Team"
+  (do-game
+    (new-game
+      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 1) (qty "Dedicated Response Team" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+    (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
+
 (deftest new-angeles-sol-on-steal
   "New Angeles Sol - interaction with runner stealing agendas"
   (do-game
