@@ -339,6 +339,32 @@
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
+(deftest full-immersion-recstudio
+  "Full Immmersion RecStudio - install directly, and via Interns"
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1)
+                     (qty "Interns" 2)
+                     (qty "Launch Campaign" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+      (let [lc (first (:hosted (refresh fir)))]
+        (is lc "Launch Campaign hosted on Full Immersion RecStudio")
+        (core/rez state :corp lc)
+        (is (and (:installed (refresh lc)) (:rezzed (refresh lc))) "Rezzed Launch Campaign")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 5 (:credit (get-corp))) "Gained 2cr from Launch Campaign")
+        (is (= 4 (get-counters (refresh lc) :credit)) "4cr left on Launch Campaign")
+        (play-from-hand state :corp "Interns")
+        (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+        (prompt-choice :corp (refresh fir))
+        (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
+
 (deftest genetics-pavilion
   "Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn"
   (do-game
