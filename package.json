@@ -16,7 +16,7 @@
     "cors": "^2.6.0",
     "express": "~3.4.7",
     "jade": "~1.9.2",
-    "jsonwebtoken": "~0.4.1",
+    "jsonwebtoken": "~7.1.6",
     "memory-cache": "~0.1.4",
     "mkdirp": "~0.5.0",
     "moment": "~2.10.2",
