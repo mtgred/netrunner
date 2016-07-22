@@ -796,7 +796,7 @@
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))
           (when-let [run-card (:card (:run-effect run))]
             [:div.run-card (om/build card-img run-card)])])
-       (when content
+       (when (not-empty content)
          [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
           (for [card content]
             (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
