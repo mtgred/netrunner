@@ -2,8 +2,8 @@
 
 (defn get-nested-host
   "Recursively searches upward to find the 'root' card of a hosting chain."
-  [state card]
-  (if (:host card) (recur state (:host card)) card))
+  [card]
+  (if (:host card) (recur (:host card)) card))
 
 (defn update-hosted!
   "Updates a card that is hosted on another, by recursively updating the host card's
@@ -24,7 +24,7 @@
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
   [state {:keys [cid zone side host] :as card}]
-  (let [root-host (get-card state (get-nested-host state card))
+  (let [root-host (get-card state (get-nested-host card))
         helper (fn search [card target]
                  (when-not (nil? card)
                    (if-let [c (some #(when (= (:cid %) (:cid target)) %) (:hosted card))]

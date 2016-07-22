@@ -368,6 +368,20 @@
                       :msg "add it to their score area and gain 1 agenda point"
                       :effect (effect (as-agenda :corp card 1))}}}
 
+   "Full Immersion RecStudio"
+   {:can-host (req (and (or (is-type? target "Asset") (is-type? target "Agenda"))
+                        (> 2 (count (:hosted card)))))
+    :trash-cost-bonus (req (* 3 (count (:hosted card))))
+    :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
+                 :req (req (< (count (:hosted card)) 2))
+                 :cost [:click 1]
+                 :prompt "Choose an asset or agenda to install"
+                 :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
+                                      (in-hand? %)
+                                      (= (:side %) "Corp"))}
+                 :msg (msg "install and host " (:title target))
+                 :effect (req (corp-install state side target card))}]}
+
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)
@@ -1067,11 +1081,8 @@
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
-                 :effect (req (trigger-event state side :corp-install target)
-                              (host state side card target)
-                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
-                              (when (:rezzed (last (:hosted (get-card state card))))
-                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
+                 :effect (req (corp-install state side target card) ;; install target onto card
+                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
    {:prevent {:expose [:all]}

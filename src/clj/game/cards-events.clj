@@ -189,9 +189,10 @@
                                            :effect (effect (gain :runner :credit 5))}} card))}
 
    "Drive By"
-   {:choices {:req #(and (is-remote? (second (:zone %)))
-                         (= (last (:zone %)) :content)
-                         (not (:rezzed %)))}
+   {:choices {:req #(let [topmost (get-nested-host %)]
+                     (and (is-remote? (second (:zone topmost)))
+                          (= (last (:zone topmost)) :content)
+                          (not (:rezzed %))))}
     :delayed-completion true
     :effect (req (when-completed (expose state side target) ;; would be nice if this could return a value on completion
                                  (if async-result ;; expose was successful
