@@ -373,6 +373,17 @@
    {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Khan: Savvy Skiptracer"
+   {:events {:pass-ice
+             {:once :per-turn
+              :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (resolve-ability state side
+                               {:prompt "Choose an icebreaker to install from your Grip"
+                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                :msg (msg "install " (:title target))
+                                :effect (effect (runner-install target))}
+                              card nil)))}}}
+
    "Laramy Fisk: Savvy Investor"
    {:events {:successful-run {:delayed-completion true
                               :req (req (and (is-central? (:server run))

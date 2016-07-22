@@ -396,6 +396,19 @@
                                        :msg (msg (corp-install-msg target))}
                                       card nil))}
 
+   "Liquidation"
+   {:delayed-completion true
+    :effect (req (let [n (count (filter #(and (rezzed? %)
+                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))]
+                   (continue-ability state side
+                     {:prompt "Choose any number of rezzed cards to trash"
+                      :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
+                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* n 3) " [Credits]")
+                      :effect (req (doseq [c targets]
+                                     (trash state side c))
+                                   (gain state side :credit (* n 3)))}
+                    card nil)))}
+
    "Localized Product Line"
    {:prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
