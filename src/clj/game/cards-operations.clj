@@ -79,7 +79,7 @@
                                                         ices (get-in @state (concat [:corp :servers] s [:ices]))]
                                                     (swap! state assoc :per-run nil
                                                            :run {:server s :position (count ices)
-                                                                 :access-bonus 0 :run-effect nil})
+                                                                 :access-bonus 0 :run-effect nil :cannot-jack-out true})
                                                     (gain-run-credits state :runner (:bad-publicity corp))
                                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                                     (trigger-event state :runner :run s)))}
