@@ -1,6 +1,7 @@
 {
   "name": "netrunner",
   "version": "0.0.1",
+  "license": "MIT",
   "dependencies": {
     "jquery": "~2.0.3",
     "jqueryui": "~1.11.4",
