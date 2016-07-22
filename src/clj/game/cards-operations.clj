@@ -538,10 +538,30 @@
                                     card nil)))}
 
    "Precognition"
-   {:msg "rearrange the top 5 cards of R&D"
-    :effect (req (prompt! state side card
-                         (str "Drag cards from the Temporary Zone back onto R&D") ["OK"] {})
-                 (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
+   (letfn [(precog-final [chosen original]
+             {:prompt (str "The top 5 cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (effect-completed state side eid))
+                             (continue-ability state side (precog-choice original '() (count original) original)
+                                               card nil)))})
+           (precog-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto R&D"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (precog-choice (remove-once #(not= target %) remaining)
+                                                               chosen n original)
+                                                 card nil)
+                               (continue-ability state side (precog-final chosen original) card nil))))})]
+     {:delayed-completion true
+      :msg "rearrange the top 5 cards of R&D"
+      :effect (req (let [from (take 5 (:deck corp))]
+                     (continue-ability state side (precog-choice from '() (count from) from) card nil)))})
 
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
