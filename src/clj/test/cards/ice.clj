@@ -166,6 +166,45 @@
         (core/rez state :corp paper)
         (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
+(deftest data-hound
+  "Data Hound - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Data Hound" 1)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
+                               (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
+    (play-from-hand state :corp "Data Hound" "HQ")
+    (take-credits state :corp)
+    (let [dh (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp dh)
+      (card-ability state :corp dh 0)
+      (prompt-choice :corp 2)
+      (prompt-choice :runner 0)
+      ;trash 1 card and rearrange the other 3
+      (prompt-choice :corp (find-card "Desperado" (:deck (get-runner))))
+      (is (= 1 (count (:discard (get-runner)))))
+      (prompt-choice :corp (find-card "Sure Gamble" (:deck (get-runner))))
+      (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
+      ;try starting over
+      (prompt-choice :corp "Start over")
+      (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
+      (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :corp (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+      (prompt-choice :corp "Done")
+      (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+      (is (= "Corroder" (:title (second (:deck (get-runner))))))
+      (is (= "Patron" (:title (second (rest (:deck (get-runner)))))))
+      (run-jack-out state)
+      (run-on state "HQ")
+      (card-ability state :corp dh 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 1)
+      ;trash the only card automatically
+      (is (= 2 (count (:discard (get-runner)))))
+      (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
+
 (deftest draco
   "Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run"
   (do-game
@@ -487,6 +526,39 @@
     (prompt-select :corp (get-in @state [:runner :rig :program 0]))
     (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
     (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+
+(deftest shiro
+  "Shiro - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Shiro" 1) (qty "Caprice Nisei" 1)
+                             (qty "Quandary" 1) (qty "Jackson Howard" 1)])
+              (default-runner [(qty "R&D Interface" 1)]))
+    (starting-hand state :corp ["Shiro"])
+    (play-from-hand state :corp "Shiro" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "R&D Interface")
+    (let [shiro (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp shiro)
+      (card-ability state :corp shiro 0)
+      (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+      (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
+      (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
+      ;try starting over
+      (prompt-choice :corp "Start over")
+      (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
+      (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
+      (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+      (prompt-choice :corp "Done")
+      (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
+      (is (= "Quandary" (:title (second (:deck (get-corp))))))
+      (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
+      (card-ability state :corp shiro 1)
+      (is (= (:cid (first (:deck (get-corp))))
+             (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
+      (prompt-choice :runner "No")
+      (is (= (:cid (second (:deck (get-corp))))
+             (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
 
 (deftest snowflake
   "Snowflake - Win a psi game to end the run"
