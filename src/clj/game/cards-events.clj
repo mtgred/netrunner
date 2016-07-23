@@ -457,7 +457,7 @@
               :effect (req (if (= target "Done")
                              (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
                                  (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid))
+                                 (effect-completed state side eid card))
                              (continue-ability state side (index-choice original '() (count original) original)
                                                card nil)))})
            (index-choice [remaining chosen n original]
@@ -479,8 +479,10 @@
                        :delayed-completion true
                        :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
                                     (let [from (take 5 (:deck corp))]
-                                      (continue-ability state side (index-choice from '() (count from) from) card nil)))}}
-                     card))})
+                                      (if (pos? (count from))
+                                        (continue-ability state side (index-choice from '() (count from) from) card nil)
+                                        (do (clear-wait-prompt state :corp)
+                                            (effect-completed state side eid card)))))}} card))})
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -625,17 +627,17 @@
 
    "Making an Entrance"
    (letfn [(entrance-final [chosen original]
-             {:prompt (str "The top cards of your stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
+             {:prompt (str "The top cards of your Stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
               :choices ["Done" "Start over"]
               :delayed-completion true
               :effect (req (if (= target "Done")
                              (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
                                  (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid))
+                                 (effect-completed state side eid card))
                              (continue-ability state side (entrance-choice original '() (count original) original)
                                                card nil)))})
            (entrance-choice [remaining chosen n original]
-             {:prompt "Choose a card to move next onto your stack"
+             {:prompt "Choose a card to move next onto your Stack"
               :choices remaining
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
@@ -649,10 +651,12 @@
              {:prompt "Choose a card to trash"
               :choices (cons "None" cards)
               :delayed-completion true
+              :msg (req (when (not= target "None") (str "trash " (:title target))))
               :effect (req (if (= target "None")
                              (if (not-empty cards)
                                (continue-ability state side (entrance-choice cards '() (count cards) cards) card nil)
-                               (effect-completed state side eid))
+                               (do (clear-wait-prompt state :corp)
+                                   (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
                                  (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
                                                    card nil))))})]

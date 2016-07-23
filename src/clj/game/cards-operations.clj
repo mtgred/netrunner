@@ -557,7 +557,8 @@
               :delayed-completion true
               :effect (req (if (= target "Done")
                              (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
-                                 (effect-completed state side eid))
+                                 (clear-wait-prompt state :runner)
+                                 (effect-completed state side eid card))
                              (continue-ability state side (precog-choice original '() (count original) original)
                                                card nil)))})
            (precog-choice [remaining chosen n original]
@@ -573,8 +574,12 @@
                                (continue-ability state side (precog-final chosen original) card nil))))})]
      {:delayed-completion true
       :msg "rearrange the top 5 cards of R&D"
-      :effect (req (let [from (take 5 (:deck corp))]
-                     (continue-ability state side (precog-choice from '() (count from) from) card nil)))})
+      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
+                (let [from (take 5 (:deck corp))]
+                  (if (pos? (count from))
+                    (continue-ability state side (precog-choice from '() (count from) from) card nil)
+                    (do (clear-wait-prompt state :runner)
+                        (effect-completed state side eid card)))))})
 
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
