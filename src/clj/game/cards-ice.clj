@@ -385,15 +385,50 @@
               {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
-   {:abilities [(trace-ability 2 {:label "Look at the top of Stack"
+   (letfn [(dh-final [chosen original]
+             {:prompt (str "The top cards of your Stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (clear-wait-prompt state :runner)
+                                 (effect-completed state side eid card))
+                             (continue-ability state side (dh-choice original '() (count original) original)
+                                               card nil)))})
+           (dh-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto the Runner's Stack"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (dh-choice (remove-once #(not= target %) remaining)
+                                                                  chosen n original)
+                                                 card nil)
+                               (continue-ability state side (dh-final chosen original) card nil))))})
+           (dh-trash [cards]
+             {:prompt "Choose a card to trash"
+              :choices cards
+              :delayed-completion true
+              :msg (msg "trash " (:title target))
+              :effect (req (do (trash state side target {:unpreventable true})
+                               (continue-ability state side (dh-choice (remove-once #(not= % target) cards)
+                                                                       '() (count (remove-once #(not= % target) cards))
+                                                                       (remove-once #(not= % target) cards)) card nil)))})]
+   {:abilities [(trace-ability 2 {:delayed-completion true
+                                  :label "Look at the top of Stack"
                                   :msg "look at top X cards of Stack"
-                                  :effect (req (doseq [c (take (- target (second targets))
-                                                               (:deck runner))]
-                                                 (move state side c :play-area))
-                                               (system-msg state :corp
-                                                           (str "looks at the top "
-                                                                (- target (second targets))
-                                                                " cards of Stack")))})]}
+                                  :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
+                                               (let [c (- target (second targets))
+                                                     from (take c (:deck runner))]
+                                                 (system-msg state :corp
+                                                             (str "looks at the top " c " cards of Stack"))
+                                                 (if (< 1 c)
+                                                   (continue-ability state side (dh-trash from) card nil)
+                                                   (do (system-msg state :corp (str "trashes " (:title (first from))))
+                                                       (trash state side (first from) {:unpreventable true})
+                                                       (clear-wait-prompt state :runner)
+                                                       (effect-completed state side eid card)))))})]})
 
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
@@ -898,14 +933,40 @@
                                   :effect (effect (damage eid :net 3 {:card card}) (end-run))})]}
 
    "Shiro"
+   (letfn [(shiro-final [chosen original]
+             {:prompt (str "The top 3 cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (clear-wait-prompt state :runner)
+                                 (effect-completed state side eid card))
+                             (continue-ability state side (shiro-choice original '() (count original) original)
+                                               card nil)))})
+           (shiro-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto R&D"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (shiro-choice (remove-once #(not= target %) remaining)
+                                                                chosen n original)
+                                                 card nil)
+                               (continue-ability state side (shiro-final chosen original) card nil))))})]
    {:abilities [{:label "Rearrange the top 3 cards of R&D"
                  :msg "rearrange the top 3 cards of R&D"
-                 :effect (req (doseq [c (take 3 (:deck corp))]
-                                (move state side c :play-area)))}
+                 :delayed-completion true
+                 :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
+                              (let [from (take 3 (:deck corp))]
+                                (if (pos? (count from))
+                                  (continue-ability state side (shiro-choice from '() (count from) from) card nil)
+                                  (do (clear-wait-prompt state :runner)
+                                      (effect-completed state side eid card)))))}
                 {:label "Force the Runner to access the top card of R&D"
                  :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
                                 (system-msg state :runner (str "accesses " (:title c)))
-                                (handle-access state side [c])))}]}
+                                (handle-access state side [c])))}]})
 
    "Snoop"
    {:abilities [{:req (req (= current-ice card))

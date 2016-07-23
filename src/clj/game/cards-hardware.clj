@@ -634,19 +634,44 @@
                  :effect (effect (trash card {:cause :ability-cost}) (draw 3))}]}
 
    "Spy Camera"
+   (letfn [(spy-final [chosen original]
+             {:prompt (str "The top cards of your stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
+                                 (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid card))
+                             (continue-ability state side (spy-choice original '() (count original) original)
+                                               card nil)))})
+           (spy-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto your stack"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side
+                                                 (spy-choice (remove-once #(not= target %) remaining)
+                                                             chosen n original)
+                                                 card nil)
+                               (continue-ability state side (spy-final chosen original) card nil))))})]
    {:abilities [{:cost [:click 1]
+                 :delayed-completion true
                  :label "Look at the top X cards of your Stack"
                  :msg "look at the top X cards of their Stack and rearrange them"
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
-                                                     (all-installed state :runner)))]
-                                (prompt! state side card
-                                                    (str "Drag cards from the Temporary Zone back onto your Stack") ["OK"] {})
-                                (doseq [c (take n (:deck runner))] (move state side c :play-area))))}
+                 :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
+                              (let [n (count (filter #(= (:title %) (:title card))
+                                                      (all-installed state :runner)))
+                                    from (take n (:deck runner))]
+                                (if (pos? (count from))
+                                  (continue-ability state side (spy-choice from '() (count from) from) card nil)
+                                  (do (clear-wait-prompt state :corp)
+                                      (effect-completed state side eid card)))))}
                 {:label "[Trash]: Look at the top card of R&D"
                  :msg "trash it and look at the top card of R&D"
                  :effect (effect (prompt! card (str "The top card of R&D is "
                                                     (:title (first (:deck corp)))) ["OK"] {})
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (trash card {:cause :ability-cost}))}]})
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
