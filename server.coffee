@@ -70,6 +70,7 @@ joinGame = (socket, gameid) ->
   game = games[gameid]
   if game and game.players.length < 2
     side = if game.players.length is 1 then swapSide(game.players[0].side) else "Corp"
+    delete socket.request.user.iat
     game.players.push({user: socket.request.user, id: socket.id, side: side})
     socket.join(gameid)
     socket.gameid = gameid
@@ -155,6 +156,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
     switch msg.action
       when "create"
         gameid = uuid.v1()
+        delete socket.request.user.iat
         game =
           date: new Date()
           gameid: gameid
