@@ -142,32 +142,38 @@
 
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
-      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
-          (cons "score" %) %))
       (#(if (or (and (= type "Agenda")
-                     (= (first zone) "servers"))
+                     (#{"servers" "onhost"} (first zone)))
                 (= advanceable "always")
                 (and rezzed
                      (= advanceable "while-rezzed"))
                 (and (not rezzed)
                      (= advanceable "while-unrezzed")))
           (cons "advance" %) %))
+      (#(if (and (= type "Agenda") (>= advance-counter current-cost))
+         (cons "score" %) %))
       (#(if (#{"Asset" "ICE" "Upgrade"} type)
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side] :as card} owner]
+(defn handle-abilities [{:keys [abilities facedown side type] :as card} owner]
   (let [actions (action-list card)
         c (+ (count actions) (count abilities))]
     (when-not (and (= side "Runner") facedown)
-      (cond (or (> c 1)
-                (= (first actions) "derez")) (-> (om/get-node owner "abilities") js/$ .toggle)
-            (= c 1) (if (= (count abilities) 1)
-                          (send-command "ability" {:card card :ability 0})
-                          (send-command (first actions) {:card card}))))))
+      (cond
+        ;; Open panel
+        (or (> c 1)
+            (some #{"derez" "advance"} actions)
+            (and (= type "ICE")
+                 (not (:run @game-state))))                        ; Horrible hack to check if currently in a run
+        (-> (om/get-node owner "abilities") js/$ .toggle)
+        ;; Trigger first (and only) ability / action
+        (= c 1)
+        (if (= (count abilities) 1)
+          (send-command "ability" {:card card :ability 0})
+          (send-command (first actions) {:card card}))))))
 
-(defn handle-card-click [{:keys [type zone counter advance-counter advancementcost advanceable
-                                 root] :as card} owner]
+(defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
       (cond
@@ -470,14 +476,20 @@
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
 
+(defn face-down?
+  "Returns true if the installed card should be drawn face down."
+  [{:keys [side type facedown rezzed] :as card}]
+  (if (= side "Corp")
+    (and (not= type "Operation") (not rezzed))
+    facedown))
+
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown named-target icon new runner-abilities subroutines]
+                         side rec-counter facedown server-target icon new runner-abilities subroutines]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
-   (when code
-     (sab/html
+    (sab/html
       [:div.card-frame
        [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
                               :draggable (when (not-spectator? game-state app-state) true)
@@ -488,11 +500,11 @@
                               :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                               :on-mouse-enter #(when (or (not (or flipped facedown))
                                                          (= (:side @game-state) (keyword (.toLowerCase side))))
-                                                 (put! zoom-channel cursor))
+                                                (put! zoom-channel cursor))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click @cursor owner)}
         (when-let [url (image-url cursor)]
-          (if (or flipped facedown)
+          (if (or (not code) flipped facedown)
             [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
             [:div
              [:span.cardname title]
@@ -502,14 +514,14 @@
            (map (fn [[type num-counters]]
                   (when (pos? num-counters)
                     (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                     [(keyword selector) num-counters])))
+                      [(keyword selector) num-counters])))
                 counter))
          (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter rec-counter])
          (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
         (when (and current-strength (not= strength current-strength))
-              current-strength [:div.darkbg.strength current-strength])
+          current-strength [:div.darkbg.strength current-strength])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
-        (when named-target [:div.darkbg.named-target named-target])
+        (when server-target [:div.darkbg.server-target server-target])
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
           (let [centrals ["Archives" "R&D" "HQ"]
                 remotes (concat (remote-list remotes) ["New remote"])
@@ -542,7 +554,8 @@
                 subroutines)])
         (let [actions (action-list cursor)]
           (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
-                    (= (first actions) "derez"))
+                    (some #{"derez" "advance"} actions)
+                    (= type "ICE"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
@@ -564,7 +577,7 @@
                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
                subroutines)]))
-        (when (= (first zone) "servers")
+       (when (#{"servers" "onhost"} (first zone))
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
@@ -576,7 +589,9 @@
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
        (when (pos? (count hosted))
          [:div.hosted
-          (om/build-all card-view hosted {:key :cid})])]))))
+          (for [card hosted]
+            (om/build card-view card {:opts {:flipped (and (not= (:type card) "Operation")
+                                                           (not (:rezzed card)))}}))])])))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)
@@ -607,7 +622,10 @@
                                                           (not (:selected card)) (playable? card))
                                                    "playable" "")
                                           :style {:left (* (/ 320 (dec size)) i)}}
-                       (if (or (= (:user player) (:user @app-state)) (:openhand player))
+                       (if (or (= (:user player) (:user @app-state))
+                               (:openhand player)
+                               (and (get-in @game-state [:options :spectatorhands])
+                                    (not (not-spectator? game-state app-state))))
                          (om/build card-view (assoc card :remotes remotes))
                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                     (:hand player))]))))
@@ -615,14 +633,15 @@
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  (send-command "system-msg" {:msg "looks at their deck"}))
+  ;(send-command "system-msg" {:msg "looks at their deck"})
+  (send-command "view-deck"))
 
-(defn close-popup [event owner ref msg shuffle?]
+(defn close-popup [event owner ref msg shuffle? deck?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
-  (when shuffle?
-    (send-command "shuffle" {:close "true"}))
-  (when msg
-    (send-command "system-msg" {:msg msg}))
+  (cond
+    shuffle? (send-command "shuffle" {:close "true"})
+    deck? (send-command "close-deck")
+    msg (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
 
 (defmulti deck-view #(get-in % [:identity :side]))
@@ -642,9 +661,9 @@
      (when (= (:side @game-state) :runner)
        [:div.panel.blue-shade.popup {:ref "stack-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false true)}
           "Close"]
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true)}
+         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true true)}
           "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
@@ -666,8 +685,8 @@
      (when (= (:side @game-state) :corp)
        [:div.panel.blue-shade.popup {:ref "rd-content"}
         [:div
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false)} "Close"]
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true)} "Close & Shuffle"]]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false true)} "Close"]
+         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true true)} "Close & Shuffle"]]
         (om/build-all card-view deck {:key :cid})])
      (when (pos? (count deck))
        [:img.card.bg {:src "/img/corp.png"}])])))
@@ -682,7 +701,7 @@
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
       [:div
-       [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]]
+       [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]
      (when-not (empty? discard)
        (om/build card-view (last discard)))])))
@@ -702,7 +721,7 @@
 
       [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
        [:div
-        [:a {:on-click #(close-popup % owner "popup" nil false)} "Close"]
+        [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
         [:label (let [total (count discard)
                       face-up (count (filter faceup? discard))]
                   (str total " cards, " (- total face-up) " face-down."))]]
@@ -820,7 +839,7 @@
             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))
           (when-let [run-card (:card (:run-effect run))]
             [:div.run-card (om/build card-img run-card)])])
-       (when content
+       (when (not-empty content)
          [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
           (for [card content]
             (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))

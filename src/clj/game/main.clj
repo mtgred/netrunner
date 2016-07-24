@@ -3,14 +3,15 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [all-cards game-states system-msg pay gain draw end-run toast show-error-toast] :as core]
+            [game.core :refer [all-cards all-cards-alt game-states system-msg pay gain draw end-run toast show-error-toast
+                               card-is-public?] :as core]
+            [game.utils :refer [card-is? private-card]]
             [environ.core :refer [env]]
             [differ.core :as differ])
   (:gen-class :main true))
 
 (add-encoder java.lang.Object encode-str)
 
-(def last-states (atom {}))
 (def ctx (ZMQ/context 1))
 
 (def spectator-commands
@@ -50,7 +51,9 @@
    "subroutine" core/play-subroutine
    "trash-resource" core/trash-resource
    "auto-pump" core/auto-pump
-   "toast" core/toast})
+   "toast" core/toast
+   "view-deck" core/view-deck
+   "close-deck" core/close-deck})
 
 (defn convert [args]
   (try
@@ -62,7 +65,7 @@
       (println "Convert error " e))))
 
 (defn strip [state]
-  (dissoc state :events :turn-events :per-turn :prevent :damage))
+  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed))
 
 (defn not-spectator? [state user]
   "Returns true if the specified user in the specified state is not a spectator"
@@ -75,19 +78,78 @@
     (when-let [cmd (spectator-commands command)]
       (cmd state (keyword side) args))))
 
+(defn- private-card-vector [state side cards]
+  (vec (map (fn [card]
+              (cond
+                (not (card-is-public? state side card)) (private-card card)
+                (:hosted card) (update-in card [:hosted] #(private-card-vector state side %))
+                :else card))
+            cards)))
+
+(defn- make-private-runner [state]
+  (-> (:runner @state)
+      (update-in [:hand] #(private-card-vector state :runner %))
+      (update-in [:discard] #(private-card-vector state :runner %))
+      (update-in [:deck] #(private-card-vector state :runner %))
+      (update-in [:rig :facedown] #(private-card-vector state :runner %))
+      (update-in [:rig :resource] #(private-card-vector state :runner %))))
+
+(defn- make-private-corp [state]
+  (let [zones (concat [[:hand]] [[:discard]] [[:deck]]
+                      (for [server (keys (:servers (:corp @state)))] [:servers server :ices])
+                      (for [server (keys (:servers (:corp @state)))] [:servers server :content]))]
+    (loop [s (:corp @state)
+           z zones]
+      (if (empty? z)
+        s
+        (recur (update-in s (first z) #(private-card-vector state :corp %)) (next z))))))
+
+(defn- make-private-deck [state side deck]
+  (if (:view-deck (side @state))
+    deck
+    (private-card-vector state side deck)))
+
+(defn- private-states [state]
+  ;; corp, runner, spectator
+  (let [corp-private (make-private-corp state)
+        runner-private (make-private-runner state)
+        corp-deck (update-in (:corp @state) [:deck] #(make-private-deck state :corp %))
+        runner-deck (update-in (:runner @state) [:deck] #(make-private-deck state :runner %))]
+    [(assoc @state :runner runner-private
+                   :corp corp-deck)
+     (assoc @state :corp corp-private
+                   :runner runner-deck)
+     (if (get-in @state [:options :spectatorhands])
+       (assoc @state :corp (assoc-in corp-private [:hand] (get-in @state [:corp :hand]))
+                     :runner (assoc-in runner-private [:hand] (get-in @state [:runner :hand])))
+       (assoc @state :corp corp-private :runner runner-private))]))
+
+(defn- reset-all-cards
+  [cards]
+  (let [;; split the cards into regular cards and alt-art cards
+        [regular alt] ((juxt filter remove) #(not= "Alternates" (:setname %)) cards)
+        regular (into {} (map (juxt :title identity) regular))
+        alt (into {} (map (juxt :title identity)
+                          ;; take the regular version of this card and change its code to the alt code
+                          (map #(assoc (regular (:title %))
+                                 :code (:code %)) alt)))]
+    (reset! all-cards regular)
+    (reset! all-cards-alt alt)))
+
 (defn- handle-command
   "Apply the given command to the given state. Return true if the state should be sent
   back across the socket (if the command was successful or a resolvable exception was
   caught), or false if an error string should."
   [{:keys [gameid action command side user args text cards] :as msg} state]
+
   (try (do (case action
-             "initialize" (swap! all-cards (fn [_] (identity cards)))
+             "initialize" (reset-all-cards cards);; creates a map from card title to card data
              "start" (core/init-game msg)
-             "remove" (do (swap! game-states dissoc gameid)
-                          (swap! last-states dissoc gameid))
+             "remove" (swap! game-states dissoc gameid)
              "do" (handle-do user command state side args)
              "notification" (when state
                               (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
+
            true)
        (catch Exception e
          (do (println "Error " action command (get-in args [:card :title]) e)
@@ -104,21 +166,36 @@
   "Main thread for handling commands from the UI server. Attempts to apply a command,
   then returns the resulting game state, or another message as appropriate."
   (while true
-    (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))
-          state (@game-states (:gameid msg))]
+    (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))]
       ;; Attempt to handle the command. If true is returned, then generate a successful
       ;; message. Otherwise generate an error message.
-      (try (if (handle-command msg state)
-             (if (= action "initialize")
-               (.send socket (generate-string "ok"))
-               (if-let [new-state (@game-states gameid)]
-                 (do (case action
-                       ("start" "reconnect" "notification") (.send socket (generate-string {:action action :state (strip @new-state) :gameid gameid}))
-                       (let [diff (differ/diff (strip (@last-states gameid)) (strip @new-state))]
-                         (.send socket (generate-string {:action action :diff diff :gameid gameid}))))
-                     (swap! last-states assoc gameid (strip @new-state)))
-                 (.send socket (generate-string {:action action :gameid gameid :state (strip @state)}))))
-             (.send socket (generate-string "error")))
+      (try (let [state (@game-states (:gameid msg))
+                 old-state (when state @state)
+                 [old-corp old-runner old-spect] (when old-state (private-states state))]
+             (if (handle-command msg state)
+               (if (= action "initialize")
+                 (.send socket (generate-string "ok"))
+                 (if-let [new-state (@game-states gameid)]
+                   (let [[new-corp new-runner new-spect] (private-states new-state)]
+                     (do
+                       (if (#{"start" "reconnect" "notification"} action)
+                         ;; send the whole state, not a diff
+                         (.send socket (generate-string {:action      action
+                                                         :runnerstate (strip new-runner)
+                                                         :corpstate   (strip new-corp)
+                                                         :spectstate  (strip new-spect)
+                                                         :gameid      gameid}))
+                         ;; send a diff
+                         (let [runner-diff (differ/diff (strip old-runner) (strip new-runner))
+                               corp-diff (differ/diff (strip old-corp) (strip new-corp))
+                               spect-diff (differ/diff (strip old-spect) (strip new-spect))]
+                           (.send socket (generate-string {:action     action
+                                                           :runnerdiff runner-diff
+                                                           :corpdiff   corp-diff
+                                                           :spectdiff  spect-diff
+                                                           :gameid     gameid}))))))
+                   (.send socket (generate-string "error"))))
+               (.send socket (generate-string "error"))))
            (catch Exception e
              (try (do (println "Inner Error " action command (get-in args [:card :title]) e)
                       (.send socket (generate-string "error")))

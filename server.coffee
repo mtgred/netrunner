@@ -89,6 +89,26 @@ requester.on 'connect', (fd, ep) ->
 requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
 
+sendGameResponse = (game, response) ->
+  diffs = response.runnerdiff
+
+  for player in game.players
+    socket = io.sockets.connected[player.id]
+    if player.side is "Corp"
+      # The response will either have a diff or a state. we don't actually send both,
+      # whichever is null will not be sent over the socket.
+      lobby.to(player.id).emit("netrunner", {type: response.action,\
+                                                   diff: response.corpdiff, \
+                                                   state: response.corpstate})
+    else if player.side is "Runner"
+      lobby.to(player.id).emit("netrunner", {type: response.action, \
+                                                   diff: response.runnerdiff, \
+                                                   state: response.runnerstate})
+  for spect in game.spectators
+    lobby.to(spect.id).emit("netrunner", {type: response.action,\
+                                                diff: response.spectdiff, \
+                                                state: response.spectstate})
+
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action is "remove"
@@ -101,12 +121,10 @@ requester.on 'message', (data) ->
       corpAgenda: response.state.corp["agenda-point"]
     }
     db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
-      throw err if err
+      throw err if er
   else
-    if response.diff
-      lobby.to(response.gameid).emit("netrunner", {type: response.action, diff: response.diff})
-    else
-      lobby.to(response.gameid).emit("netrunner", {type: response.action, state: response.state})
+    if (games[response.gameid])
+      sendGameResponse(games[response.gameid], response)
 
 # Socket.io
 io.set("heartbeat timeout", 30000)
@@ -142,6 +160,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           gameid: gameid
           title: msg.title.substring(0,30)
           allowspectator: msg.allowspectator
+          spectatorhands: msg.spectatorhands
           password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
           room: msg.room
           players: [{user: socket.request.user, id: socket.id, side: msg.side}]

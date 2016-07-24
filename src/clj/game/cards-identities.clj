@@ -373,6 +373,17 @@
    {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Khan: Savvy Skiptracer"
+   {:events {:pass-ice
+             {:once :per-turn
+              :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (resolve-ability state side
+                               {:prompt "Choose an icebreaker to install from your Grip"
+                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                :msg (msg "install " (:title target))
+                                :effect (effect (runner-install target))}
+                              card nil)))}}}
+
    "Laramy Fisk: Savvy Investor"
    {:events {:successful-run {:delayed-completion true
                               :req (req (and (is-central? (:server run))
@@ -507,12 +518,13 @@
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
                            " by 2 for the remainder of the run")
-                 :effect (effect (register-events
-                                   {:pre-ice-strength {:effect (effect (ice-strength-bonus -2 current-ice))}
-                                    :run-ends {:effect (effect (unregister-events card))}}
-                                  card)
-                                 (update-all-ice))}]
-    :events {:pre-ice-strength nil :run-ends nil}}
+                 :effect (effect (update! (assoc card :null-target current-ice))
+                                 (update-ice-strength current-ice))}]
+    :events {:pre-ice-strength
+             {:req (req (= (:cid target) (get-in card [:null-target :cid])))
+              :effect (effect (ice-strength-bonus -2 target))}
+             :run-ends
+             {:effect (effect (update! (dissoc card :null-target)))}}}
 
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"

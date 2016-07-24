@@ -6,16 +6,17 @@
 ;;; Functions for the creation of games and the progression of turns.
 (defn init-game
   "Initializes a new game with the given players vector."
-  [{:keys [players gameid] :as game}]
+  [{:keys [players gameid spectatorhands] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
-        corp-deck (create-deck (:deck corp))
-        runner-deck (create-deck (:deck runner))
+        corp-deck (create-deck (:deck corp) (:user corp))
+        runner-deck (create-deck (:deck runner) (:user runner))
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
                  :rid 0 :turn 0 :eid 0
+                 :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
                         :deck (zone :deck (drop 5 corp-deck))
                         :hand (zone :hand (take 5 corp-deck))
@@ -48,17 +49,25 @@
                      #(if (= % "Keep") (keep-hand state s nil) (mulligan state s nil)))))
     @game-states))
 
-(defn create-deck
-  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards."
-  [deck]
-  (shuffle (mapcat #(map (fn [card]
-                           (let [c (assoc card :cid (make-cid))
-                                 c (dissoc c :setname :text :_id :influence :number :influencelimit
-                                           :factioncost)]
-                             (if-let [init (:init (card-def c))] (merge c init) c)))
-                         (repeat (:qty %) (:card %)))
-                   (:cards deck))))
+(defn server-card
+  ([title] (server-card title))
+  ([title user]
+   (let [c (@all-cards title)]
+     (or (when (:special user) (@all-cards-alt title)) c))))
 
+(defn create-deck
+  "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
+  Loads card data from server-side @all-cards map if available."
+  ([deck] (create-deck deck nil))
+  ([deck user]
+   (shuffle (mapcat #(map (fn [card]
+                            (let [c (or (server-card (:title card) user) card)
+                                  c (assoc c :cid (make-cid))
+                                  c (dissoc c :setname :text :_id :influence :number :influencelimit
+                                            :factioncost)]
+                              (if-let [init (:init (card-def c))] (merge c init) c)))
+                          (repeat (:qty %) (:card %)))
+                    (shuffle (vec (:cards deck)))))))
 
 (defn make-rid
   "Returns a progressively-increasing integer to identify a new remote server."

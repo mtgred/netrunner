@@ -128,10 +128,22 @@
      (str "spends " cost-str " to " verb " "))))
 
 (defn other-side [side]
-  (if (= side :corp) :runner :corp))
+  (cond (= side :corp) :runner
+        (= side :runner) :corp))
 
-(defn side-str [side]
-  (if (= side :corp) "Corp" "Runner"))
+(defn side-str
+  "Converts kw into str. If str is passed same str is returned."
+  [side]
+  (cond
+    (= side :corp) "Corp"
+    (= side "Corp") "Corp"
+    (= side :runner) "Runner"
+    (= side "Runner") "Runner"))
+
+(defn same-side?
+  "Checks if two supplied sides are the same side. Accepts both keyword and str."
+  [side1 side2]
+  (= (side-str side1) (side-str side2)))
 
 ;;; Functions for working with zones.
 (defn remote-num->name [num]
@@ -188,3 +200,5 @@
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 
+(defn private-card [card]
+  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted]))

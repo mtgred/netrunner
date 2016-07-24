@@ -1,6 +1,7 @@
 (ns test.utils
   (:require [monger.core :as mg]
-            [monger.collection :as mc]))
+            [monger.collection :as mc]
+            [game.core :refer [all-cards]]))
 
 (defn load-card [title]
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
@@ -21,7 +22,7 @@
     ret))
 
 (defn qty [card amt]
-  {:card (if (string? card) (load-card card) card) :qty amt})
+  {:card (if (string? card) (@all-cards card) card) :qty amt})
 
 (defn make-deck [identity deck]
   {:identity identity 

@@ -160,6 +160,11 @@
   [card]
   (= (:zone card) [:hand]))
 
+(defn in-discard?
+  "Checks if the specified card is in the discard pile."
+  [card]
+  (= (:zone card) [:discard]))
+
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
   [state side card]
@@ -173,7 +178,7 @@
 (defn facedown?
   "Checks if the specified card is facedown."
   [card]
-  (= (:zone card) [:rig :facedown]))
+  (or (= (:zone card) [:rig :facedown]) (:facedown card)))
 
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
@@ -211,7 +216,8 @@
 (defn can-rez?
   ([state side card] (can-rez? state side card nil))
   ([state side card {:as args}]
-   (and (run-flag? state side card :can-rez)
+   (and (same-side? side (:side card))
+        (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez)
         (if-let [rez-req (:rez-req (card-def card))]
           (rez-req state side (make-eid state) card nil)
@@ -245,3 +251,23 @@
            (not (rezzed? card)))
       (and (is-type? card "Agenda")
            (installed? card))))
+
+(defn card-is-public? [state side {:keys [zone] :as card}]
+  (if (= side :runner)
+    ;; public runner cards: in hand and :openhand is true;
+    ;; or installed/hosted and not facedown;
+    ;; or scored or current or in heap
+    (or (card-is? card :side :corp)
+        (and (:openhand (:runner @state)) (in-hand? card))
+        (and (or (installed? card) (:host card)) (not (facedown? card)))
+        (#{:scored :discard :current} (last zone)))
+    ;; public corp cards: in hand and :openhand;
+    ;; or installed and rezzed;
+    ;; or in :discard and :seen
+    ;; or scored or current
+    (or (card-is? card :side :runner)
+        (and (:openhand (:corp @state)) (in-hand? card))
+        (and (or (installed? card) (:host card))
+             (or (is-type? card "Operation") (rezzed? card)))
+        (and (in-discard? card) (:seen card))
+        (#{:scored :current} (last zone)))))

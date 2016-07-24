@@ -117,7 +117,8 @@
           ;; If the runner is forced to trash this card (Neutralize All Threats)
           (continue-ability state :runner
                            {:cost [:credit trash-cost]
-                            :effect (effect (trash card)
+                            :delayed-completion true
+                            :effect (effect (trash eid card nil)
                                             (system-msg (str "is forced to pay " trash-cost
                                                              " [Credits] to trash " name)))} card nil)
           ;; Otherwise, show the option to pay to trash the card.
@@ -126,7 +127,8 @@
             {:optional
              {:prompt (str "Pay " trash-cost "[Credits] to trash " name "?")
               :yes-ability {:cost [:credit trash-cost]
-                            :effect (effect (trash card)
+                            :delayed-completion true
+                            :effect (effect (trash eid card nil)
                                             (system-msg (str "pays " trash-cost
                                                              " [Credits] to trash " name)))}}}
             card nil)))

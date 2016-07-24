@@ -84,19 +84,35 @@
 
    "Bank Job"
    {:data {:counter {:credit 8}}
-    :events {:no-action {:effect (req (toast state :runner "Click Bank Job to take credits from it instead of accessing" "info"))
-                         :req (req (and (is-remote? (:server run)) (not current-ice)))}}
-    :abilities [{:req (req (and (:run @state) (= (:position run) 0)))
-                 :label "Take any number of [Credits] on Bank Job"
-                 :prompt "How many [Credits]?"
-                 :choices {:counter :credit}
-                 :msg (msg "gain " target " [Credits]")
-                 :effect (req (gain state side :credit target)
-                              (register-successful-run state side (:server run))
-                              (swap! state update-in [:runner :prompt] rest)
-                              (handle-end-run state side)
-                              (when (= target (get-in card [:counter :credit]))
-                                (trash state :runner card {:unpreventable true})))}]}
+    :events {:successful-run
+             {:req (req (is-remote? (:server run)))
+              :effect (req (let [bj card]
+                             (when-not (:replace-access (get-in @state [:run :run-effect]))
+                               (swap! state assoc-in [:run :run-effect :replace-access]
+                                      {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-installed state :runner))) 1)
+                                                      (resolve-ability state side
+                                                        {:prompt "Choose a copy of Bank Job to use"
+                                                         :choices {:req #(and installed? (= (:title %) "Bank Job"))}
+                                                         :effect (req (let [c target
+                                                                            creds (get-in c [:counter :credit])]
+                                                                        (resolve-ability state side
+                                                                          {:prompt "How many Bank Job credits?"
+                                                                           :choices {:number (req (get-in c [:counter :credit]))}
+                                                                           :msg (msg "gain " target " [Credits]")
+                                                                           :effect (req (gain state side :credit target)
+                                                                                        (set-prop state side c :counter {:credit (- creds target)})
+                                                                                        (when (= target creds)
+                                                                                          (trash state side c {:unpreventable true})))}
+                                                                         card nil)))}
+                                                       bj nil)
+                                                      (resolve-ability state side
+                                                        {:prompt "How many Bank Job credits?"
+                                                         :choices {:counter :credit}
+                                                         :msg (msg "gain " target " [Credits]")
+                                                         :effect (req (gain state side :credit target)
+                                                                      (when (= target (get-in card [:counter :credit]))
+                                                                        (trash state side card {:unpreventable true})))}
+                                                       bj nil)))}))))}}}
 
    "Bazaar"
    {:events
@@ -106,7 +122,7 @@
       :silent (req (not (and (is-type? target "Hardware")
                              (some #(= (:title %) (:title target)) (:hand runner)))))
       :delayed-completion true
-      :req (req (is-type? target "Hardware"))
+      :req (req (and (is-type? target "Hardware") (= [:hand] (:previous-zone target))))
       :effect (req (let [hw (:title target)]
                      (continue-ability state side
                        {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
@@ -120,6 +136,29 @@
    "Beach Party"
    {:in-play [:hand-size-modification 5]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
+
+   "Beth Kilrain-Chang"
+   (let [ability {:once :per-turn
+                  :label "Gain 1 [Credits], draw 1 card, or gain [Click] (start of turn)"
+                  :req (req (:runner-phase-12 @state))
+                  :effect (req (let [c (:credit corp)
+                                     b (:title card)]
+                                 (cond
+                                   ;; gain 1 credit
+                                   (<= 5 c 9)
+                                   (do (gain state side :credit 1)
+                                       (system-msg state side (str "uses " b " to gain 1 [Credits]")))
+                                   ;; draw 1 card
+                                   (<= 10 c 14)
+                                   (do (draw state side 1)
+                                       (system-msg state side (str "uses " b " to draw 1 card")))
+                                   ;; gain 1 click
+                                   (<= 15 c)
+                                   (do (gain state side :click 1)
+                                       (system-msg state side (str "uses " b " to gain [Click]"))))))}]
+     {:flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability}})
 
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
@@ -680,21 +719,24 @@
                                                  card nil))}}})
    "Patron"
    (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
-                  :req (req (not= "No server" target))
+                  :req (req (not (:server-target card)))
                   :msg (msg "target " target)
-                  :effect (effect (update! (assoc card :patron-target (vec (next (server->zone state target))))))}]
-   {:events {:runner-turn-begins ability
-             :successful-run
-             {:req (req (= (get-in @state [:run :server]) (:patron-target (get-card state card))))
-              :once :per-turn
-              :effect (req (let [st card]
-                             (swap! state assoc-in [:run :run-effect :replace-access]
-                                    {:mandatory true
-                                     :effect (effect (resolve-ability
-                                                       {:msg "draw 2 cards instead of accessing"
-                                                        :effect (effect (draw 2))} st nil))})))}
-             :runner-turn-ends {:effect (effect (update! (dissoc card :patron-target)))}}
-    :abilities [ability]})
+                  :effect (req (when (not= target "No server")
+                                 (update! state side (assoc card :server-target target))))}]
+     {:events {:runner-turn-begins ability
+               :successful-run
+               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+                :once :per-turn
+                :effect (req (let [st card]
+                               (swap! state assoc-in [:run :run-effect :replace-access]
+                                      {:mandatory true
+                                       :effect (effect (resolve-ability
+                                                         {:msg "draw 2 cards instead of accessing"
+                                                          :effect (effect (draw 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+      :abilities [ability]})
 
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
@@ -887,19 +929,22 @@
    "Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing" :choices (req servers)
                   :msg (msg "target " target)
-                  :effect (effect (update! (assoc card :testing-target (vec (next (server->zone state target))))))}]
-   {:events {:runner-turn-begins ability
-             :successful-run
-             {:req (req (= (get-in @state [:run :server]) (:testing-target (get-card state card))))
-              :once :per-turn
-              :effect (req (let [st card]
-                             (swap! state assoc-in [:run :run-effect :replace-access]
-                                    {:mandatory true
-                                     :effect (effect (resolve-ability
-                                                       {:msg "gain 2 [Credits] instead of accessing"
-                                                        :effect (effect (gain :credit 2))} st nil))})))}
-             :runner-turn-ends {:effect (effect (update! (dissoc card :testing-target)))}}
-    :abilities [ability]})
+                  :req (req (not (:server-target card)))
+                  :effect (effect (update! (assoc card :server-target target)))}]
+     {:events {:runner-turn-begins ability
+               :successful-run
+               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+                :once :per-turn
+                :effect (req (let [st card]
+                               (swap! state assoc-in [:run :run-effect :replace-access]
+                                      {:mandatory true
+                                       :effect (effect (resolve-ability
+                                                         {:msg "gain 2 [Credits] instead of accessing"
+                                                          :effect (effect (gain :credit 2)
+                                                                          (update! (dissoc st :server-target)))}
+                                                         st nil))})))}
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+      :abilities [ability]})
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
@@ -1002,6 +1047,21 @@
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
 
+   "Temüjin Contract"
+   {:data {:counter {:credit 20}}
+    :prompt "Choose a server for Temüjin Contract" :choices (req servers)
+    :msg (msg "target " target)
+    :req (req (not (:server-target card)))
+    :effect (effect (update! (assoc card :server-target target)))
+    :events {:successful-run
+             {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+              :msg "gain 4 [Credits]"
+              :effect (req (let [creds (get-in card [:counter :credit])]
+                             (gain state side :credit 4)
+                             (set-prop state side card :counter {:credit (- creds 4)})
+                             (when (= 0 (get-in (get-card state card) [:counter :credit]))
+                               (trash state side card {:unpreventable true}))))}}}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
@@ -1081,7 +1141,7 @@
              :run-ends {:req (req (and (not (:agenda-stolen card))
                                        (#{:hq :rd} target)))
                         :effect (effect (add-counter card :power 1)
-                                        (system-msg (str "adds a power counter to " (:title card))))
+                                        (system-msg :runner (str "places a power counter on " (:title card))))
                         :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))

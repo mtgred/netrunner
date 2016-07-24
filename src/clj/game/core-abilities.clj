@@ -165,7 +165,8 @@
        (prompt!
          state s card prompt
          (assoc choices :autocomplete
-                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%]) @all-cards))))
+                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+                                                  (vals @all-cards)))))
          ab (assoc args :prompt-type :card-title))
        ;; unknown choice
        :else nil)

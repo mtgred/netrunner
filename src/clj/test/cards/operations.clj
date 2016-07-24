@@ -303,6 +303,40 @@
     (play-from-hand state :runner "Cache")
     (is (empty? (:prompt (get-runner))) "Housekeeping didn't trigger on 2nd install")))
 
+(deftest invasion-of-privacy
+  "Invasion of Privacy - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Invasion of Privacy" 3)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Fall Guy" 1) (qty "Cache" 2)]))
+    (core/gain state :corp :click 3 :credit 6)
+    ;trash 2 cards
+    (play-from-hand state :corp "Invasion of Privacy")
+    (prompt-choice :corp 0) ; default trace
+    (prompt-choice :runner 0) ; Runner won't match
+    (is (= 5 (count (:hand (get-runner)))))
+    (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+      (is (= (list "Fall Guy" "Sure Gamble" nil) (prompt-names)))
+      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner)))))
+    (is (= 3 (count (:hand (get-runner)))))
+    ;able to trash 2 cards but only 1 available target in Runner's hand
+    (play-from-hand state :corp "Invasion of Privacy")
+    (prompt-choice :corp 0) ; default trace
+    (prompt-choice :runner 0) ; Runner won't match
+    (is (= 3 (count (:hand (get-runner)))))
+    (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+      (is (= (list "Fall Guy" nil) (prompt-names)))
+      (prompt-choice :corp (find-card "Fall Guy" (:hand (get-runner))))
+      (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
+    (is (= 2 (count (:hand (get-runner)))))
+    ;failed trace - take the bad publicity
+    (play-from-hand state :corp "Invasion of Privacy")
+    (prompt-choice :corp 0) ; default trace
+    (prompt-choice :runner 2) ; Runner matches
+    (is (= 1 (:bad-publicity (get-corp))))))
+
 (deftest lateral-growth
   (do-game
     (new-game (default-corp [(qty "Lateral Growth" 1) (qty "Breaking News" 1)])
@@ -515,6 +549,20 @@
     (is (= 4 (count (:discard (get-corp)))) "3 cards trashed plus operation played")
     (is (= 11 (:credit (get-corp))) "Gained 6 credits")
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
+
+(deftest salems-hospitality
+  "Salem's Hospitality - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Salem's Hospitality" 3)])
+              (default-runner [(qty "I've Had Worse" 3) (qty "Faust" 1)
+                               (qty "Levy AR Lab Access" 1)]))
+    (play-from-hand state :corp "Salem's Hospitality")
+    (is (= 5 (count (:hand (get-runner)))))
+    (prompt-choice :corp "I've Had Worse")
+    (is (= 2 (count (:hand (get-runner)))))
+    (play-from-hand state :corp "Salem's Hospitality")
+    (prompt-choice :corp "Plascrete Carapace")
+    (is (= 2 (count (:hand (get-runner)))))))
 
 (deftest scorched-earth
   "Scorched Earth - burn 'em"

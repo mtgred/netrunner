@@ -28,9 +28,10 @@
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
   [card]
-  (let [napdmwl '("Cerberus \"Lady\" H1" "Clone Chip" "Desperado" "Parasite" "Prepaid VoicePAD" "Yog.0"
-                   "Architect" "AstroScript Pilot Program" "Eli 1.0" "NAPD Contract" "SanSan City Grid")]
-    (some #(= (:title card) %) napdmwl)))
+  (let [napdmwl #{"Cerberus \"Lady\" H1" "Clone Chip" "D4v1d" "Desperado" "Faust" "Parasite" "Prepaid VoicePAD"
+                  "Wyldside" "Yog.0"
+                  "Architect" "Breaking News" "Eli 1.0" "Mumba Temple" "NAPD Contract" "SanSan City Grid"}]
+    (napdmwl (:title card))))
 
 (defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))

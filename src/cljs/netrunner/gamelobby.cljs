@@ -74,6 +74,7 @@
      (om/set-state! owner :protected false)
      (om/set-state! owner :password "")
      (om/set-state! owner :allowspectator true)
+     (om/set-state! owner :spectatorhands false)
      (-> ".game-title" js/$ .select))))
 
 (defn create-game [cursor owner]
@@ -90,6 +91,7 @@
                    :title (om/get-state owner :title)
                    :password (om/get-state owner :password)
                    :allowspectator (om/get-state owner :allowspectator)
+                   :spectatorhands (om/get-state owner :spectatorhands)
                    :side (om/get-state owner :side)
                    :room (om/get-state owner :current-room)})))))))
 
@@ -313,6 +315,15 @@
                [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
                         :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
                "Allow spectators"]]
+             [:p
+              [:label
+               [:input {:type "checkbox" :checked (om/get-state owner :spectatorhands)
+                        :on-change #(om/set-state! owner :spectatorhands (.. % -target -checked))
+                        :disabled (not (om/get-state owner :allowspectator))}]
+               "Make players' hands visible to spectators"]]
+             [:p {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
+              "This will reveal both players' hands to ALL spectators of your game. We recommend "
+              "using a password to prevent strangers from spoiling the game."]
              [:p
               [:label
                [:input {:type "checkbox" :checked (om/get-state owner :private)
