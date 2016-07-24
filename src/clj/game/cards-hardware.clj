@@ -351,8 +351,8 @@
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
               :effect (effect (trigger-event :searched-stack nil)
-                              (move target :hand)
-                              (shuffle! :deck))}}}
+                              (shuffle! :deck)
+                              (move target :hand))}}}
 
    "Maya"
    {:in-play [:memory 2]
@@ -536,8 +536,8 @@
                          :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                                       (:deck runner))]
                                                      (trigger-event state side :searched-stack nil)
-                                                     (runner-install state side c)
-                                                     (shuffle! state :runner :deck)))}}} card nil))}
+                                                     (shuffle! state :runner :deck)
+                                                     (runner-install state side c)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
@@ -580,9 +580,9 @@
                          :req (req (and (is-type? target "Hardware") (some #(= (:title %) (:title target)) (:deck runner))))
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
                                        :effect (effect (trigger-event :searched-stack nil)
+                                                       (shuffle! :deck)
                                                        (move (some #(when (= (:title %) (:title target)) %)
-                                                                   (:deck runner)) :hand)
-                                                       (shuffle! :deck))}}}}}
+                                                                   (:deck runner)) :hand))}}}}}
 
    "Security Chip"
    {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"

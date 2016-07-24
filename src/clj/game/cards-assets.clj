@@ -337,7 +337,9 @@
                                             :sorted))
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
-                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]
+                 :effect (effect (trash card)
+                                 (shuffle! :deck)
+                                 (move target :hand))}]
 
     ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
     :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
@@ -542,7 +544,8 @@
                  :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1]
-                 :effect (effect (move target :hand) (shuffle! :deck))}]}
+                 :effect (effect (shuffle! :deck)
+                                 (move target :hand))}]}
 
    "Lily Lockwell"
    {:effect (effect (draw 3))
@@ -560,7 +563,7 @@
                                   (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
                                 (do (shuffle! state :corp :deck)
                                     (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
-                                (lose state :runner :tag 1))}]}
+                              (lose state :runner :tag 1))}]}
 
    "Mark Yale"
    {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
@@ -618,13 +621,10 @@
                                                             (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
                  :msg (msg "reveal " (:title target) " from R&D and "
                            (if (= (:type target) "Operation") "play " "install ") " it")
-                 :effect (req (if (= (:type target) "Operation")
-                                (when-completed (play-instant state side target)
-                                                (do (system-msg state side "shuffles their deck")
-                                                    (shuffle! state side :deck)))
-                                (when-completed (corp-install state side target nil nil)
-                                                (do (system-msg state side "shuffles their deck")
-                                                    (shuffle! state side :deck)))))}]}
+                 :effect (req (shuffle! state side :deck)
+                              (if (= (:type target) "Operation")
+                                (play-instant state side target)
+                                (corp-install state side target nil nil)))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -990,7 +990,9 @@
                  :prompt "Choose an asset to install"
                  :msg (msg "install " (:title target))
                  :choices (req (filter #(is-type? % "Asset") (:deck corp)))
-                 :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
+                 :effect (effect (trash card)
+                                 (shuffle! :deck)
+                                 (corp-install target nil))}]}
 
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"
