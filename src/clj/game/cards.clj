@@ -57,9 +57,9 @@
    :choices ["Done" "Start over"]
    :delayed-completion true
    :effect (req (if (= target "Done")
-                  (do (swap! state update-in [(if (= reorder_side :corp) :corp :runner) :deck]
+                  (do (swap! state update-in [reorder_side :deck]
                              #(vec (concat chosen (drop (count chosen) %))))
-                      (clear-wait-prompt state (if (= wait_side :corp) :corp :runner))
+                      (clear-wait-prompt state wait_side)
                       (effect-completed state side eid card))
                   (continue-ability state side (reorder-choice reorder_side wait_side original '() (count original) original)
                                     card nil)))})
