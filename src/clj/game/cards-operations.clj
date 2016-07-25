@@ -205,9 +205,9 @@
                            (<= (:cost %) (:credit corp)))
                       (:deck corp))
              :sorted))
-    :effect  (final-effect (play-instant target)
-                           (system-msg "shuffles their deck")
-                           (shuffle! :deck))
+    :effect  (effect (shuffle! :deck)
+                     (system-msg "shuffles their deck")
+                     (play-instant target))
     :msg (msg "search R&D for " (:title target) " and play it")}
 
    "Corporate Shuffle"
@@ -279,8 +279,9 @@
    "Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
-    :effect (final-effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
-                          (move target :hand) (shuffle! :deck))}
+    :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
+                    (shuffle! :deck)
+                    (move target :hand) )}
 
    "Foxfire"
    {:trace {:base 7
@@ -420,9 +421,9 @@
                     {:prompt "How many copies?"
                      :choices {:number (req (count cs))}
                      :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
-                     :effect (req (doseq [c (take target cs)]
-                                    (move state side c :hand))
-                                  (shuffle! state :corp :deck))}
+                     :effect (req (shuffle! state :corp :deck)
+                                  (doseq [c (take target cs)]
+                                    (move state side c :hand)))}
                     card nil)))}
 
    "Manhunt"

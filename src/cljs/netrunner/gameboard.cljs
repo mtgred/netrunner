@@ -556,8 +556,7 @@
        (when (pos? (count hosted))
          [:div.hosted
           (for [card hosted]
-            (om/build card-view card {:opts {:flipped (and (not= (:type card) "Operation")
-                                                           (not (:rezzed card)))}}))])])))
+            (om/build card-view card {:opts {:flipped (face-down? card)}}))])])))
 
 (defn drop-area [side server hmap]
   (merge hmap {:on-drop #(handle-drop % server)

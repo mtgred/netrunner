@@ -88,8 +88,10 @@
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (trigger-event :searched-stack nil)
+                                           (shuffle! :deck)
                                            (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
-                                           (runner-install target) (tag-runner 1) (shuffle! :deck))}} card))}
+                                           (runner-install target)
+                                           (tag-runner 1) )}} card))}
 
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
@@ -384,10 +386,10 @@
                       :choices ["Yes" "No"]
                       :effect (req (let [d target]
                                      (resolve-ability state side
-                                       {:effect (req (when (= "Yes" d)
-                                                       (runner-install state side connection))
-                                                     (shuffle! state side :deck)
-                                                     (move state side connection :hand))} card nil)))}
+                                       {:effect (req (shuffle! state side :deck)
+                                                     (if (= "Yes" d)
+                                                       (runner-install state side connection)
+                                                       (move state side connection :hand)))} card nil)))}
                      card nil)))}
 
    "Ive Had Worse"
@@ -716,6 +718,7 @@
     :choices (req (cancellable (filter #(and (has-subtype? % "Run")
                                              (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
     :prompt "Choose a Run event" :effect (effect (trigger-event :searched-stack nil)
+                                                 (shuffle! :deck)
                                                  (play-instant target {:no-additional-cost true}))}
 
    "Political Graffiti"
@@ -966,8 +969,9 @@
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (trigger-event :searched-stack nil)
+                    (shuffle! :deck)
                     (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
-                    (move target :hand) (shuffle! :deck))
+                    (move target :hand))
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
@@ -999,18 +1003,19 @@
     :choices (cancellable ["Stack" "Heap"])
     :msg (msg "install a program from their " target)
     :effect (effect (resolve-ability
-                     {:prompt "Choose a program to install"
-                      :choices (req (cancellable
-                                     (filter #(is-type? % "Program")
-                                             ((if (= target "Heap") :discard :deck) runner))))
-                      :effect (effect (trigger-event :searched-stack nil)
-                                      (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
-                      :end-turn
-                      {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
-                       :msg (msg "move " (:title target) " to the top of their Stack")
-                       :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
-                                          :deck {:front true}))}}
-                     card targets))}
+                      {:prompt "Choose a program to install"
+                       :choices (req (cancellable
+                                       (filter #(is-type? % "Program")
+                                               ((if (= target "Heap") :discard :deck) runner))))
+                       :effect (effect (trigger-event :searched-stack nil)
+                                       (shuffle! :deck)
+                                       (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
+                       :end-turn
+                       {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
+                        :msg (msg "move " (:title target) " to the top of their Stack")
+                        :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
+                                           :deck {:front true}))}}
+                      card targets))}
 
    "The Makers Eye"
    {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
@@ -1091,7 +1096,9 @@
                                       :choices (req (filter #(is-type? % "Hardware")
                                                             (:deck runner)))
                                       :msg (msg "add " (:title target) " to their Grip")
-                                      :effect (effect (trigger-event :searched-stack nil) (move target :hand))} card nil))}
+                                      :effect (effect (trigger-event :searched-stack nil)
+                                                      (shuffle! :deck)
+                                                      (move target :hand))} card nil))}
 
    "Traffic Jam"
    {:effect (effect (update-all-advancement-costs))
