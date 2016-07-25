@@ -88,9 +88,8 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side
-                                                 (cbi-choice (remove-once #(not= target %) remaining)
-                                                             chosen n original) card nil)
+                               (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
+                                                                        chosen n original) card nil)
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:delayed-completion true
       :effect (effect (run :hq {:replace-access
