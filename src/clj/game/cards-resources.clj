@@ -838,36 +838,16 @@
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Rolodex"
-   (letfn [(rolodex-final [chosen original]
-             {:prompt (str "The top cards of your Stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
-              :choices ["Done" "Start over"]
-              :delayed-completion true
-              :effect (req (if (= target "Done")
-                             (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
-                                 (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid card))
-                             (continue-ability state side (rolodex-choice original '() (count original) original)
-                                               card nil)))})
-           (rolodex-choice [remaining chosen n original]
-             {:prompt "Choose a card to move next onto your Stack"
-              :choices remaining
-              :delayed-completion true
-              :effect (req (let [chosen (cons target chosen)]
-                             (if (< (count chosen) n)
-                               (continue-ability state side
-                                                 (rolodex-choice (remove-once #(not= target %) remaining)
-                                                                 chosen n original)
-                                                 card nil)
-                               (continue-ability state side (rolodex-final chosen original) card nil))))})]
-     {:delayed-completion true
-      :msg "look at the top 5 cards of their Stack"
-      :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
-                   (let [from (take 5 (:deck runner))]
-                     (if (pos? (count from))
-                       (continue-ability state side (rolodex-choice from '() (count from) from) card nil)
-                       (do (clear-wait-prompt state :corp)
-                           (effect-completed state side eid card)))))
-      :leave-play (effect (mill :runner 3))})
+   {:delayed-completion true
+    :msg "look at the top 5 cards of their Stack"
+    :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
+                 (let [from (take 5 (:deck runner))]
+                   (if (pos? (count from))
+                     (continue-ability state side (reorder-choice :runner :corp from '()
+                                                                  (count from) from) card nil)
+                     (do (clear-wait-prompt state :corp)
+                         (effect-completed state side eid card)))))
+    :leave-play (effect (mill :runner 3))}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
