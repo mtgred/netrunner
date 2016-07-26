@@ -755,6 +755,38 @@
       (is (= 2 (:credit (get-runner))) "Gained 1 credit")
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
 
+(deftest rolodex
+  "Rolodex - Full test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Rolodex" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)
+                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Rolodex"])
+    (is (= 1 (count (:hand (get-runner)))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rolodex")
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    ;try starting over
+    (prompt-choice :runner "Start over")
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+    (prompt-choice :runner "Done")
+    (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+    (is (= "Desperado" (:title (second (:deck (get-runner))))))
+    (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
+    (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
+    (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
+    (core/trash state :runner (get-resource state 0))
+    (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
+    (is (= "Corroder" (:title (first (:deck (get-runner))))))))
+
 (deftest sacrificial-construct
   "Sacrificial Construct - Trash to prevent trash of installed program or hardware"
   (do-game

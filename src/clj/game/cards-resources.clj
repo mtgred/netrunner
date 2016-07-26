@@ -840,10 +840,15 @@
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Rolodex"
-   {:msg "look at the top 5 cards of their Stack"
-    :effect (req (toast state :runner
-                        "Drag cards from the Temporary Zone back onto your Stack." "info")
-                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
+   {:delayed-completion true
+    :msg "look at the top 5 cards of their Stack"
+    :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
+                 (let [from (take 5 (:deck runner))]
+                   (if (pos? (count from))
+                     (continue-ability state side (reorder-choice :runner :corp from '()
+                                                                  (count from) from) card nil)
+                     (do (clear-wait-prompt state :corp)
+                         (effect-completed state side eid card)))))
     :leave-play (effect (mill :runner 3))}
 
    "Sacrificial Clone"

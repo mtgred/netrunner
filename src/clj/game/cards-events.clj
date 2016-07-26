@@ -72,14 +72,35 @@
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "CBI Raid"
-   {:effect (effect (run :hq {:req (req (= target :hq))
-                              :replace-access
-                              {:msg "force the Corp to add all cards in HQ to the top of R&D"
-                               :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
-                                            (prompt! state :corp card
-                                                    (str "Click Done when finished moving cards from HQ to R&D")
-                                                    ["Done"]
-                                                    {:effect (effect (clear-wait-prompt :runner))}))}} card))}
+   (letfn [(cbi-final [chosen original]
+             {:prompt (str "The top cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (doseq [c (reverse chosen)] (move state :corp c :deck {:front true}))
+                                 (clear-wait-prompt state :runner)
+                                 (effect-completed state side eid card))
+                             (continue-ability state side (cbi-choice original '() (count original) original)
+                                               card nil)))})
+           (cbi-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto R&D"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
+                                                                        chosen n original) card nil)
+                               (continue-ability state side (cbi-final chosen original) card nil))))})]
+     {:delayed-completion true
+      :effect (effect (run :hq {:replace-access
+                                {:msg "force the Corp to add all cards in HQ to the top of R&D"
+                                 :delayed-completion true
+                                 :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
+                                              (let [from (:hand corp)]
+                                                (if (pos? (count from))
+                                                  (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
+                                                  (do (clear-wait-prompt state :runner)
+                                                      (effect-completed state side eid card)))))}} card))})
 
    "Code Siphon"
    {:effect (effect (run :rd
@@ -429,37 +450,18 @@
       :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
 
    "Indexing"
-   (letfn [(index-final [chosen original]
-             {:prompt (str "The top 5 cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
-              :choices ["Done" "Start over"]
-              :delayed-completion true
-              :effect (req (if (= target "Done")
-                             (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
-                                 (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid))
-                             (continue-ability state side (index-choice original '() (count original) original)
-                                               card nil)))})
-           (index-choice [remaining chosen n original]
-             {:prompt "Choose a card to move next onto R&D"
-              :choices remaining
-              :delayed-completion true
-              :effect (req (let [chosen (cons target chosen)]
-                             (if (< (count chosen) n)
-                               (continue-ability state side
-                                                 (index-choice (remove-once #(not= target %) remaining)
-                                                               chosen n original)
-                                                 card nil)
-                               (continue-ability state side (index-final chosen original) card nil))))})]
-     {:delayed-completion true
-      :effect (effect
-                (run :rd
-                     {:replace-access
-                      {:msg "rearrange the top 5 cards of R&D"
-                       :delayed-completion true
-                       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
-                                    (let [from (take 5 (:deck corp))]
-                                      (continue-ability state side (index-choice from '() (count from) from) card nil)))}}
-                     card))})
+   {:delayed-completion true
+    :effect (effect (run :rd
+                         {:replace-access
+                          {:msg "rearrange the top 5 cards of R&D"
+                           :delayed-completion true
+                           :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
+                                        (let [from (take 5 (:deck corp))]
+                                          (if (pos? (count from))
+                                            (continue-ability state side (reorder-choice :corp :corp from '()
+                                                                                         (count from) from) card nil)
+                                            (do (clear-wait-prompt state :corp)
+                                                (effect-completed state side eid card)))))}} card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -603,35 +605,17 @@
     :effect (effect (gain :credit 9))}
 
    "Making an Entrance"
-   (letfn [(entrance-final [chosen original]
-             {:prompt (str "The top cards of your stack will be " (clojure.string/join  ", " (map :title chosen)) ".")
-              :choices ["Done" "Start over"]
-              :delayed-completion true
-              :effect (req (if (= target "Done")
-                             (do (swap! state update-in [:runner :deck] #(vec (concat chosen (drop (count chosen) %))))
-                                 (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid))
-                             (continue-ability state side (entrance-choice original '() (count original) original)
-                                               card nil)))})
-           (entrance-choice [remaining chosen n original]
-             {:prompt "Choose a card to move next onto your stack"
-              :choices remaining
-              :delayed-completion true
-              :effect (req (let [chosen (cons target chosen)]
-                             (if (< (count chosen) n)
-                               (continue-ability state side
-                                                 (entrance-choice (remove-once #(not= target %) remaining)
-                                                                  chosen n original)
-                                                 card nil)
-                               (continue-ability state side (entrance-final chosen original) card nil))))})
-           (entrance-trash [cards]
+   (letfn [(entrance-trash [cards]
              {:prompt "Choose a card to trash"
               :choices (cons "None" cards)
               :delayed-completion true
+              :msg (req (when (not= target "None") (str "trash " (:title target))))
               :effect (req (if (= target "None")
                              (if (not-empty cards)
-                               (continue-ability state side (entrance-choice cards '() (count cards) cards) card nil)
-                               (effect-completed state side eid))
+                               (continue-ability state side (reorder-choice :runner :corp cards '()
+                                                                            (count cards) cards) card nil)
+                               (do (clear-wait-prompt state :corp)
+                                   (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
                                  (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
                                                    card nil))))})]
