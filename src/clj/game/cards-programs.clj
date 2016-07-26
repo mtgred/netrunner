@@ -504,7 +504,7 @@
                              (update! state side (update-in card [:special] dissoc :installing))
                              (trigger-event state side :runner-install card))
                            (trash state side target)
-                           (trash-ice-in-run state))
+                           (continue state side nil))
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"

@@ -164,7 +164,7 @@
                                   :msg (msg "add " (:title current-ice) " to HQ after breaking all its subroutines")
                                   :effect (req (let [c current-ice]
                                                  (move state :corp c :hand nil)
-                                                 (trash-ice-in-run state)))}]})
+                                                 (continue state side nil)))}]})
 
    "Atman"
    {:prompt "How many power counters?"
