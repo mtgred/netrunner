@@ -153,7 +153,7 @@
                  :msg (msg "trash it and gain " (get-in card [:counter :credit] 0) " [Credits]")
                  :effect (effect (gain :credit (get-in card [:counter :credit] 0))
                                  (trash card {:cause :ability-cost}))}]
-    :events {:corp-turn-begins {:req (req (>= (get-in card [:counter :credit]) 6))
+    :events {:corp-turn-begins {:req (req (>= (get-in card [:counter :credit] 0) 6))
                                 :effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to C.I. Fund")))}}}
 
