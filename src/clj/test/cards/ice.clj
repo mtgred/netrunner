@@ -178,7 +178,7 @@
     (let [dh (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp dh)
-      (card-ability state :corp dh 0)
+      (card-subroutine state :corp dh 0)
       (prompt-choice :corp 2)
       (prompt-choice :runner 0)
       ;trash 1 card and rearrange the other 3
@@ -198,7 +198,7 @@
       (is (= "Patron" (:title (second (rest (:deck (get-runner)))))))
       (run-jack-out state)
       (run-on state "HQ")
-      (card-ability state :corp dh 0)
+      (card-subroutine state :corp dh 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 1)
       ;trash the only card automatically
@@ -540,7 +540,7 @@
     (let [shiro (get-ice state :hq 0)]
       (run-on state :hq)
       (core/rez state :corp shiro)
-      (card-ability state :corp shiro 0)
+      (card-subroutine state :corp shiro 0)
       (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
@@ -553,7 +553,7 @@
       (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
       (is (= "Quandary" (:title (second (:deck (get-corp))))))
       (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
-      (card-ability state :corp shiro 1)
+      (card-subroutine state :corp shiro 1)
       (is (= (:cid (first (:deck (get-corp))))
              (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
       (prompt-choice :runner "No")
