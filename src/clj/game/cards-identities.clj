@@ -449,7 +449,8 @@
                                :yes-ability {:trace {:base 4
                                                      :msg "give the Runner 1 tag"
                                                      :effect (effect (tag-runner :runner 1 {:unpreventable true})
-                                                                     (clear-wait-prompt :runner))}}
+                                                                     (clear-wait-prompt :runner))
+                                                     :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                             card nil))}}}
 
