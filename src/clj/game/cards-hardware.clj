@@ -351,8 +351,8 @@
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
               :effect (effect (trigger-event :searched-stack nil)
-                              (move target :hand)
-                              (shuffle! :deck))}}}
+                              (shuffle! :deck)
+                              (move target :hand))}}}
 
    "Maya"
    {:in-play [:memory 2]
@@ -536,8 +536,8 @@
                          :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
                                                                       (:deck runner))]
                                                      (trigger-event state side :searched-stack nil)
-                                                     (runner-install state side c)
-                                                     (shuffle! state :runner :deck)))}}} card nil))}
+                                                     (shuffle! state :runner :deck)
+                                                     (runner-install state side c)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
@@ -580,9 +580,9 @@
                          :req (req (and (is-type? target "Hardware") (some #(= (:title %) (:title target)) (:deck runner))))
                          :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
                                        :effect (effect (trigger-event :searched-stack nil)
+                                                       (shuffle! :deck)
                                                        (move (some #(when (= (:title %) (:title target)) %)
-                                                                   (:deck runner)) :hand)
-                                                       (shuffle! :deck))}}}}}
+                                                                   (:deck runner)) :hand))}}}}}
 
    "Security Chip"
    {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
@@ -635,17 +635,21 @@
 
    "Spy Camera"
    {:abilities [{:cost [:click 1]
+                 :delayed-completion true
                  :label "Look at the top X cards of your Stack"
                  :msg "look at the top X cards of their Stack and rearrange them"
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
-                                                     (all-installed state :runner)))]
-                                (prompt! state side card
-                                                    (str "Drag cards from the Temporary Zone back onto your Stack") ["OK"] {})
-                                (doseq [c (take n (:deck runner))] (move state side c :play-area))))}
+                 :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
+                              (let [n (count (filter #(= (:title %) (:title card))
+                                                     (all-installed state :runner)))
+                                    from (take n (:deck runner))]
+                                (if (pos? (count from))
+                                  (continue-ability state side (reorder-choice :runner :corp from '()
+                                                                               (count from) from) card nil)
+                                  (do (clear-wait-prompt state :corp)
+                                      (effect-completed state side eid card)))))}
                 {:label "[Trash]: Look at the top card of R&D"
                  :msg "trash it and look at the top card of R&D"
-                 :effect (effect (prompt! card (str "The top card of R&D is "
-                                                    (:title (first (:deck corp)))) ["OK"] {})
+                 :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
                                  (trash card {:cause :ability-cost}))}]}
 
    "The Personal Touch"

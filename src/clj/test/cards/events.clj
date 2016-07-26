@@ -167,6 +167,39 @@
       (run-jack-out state)
       (run-on state "Archives"))))
 
+(deftest cbi-raid
+  "CBI Raid - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
+                             (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
+              (default-runner [(qty "CBI Raid" 1)]))
+    (take-credits state :corp)
+    (is (= 5 (count (:hand (get-corp)))))
+    (play-from-hand state :runner "CBI Raid")
+    (is (= :hq (get-in @state [:run :server 0])))
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (prompt-choice :corp (find-card "Caprice Nisei" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Adonis Campaign" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Quandary" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Jackson Howard" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Global Food Initiative" (:hand (get-corp))))
+    ;try starting over
+    (prompt-choice :corp "Start over")
+    (prompt-choice :corp (find-card "Global Food Initiative" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Jackson Howard" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Quandary" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Adonis Campaign" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Caprice Nisei" (:hand (get-corp)))) ;this is the top card of R&D
+    (prompt-choice :corp "Done")
+    (is (= 0 (count (:hand (get-corp)))))
+    (is (= 5 (count (:deck (get-corp)))))
+    (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
+    (is (= "Adonis Campaign" (:title (second (:deck (get-corp))))))
+    (is (= "Quandary" (:title (second (rest (:deck (get-corp)))))))
+    (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
+    (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
+
 (deftest corporate-scandal
   "Corporate Scandal - Corp has 1 additional bad pub even with 0"
   (do-game
@@ -376,6 +409,41 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:hand (get-runner)))) "Trashing 2 cards draws 2 card"))))
 
+(deftest indexing
+  "Indexing - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
+                            (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
+            (default-runner [(qty "Indexing" 1)]))
+    (loop [x 5]
+    (when (pos? x)
+      (do (core/move state :corp (first (:hand (get-corp))) :deck)
+          (recur (dec x)))))
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-corp)))))
+    (is (= 5 (count (:deck (get-corp)))))
+    (play-from-hand state :runner "Indexing")
+    (is (= :rd (get-in @state [:run :server 0])))
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Quandary" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Global Food Initiative" (:deck (get-corp))))
+    ;try starting over
+    (prompt-choice :runner "Start over")
+    (prompt-choice :runner (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Quandary" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-choice :runner (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+    (prompt-choice :runner "Done")
+    (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
+    (is (= "Adonis Campaign" (:title (second (:deck (get-corp))))))
+    (is (= "Quandary" (:title (second (rest (:deck (get-corp)))))))
+    (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
+    (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest information-sifting
   "Information Sifting - complicated interactions with damage prevention"
@@ -505,6 +573,44 @@
     (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
     (is (= 2 (:click (get-runner))) "Spent 2 clicks")
     (is (= 1 (:tag (get-runner))) "Lost 2 tags")))
+
+(deftest making-an-entrance
+  "Making an Entrance - Full test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Making an Entrance" 2) (qty "Sure Gamble" 1) (qty "Desperado" 1)
+                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Making an Entrance"])
+    (is (= 1 (count (:hand (get-runner)))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Making an Entrance")
+    ;trash cards
+    (is (= 1 (count (:discard (get-runner)))))
+    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+    (is (= 3 (count (:discard (get-runner)))))
+    (prompt-choice :runner "None")
+    ;start arranging
+    (prompt-choice :runner (find-card "Making an Entrance" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    ;try starting over
+    (prompt-choice :runner "Start over")
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Making an Entrance" (:deck (get-runner)))) ;this is the top card on stack
+    (prompt-choice :runner "Done")
+    (is (= "Making an Entrance" (:title (first (:deck (get-runner))))))
+    (is (= "Sure Gamble" (:title (second (:deck (get-runner))))))
+    (is (= "Corroder" (:title (second (rest (:deck (get-runner)))))))
+    (is (= "Patron" (:title (second (rest (rest (:deck (get-runner))))))))
+    (core/draw state :runner)
+    (is (= "Making an Entrance" (:title (first (:hand (get-runner))))))
+    (is (= 1 (count (:hand (get-runner)))))
+    (play-from-hand state :runner "Making an Entrance")
+    (is (= 1 (count (:hand (get-runner)))) "Can only play on first click")))
 
 (deftest modded
   "Modded - Install a program or piece of hardware at a 3 credit discount"

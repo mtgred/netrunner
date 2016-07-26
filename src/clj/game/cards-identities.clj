@@ -449,7 +449,8 @@
                                :yes-ability {:trace {:base 4
                                                      :msg "give the Runner 1 tag"
                                                      :effect (effect (tag-runner :runner 1 {:unpreventable true})
-                                                                     (clear-wait-prompt :runner))}}
+                                                                     (clear-wait-prompt :runner))
+                                                     :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                             card nil))}}}
 
@@ -653,8 +654,8 @@
            :optional
            {:prompt "Add another copy to HQ?" :priority 1
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
-                          :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                          (shuffle! :deck))}}}}}
+                          :effect (effect (shuffle! :deck)
+                                          (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand))}}}}}
 
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}

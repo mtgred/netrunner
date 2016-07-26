@@ -521,6 +521,33 @@
     (prompt-select :runner (get-in @state [:runner :rig :program 0]))
     (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
 
+(deftest precognition
+  "Precognition - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Precognition" 1) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
+                             (qty "Quandary" 1) (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Precognition"])
+    (play-from-hand state :corp "Precognition")
+    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    ;try starting over
+    (prompt-choice :corp "Start over")
+    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+    (prompt-choice :corp "Done")
+    (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
+    (is (= "Adonis Campaign" (:title (second (:deck (get-corp))))))
+    (is (= "Quandary" (:title (second (rest (:deck (get-corp)))))))
+    (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
+    (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
+
 (deftest psychographics
   "Psychographics - Place advancements up to the number of Runner tags on a card"
   (do-game

@@ -12,7 +12,7 @@
   (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :rezzed :special :added-virus-counter)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
     (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
-      (dissoc c :installed :facedown :counter :rec-counter :pump :named-target) c)))
+      (dissoc c :installed :facedown :counter :rec-counter :pump :server-target) c)))
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"

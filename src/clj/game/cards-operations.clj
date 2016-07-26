@@ -79,7 +79,7 @@
                                                         ices (get-in @state (concat [:corp :servers] s [:ices]))]
                                                     (swap! state assoc :per-run nil
                                                            :run {:server s :position (count ices)
-                                                                 :access-bonus 0 :run-effect nil})
+                                                                 :access-bonus 0 :run-effect nil :cannot-jack-out true})
                                                     (gain-run-credits state :runner (:bad-publicity corp))
                                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                                     (trigger-event state :runner :run s)))}
@@ -205,9 +205,9 @@
                            (<= (:cost %) (:credit corp)))
                       (:deck corp))
              :sorted))
-    :effect  (final-effect (play-instant target)
-                           (system-msg "shuffles their deck")
-                           (shuffle! :deck))
+    :effect  (effect (shuffle! :deck)
+                     (system-msg "shuffles their deck")
+                     (play-instant target))
     :msg (msg "search R&D for " (:title target) " and play it")}
 
    "Corporate Shuffle"
@@ -279,8 +279,9 @@
    "Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
-    :effect (final-effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
-                          (move target :hand) (shuffle! :deck))}
+    :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
+                    (shuffle! :deck)
+                    (move target :hand) )}
 
    "Foxfire"
    {:trace {:base 7
@@ -420,9 +421,9 @@
                     {:prompt "How many copies?"
                      :choices {:number (req (count cs))}
                      :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
-                     :effect (req (doseq [c (take target cs)]
-                                    (move state side c :hand))
-                                  (shuffle! state :corp :deck))}
+                     :effect (req (shuffle! state :corp :deck)
+                                  (doseq [c (take target cs)]
+                                    (move state side c :hand)))}
                     card nil)))}
 
    "Manhunt"
@@ -551,30 +552,15 @@
                                     card nil)))}
 
    "Precognition"
-   (letfn [(precog-final [chosen original]
-             {:prompt (str "The top 5 cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
-              :choices ["Done" "Start over"]
-              :delayed-completion true
-              :effect (req (if (= target "Done")
-                             (do (swap! state update-in [:corp :deck] #(vec (concat chosen (drop (count chosen) %))))
-                                 (effect-completed state side eid))
-                             (continue-ability state side (precog-choice original '() (count original) original)
-                                               card nil)))})
-           (precog-choice [remaining chosen n original]
-             {:prompt "Choose a card to move next onto R&D"
-              :choices remaining
-              :delayed-completion true
-              :effect (req (let [chosen (cons target chosen)]
-                             (if (< (count chosen) n)
-                               (continue-ability state side
-                                                 (precog-choice (remove-once #(not= target %) remaining)
-                                                               chosen n original)
-                                                 card nil)
-                               (continue-ability state side (precog-final chosen original) card nil))))})]
-     {:delayed-completion true
-      :msg "rearrange the top 5 cards of R&D"
-      :effect (req (let [from (take 5 (:deck corp))]
-                     (continue-ability state side (precog-choice from '() (count from) from) card nil)))})
+   {:delayed-completion true
+    :msg "rearrange the top 5 cards of R&D"
+    :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
+                 (let [from (take 5 (:deck corp))]
+                   (if (pos? (count from))
+                     (continue-ability state side (reorder-choice :corp :runner from '()
+                                                                  (count from) from) card nil)
+                     (do (clear-wait-prompt state :runner)
+                         (effect-completed state side eid card)))))}
 
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}

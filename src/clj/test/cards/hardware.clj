@@ -348,6 +348,52 @@
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
 
+(deftest spy-camera
+  "Spy Camera - Full test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Spy Camera" 6) (qty "Sure Gamble" 1) (qty "Desperado" 1)
+                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1) (qty "Kati Jones" 1)]))
+    (starting-hand state :runner ["Spy Camera" "Spy Camera" "Spy Camera"
+                                  "Spy Camera" "Spy Camera" "Spy Camera"])
+    (is (= 6 (count (:hand (get-runner)))))
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (core/gain state :runner :click 3)
+    (loop [x 6]
+      (when (pos? x)
+        (do (play-from-hand state :runner "Spy Camera")
+            (recur (dec x)))))
+    (let [spy (get-hardware state 5)]
+      ;look at top 6 cards
+      (card-ability state :runner spy 0)
+      (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
+      ;try starting over
+      (prompt-choice :runner "Start over")
+      (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+      (prompt-choice :runner "Done")
+      (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+      (is (= "Desperado" (:title (second (:deck (get-runner))))))
+      (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
+      (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
+      (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
+      (is (= "Kati Jones" (:title (second (rest (rest (rest (rest (:deck (get-runner))))))))))
+      ;look at top card of R&D
+      (card-ability state :runner spy 1)
+      (let [topcard (get-in (first (get-in @state [:runner :prompt])) [:msg])]
+        (is (= "The top card of R&D is Hedge Fund" topcard)))
+      (is (= 1 (count (:discard (get-runner))))))))
+
 (deftest the-personal-touch
   "The Personal Touch - Give +1 strength to an icebreaker"
   (do-game
