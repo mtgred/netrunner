@@ -1,5 +1,17 @@
 (in-ns 'test.core)
 
+(deftest corp-rez-unique
+  "Rezzing a second copy of a unique Corp card"
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Caprice Nisei" "HQ")
+    (play-from-hand state :corp "Caprice Nisei" "R&D")
+    (core/rez state :corp (get-content state :hq 0))
+    (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
+    (core/rez state :corp (get-content state :rd 0))
+    (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
+
 (deftest runner-install-program
   "runner-install - Program; ensure costs are paid"
   (do-game
@@ -176,11 +188,12 @@
       (core/rez state :corp wp)
       (card-ability state :corp wp 0)
       (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
-      (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
-      (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
       (let [dh (first (:hosted (refresh wp)))]
+        (is (:rezzed dh) "Director Haas was rezzed")
+        (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
+        (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
         (prompt-select :runner dh)
         (prompt-choice :runner "Yes") ; trash Director Haas
         (prompt-choice :runner "Done")
