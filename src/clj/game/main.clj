@@ -211,6 +211,11 @@
     (run socket)))
 
 (defn -main []
+  (Thread/setDefaultUncaughtExceptionHandler
+    (reify Thread$UncaughtExceptionHandler
+      (uncaughtException [_ thread ex]
+        (println "UNCAUGHT EXCEPTION " ex))))
+
   (println "[Prod] Listening on port 1043 for incoming commands...")
   (let [worker-url "inproc://responders"
         router (doto (.socket ctx ZMQ/ROUTER) (.bind zmq-url))
