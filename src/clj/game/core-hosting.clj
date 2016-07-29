@@ -62,11 +62,15 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
-       (when-let [events (:events (card-def target))]
-         (when installed
-           (register-events state side events c)))
-       (when (and installed (:recurring (card-def c)))
-         (card-init state side c false))
+       ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
+       (when (or (and installed (card-is? target :side :runner))
+                 (or (is-type? target "Operation")
+                     (and installed (card-is? target :side :corp) (:rezzed target))))
+         (when-let [events (:events (card-def target))]
+           (register-events state side events c))
+         (when (:recurring (card-def c))
+           (card-init state side c false)))
+
        (when-let [events (:events (card-def target))]
          (when (and installed (:recurring (card-def c)))
            (unregister-events state side target)
