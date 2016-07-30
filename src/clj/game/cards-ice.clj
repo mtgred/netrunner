@@ -385,21 +385,37 @@
               {:corp-install cw :trash cw :card-moved cw})}
 
    "Data Hound"
-   {:abilities [(trace-ability 2 {:label "Look at the top of Stack"
+   (letfn [(dh-trash [cards]
+             {:prompt "Choose a card to trash"
+              :choices cards
+              :delayed-completion true
+              :msg (msg "trash " (:title target))
+              :effect (req (do (trash state side target {:unpreventable true})
+                               (continue-ability state side (reorder-choice
+                                                              :runner :runner (remove-once #(not= % target) cards)
+                                                              '() (count (remove-once #(not= % target) cards))
+                                                              (remove-once #(not= % target) cards)) card nil)))})]
+     {:abilities [(trace-ability 2 {:delayed-completion true
+                                  :label "Look at the top of Stack"
                                   :msg "look at top X cards of Stack"
-                                  :effect (req (doseq [c (take (- target (second targets))
-                                                               (:deck runner))]
-                                                 (move state side c :play-area))
-                                               (system-msg state :corp
-                                                           (str "looks at the top "
-                                                                (- target (second targets))
-                                                                " cards of Stack")))})]}
+                                  :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
+                                               (let [c (- target (second targets))
+                                                     from (take c (:deck runner))]
+                                                 (system-msg state :corp
+                                                             (str "looks at the top " c " cards of Stack"))
+                                                 (if (< 1 c)
+                                                   (continue-ability state side (dh-trash from) card nil)
+                                                   (do (system-msg state :corp (str "trashes " (:title (first from))))
+                                                       (trash state side (first from) {:unpreventable true})
+                                                       (clear-wait-prompt state :runner)
+                                                       (effect-completed state side eid card)))))})]})
 
    "Data Mine"
    {:abilities [{:msg "do 1 net damage"
                  :effect (req (damage state :runner eid :net 1 {:card card})
                               (when current-ice
-                                (trash-ice-in-run state))
+                                (no-action state side nil)
+                                (continue state side nil))
                               (trash state side card))}]}
 
    "Datapike"
@@ -637,7 +653,8 @@
              :effect (effect (damage eid :net 2 {:card card}))}
     :abilities [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
                                                     (when current-ice
-                                                      (trash-ice-in-run state))
+                                                      (no-action state side nil)
+                                                      (continue state side nil))
                                                     (trash state side card)))]}
 
    "Janus 1.0"
@@ -661,7 +678,8 @@
                                       :msg (msg "force the Runner to trash " (:title target))
                                       :effect (req (trash state side target)
                                                    (when current-ice
-                                                     (trash-ice-in-run state))
+                                                     (no-action state side nil)
+                                                     (continue state side nil))
                                                    (trash state side card)))]}
 
    "Lancelot"
@@ -900,8 +918,14 @@
    "Shiro"
    {:abilities [{:label "Rearrange the top 3 cards of R&D"
                  :msg "rearrange the top 3 cards of R&D"
-                 :effect (req (doseq [c (take 3 (:deck corp))]
-                                (move state side c :play-area)))}
+                 :delayed-completion true
+                 :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
+                              (let [from (take 3 (:deck corp))]
+                                (if (pos? (count from))
+                                  (continue-ability state side (reorder-choice :corp :runner from '()
+                                                                               (count from) from) card nil)
+                                  (do (clear-wait-prompt state :runner)
+                                      (effect-completed state side eid card)))))}
                 {:label "Force the Runner to access the top card of R&D"
                  :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
                                 (system-msg state :runner (str "accesses " (:title c)))
@@ -928,7 +952,8 @@
    {:abilities [{:label "Gain 5 [Credits] and trash Special Offer"
                  :effect (req (gain state :corp :credit 5)
                               (when current-ice
-                                (trash-ice-in-run state))
+                                (no-action state side nil)
+                                (continue state side nil))
                               (trash state side card)
                               (system-msg state side (str "gains 5 [Credits] and trashes Special Offer")))}]}
 
@@ -1017,7 +1042,8 @@
                  :effect (req (if tagged
                                 (do (lose state :runner :credit :all)
                                     (when current-ice
-                                      (trash-ice-in-run state))
+                                      (no-action state side nil)
+                                      (continue state side nil))
                                     (trash state side card))
                                 (lose state :runner :credit 1)))}]}
 
@@ -1089,7 +1115,8 @@
                                                            (:content (card->server state card)))) 1))
                                 (prevent-jack-out state side))
                               (when current-ice
-                                (trash-ice-in-run state))
+                                (no-action state side nil)
+                                (continue state side nil))
                               (trash state side card))}]}
 
    "Woodcutter"

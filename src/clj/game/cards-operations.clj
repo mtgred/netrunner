@@ -79,7 +79,7 @@
                                                         ices (get-in @state (concat [:corp :servers] s [:ices]))]
                                                     (swap! state assoc :per-run nil
                                                            :run {:server s :position (count ices)
-                                                                 :access-bonus 0 :run-effect nil})
+                                                                 :access-bonus 0 :run-effect nil :cannot-jack-out true})
                                                     (gain-run-credits state :runner (:bad-publicity corp))
                                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                                     (trigger-event state :runner :run s)))}
@@ -205,9 +205,9 @@
                            (<= (:cost %) (:credit corp)))
                       (:deck corp))
              :sorted))
-    :effect  (final-effect (play-instant target)
-                           (system-msg "shuffles their deck")
-                           (shuffle! :deck))
+    :effect  (effect (shuffle! :deck)
+                     (system-msg "shuffles their deck")
+                     (play-instant target))
     :msg (msg "search R&D for " (:title target) " and play it")}
 
    "Corporate Shuffle"
@@ -279,8 +279,9 @@
    "Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
-    :effect (final-effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
-                          (move target :hand) (shuffle! :deck))}
+    :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
+                    (shuffle! :deck)
+                    (move target :hand) )}
 
    "Foxfire"
    {:trace {:base 7
@@ -396,6 +397,19 @@
                                        :msg (msg (corp-install-msg target))}
                                       card nil))}
 
+   "Liquidation"
+   {:delayed-completion true
+    :effect (req (let [n (count (filter #(and (rezzed? %)
+                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))]
+                   (continue-ability state side
+                     {:prompt "Choose any number of rezzed cards to trash"
+                      :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
+                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* n 3) " [Credits]")
+                      :effect (req (doseq [c targets]
+                                     (trash state side c))
+                                   (gain state side :credit (* n 3)))}
+                    card nil)))}
+
    "Localized Product Line"
    {:prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
@@ -407,9 +421,9 @@
                     {:prompt "How many copies?"
                      :choices {:number (req (count cs))}
                      :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
-                     :effect (req (doseq [c (take target cs)]
-                                    (move state side c :hand))
-                                  (shuffle! state :corp :deck))}
+                     :effect (req (shuffle! state :corp :deck)
+                                  (doseq [c (take target cs)]
+                                    (move state side c :hand)))}
                     card nil)))}
 
    "Manhunt"
@@ -470,7 +484,8 @@
                        (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
                        (trigger-event state side :corp-install newice)
                        (card-init state side newice false)
-                       (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost")))
+                       (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
+                       (trigger-event state side :rez newice))
                      (system-msg state side (str "does not find any ICE to install from R&D")))
                    (shuffle! state :corp :deck)
                    (effect-completed state side eid card)))}
@@ -537,10 +552,15 @@
                                     card nil)))}
 
    "Precognition"
-   {:msg "rearrange the top 5 cards of R&D"
-    :effect (req (prompt! state side card
-                         (str "Drag cards from the Temporary Zone back onto R&D") ["OK"] {})
-                 (doseq [c (take 5 (:deck corp))] (move state side c :play-area)))}
+   {:delayed-completion true
+    :msg "rearrange the top 5 cards of R&D"
+    :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
+                 (let [from (take 5 (:deck corp))]
+                   (if (pos? (count from))
+                     (continue-ability state side (reorder-choice :corp :runner from '()
+                                                                  (count from) from) card nil)
+                     (do (clear-wait-prompt state :runner)
+                         (effect-completed state side eid card)))))}
 
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}

@@ -5,15 +5,15 @@
 (def cards-agendas
 
   {"15 Minutes"
-     {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
-                   :label "Shuffle 15 Minutes into R&D"
-                   :effect (req (let [corp-agendas (get-in corp [:scored])
-                                      agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]
-                                  (gain-agenda-point state agenda-owner (- (:agendapoints card))))
-                                ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
-                                (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
-                                (shuffle! state :corp :deck))}]
-      :flags {:has-abilities-when-stolen true}}
+   {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
+                 :label "Shuffle 15 Minutes into R&D"
+                 :effect (req (let [corp-agendas (get-in corp [:scored])
+                                    agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]
+                                (gain-agenda-point state agenda-owner (- (:agendapoints card))))
+                              ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
+                              (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
+                              (shuffle! state :corp :deck))}]
+    :flags {:has-abilities-when-stolen true}}
 
    "Accelerated Beta Test"
    (letfn [(abt [n i]
@@ -497,8 +497,9 @@
                  :req (req (< 0 (get-in card [:counter :agenda] 0)))
                  :msg (msg "add " (:title target) " to HQ from R&D")
                  :choices (req (cancellable (:deck corp) :sorted))
-                 :cancel-effect (final-effect (system-msg "cancels the effect of Project Atlas"))
-                 :effect (final-effect (move target :hand) (shuffle! :deck))}]}
+                 :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
+                 :effect (effect (shuffle! :deck)
+                                 (move target :hand))}]}
 
    "Project Beale"
    {:agendapoints-runner (req (do 2))
@@ -600,7 +601,8 @@
    "The Future is Now"
    {:prompt "Choose a card to add to HQ" :choices (req (:deck corp))
     :msg (msg "add a card from R&D to HQ and shuffle R&D")
-    :effect (final-effect (move target :hand) (shuffle! :deck))}
+    :effect (effect (shuffle! :deck)
+                    (move target :hand) )}
 
    "The Future Perfect"
    {:steal-req (req installed)

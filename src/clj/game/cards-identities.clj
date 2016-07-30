@@ -373,6 +373,17 @@
    {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Khan: Savvy Skiptracer"
+   {:events {:pass-ice
+             {:once :per-turn
+              :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (resolve-ability state side
+                               {:prompt "Choose an icebreaker to install from your Grip"
+                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                :msg (msg "install " (:title target))
+                                :effect (effect (runner-install target))}
+                              card nil)))}}}
+
    "Laramy Fisk: Savvy Investor"
    {:events {:successful-run {:delayed-completion true
                               :req (req (and (is-central? (:server run))
@@ -438,7 +449,8 @@
                                :yes-ability {:trace {:base 4
                                                      :msg "give the Runner 1 tag"
                                                      :effect (effect (tag-runner :runner 1 {:unpreventable true})
-                                                                     (clear-wait-prompt :runner))}}
+                                                                     (clear-wait-prompt :runner))
+                                                     :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                             card nil))}}}
 
@@ -642,8 +654,8 @@
            :optional
            {:prompt "Add another copy to HQ?" :priority 1
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
-                          :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                          (shuffle! :deck))}}}}}
+                          :effect (effect (shuffle! :deck)
+                                          (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand))}}}}}
 
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}

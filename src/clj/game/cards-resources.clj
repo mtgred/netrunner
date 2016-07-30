@@ -74,7 +74,9 @@
                  :msg (msg "install " (:title target))
                  :cost [:forfeit]
                  :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
-                 :effect (effect (trigger-event :searched-stack nil) (runner-install target) (shuffle! :deck))}]}
+                 :effect (effect (trigger-event :searched-stack nil)
+                                 (shuffle! :deck)
+                                 (runner-install target))}]}
 
    "Bhagat"
    {:events {:successful-run {:req (req (= target :hq))
@@ -136,6 +138,29 @@
    "Beach Party"
    {:in-play [:hand-size-modification 5]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
+
+   "Beth Kilrain-Chang"
+   (let [ability {:once :per-turn
+                  :label "Gain 1 [Credits], draw 1 card, or gain [Click] (start of turn)"
+                  :req (req (:runner-phase-12 @state))
+                  :effect (req (let [c (:credit corp)
+                                     b (:title card)]
+                                 (cond
+                                   ;; gain 1 credit
+                                   (<= 5 c 9)
+                                   (do (gain state side :credit 1)
+                                       (system-msg state side (str "uses " b " to gain 1 [Credits]")))
+                                   ;; draw 1 card
+                                   (<= 10 c 14)
+                                   (do (draw state side 1)
+                                       (system-msg state side (str "uses " b " to draw 1 card")))
+                                   ;; gain 1 click
+                                   (<= 15 c)
+                                   (do (gain state side :click 1)
+                                       (system-msg state side (str "uses " b " to gain [Click]"))))))}]
+     {:flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability}})
 
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
@@ -680,9 +705,9 @@
                                       :choices {:number (req num)}
                                       :msg "shuffle their Stack"
                                       :effect (req (trigger-event state side :searched-stack nil)
+                                                   (shuffle! state :runner :deck)
                                                    (doseq [c (take (int target) cards)]
                                                      (trash state side c {:unpreventable true}))
-                                                   (shuffle! state :runner :deck)
                                                    (when (> (int target) 0)
                                                      (system-msg state side (str "trashes " (int target)
                                                                                  " cop" (if (> (int target) 1) "ies" "y")
@@ -816,10 +841,15 @@
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Rolodex"
-   {:msg "look at the top 5 cards of their Stack"
-    :effect (req (toast state :runner
-                        "Drag cards from the Temporary Zone back onto your Stack." "info")
-                 (doseq [c (take 5 (:deck runner))] (move state side c :play-area)))
+   {:delayed-completion true
+    :msg "look at the top 5 cards of their Stack"
+    :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
+                 (let [from (take 5 (:deck runner))]
+                   (if (pos? (count from))
+                     (continue-ability state side (reorder-choice :runner :corp from '()
+                                                                  (count from) from) card nil)
+                     (do (clear-wait-prompt state :corp)
+                         (effect-completed state side eid card)))))
     :leave-play (effect (mill :runner 3))}
 
    "Sacrificial Clone"
@@ -1025,6 +1055,21 @@
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
 
+   "Temüjin Contract"
+   {:data {:counter {:credit 20}}
+    :prompt "Choose a server for Temüjin Contract" :choices (req servers)
+    :msg (msg "target " target)
+    :req (req (not (:server-target card)))
+    :effect (effect (update! (assoc card :server-target target)))
+    :events {:successful-run
+             {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+              :msg "gain 4 [Credits]"
+              :effect (req (let [creds (get-in card [:counter :credit])]
+                             (gain state side :credit 4)
+                             (set-prop state side card :counter {:credit (- creds 4)})
+                             (when (= 0 (get-in (get-card state card) [:counter :credit]))
+                               (trash state side card {:unpreventable true}))))}}}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
@@ -1129,7 +1174,10 @@
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
                  :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
-                 :cost [:click 2] :effect (effect (trigger-event :searched-stack nil) (move target :hand) (shuffle! :deck))}]}
+                 :cost [:click 2]
+                 :effect (effect (trigger-event :searched-stack nil)
+                                 (shuffle! :deck)
+                                 (move target :hand))}]}
 
    "Underworld Contact"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"

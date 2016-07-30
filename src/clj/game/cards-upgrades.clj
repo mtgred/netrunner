@@ -272,7 +272,8 @@
                               :effect (req (trash state :corp card)
                                            (enable-run-on-server state card
                                                                  (second (:zone card)))
-                                           (system-msg state :corp (str "trashes Off the Grid")))}}}
+                                           (system-msg state :corp (str "trashes Off the Grid")))}}
+    :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
    {:events {:pre-steal-cost
