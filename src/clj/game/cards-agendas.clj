@@ -506,6 +506,11 @@
     :effect (req (let [n (quot (- (:advance-counter card) 3) 2)]
                     (set-prop state side card :counter {:agenda n} :agendapoints (+ 2 n))))}
 
+   "Project Kusanagi"
+   {:effect (effect (add-counter card :agenda (- (:advance-counter card) 2)))
+    :abilities [{:counter-cost [:agenda 1]
+                 :msg "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" after all its other subroutines for the remainder of the run"}]}
+
    "Project Vitruvius"
    {:effect (effect (add-counter card :agenda (- (:advance-counter card) 3)))
     :abilities [{:counter-cost [:agenda 1]
