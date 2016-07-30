@@ -351,7 +351,8 @@
                 {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Fan Site"
-   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+   {:events {:agenda-scored {:req (req installed)
+                             :msg "add it to their score area as an agenda worth 0 agenda points"
                              :effect (effect (as-agenda :runner card 0))}}}
 
    "Fester"
