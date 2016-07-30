@@ -305,6 +305,13 @@
    {:msg "gain 3 [Credits] and draw 1 card"
     :effect (effect (gain :credit 3) (draw))}
 
+   "Hatchet Job"
+   {:trace {:base 5
+            :choices {:req #(and (installed? %)
+                                 (not (has-subtype? % "Virtual")))}
+            :msg "add an installed non-virtual card to the Runner's grip"
+            :effect (effect (move :runner target :hand true))}}
+
    "Hard-Hitting News"
    {:req (req (:made-run runner-reg))
     :trace {:base 4
