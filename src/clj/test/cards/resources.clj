@@ -341,6 +341,34 @@
     (is (= 0 (:agenda-point (get-runner))))
     (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
 
+(deftest fan-site-eoi
+  "Fan Site - Don't trigger after swap with Exchange of Information. Issue #1824"
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Exchange of Information" 1)])
+              (default-runner [(qty "Fan Site" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (core/tag-runner state :runner 1)
+
+    (play-from-hand state :corp "Exchange of Information")
+
+    (prompt-select :corp (find-card "Fan Site" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Hostile Takeover" (:scored (get-corp))))
+
+    (is (= 1 (:agenda-point (get-runner))))
+    (is (= 0 (:agenda-point (get-corp))))
+
+    (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site swapped into Corp score area")
+
+    (prn (find-card "Fan Site" (:scored (get-corp))))
+
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
+
 (deftest fester
   "Fester - Corp loses 2c (if able) when purging viruses"
   (do-game
