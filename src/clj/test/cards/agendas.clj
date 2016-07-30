@@ -216,6 +216,56 @@
     (is (not (nil? (get-ice state :hq 2))) "Corp has three ice installed on HQ")
     (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
 
+(deftest efficiency-committee
+  "Efficiency Committee - Cannot advance cards if agenda counter is used"
+  (do-game
+    (new-game (default-corp [(qty "Efficiency Committee" 3) (qty "Shipment from SanSan" 2)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ec1 (get-content state :remote1 0)
+          ec2 (get-content state :remote2 0)
+          ec3 (get-content state :remote3 0)
+          iw (get-ice state :hq 0)]
+      (score-agenda state :corp ec1)
+      (let [ec1_scored (get-in @state [:corp :scored 0])]
+        (is (= 3 (get-counters (refresh ec1_scored) :agenda)))
+        (is (= 2 (:agenda-point (get-corp))))
+        ;use token
+        (is (= 3 (:click (get-corp))))
+        (card-ability state :corp ec1_scored 0)
+        (is (= 4 (:click (get-corp))))
+        ;try to advance Ice Wall
+        (core/advance state :corp {:card (refresh iw)})
+        (is (= 4 (:click (get-corp))))
+        (is (= nil (:advance-counter (refresh iw))))
+        ;try to advance Efficiency Committee
+        (core/advance state :corp {:card (refresh ec2)})
+        (is (= 4 (:click (get-corp))))
+        (is (= nil (:advance-counter (refresh ec2))))
+        ;advance with Shipment from SanSan
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "2")
+        (prompt-select :corp ec2)
+        (is (= 2 (:advance-counter (refresh ec2))))
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "2")
+        (prompt-select :corp ec2)
+        (is (= 4 (:advance-counter (refresh ec2))))
+        (core/score state :corp {:card (refresh ec2)})
+        (is (= 4 (:agenda-point (get-corp))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        ;can advance again
+        (core/advance state :corp {:card (refresh iw)})
+        (is (= 1 (:advance-counter (refresh iw))))
+        (core/advance state :corp {:card (refresh ec3)})
+        (is (= 1 (:advance-counter (refresh ec3))))))))
+
 (deftest explode-a-palooza
   "Explode-a-palooza - Gain 5 credits when Runner accesses it"
   (do-game

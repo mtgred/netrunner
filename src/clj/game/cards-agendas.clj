@@ -219,8 +219,16 @@
 
    "Efficiency Committee"
    {:effect (effect (add-counter card :agenda 3))
-    :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :effect (effect (gain :click 2))
-                 :msg "gain [Click][Click]"}]}
+    :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+                 :effect (effect (gain :click 2)
+                                 (register-persistent-flag!
+                                   card :cannot-advance
+                                   (fn [state side card]
+                                     ((constantly true)
+                                       (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
+                 :msg "gain [Click][Click]"}]
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
+                                              (unregister-events card))}}}
 
    "Encrypted Portals"
    {:msg (msg "gain " (reduce (fn [c server]
