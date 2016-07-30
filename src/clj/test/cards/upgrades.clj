@@ -453,6 +453,24 @@
       (run-on state "Server 1")
       (is (:cannot-jack-out (get-in @state [:run])) "Prevents jack out when upgrade is rezzed prior to run"))))
 
+(deftest prisec
+  "Prisec - Pay 2 credits to give runner 1 tag and do 1 meat damage, only when installed"
+  (do-game
+    (new-game (default-corp [(qty "Prisec" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Prisec" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [pre-creds (:credit (get-corp))]
+      (prompt-choice :corp "Yes")
+      (is (= (- pre-creds 2) (:credit (get-corp))) "Pay 2 [Credits] to pay for Prisec"))
+    (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
+    ;; Runner trashes Prisec
+    (prompt-choice :runner "Yes")
+    (run-empty-server state "HQ")
+    (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
+
 (deftest product-placement
   "Product Placement - Gain 2 credits when Runner accesses it"
   (do-game

@@ -299,6 +299,19 @@
              :runner-trash {:req (req (and this-server (is-type? target "Program")))
                             :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}}}
 
+   "Prisec"
+   {:access {:req (req (installed? card))
+             :effect (effect (show-wait-prompt :runner "Corp to use Prisec")
+                             (resolve-ability
+                               {:optional
+                                {:prompt "Pay 2 [Credits] to use Prisec ability?"
+                                 :end-effect (effect (clear-wait-prompt :runner))
+                                 :yes-ability {:cost [:credit 2]
+                                               :msg "do 1 meat damage and give the Runner 1 tag"
+                                               :effect (effect (damage eid :meat 1 {:card card})
+                                                               (tag-runner :runner 1))}}}
+                               card nil))}}
+
    "Product Placement"
    {:access {:req (req (not= (first (:zone card)) :discard))
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
