@@ -219,6 +219,9 @@
    (and (same-side? side (:side card))
         (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez)
+        (or (not (:uniqueness card))
+            (empty? (filter #(and (:uniqueness %) (:rezzed %) (= (:code card) (:code %)))
+                            (all-installed state :corp))))
         (if-let [rez-req (:rez-req (card-def card))]
           (rez-req state side (make-eid state) card nil)
           true))))

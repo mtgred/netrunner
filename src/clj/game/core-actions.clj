@@ -211,9 +211,9 @@
 (defn rez
   "Rez a corp card."
   ([state side card] (rez state side card nil))
-  ([state side card {:keys [ignore-cost no-warning] :as args}]
+  ([state side card {:keys [ignore-cost no-warning force] :as args}]
    (let [card (get-card state card)]
-     (if (can-rez? state side card)
+     (if (or force (can-rez? state side card))
        (do
          (trigger-event state side :pre-rez card)
          (when (or (#{"Asset" "ICE" "Upgrade"} (:type card))
