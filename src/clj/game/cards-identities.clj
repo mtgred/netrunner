@@ -309,6 +309,11 @@
                              :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Jinteki: Potential Unleashed"
+   {:events {:damage {:req (req (= target :net))
+                      :msg "trash the top card of the Runner's Stack"
+                      :effect (effect (mill :runner))}}}
+
    "Jinteki: Replicating Perfection"
    {:events
     {:runner-phase-12 {:effect (req (apply prevent-run-on-server

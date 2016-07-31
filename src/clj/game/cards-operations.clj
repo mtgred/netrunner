@@ -144,6 +144,12 @@
    {:msg "gain 5 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 5) (draw 2))}
 
+   "BOOM!"
+   {:req (req (> (:tag runner) 1))
+    :delayed-completion true
+    :msg "do 7 meat damage"
+    :effect (effect (damage eid :meat 7 {:card card}))}
+
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
                          (in-hand? %))}
