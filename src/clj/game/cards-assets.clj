@@ -381,7 +381,7 @@
                  :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
-                 :msg (msg "install and host " (:title target))
+                 :msg "install and host an asset or agenda"
                  :effect (req (corp-install state side target card))}]}
 
    "Genetics Pavilion"
