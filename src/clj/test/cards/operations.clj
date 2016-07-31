@@ -466,6 +466,17 @@
       (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
           "Archer hosting OAI as a condition"))))
 
+(deftest patch
+  "Patch - +2 current strength"
+  (do-game
+    (new-game (default-corp [(qty "Patch" 1) (qty "Vanilla" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Patch")
+    (prompt-select :corp (get-ice state :hq 0))
+    (is (= 2 (:current-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
+
 (deftest paywall-implementation
   "Paywall Implementation - Gain 1 credit for every successful run"
   (do-game
