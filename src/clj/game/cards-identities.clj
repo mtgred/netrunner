@@ -681,6 +681,12 @@
    "Weyland Consortium: Because We Built It"
    {:recurring 1}
 
+   "Weyland Consortium: Builder of Nations"
+   {:abilities [{:label "Do 1 meat damage"
+                 :delayed-completion true
+                 :msg "do 1 meat damage"
+                 :effect (effect (damage eid :meat 1 {:card card}))}]}
+
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"
                               :effect (effect (gain :credit 1))

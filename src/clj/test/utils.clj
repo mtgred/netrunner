@@ -22,10 +22,13 @@
     ret))
 
 (defn qty [card amt]
-  {:card (if (string? card) (@all-cards card) card) :qty amt})
+  (let [loaded-card (if (string? card) (@all-cards card) card)]
+    (when-not loaded-card
+      (throw (Exception. (str card " not found in @all-cards"))))
+    {:card loaded-card :qty amt}))
 
 (defn make-deck [identity deck]
-  {:identity identity 
+  {:identity identity
    :deck (map #(if (string? %) (qty % 1) %) deck)})
 
 (defn default-corp

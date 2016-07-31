@@ -318,6 +318,13 @@
             :label "Give the Runner 4 tags"
             :effect (effect (tag-runner :runner 4))}}
 
+   "Hatchet Job"
+   {:trace {:base 5
+            :choices {:req #(and (installed? %)
+                                 (not (has-subtype? % "Virtual")))}
+            :msg "add an installed non-virtual card to the Runner's grip"
+            :effect (effect (move :runner target :hand true))}}
+
    "Hedge Fund"
    {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
 
