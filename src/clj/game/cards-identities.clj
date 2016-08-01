@@ -310,9 +310,9 @@
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Potential Unleashed"
-   {:events {:damage {:req (req (= target :net))
-                      :msg "trash the top card of the Runner's Stack"
-                      :effect (effect (mill :runner))}}}
+   {:events {:pre-resolve-damage {:req (req (and (= target :net) (> (last targets) 0)))
+                                  :msg "trash the top card of the Runner's Stack"
+                                  :effect (effect (mill :runner))}}}
 
    "Jinteki: Replicating Perfection"
    {:events
