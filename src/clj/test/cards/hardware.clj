@@ -462,13 +462,11 @@
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
         (is (= 0 (:agenda-point (get-runner))) "Stole Domestic Sleepers")
-        ;; Turntable prompt should be active
+        (is (prompt-is-card? :runner tt))
         (prompt-choice :runner "Yes")
-        (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
         (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
-        (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")
-        (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+        (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
 
 (deftest turntable-mandatory-upgrades
   "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn"
@@ -484,10 +482,10 @@
       (let [tt (get-in @state [:runner :rig :hardware 0])]
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
-        (prompt-choice :runner "Yes") ;; Turntable optional prompt
+        (is (prompt-is-card? :runner tt))
+        (prompt-choice :runner "Yes")
         (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
-        (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
-        (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+        (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")))))
 
 (deftest vigil
   "Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size"

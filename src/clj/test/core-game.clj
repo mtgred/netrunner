@@ -288,8 +288,7 @@
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
-;; Broken by counter re-write
-#_(deftest counter-manipulation-commands
+(deftest counter-manipulation-commands
   "Test interactions of various cards with /counter and /adv-counter commands"
   (do-game
     (new-game (default-corp [(qty "Adonis Campaign" 1)
@@ -331,7 +330,7 @@
     
     ;; oops, forgot to rez 2nd public support before start of turn,
     ;; let me fix it with a /command
-    (core/command-counter state :corp 2)
+    (core/command-counter state :corp ["power" 2])
     (prompt-select :corp (refresh publics2))
     (is (= 2 (get-counters (refresh publics2) :power)))
     ;; Oaktown checks and manipulation
@@ -352,15 +351,20 @@
     
     ;; Turn 2 Runner
     ;; cheating with publics1 going too fast. Why? because I can
-    (core/command-counter state :corp 1)
+    (is (= 2 (get-counters (refresh publics1) :power)))
+    (core/command-counter state :corp ["power" 1])
     (prompt-select :corp (refresh publics1))
-    (core/command-counter state :corp 3) ; let's adjust Adonis while at it
+    (is (= 1 (get-counters (refresh publics1) :power)))
+    ; let's adjust Adonis while at it
+    (is (= 9 (get-counters (refresh adonis) :credit)))
+    (core/command-counter state :corp ["credit" 3])
     (prompt-select :corp (refresh adonis))
+    (is (= 3 (get-counters (refresh adonis) :credit)))
     (take-credits state :runner)
     
     ;; Turn 3 Corp
     (is (= 3 (:agenda-point (get-corp)))) ; cheated PS1 should get scored
-    (is (= 9 (:credit (get-corp))) "twice Adonis money and money turn")
+    (is (= 9 (:credit (get-corp))))
     (is (= (:zone (refresh publics1) :scored)))
     (is (= (:zone (refresh publics2)) [:servers :remote3 :content]))
     (is (= (:zone (refresh adonis) :discard)))
@@ -368,10 +372,11 @@
     
     ;; Turn 3 Runner
     (take-credits state :runner)
+
     ;; Turn 4 Corp
     (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
     (is (= (:zone (refresh publics2) :scored)))
-    (is (= 12 (:credit (get-corp))) "twice Adonis money and 2xmoney turn, no third Adonis"))))
+    (is (= 12 (:credit (get-corp)))))))
 
 (deftest run-bad-publicity-credits
   "Should not lose BP credits until a run is completely over. Issue #1721."
