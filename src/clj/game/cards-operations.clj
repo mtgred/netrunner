@@ -257,6 +257,19 @@
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
+   "Enforcing Loyalty"
+   {:trace {:base 3
+            :label "Trash a card not matching the faction of the Runner's identity"
+            :delayed-completion true
+            :effect (req (let [f (:faction (:identity runner))]
+                           (continue-ability
+                             state side
+                             {:prompt "Choose an installed card not matching the faction of the Runner's identity"
+                              :choices {:req #(and (installed? %) (not= f (:faction %)) (card-is? % :side :runner))}
+                              :msg (msg "trash " (:title target))
+                              :effect (effect (trash target))}
+                            card nil)))}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
