@@ -5,6 +5,80 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest twenty-four-seven-news-cycle-breaking-news
+  "24/7 News Cycle - Breaking News interaction"
+  (do-game
+    (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (let [ag1 (get-content state :remote1 0)
+          ag2 (get-content state :remote2 0)]
+      (score-agenda state :corp ag1)
+      (score-agenda state :corp ag2)
+      (take-credits state :corp)
+      (is (= 0 (:tag (get-runner)))) ; tags cleared
+      (take-credits state :runner)
+      (play-from-hand state :corp "24/7 News Cycle")
+      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
+      (take-credits state :corp 2)
+      (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
+
+(deftest twenty-four-seven-news-cycle-posted-bounty
+  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [ag1 (get-content state :remote1 0)
+          ag2 (get-content state :remote2 0)]
+      (score-agenda state :corp ag1)
+      (prompt-choice :corp "No")
+      (score-agenda state :corp ag2)
+      (prompt-choice :corp "No")
+      (play-from-hand state :corp "24/7 News Cycle")
+      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
+      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
+      (is (= 1 (:tag (get-runner))) "Runner given 1 tag")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+      (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
+
+(deftest twenty-four-seven-news-cycle-swaps
+  "24/7 News Cycle - Swapped agendas are able to be used. #1555"
+  (do-game
+    (new-game (default-corp [(qty "24/7 News Cycle" 1) (qty "Chronos Project" 1)
+                             (qty "Philotic Entanglement" 1) (qty "Profiteering" 1)])
+              (default-runner [(qty "Turntable" 3)]))
+    (score-agenda state :corp (find-card "Chronos Project" (:hand (get-corp))))
+    (score-agenda state :corp (find-card "Philotic Entanglement" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Turntable")
+    (core/steal state :runner (find-card "Profiteering" (:hand (get-corp))))
+    (prompt-choice :runner "Yes")
+    (prompt-select :runner (find-card "Philotic Entanglement" (:scored (get-corp))))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (take-credits state :runner)
+    (play-from-hand state :corp "24/7 News Cycle")
+    (prompt-card :corp (find-card "Chronos Project" (:scored (get-corp))))
+    (is (= "Chronos Project" (:title (first (:rfg (get-corp))))))
+    ;shouldn't work on an agenda in the Runner's scored area
+    (is (= 2 (count (:hand (get-runner)))))
+    (prompt-select :corp (find-card "Philotic Entanglement" (:scored (get-runner))))
+    (is (= 2 (count (:hand (get-runner)))))
+    ;resolve 'when scored' ability on swapped Profiteering
+    (is (= 8 (:credit (get-corp))))
+    (prompt-select :corp (find-card "Profiteering" (:scored (get-corp))))
+    (prompt-choice :corp "3")
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 3 (:bad-publicity (get-corp))))
+    (is (= 23 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest accelerated-diagnostics
   "Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan"
@@ -408,49 +482,6 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
-
-(deftest news-cycle
-  (do-game
-    (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (let [ag1 (get-content state :remote1 0)
-          ag2 (get-content state :remote2 0)]
-      (score-agenda state :corp ag1)
-      (score-agenda state :corp ag2)
-      (take-credits state :corp)
-      (is (= 0 (:tag (get-runner)))) ; tags cleared
-      (take-credits state :runner)
-      (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
-      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
-      (take-credits state :corp 2)
-      (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
-
-(deftest news-cycle-posted-bounty
-  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
-  (do-game
-    (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (let [ag1 (get-content state :remote1 0)
-          ag2 (get-content state :remote2 0)]
-      (score-agenda state :corp ag1)
-      (prompt-choice :corp "No")
-      (score-agenda state :corp ag2)
-      (prompt-choice :corp "No")
-      (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
-      (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
-      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
-      (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
-      (is (= 1 (:tag (get-runner))) "Runner given 1 tag")
-      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
-      (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
 
 (deftest oversight-ai
   "Oversight AI - Rez a piece of ICE ignoring all costs"

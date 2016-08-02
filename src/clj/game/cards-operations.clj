@@ -5,16 +5,16 @@
    {:req (req (> (count (:scored corp)) 1))
     :delayed-completion true
     :additional-cost [:forfeit]
-    :effect (req (let [agendas (get-in @state [:corp :scored])]
-                   (continue-ability state side
-                     {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
-                      :choices {:req #(and (is-type? % "Agenda")
-                                           (= (first (:zone %)) :scored)
-                                           (:abilities %))}
-                      :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                      :delayed-completion true
-                      :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
-                    card nil)))}
+    :effect (req (continue-ability
+                   state side
+                   {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                    :choices {:req #(and (is-type? % "Agenda")
+                                         (is-scored? state :corp %))}
+                    :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                    :delayed-completion true
+                    ;dissoc :end-turn for Breaking News
+                    :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
+                   card nil))}
 
    "Accelerated Diagnostics"
    (letfn [(ad [i n adcard]
