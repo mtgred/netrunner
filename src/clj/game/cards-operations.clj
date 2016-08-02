@@ -760,6 +760,17 @@
                                                 card nil))}
                              card nil)))}}
 
+   "Special Report"
+   {:prompt "Choose any number of cards in HQ to shuffle into R&D"
+    :choices {:max (req (count (:hand corp))) :req #(and (:side % "Corp")
+                                                         (in-hand? %))}
+    :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
+    :effect (req (doseq [c targets]
+                   (move state side c :deck))
+                 (shuffle! state side :deck)
+                 (draw state side (count targets))
+                 (effect-completed state side eid card))}
+
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
