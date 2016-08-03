@@ -483,18 +483,22 @@
                                 :bad-publicity (Integer/parseInt target)))}
 
    "Project Ares"
-     {:req (req #(and (> (:advance-counter card) 4) (> (count (all-installed state :runner)) 0)))
-      :msg (msg "force the Runner to trash " (- (:advance-counter card) 4) " installed cards and take 1 bad publicity")
-      :delayed-completion true
-      :effect (req (let [ares card]
-                     (continue-ability
-                       state :runner
-                       {:prompt (msg "Choose " (- (:advance-counter ares) 4) " installed cards to trash")
-                        :choices {:max (- (:advance-counter ares) 4) :req #(and (:installed %) (= (:side %) "Runner"))}
-                        :effect (final-effect (trash-cards targets)
-                                              (system-msg (str "trashes " (join ", " (map :title targets)))))}
-                       card nil))
-                   (gain state :corp :bad-publicity 1))}
+   {:req (req (and (> (:advance-counter card) 4) (pos? (count (all-installed state :runner)))))
+    :msg (msg (str "force the Runner to trash " (- (:advance-counter card) 4)
+                   " installed card" (when (> (- (:advance-counter card) 4) 1) "s")
+                   " and take 1 bad publicity"))
+    :delayed-completion true
+    :effect (req (show-wait-prompt state :corp "Runner to trash installed cards")
+                 (continue-ability
+                   state :runner
+                   {:prompt (msg "Choose " (- (:advance-counter card) 4) " installed card"
+                                 (when (> (- (:advance-counter card) 4) 1) "s") " to trash")
+                    :choices {:req #(and (:installed %) (= (:side %) "Runner"))
+                              :max (min (- (:advance-counter card) 4) (count (all-installed state :runner)))}
+                    :effect (final-effect (trash-cards targets)
+                                          (system-msg (str "trashes " (join ", " (map :title targets))))
+                                          (gain :corp :bad-publicity 1))} card nil)
+                 (clear-wait-prompt state :corp))}
 
    "Project Atlas"
    {:effect (effect (add-counter card :agenda (max 0 (- (:advance-counter card) 3))))

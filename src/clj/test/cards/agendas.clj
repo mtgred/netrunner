@@ -588,6 +588,33 @@
       (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
       (is (= 20 (:credit (get-corp))) "Gained 15 credits"))))
 
+(deftest project-ares
+  "Project Ares - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Project Ares" 2)])
+              (default-runner [(qty "Clone Chip" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (take-credits state :runner)
+    (score-agenda state :corp (find-card "Project Ares" (:hand (get-corp))))
+    (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Project Ares" "New remote")
+    (let [ares (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (is (= 6 (:advance-counter (refresh ares)))
+      (core/score state :corp {:card (refresh ares)}))
+      (is (prompt-is-card? :runner ares) "Runner has Ares prompt to trash installed cards"))
+    (prompt-select :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
+    (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 1 (:bad-publicity (get-corp))))))
+
 (deftest project-beale
   "Project Beale - Extra agenda points for over-advancing"
   (do-game
