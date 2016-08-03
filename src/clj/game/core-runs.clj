@@ -52,30 +52,24 @@
                                          (trash state side current)))}
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
-       (do
-         (effect-completed state side eid nil))))))
+       (effect-completed state side eid nil)))))
 
-(defn resolve-steal-events
+(defn- resolve-steal-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
   ([state side card] (resolve-steal-events state side (make-eid state) card))
   ([state side eid card]
-   (let [cdef (card-def card)]
-     (if-let [access-effect (:access cdef)]
-       (when-completed (resolve-ability state (to-keyword (:side card)) access-effect card nil)
-                       (do (trigger-event state side :access card)
-                           (effect-completed state side eid card)))
-       (do (trigger-event state side :access card)
-           (effect-completed state side eid card))))))
+   (trigger-event state side :access card)
+   (effect-completed state side eid card)))
 
-(defn resolve-steal
+(defn- resolve-steal
   "Finish the stealing of an agenda."
   ([state side card] (resolve-steal state side (make-eid state) card))
   ([state side eid card]
    (let [cdef (card-def card)]
      (when-completed (resolve-steal-events state side card)
-                     (do (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
-                           (steal state :runner eid card)
-                           (effect-completed state side eid nil)))))))
+                     (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+                       (steal state :runner eid card)
+                       (effect-completed state side eid nil))))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -193,7 +187,16 @@
                c (assoc c :seen true)]
            (when-let [name (:title c)]
              (if (is-type? c "Agenda") ; accessing an agenda
-               (access-agenda state side eid c)
+               (if-let [access-effect (:access cdef)]
+                 ;; deal with access effects first. This is where Film Critic can be used to prevent these
+                 (continue-ability state :runner
+                                   {:delayed-completion true
+                                    :prompt (str "You must access " name)
+                                    :choices ["Access"]
+                                    :effect (req (when-completed
+                                                   (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                                   (access-agenda state side eid c)))} c nil)
+                 (access-agenda state side eid c))
                ;; Accessing a non-agenda
                (do (if-let [access-effect (:access cdef)]
                      (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)

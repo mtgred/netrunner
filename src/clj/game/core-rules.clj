@@ -343,7 +343,8 @@
              card (:card prompt)
              eid (:eid prompt)]
     (when card
-      (if (is-type? card "Agenda") ; trashing before the :access events actually fire; fire them manually
+      ;; trashing before the :access events actually fire; fire them manually
+      (if (is-type? card "Agenda")
         (when-completed (resolve-steal-events state side card)
                         (resolve-trash-no-cost state side card))
         (resolve-trash-no-cost state side card)))))
