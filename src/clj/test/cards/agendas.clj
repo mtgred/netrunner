@@ -553,6 +553,52 @@
       (is (= 9 (:credit (get-corp)))
           "Spent 1 credit to advance, gained 3 credits from Oaktown"))))
 
+(deftest personality-profiles
+  "Personality Profiles - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Personality Profiles" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1) (qty "Patron" 2)]))
+    (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
+    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Clone Chip")
+    (let [smc (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner smc 0)
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (is (= 2 (count (:discard (get-runner))))))
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+      (is (= 3 (count (:discard (get-runner))))))))
+
+(deftest personality-profiles-empty-hand
+  "Personality Profiles - Ensure effects still fire with an empty hand, #1840"
+  (do-game
+    (new-game (default-corp [(qty "Personality Profiles" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1)]))
+    (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
+    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Clone Chip")
+    (let [smc (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner smc 0)
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (let [cor (get-in @state [:runner :rig :program 0])]
+        (is (not (nil? cor)))
+        (is (= (:title cor) "Corroder"))
+        (is (= "Self-modifying Code" (:title (first (:discard (get-runner))))))))
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+      (let [smc (get-in @state [:runner :rig :program 1])]
+        (is (not (nil? smc)))
+        (is (= (:title smc) "Self-modifying Code"))
+        (is (= "Clone Chip" (:title (first (:discard (get-runner))))))))))
+
 (deftest philotic-entanglement
   "Philotic Entanglement - When scored, do 1 net damage for each agenda in the Runner's score area"
   (do-game

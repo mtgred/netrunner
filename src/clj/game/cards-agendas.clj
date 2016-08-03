@@ -452,10 +452,12 @@
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
    "Personality Profiles"
-   (let [pp {:msg "force the Runner to trash 1 card from their Grip at random"
+   (let [pp {:req (req (pos? (count (:hand runner))))
+             :msg "force the Runner to trash 1 card from their Grip at random"
              :effect (effect (trash (first (shuffle (:hand runner)))))}]
      {:events {:searched-stack pp
-               :runner-install (assoc pp :req (req (some #{:discard} (:previous-zone target))))}})
+               :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
+                                                        (pos? (count (:hand runner))))))}})
 
    "Philotic Entanglement"
    {:req (req (> (count (:scored runner)) 0))
