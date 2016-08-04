@@ -573,6 +573,22 @@
       (is (= 1 (:credit (get-corp))) "Spent 4 credits")
       (is (= 4 (:advance-counter (refresh pj))) "Junebug has 4 advancements"))))
 
+(deftest punitive-counterstrike
+  "Punitive Counterstrike - deal meat damage equal to printed agenda points"
+  (do-game
+    (new-game (default-corp [(qty "Global Food Initiative" 1) (qty "Punitive Counterstrike" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Global Food Initiative" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Runner scored 2 points")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Punitive Counterstrike")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
+
 (deftest reuse
   "Reuse - Gain 2 credits for each card trashed from HQ"
   (do-game

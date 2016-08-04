@@ -608,7 +608,8 @@
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
-            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
+            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
+                            (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")

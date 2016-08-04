@@ -41,15 +41,16 @@
          points (get-agenda-points state :runner c)]
      (when-completed
        (trigger-event-simult state :runner :agenda-stolen
-                             {:effect (req (when-let [current (first (get-in @state [:corp :current]))]
+                             {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains " points
+                                                                          " agenda point" (when (> points 1) "s")))
+                                           (swap! state update-in [:runner :register :stole-agenda]
+                                                  #(+ (or % 0) (:agendapoints c)))
+                                           (gain-agenda-point state :runner points)
+                                           (when-let [current (first (get-in @state [:corp :current]))]
                                              (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                              (trash state side current)))}
                              (ability-as-handler c (:stolen (card-def c))) c)
        (do
-         (system-msg state :runner (str "steals " (:title c) " and gains " points
-                                        " agenda point" (when (> points 1) "s")))
-         (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) points))
-         (gain-agenda-point state :runner points)
          (effect-completed state side eid nil))))))
 
 (defn resolve-steal-events
