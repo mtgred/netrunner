@@ -543,12 +543,14 @@
 
 (defn end-run
   "End this run, and set it as UNSUCCESSFUL"
-  [state side]
-  (let [server (first (get-in @state [:run :server]))]
-    (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-    (swap! state assoc-in [:run :unsuccessful] true)
-    (handle-end-run state side)
-    (trigger-event state side :unsuccessful-run)))
+  ([state side] (end-run state side (make-eid state)))
+  ([state side eid]
+   (let [run (:run @state)
+         server (first (get-in @state [:run :server]))]
+     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+     (swap! state assoc-in [:run :unsuccessful] true)
+     (handle-end-run state side)
+     (trigger-event-sync state side eid :unsuccessful-run run))))
 
 (defn jack-out-prevent
   [state side]
