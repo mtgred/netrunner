@@ -49,6 +49,23 @@
     (is (= 4 (core/hand-size state :runner)) "Runner handsize decreased by 1")
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
+(deftest another-day-another-paycheck
+  "Another Day, Another Paycheck"
+  (do-game
+    (new-game
+      (default-corp [(qty "Project Atlas" 2)])
+      (default-runner [(qty "Another Day, Another Paycheck" 1)]))
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Another Day, Another Paycheck")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 1)
+    ; 4 credits after trace, should gain 4
+    (is (= 8 (:credit (get-runner))) "Runner gained 8 credits")))
+
 (deftest apocalypse-hosting
   "Apocalypse - Ensure MU is correct and no duplicate cards in heap"
   (do-game

@@ -15,6 +15,14 @@
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
     :effect (effect (gain :click 3) (damage eid :brain 1 {:unpreventable true :card card}))}
 
+   "Another Day, Another Paycheck"
+   {:events {:agenda-stolen
+             {:trace {:base 0
+                      :msg (msg (str "Runner gains " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))
+                      :unsuccessful {:effect (effect (gain :runner :credit
+                                                           (+ (:agenda-point runner) (:agenda-point corp))))
+                                     :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
+
    "Apocalypse"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
