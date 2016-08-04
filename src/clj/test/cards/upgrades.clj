@@ -281,6 +281,29 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
+(deftest georgia-emelyov
+  "Georgia Emelyov"
+  (do-game
+    (new-game (default-corp [(qty "Georgia Emelyov" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Georgia Emelyov" "New remote")
+    (let [geo (get-content state :remote1 0)]
+      (core/rez state :corp geo)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-jack-out state)
+      (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
+      (card-ability state :corp (refresh geo) 0)
+      (prompt-choice :corp "Archives")
+      (let [geo (get-content state :archives 0)]
+        (is geo "Georgia moved to Archives")
+        (run-on state "Archives")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner took 1 net damage")
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner did not take  damage")))))
+
 (deftest hokusai-grid
   "Hokusai Grid - Do 1 net damage when run successful on its server"
   (do-game
