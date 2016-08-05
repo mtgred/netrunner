@@ -168,7 +168,7 @@
            (if-let [cost-str (pay state side card end-cost)]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
-                             (dissoc :seen))]
+                             (dissoc :seen :disabled))]
                    (when (= server "New remote")
                      (trigger-event state side :server-created card))
                    (when (not host-card)
