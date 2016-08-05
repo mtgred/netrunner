@@ -118,19 +118,19 @@
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain :corp :bad-publicity 1))}}
 
-   "Corporate War"
-   {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
-    :effect (req (if (> (:credit corp) 6)
-                   (gain state :corp :credit 7) (lose state :corp :credit :all)))}
-
    "Corporate Sales Team"
    (let [e {:msg "gain 1 [Credit]"  :counter-cost [:credit 1]
             :effect (req (gain state :corp :credit 1)
                          (when (zero? (:credit (:counter card)))
                            (unregister-events state :corp card)))}]
-    {:effect (effect (add-counter card :credit 10))
-     :events {:runner-turn-begins e
-              :corp-turn-begins   e}})
+     {:effect (effect (add-counter card :credit 10))
+      :events {:runner-turn-begins e
+               :corp-turn-begins e}})
+
+   "Corporate War"
+   {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
+    :effect (req (if (> (:credit corp) 6)
+                   (gain state :corp :credit 7) (lose state :corp :credit :all)))}
 
    "Crisis Management"
    (let [ability {:req (req tagged)
@@ -143,36 +143,36 @@
       :abilities [ability]})
 
    "Dedicated Neural Net"
-     (letfn [(access-hq [cards]
-               {:prompt "Select a card to access."
-                :player :runner
-                :choices [(str "Card from HQ")]
-                :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                             (when-completed
-                               (handle-access state side [(first cards)])
-                               (do (if (< 1 (count cards))
-                                     (continue-ability state side (access-hq (next cards)) card nil)
-                                     (effect-completed state side eid card)))))})]
-       (let [psi-effect
-             {:delayed-completion true
-              :mandatory true
-              :effect (req (if (not-empty (:hand corp))
-                             (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
-                                 (continue-ability
-                                   state :corp
-                                   {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
-                                    :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
-                                              :max (req (access-count state side :hq-access))}
-                                    :effect (effect (clear-wait-prompt :runner)
-                                                    (continue-ability :runner (access-hq (shuffle targets)) card nil))}
-                                   card nil))
-                             (effect-completed state side eid card)))}]
-         {:events {:successful-run {:psi {:req (req (= target :hq))
-                                          :once :per-turn
-                                          :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
-                                                                     (swap! state update-in [:run :run-effect]
-                                                                            #(assoc % :replace-access psi-effect)))
-                                                                   (effect-completed state side eid))}}}}}))
+   (letfn [(access-hq [cards]
+             {:prompt "Select a card to access."
+              :player :runner
+              :choices [(str "Card from HQ")]
+              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
+                           (when-completed
+                             (handle-access state side [(first cards)])
+                             (do (if (< 1 (count cards))
+                                   (continue-ability state side (access-hq (next cards)) card nil)
+                                   (effect-completed state side eid card)))))})]
+     (let [psi-effect
+           {:delayed-completion true
+            :mandatory true
+            :effect (req (if (not-empty (:hand corp))
+                           (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
+                               (continue-ability
+                                 state :corp
+                                 {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
+                                  :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
+                                            :max (req (access-count state side :hq-access))}
+                                  :effect (effect (clear-wait-prompt :runner)
+                                                  (continue-ability :runner (access-hq (shuffle targets)) card nil))}
+                                 card nil))
+                           (effect-completed state side eid card)))}]
+       {:events {:successful-run {:psi {:req (req (= target :hq))
+                                        :once :per-turn
+                                        :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                                   (swap! state update-in [:run :run-effect]
+                                                                          #(assoc % :replace-access psi-effect)))
+                                                                 (effect-completed state side eid))}}}}}))
 
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
@@ -242,6 +242,7 @@
                                                               (rezzed? %)) (:ices server)))))
                                   0 (flatten (seq (:servers corp)))))
                     (update-all-ice))
+    :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
@@ -370,6 +371,7 @@
 
    "Improved Tracers"
    {:effect (req (update-all-ice state side))
+    :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
                                 :effect (effect (ice-strength-bonus 1 target))}
              :pre-init-trace {:req (req (has-subtype? target "Tracer"))
@@ -535,7 +537,9 @@
 
    "Project Wotan"
    {:effect (effect (add-counter card :agenda 3))
-    :abilities [{:counter-cost [:agenda 1]
+    :abilities [{:req (req (and (ice? current-ice) (rezzed? current-ice)
+                                (has-subtype? current-ice "Bioroid")))
+                 :counter-cost [:agenda 1]
                  :msg "add an 'End the run' subroutine to the approached ICE"}]}
 
    "Puppet Master"
@@ -558,21 +562,41 @@
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
-   {:effect (req (doseq [c (filter #(is-type? % "Asset")
+   {:msg "make all assets gain Advertisement"
+    :effect (req (doseq [c (filter #(is-type? % "Asset")
                                    (concat (all-installed state :corp)
                                            (:deck corp)
                                            (:hand corp)
                                            (:discard corp)))]
                    (update! state side (assoc c :subtype
                                               (->> (vec (.split (or (:subtype c) "") " - "))
-                                                   (cons "Advertisement")
-                                                   distinct
+                                                   (cons "Advertisement") ;append ad even if it is already an ad
                                                    (join " - "))))))
-    :msg "make all assets gain Advertisement"}
+    :swapped {:msg "make all assets gain Advertisement"
+              :effect (req (doseq [c (filter #(is-type? % "Asset")
+                                             (concat (all-installed state :corp)
+                                                     (:deck corp)
+                                                     (:hand corp)
+                                                     (:discard corp)))]
+                             (update! state side (assoc c :subtype
+                                                          (->> (vec (.split (or (:subtype c) "") " - "))
+                                                               (cons "Advertisement")
+                                                               (join " - "))))))}
+    :leave-play (req (doseq [c (filter #(is-type? % "Asset")
+                                       (concat (all-installed state :corp)
+                                               (:deck corp)
+                                               (:hand corp)
+                                               (:discard corp)))]
+                       (update! state side (assoc c :subtype
+                                                    (->> (vec (.split (or (:subtype c) "") " - "))
+                                                         (drop 1) ;so that all actual ads remain ads if agenda leaves play
+                                                         (join " - "))))))}
 
    "Remote Data Farm"
    {:msg "increase their maximum hand size by 2"
     :effect (effect (gain :hand-size-modification 2))
+    :swapped {:msg "increase their maximum hand size by 2"
+              :effect (effect (gain :hand-size-modification 2))}
     :leave-play (effect (lose :hand-size-modification 2))}
 
    "Research Grant"
@@ -587,12 +611,16 @@
                  :trace {:base 2 :msg "give the Runner 1 tag" :effect (effect (tag-runner :runner 1))}}]}
 
    "Self-Destruct Chips"
-   {:effect (effect (lose :runner :hand-size-modification 1))
+   {:msg "decrease the Runner's maximum hand size by 1"
+    :effect (effect (lose :runner :hand-size-modification 1))
+    :swapped {:msg "decrease the Runner's maximum hand size by 1"
+              :effect (effect (lose :runner :hand-size-modification 1))}
     :leave-play (effect (gain :runner :hand-size-modification 1))}
 
    "Sentinel Defense Program"
-   {:events {:damage {:req (req (= target :brain)) :msg "to do 1 net damage"
-                      :effect (effect (damage eid :net 1 {:card card})) }}}
+   {:events {:pre-resolve-damage {:req (req (and (= target :brain) (> (last targets) 0)))
+                                  :msg "to do 1 net damage"
+                                  :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Superior Cyberwalls"
    {:msg (msg "gain " (reduce (fn [c server]
@@ -606,6 +634,7 @@
                                                                (rezzed? %)) (:ices server)))))
                                    0 (flatten (seq (:servers corp)))))
                      (update-all-ice state side)))
+    :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has? target :subtype "Barrier"))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 

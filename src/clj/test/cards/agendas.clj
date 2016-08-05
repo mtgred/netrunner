@@ -697,6 +697,54 @@
     (prompt-choice :corp "Done")
     (is (empty? (:prompt (get-runner))) "Runner's waiting prompt resolved")))
 
+(deftest rebranding-team
+  "Rebranding Team - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Rebranding Team" 1) (qty "Launch Campaign" 1) (qty "City Surveillance" 1)
+                             (qty "Jackson Howard" 1) (qty "Museum of History" 1)])
+              (default-runner))
+    (score-agenda state :corp (find-card "Rebranding Team" (:hand (get-corp))))
+    (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Executive"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))
+    (core/move state :corp (find-card "Rebranding Team" (:scored (get-corp))) :deck)
+    (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
+    (is (not (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement")))
+    (is (not (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement")))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Executive"))
+    (is (not (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
+
+(deftest sentinel-defense-program
+  "Sentinel Defense Program - Doesn't fire if brain damage is prevented"
+  (do-game
+    (new-game (default-corp [(qty "Sentinel Defense Program" 1) (qty "Viktor 1.0" 1)])
+              (default-runner [(qty "Feedback Filter" 1) (qty "Sure Gamble" 3)]))
+    (score-agenda state :corp (find-card "Sentinel Defense Program" (:hand (get-corp))))
+    (play-from-hand state :corp "Viktor 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (let [viktor (get-ice state :hq 0)
+          ff (get-in @state [:runner :rig :hardware 0])]
+      (run-on state "HQ")
+      (core/rez state :corp viktor)
+      (card-ability state :corp viktor 0)
+      (prompt-choice :runner "Done") ;don't prevent the brain damage
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 1 (:brain-damage (get-runner))))
+      (prompt-choice :runner "Done") ;so we take the net, but don't prevent it either
+      (is (= 2 (count (:discard (get-runner)))))
+      (card-ability state :corp viktor 0)
+      (card-ability state :runner ff 1) ;prevent the brain damage this time
+      (prompt-choice :runner "Done")
+      (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
+      (is (= 1 (:brain-damage (get-runner)))))))
+
 (deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"
   (do-game
