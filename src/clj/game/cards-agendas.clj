@@ -397,6 +397,10 @@
    "Mandatory Upgrades"
    {:msg "gain an additional [Click] per turn"
     :effect (effect (gain :click 1 :click-per-turn 1))
+    :swapped {:msg "gain an additional [Click] per turn"
+              :effect (req (when (= (:active-player @state) :corp)
+                             (gain state :corp :click 1))
+                           (gain state :corp :click-per-turn 1))}
     :leave-play (req (lose state :corp :click 1 :click-per-turn 1))}
 
    "Market Research"

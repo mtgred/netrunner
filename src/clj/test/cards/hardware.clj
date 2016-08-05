@@ -469,23 +469,29 @@
         (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
 
 (deftest turntable-mandatory-upgrades
-  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn"
+  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
+             - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades"
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Project Vitruvius" 1)])
+    (new-game (default-corp [(qty "Mandatory Upgrades" 2) (qty "Project Vitruvius" 1)])
               (default-runner [(qty "Turntable" 1)]))
-    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
-    (let [manups (get-content state :remote1 0)]
-      (score-agenda state :corp manups)
-      (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Turntable")
-      (let [tt (get-in @state [:runner :rig :hardware 0])]
-        (run-empty-server state "HQ")
-        (prompt-choice :runner "Steal")
-        (is (prompt-is-card? :runner tt))
-        (prompt-choice :runner "Yes")
-        (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
-        (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")))))
+    (score-agenda state :corp (find-card "Mandatory Upgrades" (:hand (get-corp))))
+    (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Turntable")
+    (let [tt (get-in @state [:runner :rig :hardware 0])]
+      ;steal Project Vitruvius and swap for Mandatory Upgrades
+      (core/steal state :runner (find-card "Project Vitruvius" (:hand (get-corp))))
+      (is (prompt-is-card? :runner tt))
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
+      (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
+      ;steal second Mandatory Upgrades and swap for Project Vitruvius
+      (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
+      (is (prompt-is-card? :runner tt))
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
+      (is (= 0 (:click (get-corp))) "Corp doesn't gain a click on Runner's turn")
+      (is (= 4 (:click-per-turn (get-corp)))))))
 
 (deftest vigil
   "Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size"
