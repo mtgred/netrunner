@@ -149,6 +149,21 @@
                                     :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
                     card nil)))}
 
+   "Data Breach"
+   {:delayed-completion true
+    :effect (req (register-events state side (:events (card-def card))
+                                  (assoc card :zone '(:discard)))
+                 (when-completed (game.core/run state side :rd nil card)
+                                 (let [card (get-card state (assoc card :zone '(:discard)))]
+                                   (unregister-events state side card)
+                                   (if (:run-again card)
+                                     (game.core/run state side eid :rd nil card)
+                                     (effect-completed state side eid))
+                                   (update! state side (dissoc card :run-again)))))
+    :events {:successful-run-ends {:optional {:req (req (= :rd target))
+                                              :prompt "Make another run on R&D?"
+                                              :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
+
    "Day Job"
    {:additional-cost [:click 3]
     :msg "gain 10 [Credits]" :effect (effect (gain :credit 10))}

@@ -242,6 +242,29 @@
       (take-credits state :corp)
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
+(deftest data-breach
+  "Data Breach"
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Data Breach" 3)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Breach")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
+    (is (not (:run @state)) "Run is over")
+    (play-from-hand state :runner "Data Breach")
+    (run-jack-out state)
+    (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+
 (deftest deuces-wild
   "Deuces Wild"
   (do-game
@@ -934,8 +957,7 @@
     (run-on state :remote1)
     (run-continue state)
     (is (empty? (:prompt (get-corp))) "Caprice prompt is not showing")
-    (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
-    (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
+    (run-jack-out state)
 
     ;; Trashable execs
     (run-empty-server state :remote2)
@@ -950,7 +972,9 @@
 
     (core/derez state :corp (get-content state :remote4 0))
     (core/rez state :corp (get-content state :remote4 0))
-    (is (= 0 (:bad-publicity (get-corp))) "Corp has 0 bad publicity")))
+    (is (= 0 (:bad-publicity (get-corp))) "Corp has 0 bad publicity")
+    (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
+    (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
 
 (deftest singularity
   "Singularity - Run a remote; if successful, trash all contents at no cost"
