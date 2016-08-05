@@ -663,6 +663,23 @@
     (prompt-choice :runner "Done")
     (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
 
+(deftest subcontract-terminal
+  "Subcontract - interaction with Terminal operations"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
+      (default-runner))
+    (core/gain state :runner :tag 1)
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Hard-Hitting News" (:hand (get-corp))))
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
+    (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
+
 (deftest shipment-from-sansan
   "Shipment from SanSan - placing advancements"
   (do-game
