@@ -265,12 +265,12 @@
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- resolve-trash-end
-  [state side eid {:keys [zone type] :as card}
+  [state side eid {:keys [zone type disabled] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (when (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect))
+      (when (and (not disabled) (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect)))
         (resolve-ability state side trash-effect moved-card (cons cause targets))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))

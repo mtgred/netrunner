@@ -63,8 +63,9 @@
   [state side]
   (if (= side :runner)
     (cons (get-in @state [:runner :identity]) (all-installed state side))
-    (cons (get-in @state [:corp :identity]) (concat (all-installed state side)
-                                                    (get-in @state [:corp :scored])))))
+    (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
+                                                    (concat (all-installed state side)
+                                                            (get-in @state [:corp :scored]))))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
