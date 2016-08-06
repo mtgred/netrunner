@@ -90,10 +90,8 @@ requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
 
 sendGameResponse = (game, response) ->
-  diffs = response.runnerdiff
 
   for player in game.players
-    socket = io.sockets.connected[player.id]
     if player.side is "Corp"
       # The response will either have a diff or a state. we don't actually send both,
       # whichever is null will not be sent over the socket.
