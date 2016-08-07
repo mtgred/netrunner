@@ -625,7 +625,7 @@
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (empty? (get-in @state [:runner :prompt]))
+  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
 
