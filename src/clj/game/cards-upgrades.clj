@@ -112,9 +112,15 @@
                                            (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}
 
    "Cyberdex Virus Suite"
-   {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                        :yes-ability {:msg (msg "purge viruses")
-                                      :effect (effect (purge))}}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Cyberdex Virus Suite")
+                             (continue-ability
+                               {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
+                                           :yes-ability {:msg (msg "purge viruses")
+                                                         :effect (effect (clear-wait-prompt :runner)
+                                                                         (purge))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}
     :abilities [{:label "[Trash]: Purge virus counters"
                  :msg "purge viruses" :effect (effect (trash card) (purge))}]}
 
