@@ -475,7 +475,7 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown server-target icon new]
+                         side rec-counter facedown server-target icon new disabled]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -524,26 +524,27 @@
                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
                      label])
                   servers)]))
-        (let [actions (action-list cursor)]
-          (when (or (> (+ (count actions) (count abilities)) 1)
-                    (some #{"derez" "advance"} actions)
-                    (= type "ICE"))
-            [:div.blue-shade.panel.abilities {:ref "abilities"}
-             (map (fn [action]
-                    [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
-                  actions)
-             (map-indexed
-               (fn [i ab]
-                 (if (:auto-pump ab)
-                   [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
-                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
-                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                  :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                             (dec i) i)})
-                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-               abilities)]))
-        (when (#{"servers" "onhost"} (first zone))
+        (when-not disabled
+          (let [actions (action-list cursor)]
+            (when (or (> (+ (count actions) (count abilities)) 1)
+                      (some #{"derez" "advance"} actions)
+                      (= type "ICE"))
+              [:div.blue-shade.panel.abilities {:ref "abilities"}
+               (map (fn [action]
+                      [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
+                    actions)
+               (map-indexed
+                 (fn [i ab]
+                   (if (:auto-pump ab)
+                     [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                            :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                     [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                    :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                               (dec i) i)})
+                                           (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                            :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+                 abilities)])))
+        (when (and (not disabled) (#{"servers" "onhost"} (first zone)))
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}

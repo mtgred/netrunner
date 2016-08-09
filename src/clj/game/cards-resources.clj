@@ -381,7 +381,9 @@
                                 (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
-                                (host state side card (move state side agenda :play-area))
+                                (let [agenda (move state side agenda :play-area)
+                                      agenda (host state side card agenda)]
+                                  (disable-card state side agenda))
                                 (close-access-prompt state side)
                                 (effect-completed state side eid nil)
                                 (when-not (:run @state)
@@ -390,6 +392,7 @@
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
+                                (enable-card state side c)
                                 (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                  :msg (msg (let [c (first (:hosted card))]
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
