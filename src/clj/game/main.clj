@@ -192,7 +192,7 @@
                                                            :corpdiff   corp-diff
                                                            :spectdiff  spect-diff
                                                            :gameid     gameid}))))))
-                   (.send socket (generate-string "error"))))
+                   (.send socket (generate-string {:action action :state old-state :gameid gameid}))))
                (.send socket (generate-string "error"))))
            (catch Exception e
              (try (do (println "Inner Error " action command (get-in args [:card :title]) e)

@@ -121,7 +121,7 @@ requester.on 'message', (data) ->
       corpAgenda: response.state.corp["agenda-point"]
     }
     db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
-      throw err if er
+      throw err if err
   else
     if (games[response.gameid])
       sendGameResponse(games[response.gameid], response)
