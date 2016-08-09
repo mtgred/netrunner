@@ -102,7 +102,8 @@
            (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
     (swap! state update-in [:runner :scored]
            (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
-                            (dissoc scored :abilities :events))))
+                            (if-not (card-flag? scored :has-abilities-when-stolen true)
+                              (dissoc scored :abilities :events) scored))))
     ;; Update agenda points
     (gain-agenda-point state :runner runner-ap-change)
     (gain-agenda-point state :corp corp-ap-change)
@@ -112,7 +113,8 @@
             new-scored (merge new-scored {:abilities abilities})]
         (update! state :corp new-scored)
         (when-let [events (:events (card-def new-scored))]
-          (register-events state side events new-scored))))
+          (register-events state side events new-scored))
+        (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil)))
     (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
       (deactivate state :corp new-stolen))))
 
