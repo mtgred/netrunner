@@ -1,5 +1,17 @@
 (in-ns 'test.core)
 
+(deftest corp-rez-unique
+  "Rezzing a second copy of a unique Corp card"
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Caprice Nisei" "HQ")
+    (play-from-hand state :corp "Caprice Nisei" "R&D")
+    (core/rez state :corp (get-content state :hq 0))
+    (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
+    (core/rez state :corp (get-content state :rd 0))
+    (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
+
 (deftest runner-install-program
   "runner-install - Program; ensure costs are paid"
   (do-game
@@ -176,11 +188,12 @@
       (core/rez state :corp wp)
       (card-ability state :corp wp 0)
       (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
-      (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
-      (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
       (let [dh (first (:hosted (refresh wp)))]
+        (is (:rezzed dh) "Director Haas was rezzed")
+        (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
+        (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
         (prompt-select :runner dh)
         (prompt-choice :runner "Yes") ; trash Director Haas
         (prompt-choice :runner "Done")
@@ -288,8 +301,7 @@
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
-;; Broken by counter re-write
-#_(deftest counter-manipulation-commands
+(deftest counter-manipulation-commands
   "Test interactions of various cards with /counter and /adv-counter commands"
   (do-game
     (new-game (default-corp [(qty "Adonis Campaign" 1)
@@ -331,7 +343,7 @@
     
     ;; oops, forgot to rez 2nd public support before start of turn,
     ;; let me fix it with a /command
-    (core/command-counter state :corp 2)
+    (core/command-counter state :corp ["power" 2])
     (prompt-select :corp (refresh publics2))
     (is (= 2 (get-counters (refresh publics2) :power)))
     ;; Oaktown checks and manipulation
@@ -352,15 +364,20 @@
     
     ;; Turn 2 Runner
     ;; cheating with publics1 going too fast. Why? because I can
-    (core/command-counter state :corp 1)
+    (is (= 2 (get-counters (refresh publics1) :power)))
+    (core/command-counter state :corp ["power" 1])
     (prompt-select :corp (refresh publics1))
-    (core/command-counter state :corp 3) ; let's adjust Adonis while at it
+    (is (= 1 (get-counters (refresh publics1) :power)))
+    ; let's adjust Adonis while at it
+    (is (= 9 (get-counters (refresh adonis) :credit)))
+    (core/command-counter state :corp ["credit" 3])
     (prompt-select :corp (refresh adonis))
+    (is (= 3 (get-counters (refresh adonis) :credit)))
     (take-credits state :runner)
     
     ;; Turn 3 Corp
     (is (= 3 (:agenda-point (get-corp)))) ; cheated PS1 should get scored
-    (is (= 9 (:credit (get-corp))) "twice Adonis money and money turn")
+    (is (= 9 (:credit (get-corp))))
     (is (= (:zone (refresh publics1) :scored)))
     (is (= (:zone (refresh publics2)) [:servers :remote3 :content]))
     (is (= (:zone (refresh adonis) :discard)))
@@ -368,28 +385,31 @@
     
     ;; Turn 3 Runner
     (take-credits state :runner)
+
     ;; Turn 4 Corp
     (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
     (is (= (:zone (refresh publics2) :scored)))
-    (is (= 12 (:credit (get-corp))) "twice Adonis money and 2xmoney turn, no third Adonis"))))
+    (is (= 12 (:credit (get-corp)))))))
 
 (deftest run-bad-publicity-credits
   "Should not lose BP credits until a run is completely over. Issue #1721."
   (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
+    (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
               (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
     (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
-    (starting-hand state :corp ["PAD Campaign" "PAD Campaign"])
-    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
+    (play-from-hand state :corp "Cyberdex Virus Suite" "R&D")
+    (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
     (take-credits state :corp)
     (run-empty-server state :remote1)
+    (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
-    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")
-    (core/gain state :runner :credit 3)
+    (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
+    (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
-    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")
-    (core/gain state :runner :credit 3)
+    (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
+    (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
-    (is (= 2 (:credit (get-runner))) "1 BP credit spent to trash PAD Campaign")))
+    (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))11111111

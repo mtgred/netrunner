@@ -38,6 +38,23 @@
     :effect (effect (gain :corp :click-per-turn 1))
     :leave-play (effect (lose :corp :click-per-turn 1))}
 
+   "Algo Trading"
+   {:flags {:runner-phase-12 (req (> (:credit runner) 0))}
+    :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
+                 :prompt "Choose how many [Credit] to move" :once :per-turn
+                 :choices {:number (req (min (:credit runner) 3))}
+                 :effect (effect (lose :credit target)
+                                 (add-counter card :credit target))
+                 :msg (msg "move " target " [Credit] to Algo Trading")}
+                {:label "Take all credits from Algo Trading"
+                 :cost [:credit 2]
+                 :msg (msg "trash it and gain " (get-in card [:counter :credit] 0) " [Credits]")
+                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                                 (trash card {:cause :ability-cost}))}]
+    :events {:runner-turn-begins {:req (req (>= (get-in card [:counter :credit] 0) 6))
+                                  :effect (effect (add-counter card :credit 2)
+                                                  (system-msg (str "adds 2 [Credit] to Algo Trading")))}}}
+
    "Always Be Running"
    {:abilities [{:once :per-turn
                  :cost [:click 2]
@@ -352,6 +369,7 @@
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+                             :req (req (installed? card))
                              :effect (effect (as-agenda :runner card 0))}}}
 
    "Fester"

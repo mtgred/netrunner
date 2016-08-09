@@ -381,7 +381,7 @@
                  :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
-                 :msg (msg "install and host " (:title target))
+                 :msg "install and host an asset or agenda"
                  :effect (req (corp-install state side target card))}]}
 
    "Genetics Pavilion"
@@ -668,7 +668,8 @@
 
    "News Team"
    {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
-             :effect (effect (resolve-ability
+             :delayed-completion true
+             :effect (effect (continue-ability
                                {:player :runner
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
@@ -771,6 +772,7 @@
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
+                               :delayed-completion true
                                :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
@@ -834,7 +836,8 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (update-all-ice ref side))))))
+                                  (update-all-ice ref side)))))
+                 (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (and (ice? target)
                                                (>= (:credit corp) 10)))
                                 :effect (effect (ice-strength-bonus (quot (:credit corp) 5) target))}}

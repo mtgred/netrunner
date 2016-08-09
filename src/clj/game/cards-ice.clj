@@ -120,7 +120,7 @@
    :choices {:max 2
              :req grail-in-hand}
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-         (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+          (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
   "Ability for resolving a subroutine on a Grail ICE in HQ."
@@ -149,8 +149,8 @@
 ;;; For Morph ICE
 (defn morph [state side card new old]
   (update! state side (assoc card :subtype
-                             (->> (remove #(= old %) (.split (:subtype card) " - "))
-                                  vec (concat [new]) distinct (join " - "))))
+                                  (->> (remove #(= old %) (.split (:subtype card) " - "))
+                                       vec (concat [new]) distinct (join " - "))))
   (update-ice-strength state side card))
 
 (defn morph-effect
@@ -180,7 +180,13 @@
 
 ;;;; Card definitions
 (def cards-ice
-  {"Archangel"
+  {"Aiki"
+   {:subroutines [(do-psi {:label "Runner draws 2 cards"
+                           :msg "make the Runner draw 2 cards"
+                           :effect (effect (draw :runner 2))})
+                  (do-net-damage 1)]}
+
+   "Archangel"
    {:access
     {:req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
@@ -256,7 +262,7 @@
                                      {:successful-run {:effect (effect (lose :runner :tag 1))
                                                        :msg "make the Runner lose 1 tag"}
                                       :run-ends {:effect (effect (unregister-events card))}}
-                                    card))}]
+                                     card))}]
     :events {:successful-run nil :run-ends nil}}
 
    "Bastion"
@@ -280,22 +286,22 @@
 
    "Bullfrog"
    {:subroutines [(do-psi {:label "Move Bullfrog to another server"
-                         :player :corp
-                         :prompt "Choose a server"
-                         :choices (req servers)
-                         :msg (msg "move it to the outermost position of " target)
-                         :effect (req (let [dest (server->zone state target)]
-                                        (swap! state update-in [:run]
-                                               #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                       :server (rest dest))))
-                                      (move state side card
-                                            (conj (server->zone state target) :ices)))})]}
+                           :player :corp
+                           :prompt "Choose a server"
+                           :choices (req servers)
+                           :msg (msg "move it to the outermost position of " target)
+                           :effect (req (let [dest (server->zone state target)]
+                                          (swap! state update-in [:run]
+                                                 #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                           :server (rest dest))))
+                                        (move state side card
+                                              (conj (server->zone state target) :ices)))})]}
 
    "Burke Bugs"
    {:subroutines [(trace-ability 0 (assoc trash-program :not-distinct true
-                                          :player :runner
-                                          :msg "force the Runner to trash a program"
-                                          :label "Force the Runner to trash a program"))]}
+                                                        :player :runner
+                                                        :msg "force the Runner to trash a program"
+                                                        :label "Force the Runner to trash a program"))]}
 
    "Caduceus"
    {:subroutines [(trace-ability 3 (gain-credits 3))
@@ -407,25 +413,25 @@
                                                               '() (count (remove-once #(not= % target) cards))
                                                               (remove-once #(not= % target) cards)) card nil)))})]
      {:subroutines [(trace-ability 2 {:delayed-completion true
-                                    :label "Look at the top of Stack"
-                                    :msg "look at top X cards of Stack"
-                                    :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
-                                                 (let [c (- target (second targets))
-                                                       from (take c (:deck runner))]
-                                                   (system-msg state :corp
-                                                               (str "looks at the top " c " cards of Stack"))
-                                                   (if (< 1 c)
-                                                     (continue-ability state side (dh-trash from) card nil)
-                                                     (do (system-msg state :corp (str "trashes " (:title (first from))))
-                                                         (trash state side (first from) {:unpreventable true})
-                                                         (clear-wait-prompt state :runner)
-                                                         (effect-completed state side eid card)))))})]})
+                                      :label "Look at the top of Stack"
+                                      :msg "look at top X cards of Stack"
+                                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
+                                                   (let [c (- target (second targets))
+                                                         from (take c (:deck runner))]
+                                                     (system-msg state :corp
+                                                                 (str "looks at the top " c " cards of Stack"))
+                                                     (if (< 1 c)
+                                                       (continue-ability state side (dh-trash from) card nil)
+                                                       (do (system-msg state :corp (str "trashes " (:title (first from))))
+                                                           (trash state side (first from) {:unpreventable true})
+                                                           (clear-wait-prompt state :runner)
+                                                           (effect-completed state side eid card)))))})]})
 
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
                    :effect (req (damage state :runner eid :net 1 {:card card})
                                 (when current-ice
-                                 (no-action state side nil)
+                                  (no-action state side nil)
                                   (continue state side nil))
                                 (trash state side card))}]}
 
@@ -497,6 +503,18 @@
                                       (system-msg state side "pays 1 [Credits]"))
                                   (resolve-ability state :runner trash-installed card nil)))}]}
 
+   "Fairchild 2.0"
+   {:subroutines [{:label "Force the Runner to pay 2 [Credits] or trash an installed card"
+                   :msg "force the Runner to pay 2 [Credits] or trash an installed card"
+                   :player :runner
+                   :prompt "Choose one"
+                   :choices ["Pay 2 [Credits]" "Trash an installed card"]
+                   :effect (req (if (= target "Pay 2 [Credits]")
+                                  (do (pay state side card :credit 2)
+                                      (system-msg state side "pays 2 [Credits]"))
+                                  (resolve-ability state :runner trash-installed card nil)))}
+                  (do-brain-damage 1)]}
+
    "Fenris"
    {:effect take-bad-pub
     :subroutines [(do-brain-damage 1)
@@ -510,16 +528,18 @@
    "Flare"
    {:subroutines [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
                                     :msg "trash 1 hardware, do 2 meat damage, and end the run"
-                                    :effect (effect (resolve-ability
-                                                     {:prompt "Choose a piece of hardware to trash"
-                                                      :label "Trash a piece of hardware"
-                                                      :msg (msg "trash " (:title target))
-                                                      :choices {:req #(is-type? % "Hardware")}
-                                                      :effect (effect (trash target {:cause :subroutine}))}
-                                                     card nil)
-                                                    (damage eid :meat 2 {:unpreventable true
-                                                                     :card card})
-                                                    (end-run))})]}
+                                    :delayed-completion true
+                                    :effect (effect (continue-ability
+                                                      {:prompt "Choose a piece of hardware to trash"
+                                                       :label "Trash a piece of hardware"
+                                                       :msg (msg "trash " (:title target))
+                                                       :choices {:req #(is-type? % "Hardware")}
+                                                       :effect (req (when-completed
+                                                                      (trash state side target {:cause :subroutine})
+                                                                      (do (damage state side eid :meat 2 {:unpreventable true
+                                                                                                          :card card})
+                                                                          (end-run state side))))}
+                                                      card nil))})]}
 
    "Galahad"
    (grail-ice end-the-run)
@@ -569,7 +589,7 @@
                                                       (trash state :runner c))
                                                     (system-msg state :runner
                                                                 (str "trashes " (join ", " (map :title targets)))))}
-                                     card nil))))}]}
+                                      card nil))))}]}
 
    "Himitsu-Bako"
    {:abilities {:msg "add it to HQ"
@@ -624,7 +644,7 @@
 
    "Hudson 1.0"
    {:subroutines [{:msg "prevent the Runner from accessing more than 1 card during this run"
-                 :effect (effect (max-access 1))}]
+                   :effect (effect (max-access 1))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Hunter"
@@ -734,16 +754,16 @@
     :effect (req (let [magnet card]
                    (continue-ability
                      state side
-                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                       (remove-once #(not= (:cid %) (:cid magnet)) (all-installed state corp))))
-                       :prompt "Select a Program to host on Magnet"
-                       :choices {:req #(and (card-is? % :type "Program")
-                                            (ice? (:host %))
-                                            (not= (:cid (:host %)) (:cid magnet)))}
-                       :effect (req (let [hosted (host state side card target)]
-                                      (unregister-events state side hosted)
-                                      (update! state side (dissoc hosted :abilities))))}
-                      card nil)))
+                     {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                      (remove-once #(not= (:cid %) (:cid magnet)) (all-installed state corp))))
+                      :prompt "Select a Program to host on Magnet"
+                      :choices {:req #(and (card-is? % :type "Program")
+                                           (ice? (:host %))
+                                           (not= (:cid (:host %)) (:cid magnet)))}
+                      :effect (req (let [hosted (host state side card target)]
+                                     (unregister-events state side hosted)
+                                     (update! state side (dissoc hosted :abilities))))}
+                     card nil)))
     :subroutines [end-the-run]}
 
    "Mamba"
@@ -877,7 +897,7 @@
                    :effect (effect (register-events
                                      {:pre-ice-strength {:effect (effect (ice-strength-bonus 3 target))}
                                       :run-ends {:effect (effect (unregister-events card))}}
-                                    card)
+                                     card)
                                    (update-all-ice))}]
     :events {:pre-ice-strength nil :run-ends nil}}
 
@@ -960,7 +980,7 @@
                                                                                  (count from) from) card nil)
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid card)))))}
-                 {:label "Force the Runner to access the top card of R&D"
+                  {:label "Force the Runner to access the top card of R&D"
                    :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
                                   (system-msg state :runner (str "accesses " (:title c)))
                                   (handle-access state side [c])))}]}
@@ -996,10 +1016,10 @@
 
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
-                 :msg "make the Runner continue the run on Archives"
-                 :effect (req (swap! state update-in [:run]
-                                     #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                               :server [:archives])))}]}
+                   :msg "make the Runner continue the run on Archives"
+                   :effect (req (swap! state update-in [:run]
+                                       #(assoc % :position (count (get-in corp [:servers :archives :ices]))
+                                                 :server [:archives])))}]}
 
    "Swarm"
    {:effect take-bad-pub
@@ -1134,7 +1154,7 @@
                                                          state side
                                                          {:msg (msg "trash " (:title c))
                                                           :effect (effect (trash c))}
-                                                        card nil)))))})]}
+                                                         card nil)))))})]}
 
    "Wall of Static"
    {:subroutines [end-the-run]}

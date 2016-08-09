@@ -5,6 +5,80 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest twenty-four-seven-news-cycle-breaking-news
+  "24/7 News Cycle - Breaking News interaction"
+  (do-game
+    (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (let [ag1 (get-content state :remote1 0)
+          ag2 (get-content state :remote2 0)]
+      (score-agenda state :corp ag1)
+      (score-agenda state :corp ag2)
+      (take-credits state :corp)
+      (is (= 0 (:tag (get-runner)))) ; tags cleared
+      (take-credits state :runner)
+      (play-from-hand state :corp "24/7 News Cycle")
+      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
+      (take-credits state :corp 2)
+      (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
+
+(deftest twenty-four-seven-news-cycle-posted-bounty
+  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [ag1 (get-content state :remote1 0)
+          ag2 (get-content state :remote2 0)]
+      (score-agenda state :corp ag1)
+      (prompt-choice :corp "No")
+      (score-agenda state :corp ag2)
+      (prompt-choice :corp "No")
+      (play-from-hand state :corp "24/7 News Cycle")
+      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
+      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
+      (is (= 1 (:tag (get-runner))) "Runner given 1 tag")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+      (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
+
+(deftest twenty-four-seven-news-cycle-swaps
+  "24/7 News Cycle - Swapped agendas are able to be used. #1555"
+  (do-game
+    (new-game (default-corp [(qty "24/7 News Cycle" 1) (qty "Chronos Project" 1)
+                             (qty "Philotic Entanglement" 1) (qty "Profiteering" 1)])
+              (default-runner [(qty "Turntable" 3)]))
+    (score-agenda state :corp (find-card "Chronos Project" (:hand (get-corp))))
+    (score-agenda state :corp (find-card "Philotic Entanglement" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Turntable")
+    (core/steal state :runner (find-card "Profiteering" (:hand (get-corp))))
+    (prompt-choice :runner "Yes")
+    (prompt-select :runner (find-card "Philotic Entanglement" (:scored (get-corp))))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (take-credits state :runner)
+    (play-from-hand state :corp "24/7 News Cycle")
+    (prompt-card :corp (find-card "Chronos Project" (:scored (get-corp))))
+    (is (= "Chronos Project" (:title (first (:rfg (get-corp))))))
+    ;shouldn't work on an agenda in the Runner's scored area
+    (is (= 2 (count (:hand (get-runner)))))
+    (prompt-select :corp (find-card "Philotic Entanglement" (:scored (get-runner))))
+    (is (= 2 (count (:hand (get-runner)))))
+    ;resolve 'when scored' ability on swapped Profiteering
+    (is (= 8 (:credit (get-corp))))
+    (prompt-select :corp (find-card "Profiteering" (:scored (get-corp))))
+    (prompt-choice :corp "3")
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 3 (:bad-publicity (get-corp))))
+    (is (= 23 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest accelerated-diagnostics
   "Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan"
@@ -261,6 +335,84 @@
       (is (= 2 (:agenda-point (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner does not lose tags at end of turn")))
 
+(deftest exchange-of-information-fifteen-minutes
+  "Exchange of Information - Swapping a 15 Minutes still keeps the ability. #1783"
+  (do-game
+    (new-game (default-corp [(qty "Exchange of Information" 2) (qty "15 Minutes" 1)
+                             (qty "Project Beale" 1)])
+              (default-runner))
+    (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
+    (take-credits state :runner)
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (play-from-hand state :corp "Exchange of Information")
+    (prompt-select :corp (find-card "Project Beale" (:scored (get-runner))))
+    (prompt-select :corp (find-card "15 Minutes" (:scored (get-corp))))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 1 (:agenda-point (get-runner))))
+    (is (= 0 (count (:deck (get-corp)))))
+    ;shuffle back into R&D from runner's scored area
+    (let [fifm (get-in @state [:runner :scored 0])]
+      (card-ability state :corp fifm 0))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 0 (:agenda-point (get-runner))))
+    (is (= "15 Minutes" (:title (first (:deck (get-corp))))))
+    (take-credits state :corp)
+    (core/steal state :runner (find-card "15 Minutes" (:deck (get-corp))))
+    (take-credits state :runner)
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 1 (:agenda-point (get-runner))))
+    (play-from-hand state :corp "Exchange of Information")
+    (prompt-select :corp (find-card "15 Minutes" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Project Beale" (:scored (get-corp))))
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    ;shuffle back into R&D from corp's scored area
+    (let [fifm (get-in @state [:corp :scored 0])]
+      (card-ability state :corp fifm 0))
+    (is (= "15 Minutes" (:title (first (:deck (get-corp))))))))
+
+(deftest exchange-of-information-mandatory-upgrades
+  "Exchange of Information - Swapping a Mandatory Upgrades gives the Corp an additional click per turn. #1687"
+  (do-game
+    (new-game (default-corp [(qty "Exchange of Information" 2) (qty "Mandatory Upgrades" 1)
+                             (qty "Global Food Initiative" 1)])
+              (default-runner))
+    (score-agenda state :corp (find-card "Global Food Initiative" (:hand (get-corp))))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
+    (take-credits state :runner)
+    (is (= 3 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (is (= 3 (:click (get-corp))))
+    (is (= 3 (:click-per-turn (get-corp))))
+    (play-from-hand state :corp "Exchange of Information")
+    (prompt-select :corp (find-card "Mandatory Upgrades" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Global Food Initiative" (:scored (get-corp))))
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (is (= 3 (:click (get-corp))))
+    (is (= 4 (:click-per-turn (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))))
+    (is (= 4 (:click-per-turn (get-corp))))
+    (play-from-hand state :corp "Exchange of Information")
+    (prompt-select :corp (find-card "Global Food Initiative" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Mandatory Upgrades" (:scored (get-corp))))
+    (is (= 3 (:agenda-point (get-corp))))
+    (is (= 2 (:agenda-point (get-runner))))
+    (is (= 2 (:click (get-corp))))
+    (is (= 3 (:click-per-turn (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))))
+    (is (= 3 (:click-per-turn (get-corp))))))
+
 (deftest election-day
   (do-game
     (new-game (default-corp [(qty "Election Day" 7)])
@@ -409,49 +561,6 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
-(deftest news-cycle
-  (do-game
-    (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (let [ag1 (get-content state :remote1 0)
-          ag2 (get-content state :remote2 0)]
-      (score-agenda state :corp ag1)
-      (score-agenda state :corp ag2)
-      (take-credits state :corp)
-      (is (= 0 (:tag (get-runner)))) ; tags cleared
-      (take-credits state :runner)
-      (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
-      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
-      (take-credits state :corp 2)
-      (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
-
-(deftest news-cycle-posted-bounty
-  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
-  (do-game
-    (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (let [ag1 (get-content state :remote1 0)
-          ag2 (get-content state :remote2 0)]
-      (score-agenda state :corp ag1)
-      (prompt-choice :corp "No")
-      (score-agenda state :corp ag2)
-      (prompt-choice :corp "No")
-      (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
-      (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
-      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
-      (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
-      (is (= 1 (:tag (get-runner))) "Runner given 1 tag")
-      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
-      (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
-
 (deftest oversight-ai
   "Oversight AI - Rez a piece of ICE ignoring all costs"
   (do-game
@@ -465,6 +574,17 @@
       (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
       (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
           "Archer hosting OAI as a condition"))))
+
+(deftest patch
+  "Patch - +2 current strength"
+  (do-game
+    (new-game (default-corp [(qty "Patch" 1) (qty "Vanilla" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Patch")
+    (prompt-select :corp (get-ice state :hq 0))
+    (is (= 2 (:current-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
 
 (deftest paywall-implementation
   "Paywall Implementation - Gain 1 credit for every successful run"
@@ -562,6 +682,22 @@
       (is (= 1 (:credit (get-corp))) "Spent 4 credits")
       (is (= 4 (:advance-counter (refresh pj))) "Junebug has 4 advancements"))))
 
+(deftest punitive-counterstrike
+  "Punitive Counterstrike - deal meat damage equal to printed agenda points"
+  (do-game
+    (new-game (default-corp [(qty "Global Food Initiative" 1) (qty "Punitive Counterstrike" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Global Food Initiative" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Runner scored 2 points")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Punitive Counterstrike")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
+
 (deftest reuse
   "Reuse - Gain 2 credits for each card trashed from HQ"
   (do-game
@@ -635,6 +771,23 @@
         "Corp does not have Subcontract prompt until damage prevention completes")
     (prompt-choice :runner "Done")
     (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
+
+(deftest subcontract-terminal
+  "Subcontract - interaction with Terminal operations"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
+      (default-runner))
+    (core/gain state :runner :tag 1)
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Hard-Hitting News" (:hand (get-corp))))
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
+    (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
 (deftest shipment-from-sansan
   "Shipment from SanSan - placing advancements"

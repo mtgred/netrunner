@@ -49,6 +49,23 @@
     (is (= 4 (core/hand-size state :runner)) "Runner handsize decreased by 1")
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
+(deftest another-day-another-paycheck
+  "Another Day, Another Paycheck"
+  (do-game
+    (new-game
+      (default-corp [(qty "Project Atlas" 2)])
+      (default-runner [(qty "Another Day, Another Paycheck" 1)]))
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Another Day, Another Paycheck")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 1)
+    ; 4 credits after trace, should gain 4
+    (is (= 8 (:credit (get-runner))) "Runner gained 8 credits")))
+
 (deftest apocalypse-hosting
   "Apocalypse - Ensure MU is correct and no duplicate cards in heap"
   (do-game
@@ -224,6 +241,29 @@
       (is (= 1 (:has-bad-pub (get-corp))) "Corp still has BP")
       (take-credits state :corp)
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
+
+(deftest data-breach
+  "Data Breach"
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Data Breach" 3)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Breach")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
+    (is (not (:run @state)) "Run is over")
+    (play-from-hand state :runner "Data Breach")
+    (run-jack-out state)
+    (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
 
 (deftest deuces-wild
   "Deuces Wild"
@@ -869,6 +909,72 @@
           "Morning Star installed")
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
       (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
+
+(deftest rumor-mill
+  "Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects"
+  (do-game
+    (new-game
+      (default-corp [(qty "Project Atlas" 1)
+                     (qty "Caprice Nisei" 1) (qty "Chairman Hiro" 1) (qty "Cybernetics Court" 1)
+                     (qty "Elizabeth Mills" 1)
+                     (qty "Ibrahim Salem" 1)
+                     (qty "Housekeeping" 1)])
+      (default-runner [(qty "Rumor Mill" 1)]))
+    (core/gain state :corp :credit 100 :click 100 :bad-publicity 1)
+    (core/draw state :corp 100)
+
+    (play-from-hand state :corp "Caprice Nisei" "New remote")
+    (play-from-hand state :corp "Chairman Hiro" "New remote")
+    (play-from-hand state :corp "Cybernetics Court" "New remote")
+    (play-from-hand state :corp "Elizabeth Mills" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Ibrahim Salem" "New remote")
+    (core/rez state :corp (get-content state :remote2 0))
+    (core/rez state :corp (get-content state :remote3 0))
+    (score-agenda state :corp (get-content state :remote5 0))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
+    (is (= -2 (:hand-size-modification (get-runner))) "Runner has -2 hand size")
+
+    (play-from-hand state :runner "Rumor Mill")
+
+    ;; Additional costs to rez should STILL be applied
+    (core/rez state :corp (get-content state :remote6 0))
+    (is (seq (:rfg (get-corp))) "Agenda was auto-forfeit to rez Ibrahim Salem")
+
+    ;; In-play effects
+    (is (= 0 (:hand-size-modification (get-corp))) "Corp has original hand size")
+    (is (= 0 (:hand-size-modification (get-runner))) "Runner has original hand size")
+
+    ;; "When you rez" effects should not apply
+    (core/rez state :corp (get-content state :remote4 0))
+    (is (= 1 (:bad-publicity (get-corp))) "Corp still has 1 bad publicity")
+
+    ;; Run events (Caprice)
+    ;; Make sure Rumor Mill applies even if card is rezzed after RM is put in play.
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-on state :remote1)
+    (run-continue state)
+    (is (empty? (:prompt (get-corp))) "Caprice prompt is not showing")
+    (run-jack-out state)
+
+    ;; Trashable execs
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Yes")
+    (is (empty? (:scored (get-runner))) "Chairman Hiro not added to runner's score area")
+    (take-credits state :runner)
+
+    ;; Trash RM, make sure everything works again
+    (play-from-hand state :corp "Housekeeping")
+    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
+    (is (= 0 (:hand-size-modification (get-runner))) "Runner has +0 hand size")
+
+    (core/derez state :corp (get-content state :remote4 0))
+    (core/rez state :corp (get-content state :remote4 0))
+    (is (= 0 (:bad-publicity (get-corp))) "Corp has 0 bad publicity")
+    (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
+    (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
 
 (deftest singularity
   "Singularity - Run a remote; if successful, trash all contents at no cost"
