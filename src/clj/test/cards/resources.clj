@@ -362,9 +362,6 @@
     (is (= 0 (:agenda-point (get-corp))))
 
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site swapped into Corp score area")
-
-    (prn (find-card "Fan Site" (:scored (get-corp))))
-
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote2 0))
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))

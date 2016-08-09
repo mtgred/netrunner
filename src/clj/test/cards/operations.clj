@@ -573,6 +573,22 @@
       (is (= 1 (:credit (get-corp))) "Spent 4 credits")
       (is (= 4 (:advance-counter (refresh pj))) "Junebug has 4 advancements"))))
 
+(deftest punitive-counterstrike
+  "Punitive Counterstrike - deal meat damage equal to printed agenda points"
+  (do-game
+    (new-game (default-corp [(qty "Global Food Initiative" 1) (qty "Punitive Counterstrike" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Global Food Initiative" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (:agenda-point (get-runner))) "Runner scored 2 points")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Punitive Counterstrike")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
+
 (deftest reuse
   "Reuse - Gain 2 credits for each card trashed from HQ"
   (do-game
@@ -646,6 +662,23 @@
         "Corp does not have Subcontract prompt until damage prevention completes")
     (prompt-choice :runner "Done")
     (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
+
+(deftest subcontract-terminal
+  "Subcontract - interaction with Terminal operations"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
+      (default-runner))
+    (core/gain state :runner :tag 1)
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Hard-Hitting News" (:hand (get-corp))))
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
+    (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
 (deftest shipment-from-sansan
   "Shipment from SanSan - placing advancements"

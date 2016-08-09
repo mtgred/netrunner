@@ -668,7 +668,8 @@
 
    "News Team"
    {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
-             :effect (effect (resolve-ability
+             :delayed-completion true
+             :effect (effect (continue-ability
                                {:player :runner
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
@@ -771,6 +772,7 @@
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
+                               :delayed-completion true
                                :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 

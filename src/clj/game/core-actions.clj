@@ -180,8 +180,9 @@
               :effect (effect (add-prop card :rec-counter -1) (gain :credit 1))}
              (get-in cdef [:abilities ability]))
         cost (:cost ab)]
-    (when (or (nil? cost)
-              (apply can-pay? state side (:title card) cost))
+    (when (and (not (:disabled card))
+               (or (nil? cost)
+                   (apply can-pay? state side (:title card) cost)))
       (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
       (resolve-ability state side ab card targets))))
 
@@ -211,7 +212,7 @@
 (defn rez
   "Rez a corp card."
   ([state side card] (rez state side card nil))
-  ([state side card {:keys [ignore-cost no-warning force] :as args}]
+  ([state side {:keys [disabled] :as card} {:keys [ignore-cost no-warning force] :as args}]
    (let [card (get-card state card)]
      (if (or force (can-rez? state side card))
        (do
@@ -222,12 +223,14 @@
            (let [cdef (card-def card)
                  cost (rez-cost state side card)
                  costs (concat (when-not ignore-cost [:credit cost])
-                               (when (not= ignore-cost :all-costs) (:additional-cost cdef)))]
+                               (when (not= ignore-cost :all-costs)
+                                 (:additional-cost cdef)))]
              (when-let [cost-str (apply pay state side card costs)]
                ;; Deregister the derezzed-events before rezzing card
                (when (:derezzed-events cdef)
                  (unregister-events state side card))
-               (card-init state side (assoc card :rezzed true))
+               (when (not disabled)
+                 (card-init state side (assoc card :rezzed true)))
                (doseq [h (:hosted card)]
                  (update! state side (-> h
                                          (update-in [:zone] #(map to-keyword %))

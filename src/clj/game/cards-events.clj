@@ -15,6 +15,14 @@
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
     :effect (effect (gain :click 3) (damage eid :brain 1 {:unpreventable true :card card}))}
 
+   "Another Day, Another Paycheck"
+   {:events {:agenda-stolen
+             {:trace {:base 0
+                      :msg (msg (str "Runner gains " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))
+                      :unsuccessful {:effect (effect (gain :runner :credit
+                                                           (+ (:agenda-point runner) (:agenda-point corp))))
+                                     :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
+
    "Apocalypse"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
@@ -140,6 +148,21 @@
                                                  (trigger-event state :runner :run runtgt))
                                     :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
                     card nil)))}
+
+   "Data Breach"
+   {:delayed-completion true
+    :effect (req (register-events state side (:events (card-def card))
+                                  (assoc card :zone '(:discard)))
+                 (when-completed (game.core/run state side :rd nil card)
+                                 (let [card (get-card state (assoc card :zone '(:discard)))]
+                                   (unregister-events state side card)
+                                   (if (:run-again card)
+                                     (game.core/run state side eid :rd nil card)
+                                     (effect-completed state side eid))
+                                   (update! state side (dissoc card :run-again)))))
+    :events {:successful-run-ends {:optional {:req (req (= :rd target))
+                                              :prompt "Make another run on R&D?"
+                                              :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
    "Day Job"
    {:additional-cost [:click 3]
@@ -858,6 +881,19 @@
                               (continue-ability :corp (corp-choice (Integer/parseInt target)) card nil))})]
    {:effect (effect (show-wait-prompt :corp "Runner to spend credits")
                     (continue-ability (runner-choice (inc (min 2 (:credit runner)))) card nil))})
+
+   "Rumor Mill"
+   (letfn [(eligible? [card] (and (:uniqueness card)
+                                  (or (card-is? card :type "Asset")
+                                      (card-is? card :type "Upgrade"))
+                                  (not (has-subtype? card "Region"))))
+           (rumor [state] (filter eligible? (all-installed state :corp)))]
+   {:leave-play (req (doseq [c (rumor state)]
+                       (enable-card state :corp c)))
+    :effect (req (doseq [c (rumor state)]
+                   (disable-card state :corp c)))
+    :events {:corp-install {:req (req (eligible? target))
+                            :effect (effect (disable-card :corp target))}}})
 
    "Run Amok"
    {:prompt "Choose a server" :choices (req runnable-servers)

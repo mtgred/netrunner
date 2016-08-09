@@ -431,6 +431,33 @@
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 3 5)]})
 
+   "Paperclip"
+   (let [install {:req (req (and (= (:zone card) [:discard])
+                                 (rezzed? current-ice)
+                                 (has-subtype? current-ice "Barrier")))
+                  :optional {:player :runner
+                             :prompt "Install Paperclip?"
+                             :yes-ability {:effect (effect (unregister-events card)
+                                                           (runner-install :runner card))}}}
+         heap-event (req (when (= (:zone card) [:discard])
+                           (unregister-events state side card)
+                           (register-events state side
+                                            (:events (card-def card))
+                                            (assoc card :zone [:discard]))))]
+   {:move-zone heap-event
+    :mill-effect {:effect heap-event}
+    :card-moved heap-event
+    :abilities [{:label (str "X [Credits]: +X strength, break X subroutines")
+                 :choices :credit
+                 :prompt "How many credits?"
+                 :effect (effect (pump card target))
+                 :msg (msg "increase strength by " target " and break " target " barrier subroutine"
+                           (when (not= target 1) "s"))}]
+    :events {:rez install
+             :pass-ice install
+             :run install}})
+
+
    "Passport"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [{:cost [:credit 1]

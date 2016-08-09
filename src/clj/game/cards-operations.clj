@@ -25,8 +25,9 @@
               :msg (msg "play " (:title target))
               :delayed-completion true
               :effect (req (when-completed (play-instant state side target {:no-additional-cost true})
-                                           (when (< i n)
-                                             (continue-ability state side (ad (inc i) n adcard) adcard nil))))})]
+                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i n))
+                                             (continue-ability state side (ad (inc i) n adcard) adcard nil)
+                                             (effect-completed state side eid))))})]
      {:delayed-completion true
       :effect (req (let [n (count (filter #(is-type? % "Operation")
                                           (take 3 (:deck corp))))]
@@ -621,7 +622,8 @@
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
-            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
+            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
+                            (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
@@ -808,7 +810,7 @@
               :delayed-completion true
               :msg (msg "play " (:title target))
               :effect (req (when-completed (play-instant state side target)
-                                           (if (< i 2)
+                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i 2))
                                                (continue-ability state side (sc (inc i) sccard) sccard nil)
                                                (effect-completed state side eid))))})]
      {:req (req tagged)
