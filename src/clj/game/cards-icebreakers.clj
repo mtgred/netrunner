@@ -346,6 +346,17 @@
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 1)]})
 
+   "Golden"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 2 2 "sentry")
+                                 (strength-pump 2 4)
+                                 {:label "Derez a sentry and return Golden to your Grip"
+                                  :cost [:credit 2]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice) " and return Golden to their Grip")
+                                  :effect (effect (derez current-ice)
+                                                  (move card :hand))}]})
+
    "Gordian Blade"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "code gate")
@@ -406,6 +417,14 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 2 "sentry")
                                  (strength-pump 2 2)]})
+
+   "Nfr"
+   {:abilities [{:label "Place 1 power counter on Nfr"
+                 :msg "place 1 power counter on it"
+                 :effect (effect (add-counter card :power 1)
+                                 (update-breaker-strength card))}
+                (break-sub 1 1 "barrier")]
+    :strength-bonus (req (get-in card [:counter :power] 0))}
 
    "Ninja"
    (auto-icebreaker ["Sentry"]

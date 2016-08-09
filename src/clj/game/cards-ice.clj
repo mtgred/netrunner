@@ -169,7 +169,13 @@
 
 ;;;; Card definitions
 (def cards-ice
-  {"Archangel"
+  {"Aiki"
+   {:abilities [(do-psi {:label "Runner draws 2 cards"
+                         :msg "make the Runner draw 2 cards"
+                         :effect (effect (draw :runner 2))})
+                (do-net-damage 1)]}
+
+   "Archangel"
    {:access
     {:req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
@@ -477,6 +483,18 @@
                                 (do (pay state side card :credit 1)
                                     (system-msg state side "pays 1 [Credits]"))
                                 (resolve-ability state :runner trash-installed card nil)))}]}
+
+   "Fairchild 2.0"
+   {:abilities [{:label "Force the Runner to pay 2 [Credits] or trash an installed card"
+                 :msg "force the Runner to pay 2 [Credits] or trash an installed card"
+                 :player :runner
+                 :prompt "Choose one"
+                 :choices ["Pay 2 [Credits]" "Trash an installed card"]
+                 :effect (req (if (= target "Pay 2 [Credits]")
+                                (do (pay state side card :credit 2)
+                                    (system-msg state side "pays 2 [Credits]"))
+                                (resolve-ability state :runner trash-installed card nil)))}
+                (do-brain-damage 1)]}
 
    "Fenris"
    {:effect take-bad-pub

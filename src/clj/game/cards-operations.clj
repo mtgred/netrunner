@@ -257,6 +257,19 @@
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
+   "Enforcing Loyalty"
+   {:trace {:base 3
+            :label "Trash a card not matching the faction of the Runner's identity"
+            :delayed-completion true
+            :effect (req (let [f (:faction (:identity runner))]
+                           (continue-ability
+                             state side
+                             {:prompt "Choose an installed card not matching the faction of the Runner's identity"
+                              :choices {:req #(and (installed? %) (not= f (:faction %)) (card-is? % :side :runner))}
+                              :msg (msg "trash " (:title target))
+                              :effect (effect (trash target))}
+                            card nil)))}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
@@ -759,6 +772,17 @@
                                                   {:effect (final-effect (trash c)) :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
+
+   "Special Report"
+   {:prompt "Choose any number of cards in HQ to shuffle into R&D"
+    :choices {:max (req (count (:hand corp))) :req #(and (:side % "Corp")
+                                                         (in-hand? %))}
+    :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
+    :effect (req (doseq [c targets]
+                   (move state side c :deck))
+                 (shuffle! state side :deck)
+                 (draw state side (count targets))
+                 (effect-completed state side eid card))}
 
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
