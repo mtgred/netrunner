@@ -5,16 +5,16 @@
    {:req (req (> (count (:scored corp)) 1))
     :delayed-completion true
     :additional-cost [:forfeit]
-    :effect (req (let [agendas (get-in @state [:corp :scored])]
-                   (continue-ability state side
-                     {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
-                      :choices {:req #(and (is-type? % "Agenda")
-                                           (= (first (:zone %)) :scored)
-                                           (:abilities %))}
-                      :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                      :delayed-completion true
-                      :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
-                    card nil)))}
+    :effect (req (continue-ability
+                   state side
+                   {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                    :choices {:req #(and (is-type? % "Agenda")
+                                         (is-scored? state :corp %))}
+                    :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                    :delayed-completion true
+                    ;dissoc :end-turn for Breaking News
+                    :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
+                   card nil))}
 
    "Accelerated Diagnostics"
    (letfn [(ad [i n adcard]
@@ -25,8 +25,9 @@
               :msg (msg "play " (:title target))
               :delayed-completion true
               :effect (req (when-completed (play-instant state side target {:no-additional-cost true})
-                                           (when (< i n)
-                                             (continue-ability state side (ad (inc i) n adcard) adcard nil))))})]
+                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i n))
+                                             (continue-ability state side (ad (inc i) n adcard) adcard nil)
+                                             (effect-completed state side eid))))})]
      {:delayed-completion true
       :effect (req (let [n (count (filter #(is-type? % "Operation")
                                           (take 3 (:deck corp))))]
@@ -144,6 +145,12 @@
    {:msg "gain 5 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 5) (draw 2))}
 
+   "BOOM!"
+   {:req (req (> (:tag runner) 1))
+    :delayed-completion true
+    :msg "do 7 meat damage"
+    :effect (effect (damage eid :meat 7 {:card card}))}
+
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
                          (in-hand? %))}
@@ -251,6 +258,19 @@
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
+   "Enforcing Loyalty"
+   {:trace {:base 3
+            :label "Trash a card not matching the faction of the Runner's identity"
+            :delayed-completion true
+            :effect (req (let [f (:faction (:identity runner))]
+                           (continue-ability
+                             state side
+                             {:prompt "Choose an installed card not matching the faction of the Runner's identity"
+                              :choices {:req #(and (installed? %) (not= f (:faction %)) (card-is? % :side :runner))}
+                              :msg (msg "trash " (:title target))
+                              :effect (effect (trash target))}
+                            card nil)))}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
@@ -311,6 +331,13 @@
             :msg "give the Runner 4 tags"
             :label "Give the Runner 4 tags"
             :effect (effect (tag-runner :runner 4))}}
+
+   "Hatchet Job"
+   {:trace {:base 5
+            :choices {:req #(and (installed? %)
+                                 (not (has-subtype? % "Virtual")))}
+            :msg "add an installed non-virtual card to the Runner's grip"
+            :effect (effect (move :runner target :hand true))}}
 
    "Hedge Fund"
    {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
@@ -504,7 +531,7 @@
    "Patch"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
-    :effect (final-effect (host target (assoc card :zone [:discard] :seen true :installed true))
+    :effect (final-effect (host target (assoc card :zone [:discard] :seen true))
                           (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2 target))}}}
@@ -595,7 +622,8 @@
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
-            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card}) (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
+            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
+                            (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
@@ -747,6 +775,17 @@
                                                 card nil))}
                              card nil)))}}
 
+   "Special Report"
+   {:prompt "Choose any number of cards in HQ to shuffle into R&D"
+    :choices {:max (req (count (:hand corp))) :req #(and (:side % "Corp")
+                                                         (in-hand? %))}
+    :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
+    :effect (req (doseq [c targets]
+                   (move state side c :deck))
+                 (shuffle! state side :deck)
+                 (draw state side (count targets))
+                 (effect-completed state side eid card))}
+
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
@@ -771,7 +810,7 @@
               :delayed-completion true
               :msg (msg "play " (:title target))
               :effect (req (when-completed (play-instant state side target)
-                                           (if (< i 2)
+                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i 2))
                                                (continue-ability state side (sc (inc i) sccard) sccard nil)
                                                (effect-completed state side eid))))})]
      {:req (req tagged)

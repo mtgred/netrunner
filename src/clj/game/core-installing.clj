@@ -16,12 +16,13 @@
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
-  [state side card]
+  [state side {:keys [disabled installed rezzed facedown zone] :as card}]
   (when-let [leave-effect (:leave-play (card-def card))]
-    (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
-              (:rezzed card)
-              (= (first (:zone card)) :current)
-              (= (first (:zone card)) :scored))
+    (when (and (not disabled)
+               (or (and (= (:side card) "Runner") installed (not facedown))
+                   rezzed
+                   (= (first zone) :current)
+                   (= (first zone) :scored)))
       (leave-effect state side (make-eid state) card nil))))
 
 (defn- handle-prevent-effect
@@ -167,7 +168,7 @@
            (if-let [cost-str (pay state side card end-cost)]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
-                             (dissoc :seen))]
+                             (dissoc :seen :disabled))]
                    (when (= server "New remote")
                      (trigger-event state side :server-created card))
                    (when (not host-card)

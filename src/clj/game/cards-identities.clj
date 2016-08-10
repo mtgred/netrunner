@@ -309,6 +309,11 @@
                              :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Jinteki: Potential Unleashed"
+   {:events {:pre-resolve-damage {:req (req (and (= target :net) (> (last targets) 0)))
+                                  :msg "trash the top card of the Runner's Stack"
+                                  :effect (effect (mill :runner))}}}
+
    "Jinteki: Replicating Perfection"
    {:events
     {:runner-phase-12 {:effect (req (apply prevent-run-on-server
@@ -675,6 +680,12 @@
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}
+
+   "Weyland Consortium: Builder of Nations"
+   {:abilities [{:label "Do 1 meat damage"
+                 :delayed-completion true
+                 :msg "do 1 meat damage"
+                 :effect (effect (damage eid :meat 1 {:card card}))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"

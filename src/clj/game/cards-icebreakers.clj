@@ -346,6 +346,17 @@
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 1)]})
 
+   "Golden"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 2 2 "sentry")
+                                 (strength-pump 2 4)
+                                 {:label "Derez a sentry and return Golden to your Grip"
+                                  :cost [:credit 2]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice) " and return Golden to their Grip")
+                                  :effect (effect (derez current-ice)
+                                                  (move card :hand))}]})
+
    "Gordian Blade"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "code gate")
@@ -407,10 +418,45 @@
                     {:abilities [(break-sub 1 2 "sentry")
                                  (strength-pump 2 2)]})
 
+   "Nfr"
+   {:abilities [{:label "Place 1 power counter on Nfr"
+                 :msg "place 1 power counter on it"
+                 :effect (effect (add-counter card :power 1)
+                                 (update-breaker-strength card))}
+                (break-sub 1 1 "barrier")]
+    :strength-bonus (req (get-in card [:counter :power] 0))}
+
    "Ninja"
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 3 5)]})
+
+   "Paperclip"
+   (let [install {:req (req (and (= (:zone card) [:discard])
+                                 (rezzed? current-ice)
+                                 (has-subtype? current-ice "Barrier")))
+                  :optional {:player :runner
+                             :prompt "Install Paperclip?"
+                             :yes-ability {:effect (effect (unregister-events card)
+                                                           (runner-install :runner card))}}}
+         heap-event (req (when (= (:zone card) [:discard])
+                           (unregister-events state side card)
+                           (register-events state side
+                                            (:events (card-def card))
+                                            (assoc card :zone [:discard]))))]
+   {:move-zone heap-event
+    :mill-effect {:effect heap-event}
+    :card-moved heap-event
+    :abilities [{:label (str "X [Credits]: +X strength, break X subroutines")
+                 :choices :credit
+                 :prompt "How many credits?"
+                 :effect (effect (pump card target))
+                 :msg (msg "increase strength by " target " and break " target " barrier subroutine"
+                           (when (not= target 1) "s"))}]
+    :events {:rez install
+             :pass-ice install
+             :run install}})
+
 
    "Passport"
    (auto-icebreaker ["Code Gate"]

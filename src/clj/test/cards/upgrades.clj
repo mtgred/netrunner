@@ -32,8 +32,6 @@
     (play-from-hand state :corp "Bernice Mai" "New remote")
     (play-from-hand state :corp "Bernice Mai" "R&D")
     (core/rez state :corp (get-content state :remote1 0))
-    (core/rez state :corp (get-content state :remote2 0))
-    (core/rez state :corp (get-content state :rd 0))
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (prompt-choice :corp 0)
@@ -41,12 +39,14 @@
     (prompt-choice :runner "Yes")
     (is (= 1 (:tag (get-runner))))
     (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
+    (core/rez state :corp (get-content state :remote2 0))
     (core/gain state :runner :credit 20)
     (run-empty-server state :remote2)
     (prompt-choice :corp 0)
     (prompt-choice :runner 10)
     (is (not (get-content state :remote2 0)) "Bernice auto-trashed from unsuccessful trace")
     (is (not (:run @state)) "Run ended when Bernice was trashed from server")
+    (core/rez state :corp (get-content state :rd 0))
     (run-empty-server state :rd)
     (prompt-choice :corp 0)
     (prompt-choice :runner 10)
@@ -281,6 +281,29 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
+(deftest georgia-emelyov
+  "Georgia Emelyov"
+  (do-game
+    (new-game (default-corp [(qty "Georgia Emelyov" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Georgia Emelyov" "New remote")
+    (let [geo (get-content state :remote1 0)]
+      (core/rez state :corp geo)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-jack-out state)
+      (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
+      (card-ability state :corp (refresh geo) 0)
+      (prompt-choice :corp "Archives")
+      (let [geo (get-content state :archives 0)]
+        (is geo "Georgia moved to Archives")
+        (run-on state "Archives")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner took 1 net damage")
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner did not take  damage")))))
+
 (deftest hokusai-grid
   "Hokusai Grid - Do 1 net damage when run successful on its server"
   (do-game
@@ -452,6 +475,24 @@
       (is (nil? (:cannot-jack-out (get-in @state [:run]))) "Jack out enabled by program trash")
       (run-on state "Server 1")
       (is (:cannot-jack-out (get-in @state [:run])) "Prevents jack out when upgrade is rezzed prior to run"))))
+
+(deftest prisec
+  "Prisec - Pay 2 credits to give runner 1 tag and do 1 meat damage, only when installed"
+  (do-game
+    (new-game (default-corp [(qty "Prisec" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Prisec" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [pre-creds (:credit (get-corp))]
+      (prompt-choice :corp "Yes")
+      (is (= (- pre-creds 2) (:credit (get-corp))) "Pay 2 [Credits] to pay for Prisec"))
+    (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
+    ;; Runner trashes Prisec
+    (prompt-choice :runner "Yes")
+    (run-empty-server state "HQ")
+    (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
 
 (deftest product-placement
   "Product Placement - Gain 2 credits when Runner accesses it"

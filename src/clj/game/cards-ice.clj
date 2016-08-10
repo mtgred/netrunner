@@ -169,7 +169,13 @@
 
 ;;;; Card definitions
 (def cards-ice
-  {"Archangel"
+  {"Aiki"
+   {:abilities [(do-psi {:label "Runner draws 2 cards"
+                         :msg "make the Runner draw 2 cards"
+                         :effect (effect (draw :runner 2))})
+                (do-net-damage 1)]}
+
+   "Archangel"
    {:access
     {:req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
@@ -478,6 +484,18 @@
                                     (system-msg state side "pays 1 [Credits]"))
                                 (resolve-ability state :runner trash-installed card nil)))}]}
 
+   "Fairchild 2.0"
+   {:abilities [{:label "Force the Runner to pay 2 [Credits] or trash an installed card"
+                 :msg "force the Runner to pay 2 [Credits] or trash an installed card"
+                 :player :runner
+                 :prompt "Choose one"
+                 :choices ["Pay 2 [Credits]" "Trash an installed card"]
+                 :effect (req (if (= target "Pay 2 [Credits]")
+                                (do (pay state side card :credit 2)
+                                    (system-msg state side "pays 2 [Credits]"))
+                                (resolve-ability state :runner trash-installed card nil)))}
+                (do-brain-damage 1)]}
+
    "Fenris"
    {:effect take-bad-pub
     :abilities [(do-brain-damage 1)
@@ -491,16 +509,18 @@
    "Flare"
    {:abilities [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
                                   :msg "trash 1 hardware, do 2 meat damage, and end the run"
-                                  :effect (effect (resolve-ability
+                                  :delayed-completion true
+                                  :effect (effect (continue-ability
                                                    {:prompt "Choose a piece of hardware to trash"
                                                     :label "Trash a piece of hardware"
                                                     :msg (msg "trash " (:title target))
                                                     :choices {:req #(is-type? % "Hardware")}
-                                                    :effect (effect (trash target {:cause :subroutine}))}
-                                                   card nil)
-                                                  (damage eid :meat 2 {:unpreventable true
-                                                                   :card card})
-                                                  (end-run))})]}
+                                                    :effect (req (when-completed
+                                                                   (trash state side target {:cause :subroutine})
+                                                                   (do (damage state side eid :meat 2 {:unpreventable true
+                                                                                            :card card})
+                                                                       (end-run state side))))}
+                                                   card nil))})]}
 
    "Galahad"
    (grail-ice end-the-run)

@@ -112,16 +112,17 @@ sendGameResponse = (game, response) ->
 requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action is "remove"
-    g = {
-      winner: response.state.winner
-      reason: response.state.reason
-      endDate: response.state["end-time"]
-      turn: response.state.turn
-      runnerAgenda: response.state.runner["agenda-point"]
-      corpAgenda: response.state.corp["agenda-point"]
-    }
-    db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
-      throw err if er
+    if response.state
+      g = {
+        winner: response.state.winner
+        reason: response.state.reason
+        endDate: response.state["end-time"]
+        turn: response.state.turn
+        runnerAgenda: response.state.runner["agenda-point"]
+        corpAgenda: response.state.corp["agenda-point"]
+      }
+      db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
+        throw err if err
   else
     if (games[response.gameid])
       sendGameResponse(games[response.gameid], response)

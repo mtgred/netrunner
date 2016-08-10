@@ -216,6 +216,56 @@
     (is (not (nil? (get-ice state :hq 2))) "Corp has three ice installed on HQ")
     (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
 
+(deftest efficiency-committee
+  "Efficiency Committee - Cannot advance cards if agenda counter is used"
+  (do-game
+    (new-game (default-corp [(qty "Efficiency Committee" 3) (qty "Shipment from SanSan" 2)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Efficiency Committee" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ec1 (get-content state :remote1 0)
+          ec2 (get-content state :remote2 0)
+          ec3 (get-content state :remote3 0)
+          iw (get-ice state :hq 0)]
+      (score-agenda state :corp ec1)
+      (let [ec1_scored (get-in @state [:corp :scored 0])]
+        (is (= 3 (get-counters (refresh ec1_scored) :agenda)))
+        (is (= 2 (:agenda-point (get-corp))))
+        ;use token
+        (is (= 3 (:click (get-corp))))
+        (card-ability state :corp ec1_scored 0)
+        (is (= 4 (:click (get-corp))))
+        ;try to advance Ice Wall
+        (core/advance state :corp {:card (refresh iw)})
+        (is (= 4 (:click (get-corp))))
+        (is (= nil (:advance-counter (refresh iw))))
+        ;try to advance Efficiency Committee
+        (core/advance state :corp {:card (refresh ec2)})
+        (is (= 4 (:click (get-corp))))
+        (is (= nil (:advance-counter (refresh ec2))))
+        ;advance with Shipment from SanSan
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "2")
+        (prompt-select :corp ec2)
+        (is (= 2 (:advance-counter (refresh ec2))))
+        (play-from-hand state :corp "Shipment from SanSan")
+        (prompt-choice :corp "2")
+        (prompt-select :corp ec2)
+        (is (= 4 (:advance-counter (refresh ec2))))
+        (core/score state :corp {:card (refresh ec2)})
+        (is (= 4 (:agenda-point (get-corp))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        ;can advance again
+        (core/advance state :corp {:card (refresh iw)})
+        (is (= 1 (:advance-counter (refresh iw))))
+        (core/advance state :corp {:card (refresh ec3)})
+        (is (= 1 (:advance-counter (refresh ec3))))))))
+
 (deftest explode-a-palooza
   "Explode-a-palooza - Gain 5 credits when Runner accesses it"
   (do-game
@@ -503,6 +553,52 @@
       (is (= 9 (:credit (get-corp)))
           "Spent 1 credit to advance, gained 3 credits from Oaktown"))))
 
+(deftest personality-profiles
+  "Personality Profiles - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Personality Profiles" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1) (qty "Patron" 2)]))
+    (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
+    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Clone Chip")
+    (let [smc (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner smc 0)
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (is (= 2 (count (:discard (get-runner))))))
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+      (is (= 3 (count (:discard (get-runner))))))))
+
+(deftest personality-profiles-empty-hand
+  "Personality Profiles - Ensure effects still fire with an empty hand, #1840"
+  (do-game
+    (new-game (default-corp [(qty "Personality Profiles" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1)]))
+    (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
+    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Clone Chip")
+    (let [smc (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner smc 0)
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (let [cor (get-in @state [:runner :rig :program 0])]
+        (is (not (nil? cor)))
+        (is (= (:title cor) "Corroder"))
+        (is (= "Self-modifying Code" (:title (first (:discard (get-runner))))))))
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+      (let [smc (get-in @state [:runner :rig :program 1])]
+        (is (not (nil? smc)))
+        (is (= (:title smc) "Self-modifying Code"))
+        (is (= "Clone Chip" (:title (first (:discard (get-runner))))))))))
+
 (deftest philotic-entanglement
   "Philotic Entanglement - When scored, do 1 net damage for each agenda in the Runner's score area"
   (do-game
@@ -537,6 +633,33 @@
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
       (is (= 20 (:credit (get-corp))) "Gained 15 credits"))))
+
+(deftest project-ares
+  "Project Ares - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Project Ares" 2)])
+              (default-runner [(qty "Clone Chip" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (take-credits state :runner)
+    (score-agenda state :corp (find-card "Project Ares" (:hand (get-corp))))
+    (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Project Ares" "New remote")
+    (let [ares (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (core/advance state :corp {:card (refresh ares)})
+      (is (= 6 (:advance-counter (refresh ares)))
+      (core/score state :corp {:card (refresh ares)}))
+      (is (prompt-is-card? :runner ares) "Runner has Ares prompt to trash installed cards"))
+    (prompt-select :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
+    (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 1 (:bad-publicity (get-corp))))))
 
 (deftest project-beale
   "Project Beale - Extra agenda points for over-advancing"
@@ -573,6 +696,54 @@
     (run-empty-server state :archives)
     (prompt-choice :corp "Done")
     (is (empty? (:prompt (get-runner))) "Runner's waiting prompt resolved")))
+
+(deftest rebranding-team
+  "Rebranding Team - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Rebranding Team" 1) (qty "Launch Campaign" 1) (qty "City Surveillance" 1)
+                             (qty "Jackson Howard" 1) (qty "Museum of History" 1)])
+              (default-runner))
+    (score-agenda state :corp (find-card "Rebranding Team" (:hand (get-corp))))
+    (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Executive"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))
+    (core/move state :corp (find-card "Rebranding Team" (:scored (get-corp))) :deck)
+    (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
+    (is (not (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement")))
+    (is (not (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement")))
+    (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Executive"))
+    (is (not (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
+    (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
+
+(deftest sentinel-defense-program
+  "Sentinel Defense Program - Doesn't fire if brain damage is prevented"
+  (do-game
+    (new-game (default-corp [(qty "Sentinel Defense Program" 1) (qty "Viktor 1.0" 1)])
+              (default-runner [(qty "Feedback Filter" 1) (qty "Sure Gamble" 3)]))
+    (score-agenda state :corp (find-card "Sentinel Defense Program" (:hand (get-corp))))
+    (play-from-hand state :corp "Viktor 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (let [viktor (get-ice state :hq 0)
+          ff (get-in @state [:runner :rig :hardware 0])]
+      (run-on state "HQ")
+      (core/rez state :corp viktor)
+      (card-ability state :corp viktor 0)
+      (prompt-choice :runner "Done") ;don't prevent the brain damage
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 1 (:brain-damage (get-runner))))
+      (prompt-choice :runner "Done") ;so we take the net, but don't prevent it either
+      (is (= 2 (count (:discard (get-runner)))))
+      (card-ability state :corp viktor 0)
+      (card-ability state :runner ff 1) ;prevent the brain damage this time
+      (prompt-choice :runner "Done")
+      (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
+      (is (= 1 (:brain-damage (get-runner)))))))
 
 (deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"

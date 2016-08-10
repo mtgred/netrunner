@@ -46,7 +46,8 @@
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))
                    (when (has-subtype? card "Terminal")
-                     (lose state side :click (-> @state side :click))))))
+                     (lose state side :click (-> @state side :click))
+                     (swap! state assoc-in [:corp :register :terminal] true)))))
            ;; could not pay the card's price; mark the effect as being over.
            (effect-completed state side eid card))
          ;; card's req was not satisfied; mark the effect as being over.
@@ -265,12 +266,12 @@
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- resolve-trash-end
-  [state side eid {:keys [zone type] :as card}
+  [state side eid {:keys [zone type disabled] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (when (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect))
+      (when (and (not disabled) (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect)))
         (resolve-ability state side trash-effect moved-card (cons cause targets))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))
