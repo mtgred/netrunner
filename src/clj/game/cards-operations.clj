@@ -2,7 +2,7 @@
 
 (def cards-operations
   {"24/7 News Cycle"
-   {:req (req (> (count (:scored corp)) 0))
+   {:req (req (pos? (count (:scored corp))))
     :delayed-completion true
     :additional-cost [:forfeit]
     :effect (req (continue-ability
