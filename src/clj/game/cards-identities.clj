@@ -442,8 +442,8 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:delayed-completion true
-              :once :per-turn
-              :req (req (and (card-is? target :side :corp)
+              :req (req (and (first-event state side :runner-trash)
+                             (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                            (continue-ability
