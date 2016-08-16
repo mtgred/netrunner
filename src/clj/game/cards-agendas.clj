@@ -227,8 +227,7 @@
                                      ((constantly true)
                                        (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
                  :msg "gain [Click][Click]"}]
-    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
-                                              (unregister-events card))}}}
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance))}}}
 
    "Encrypted Portals"
    {:msg (msg "gain " (reduce (fn [c server]
