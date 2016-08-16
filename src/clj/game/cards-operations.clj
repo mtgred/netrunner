@@ -304,15 +304,17 @@
                     (move target :hand) )}
 
    "Financial Collapse"
-   {:req (req (>= (:credit runner) 6))
+   {:delayed-completion true
+    :req (req (>= (:credit runner) 6))
     :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
-                         (resolve-ability
+                         (continue-ability
                            state side
                            {:prompt (msg "Trash a resource to prevent Financial Collapse?")
                             :choices ["Yes" "No"] :player :runner
-                            :effect (final-effect (resolve-ability
+                            :delayed-completion true
+                            :effect (final-effect (continue-ability
                                                     (if (= target "Yes")
                                                       {:prompt "Choose a resource to trash" :player :runner
                                                        :choices {:req #(and (is-type? % "Resource") (installed? %))}
@@ -325,7 +327,7 @@
                                                                        (clear-wait-prompt :corp))
                                                        :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")})
                                                    card nil))} card nil))
-                     (resolve-ability
+                     (continue-ability
                        state side
                        {:effect (effect (lose :runner :credit (* rcount 2)))
                         :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
