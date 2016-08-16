@@ -303,6 +303,33 @@
                     (shuffle! :deck)
                     (move target :hand) )}
 
+   "Financial Collapse"
+   {:req (req (>= (:credit runner) 6))
+    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
+                   (if (pos? rcount)
+                     (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
+                         (resolve-ability
+                           state side
+                           {:prompt (msg "Trash a resource to prevent Financial Collapse?")
+                            :choices ["Yes" "No"] :player :runner
+                            :effect (final-effect (resolve-ability
+                                                    (if (= target "Yes")
+                                                      {:prompt "Choose a resource to trash" :player :runner
+                                                       :choices {:req #(and (is-type? % "Resource") (installed? %))}
+                                                       :effect (req (trash state side target {:unpreventable true})
+                                                                    (system-msg state :runner
+                                                                                (str "trashes " (:title target)
+                                                                                     " to prevent Financial Collapse"))
+                                                                    (clear-wait-prompt state :corp))}
+                                                      {:effect (effect (lose :runner :credit (* rcount 2))
+                                                                       (clear-wait-prompt :corp))
+                                                       :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")})
+                                                   card nil))} card nil))
+                     (resolve-ability
+                       state side
+                       {:effect (effect (lose :runner :credit (* rcount 2)))
+                        :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
+
    "Foxfire"
    {:trace {:base 7
             :prompt "Choose 1 card to trash"
@@ -698,6 +725,11 @@
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
                    (trash state side c)))}
+
+   "Scarcity of Resources"
+   {:msg "increase the install cost of resources by 2"
+    :events {:pre-install {:req (req (is-type? target "Resource"))
+                           :effect (effect (install-cost-bonus [:credit 2]))}}}
 
    "Scorched Earth"
    {:req (req tagged)
