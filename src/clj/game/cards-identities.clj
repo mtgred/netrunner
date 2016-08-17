@@ -382,6 +382,7 @@
    {:events {:pass-ice
              {:once :per-turn
               :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (install-cost-bonus state side [:credit -1])
                              (resolve-ability state side
                                {:prompt "Choose an icebreaker to install from your Grip"
                                 :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
@@ -525,7 +526,8 @@
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
                            " by 2 for the remainder of the run")
                  :effect (effect (update! (assoc card :null-target current-ice))
-                                 (update-ice-strength current-ice))}]
+                                 (update-ice-strength current-ice)
+                                 (trash target {:unpreventable true}))}]
     :events {:pre-ice-strength
              {:req (req (= (:cid target) (get-in card [:null-target :cid])))
               :effect (effect (ice-strength-bonus -2 target))}
