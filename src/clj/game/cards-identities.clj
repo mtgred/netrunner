@@ -101,8 +101,8 @@
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
-    {:corp-turn-begins {:effect (effect (enable-corp-damage-choice))}
-     :runner-turn-begins {:effect (effect (enable-corp-damage-choice))}
+    {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}
+     :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
      {:once :per-turn
       :delayed-completion true
