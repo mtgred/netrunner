@@ -192,7 +192,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "join"
         game = games[msg.gameid]
 
-        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+        if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           fn("join ok")
           joinGame(socket, msg.gameid)
           socket.broadcast.to(msg.gameid).emit 'netrunner',
@@ -259,8 +259,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               room: game.room
               corp: corp.user.username
               runner: runner.user.username
-              corpIdentity: corp["deck"]["identity"]["title"]
-              runnerIdentity: runner["deck"]["identity"]["title"]
+              corpIdentity: if corp.deck then corp.deck.identity.title else null
+              runnerIdentity: if runner.deck then runner.deck.identity.title else null
             }
             db.collection('gamestats').insert g, (err, data) ->
               console.log(err) if err
