@@ -191,7 +191,8 @@
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
-                              :effect (req (damage state side eid :net 1 {:card card}))}}}
+                              :delayed-completion true
+                              :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -367,6 +368,7 @@
    "Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                 :delayed-completion true
                  :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
