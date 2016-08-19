@@ -325,15 +325,19 @@
 
    "Prisec"
    {:access {:req (req (installed? card))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Prisec")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:prompt "Pay 2 [Credits] to use Prisec ability?"
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 2]
                                                :msg "do 1 meat damage and give the Runner 1 tag"
-                                               :effect (effect (damage eid :meat 1 {:card card})
-                                                               (tag-runner :runner 1))}}}
+                                               :delayed-completion true
+                                               :effect (req (when-completed (damage state side :meat 1 {:card card})
+                                                                            (do (tag-runner state :runner 1)
+                                                                                ;; TO-DO: extend effect-completed to tag prevention
+                                                                                (effect-completed state side eid))))}}}
                                card nil))}}
 
    "Product Placement"
