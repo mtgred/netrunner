@@ -460,10 +460,10 @@
                    (continue-ability state side
                      {:prompt "Choose any number of rezzed cards to trash"
                       :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
-                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* n 3) " [Credits]")
+                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
-                                   (gain state side :credit (* n 3)))}
+                                   (gain state side :credit (* (count targets) 3)))}
                     card nil)))}
 
    "Localized Product Line"
