@@ -41,7 +41,7 @@
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
-                     (card-init state side moved-card)))
+                     (card-init state side eid moved-card true)))
                (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))

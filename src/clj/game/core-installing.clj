@@ -64,7 +64,8 @@
 (defn card-init
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card true))
-  ([state side card resolve]
+  ([state side card resolve] (card-init state side (make-eid state) card resolve))
+  ([state side eid card resolve]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          abilities (ability-init cdef)
@@ -85,8 +86,9 @@
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
-     (when resolve
-       (resolve-ability state side cdef c nil))
+     (if (and resolve (is-ability cdef))
+       (resolve-ability state side eid cdef c nil)
+       (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
      (get-card state c))))
