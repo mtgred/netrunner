@@ -485,6 +485,7 @@
                                                 (concat (:hand corp) (:discard corp))))))
                  :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
                                :show-discard true
+                               :delayed-completion true
                                :choices {:req #(and (has-subtype? % "Current")
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}
