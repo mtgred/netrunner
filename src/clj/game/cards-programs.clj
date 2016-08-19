@@ -629,7 +629,7 @@
                                     :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
                                   card nil))}
                 {:label "Host an installed program"
-                 :prompt "Choose a program to host on Scheherazade"
+                 :prompt "Choose a program to host on Scheherazade" :priority 2
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
