@@ -7,6 +7,11 @@
 ;;;; Functions for implementing card abilities and prompts
 
 ;;; Abilities
+(defn is-ability
+  "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
+  [{:keys [effect optional trace psi] :as abi}]
+  (or effect optional trace psi))
+
 (defn resolve-ability
   "Resolves an ability defined by the given ability map. Checks :req functions; shows prompts, psi games,
   traces, etc. as needed; charges costs; invokes :effect functions. All card effects and most engine effects

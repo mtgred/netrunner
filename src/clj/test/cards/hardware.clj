@@ -142,6 +142,23 @@
         (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
 
+(deftest doppelganger
+  "Doppelgänger - run again when successful"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Doppelgänger" 1)]))
+    (core/gain state :corp :bad-publicity 1)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Doppelgänger")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "OK")
+    (is (= 0 (:run-credit (get-runner))) "Runner lost BP credits")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "R&D")
+    (is (:run @state) "New run started")
+    (is (= [:rd] (:server (:run @state))) "Running on R&D")
+    (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+
 (deftest feedback-filter
   "Feedback Filter - Prevent net and brain damage"
   (do-game

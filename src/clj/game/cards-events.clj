@@ -160,7 +160,7 @@
                                      (game.core/run state side eid :rd nil card)
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= :rd target))
+    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 

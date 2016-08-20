@@ -153,8 +153,8 @@
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target))}
-             :successful-run-ends {:req (req (and (= target :archives)
-                                                  (not= (:max-access run) 0)
+             :successful-run-ends {:req (req (and (= (:server target) [:archives])
+                                                  (not= (:max-access target) 0)
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
@@ -485,6 +485,7 @@
                                                 (concat (:hand corp) (:discard corp))))))
                  :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
                                :show-discard true
+                               :delayed-completion true
                                :choices {:req #(and (has-subtype? % "Current")
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}

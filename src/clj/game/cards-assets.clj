@@ -217,7 +217,9 @@
                  :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :msg "do 2 meat damage" :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
+                 :delayed-completion true
+                 :msg "do 2 meat damage"
+                 :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
 
    "Corporate Town"
    {:additional-cost [:forfeit]
@@ -260,7 +262,9 @@
                                    :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))))}}}
 
    "Dedicated Response Team"
-   {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
+   {:events {:successful-run-ends {:req (req tagged)
+                                   :msg "do 2 meat damage"
+                                   :delayed-completion true
                                    :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
@@ -297,9 +301,10 @@
    "Edge of World"
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
-       (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
-                                    :effect (effect (damage eid :brain (ice-count state)
-                                                            {:card card}))}))
+     (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
+                                  :delayed-completion true
+                                  :effect (effect (damage eid :brain (ice-count state)
+                                                          {:card card}))}))
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -416,7 +421,9 @@
                                            " net damage"))
                             :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
+    :abilities [{:msg "do 1 net damage"
+                 :delayed-completion true
+                 :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Hyoubu Research Facility"
    {:events {:psi-bet-corp {:once :per-turn
@@ -829,7 +836,9 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
+                 :msg "do 3 net damage"
+                 :delayed-completion true
+                 :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
 
    "Sandburg"
    {:effect (req (add-watch state :sandburg
@@ -932,34 +941,41 @@
                 :prompt "Pay [Credits] to use Shi.Kyū?"
                 :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
                               :msg (msg "attempt to do " target " net damage")
-                              :effect (effect (resolve-ability
+                              :delayed-completion true
+                              :effect (effect (continue-ability
                                {:player :runner
                                 :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
                                 :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
+                                :delayed-completion true
                                 :effect (let [dmg target]
                                           (req (if (= target "Add Shi.Kyū to score area")
                                                  (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
                                                          (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
-                                                   (gain-agenda-point state :runner -1)
-                                                   (system-msg state side
-                                                    (str "adds Shi.Kyū to their score area as -1 agenda point")))
+                                                     (gain-agenda-point state :runner -1)
+                                                     (system-msg state side
+                                                                 (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                     (effect-completed state side eid))
                                                  (do (damage state :corp eid :net dmg {:card card})
-                                                   (system-msg state :corp
-                                                    (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                     (system-msg state :corp
+                                                                 (str "uses Shi.Kyū to do " dmg " net damage"))))))}
                               card targets))}}}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}
+   {:access {:msg "do 1 net damage"
+             :delayed-completion true
+             :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
    {:access {:req (req (not= (first (:zone card)) :discard))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:prompt "Pay 4 [Credits] to use Snare! ability?"
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
+                                               :delayed-completion true
                                                :effect (effect (damage eid :net 3 {:card card})
                                                                (tag-runner :runner 1))}}}
                                card nil))}}
