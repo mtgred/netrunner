@@ -922,7 +922,9 @@
                                 (pay state :runner card :credit (trash-cost state side c))
                                 (trigger-event state side :runner-trash nil)
                                 (update! state side (dissoc card :slums-active))
-                                (close-access-prompt state side)))}
+                                (close-access-prompt state side)
+                                (when-not (:run @state)
+                                  (swap! state dissoc :access))))}
                 {:label "Remove a card trashed this turn from the game"
                  :req (req (if (:slums-active card)
                              true
