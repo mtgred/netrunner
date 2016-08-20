@@ -381,6 +381,17 @@
              :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
                                     :effect (effect (advancement-cost-bonus -1))}}}
 
+   "Satellite Grid"
+   {:effect (req (doseq [c (:ices (card->server state card))]
+                   (set-prop state side c :extra-advance-counter 1))
+                 (update-all-ice state side))
+    :events {:corp-install {:req (req (and (ice? target)
+                                           (= (card->server state target) (card->server state card))))
+                            :effect (effect (set-prop target :extra-advance-counter 1))}}
+    :leave-play (req (doseq [c (:ices (card->server state card))]
+                       (update! state side (dissoc c :extra-advance-counter)))
+                     (update-all-ice state side))}
+
    "Self-destruct"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Trace X - Do 3 net damage"

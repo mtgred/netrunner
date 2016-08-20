@@ -82,11 +82,11 @@
 ;;; For Advanceable ICE
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
-  (req (:advance-counter card 0)))
+  (req (+ (:advance-counter card 0) (:extra-advance-counter card 0))))
 
 (def space-ice-rez-bonus
   "Amount of rez reduction for the Space ICE."
-  (req (* -3 (:advance-counter card 0))))
+  (req (* -3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))))
 
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
