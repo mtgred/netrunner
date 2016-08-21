@@ -653,7 +653,7 @@
                                 (str "Choose " (if (< 1 mus) (str mus " cards") "a card")
                                      " in Archives to shuffle into R&D")))
                  :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))
-                           :max (req (count (filter #(= "10019" (:code %)) (all-installed state :corp))))}
+                           :max (req (count (filter #(and (= "10019" (:code %)) (rezzed? %)) (all-installed state :corp))))}
                  :show-discard true
                  :priority 1
                  :once :per-turn
