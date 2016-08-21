@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-active all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run ice?
+(declare active? all-active all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run ice?
          has-subtype? register-events remove-from-host remove-icon rezzed?
          trash update-hosted! update-ice-strength unregister-events)
 
@@ -225,9 +225,10 @@
 
 (defn enable-card
   "Enables a disabled card"
-  [state side card]
-  (let [c (dissoc card :disabled)
-        cdef (card-def c)
-        events (:events cdef)]
-    (update! state side c)
-    (card-init state side c false)))
+  [state side {:keys [disabled] :as card}]
+  (when disabled
+    (let [c (dissoc card :disabled)]
+      (update! state side c)
+      (when (active? card)
+        (card-init state side c false)))))
+
