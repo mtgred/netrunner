@@ -415,10 +415,9 @@
   "Purges viruses."
   [state side]
   (trigger-event state side :pre-purge)
-  (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
-        hosted-cards (filter :installed (mapcat :hosted rig-cards))
+  (let [rig-cards (all-installed state :runner)
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-    (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+    (doseq [card (concat rig-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
         (add-counter state :runner card :virus (- (get-in card [:counter :virus] 0)))))
