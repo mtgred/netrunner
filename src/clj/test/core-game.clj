@@ -413,3 +413,23 @@
     (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))11111111
+
+(deftest purge-nested
+  "Purge nested-hosted virus counters"
+  (do-game
+    (new-game (default-corp [(qty "Cyberdex Trial" 1)])
+              (default-runner [(qty "Djinn" 1) (qty "Imp" 1) (qty "Leprechaun" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Leprechaun")
+    (let [lep (get-program state 0)]
+      (card-ability state :runner lep 0)
+      (prompt-select :runner (find-card "Djinn" (:hand (get-runner))))
+      (let [djinn (first (:hosted (refresh lep)))]
+        (card-ability state :runner djinn 1)
+        (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+        (let [imp (first (:hosted (refresh djinn)))]
+          (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
+          (take-credits state :runner)
+          (play-from-hand state :corp "Cyberdex Trial")
+          (is (= 0 (get-counters (refresh imp) :virus)) "Imp counters purged"))))))

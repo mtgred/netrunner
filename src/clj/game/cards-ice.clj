@@ -519,7 +519,9 @@
                                                                    (trash state side target {:cause :subroutine})
                                                                    (do (damage state side eid :meat 2 {:unpreventable true
                                                                                             :card card})
-                                                                       (end-run state side))))}
+                                                                       (end-run state side))))
+                                                    :cancel-effect (effect (damage eid :meat 2 {:unpreventable true :card card})
+                                                                           (end-run))}
                                                    card nil))})]}
 
    "Galahad"

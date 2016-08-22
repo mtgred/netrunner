@@ -39,9 +39,9 @@
   some events."
   ([state side card] (deactivate state side card nil))
   ([state side card keep-counter]
+   (unregister-events state side card)
    (trigger-leave-effect state side card)
    (handle-prevent-effect state card)
-   (unregister-events state side card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
    (when (and (find-cid (:cid card) (all-installed state side))
