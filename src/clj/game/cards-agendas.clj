@@ -605,10 +605,14 @@
 
    "Research Grant"
    {:req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
-    :prompt "Choose another installed copy of Research Grant to score"
-    :choices {:req #(= (:title %) "Research Grant")}
-    :effect (final-effect (score (assoc target :advance-counter (:advancementcost target))))
-    :msg (msg "score another copy of Research Grant")}
+    :delayed-completion true
+    :effect (effect (continue-ability
+                      {:prompt "Choose another installed copy of Research Grant to score"
+                       :choices {:req #(= (:title %) "Research Grant")}
+                       :effect (effect (set-prop target :advance-counter (:advancementcost target))
+                                       (score target))
+                       :msg "score another copy of Research Grant"}
+                     card nil))}
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
