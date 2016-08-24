@@ -816,7 +816,7 @@
     :prompt "Choose an identity to become"
     :choices (req (let [is-swappable (fn [c] (and (= "Identity" (:type c))
                                              (= (-> @state :runner :identity :faction) (:faction c))
-                                             (not (= "Draft" (:setname c)))
+                                             (not (.startsWith (:code c) "00")) ; only draft identities have this
                                              (not (= (:title c) (-> @state :runner :identity :title)))))
                         swappable-ids (filter is-swappable (vals @all-cards))]
                     (cancellable swappable-ids :sorted)))
