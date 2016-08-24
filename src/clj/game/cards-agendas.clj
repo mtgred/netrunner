@@ -70,14 +70,21 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
-   {:access {:choices ["0", "1", "2"]
-             :prompt "How many advancement tokens?"
-             :effect (req (let [c (Integer/parseInt target)]
-                            (continue-ability
-                             state side
-                             {:choices {:req can-be-advanced?}
-                              :msg (msg "place " c " advancement tokens on " (card-str state target))
-                              :effect (final-effect (add-prop :corp target :advance-counter c {:placed true}))} card nil)))}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to place advancement tokens with Award Bait")
+                             (continue-ability
+                               {:delayed-completion true
+                                :choices ["0", "1", "2"]
+                                :prompt "How many advancement tokens?"
+                                :effect (req (let [c (Integer/parseInt target)]
+                                               (continue-ability
+                                                 state side
+                                                 {:choices {:req can-be-advanced?}
+                                                  :msg (msg "place " c " advancement tokens on " (card-str state target))
+                                                  :cancel-effect (effect (clear-wait-prompt :runner))
+                                                  :effect (effect (add-prop :corp target :advance-counter c {:placed true})
+                                                                  (clear-wait-prompt :runner))} card nil)))}
+                              card nil))}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
