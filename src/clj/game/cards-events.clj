@@ -129,10 +129,9 @@
 
    "Cyber Threat"
    {:prompt "Choose a server" :choices (req runnable-servers)
-    :effect (req (let [serv target
-                       runtgt [(last (server->zone state serv))]
-                       ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
-                   (resolve-ability
+    :delayed-completion true
+    :effect (req (let [serv target]
+                   (continue-ability
                      state :corp
                      {:optional
                       {:prompt (msg "Rez a piece of ICE protecting " serv "?")
@@ -140,12 +139,7 @@
                                      :choices {:req #(and (not (:rezzed %))
                                                           (= (last (:zone %)) :ices))}
                                      :effect (req (rez state :corp target nil))}
-                       :no-ability {:effect (req (swap! state assoc :per-run nil
-                                                        :run {:server runtgt :position (count ices)
-                                                              :access-bonus 0 :run-effect nil})
-                                                 (gain-run-credits state :runner (:bad-publicity corp))
-                                                 (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
-                                                 (trigger-event state :runner :run runtgt))
+                       :no-ability {:effect (effect (game.core/run eid serv nil card))
                                     :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
                     card nil)))}
 
