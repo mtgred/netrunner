@@ -554,9 +554,15 @@ app.get '/data/:collection/:field/:value', (req, res) ->
     res.send {message: 'Unauthorized'}, 401
 
 app.get '/announce', (req, res) ->
-  if req.user.isadmin
-    requester.send(JSON.stringify({action: "alert", command: req.query.text}))
-    res.send {text: req.query.text, result: "ok"}, 200
+  if req.user and req.user.isadmin
+    res.render('announce.jade', {user : req.user})
+  else
+    res.send {message: 'Unauthorized'}, 401
+
+app.post '/announce', (req, res) ->
+  if req.user and req.user.isadmin
+    requester.send(JSON.stringify({action: "alert", command: req.body.message}))
+    res.send {text: req.body.message, result: "ok"}, 200
   else
     res.send {message: 'Unauthorized'}, 401
 
