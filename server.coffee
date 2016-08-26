@@ -326,7 +326,7 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special})
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special, isadmin: user.isadmin})
 
 # Routes
 app.options('*', cors())
@@ -550,6 +550,13 @@ app.get '/data/:collection/:field/:value', (req, res) ->
       console.error(err) if err
       delete d._id for d in data
       res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
+
+app.get '/announce', (req, res) ->
+  if req.user.isadmin
+    requester.send(JSON.stringify({action: "alert", command: req.query.text}))
+    res.send {text: req.query.text, result: "ok"}, 200
   else
     res.send {message: 'Unauthorized'}, 401
 

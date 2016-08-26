@@ -3,7 +3,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.macros :refer [effect]]
-            [game.core :refer [all-cards all-cards-alt game-states system-msg pay gain draw end-run toast show-error-toast
+            [game.core :refer [all-cards all-cards-alt game-states old-states system-msg pay gain draw end-run toast show-error-toast
                                card-is-public?] :as core]
             [game.utils :refer [card-is? private-card]]
             [environ.core :refer [env]]
@@ -143,7 +143,8 @@
   (try (do (case action
              "initialize" (reset-all-cards cards);; creates a map from card title to card data
              "start" (core/init-game msg)
-             "remove" (swap! game-states dissoc gameid)
+             "remove" (do (swap! game-states dissoc gameid)
+                          (swap! old-states dissoc gameid))
              "do" (handle-do user command state side args)
              "notification" (when state
                               (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
@@ -167,38 +168,45 @@
     (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))]
       ;; Attempt to handle the command. If true is returned, then generate a successful
       ;; message. Otherwise generate an error message.
-      (try (let [state (@game-states (:gameid msg))
-                 old-state (when state @state)
-                 [old-corp old-runner old-spect] (when old-state (private-states state))]
-             (if (handle-command msg state)
-               (if (= action "initialize")
-                 (.send socket (generate-string "ok"))
-                 (if-let [new-state (@game-states gameid)]
-                   (let [[new-corp new-runner new-spect] (private-states new-state)]
-                     (do
-                       (if (#{"start" "reconnect" "notification"} action)
-                         ;; send the whole state, not a diff
-                         (.send socket (generate-string {:action      action
-                                                         :runnerstate (strip new-runner)
-                                                         :corpstate   (strip new-corp)
-                                                         :spectstate  (strip new-spect)
-                                                         :gameid      gameid}))
-                         ;; send a diff
-                         (let [runner-diff (differ/diff (strip old-runner) (strip new-runner))
-                               corp-diff (differ/diff (strip old-corp) (strip new-corp))
-                               spect-diff (differ/diff (strip old-spect) (strip new-spect))]
-                           (.send socket (generate-string {:action     action
-                                                           :runnerdiff runner-diff
-                                                           :corpdiff   corp-diff
-                                                           :spectdiff  spect-diff
-                                                           :gameid     gameid}))))))
-                   (.send socket (generate-string {:action action :state old-state :gameid gameid}))))
-               (.send socket (generate-string "error"))))
-           (catch Exception e
-             (try (do (println "Inner Error " action command (get-in args [:card :title]) e)
-                      (.send socket (generate-string "error")))
-                  (catch Exception e
-                    (println "Socket Error " e))))))))
+      (try
+        (if (= action "alert")
+          (do (doseq [state (vals @game-states)]
+                (doseq [side [:runner :corp]]
+                  (toast state side command "warning" {:time-out 0 :close-button true})))
+              (.send socket (generate-string "ok")))
+          (let [state (@game-states (:gameid msg))
+                old-state (when state (@old-states (:gameid msg)))
+                [old-corp old-runner old-spect] (when old-state (private-states (atom old-state)))]
+            (if (handle-command msg state)
+              (if (= action "initialize")
+                (.send socket (generate-string "ok"))
+                (if-let [new-state (@game-states gameid)]
+                  (let [[new-corp new-runner new-spect] (private-states new-state)]
+                    (do
+                      (swap! old-states assoc (:gameid msg) @new-state)
+                      (if (#{"start" "reconnect" "notification"} action)
+                        ;; send the whole state, not a diff
+                        (.send socket (generate-string {:action      action
+                                                        :runnerstate (strip new-runner)
+                                                        :corpstate   (strip new-corp)
+                                                        :spectstate  (strip new-spect)
+                                                        :gameid      gameid}))
+                        ;; send a diff
+                        (let [runner-diff (differ/diff (strip old-runner) (strip new-runner))
+                              corp-diff (differ/diff (strip old-corp) (strip new-corp))
+                              spect-diff (differ/diff (strip old-spect) (strip new-spect))]
+                          (.send socket (generate-string {:action     action
+                                                          :runnerdiff runner-diff
+                                                          :corpdiff   corp-diff
+                                                          :spectdiff  spect-diff
+                                                          :gameid     gameid}))))))
+                  (.send socket (generate-string {:action action :state old-state :gameid gameid}))))
+              (.send socket (generate-string "error")))))
+        (catch Exception e
+          (try (do (println "Inner Error " action command (get-in args [:card :title]) e)
+                   (.send socket (generate-string "error")))
+               (catch Exception e
+                 (println "Socket Error " e))))))))
 
 (def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 
