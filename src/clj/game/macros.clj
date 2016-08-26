@@ -33,7 +33,7 @@
             'corp-reg '(get-in @state [:corp :register])
             'runner-reg '(get-in @state [:runner :register])
             'target '(first targets)
-            'installed '(#{:rig :servers} (first (:zone card)))
+            'installed '(#{:rig :servers} (first (:zone (get-nested-host card))))
             'remotes '(get-remote-names @state)
             'servers '(zones->sorted-names (get-zones @state))
             'unprotected '(let [server (second (:zone (if (:host card)
