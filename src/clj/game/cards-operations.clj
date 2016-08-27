@@ -726,7 +726,7 @@
                                   (join ", " (map :title (:hand runner)))
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
-                   (trash state side c)))}
+                   (trash state side c {:unpreventable true})))}
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
