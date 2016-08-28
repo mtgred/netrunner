@@ -889,7 +889,6 @@
                          :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
                          :effect (effect (move :runner target :deck))}}
                 {:label "Give the Runner 1 tag"
-                 :msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1))}]}
 
    "Shinobi"
