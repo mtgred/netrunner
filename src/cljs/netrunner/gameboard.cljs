@@ -1138,6 +1138,17 @@
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
                 (om/build cb/card-view card))]
+             ;; card implementation info
+             (when-let [card (om/get-state owner :zoom)]
+               (let [implemented (:implementation card)]
+                 (case implemented
+                   ;; no icon if fully implemented
+                   :full nil
+                   "full" nil
+                   ;; not implemented
+                   nil [:div.implementation.unimplemented "Unimplemented"]
+                   ;; special implementation message
+                   [:div.implementation.impl-msg implemented])))
              (om/build log-pane (:log cursor))]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})

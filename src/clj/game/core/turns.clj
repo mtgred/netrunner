@@ -5,6 +5,19 @@
 
 (def game-states (atom {}))
 
+(defn- card-implemented [card]
+  "Checks if the card is implemented. Looks for a valid return from `card-def`.
+  If implemented also looks for `:implementation` key which may contain special notes.
+  Returns either:
+    nil - not implemented
+    :full - implemented fully
+    msg - string with implementation notes"
+  (when-let [cdef (card-def card)]
+    ;; Card is defined - hence implemented
+    (if-let [impl (:implementation cdef)]
+      impl
+      :full)))
+
 ;;; Functions for the creation of games and the progression of turns.
 (defn- identity-init
   "Initialise the identity"
@@ -21,7 +34,9 @@
         corp-deck (create-deck (:deck corp) (:user corp))
         runner-deck (create-deck (:deck runner) (:user runner))
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
+        corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
                  :rid 0 :turn 0 :eid 0
@@ -71,7 +86,7 @@
   "Makes a proper card from an @all-cards card"
   [card]
   (-> card
-      (assoc :cid (make-cid))
+      (assoc :cid (make-cid) :implementation (card-implemented c))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
 
 (defn create-deck
