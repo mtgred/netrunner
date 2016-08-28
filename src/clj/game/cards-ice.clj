@@ -540,7 +540,9 @@
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
 
    "Hive"
-   {:abilities [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}
+                end-the-run]}
 
    "Heimdall 1.0"
    {:abilities [(do-brain-damage 1)
