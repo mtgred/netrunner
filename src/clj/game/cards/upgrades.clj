@@ -264,7 +264,8 @@
                                                              " with " (card-str state target)))))}]}
 
    "Mumbad Virtual Tour"
-   {:access {:req (req installed)
+   {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
+    :access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)
                                 slow-trash (any-flag-fn? state :runner :slow-trash true)]
                             (if (and (can-pay? state :runner nil :credit trash-cost)
@@ -291,7 +292,8 @@
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Off the Grid"
-   {:effect (req (prevent-run-on-server state card (second (:zone card))))
+   {:implementation "Installation restriction not enforced"
+    :effect (req (prevent-run-on-server state card (second (:zone card))))
     :events {:runner-turn-begins {:effect (req (prevent-run-on-server state card (second (:zone card))))}
              :successful-run {:req (req (= target :hq))
                               :effect (req (trash state :corp card)
@@ -508,12 +510,14 @@
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
 
    "Underway Grid"
-   {:events {:pre-expose {:req (req (= (take 2 (:zone target)) (take 2 (:zone card))))
+   {:implementation "Bypass prevention is not implemented"
+    :events {:pre-expose {:req (req (= (take 2 (:zone target)) (take 2 (:zone card))))
                           :msg "prevent 1 card from being exposed"
                           :effect (effect (expose-prevent 1))}}}
 
    "Valley Grid"
-   {:abilities [{:req (req this-server)
+   {:implementation "Activation is manual"
+    :abilities [{:req (req this-server)
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
