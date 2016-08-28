@@ -156,7 +156,7 @@
                  :choices {:req #(and (is-type? % "Operation")
                                       (= (:zone %) [:discard]))}
                  :effect (effect (move target :hand)) :once :per-turn
-                 :msg (msg "add " (card-str state target) " to HQ")}]}
+                 :msg (msg "add " (if (:seen target) (:title target) "a facedown card") " to HQ")}]}
 
    "Commercial Bankers Group"
    (let [ability {:req (req unprotected)

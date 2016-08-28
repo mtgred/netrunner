@@ -883,7 +883,7 @@
 
    "Sherlock 2.0"
    {:abilities [{:label "Trace 4 - Add an installed program to the bottom of the Runner's Stack"
-                 :trace {:base    4
+                 :trace {:base 4
                          :choices {:req #(and (installed? %)
                                               (is-type? % "Program"))}
                          :msg     (msg "add " (:title target) " to the bottom of the Runner's Stack")
