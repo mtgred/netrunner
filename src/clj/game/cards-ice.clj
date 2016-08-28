@@ -578,7 +578,9 @@
    {:abilities [end-the-run {:msg "add it to HQ" :cost [:credit 1] :effect (effect (move card :hand))}]}
 
    "Hive"
-   {:abilities [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}
+                end-the-run]}
 
    "Heimdall 1.0"
    {:abilities [(do-brain-damage 1)
@@ -927,6 +929,7 @@
                          :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
                          :effect (effect (move :runner target :deck))}}
                 {:label "Give the Runner 1 tag"
+                 :msg "give the Runner 1 tag"
                  :effect (effect (tag-runner :runner 1))}]}
 
    "Shinobi"
