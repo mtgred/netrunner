@@ -722,7 +722,8 @@
    {:recurring 1}
 
    "Weyland Consortium: Builder of Nations"
-   {:abilities [{:label "Do 1 meat damage"
+   {:implementation "Damage triggered manually"
+    :abilities [{:label "Do 1 meat damage"
                  :delayed-completion true
                  :msg "do 1 meat damage"
                  :effect (effect (damage eid :meat 1 {:card card}))}]}

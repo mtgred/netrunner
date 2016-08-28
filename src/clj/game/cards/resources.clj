@@ -64,7 +64,8 @@
                                                   (system-msg (str "adds 2 [Credit] to Algo Trading")))}}}
 
    "Always Be Running"
-   {:abilities [{:once :per-turn
+   {:implementation "Run requirement not enforced"
+    :abilities [{:once :per-turn
                  :cost [:click 2]
                  :msg (msg "break 1 subroutine")}]}
 
@@ -244,7 +245,8 @@
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Councilman"
-   {:events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
+   {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
+    :events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
                                   (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
                    :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                           " that was just rezzed") "info")
@@ -548,7 +550,8 @@
                                   (runner-install state side c {:facedown true})))}]}
 
    "Ice Analyzer"
-   {:events {:rez {:req (req (ice? target))
+   {:implementation "Credit use restriction is not enforced"
+    :events {:rez {:req (req (ice? target))
                    :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-counter :runner card :credit 1))}}
     :abilities [{:counter-cost [:credit 1]
@@ -576,7 +579,8 @@
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :makes-run true
                   :effect (effect (run target))}]
-   {:flags {:runner-phase-12 (req true)}
+   {:implementation "Doesn't prevent program use"
+    :flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (* -1 (:link runner))])
     :events {:runner-turn-begins
               {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))

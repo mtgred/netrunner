@@ -122,7 +122,8 @@
               (* 3 (get target :advance-counter 0)) " [Credits]")}
 
    "Bad Times"
-   {:req (req tagged)
+   {:implementation "Any required program trashing is manual"
+    :req (req tagged)
     :msg "force the Runner to lose 2[mu] until the end of the turn"
     :effect (req (lose state :runner :memory 2)
                  (when (< (:memory runner) 0)
@@ -140,7 +141,8 @@
     :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
-   {:choices {:req #(and (ice? %)
+   {:implementation "Derez is manual"
+    :choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")
                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
@@ -586,7 +588,8 @@
                      card nil))}
 
    "Oversight AI"
-   {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
+   {:implementation "Trashing ICE is manual"
+    :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
                           (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
