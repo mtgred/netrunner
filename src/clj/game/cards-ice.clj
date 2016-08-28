@@ -965,6 +965,9 @@
    "Taurus"
    (constellation-ice trash-hardware)
 
+   "TL;DR"
+   {:abilities [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}
+
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
