@@ -705,7 +705,6 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run eid target nil card))
-    :mill-effect {:effect (effect (register-events (ashes-flag) (assoc card :zone [:discard])))}
     :move-zone (req (if (= [:discard] (:zone card))
                       (register-events state side (ashes-flag) (assoc card :zone [:discard]))
                       (unregister-events state side card)))

@@ -428,14 +428,9 @@
   "Force the discard of n cards from :deck to :discard."
   ([state side] (mill state side 1))
   ([state side n]
-   (let [milltargets (take n (get-in @state [side :deck]))
-         milled (zone :discard milltargets)]
+   (let [milltargets (take n (get-in @state [side :deck]))]
      (doseq [c milltargets]
-       (when-let [mill (:mill-effect (card-def c))]
-         (resolve-ability state side mill c nil)
-         (trigger-event state side :mill-effect c)))
-     (swap! state update-in [side :discard] #(concat % milled)))
-   (swap! state update-in [side :deck] (partial drop n))))
+       (move state side c :discard)))))
 
 ;; Exposing
 (defn expose-prevent
