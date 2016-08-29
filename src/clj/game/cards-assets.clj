@@ -139,6 +139,24 @@
     :trash-effect {:when-unrezzed true
                    :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
+   "C.I. Fund"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (> (:credit corp) 0))}
+    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
+                 :prompt "Choose how many [Credit] to move" :once :per-turn
+                 :choices {:number (req (min (:credit corp) 3))}
+                 :effect (effect (lose :credit target)
+                                 (add-counter card :credit target))
+                 :msg (msg "move " target " [Credit] to C.I. Fund")}
+                {:label "Take all credits from C.I. Fund"
+                 :cost [:credit 2]
+                 :msg (msg "trash it and gain " (get-in card [:counter :credit] 0) " [Credits]")
+                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                                 (trash card {:cause :ability-cost}))}]
+    :events {:corp-turn-begins {:req (req (>= (get-in card [:counter :credit] 0) 6))
+                                :effect (effect (add-counter card :credit 2)
+                                                (system-msg (str "adds 2 [Credit] to C.I. Fund")))}}}
+
    "City Surveillance"
    {:events {:runner-turn-begins
              {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
@@ -199,7 +217,9 @@
                  :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :msg "do 2 meat damage" :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
+                 :delayed-completion true
+                 :msg "do 2 meat damage"
+                 :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
 
    "Corporate Town"
    {:additional-cost [:forfeit]
@@ -242,7 +262,9 @@
                                    :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))))}}}
 
    "Dedicated Response Team"
-   {:events {:successful-run-ends {:req (req tagged) :msg "do 2 meat damage"
+   {:events {:successful-run-ends {:req (req tagged)
+                                   :msg "do 2 meat damage"
+                                   :delayed-completion true
                                    :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
@@ -279,9 +301,10 @@
    "Edge of World"
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
-       (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
-                                    :effect (effect (damage eid :brain (ice-count state)
-                                                            {:card card}))}))
+     (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
+                                  :delayed-completion true
+                                  :effect (effect (damage eid :brain (ice-count state)
+                                                          {:card card}))}))
 
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
@@ -319,7 +342,9 @@
                                             :sorted))
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
-                 :effect (effect (trash card) (move target :hand) (shuffle! :deck))}]
+                 :effect (effect (trash card)
+                                 (shuffle! :deck)
+                                 (move target :hand))}]
 
     ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
     :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
@@ -349,6 +374,20 @@
    {:events {:access {:req (req (is-type? target "Agenda"))
                       :msg "add it to their score area and gain 1 agenda point"
                       :effect (effect (as-agenda :corp card 1))}}}
+
+   "Full Immersion RecStudio"
+   {:can-host (req (and (or (is-type? target "Asset") (is-type? target "Agenda"))
+                        (> 2 (count (:hosted card)))))
+    :trash-cost-bonus (req (* 3 (count (:hosted card))))
+    :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
+                 :req (req (< (count (:hosted card)) 2))
+                 :cost [:click 1]
+                 :prompt "Choose an asset or agenda to install"
+                 :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
+                                      (in-hand? %)
+                                      (= (:side %) "Corp"))}
+                 :msg "install and host an asset or agenda"
+                 :effect (req (corp-install state side target card))}]}
 
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
@@ -382,7 +421,9 @@
                                            " net damage"))
                             :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
                                                     {:card card}))}}
-    :abilities [{:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}]}
+    :abilities [{:msg "do 1 net damage"
+                 :delayed-completion true
+                 :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Hyoubu Research Facility"
    {:events {:psi-bet-corp {:once :per-turn
@@ -510,7 +551,8 @@
                  :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1]
-                 :effect (effect (move target :hand) (shuffle! :deck))}]}
+                 :effect (effect (shuffle! :deck)
+                                 (move target :hand))}]}
 
    "Lily Lockwell"
    {:effect (effect (draw 3))
@@ -528,7 +570,7 @@
                                   (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
                                 (do (shuffle! state :corp :deck)
                                     (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
-                                (lose state :runner :tag 1))}]}
+                              (lose state :runner :tag 1))}]}
 
    "Mark Yale"
    {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
@@ -586,13 +628,10 @@
                                                             (<= (:cost %) (:credit corp)) true)) (:deck corp)) :sorted))
                  :msg (msg "reveal " (:title target) " from R&D and "
                            (if (= (:type target) "Operation") "play " "install ") " it")
-                 :effect (req (if (= (:type target) "Operation")
-                                (when-completed (play-instant state side target)
-                                                (do (system-msg state side "shuffles their deck")
-                                                    (shuffle! state side :deck)))
-                                (when-completed (corp-install state side target nil nil)
-                                                (do (system-msg state side "shuffles their deck")
-                                                    (shuffle! state side :deck)))))}]}
+                 :effect (req (shuffle! state side :deck)
+                              (if (= (:type target) "Operation")
+                                (play-instant state side target)
+                                (corp-install state side target nil nil)))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -614,7 +653,7 @@
                                 (str "Choose " (if (< 1 mus) (str mus " cards") "a card")
                                      " in Archives to shuffle into R&D")))
                  :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))
-                           :max (req (count (filter #(= "10019" (:code %)) (all-installed state :corp))))}
+                           :max (req (count (filter #(and (= "10019" (:code %)) (rezzed? %)) (all-installed state :corp))))}
                  :show-discard true
                  :priority 1
                  :once :per-turn
@@ -636,7 +675,8 @@
 
    "News Team"
    {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
-             :effect (effect (resolve-ability
+             :delayed-completion true
+             :effect (effect (continue-ability
                                {:player :runner
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
@@ -739,6 +779,7 @@
    "Psychic Field"
    (let [ab {:psi {:req (req installed)
                    :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
+                               :delayed-completion true
                                :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
      {:expose ab :access ab})
 
@@ -795,14 +836,17 @@
    "Ronin"
    {:advanceable :always
     :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
-                 :msg "do 3 net damage" :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
+                 :msg "do 3 net damage"
+                 :delayed-completion true
+                 :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
 
    "Sandburg"
    {:effect (req (add-watch state :sandburg
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (update-all-ice ref side))))))
+                                  (update-all-ice ref side)))))
+                 (update-all-ice state side))
     :events {:pre-ice-strength {:req (req (and (ice? target)
                                                (>= (:credit corp) 10)))
                                 :effect (effect (ice-strength-bonus (quot (:credit corp) 5) target))}}
@@ -897,34 +941,41 @@
                 :prompt "Pay [Credits] to use Shi.Kyū?"
                 :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
                               :msg (msg "attempt to do " target " net damage")
-                              :effect (effect (resolve-ability
+                              :delayed-completion true
+                              :effect (effect (continue-ability
                                {:player :runner
                                 :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
                                 :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
+                                :delayed-completion true
                                 :effect (let [dmg target]
                                           (req (if (= target "Add Shi.Kyū to score area")
                                                  (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
                                                          (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
-                                                   (gain-agenda-point state :runner -1)
-                                                   (system-msg state side
-                                                    (str "adds Shi.Kyū to their score area as -1 agenda point")))
+                                                     (gain-agenda-point state :runner -1)
+                                                     (system-msg state side
+                                                                 (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                     (effect-completed state side eid))
                                                  (do (damage state :corp eid :net dmg {:card card})
-                                                   (system-msg state :corp
-                                                    (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                     (system-msg state :corp
+                                                                 (str "uses Shi.Kyū to do " dmg " net damage"))))))}
                               card targets))}}}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}
+   {:access {:msg "do 1 net damage"
+             :delayed-completion true
+             :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
    {:access {:req (req (not= (first (:zone card)) :discard))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:prompt "Pay 4 [Credits] to use Snare! ability?"
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
+                                               :delayed-completion true
                                                :effect (effect (damage eid :net 3 {:card card})
                                                                (tag-runner :runner 1))}}}
                                card nil))}}
@@ -958,7 +1009,9 @@
                  :prompt "Choose an asset to install"
                  :msg (msg "install " (:title target))
                  :choices (req (filter #(is-type? % "Asset") (:deck corp)))
-                 :effect (effect (trash card) (corp-install target nil) (shuffle! :deck))}]}
+                 :effect (effect (trash card)
+                                 (shuffle! :deck)
+                                 (corp-install target nil))}]}
 
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"
@@ -1049,11 +1102,8 @@
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
-                 :effect (req (trigger-event state side :corp-install target)
-                              (host state side card target)
-                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card))))
-                              (when (:rezzed (last (:hosted (get-card state card))))
-                                (update! state side (dissoc (get-card state (last (:hosted card))) :facedown))))}]}
+                 :effect (req (corp-install state side target card) ;; install target onto card
+                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
    {:prevent {:expose [:all]}

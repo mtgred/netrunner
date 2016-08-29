@@ -192,7 +192,7 @@
                                                            :corpdiff   corp-diff
                                                            :spectdiff  spect-diff
                                                            :gameid     gameid}))))))
-                   (.send socket (generate-string "error"))))
+                   (.send socket (generate-string {:action action :state old-state :gameid gameid}))))
                (.send socket (generate-string "error"))))
            (catch Exception e
              (try (do (println "Inner Error " action command (get-in args [:card :title]) e)
@@ -209,6 +209,11 @@
     (run socket)))
 
 (defn -main []
+  (Thread/setDefaultUncaughtExceptionHandler
+    (reify Thread$UncaughtExceptionHandler
+      (uncaughtException [_ thread ex]
+        (println "UNCAUGHT EXCEPTION " ex))))
+
   (println "[Prod] Listening on port 1043 for incoming commands...")
   (let [worker-url "inproc://responders"
         router (doto (.socket ctx ZMQ/ROUTER) (.bind zmq-url))

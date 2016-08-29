@@ -138,7 +138,7 @@
                                         (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                                         (doseq [c (all-installed state side)]
                                           (when-not (:rezzed c)
-                                            (rez state side c {:ignore-cost :all-costs}))))}}}
+                                            (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     {:title "/rez-all command"} nil))
 
 (defn parse-command [text]
@@ -179,7 +179,7 @@
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
         "/close-prompt" #(swap! %1 update-in [%2 :prompt] rest)
         "/rez"        #(when (= %2 :corp)
-                        (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs}))
+                        (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
                                                 :choices {:req (fn [t] (card-is? t :side %2))}}
                                          {:title "/rez command"} nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
@@ -187,6 +187,10 @@
                                                :effect (effect (move target :rfg))
                                                :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/rfg command"} nil)
+        "/move-bottom"  #(resolve-ability %1 %2 {:prompt "Select a card in hand to put on the bottom of your deck"
+                                                 :effect (effect (move target :deck))
+                                                 :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
+                                          {:title "/move-bottom command"} nil)
         "/error"      #(show-error-toast %1 %2)
         nil))))
 

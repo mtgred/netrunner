@@ -152,12 +152,11 @@
    "Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)
-    :effect (effect (update! (assoc card :named-target target)))
-    :leave-play (effect (update! (dissoc card :named-target)))
+    :effect (effect (update! (assoc card :server-target target)))
     :events {:purge {:effect (effect (trash card))}
              :pre-corp-install {:req (req (let [c target
                                                 serv (:server (second targets))]
-                                            (and (= serv (:named-target card))
+                                            (and (= serv (:server-target card))
                                                  (not (and (is-central? serv)
                                                            (is-type? c "Upgrade"))))))
                                 :effect (effect (install-cost-bonus [:credit 1]))}}}
@@ -169,7 +168,10 @@
                  :choices (req (cancellable (filter #(and (is-type? % "Program")
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
-                 :cost [:click 1 :credit 1] :effect (effect (trigger-event :searched-stack nil) (move target :hand) (shuffle! :deck))}
+                 :cost [:click 1 :credit 1]
+                 :effect (effect (trigger-event :searched-stack nil)
+                                 (shuffle! :deck)
+                                 (move target :hand) )}
                 {:label "Install a non-Icebreaker program on Djinn"
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
@@ -261,12 +263,15 @@
    {:events {:successful-run {:effect (effect (add-counter card :virus 1))}}
     :abilities [{:counter-cost [:virus 2]
                  :cost [:click 1]
+                 :req (req (> (count (:hand corp)) 0))
                  :msg "force the Corp to trash 1 card from HQ"
-                 :effect (req (resolve-ability
+                 :effect (req (show-wait-prompt state :runner "Corp to trash a card from HQ")
+                              (resolve-ability
                                 state :corp
                                 {:prompt "Choose a card to trash"
                                  :choices (req (filter #(= (:side %) "Corp") (:hand corp)))
-                                 :effect (effect (trash target))}
+                                 :effect (effect (trash target)
+                                                 (clear-wait-prompt :runner))}
                                card nil))}]}
 
    "Hivemind"
@@ -502,7 +507,7 @@
                              (update! state side (update-in card [:special] dissoc :installing))
                              (trigger-event state side :runner-install card))
                            (trash state side target)
-                           (trash-ice-in-run state))
+                           (continue state side nil))
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
@@ -627,7 +632,7 @@
                                     :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
                                   card nil))}
                 {:label "Host an installed program"
-                 :prompt "Choose a program to host on Scheherazade"
+                 :prompt "Choose a program to host on Scheherazade" :priority 2
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
@@ -641,7 +646,8 @@
                  :cost [:credit 2]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (trash card {:cause :ability-cost})
-                                 (runner-install target) (shuffle! :deck))}]}
+                                 (shuffle! :deck)
+                                 (runner-install target))}]}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1] :msg "make a run on Archives"

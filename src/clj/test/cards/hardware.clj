@@ -142,6 +142,23 @@
         (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
 
+(deftest doppelganger
+  "Doppelgänger - run again when successful"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Doppelgänger" 1)]))
+    (core/gain state :corp :bad-publicity 1)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Doppelgänger")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "OK")
+    (is (= 0 (:run-credit (get-runner))) "Runner lost BP credits")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "R&D")
+    (is (:run @state) "New run started")
+    (is (= [:rd] (:server (:run @state))) "Running on R&D")
+    (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+
 (deftest feedback-filter
   "Feedback Filter - Prevent net and brain damage"
   (do-game
@@ -348,6 +365,52 @@
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
 
+(deftest spy-camera
+  "Spy Camera - Full test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Spy Camera" 6) (qty "Sure Gamble" 1) (qty "Desperado" 1)
+                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1) (qty "Kati Jones" 1)]))
+    (starting-hand state :runner ["Spy Camera" "Spy Camera" "Spy Camera"
+                                  "Spy Camera" "Spy Camera" "Spy Camera"])
+    (is (= 6 (count (:hand (get-runner)))))
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    (core/gain state :runner :click 3)
+    (loop [x 6]
+      (when (pos? x)
+        (do (play-from-hand state :runner "Spy Camera")
+            (recur (dec x)))))
+    (let [spy (get-hardware state 5)]
+      ;look at top 6 cards
+      (card-ability state :runner spy 0)
+      (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
+      ;try starting over
+      (prompt-choice :runner "Start over")
+      (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+      (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+      (prompt-choice :runner "Done")
+      (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+      (is (= "Desperado" (:title (second (:deck (get-runner))))))
+      (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
+      (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
+      (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
+      (is (= "Kati Jones" (:title (second (rest (rest (rest (rest (:deck (get-runner))))))))))
+      ;look at top card of R&D
+      (card-ability state :runner spy 1)
+      (let [topcard (get-in (first (get-in @state [:runner :prompt])) [:msg])]
+        (is (= "The top card of R&D is Hedge Fund" topcard)))
+      (is (= 1 (count (:discard (get-runner))))))))
+
 (deftest the-personal-touch
   "The Personal Touch - Give +1 strength to an icebreaker"
   (do-game
@@ -416,32 +479,36 @@
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
         (is (= 0 (:agenda-point (get-runner))) "Stole Domestic Sleepers")
-        ;; Turntable prompt should be active
+        (is (prompt-is-card? :runner tt))
         (prompt-choice :runner "Yes")
-        (is (= (:cid tt) (-> @state :runner :prompt first :card :cid)))
         (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
-        (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")
-        (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+        (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
 
 (deftest turntable-mandatory-upgrades
-  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn"
+  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
+             - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades"
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Project Vitruvius" 1)])
+    (new-game (default-corp [(qty "Mandatory Upgrades" 2) (qty "Project Vitruvius" 1)])
               (default-runner [(qty "Turntable" 1)]))
-    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
-    (let [manups (get-content state :remote1 0)]
-      (score-agenda state :corp manups)
-      (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Turntable")
-      (let [tt (get-in @state [:runner :rig :hardware 0])]
-        (run-empty-server state "HQ")
-        (prompt-choice :runner "Steal")
-        (prompt-choice :runner "Yes") ;; Turntable optional prompt
-        (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
-        (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
-        (is (nil? (:swap (core/get-card state tt))) "Turntable ability disabled")))))
+    (score-agenda state :corp (find-card "Mandatory Upgrades" (:hand (get-corp))))
+    (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Turntable")
+    (let [tt (get-in @state [:runner :rig :hardware 0])]
+      ;steal Project Vitruvius and swap for Mandatory Upgrades
+      (core/steal state :runner (find-card "Project Vitruvius" (:hand (get-corp))))
+      (is (prompt-is-card? :runner tt))
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
+      (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
+      ;steal second Mandatory Upgrades and swap for Project Vitruvius
+      (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
+      (is (prompt-is-card? :runner tt))
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
+      (is (= 0 (:click (get-corp))) "Corp doesn't gain a click on Runner's turn")
+      (is (= 4 (:click-per-turn (get-corp)))))))
 
 (deftest vigil
   "Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size"

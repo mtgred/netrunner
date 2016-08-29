@@ -112,9 +112,15 @@
                                            (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}
 
    "Cyberdex Virus Suite"
-   {:access {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                        :yes-ability {:msg (msg "purge viruses")
-                                      :effect (effect (purge))}}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Cyberdex Virus Suite")
+                             (continue-ability
+                               {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
+                                           :yes-ability {:msg (msg "purge viruses")
+                                                         :effect (effect (clear-wait-prompt :runner)
+                                                                         (purge))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                               card nil))}
     :abilities [{:label "[Trash]: Purge virus counters"
                  :msg "purge viruses" :effect (effect (trash card) (purge))}]}
 
@@ -159,6 +165,24 @@
     :events {:corp-turn-begins ability}
     :abilities [ability]})
 
+   "Georgia Emelyov"
+   {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
+                                :delayed-completion true
+                                :msg "do 1 net damage"
+                                :effect (effect (damage eid :net 1 {:card card}))}}
+    :abilities [{:cost [:credit 2]
+                 :label "Move to another server"
+                 :delayed-completion true
+                 :effect (effect (continue-ability
+                                   {:prompt "Choose a server"
+                                    :choices (butlast (server-list state side))
+                                    :msg (msg "move to " target)
+                                    :effect (req (let [c (move state side card
+                                                               (conj (server->zone state target) :content))]
+                                                   (unregister-events state side card)
+                                                   (register-events state side (:events (card-def c)) c)))}
+                                   card nil))}]}
+
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
@@ -167,7 +191,8 @@
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
-                              :effect (req (damage state side eid :net 1 {:card card}))}}}
+                              :delayed-completion true
+                              :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -272,7 +297,8 @@
                               :effect (req (trash state :corp card)
                                            (enable-run-on-server state card
                                                                  (second (:zone card)))
-                                           (system-msg state :corp (str "trashes Off the Grid")))}}}
+                                           (system-msg state :corp (str "trashes Off the Grid")))}}
+    :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
    {:events {:pre-steal-cost
@@ -297,6 +323,23 @@
                    :effect (effect (prevent-jack-out))}
              :runner-trash {:req (req (and this-server (is-type? target "Program")))
                             :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}}}
+
+   "Prisec"
+   {:access {:req (req (installed? card))
+             :delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Prisec")
+                             (continue-ability
+                               {:optional
+                                {:prompt "Pay 2 [Credits] to use Prisec ability?"
+                                 :end-effect (effect (clear-wait-prompt :runner))
+                                 :yes-ability {:cost [:credit 2]
+                                               :msg "do 1 meat damage and give the Runner 1 tag"
+                                               :delayed-completion true
+                                               :effect (req (when-completed (damage state side :meat 1 {:card card})
+                                                                            (do (tag-runner state :runner 1)
+                                                                                ;; TO-DO: extend effect-completed to tag prevention
+                                                                                (effect-completed state side eid))))}}}
+                               card nil))}}
 
    "Product Placement"
    {:access {:req (req (not= (first (:zone card)) :discard))
@@ -325,6 +368,7 @@
    "Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                 :delayed-completion true
                  :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
@@ -336,6 +380,17 @@
                             :effect (effect (update-advancement-cost target))}
              :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
                                     :effect (effect (advancement-cost-bonus -1))}}}
+
+   "Satellite Grid"
+   {:effect (req (doseq [c (:ices (card->server state card))]
+                   (set-prop state side c :extra-advance-counter 1))
+                 (update-all-ice state side))
+    :events {:corp-install {:req (req (and (ice? target)
+                                           (= (card->server state target) (card->server state card))))
+                            :effect (effect (set-prop target :extra-advance-counter 1))}}
+    :leave-play (req (doseq [c (:ices (card->server state card))]
+                       (update! state side (dissoc c :extra-advance-counter)))
+                     (update-all-ice state side))}
 
    "Self-destruct"
    {:abilities [{:req (req this-server)

@@ -339,6 +339,55 @@
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
+(deftest full-immersion-recstudio
+  "Full Immmersion RecStudio - install directly, and via Interns"
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1)
+                     (qty "Interns" 2)
+                     (qty "Launch Campaign" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+      (let [lc (first (:hosted (refresh fir)))]
+        (is lc "Launch Campaign hosted on Full Immersion RecStudio")
+        (core/rez state :corp lc)
+        (is (and (:installed (refresh lc)) (:rezzed (refresh lc))) "Rezzed Launch Campaign")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 5 (:credit (get-corp))) "Gained 2cr from Launch Campaign")
+        (is (= 4 (get-counters (refresh lc) :credit)) "4cr left on Launch Campaign")
+        (play-from-hand state :corp "Interns")
+        (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+        (prompt-choice :corp (refresh fir))
+        (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
+
+(deftest full-immersion-recstudio-sandburg
+  "Full Immmersion RecStudio - hosting an asset with events does not double-register events. Issue #1827."
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1) (qty "Vanilla" 1)
+                     (qty "Oaktown Renovation" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (let [fir (get-content state :remote1 0)
+          van (get-ice state :hq 0)]
+      (core/rez state :corp fir)
+      (core/rez state :corp van)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
+      (core/gain state :corp :credit 7 :click 3)
+      (core/rez state :corp (first (:hosted (refresh fir))))
+      (is (= 2 (:current-strength (refresh van))) "Vanilla at 2 strength")
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+      (core/advance state :corp {:card (last (:hosted (refresh fir)))})
+      (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
+
 (deftest genetics-pavilion
   "Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn"
   (do-game

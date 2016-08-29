@@ -210,6 +210,17 @@
 (defn installed? [card]
   (or (:installed card) (= :servers (first (:zone card)))))
 
+(defn active? [{:keys [zone] :as card}]
+  "Checks if the card is active and should receive game events/triggers."
+  (or (is-type? card "Identity")
+      (= zone [:current])
+      (and (card-is? card :side :corp)
+           (installed? card)
+           (rezzed? card))
+      (and (card-is? card :side :runner)
+           (installed? card)
+           (not (facedown? card)))))
+
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
@@ -219,6 +230,9 @@
    (and (same-side? side (:side card))
         (run-flag? state side card :can-rez)
         (turn-flag? state side card :can-rez)
+        (or (not (:uniqueness card))
+            (empty? (filter #(and (:uniqueness %) (:rezzed %) (= (:code card) (:code %)))
+                            (all-installed state :corp))))
         (if-let [rez-req (:rez-req (card-def card))]
           (rez-req state side (make-eid state) card nil)
           true))))
@@ -267,6 +281,7 @@
     ;; or scored or current
     (or (card-is? card :side :runner)
         (and (:openhand (:corp @state)) (in-hand? card))
-        (and (installed? card) (rezzed? card))
+        (and (or (installed? card) (:host card))
+             (or (is-type? card "Operation") (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))

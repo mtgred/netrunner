@@ -41,15 +41,16 @@
          points (get-agenda-points state :runner c)]
      (when-completed
        (trigger-event-simult state :runner :agenda-stolen
-                             {:effect (req (when-let [current (first (get-in @state [:corp :current]))]
+                             {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains " points
+                                                                          " agenda point" (when (> points 1) "s")))
+                                           (swap! state update-in [:runner :register :stole-agenda]
+                                                  #(+ (or % 0) (:agendapoints c)))
+                                           (gain-agenda-point state :runner points)
+                                           (when-let [current (first (get-in @state [:corp :current]))]
                                              (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                              (trash state side current)))}
                              (ability-as-handler c (:stolen (card-def c))) c)
        (do
-         (system-msg state :runner (str "steals " (:title c) " and gains " points
-                                        " agenda point" (when (> points 1) "s")))
-         (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) points))
-         (gain-agenda-point state :runner points)
          (effect-completed state side eid nil))))))
 
 (defn resolve-steal-events
@@ -117,7 +118,8 @@
           ;; If the runner is forced to trash this card (Neutralize All Threats)
           (continue-ability state :runner
                            {:cost [:credit trash-cost]
-                            :effect (effect (trash card)
+                            :delayed-completion true
+                            :effect (effect (trash eid card nil)
                                             (system-msg (str "is forced to pay " trash-cost
                                                              " [Credits] to trash " name)))} card nil)
           ;; Otherwise, show the option to pay to trash the card.
@@ -126,7 +128,8 @@
             {:optional
              {:prompt (str "Pay " trash-cost "[Credits] to trash " name "?")
               :yes-ability {:cost [:credit trash-cost]
-                            :effect (effect (trash card)
+                            :delayed-completion true
+                            :effect (effect (trash eid card nil)
                                             (system-msg (str "pays " trash-cost
                                                              " [Credits] to trash " name)))}}}
             card nil)))
@@ -540,12 +543,14 @@
 
 (defn end-run
   "End this run, and set it as UNSUCCESSFUL"
-  [state side]
-  (let [server (first (get-in @state [:run :server]))]
-    (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-    (swap! state assoc-in [:run :unsuccessful] true)
-    (handle-end-run state side)
-    (trigger-event state side :unsuccessful-run)))
+  ([state side] (end-run state side (make-eid state)))
+  ([state side eid]
+   (let [run (:run @state)
+         server (first (get-in @state [:run :server]))]
+     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+     (swap! state assoc-in [:run :unsuccessful] true)
+     (handle-end-run state side)
+     (trigger-event-sync state side eid :unsuccessful-run run))))
 
 (defn jack-out-prevent
   [state side]
@@ -580,17 +585,28 @@
                       (do (resolve-jack-out state side eid)
                           (effect-completed state side (make-result eid false))))))))
 
+(defn- trigger-run-end-events
+  [state side eid run]
+  (cond
+    ;; Successful
+    (:successful run)
+    (trigger-event-sync state side eid :successful-run-ends run)
+    ;; Unsuccessful
+    (:unsuccessful run)
+    (trigger-event-sync state side eid :unsuccessful-run-ends run)
+    ;; Neither
+    :else
+    (effect-completed state side eid)))
+
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [server (get-in @state [:run :server])
-        eid (get-in @state [:run :eid])]
+  (let [run (:run @state)
+        server (:server run)
+        eid (:eid run)]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends (first server))
-    (when (get-in @state [:run :successful])
-      (trigger-event state side :successful-run-ends (first server)))
-    (when (get-in @state [:run :unsuccessful])
-      (trigger-event state side :unsuccessful-run-ends (first server)))
+
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
@@ -603,12 +619,12 @@
     (swap! state assoc :run nil)
     (update-all-ice state side)
     (clear-run-register! state)
-    (effect-completed state side eid nil)))
+    (trigger-run-end-events state side eid run)))
 
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (empty? (get-in @state [:runner :prompt]))
+  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
 

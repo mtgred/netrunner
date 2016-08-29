@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-active all-installed cards deactivate card-flag? get-card-hosted handle-end-run ice?
+(declare active? all-active all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run ice?
          has-subtype? register-events remove-from-host remove-icon rezzed?
          trash update-hosted! update-ice-strength unregister-events)
 
@@ -204,6 +204,13 @@
     (when-let [leave-play (:leave-play (card-def id))]
       (leave-play state side (make-eid state) id nil))))
 
+(defn disable-card
+  "Disables a card"
+  [state side card]
+  (let [c (assoc card :disabled true)]
+    (deactivate state side card)
+    (update! state side c)))
+
 (defn enable-identity
   "Enables the side's identity"
   [state side]
@@ -215,3 +222,13 @@
       (eff state side (make-eid state) id nil))
     (when events
       (register-events state side events id))))
+
+(defn enable-card
+  "Enables a disabled card"
+  [state side {:keys [disabled] :as card}]
+  (when disabled
+    (let [c (dissoc card :disabled)]
+      (update! state side c)
+      (when (active? card)
+        (card-init state side c false)))))
+

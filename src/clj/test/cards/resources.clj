@@ -341,6 +341,31 @@
     (is (= 0 (:agenda-point (get-runner))))
     (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
 
+(deftest fan-site-eoi
+  "Fan Site - Don't trigger after swap with Exchange of Information. Issue #1824"
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Exchange of Information" 1)])
+              (default-runner [(qty "Fan Site" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (core/tag-runner state :runner 1)
+
+    (play-from-hand state :corp "Exchange of Information")
+
+    (prompt-select :corp (find-card "Fan Site" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Hostile Takeover" (:scored (get-corp))))
+
+    (is (= 1 (:agenda-point (get-runner))))
+    (is (= 0 (:agenda-point (get-corp))))
+
+    (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site swapped into Corp score area")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
+
 (deftest fester
   "Fester - Corp loses 2c (if able) when purging viruses"
   (do-game
@@ -754,6 +779,38 @@
       (is (= 1 (:click (get-runner))) "Spent 1 click")
       (is (= 2 (:credit (get-runner))) "Gained 1 credit")
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
+
+(deftest rolodex
+  "Rolodex - Full test"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Rolodex" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)
+                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Rolodex"])
+    (is (= 1 (count (:hand (get-runner)))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rolodex")
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    ;try starting over
+    (prompt-choice :runner "Start over")
+    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+    (prompt-choice :runner "Done")
+    (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+    (is (= "Desperado" (:title (second (:deck (get-runner))))))
+    (is (= "Diesel" (:title (second (rest (:deck (get-runner)))))))
+    (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
+    (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
+    (core/trash state :runner (get-resource state 0))
+    (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
+    (is (= "Corroder" (:title (first (:deck (get-runner))))))))
 
 (deftest sacrificial-construct
   "Sacrificial Construct - Trash to prevent trash of installed program or hardware"

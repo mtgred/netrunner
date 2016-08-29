@@ -39,13 +39,6 @@
   (doseq [server (get-in @state [:corp :servers])]
     (update-ice-in-server state side (second server))))
 
-(defn trash-ice-in-run
-  "Decreases the position of each ice in the run. For when an ice is trashed mid-run."
-  [state]
-  (when-let [run (:run @state)]
-    (swap! state update-in [:run :position] dec)
-    (trigger-event state :runner :pass-ice nil)))
-
 
 ;;; Icebreaker functions.
 (defn breaker-strength-bonus

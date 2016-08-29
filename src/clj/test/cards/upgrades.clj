@@ -32,8 +32,6 @@
     (play-from-hand state :corp "Bernice Mai" "New remote")
     (play-from-hand state :corp "Bernice Mai" "R&D")
     (core/rez state :corp (get-content state :remote1 0))
-    (core/rez state :corp (get-content state :remote2 0))
-    (core/rez state :corp (get-content state :rd 0))
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (prompt-choice :corp 0)
@@ -41,12 +39,14 @@
     (prompt-choice :runner "Yes")
     (is (= 1 (:tag (get-runner))))
     (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
+    (core/rez state :corp (get-content state :remote2 0))
     (core/gain state :runner :credit 20)
     (run-empty-server state :remote2)
     (prompt-choice :corp 0)
     (prompt-choice :runner 10)
     (is (not (get-content state :remote2 0)) "Bernice auto-trashed from unsuccessful trace")
     (is (not (:run @state)) "Run ended when Bernice was trashed from server")
+    (core/rez state :corp (get-content state :rd 0))
     (run-empty-server state :rd)
     (prompt-choice :corp 0)
     (prompt-choice :runner 10)
@@ -281,6 +281,29 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
+(deftest georgia-emelyov
+  "Georgia Emelyov"
+  (do-game
+    (new-game (default-corp [(qty "Georgia Emelyov" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Georgia Emelyov" "New remote")
+    (let [geo (get-content state :remote1 0)]
+      (core/rez state :corp geo)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-jack-out state)
+      (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
+      (card-ability state :corp (refresh geo) 0)
+      (prompt-choice :corp "Archives")
+      (let [geo (get-content state :archives 0)]
+        (is geo "Georgia moved to Archives")
+        (run-on state "Archives")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner took 1 net damage")
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Runner did not take  damage")))))
+
 (deftest hokusai-grid
   "Hokusai Grid - Do 1 net damage when run successful on its server"
   (do-game
@@ -453,6 +476,24 @@
       (run-on state "Server 1")
       (is (:cannot-jack-out (get-in @state [:run])) "Prevents jack out when upgrade is rezzed prior to run"))))
 
+(deftest prisec
+  "Prisec - Pay 2 credits to give runner 1 tag and do 1 meat damage, only when installed"
+  (do-game
+    (new-game (default-corp [(qty "Prisec" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Prisec" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [pre-creds (:credit (get-corp))]
+      (prompt-choice :corp "Yes")
+      (is (= (- pre-creds 2) (:credit (get-corp))) "Pay 2 [Credits] to pay for Prisec"))
+    (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
+    ;; Runner trashes Prisec
+    (prompt-choice :runner "Yes")
+    (run-empty-server state "HQ")
+    (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
+
 (deftest product-placement
   "Product Placement - Gain 2 credits when Runner accesses it"
   (do-game
@@ -572,6 +613,29 @@
       (is (= 0 (:click (get-runner))))
       (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
+
+(deftest satellite-grid
+  "Satellite Grid - Add 1 fake advancement on all ICE protecting server"
+  (do-game
+    (new-game (default-corp [(qty "Satellite Grid" 1) (qty "Ice Wall" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Satellite Grid" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (let [iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)
+          sg (get-content state :hq 0)]
+      (core/gain state :corp :click 1)
+      (advance state iw1)
+      (core/rez state :corp sg)
+      (core/rez state :corp (refresh iw1))
+      (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
+      (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
+      (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
+      (core/rez state :corp (refresh iw2))
+      (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
+      (core/derez state :corp sg)
+      (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
 (deftest strongbox
   "Strongbox - Ability"

@@ -10,18 +10,19 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [c (dissoc card :current-strength :abilities :rezzed :special :added-virus-counter)
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
+        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
-      (dissoc c :installed :facedown :counter :rec-counter :pump :named-target) c)))
+      (dissoc c :installed :facedown :counter :rec-counter :pump :server-target) c)))
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
-  [state side card]
+  [state side {:keys [disabled installed rezzed facedown zone] :as card}]
   (when-let [leave-effect (:leave-play (card-def card))]
-    (when (or (and (= (:side card) "Runner") (:installed card) (not (:facedown card)))
-              (:rezzed card)
-              (= (first (:zone card)) :current)
-              (= (first (:zone card)) :scored))
+    (when (and (not disabled)
+               (or (and (= (:side card) "Runner") installed (not facedown))
+                   rezzed
+                   (= (first zone) :current)
+                   (= (first zone) :scored)))
       (leave-effect state side (make-eid state) card nil))))
 
 (defn- handle-prevent-effect
@@ -38,9 +39,9 @@
   some events."
   ([state side card] (deactivate state side card nil))
   ([state side card keep-counter]
+   (unregister-events state side card)
    (trigger-leave-effect state side card)
    (handle-prevent-effect state card)
-   (unregister-events state side card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
    (when (and (find-cid (:cid card) (all-installed state side))
@@ -63,7 +64,8 @@
 (defn card-init
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card true))
-  ([state side card resolve]
+  ([state side card resolve] (card-init state side (make-eid state) card resolve))
+  ([state side eid card resolve]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          abilities (ability-init cdef)
@@ -84,8 +86,9 @@
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
-     (when resolve
-       (resolve-ability state side cdef c nil))
+     (if (and resolve (is-ability cdef))
+       (resolve-ability state side eid cdef c nil)
+       (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
      (get-card state c))))
@@ -120,59 +123,81 @@
     (system-msg state side (str (build-spend-msg cost-str "install") card-name
                                 (if (ice? card) " protecting " " in ") server-name))))
 
+(defn corp-install-list
+  "Returns a list of targets for where a given card can be installed."
+  [state card]
+  (let [hosts (filter #(when-let [can-host (:can-host (card-def %))]
+                        (and (rezzed? %)
+                             (can-host state :corp (make-eid state) % [card])))
+                      (all-installed state :corp))]
+    (concat hosts (server-list state card))))
+
 (defn corp-install
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
-  ([state side eid card server {:keys [extra-cost no-install-cost install-state] :as args}]
-   (if-not server
+  ([state side eid card server {:keys [extra-cost no-install-cost install-state host-card] :as args}]
+   (cond
+     ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
+     (not server)
      (continue-ability state side
-                       {:prompt (str "Choose a server to install " (:title card))
-                        :choices (server-list state card)
+                       {:prompt (str "Choose a location to install " (:title card))
+                        :choices (corp-install-list state card)
                         :delayed-completion true
                         :effect (effect (corp-install eid card target args))}
                        card nil)
-     (do
-       (let [cdef (card-def card)
-             c (-> card
-                   (assoc :advanceable (:advanceable cdef))
-                   (dissoc :seen))
-             slot (conj (server->zone state server) (if (ice? c) :ices :content))
-             dest-zone (get-in @state (cons :corp slot))]
-         ;; trigger :pre-corp-install before computing install costs so that
-         ;; event handlers may adjust the cost.
-         (trigger-event state side :pre-corp-install card {:server server :dest-zone dest-zone})
-         (let [ice-cost (if (and (ice? c)
-                                 (not no-install-cost)
-                                 (not (ignore-install-cost? state side)))
-                          (count dest-zone) 0)
-               all-cost (concat extra-cost [:credit ice-cost])
-               end-cost (install-cost state side card all-cost)
-               install-state (or install-state (:install-state cdef))]
-           (when (corp-can-install? card dest-zone)
-             (when-let [cost-str (pay state side card end-cost)]
-               (when (= server "New remote")
-                 (trigger-event state side :server-created card))
-               (corp-install-asset-agenda state side c dest-zone)
-               (corp-install-message state side c server install-state cost-str)
-               (let [moved-card (move state side (assoc c :new true) slot)]
-                 (trigger-event state side :corp-install moved-card)
-                 (when (is-type? c "Agenda")
-                   (update-advancement-cost state side moved-card))
-                 (when (= install-state :rezzed-no-cost)
-                   (rez state side moved-card {:ignore-cost :all-costs}))
-                 (when (= install-state :rezzed)
-                   (rez state side moved-card))
-                 (when (= install-state :face-up)
-                   (if (:install-state cdef)
-                     (card-init state side
-                                (assoc (get-card state moved-card) :rezzed true :seen true) false)
-                     (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
-                 (when-let [dre (:derezzed-events cdef)]
-                   (when-not (:rezzed (get-card state moved-card))
-                     (register-events state side dre moved-card))))))
-           (clear-install-cost-bonus state side)
-           (when-not (:delayed-completion cdef)
-             (effect-completed state side eid card))))))))
+     ;; A card was selected as the server; recurse, with the :host-card parameter set.
+     (and (map? server) (not host-card))
+     (corp-install state side eid card server (assoc args :host-card server))
+     ;; A server was selected
+     :else
+     (let [cdef (card-def card)
+           slot (if host-card
+                  (:zone host-card)
+                  (conj (server->zone state server) (if (ice? card) :ices :content)))
+           dest-zone (get-in @state (cons :corp slot))]
+       ;; trigger :pre-corp-install before computing install costs so that
+       ;; event handlers may adjust the cost.
+       (trigger-event state side :pre-corp-install card {:server server :dest-zone dest-zone})
+       (let [ice-cost (if (and (ice? card)
+                               (not no-install-cost)
+                               (not (ignore-install-cost? state side)))
+                        (count dest-zone) 0)
+             all-cost (concat extra-cost [:credit ice-cost])
+             end-cost (install-cost state side card all-cost)
+             install-state (or install-state (:install-state cdef))]
+
+         (if (corp-can-install? card dest-zone)
+           (if-let [cost-str (pay state side card end-cost)]
+             (do (let [c (-> card
+                             (assoc :advanceable (:advanceable cdef) :new true)
+                             (dissoc :seen :disabled))]
+                   (when (= server "New remote")
+                     (trigger-event state side :server-created card))
+                   (when (not host-card)
+                     (corp-install-asset-agenda state side c dest-zone)
+                     (corp-install-message state side c server install-state cost-str))
+
+                   (let [moved-card (if host-card
+                                      (host state side host-card (assoc c :installed true))
+                                      (move state side c slot))]
+                     (trigger-event state side :corp-install moved-card)
+                     (when (is-type? c "Agenda")
+                       (update-advancement-cost state side moved-card))
+                     (when (= install-state :rezzed-no-cost)
+                       (rez state side moved-card {:ignore-cost :all-costs}))
+                     (when (= install-state :rezzed)
+                       (rez state side moved-card))
+                     (when (= install-state :face-up)
+                       (if (:install-state cdef)
+                         (card-init state side
+                                    (assoc (get-card state moved-card) :rezzed true :seen true) false)
+                         (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
+                     (when-let [dre (:derezzed-events cdef)]
+                       (when-not (:rezzed (get-card state moved-card))
+                         (register-events state side dre moved-card))))))))
+         (clear-install-cost-bonus state side)
+         (when-not (:delayed-completion cdef)
+           (effect-completed state side eid card)))))))
 
 
 ;;; Installing a runner card

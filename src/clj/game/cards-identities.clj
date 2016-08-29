@@ -101,8 +101,8 @@
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
-    {:corp-turn-begins {:effect (effect (enable-corp-damage-choice))}
-     :runner-turn-begins {:effect (effect (enable-corp-damage-choice))}
+    {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}
+     :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
      {:once :per-turn
       :delayed-completion true
@@ -153,8 +153,8 @@
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target))}
-             :successful-run-ends {:req (req (and (= target :archives)
-                                                  (not= (:max-access run) 0)
+             :successful-run-ends {:req (req (and (= (:server target) [:archives])
+                                                  (not= (:max-access target) 0)
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
@@ -309,6 +309,11 @@
                              :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Jinteki: Potential Unleashed"
+   {:events {:pre-resolve-damage {:req (req (and (= target :net) (> (last targets) 0)))
+                                  :msg "trash the top card of the Runner's Stack"
+                                  :effect (effect (mill :runner))}}}
+
    "Jinteki: Replicating Perfection"
    {:events
     {:runner-phase-12 {:effect (req (apply prevent-run-on-server
@@ -373,6 +378,18 @@
    {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
                           :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Khan: Savvy Skiptracer"
+   {:events {:pass-ice
+             {:once :per-turn
+              :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (install-cost-bonus state side [:credit -1])
+                             (resolve-ability state side
+                               {:prompt "Choose an icebreaker to install from your Grip"
+                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                :msg (msg "install " (:title target))
+                                :effect (effect (runner-install target))}
+                              card nil)))}}}
+
    "Laramy Fisk: Savvy Investor"
    {:events {:successful-run {:delayed-completion true
                               :req (req (and (is-central? (:server run))
@@ -426,8 +443,8 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:delayed-completion true
-              :once :per-turn
-              :req (req (and (card-is? target :side :corp)
+              :req (req (and (first-event state side :runner-trash)
+                             (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                            (continue-ability
@@ -438,7 +455,8 @@
                                :yes-ability {:trace {:base 4
                                                      :msg "give the Runner 1 tag"
                                                      :effect (effect (tag-runner :runner 1 {:unpreventable true})
-                                                                     (clear-wait-prompt :runner))}}
+                                                                     (clear-wait-prompt :runner))
+                                                     :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                             card nil))}}}
 
@@ -467,6 +485,7 @@
                                                 (concat (:hand corp) (:discard corp))))))
                  :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
                                :show-discard true
+                               :delayed-completion true
                                :choices {:req #(and (has-subtype? % "Current")
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}
@@ -508,7 +527,8 @@
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
                            " by 2 for the remainder of the run")
                  :effect (effect (update! (assoc card :null-target current-ice))
-                                 (update-ice-strength current-ice))}]
+                                 (update-ice-strength current-ice)
+                                 (trash target {:unpreventable true}))}]
     :events {:pre-ice-strength
              {:req (req (= (:cid target) (get-in card [:null-target :cid])))
               :effect (effect (ice-strength-bonus -2 target))}
@@ -642,8 +662,8 @@
            :optional
            {:prompt "Add another copy to HQ?" :priority 1
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
-                          :effect (effect (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand)
-                                          (shuffle! :deck))}}}}}
+                          :effect (effect (shuffle! :deck)
+                                          (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand))}}}}}
 
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}
@@ -663,6 +683,12 @@
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}
+
+   "Weyland Consortium: Builder of Nations"
+   {:abilities [{:label "Do 1 meat damage"
+                 :delayed-completion true
+                 :msg "do 1 meat damage"
+                 :effect (effect (damage eid :meat 1 {:card card}))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"

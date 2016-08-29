@@ -86,7 +86,9 @@
 
 (defn trash-cost [state side {:keys [trash] :as card}]
   (when-not (nil? trash)
-    (-> trash
+    (-> (if-let [trashfun (:trash-cost-bonus (card-def card))]
+          (+ trash (trashfun state side (make-eid state) card nil))
+          trash)
         (+ (or (get-in @state [:bonus :trash]) 0))
         (max 0))))
 
