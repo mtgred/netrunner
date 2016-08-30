@@ -937,28 +937,35 @@
 
    "Shi.Kyū"
    {:access
-    {:optional {:req (req (not= (first (:zone card)) :deck))
-                :prompt "Pay [Credits] to use Shi.Kyū?"
-                :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
-                              :msg (msg "attempt to do " target " net damage")
-                              :delayed-completion true
-                              :effect (effect (continue-ability
-                               {:player :runner
-                                :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
-                                :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
-                                :delayed-completion true
-                                :effect (let [dmg target]
-                                          (req (if (= target "Add Shi.Kyū to score area")
-                                                 (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
-                                                         (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
-                                                     (gain-agenda-point state :runner -1)
-                                                     (system-msg state side
-                                                                 (str "adds Shi.Kyū to their score area as -1 agenda point"))
-                                                     (effect-completed state side eid))
-                                                 (do (damage state :corp eid :net dmg {:card card})
-                                                     (system-msg state :corp
-                                                                 (str "uses Shi.Kyū to do " dmg " net damage"))))))}
-                              card targets))}}}}
+    {:delayed-completion true
+     :effect (effect (show-wait-prompt :runner "Corp to use Shi.Kyū")
+                     (continue-ability
+                       {:optional
+                        {:req (req (not= (first (:zone card)) :deck))
+                         :prompt "Pay [Credits] to use Shi.Kyū?"
+                         :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
+                                       :msg (msg "attempt to do " target " net damage")
+                                       :delayed-completion true
+                                       :effect (effect (clear-wait-prompt :runner)
+                                                       (continue-ability
+                                                         {:player :runner
+                                                          :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
+                                                          :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
+                                                          :delayed-completion true
+                                                          :effect (let [dmg target]
+                                                                    (req (if (= target "Add Shi.Kyū to score area")
+                                                                           (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
+                                                                                   (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
+                                                                               (gain-agenda-point state :runner -1)
+                                                                               (system-msg state side
+                                                                                           (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                                               (effect-completed state side eid))
+                                                                           (do (damage state :corp eid :net dmg {:card card})
+                                                                               (system-msg state :corp
+                                                                                           (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                        card targets))}
+                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                      card targets))}}
 
    "Shock!"
    {:access {:msg "do 1 net damage"
@@ -981,9 +988,15 @@
                                card nil))}}
 
    "Space Camp"
-   {:access {:msg (msg "place 1 advancement token on " (card-str state target))
-             :choices {:req can-be-advanced?}
-             :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}
+   {:access {:delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to place an advancement with Space Camp")
+                             (continue-ability
+                               {:msg (msg "place 1 advancement token on " (card-str state target))
+                                :choices {:req can-be-advanced?}
+                                :cancel-effect (effect (clear-wait-prompt :runner))
+                                :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                                                (clear-wait-prompt :runner))}
+                              card nil))}}
 
    "Sundew"
    {:events {:runner-spent-click {:once :per-turn

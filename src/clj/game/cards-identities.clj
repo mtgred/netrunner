@@ -289,11 +289,12 @@
                                        an (get facs "Anarch" 0)
                                        sh (get facs "Shaper" 0)
                                        cr (get facs "Criminal" 0)]
-                                   (and (> sh an) (> sh cr) (pos? (count (:deck runner))))))
+                                   (and (> sh an) (> sh cr) (pos? (count (:deck runner)))
+                                        (first-event state side :pre-install))))
                        :msg "draw 1 card"
                        :once :per-turn
                        :effect (effect (draw 1))}]
-              {:runner-install jam
+              {:pre-install jam
                :pre-start-game {:effect draft-points-target}})}
 
    "Jesminder Sareen: Girl Behind the Curtain"
