@@ -92,11 +92,11 @@
 ;;; For Advanceable ICE
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
-  (req (:advance-counter card 0)))
+  (req (+ (:advance-counter card 0) (:extra-advance-counter card 0))))
 
 (def space-ice-rez-bonus
   "Amount of rez reduction for the Space ICE."
-  (req (* -3 (:advance-counter card 0))))
+  (req (* -3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))))
 
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
@@ -530,16 +530,18 @@
                                     :msg "trash 1 hardware, do 2 meat damage, and end the run"
                                     :delayed-completion true
                                     :effect (effect (continue-ability
-                                                      {:prompt "Choose a piece of hardware to trash"
-                                                       :label "Trash a piece of hardware"
-                                                       :msg (msg "trash " (:title target))
-                                                       :choices {:req #(is-type? % "Hardware")}
-                                                       :effect (req (when-completed
-                                                                      (trash state side target {:cause :subroutine})
-                                                                      (do (damage state side eid :meat 2 {:unpreventable true
-                                                                                                          :card card})
-                                                                          (end-run state side))))}
-                                                      card nil))})]}
+                                                     {:prompt "Choose a piece of hardware to trash"
+                                                      :label "Trash a piece of hardware"
+                                                      :msg (msg "trash " (:title target))
+                                                      :choices {:req #(is-type? % "Hardware")}
+                                                      :effect (req (when-completed
+                                                                     (trash state side target {:cause :subroutine})
+                                                                     (do (damage state side eid :meat 2 {:unpreventable true
+                                                                                              :card card})
+                                                                         (end-run state side))))
+                                                      :cancel-effect (effect (damage eid :meat 2 {:unpreventable true :card card})
+                                                                             (end-run))}
+                                                     card nil))})]}
 
    "Galahad"
    (grail-ice end-the-run)
@@ -598,7 +600,9 @@
     :subroutines [end-the-run]}
 
    "Hive"
-   {:subroutines [end-the-run]}
+   {:abilities [{:label "Gain subroutines"
+                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}]
+    :subroutines [end-the-run]}
 
    "Heimdall 1.0"
    {:subroutines [(do-brain-damage 1)
@@ -955,9 +959,10 @@
                    :trace {:base 4
                            :choices {:req #(and (installed? %)
                                                 (is-type? % "Program"))}
-                           :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                           :effect (effect (move :runner target :deck))}}
-                  {:label "Give the Runner 1 tag"
+                           :msg     (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                           :effect  (effect (move :runner target :deck))}}
+                  {:label  "Give the Runner 1 tag"
+                   :msg    "give the Runner 1 tag"
                    :effect (effect (tag-runner :runner 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
@@ -1040,6 +1045,9 @@
 
    "Taurus"
    (constellation-ice trash-hardware)
+
+   "TL;DR"
+   {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}
 
    "TMI"
    {:trace {:base 2

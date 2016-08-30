@@ -192,7 +192,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "join"
         game = games[msg.gameid]
 
-        if game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+        if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           fn("join ok")
           joinGame(socket, msg.gameid)
           socket.broadcast.to(msg.gameid).emit 'netrunner',
@@ -259,8 +259,8 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               room: game.room
               corp: corp.user.username
               runner: runner.user.username
-              corpIdentity: corp["deck"]["identity"]["title"]
-              runnerIdentity: runner["deck"]["identity"]["title"]
+              corpIdentity: if corp.deck then corp.deck.identity.title else null
+              runnerIdentity: if runner.deck then runner.deck.identity.title else null
             }
             db.collection('gamestats').insert g, (err, data) ->
               console.log(err) if err
@@ -326,7 +326,7 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special})
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special, isadmin: user.isadmin})
 
 # Routes
 app.options('*', cors())
@@ -550,6 +550,19 @@ app.get '/data/:collection/:field/:value', (req, res) ->
       console.error(err) if err
       delete d._id for d in data
       res.json(200, data)
+  else
+    res.send {message: 'Unauthorized'}, 401
+
+app.get '/announce', (req, res) ->
+  if req.user and req.user.isadmin
+    res.render('announce.jade', {user : req.user})
+  else
+    res.send {message: 'Unauthorized'}, 401
+
+app.post '/announce', (req, res) ->
+  if req.user and req.user.isadmin
+    requester.send(JSON.stringify({action: "alert", command: req.body.message}))
+    res.send {text: req.body.message, result: "ok"}, 200
   else
     res.send {message: 'Unauthorized'}, 401
 

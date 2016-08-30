@@ -210,6 +210,17 @@
 (defn installed? [card]
   (or (:installed card) (= :servers (first (:zone card)))))
 
+(defn active? [{:keys [zone] :as card}]
+  "Checks if the card is active and should receive game events/triggers."
+  (or (is-type? card "Identity")
+      (= zone [:current])
+      (and (card-is? card :side :corp)
+           (installed? card)
+           (rezzed? card))
+      (and (card-is? card :side :runner)
+           (installed? card)
+           (not (facedown? card)))))
+
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 

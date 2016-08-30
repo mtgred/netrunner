@@ -586,14 +586,14 @@
                           (effect-completed state side (make-result eid false))))))))
 
 (defn- trigger-run-end-events
-  [state side eid server]
+  [state side eid run]
   (cond
     ;; Successful
-    (get-in @state [:run :successful])
-    (trigger-event-sync state side eid :successful-run-ends (first server))
+    (:successful run)
+    (trigger-event-sync state side eid :successful-run-ends run)
     ;; Unsuccessful
-    (get-in @state [:run :unsuccessful])
-    (trigger-event-sync state side eid :unsuccessful-run-ends (first server))
+    (:unsuccessful run)
+    (trigger-event-sync state side eid :unsuccessful-run-ends run)
     ;; Neither
     :else
     (effect-completed state side eid)))
@@ -601,26 +601,25 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [server (get-in @state [:run :server])
-        eid (get-in @state [:run :eid])]
+  (let [run (:run @state)
+        server (:server run)
+        eid (:eid run)]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends (first server))
-    (when-completed
-      (trigger-run-end-events state side server)
-      (do
-        (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
-          (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
-          (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
-          (update-breaker-strength state side p))
-        (let [run-effect (get-in @state [:run :run-effect])]
-          (when-let [end-run-effect (:end-run run-effect)]
-            (resolve-ability state side end-run-effect (:card run-effect) [(first server)])))
-        (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-        (swap! state assoc-in [:runner :run-credit] 0)
-        (swap! state assoc :run nil)
-        (update-all-ice state side)
-        (clear-run-register! state)
-        (effect-completed state side eid nil)))))
+
+    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+      (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
+      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
+      (update-breaker-strength state side p))
+    (let [run-effect (get-in @state [:run :run-effect])]
+      (when-let [end-run-effect (:end-run run-effect)]
+        (resolve-ability state side end-run-effect (:card run-effect) [(first server)])))
+    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap! state assoc-in [:runner :run-credit] 0)
+    (swap! state assoc :run nil)
+    (update-all-ice state side)
+    (clear-run-register! state)
+    (trigger-run-end-events state side eid run)))
 
 (defn handle-end-run
   "Initiate run resolution."

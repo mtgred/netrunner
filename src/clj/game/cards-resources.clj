@@ -47,7 +47,7 @@
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to Algo Trading")}
                 {:label "Take all credits from Algo Trading"
-                 :cost [:credit 2]
+                 :cost [:click 1]
                  :msg (msg "trash it and gain " (get-in card [:counter :credit] 0) " [Credits]")
                  :effect (effect (gain :credit (get-in card [:counter :credit] 0))
                                  (trash card {:cause :ability-cost}))}]
@@ -920,8 +920,11 @@
                                 (deactivate state side c)
                                 (move state :corp c :rfg)
                                 (pay state :runner card :credit (trash-cost state side c))
+                                (trigger-event state side :runner-trash nil)
                                 (update! state side (dissoc card :slums-active))
-                                (close-access-prompt state side)))}
+                                (close-access-prompt state side)
+                                (when-not (:run @state)
+                                  (swap! state dissoc :access))))}
                 {:label "Remove a card trashed this turn from the game"
                  :req (req (if (:slums-active card)
                              true
@@ -933,6 +936,7 @@
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (deactivate state side target)
                                                  (move state :corp target :rfg)
+                                                 (trigger-event state side :runner-trash nil)
                                                  (update! state side (dissoc card :slums-active)))}
                                    card nil))}]}
 

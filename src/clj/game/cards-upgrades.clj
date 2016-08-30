@@ -191,7 +191,8 @@
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
-                              :effect (req (damage state side eid :net 1 {:card card}))}}}
+                              :delayed-completion true
+                              :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -325,15 +326,19 @@
 
    "Prisec"
    {:access {:req (req (installed? card))
+             :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Prisec")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:prompt "Pay 2 [Credits] to use Prisec ability?"
                                  :end-effect (effect (clear-wait-prompt :runner))
                                  :yes-ability {:cost [:credit 2]
                                                :msg "do 1 meat damage and give the Runner 1 tag"
-                                               :effect (effect (damage eid :meat 1 {:card card})
-                                                               (tag-runner :runner 1))}}}
+                                               :delayed-completion true
+                                               :effect (req (when-completed (damage state side :meat 1 {:card card})
+                                                                            (do (tag-runner state :runner 1)
+                                                                                ;; TO-DO: extend effect-completed to tag prevention
+                                                                                (effect-completed state side eid))))}}}
                                card nil))}}
 
    "Product Placement"
@@ -363,6 +368,7 @@
    "Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                 :delayed-completion true
                  :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
@@ -374,6 +380,17 @@
                             :effect (effect (update-advancement-cost target))}
              :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
                                     :effect (effect (advancement-cost-bonus -1))}}}
+
+   "Satellite Grid"
+   {:effect (req (doseq [c (:ices (card->server state card))]
+                   (set-prop state side c :extra-advance-counter 1))
+                 (update-all-ice state side))
+    :events {:corp-install {:req (req (and (ice? target)
+                                           (= (card->server state target) (card->server state card))))
+                            :effect (effect (set-prop target :extra-advance-counter 1))}}
+    :leave-play (req (doseq [c (:ices (card->server state card))]
+                       (update! state side (dissoc c :extra-advance-counter)))
+                     (update-all-ice state side))}
 
    "Self-destruct"
    {:abilities [{:req (req this-server)

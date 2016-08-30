@@ -614,6 +614,29 @@
       (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
+(deftest satellite-grid
+  "Satellite Grid - Add 1 fake advancement on all ICE protecting server"
+  (do-game
+    (new-game (default-corp [(qty "Satellite Grid" 1) (qty "Ice Wall" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Satellite Grid" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (let [iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)
+          sg (get-content state :hq 0)]
+      (core/gain state :corp :click 1)
+      (advance state iw1)
+      (core/rez state :corp sg)
+      (core/rez state :corp (refresh iw1))
+      (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
+      (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
+      (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
+      (core/rez state :corp (refresh iw2))
+      (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
+      (core/derez state :corp sg)
+      (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
+
 (deftest strongbox
   "Strongbox - Ability"
   (do-game

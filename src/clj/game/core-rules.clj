@@ -41,7 +41,7 @@
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                        (trash state side current)))
                    (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
-                     (card-init state side moved-card)))
+                     (card-init state side eid moved-card true)))
                (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))
@@ -415,10 +415,9 @@
   "Purges viruses."
   [state side]
   (trigger-event state side :pre-purge)
-  (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
-        hosted-cards (filter :installed (mapcat :hosted rig-cards))
+  (let [rig-cards (all-installed state :runner)
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-    (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
+    (doseq [card (concat rig-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
         (add-counter state :runner card :virus (- (get-in card [:counter :virus] 0)))))
@@ -429,14 +428,9 @@
   "Force the discard of n cards from :deck to :discard."
   ([state side] (mill state side 1))
   ([state side n]
-   (let [milltargets (take n (get-in @state [side :deck]))
-         milled (zone :discard milltargets)]
+   (let [milltargets (take n (get-in @state [side :deck]))]
      (doseq [c milltargets]
-       (when-let [mill (:mill-effect (card-def c))]
-         (resolve-ability state side mill c nil)
-         (trigger-event state side :mill-effect c)))
-     (swap! state update-in [side :discard] #(concat % milled)))
-   (swap! state update-in [side :deck] (partial drop n))))
+       (move state side c :discard)))))
 
 ;; Exposing
 (defn expose-prevent

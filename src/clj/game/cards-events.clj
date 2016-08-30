@@ -129,10 +129,9 @@
 
    "Cyber Threat"
    {:prompt "Choose a server" :choices (req runnable-servers)
-    :effect (req (let [serv target
-                       runtgt [(last (server->zone state serv))]
-                       ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
-                   (resolve-ability
+    :delayed-completion true
+    :effect (req (let [serv target]
+                   (continue-ability
                      state :corp
                      {:optional
                       {:prompt (msg "Rez a piece of ICE protecting " serv "?")
@@ -140,12 +139,7 @@
                                      :choices {:req #(and (not (:rezzed %))
                                                           (= (last (:zone %)) :ices))}
                                      :effect (req (rez state :corp target nil))}
-                       :no-ability {:effect (req (swap! state assoc :per-run nil
-                                                        :run {:server runtgt :position (count ices)
-                                                              :access-bonus 0 :run-effect nil})
-                                                 (gain-run-credits state :runner (:bad-publicity corp))
-                                                 (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
-                                                 (trigger-event state :runner :run runtgt))
+                       :no-ability {:effect (effect (game.core/run eid serv nil card))
                                     :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
                     card nil)))}
 
@@ -160,7 +154,7 @@
                                      (game.core/run state side eid :rd nil card)
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= :rd target))
+    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
@@ -711,7 +705,6 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run eid target nil card))
-    :mill-effect {:effect (effect (register-events (ashes-flag) (assoc card :zone [:discard])))}
     :move-zone (req (if (= [:discard] (:zone card))
                       (register-events state side (ashes-flag) (assoc card :zone [:discard]))
                       (unregister-events state side card)))
@@ -816,7 +809,7 @@
     :prompt "Choose an identity to become"
     :choices (req (let [is-swappable (fn [c] (and (= "Identity" (:type c))
                                              (= (-> @state :runner :identity :faction) (:faction c))
-                                             (not (= "Draft" (:setname c)))
+                                             (not (.startsWith (:code c) "00")) ; only draft identities have this
                                              (not (= (:title c) (-> @state :runner :identity :title)))))
                         swappable-ids (filter is-swappable (vals @all-cards))]
                     (cancellable swappable-ids :sorted)))

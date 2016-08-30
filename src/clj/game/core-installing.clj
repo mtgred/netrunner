@@ -10,7 +10,7 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :rezzed :special :added-virus-counter)
-        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter))]
+        c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
       (dissoc c :installed :facedown :counter :rec-counter :pump :server-target) c)))
 
@@ -39,9 +39,9 @@
   some events."
   ([state side card] (deactivate state side card nil))
   ([state side card keep-counter]
+   (unregister-events state side card)
    (trigger-leave-effect state side card)
    (handle-prevent-effect state card)
-   (unregister-events state side card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
    (when (and (find-cid (:cid card) (all-installed state side))
@@ -77,7 +77,8 @@
 (defn card-init
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card true))
-  ([state side card resolve]
+  ([state side card resolve] (card-init state side (make-eid state) card resolve))
+  ([state side eid card resolve]
    (let [cdef (card-def card)
          recurring (:recurring cdef)
          abilities (ability-init cdef)
@@ -100,8 +101,9 @@
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
-     (when resolve
-       (resolve-ability state side cdef c nil))
+     (if (and resolve (is-ability cdef))
+       (resolve-ability state side eid cdef c nil)
+       (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
      (get-card state c))))

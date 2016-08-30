@@ -296,7 +296,7 @@
             [:section
              [:h3 "Title"]
              [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                 :value (:title state) :placeholder "Title" :maxLength "30"}]]
+                                 :value (:title state) :placeholder "Title" :maxLength "100"}]]
 
             [:section
              [:h3 "Side"]

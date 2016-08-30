@@ -2,7 +2,7 @@
 
 (def cards-operations
   {"24/7 News Cycle"
-   {:req (req (> (count (:scored corp)) 1))
+   {:req (req (pos? (count (:scored corp))))
     :delayed-completion true
     :additional-cost [:forfeit]
     :effect (req (continue-ability
@@ -303,6 +303,35 @@
                     (shuffle! :deck)
                     (move target :hand) )}
 
+   "Financial Collapse"
+   {:delayed-completion true
+    :req (req (>= (:credit runner) 6))
+    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
+                   (if (pos? rcount)
+                     (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
+                         (continue-ability
+                           state side
+                           {:prompt (msg "Trash a resource to prevent Financial Collapse?")
+                            :choices ["Yes" "No"] :player :runner
+                            :delayed-completion true
+                            :effect (final-effect (continue-ability
+                                                    (if (= target "Yes")
+                                                      {:prompt "Choose a resource to trash" :player :runner
+                                                       :choices {:req #(and (is-type? % "Resource") (installed? %))}
+                                                       :effect (req (trash state side target {:unpreventable true})
+                                                                    (system-msg state :runner
+                                                                                (str "trashes " (:title target)
+                                                                                     " to prevent Financial Collapse"))
+                                                                    (clear-wait-prompt state :corp))}
+                                                      {:effect (effect (lose :runner :credit (* rcount 2))
+                                                                       (clear-wait-prompt :corp))
+                                                       :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")})
+                                                   card nil))} card nil))
+                     (continue-ability
+                       state side
+                       {:effect (effect (lose :runner :credit (* rcount 2)))
+                        :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
+
    "Foxfire"
    {:trace {:base 7
             :prompt "Choose 1 card to trash"
@@ -431,10 +460,10 @@
                    (continue-ability state side
                      {:prompt "Choose any number of rezzed cards to trash"
                       :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
-                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* n 3) " [Credits]")
+                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
-                                   (gain state side :credit (* n 3)))}
+                                   (gain state side :credit (* (count targets) 3)))}
                     card nil)))}
 
    "Localized Product Line"
@@ -697,7 +726,12 @@
                                   (join ", " (map :title (:hand runner)))
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
-                   (trash state side c)))}
+                   (trash state side c {:unpreventable true})))}
+
+   "Scarcity of Resources"
+   {:msg "increase the install cost of resources by 2"
+    :events {:pre-install {:req (req (is-type? target "Resource"))
+                           :effect (effect (install-cost-bonus [:credit 2]))}}}
 
    "Scorched Earth"
    {:req (req tagged)
@@ -839,7 +873,6 @@
                       (resolve-ability {:once :per-turn :once-key :subliminal-messaging
                                         :msg "gain [Click]"
                                         :effect (effect (gain :corp :click 1))} card nil))
-      :mill-effect {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
       :move-zone (req (if (= [:discard] (:zone card))
                         (register-events state side (subliminal) (assoc card :zone '(:discard)))
                         (unregister-events state side card)))

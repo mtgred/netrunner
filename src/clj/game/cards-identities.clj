@@ -101,8 +101,8 @@
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
-    {:corp-turn-begins {:effect (effect (enable-corp-damage-choice))}
-     :runner-turn-begins {:effect (effect (enable-corp-damage-choice))}
+    {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}
+     :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
      {:once :per-turn
       :delayed-completion true
@@ -153,8 +153,8 @@
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target))}
-             :successful-run-ends {:req (req (and (= target :archives)
-                                                  (not= (:max-access run) 0)
+             :successful-run-ends {:req (req (and (= (:server target) [:archives])
+                                                  (not= (:max-access target) 0)
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
@@ -289,11 +289,12 @@
                                        an (get facs "Anarch" 0)
                                        sh (get facs "Shaper" 0)
                                        cr (get facs "Criminal" 0)]
-                                   (and (> sh an) (> sh cr) (pos? (count (:deck runner))))))
+                                   (and (> sh an) (> sh cr) (pos? (count (:deck runner)))
+                                        (first-event state side :pre-install))))
                        :msg "draw 1 card"
                        :once :per-turn
                        :effect (effect (draw 1))}]
-              {:runner-install jam
+              {:pre-install jam
                :pre-start-game {:effect draft-points-target}})}
 
    "Jesminder Sareen: Girl Behind the Curtain"
@@ -382,6 +383,7 @@
    {:events {:pass-ice
              {:once :per-turn
               :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
+                             (install-cost-bonus state side [:credit -1])
                              (resolve-ability state side
                                {:prompt "Choose an icebreaker to install from your Grip"
                                 :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
@@ -442,8 +444,8 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:delayed-completion true
-              :once :per-turn
-              :req (req (and (card-is? target :side :corp)
+              :req (req (and (first-event state side :runner-trash)
+                             (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                            (continue-ability
@@ -484,6 +486,7 @@
                                                 (concat (:hand corp) (:discard corp))))))
                  :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
                                :show-discard true
+                               :delayed-completion true
                                :choices {:req #(and (has-subtype? % "Current")
                                                     (= (:side %) "Corp")
                                                     (#{[:hand] [:discard]} (:zone %)))}
@@ -525,7 +528,8 @@
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
                            " by 2 for the remainder of the run")
                  :effect (effect (update! (assoc card :null-target current-ice))
-                                 (update-ice-strength current-ice))}]
+                                 (update-ice-strength current-ice)
+                                 (trash target {:unpreventable true}))}]
     :events {:pre-ice-strength
              {:req (req (= (:cid target) (get-in card [:null-target :cid])))
               :effect (effect (ice-strength-bonus -2 target))}

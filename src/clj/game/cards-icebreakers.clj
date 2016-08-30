@@ -445,8 +445,6 @@
                                             (:events (card-def card))
                                             (assoc card :zone [:discard]))))]
    {:move-zone heap-event
-    :mill-effect {:effect heap-event}
-    :card-moved heap-event
     :abilities [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices :credit
                  :prompt "How many credits?"
