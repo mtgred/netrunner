@@ -873,7 +873,6 @@
                       (resolve-ability {:once :per-turn :once-key :subliminal-messaging
                                         :msg "gain [Click]"
                                         :effect (effect (gain :corp :click 1))} card nil))
-      :mill-effect {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
       :move-zone (req (if (= [:discard] (:zone card))
                         (register-events state side (subliminal) (assoc card :zone '(:discard)))
                         (unregister-events state side card)))
