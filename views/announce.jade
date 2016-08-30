@@ -1,0 +1,14 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Jinteki
+    link(rel='stylesheet', href='/css/netrunner.css')
+  body
+    div.reset-bg
+    form.panel.blue-shade.reset-form(method='POST')
+      h3 Announcement
+      p
+        textarea.form-control(rows=5, style='height: 80px; width: 250px', name='message', value='', autofocus=true required)
+      p
+        button.btn.btn-primary(type='submit') Submit

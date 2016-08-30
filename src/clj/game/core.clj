@@ -12,6 +12,7 @@
          get-nested-host resolve-ability say server-card system-msg trigger-event update!)
 
 (def game-states (atom {}))
+(def old-states (atom {}))
 (def all-cards (atom {}))
 (def all-cards-alt (atom {}))
 
