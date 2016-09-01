@@ -434,6 +434,11 @@
                 (power-counter-ability give-tag)
                 (trace-ability 3 add-power-counter)]}
 
+   "DNA Tracker"
+   {:abilities [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
+                 :effect (req (when-completed (damage state side :net 1 {:card card})
+                                              (lose state :runner :credit 2)))}]}
+
    "Dracō"
    {:prompt "How many power counters?"
     :choices :credit
