@@ -42,7 +42,7 @@
    "access" core/successful-run
    "jack-out" core/jack-out
    "advance" core/advance
-   "score" core/score
+   "score" #(core/score %1 %2 (game.core/get-card %1 %3))
    "choice" core/resolve-prompt
    "select" core/select
    "shuffle" core/shuffle-deck
