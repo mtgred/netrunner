@@ -629,7 +629,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt (str "Choose 1 card to add to the bottom of the Stack")
-                                   :msg (msg "add 1 card to the bottom of Stack")
+                                   :msg (msg "add 1 card to the bottom of the Stack")
                                    :choices {:req #(and (in-hand? %)
                                                         (some (fn [c] (= (:cid c) (:cid %))) drawn))}
                                    :effect (req (move state side target :deck))} card nil)))}]}
