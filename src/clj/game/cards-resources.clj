@@ -211,7 +211,7 @@
                                 (trash state side c {:unpreventable true}))
                               (damage-prevent state side :meat Integer/MAX_VALUE))}]
     :events {:runner-turn-ends
-             {:req (req (> (:tag runner) 0))
+             {:req (req (pos? (:tag runner)))
               :msg "force the Corp to initiate a trace"
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1 :unsuccessful {:effect (effect (lose :runner :tag 1))
