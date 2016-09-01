@@ -202,6 +202,21 @@
     {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
+   "Citadel Sanctuary"
+   {:prevent {:damage [:meat]}
+    :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"
+                 :msg "trash all cards in their Grip and prevent all meat damage"
+                 :effect (req (trash state side card {:cause :ability-cost})
+                              (doseq [c (:hand runner)]
+                                (trash state side c {:unpreventable true}))
+                              (damage-prevent state side :meat Integer/MAX_VALUE))}]
+    :events {:runner-turn-ends
+             {:req (req (> (:tag runner) 0))
+              :msg "force the Corp to initiate a trace"
+              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
+              :trace {:base 1 :unsuccessful {:effect (effect (lose :runner :tag 1))
+                                             :msg "remove 1 tag"}}}}}
+
    "Compromised Employee"
    {:recurring 1
     :events {:rez {:req (req (ice? target))
