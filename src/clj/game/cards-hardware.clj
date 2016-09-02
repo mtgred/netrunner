@@ -7,7 +7,8 @@
    "Archives Interface"
    {:events
     {:successful-run
-     {:delayed-completion true
+     {:silent (req true)
+      :delayed-completion true
       :req (req (= target :archives))
       :effect (effect (continue-ability
                         {:optional
@@ -185,7 +186,8 @@
 
    "Desperado"
    {:in-play [:memory 1]
-    :events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+    :events {:successful-run {:interactive (req false)
+                              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"

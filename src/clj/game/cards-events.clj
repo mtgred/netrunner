@@ -439,7 +439,8 @@
    {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
                                                               (assoc card :zone '(:discard))))
     :events {:successful-run
-             {:req (req (= target :archives))
+             {:silent (req true)
+              :req (req (= target :archives))
               :effect (req (when-completed
                              (resolve-ability state side
                                {:delayed-completion true
@@ -592,7 +593,8 @@
    "Legwork"
    {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:effect (effect (access-bonus 2))}
+    :events {:successful-run {:silent (req true)
+                              :effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Leverage"
@@ -1033,7 +1035,8 @@
    "The Makers Eye"
    {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:effect (effect (access-bonus 2))}
+    :events {:successful-run {:silent (req true)
+                              :effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "The Noble Path"
