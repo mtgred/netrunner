@@ -275,7 +275,7 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [{:keys [setname] :as card}]
   (let [date (some #(when (= (:name %) setname)
-                           (:available %))
+                           (:date_release %))
                    (:sets @app-state))]
     (and (not= date "")
          (< date (.toJSON (js/Date.))))))

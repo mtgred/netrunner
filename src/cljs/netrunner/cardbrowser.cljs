@@ -162,12 +162,12 @@
              [:option {:value field} field])]]
 
          (let [cycles (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
-                        {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+                        {:name (str cycle " cycle") :date_release (:date_release (first cycle-sets))})
                cycle-sets (map #(if (:cycle %)
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
                                sets)]
-           (for [filter [["Set" :set-filter (map :name (sort-by :available (concat cycles cycle-sets)))]
+           (for [filter [["Set" :set-filter (map :name (sort-by :date_release (concat cycles cycle-sets)))]
                          ["Side" :side-filter ["Corp" "Runner"]]
                          ["Faction" :faction-filter (factions (:side-filter state))]
                          ["Type" :type-filter (types (:side-filter state))]]]
