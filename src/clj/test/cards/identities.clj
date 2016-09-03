@@ -20,6 +20,18 @@
       (is (and nat sf abr) "3 directives installed")
       (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
 
+(deftest adam-no-directives
+  ;; Test generate directives from @all-cards
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Adam: Compulsive Hacker" [(qty "Bank Job" 3)]))
+    (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
+          sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
+          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
+      (is (and nat sf abr) "3 directives installed")
+      (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
+
 (deftest adam-palana
   "Adam - Directives should not grant Pālanā credits."
   (do-game

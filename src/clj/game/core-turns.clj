@@ -50,10 +50,17 @@
     @game-states))
 
 (defn server-card
-  ([title] (server-card title))
+  ([title] (@all-cards title))
   ([title user]
    (let [c (@all-cards title)]
      (or (when (:special user) (@all-cards-alt title)) c))))
+
+(defn make-card
+  "Makes a proper card from an @all-cards card"
+  [card]
+  (-> card
+      (assoc :cid (make-cid))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
@@ -61,10 +68,8 @@
   ([deck] (create-deck deck nil))
   ([deck user]
    (shuffle (mapcat #(map (fn [card]
-                            (let [c (or (server-card (:title card) user) card)
-                                  c (assoc c :cid (make-cid))
-                                  c (dissoc c :setname :text :_id :influence :number :influencelimit
-                                            :factioncost)]
+                            (let [card (or (server-card (:title card) user) card)
+                                  c (make-card card)]
                               (if-let [init (:init (card-def c))] (merge c init) c)))
                           (repeat (:qty %) (:card %)))
                     (shuffle (vec (:cards deck)))))))

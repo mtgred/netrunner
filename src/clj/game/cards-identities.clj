@@ -7,24 +7,46 @@
 
 (def cards-identities
   {"Adam: Compulsive Hacker"
-   (let [titles #{"Safety First" "Always Be Running" "Neutralize All Threats"}
-         one-of-each   (fn [cards] (->> cards (group-by :title) (map second) (map first)))
-         get-directives (fn [source] (filter #(some #{(:title %)} titles) source))]
    {:events {:pre-start-game
              {:req (req (= side :runner))
-              :effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
-                             (when (not= 3 (count directives))
+              :effect (req (let [is-directive? #(has-subtype? % "Directive")
+                                 one-of-each (fn [cards] (->> cards (group-by :title) (map second) (map first)))
+                                 directives (filter is-directive? (concat (:deck runner) (:hand runner)))
+                                 directives (one-of-each directives)]
+                             (case (count directives)
+                               ;; Have directives in the deck
+                               3
+                               (do (prn directives)
+                                   (doseq [c directives]
+                                     (runner-install state side c {:no-cost true
+                                                                   :custom-message (str "starts with " (:title c) " in play")}))
+                                   (draw state :runner (count (filter in-hand? directives)) {:suppress-event true}))
+                               ;; Missing directives. Add them
+                               0
+                               (let [directives (filter is-directive? (vals @all-cards))
+                                     directives (map make-card directives)
+                                     directives (zone :play-area directives)]
+                                 ;; Add directives to :play-area - should be empty
+                                 (swap! state assoc-in [:runner :play-area] directives)
+                                 ;; If more directives are printed this is probably where the runner gets to choose
+                                 (doseq [c directives]
+                                   (runner-install state side c {:no-cost true
+                                                                 :custom-message (str "starts with " (:title c) " in play")}))
+                                 (when (< 3 (count directives))
+                                   ;; Extra directives have been added, ask player to use /rfg on the directives not used.
+                                   ;; This implementation is just to make this more future proof, if extra directives are
+                                   ;; actually added then a selection would be better
+                                   (toast state :runner
+                                          (str "Please use /rfg to remove any directives other than the 3 you intend to start with."))))
+                               ;; Have other number of directives, toast
+                               :else
                                (toast state :runner
                                       (str "Your deck doesn't contain enough directives for Adam's ability. The deck "
                                            "needs to contain at least one copy of each directive. They are not counted "
                                            "against the printed decksize limit, so Adam's minimum decksize on this "
                                            "site is 48 cards.")
                                       "warning"
-                                      {:time-out 0 :close-button true}))
-                             (doseq [c directives]
-                               (runner-install state side c {:no-cost true
-                                                             :custom-message (str "starts with " (:title c) " in play")}))
-                             (draw state :runner (count (filter in-hand? directives)) {:suppress-event true})))}}})
+                                      {:time-out 0 :close-button true}))))}}}
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
