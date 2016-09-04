@@ -5,21 +5,6 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
-
-
-(deftest adam-directives
-  "Adam: Compulsive Hacker - install 3 directives"
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 3) (qty "Safety First" 3)
-                                                   (qty "Always Be Running" 3) (qty "Bank Job" 3)]))
-    (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
-          sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
-          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
-      (is (and nat sf abr) "3 directives installed")
-      (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
-
 (deftest adam-no-directives
   ;; Test generate directives from @all-cards
   (do-game
