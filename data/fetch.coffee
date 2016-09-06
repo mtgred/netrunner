@@ -25,8 +25,9 @@ capitalize = (s) ->
   return s.charAt(0).toUpperCase() + s.substr(1)
 
 setFields = {
+  "code" : same,
+  "date_release" : same
   "name" : same,
-  "date_release" : rename("available")
 }
 
 mapFactions = {
@@ -44,6 +45,50 @@ mapFactions = {
   "neutral-corp" : "Neutral"
 }
 
+# note - this is a horrible, horrible hack. Do not try at home.
+mapPacks = {
+  "core" : "Core Set",
+  "wla" : "What Lies Ahead",
+  "ta" : "Trace Amount",
+  "ce" : "Cyber Exodus",
+  "asis" : "A Study in Static",
+  "hs" : "Humanity's Shadow",
+  "fp" : "Future Proof",
+  "cac" : "Creation and Control",
+  "om" : "Opening Moves",
+  "st" : "Second Thoughts",
+  "mt" : "Mala Tempora",
+  "tc" : "True Colors",
+  "dt" : "Double Time",
+  "fal" : "Fear and Loathing",
+  "draft" : "Draft",
+  "hap" : "Honor and Profit",
+  "up" : "Upstalk",
+  "tsb" : "The Spaces Between",
+  "fc" : "First Contact",
+  "uao" : "Up and Over",
+  "atr" : "All That Remains",
+  "ts" : "The Source",
+  "oac" : "Order and Chaos",
+  "val" : "The Valley",
+  "bb" : "Breaker Bay",
+  "cc" : "Chrome City",
+  "uw" : "The Underway",
+  "oh" : "Old Hollywood",
+  "uot" : "The Universe of Tomorrow",
+  "dad" : "Data and Destiny",
+  "kg" : "Kala Ghoda",
+  "bf" : "Business First",
+  "dag" : "Democracy and Dogma",
+  "si" : "Salsette Island",
+  "tlm" : "The Liberated Mind",
+  "ftm" : "Fear the Masses",
+  "23s" : "23 Seconds",
+  "bm" : "Blood Money",
+  "es" : "Escalation",
+  "in" : "Intervention",
+  "ml" : "Martial Law"
+}
 
 cardFields = {
   "code" : same,
@@ -60,7 +105,7 @@ cardFields = {
   "faction_code" : (k, t) -> ["faction", mapFactions[t]],
   "faction_cost" : rename("factioncost"), # influence
   "position" : rename("number"),
-  # "setname",   --  deprecated
+  "pack_code" : (k, t) -> ["setname", mapPacks[t]]
   "side_code" : (k, t) -> ["side", capitalize(t)],
   "uniqueness" : same,
   "memory_cost" : rename("memoryunits"),
