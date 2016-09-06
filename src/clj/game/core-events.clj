@@ -67,7 +67,9 @@
   "Triggers the simultaneous event handlers for the given event trigger and player.
   If none of the handlers require interaction, then they are all resolved automatically, each waiting for the previous
   to fully resolve as in trigger-event-sync. If at least one requires interaction, then a menu is shown to manually
-  choose the order of resolution."
+  choose the order of resolution.
+
+  :silent abilities are not shown in the list of handlers, and are resolved last in an arbitrary order."
   [state side eid event handlers event-targets]
   (if (pos? (count handlers))
     (letfn [(choose-handler [handlers]
@@ -82,7 +84,8 @@
                                         handlers)]
                 ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
                 (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
-                  (let [to-resolve (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                  (let [to-resolve
+                        (if (= 1 (count non-silent)) (first non-silent) (first handlers))
                         others (if (= 1 (count non-silent))
                                  (remove-once #(not= (:cid (:card to-resolve)) (:cid (:card %))) handlers)
                                  (next handlers))]

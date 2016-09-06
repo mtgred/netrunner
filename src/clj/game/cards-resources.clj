@@ -104,7 +104,8 @@
    "Bank Job"
    {:data {:counter {:credit 8}}
     :events {:successful-run
-             {:req (req (is-remote? (:server run)))
+             {:silent (req true)
+              :req (req (is-remote? (:server run)))
               :effect (req (let [bj card]
                              (when-not (:replace-access (get-in @state [:run :run-effect]))
                                (swap! state assoc-in [:run :run-effect :replace-access]
@@ -371,7 +372,8 @@
       :abilities [ability]})
 
    "Enhanced Vision"
-   {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
+   {:events {:successful-run {:silent (req true)
+                              :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :req (req (or (first-event state side :successful-run)
                                             (and (second-event state side :successful-run)
                                                  (persistent-flag? state side card :triggers-twice))))}}}

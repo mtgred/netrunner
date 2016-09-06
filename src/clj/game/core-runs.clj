@@ -484,7 +484,10 @@
   ([state side eid server]
    (swap! state update-in [:runner :register :successful-run] #(conj % (first server)))
    (swap! state assoc-in [:run :successful] true)
-   (when-completed (trigger-event-sync state side :successful-run (first server))
+   (when-completed (trigger-event-simult state side :successful-run
+                                         nil ; nothing needs to happen between determining the handlers and invoking them
+                                         nil ; a card ability that can trigger in the same window; maybe in :run???
+                                         (first server))
                    (effect-completed state side eid nil))))
 
 (defn- successful-run-trigger

@@ -15,7 +15,8 @@
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Ash 2X3ZB9CY"
-   {:events {:successful-run {:req (req this-server)
+   {:events {:successful-run {:interactive (req true)
+                              :req (req this-server)
                               :trace {:base 4
                                       :effect (req (max-access state side 0)
                                                    (when-not (:replace-access (get-in @state [:run :run-effect]))
@@ -106,7 +107,8 @@
 
    "Crisium Grid"
    {:suppress {:successful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}}
-    :events {:successful-run {:req (req this-server)
+    :events {:successful-run {:silent (req true)
+                              :req (req this-server)
                               :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                            (swap! state update-in [:run] dissoc :successful)
                                            (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}

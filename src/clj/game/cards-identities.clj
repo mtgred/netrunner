@@ -184,7 +184,8 @@
                :pre-start-game {:effect draft-points-target}})}
 
    "Gabriel Santiago: Consummate Professional"
-   {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
+   {:events {:successful-run {:silent (req true)
+                              :msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
@@ -395,15 +396,20 @@
                               card nil)))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:delayed-completion true
-                              :req (req (and (is-central? (:server run))
-                                             (empty? (let [successes (turn-events state side :successful-run)]
-                                                       (filter #(is-central? %) successes)))))
-                              :effect (effect (continue-ability
-                                                {:optional
-                                                 {:prompt "Force the Corp to draw a card?"
-                                                  :yes-ability {:msg "force the Corp to draw 1 card"
-                                                                :effect (effect (draw :corp))}}} card nil))}}}
+   {:events
+    {:successful-run
+     {:delayed-completion true
+      :interactive (req true)
+      :req (req (and (is-central? (:server run))
+                     (empty? (let [successes (turn-events state side :successful-run)]
+                               (filter #(is-central? %) successes)))))
+      :effect (effect (continue-ability
+                        {:optional
+                         {:prompt "Force the Corp to draw a card?"
+                          :yes-ability {:msg "force the Corp to draw 1 card"
+                                        :effect (effect (draw :corp))}
+                          :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
+                        card nil))}}}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
@@ -575,7 +581,8 @@
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run
-             {:delayed-completion true
+             {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
+              :delayed-completion true
               :req (req (= target :hq)) :once :per-turn
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
                                                 :effect (effect (expose target)) :msg "expose 1 card"}

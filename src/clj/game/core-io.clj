@@ -216,6 +216,7 @@
     :agenda-scored "agenda-scored"
     :agenda-stolen "agenda-stolen"
     :runner-install "runner-install"
+    :successful-run "successful-run"
     (str event)))
 
 (defn show-error-toast

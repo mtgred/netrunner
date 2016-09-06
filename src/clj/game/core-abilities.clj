@@ -57,6 +57,21 @@
             succeeds. Can also have a key :kicker that is an ability map with key :min, whose effect triggers
             if the trace strength matches or exceeds the :min value. (Constellation ice.)
 
+  SIMULTANEOUS EFFECT RESOLUTION KEYS
+  :interactive -- when simultaneous effect resolution has been enabled for a specific event, the user receives
+                  a menu of cards that handle the effect and get to choose the order of their resolution. This menu is
+                  only shown if at least one ability handling the event has an :interactive function that returns true.
+                  If none are interactive, then all handlers will be resolved automatically, one at a time in an
+                  arbitrary order. In general, handlers should be marked ':interactive (req true)' if they have
+                  important order-of-effect interactions with other cards. The :interactive function can be coded to
+                  have smarter logic if necessary -- see Replicator, which is only interactive if there is another
+                  copy of the installed card remaining in the Stack.
+  :silent -- any handler that does not require user interaction under any circumstances can be marked :silent. If a
+             handler's :silent function returns true, then no menu entry will be shown for the handler. In that case,
+             the ability will only be resolved once all non-silent abilities are resolved. Example: AstroScript has no
+             important interactions with other 'agenda scored' effects, and doesn't care when an agenda token is placed.
+             Example: Haley Kaplan will not show a prompt if there are no valid targets in the grip.
+
   OTHER KEYS
   :counter-cost / :advance-counter-cost -- number of counters to remove to resolve the ability
   :once -- its only value is :per-turn; signifies an effect that can only be triggered once per turn.
