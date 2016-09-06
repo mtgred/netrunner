@@ -236,9 +236,7 @@
 (defn min-deck-size
   "Contains implementation-specific decksize adjustments, if they need to be different from printed ones."
   [identity]
-  (cond
-    (= "09037" (:code identity)) 48 ;; Adam needs to have his 3 directives in deck
-    :else (:minimumdecksize identity)))
+  (:minimumdecksize identity))
 
 (defn min-agenda-points [deck]
   (let [size (max (card-count (:cards deck)) (min-deck-size (:identity deck)))]
@@ -253,14 +251,6 @@
   [{:keys [qty card] :as line}]
   (<= qty (or (:limited card) 3)))
 
-(defn adam-valid?
-  "Checks for Adam decks specific to current implementation of his identity."
-  [{:keys [identity cards] :as deck}]
-  (or (not= "09037" (:code identity))
-      (and (<= 1 (card-count (filter #(= "09041" (:code (:card %))) cards))) ;; Always Be Running
-           (<= 1 (card-count (filter #(= "09043" (:code (:card %))) cards))) ;; Neutralize All Threats
-           (<= 1 (card-count (filter #(= "09044" (:code (:card %))) cards)))))) ;; Safety First
-
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (min-deck-size identity))
        (<= (influence-count deck) (id-inf-limit identity))
@@ -268,8 +258,7 @@
                      (legal-num-copies? %)) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
-             (<= min (agenda-points deck) (inc min))))
-       (adam-valid? deck)))
+             (<= min (agenda-points deck) (inc min))))))
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
@@ -601,9 +590,7 @@
                        min-count (min-deck-size identity)]
                    [:div count " cards"
                     (when (< count min-count)
-                      [:span.invalid (str " (minimum " min-count ")")])
-                    (when-not (adam-valid? deck)
-                      [:span.invalid " (not enough directives)"])])
+                      [:span.invalid (str " (minimum " min-count ")")])])
                  (let [inf (influence-count deck)
                        limit (deck-inf-limit deck)
                        id-limit (id-inf-limit identity)
