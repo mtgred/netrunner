@@ -614,6 +614,27 @@
       (take-credits state :runner)
       (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
 
+(deftest plan-b
+  "Plan B - score agenda with adv cost <= # of adv counters"
+  (do-game
+    (new-game (default-corp [(qty "Plan B" 1)
+                             (qty "Braintrust" 1)
+                             (qty "The Future Perfect" 1)
+                             (qty "Mushin No Shin" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mushin No Shin")
+    (prompt-select :corp (find-card "Plan B" (:hand (get-corp))))
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    ;; prompt for corp to use Plan B
+    (prompt-choice :corp "Yes")
+    ;; Pick TFP, does not score
+    (prompt-select :corp (find-card "The Future Perfect" (:hand (get-corp))))
+    (is (find-card "The Future Perfect" (:hand (get-corp))) "TFP is not scored")
+    ;; Pick Brain Trust, scores
+    (prompt-select :corp (find-card "Braintrust" (:hand (get-corp))))
+    (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
+
 (deftest political-dealings
   (do-game
     (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])

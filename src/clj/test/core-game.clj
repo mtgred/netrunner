@@ -170,9 +170,8 @@
               (default-runner))
     (play-from-hand state :corp "Ancestral Imager" "New remote")
     (let [ai (get-content state :remote1 0)]
-      ;; Trying to score without any tokens throws NPE
-      (is (thrown? java.lang.NullPointerException
-                   (core/score state :corp {:card (refresh ai)})))
+      ;; Trying to score without any tokens does not do anything
+      (is (not (find-card "Ancestral Imager" (:scored (get-corp)))) "AI not scored")
       (is (not (nil? (get-content state :remote1 0))))
       (core/advance state :corp {:card (refresh ai)})
       (core/score state :corp {:card (refresh ai)})
@@ -323,7 +322,7 @@
     (core/advance state :corp {:card (refresh oaktown)})
     (is (= 8 (:credit (get-corp))) "Corp 5+3 creds from Oaktown")
     (core/end-turn state :corp nil)
-    
+
     ;; Turn 1 Runner
     (core/start-turn state :runner nil)
     (take-credits state :runner 3)
@@ -331,7 +330,7 @@
     (core/end-turn state :runner nil)
     (core/rez state :corp (refresh adonis))
     (core/rez state :corp (refresh publics1))
-    
+
     ;; Turn 2 Corp
     (core/start-turn state :corp nil)
     (core/rez state :corp (refresh publics2))
@@ -340,7 +339,7 @@
     (is (= 9 (get-counters (refresh adonis) :credit)))
     (is (= 2 (get-counters (refresh publics1) :power)))
     (is (= 3 (get-counters (refresh publics2) :power)))
-    
+
     ;; oops, forgot to rez 2nd public support before start of turn,
     ;; let me fix it with a /command
     (core/command-counter state :corp ["power" 2])
@@ -361,7 +360,7 @@
     (core/score state :corp (refresh oaktown)) ; now the score should go through
     (is (= 2 (:agenda-point (get-corp))))
     (take-credits state :corp)
-    
+
     ;; Turn 2 Runner
     ;; cheating with publics1 going too fast. Why? because I can
     (is (= 2 (get-counters (refresh publics1) :power)))
@@ -374,7 +373,7 @@
     (prompt-select :corp (refresh adonis))
     (is (= 3 (get-counters (refresh adonis) :credit)))
     (take-credits state :runner)
-    
+
     ;; Turn 3 Corp
     (is (= 3 (:agenda-point (get-corp)))) ; cheated PS1 should get scored
     (is (= 9 (:credit (get-corp))))
@@ -382,7 +381,7 @@
     (is (= (:zone (refresh publics2)) [:servers :remote3 :content]))
     (is (= (:zone (refresh adonis) :discard)))
     (take-credits state :corp)
-    
+
     ;; Turn 3 Runner
     (take-credits state :runner)
 

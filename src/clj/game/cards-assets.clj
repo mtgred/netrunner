@@ -727,7 +727,7 @@
    "Plan B"
    (advance-ambush
     0
-    {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+    {:req (req (pos? (:advance-counter (get-card state card) 0)))
      :effect
      (effect (resolve-ability
               {:prompt "Choose an Agenda in HQ to score"
