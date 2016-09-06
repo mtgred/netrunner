@@ -637,13 +637,17 @@
     :abilities [ability]})
 
    "Mr. Li"
-   {:abilities [{:cost [:click 1] :prompt "Card to keep?"
-                 :choices (req (take 2 (:deck runner))) :not-distinct true :msg "choose 1 card to draw"
-                 :effect (req (move state side target :hand)
-                              (if (= target (first (:deck runner)))
-                                (move state side (second (:deck runner)) :deck)
-                                (move state side (first (:deck runner)) :deck))
-                              (trigger-event state side :runner-draw))}]}
+   {:abilities [{:cost [:click 1]
+                 :msg (msg "draw 2 cards")
+                 :effect (req (draw state side 2)
+                              (let [drawn (take-last 2 (conj (take 2 (:deck runner)) (:hand runner)))]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (str "Choose 1 card to add to the bottom of the Stack")
+                                   :msg (msg "add 1 card to the bottom of the Stack")
+                                   :choices {:req #(and (in-hand? %)
+                                                        (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                   :effect (req (move state side target :deck))} card nil)))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability

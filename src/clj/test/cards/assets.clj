@@ -443,6 +443,41 @@
       (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
       (is (= 3 (count (:hand (get-corp)))) "Drew all 3 cards"))))
 
+(deftest genetics-pavilion-mr-li
+  "Genetics Pavilion - Mr. Li interaction. #1594"
+  (do-game
+    (new-game (default-corp [(qty "Genetics Pavilion" 1)])
+              (default-runner [(qty "Mr. Li" 1) (qty "Account Siphon" 1) (qty "Faerie" 1)
+                               (qty "Sure Gamble" 1) (qty "John Masanori" 1) (qty "Desperado" 1)]))
+    (starting-hand state :runner ["Mr. Li"])
+    (play-from-hand state :corp "Genetics Pavilion" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mr. Li")
+    (let [mrli (get-in @state [:runner :rig :resource 0])]
+      (is (= 0 (count (:hand (get-runner)))))
+      ;use Mr. Li with 2 draws allowed
+      (card-ability state :runner mrli 0)
+      (is (= 2 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner))))
+      (is (= 1 (count (:hand (get-runner)))))
+      ;use Mr. Li with 0 draws allowed
+      (card-ability state :runner mrli 0)
+      (is (= 1 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner)))) ;will fail because not a valid target
+      (prompt-choice :runner "Done") ;cancel out
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/draw state :runner)
+      (is (= 2 (count (:hand (get-runner)))))
+      ;use Mr. Li with 1 draw allowed
+      (card-ability state :runner mrli 0)
+      (is (= 3 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner)))) ;will fail
+      (prompt-select :runner (second (:hand (get-runner)))) ;will fail
+      (prompt-select :runner (second (rest (:hand (get-runner)))))
+      (is (= 2 (count (:hand (get-runner))))))))
+
 (deftest ghost-branch
   "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
   (do-game
