@@ -226,6 +226,7 @@
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
    :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
+   :delayed-completion true
    :effect (req (when-completed (handle-access state side [target])
                                 (if (< 1 (count cards))
                                   (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
@@ -266,6 +267,7 @@
                         state side
                         {:prompt "Choose an upgrade in HQ to access."
                          :choices {:req #(= (second (:zone %)) :hq)}
+                         :delayed-completion true
                          :effect (req (system-msg state side (str "accesses " (:title target)))
                                       (when-completed (handle-access state side [target])
                                                       (continue-ability
@@ -337,6 +339,7 @@
                       (continue-ability
                         state side
                         {:prompt "Choose an upgrade in R&D to access."
+                         :delayed-completion true
                          :choices {:req #(= (second (:zone %)) :rd)}
                          :effect (req (system-msg state side (str "accesses " (:title target)))
                                       (when-completed (handle-access state side [target])
@@ -394,6 +397,7 @@
                         state side
                         {:prompt "Choose an upgrade in Archives to access."
                          :choices {:req #(= (second (:zone %)) :archives)}
+                         :delayed-completion true
                          :effect (req  (system-msg state side (str "accesses " (:title target)))
                                        (when-completed (handle-access state side [target])
                                                        (continue-ability
@@ -413,7 +417,8 @@
                                         (effect-completed state side eid nil))))))})
 
 (defmethod choose-access :archives [cards server]
-  {:effect (req (let [; only include agendas and cards with an :access ability whose :req is true
+  {:delayed-completion true
+   :effect (req (let [; only include agendas and cards with an :access ability whose :req is true
                       ; (or don't have a :req, or have an :optional with no :req, or :optional with a true :req.)
                       cards (filter #(let [cdef (card-def %)]
                                       (or (is-type? % "Agenda")

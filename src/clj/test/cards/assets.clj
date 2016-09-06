@@ -973,6 +973,24 @@
       (prompt-choice :runner "Yes")
       (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
 
+(deftest space-camp-archives
+  "Space Camp - bugged interaction from Archives. Issue #1929."
+  (do-game
+    (new-game (default-corp [(qty "Space Camp" 1) (qty "News Team" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Space Camp")
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "News Team")
+    (prompt-choice :runner "Take 2 tags")
+    (prompt-choice :runner "Space Camp")
+    (prompt-select :corp (get-content state :remote1 0))
+    (is (= 1 (:advance-counter (get-content state :remote1 0))) "Agenda advanced once from Space Camp")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (is (not (:run @state)) "Run completed")))
+
 (deftest sundew
   "Sundew"
   (do-game
