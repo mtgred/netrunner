@@ -158,6 +158,9 @@
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
+   "Ele \"Smoke\" Scovak: Cynosure of the Net"
+   {:recurring 1}
+
    "Exile: Streethawk"
    {:events {:pre-start-game {:req (req (= side :runner))
                               :effect (effect (gain :link 1))}
