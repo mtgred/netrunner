@@ -147,6 +147,47 @@
                         currmap)))]
     (reduce mwlhelper {} cards)))
 
+;;; Helpers for Alliance cards
+(defn is-alliance?
+  "Checks if the card is an alliance card"
+  [card]
+  ;; All alliance cards
+  (let [ally-cards #{"10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10094" "10109"}
+        card-code (:code (:card card))]
+    (ally-cards card-code)))
+
+(defn default-alliance-is-free?
+  "Checks if specified alliance card is free."
+  [cards card]
+  (<= 6 (card-count (filter #(and (= (:faction (:card card))
+                                     (:faction (:card %)))
+                                  (not (is-alliance? %)))
+                            cards))))
+
+(defn is-alliance-free?
+  "Checks if an alliance card is free"
+  [cards card]
+  (case (:code (:card card))
+    (list
+      "10013"                                               ; Heritage Committee
+      "10029"                                               ; Product Recall
+      "10067"                                               ; Jeeves Model Bioroids
+      "10068"                                               ; Raman Rai
+      "10071"                                               ; Salem's Hospitality
+      "10072"                                               ; Executive Search Firm
+      "10094"                                               ; Consulting Visit
+      "10109")                                              ; Ibrahim Salem
+    (default-alliance-is-free? cards card)
+    "10018"                                                 ; Mumba Temple
+    (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
+    "10019"                                                 ; Museum of History
+    (<= 50 (card-count cards))
+    "10038"                                                 ; PAD Factory
+    (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
+    "10076"                                                 ; Mumbad Virtual Tour
+    (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
+    false))
+
 (defn influence
   "Returns a map of faction keywords to influence values from the faction's cards."
   [deck]
@@ -171,51 +212,16 @@
         infmap (if (= (:code identity) "03029") ; The Professor: Keeper of Knowledge
                  (profhelper infmap)
                  infmap)
-        ;; checks card ID against list of currently known alliance cards
-        has-alliance-subtype? (fn [card]
-                                (case (:code (:card card))
-                                  (list "10013" "10018" "10019" "10029" "10038" "10067" "10068" "10071" "10072" "10076" "10094" "10109")
-                                  true
-                                  false))
         ;; alliance helper, subtracts influence of free ally cards from given influence map
         allyhelper (fn [arg-infmap]
-                     (let [ally-cards (filter has-alliance-subtype? cards)
-                           ;; Implements the standard alliance check, 6 or more non-alliance faction cards
-                           default-alliance-free? (fn [card]
-                                                    (<= 6 (card-count (filter #(and (= (:faction (:card card))
-                                                                                       (:faction (:card %)))
-                                                                                    (not (has-alliance-subtype? %)))
-                                                                              cards))))
-                           ;; checks card for alliance conditions and returns true if they are met
-                           is-ally-free? (fn [card]
-                                           (case (:code (:card card))
-                                             (list
-                                               "10013" ; Heritage Committee
-                                               "10029" ; Product Recall
-                                               "10067" ; Jeeves Model Bioroids
-                                               "10068" ; Raman Rai
-                                               "10071" ; Salem's Hospitality
-                                               "10072" ; Executive Search Firm
-                                               "10094" ; Consulting Visit
-                                               "10109") ; Ibrahim Salem
-                                             (default-alliance-free? card)
-                                             "10018" ; Mumba Temple
-                                             (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
-                                             "10019" ; Museum of History
-                                             (<= 50 (card-count cards))
-                                             "10038" ; PAD Factory
-                                             (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
-                                             "10076" ; Mumbad Virtual Tour
-                                             (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
-                                             false))
-                           free-ally-cards (filter is-ally-free? ally-cards)
+                     (let [ally-cards (filter is-alliance? cards)
+                           free-ally-cards (filter (partial is-alliance-free? cards) ally-cards)
                            free-ally-infmap (reduce infhelper {} free-ally-cards)]
                        (merge-with - arg-infmap free-ally-infmap)))
-        infmap (if (some has-alliance-subtype? cards)
+        infmap (if (some is-alliance? cards)
                  (allyhelper infmap)
                  infmap)]
-    infmap
-    ))
+    infmap))
 
 (defn mostwanted-count
   "Returns total number of MWL restricted cards in a deck."
