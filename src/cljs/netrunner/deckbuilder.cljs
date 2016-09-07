@@ -351,39 +351,46 @@
           (:cards @app-state))
     card))
 
+;; Dot definitions
+(def zws "&#8203;")                                         ; zero-width space for wrapping dots
+(def influence-dot (str "&#9679;" zws))                     ; normal influence dot
+(def mwl-dot (str "&#9733;" zws))                           ; influence penalty from MWL
+(def alliance-dot (str "&#9675;" zws))                      ; alliance free-inf dot
+
+(defn- make-dots
+  "Returns string of specified dots and number. Uses number for n > 20"
+  [dot n]
+  (if (<= 20 n)
+    (str n dot)
+    (join (conj (repeat n dot) ""))))
+
 (defn influence-dots
   "Returns a string with UTF-8 full circles representing influence."
   [num]
-  (let [dot "&#9679;&#8203;"] ; &#8203; is a zero-width space to allow wrapping
-    (if (<= 20 num)
-      (str num dot)
-      (join (conj (repeat num dot) "")))))
+  (make-dots influence-dot num))
 
 (defn restricted-dots
   "Returns a string with UTF-8 empty circles representing MWL restricted cards."
   [num]
-  (let [dot "&#9675;&#8203;"]
-    (if (<= 20 num)
-      (str num dot)
-      (join (conj (repeat num dot) "")))))
+  (make-dots mwl-dot num))
+
+(defn- dots-html
+  "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
+  [dot cost-map]
+  (for [factionkey (sort (keys cost-map))]
+    [:span.influence
+     {:class (name factionkey)
+      :dangerouslySetInnerHTML #js {:__html (make-dots dot (factionkey cost-map))}}]))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
   [deck]
-  (let [infmap (influence deck)]
-    (for [factionkey (sort (keys infmap))] [:span.influence
-                                            {:class (name factionkey)
-                                             :dangerouslySetInnerHTML
-                                                    #js {:__html (influence-dots (factionkey infmap))}}])))
+  (dots-html influence-dot (influence deck)))
 
 (defn restricted-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's MWL restricted cards."
   [deck]
-  (let [mwlmap (mostwanted deck)]
-    (for [factionkey (sort (keys mwlmap))] [:span.influence
-                                         {:class (name factionkey)
-                                          :dangerouslySetInnerHTML
-                                          #js {:__html (restricted-dots (factionkey mwlmap))}}])))
+  (dots-html mwl-dot (mostwanted deck)))
 
 (defn deck-status-label
   [deck]
