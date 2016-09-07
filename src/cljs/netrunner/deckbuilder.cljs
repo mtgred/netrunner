@@ -20,10 +20,15 @@
 (defn found? [query cards]
   (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
+(defn is-draft-id?
+  "Check if the specified id is a draft identity"
+  [identity]
+  (= "Draft" (:setname identity)))
+
 (defn id-inf-limit
   "Returns influence limit of an identity or INFINITY in case of draft IDs."
   [identity]
-  (if (= (:setname identity) "Draft") INFINITY (:influencelimit identity)))
+  (if (is-draft-id? identity) INFINITY (:influencelimit identity)))
 
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
@@ -90,13 +95,13 @@
 
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
-  [card {:keys [side faction setname code] :as identity}]
+  [card {:keys [side faction code] :as identity}]
   (and (not= (:type card) "Identity")
        (= (:side card) side)
        (or (not= (:type card) "Agenda")
            (= (:faction card) "Neutral")
            (= (:faction card) faction)
-           (= setname "Draft"))
+           (is-draft-id? identity))
        (or (not= code "03002") ; Custom Biotics: Engineered for Success
            (not= (:faction card) "Jinteki"))))
 
@@ -257,14 +262,15 @@
 
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
-  [{:keys [qty card] :as line}]
-  (<= qty (or (:limited card) 3)))
+  [identity {:keys [qty card]}]
+  (or (is-draft-id? identity)
+      (<= qty (or (:limited card) 3))))
 
 (defn valid? [{:keys [identity cards] :as deck}]
   (and (>= (card-count cards) (min-deck-size identity))
        (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
-                     (legal-num-copies? %)) cards)
+                     (legal-num-copies? identity %)) cards)
        (or (= (:side identity) "Runner")
            (let [min (min-agenda-points deck)]
              (<= min (agenda-points deck) (inc min))))))
@@ -553,7 +559,8 @@
                     existing-line (some match? cards)]
                 (let [new-qty (+ (or (:qty existing-line) 0) (:qty edit))
                       rest (remove match? cards)
-                      new-cards (cond (> new-qty max-qty) (conj rest {:qty max-qty :card card})
+                      draft-id (is-draft-id? (om/get-state owner [:deck :identity]))
+                      new-cards (cond (and (not draft-id) (> new-qty max-qty)) (conj rest {:qty max-qty :card card})
                                       (<= new-qty 0) rest
                                       :else (conj rest {:qty new-qty :card card}))]
                   (om/set-state! owner [:deck :cards] new-cards))
@@ -649,7 +656,7 @@
                                wanted (mostwanted? card)
                                allied (alliance-is-free? cards line)
                                valid (and (allowed? card identity)
-                                          (legal-num-copies? line))
+                                          (legal-num-copies? identity line))
                                released (released? sets card)]
                            [:span
                             [:span {:class (cond
