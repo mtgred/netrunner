@@ -26,8 +26,8 @@ capitalize = (s) ->
 
 setFields = {
   "name" : same
-  "date_release" : rename("available")
-  "cycle_code" : (k, t) -> ["cycle", capitalize(t)]
+  "date_release" : (k, t) -> ["available", if t is null then "4096-01-01" else t]
+  "cycle_code" : (k, t) -> ["cycle", capitalize(t.replace(/-/g, " "))]
 }
 
 mapFactions = {
@@ -120,6 +120,5 @@ fetchCards = (callback) ->
         fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
           console.log("#{cards.length} cards fetched")
         callback(null, cards.length)
-    db.close()
 
-async.series [fetchSets, fetchCards]
+async.series [fetchSets, fetchCards, () -> db.close()]
