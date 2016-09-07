@@ -25,8 +25,9 @@ capitalize = (s) ->
   return s.charAt(0).toUpperCase() + s.substr(1)
 
 setFields = {
-  "name" : same,
+  "name" : same
   "date_release" : rename("available")
+  "cycle_code" : (k, t) -> ["cycle", capitalize(t)]
 }
 
 mapFactions = {
@@ -44,6 +45,7 @@ mapFactions = {
   "neutral-corp" : "Neutral"
 }
 
+mapSets = {}
 
 cardFields = {
   "code" : same,
@@ -60,7 +62,7 @@ cardFields = {
   "faction_code" : (k, t) -> ["faction", mapFactions[t]],
   "faction_cost" : rename("factioncost"), # influence
   "position" : rename("number"),
-  # "setname",   --  deprecated
+  "pack_code": (k, t) -> ["setname", mapSets[t]]
   "side_code" : (k, t) -> ["side", capitalize(t)],
   "uniqueness" : same,
   "memory_cost" : rename("memoryunits"),
@@ -81,7 +83,10 @@ selectFields = (fields, objectList) ->
 fetchSets = (callback) ->
   request.get baseurl + "packs", (error, response, body) ->
     if !error and response.statusCode is 200
-      sets = selectFields(setFields, JSON.parse(body).data)
+      data = JSON.parse(body).data
+      for set in data
+        mapSets[set.code] = set.name
+      sets = selectFields(setFields, data)
       db.collection("sets").remove ->
       db.collection("sets").insert sets, (err, result) ->
         fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
@@ -115,6 +120,6 @@ fetchCards = (callback) ->
         fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
           console.log("#{cards.length} cards fetched")
         callback(null, cards.length)
+    db.close()
 
-async.parallel [fetchSets, fetchCards], (error, results) ->
-  db.close()
+async.series [fetchSets, fetchCards]
