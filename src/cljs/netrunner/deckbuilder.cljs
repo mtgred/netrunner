@@ -262,10 +262,9 @@
 
 (defn released?
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
-  [{:keys [setname] :as card}]
-  (let [date (some #(when (= (:name %) setname)
-                           (:available %))
-                   (:sets @app-state))]
+  [sets card]
+  (let [card-set (:setname card)
+        date (some #(when (= (:name %) card-set) (:available %)) sets)]
     (and (not= date "")
          (< date (.toJSON (js/Date.))))))
 
@@ -276,9 +275,9 @@
 
 (defn only-in-rotation?
   "Returns true if the deck doesn't contain any cards outside of current rotation."
-  [deck]
-  (and (every? #(released? (:card %)) (:cards deck))
-       (released? (:identity deck))))
+  [sets deck]
+  (and (every? #(released? sets (:card %)) (:cards deck))
+       (released? sets (:identity deck))))
 
 (defn edit-deck [owner]
   (om/set-state! owner :edit true)
@@ -393,20 +392,20 @@
   (dots-html mwl-dot (mostwanted deck)))
 
 (defn deck-status-label
-  [deck]
+  [sets deck]
   (cond
-    (and (mwl-legal? deck) (valid? deck) (only-in-rotation? deck)) "legal"
+    (and (mwl-legal? deck) (valid? deck) (only-in-rotation? sets deck)) "legal"
     (valid? deck) "casual"
     :else "invalid"))
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
-  ([deck] (deck-status-span deck false))
-  ([deck tooltip?]
-   (let [status (deck-status-label deck)
+  ([sets deck] (deck-status-span sets deck false))
+  ([sets deck tooltip?]
+   (let [status (deck-status-label sets deck)
          valid (valid? deck)
          mwl (mwl-legal? deck)
-         rotation (only-in-rotation? deck)
+         rotation (only-in-rotation? sets deck)
          message (case status
                    "legal" "Tournament legal"
                    "casual" "Casual play only"
@@ -508,17 +507,17 @@
                  (:title (nth matches i))])]))]]))))
 
 (defn deck-collection
-  [decks active-deck]
+  [sets decks active-deck]
   (for [deck (sort-by :date > decks)]
     [:div.deckline {:class (when (= active-deck deck) "active")
                     :on-click #(put! select-channel deck)}
      [:img {:src (image-url (:identity deck))}]
-     [:div.float-right (deck-status-span deck)]
+     [:div.float-right (deck-status-span sets deck)]
      [:h4 (:name deck)]
      [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
      [:p (get-in deck [:identity :title])]]))
 
-(defn deck-builder [{:keys [decks decks-loaded] :as cursor} owner]
+(defn deck-builder [{:keys [decks decks-loaded sets] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -563,7 +562,7 @@
             (cond
               (not decks-loaded) [:h4 "Loading deck collection..."]
               (empty? decks) [:h4 "No decks"]
-              :else (deck-collection decks (om/get-state owner :deck)))]
+              :else (deck-collection sets decks (om/get-state owner :deck)))]
            [:div {:class (when (:edit state) "edit")}
             (when-let [card (om/get-state owner :zoom)]
               (om/build card-view card))]]
@@ -616,7 +615,7 @@
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
                         [:span.invalid " (maximum" (inc min-point) ")"])]))
-                 [:div (deck-status-span deck true)]]
+                 [:div (deck-status-span sets deck true)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group
@@ -637,7 +636,7 @@
                                wanted (mostwanted? card)
                                valid (and (allowed? card identity)
                                           (legal-num-copies? line))
-                               released (released? card)]
+                               released (released? sets card)]
                            [:span
                             [:span {:class (cond
                                              (and valid released) "fake-link"
