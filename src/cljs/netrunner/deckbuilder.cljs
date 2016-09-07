@@ -158,16 +158,16 @@
 
 (defn default-alliance-is-free?
   "Checks if specified alliance card is free."
-  [cards card]
-  (<= 6 (card-count (filter #(and (= (:faction (:card card))
+  [cards {:keys [card]}]
+  (<= 6 (card-count (filter #(and (= (:faction card)
                                      (:faction (:card %)))
                                   (not (is-alliance? %)))
                             cards))))
 
-(defn is-alliance-free?
+(defn alliance-is-free?
   "Checks if an alliance card is free"
-  [cards card]
-  (case (:code (:card card))
+  [cards {:keys [card] :as line}]
+  (case (:code card)
     (list
       "10013"                                               ; Heritage Committee
       "10029"                                               ; Product Recall
@@ -177,7 +177,7 @@
       "10072"                                               ; Executive Search Firm
       "10094"                                               ; Consulting Visit
       "10109")                                              ; Ibrahim Salem
-    (default-alliance-is-free? cards card)
+    (default-alliance-is-free? cards line)
     "10018"                                                 ; Mumba Temple
     (>= 15 (card-count (filter #(= "ICE" (:type (:card %))) cards)))
     "10019"                                                 ; Museum of History
@@ -188,40 +188,43 @@
     (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
     false))
 
-(defn influence
+;;; Influence map helpers
+;; Note: line is a map with a :card and a :qty
+(defn line-base-cost
+  "Returns the basic influence cost of a deck-line"
+  [identity-faction {:keys [card qty]}]
+  (let [card-faction (:faction card)]
+    (if (= identity-faction card-faction)
+      0
+      (* qty (:factioncost card)))))
+
+(defn line-influence-cost
+  "Returns the influence cost of the specified card"
+  [deck {:keys [card qty] :as line}]
+  (let [identity-faction (get-in deck [:identity :faction])
+        base-cost (line-base-cost identity-faction line)]
+    ;; Do not care about discounts if the base cost is 0 (in faction or free neutral)
+    (if (= 0 base-cost)
+      0
+      (cond
+        ;; The Professor: Keeper of Knowledge
+        ;; Discount influence cost of first copy of each program
+        (= (get-in deck [:identity :code]) "03029")
+        (- base-cost (:factioncost card))
+        ;; Check if the card is Alliance and fulfills its requirement
+        (alliance-is-free? (:cards deck) line)
+        0
+        :else
+        base-cost))))
+
+(defn influence-map
   "Returns a map of faction keywords to influence values from the faction's cards."
   [deck]
-  (let [identity (:identity deck)
-        cards (:cards deck)
-        ;; sums up influence of a cardlist by faction to a map
-        infhelper (fn [currmap line]
-                    (let [card (:card line)]
-                      (if (= (:faction card) (:faction identity))
-                        currmap
-                        (update-in currmap [(keyword (faction-label card))]
-                                   (fnil (fn [curinf] (+ curinf (* (:qty line) (:factioncost card))))
-                                         0)))))
-        infmap (reduce infhelper {} cards)
-        ;; sums up influence of one of each imported programs, to resolve Professor's ability
-        profhelper (fn [arg-infmap]
-                     (let [progs (filter #(= "Program" (:type (:card %))) cards)
-                           ;; list with single programs
-                           singled-progs (reduce #(conj %1 (assoc-in %2 [:qty] 1)) '() progs)
-                           singled-infmap (reduce infhelper {} singled-progs)]
-                       (merge-with - arg-infmap singled-infmap)))
-        infmap (if (= (:code identity) "03029") ; The Professor: Keeper of Knowledge
-                 (profhelper infmap)
-                 infmap)
-        ;; alliance helper, subtracts influence of free ally cards from given influence map
-        allyhelper (fn [arg-infmap]
-                     (let [ally-cards (filter is-alliance? cards)
-                           free-ally-cards (filter (partial is-alliance-free? cards) ally-cards)
-                           free-ally-infmap (reduce infhelper {} free-ally-cards)]
-                       (merge-with - arg-infmap free-ally-infmap)))
-        infmap (if (some is-alliance? cards)
-                 (allyhelper infmap)
-                 infmap)]
-    infmap))
+  (letfn [(infhelper [infmap line]
+            (let [inf-cost (line-influence-cost deck line)
+                  faction (keyword (faction-label (:card line)))]
+              (update infmap faction #(+ (or % 0) inf-cost))))]
+    (reduce infhelper {} (:cards deck))))
 
 (defn mostwanted-count
   "Returns total number of MWL restricted cards in a deck."
@@ -231,7 +234,7 @@
 (defn influence-count
   "Returns sum of influence count used by a deck."
   [deck]
-  (apply + (vals (influence deck))))
+  (apply + (vals (influence-map deck))))
 
 (defn deck-inf-limit [deck]
   (let [originf (id-inf-limit (:identity deck))
@@ -394,7 +397,7 @@
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
   [deck]
-  (dots-html influence-dot (influence deck)))
+  (dots-html influence-dot (influence-map deck)))
 
 (defn restricted-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's MWL restricted cards."
@@ -644,7 +647,7 @@
                          (let [card (:card line)
                                infaction (noinfcost? identity card)
                                wanted (mostwanted? card)
-                               allied (is-alliance-free? cards line)
+                               allied (alliance-is-free? cards line)
                                valid (and (allowed? card identity)
                                           (legal-num-copies? line))
                                released (released? sets card)]
