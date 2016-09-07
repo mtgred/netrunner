@@ -379,6 +379,10 @@
   [num]
   (make-dots mwl-dot num))
 
+(defn alliance-dots
+  [num]
+  (make-dots alliance-dot num))
+
 (defn- dots-html
   "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
   [dot cost-map]
@@ -640,6 +644,7 @@
                          (let [card (:card line)
                                infaction (noinfcost? identity card)
                                wanted (mostwanted? card)
+                               allied (is-alliance-free? cards line)
                                valid (and (allowed? card identity)
                                           (legal-num-copies? line))
                                released (released? sets card)]
@@ -652,11 +657,18 @@
                                     :on-mouse-leave #(put! zoom-channel false)} name]
                             (when (or wanted (not infaction))
                               (let [influence (* (:factioncost card) (:qty line))]
-                                (list " " [:span.influence
-                                 {:class (faction-label card)
-                                  :dangerouslySetInnerHTML
-                                  #js {:__html (str (if-not infaction (influence-dots influence))
-                                                    (if wanted (restricted-dots (:qty line))))}}])))])
+                                (list " "
+                                      [:span.influence
+                                       {:class (faction-label card)
+                                        :dangerouslySetInnerHTML
+                                        #js {:__html
+                                             (str
+                                               ;; normal influence
+                                               (when (and (not infaction) (not allied)) (influence-dots influence))
+                                               ;; satisfies alliance criterion
+                                               (when allied (alliance-dots influence))
+                                               ;; on mwl
+                                               (when wanted (restricted-dots (:qty line))))}}])))])
                          (:card line))])])]]))]
 
           [:div.deckedit
