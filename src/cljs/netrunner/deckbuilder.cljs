@@ -536,7 +536,43 @@
      [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
      [:p (get-in deck [:identity :title])]]))
 
-(defn deck-builder [{:keys [decks decks-loaded sets] :as cursor} owner]
+(defn line-span
+  "Make the view of a single line in the deck - returns a span"
+  [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
+  [:span qty " "
+   (if-let [name (:title card)]
+     (let [infaction (noinfcost? identity card)
+           wanted (mostwanted? card)
+           allied (alliance-is-free? cards line)
+           valid (and (allowed? card identity)
+                      (legal-num-copies? identity line))
+           released (released? sets card)]
+       [:span
+        [:span {:class (cond
+                         (and valid released) "fake-link"
+                         valid "casual"
+                         :else "invalid")
+                :on-mouse-enter #(put! zoom-channel card)
+                :on-mouse-leave #(put! zoom-channel false)} name]
+        (when (or wanted (not infaction))
+          (let [influence (* (:factioncost card) qty)]
+            (list " "
+                  [:span.influence
+                   {:class (faction-label card)
+                    :dangerouslySetInnerHTML
+                    #js {:__html
+                         (str
+                           ;; normal influence
+                           (when (and (not infaction) (not allied)) (influence-dots influence))
+                           ;; satisfies alliance criterion
+                           (when allied (alliance-dots influence))
+                           ;; on mwl
+                           (when wanted (restricted-dots qty)))}}])))])
+     card)])
+
+(defn deck-builder
+  "Make the deckbuilder view"
+  [{:keys [decks decks-loaded sets] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -622,7 +658,7 @@
                        id-limit (id-inf-limit identity)
                        mwl (mostwanted-count deck)]
                    [:div "Influence: "
-                    ; we don't use valid? and mwl-legal? functions here, since it concerns influence only
+                    ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
                     [:span {:class (if (> inf limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
                     "/" (if (= INFINITY id-limit) "∞" limit)
                     (if (< 0 (+ inf mwl))
@@ -649,37 +685,7 @@
                                             :type "button"} "+"]
                             [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
                                             :type "button"} "-"]]))
-                       (:qty line) " "
-                       (if-let [name (get-in line [:card :title])]
-                         (let [card (:card line)
-                               infaction (noinfcost? identity card)
-                               wanted (mostwanted? card)
-                               allied (alliance-is-free? cards line)
-                               valid (and (allowed? card identity)
-                                          (legal-num-copies? identity line))
-                               released (released? sets card)]
-                           [:span
-                            [:span {:class (cond
-                                             (and valid released) "fake-link"
-                                             valid "casual"
-                                             :else "invalid")
-                                    :on-mouse-enter #(put! zoom-channel card)
-                                    :on-mouse-leave #(put! zoom-channel false)} name]
-                            (when (or wanted (not infaction))
-                              (let [influence (* (:factioncost card) (:qty line))]
-                                (list " "
-                                      [:span.influence
-                                       {:class (faction-label card)
-                                        :dangerouslySetInnerHTML
-                                        #js {:__html
-                                             (str
-                                               ;; normal influence
-                                               (when (and (not infaction) (not allied)) (influence-dots influence))
-                                               ;; satisfies alliance criterion
-                                               (when allied (alliance-dots influence))
-                                               ;; on mwl
-                                               (when wanted (restricted-dots (:qty line))))}}])))])
-                         (:card line))])])]]))]
+                       (line-span sets deck line)])])]]))]
 
           [:div.deckedit
            [:div
