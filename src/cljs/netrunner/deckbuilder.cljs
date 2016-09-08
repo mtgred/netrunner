@@ -162,10 +162,10 @@
     (ally-cards card-code)))
 
 (defn default-alliance-is-free?
-  "Checks if specified alliance card is free."
-  [cards {:keys [card]}]
-  (<= 6 (card-count (filter #(and (= (:faction card)
-                                     (:faction (:card %)))
+  "Default check if an alliance card is free - 6 non-alliance cards of same faction."
+  [cards line]
+  (<= 6 (card-count (filter #(and (= (get-in line [:card :faction])
+                                     (get-in % [:card :faction]))
                                   (not (is-alliance? %)))
                             cards))))
 
@@ -191,6 +191,7 @@
     (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
     "10076"                                                 ; Mumbad Virtual Tour
     (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
+    ;; Not an alliance card
     false))
 
 ;;; Influence map helpers
@@ -205,17 +206,16 @@
 
 (defn line-influence-cost
   "Returns the influence cost of the specified card"
-  [deck {:keys [card qty] :as line}]
+  [deck line]
   (let [identity-faction (get-in deck [:identity :faction])
         base-cost (line-base-cost identity-faction line)]
     ;; Do not care about discounts if the base cost is 0 (in faction or free neutral)
-    (if (= 0 base-cost)
+    (if (zero? base-cost)
       0
       (cond
-        ;; The Professor: Keeper of Knowledge
-        ;; Discount influence cost of first copy of each program
+        ;; The Professor: Keeper of Knowledge - discount influence cost of first copy of each program
         (= (get-in deck [:identity :code]) "03029")
-        (- base-cost (:factioncost card))
+        (- base-cost (get-in line [:card :factioncost]))
         ;; Check if the card is Alliance and fulfills its requirement
         (alliance-is-free? (:cards deck) line)
         0
@@ -661,7 +661,7 @@
                     ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
                     [:span {:class (if (> inf limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
                     "/" (if (= INFINITY id-limit) "∞" limit)
-                    (if (< 0 (+ inf mwl))
+                    (if (pos? (+ inf mwl))
                       (list " " (influence-html deck) (restricted-html deck)))])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
