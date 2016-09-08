@@ -353,11 +353,22 @@
    "Chrysalis"
    {:abilities [(do-net-damage 2)]
     :access {:req (req (not= (first (:zone card)) :discard))
-             :msg "force the Runner to encounter Chrysalis"
-             :optional {:req (req (not= (first (:zone card)) :discard))
-                        :prompt "Use Chrysalis to do 2 net damage?"
-                        :yes-ability {:effect (effect (damage eid :net 2 {:card card}))
-                        :msg "do 2 net damage"}}}}
+             :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Chrysalis")
+                             (resolve-ability
+                               {:optional
+                                {:req (req (not= (first (:zone card)) :discard))
+                                 :prompt "Force the Runner to encounter Chrysalis?"
+                                 :yes-ability {:effect (req (system-msg state :corp "forces the Runner to encounter Chrysalis")
+                                                            (clear-wait-prompt state :runner)
+                                                            (resolve-ability state :runner
+                                                              {:optional
+                                                               {:player :runner
+                                                                :prompt "Allow Chrysalis subroutine to fire?" :priority 1
+                                                                :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                             card nil))}
+                                 :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Chrysalis")
+                                                           (clear-wait-prompt state :runner))}}}
+                              card nil))}}
 
    "Chum"
    {:abilities [(do-net-damage 3)]}
