@@ -30,13 +30,23 @@
   [identity]
   (if (is-draft-id? identity) INFINITY (:influencelimit identity)))
 
+(defn- check-mwl-map
+  "Check if card is in specified mwl map"
+  [mwl-map card]
+  (let [mwl-cards (:cards mwl-map)
+        code (keyword (:code card))]
+    (contains? mwl-cards code)))
+
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
-  [card]
-  (let [napdmwl #{"Cerberus \"Lady\" H1" "Clone Chip" "D4v1d" "Desperado" "Faust" "Parasite" "Prepaid VoicePAD"
-                  "Wyldside" "Yog.0"
-                  "Architect" "Breaking News" "Eli 1.0" "Mumba Temple" "NAPD Contract" "SanSan City Grid"}]
-    (napdmwl (:title card))))
+  ([card]
+   (let [mwl-list (:mwl @app-state)
+         active-mwl (first (filter :active mwl-list))]
+     (check-mwl-map active-mwl card)))
+  ([mwl-code card]
+   (let [mwl-list (:mwl @app-state)
+         mwl-map (first (filter #(= mwl-code (:code %)) mwl-list))]
+     (check-mwl-map mwl-map card))))
 
 (defn card-count [cards]
   (reduce #(+ %1 (:qty %2)) 0 cards))
