@@ -48,11 +48,15 @@
 (defn search [query cards]
   (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
 
-(defn alt-art? [card]
+(defn alt-art?
+  "Removes alt-art cards from the search if user is not :special"
+  [card]
   (or (get-in @app-state [:user :special])
       (not= "Alternates" (:setname card))))
 
-(defn lookup [side query]
+(defn lookup
+  "Lookup the card title (query) looking at all cards on specified side"
+  [side query]
   (let [q (.toLowerCase query)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))]
@@ -66,6 +70,11 @@
                (<= i (count query)) (recur (inc i) (search subquery matches))
                :else query))))))
 
+(defn parse-identity
+  "Parse an id to the corresponding card map - only care about side and name for now"
+  [{:keys [side title]}]
+  (lookup side title))
+
 (defn parse-line [side line]
   (let [tokens (split line " ")
         qty (js/parseInt (first tokens))
@@ -73,18 +82,42 @@
     (when-not (js/isNaN qty)
       {:qty (min qty 6) :card (lookup side cardname)})))
 
-(defn parse-deck
-  "Parses a string containing cardlist and returns a list of line card maps {:qty num :card cardmap}"
-  [side deck]
-  (let [base-list (reduce #(if-let [card (parse-line side %2)] (conj %1 card) %1) [] (split-lines deck))
-        ;; in case there were e.g. 2 lines with Sure Gambles, we need to sum them up in deduplicate
-        duphelper (fn [currmap line]
-                    (let [title (:title (:card line))
-                          qty (:qty line)]
-                      (if (contains? currmap title)
-                        (assoc-in currmap [title :qty] (+ (get-in currmap [title :qty]) qty))
-                        (assoc currmap title line))))]
-    (vals (reduce duphelper {} base-list))))
+(defn deck-string->list
+  "Turn a raw deck string into a list of {:qty :title}"
+  [deck-string]
+  (letfn [(line-reducer [coll line]
+            (let [[qty & cardname] (split line " ")
+                  qty (js/parseInt qty)
+                  title (join " " cardname)]
+              (if (js/isNaN qty)
+                coll
+                (conj coll {:qty qty :card title}))))]
+          (reduce line-reducer [] (split-lines deck-string))))
+
+(defn collate-deck
+  "Takes a list of {:qty n :card title} and returns list of unique titles and summed n for same title"
+  [card-list]
+  ;; create a backing map of title to {:qty n :card title} and update the
+  (letfn [(duphelper [currmap line]
+            (let [title (:card line)
+                  curr-qty (get-in currmap [title :qty] 0)
+                  line (update line :qty #(+ % curr-qty))]
+              (assoc currmap title line)))]
+          (vals (reduce duphelper {} card-list))))
+
+(defn lookup-deck
+  "Takes a list of {:qty n :card title} and looks up each title and replaces it with the corresponding cardmap"
+  [side card-list]
+  (let [card-list (collate-deck card-list)
+        card-lookup (partial lookup side)]
+    ;; lookup each card and replace title with cardmap
+    (map #(update % :card card-lookup) card-list)))
+
+(defn parse-deck-string
+  "Parses a string containing the decklist and returns a list of lines {:qty :card}"
+  [side deck-string]
+  (let [raw-deck-list (deck-string->list deck-string)]
+    (lookup-deck side raw-deck-list)))
 
 (defn faction-label
   "Returns faction of a card as a lowercase label"
@@ -110,10 +143,13 @@
   (put! select-channel (first (sort-by :date > decks)))
   (swap! app-state assoc :decks-loaded true))
 
-(defn process-decks [decks]
+(defn process-decks
+  "Process the raw deck from the database into a more useful format"
+  [decks]
   (for [deck decks]
-    (let [cards (map #(str (:qty %) " " (:card %)) (:cards deck))]
-      (assoc deck :cards (parse-deck (get-in deck [:identity :side]) (join "\n" cards))))))
+    (let [identity (parse-identity (:identity deck))
+          cards (lookup-deck (:side identity) (:cards deck))]
+      (assoc deck :identity identity :cards cards))))
 
 (defn distinct-by [f coll]
   (letfn [(step [xs seen]
@@ -308,12 +344,11 @@
   (-> owner (om/get-node "viewport") js/$ (.removeClass "edit")))
 
 (defn handle-edit [owner]
-  (let [text (.-value (om/get-node owner "deck-edit"))]
+  (let [text (.-value (om/get-node owner "deck-edit"))
+        side (om/get-state owner [:deck :identity :side])
+        cards (parse-deck-string side text)]
     (om/set-state! owner :deck-edit text)
-    (om/set-state! owner
-                   [:deck :cards]
-                   (parse-deck (om/get-state owner [:deck :identity :side])
-                               text))))
+    (om/set-state! owner [:deck :cards] cards)))
 
 (defn delete-deck [owner]
   (om/set-state! owner :delete true)
@@ -349,7 +384,9 @@
            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
            cards (for [card (:cards deck) :when (get-in card [:card :title])]
                    {:qty (:qty card) :card (get-in card [:card :title])})
-           data (assoc deck :cards cards)]
+           ;; only include keys that are relevant, currently title and side, includes code for future-proofing
+           identity (select-keys (:identity deck) [:title :side :code])
+           data (assoc deck :cards cards :identity identity)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
        (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
