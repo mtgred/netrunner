@@ -872,7 +872,33 @@
 
       (is (changes-credits (get-corp) -1
         (core/rez state :corp (get-ice state :rd 0)))
-        "Reina is no longer active"))))
+        "Reina is no longer active")))
+
+  (deftest rebirth-lose-link
+    "Rebirth - Lose link from ID"
+    (do-game
+      (new-game (default-corp)
+                (make-deck kate ["Rebirth" "Access to Globalsec"])
+                {:start-as :runner})
+      (play-from-hand state :runner "Access to Globalsec")
+      (is (= 2 (:link (get-runner))) "2 link before rebirth")
+
+      (play-from-hand state :runner "Rebirth")
+      (choose-runner chaos state prompt-map)
+      (is (= 1 (:link (get-runner))) "1 link after rebirth")))
+
+  (deftest rebirth-gain-link
+    "Rebirth - Gain link from ID"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Rebirth" "Access to Globalsec"])
+                {:start-as :runner})
+      (play-from-hand state :runner "Access to Globalsec")
+      (is (= 1 (:link (get-runner))) "1 link before rebirth")
+
+      (play-from-hand state :runner "Rebirth")
+      (choose-runner kate state prompt-map)
+      (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
 
 (deftest rigged-results
   "Rigged Results - success and failure"

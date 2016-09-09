@@ -820,21 +820,16 @@
                (move state side (last (:discard runner)) :rfg)
                (disable-identity state side)
 
-               ;; Manually change the runner's link
-               (swap! state update-in [side :link]
-                 (fn [old-link]
-                   (let [old-id-link (-> @state :runner :identity :baselink)
-                         new-id-link (:baselink target)
-                         link-change (- new-id-link old-id-link)]
-                      (+ old-link link-change))))
+               ;; Manually reduce the runner's link by old link
+               (lose state :runner :link (get-in @state [:runner :identity :baselink]))
 
                ;; Move the selected ID to [:runner :identity] and set the zone
                (swap! state update-in [side :identity]
                   (fn [x] (assoc (server-card (:title target) (get-in @state [:runner :user]))
                             :zone [:identity])))
 
-               ;; enable-identity does not do everything that card-init does
-               (card-init state side (get-in @state [:runner :identity]))
+               ;; enable-identity does not do everything that identity-init does
+               (identity-init state side (get-in @state [:runner :identity]))
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary"))}

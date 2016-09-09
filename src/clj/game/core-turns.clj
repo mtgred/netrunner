@@ -4,6 +4,13 @@
          turn-message)
 
 ;;; Functions for the creation of games and the progression of turns.
+(defn- identity-init
+  "Initialise the identity"
+  [state side identity]
+  (card-init state side identity)
+  (when-let [baselink (:baselink identity)]
+    (gain state side :link baselink)))
+
 (defn init-game
   "Initializes a new game with the given players vector."
   [{:keys [players gameid spectatorhands] :as game}]
@@ -36,8 +43,8 @@
                           :agenda-point 0
                           :hq-access 1 :rd-access 1 :tagged 0
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
-    (card-init state :corp corp-identity)
-    (card-init state :runner runner-identity)
+    (identity-init state :corp corp-identity)
+    (identity-init state :runner runner-identity)
     (swap! game-states assoc gameid state)
     (trigger-event state :corp :pre-start-game)
     (trigger-event state :runner :pre-start-game)
