@@ -260,7 +260,8 @@
       0
       (cond
         ;; The Professor: Keeper of Knowledge - discount influence cost of first copy of each program
-        (= (get-in deck [:identity :code]) "03029")
+        (and (= "03029" (get-in deck [:identity :code]))
+             (= "Program" (get-in line [:card :type])))
         (- base-cost (get-in line [:card :factioncost]))
         ;; Check if the card is Alliance and fulfills its requirement
         (alliance-is-free? (:cards deck) line)
