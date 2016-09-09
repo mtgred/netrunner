@@ -486,21 +486,6 @@
          [:div {:class (if rotation "legal" "invalid")}
           [:span.tick (if rotation "✔" "✘")] "Only released cards"]])])))
 
-(defn octgn-link [owner]
-  (let [deck (om/get-state owner :deck)
-        identity (not-alternate (:identity deck))
-        id "bc0f047c-01b1-427f-a439-d451eda"
-        xml (str
-             "<deck game=\"0f38e453-26df-4c04-9d67-6d43de939c77\"><section name=\"Identity\"><card qty=\"1\" id=\""
-             id (:code identity) "\">" (:title identity) "</card></section>"
-             "<section name=\"R&amp;D / Stack\">"
-             (join (for [c (:cards deck) :when (get-in c [:card :title])]
-                     (str "<card qty=\"" (:qty c) "\" id=\"" id (get-in c [:card :code]) "\">"
-                          (html-escape (get-in c [:card :title])) "</card>")))
-             "</section></deck>")
-        blob (js/Blob. (clj->js [xml]) #js {:type "application/download"})]
-    (.createObjectURL js/URL blob)))
-
 (defn match [identity query]
   (if (empty? query)
     []
@@ -686,10 +671,7 @@
                            [:button {:on-click #(end-delete owner)} "Cancel"]]
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
-                         [:button {:on-click #(delete-deck owner)} "Delete"]
-                         [:a.button {:href (octgn-link owner)
-                                     :download (str (:name deck) ".o8d")}
-                          "OCTGN Export"]])
+                         [:button {:on-click #(delete-deck owner)} "Delete"]])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
