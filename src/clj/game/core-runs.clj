@@ -463,15 +463,16 @@
   "Starts the access routines for the run's server."
   [state side eid server]
   (trigger-event state side :pre-access (first server))
-  (let [cards (access state side server)]
+  (let [cards (access state side server)
+        n (count cards)]
     ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
     (when-not (or (= (get-in @state [:run :max-access]) 0)
                   (empty? cards))
       (if (= (first server) :rd)
-        (let [n (count cards)]
-          (system-msg state side (str "accesses " n " card" (when (> n 1) "s")))))
+        (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
       (when-completed (resolve-ability state side (choose-access cards server) nil nil)
-                      (effect-completed state side eid nil))))
+                      (effect-completed state side eid nil))
+      (swap! state assoc-in [:run :cards-accessed] n)))
   (handle-end-run state side))
 
 (defn replace-access
