@@ -126,11 +126,12 @@
 (defn move-zone
   "Moves all cards from one zone to another, as in Chronos Project."
   [state side server to]
-  (let [from-zone (cons side (if (sequential? server) server [server]))
-        to-zone (cons side (if (sequential? to) to [to]))]
-    (swap! state assoc-in to-zone (concat (get-in @state to-zone)
-                                          (zone to (get-in @state from-zone))))
-    (swap! state assoc-in from-zone [])))
+  (when-not (seq (get-in @state [side :locked server]))
+    (let [from-zone (cons side (if (sequential? server) server [server]))
+          to-zone (cons side (if (sequential? to) to [to]))]
+      (swap! state assoc-in to-zone (concat (get-in @state to-zone)
+                                            (zone to (get-in @state from-zone))))
+      (swap! state assoc-in from-zone []))))
 
 (defn add-prop
   "Adds the given value n to the existing value associated with the key in the card.

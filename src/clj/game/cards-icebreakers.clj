@@ -458,7 +458,7 @@
                  :msg (msg "increase strength by " target " and break " target " barrier subroutine"
                            (when (not= target 1) "s"))}]
     :events {:rez install
-             :pass-ice install
+             :approach-ice install
              :run install}})
 
 

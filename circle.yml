@@ -16,6 +16,9 @@ test:
   override:
     - lein compile game.main
     - lein compile test.core
+    - lein compile test.cards.assets
+    - lein compile test.cards.events
+    - lein compile test.cards.resources
     - lein test test.core
     - lein test test.cards.agendas
     - lein test test.cards.assets
