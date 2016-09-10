@@ -86,7 +86,7 @@
   "Makes a proper card from an @all-cards card"
   [card]
   (-> card
-      (assoc :cid (make-cid) :implementation (card-implemented c))
+      (assoc :cid (make-cid) :implementation (card-implemented card))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
 
 (defn create-deck
