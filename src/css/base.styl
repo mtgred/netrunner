@@ -1702,32 +1702,33 @@ nav ul
 
     // Card implementation div
     .implementation
+      width: 150px
+      position: absolute
+      top: 0
+      right: 224px
+
+      text-align: right
+      font-size: 12px
+      line-height: 12px
+
       // stuff from .panel
       radius: 4px
-      padding: 3px 5px
+      padding: 5px 10px
       border: 1px solid rgba(39, 56, 76, 0.9)
-      margin: 5px
+      margin: 3px
 
       // stuff from .blue-shade
       color: white
       background-color: transparent-blue
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
 
-      // override above
-      position: absolute
-      top: 0
-      right: 0
-      width: 100px
       transition(all 0.2s ease-in-out)
-      text-align: start
-      font-size: 12px
-      line-height: 12px
 
-      &.unimplemented
+      .unimplemented
         color: red
         font-style: italic
 
-      &.impl-msg
+      .impl-msg
         color: orange
 
     .log
