@@ -185,6 +185,22 @@
       (is (= 0 (:current-strength (refresh q1)))
           "Inner Quandary back to default 0 strength after turn ends"))))
 
+(deftest crisium-grid
+  "Crisium Grid - various interactions"
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)])
+              (default-runner [(qty "Desperado" 1) (qty "Temüjin Contract" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (is (= 4 (:credit (get-corp))) "Corp has 4 credits")
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "Desperado")
+    (play-from-hand state :runner "Temüjin Contract")
+    (prompt-choice :runner "HQ")
+    (run-empty-server state "HQ")
+    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")))
+
 (deftest cyberdex-virus-suite-purge
   "Cyberdex Virus Suite - Purge ability"
   (do-game

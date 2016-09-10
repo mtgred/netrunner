@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
+(declare check-req clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -154,15 +154,23 @@
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
          opponent (other-side (:active-player @state))
-         is-active-player #(or (= active-player (get-side %)) (= active-player (get-ability-side %)))
-         active-player-events (filter is-active-player (get-in @state [:events event]))
-         active-player-events (if (= (:active-player @state) (get-side card-ability))
-                                (cons card-ability active-player-events)
-                                active-player-events)
-         opponent-events (filter (complement is-active-player) (get-in @state [:events event]))
-         opponent-events (if (= opponent (get-side card-ability))
-                           (cons card-ability opponent-events)
-                           opponent-events)]
+         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
+
+         ;; prepare the list of the given player's handlers for this event.
+         ;; gather all registered handlers from the state, then append the card-ability if appropriate, then
+         ;; filter to remove suppressed handlers and those whose req is false.
+         ;; this is essentially "step 1" as described here:
+         ;; http://ancur.wikia.com/wiki/User_blog:Jakodrako/Ability_Types_and_Resolution_Primer#Conditional_Abilities
+         get-handlers (fn [player-side]
+                        (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
+                              abis (if (= player-side (get-side card-ability))
+                                     (cons card-ability abis)
+                                     abis)]
+                          (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                        (check-req state side (get-card state (:card %))targets %))
+                                  abis)))
+         active-player-events (get-handlers active-player)
+         opponent-events (get-handlers opponent)]
      ; let active player activate their events first
      (when-completed
        (resolve-ability state side first-ability nil nil)
@@ -199,6 +207,7 @@
   [state side event & targets]
   (reduce #(or %1 ((:req (:ability %2)) state side (make-eid state) (:card %2) targets))
           false (get-in @state [:suppress event])))
+
 
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
