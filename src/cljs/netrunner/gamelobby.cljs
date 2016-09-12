@@ -108,14 +108,13 @@
   (send {:action "leave-lobby" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
   (om/update! cursor :message []))
-  (swap! app-state assoc :password-gameid nil)
+  (swap! app-state dissoc :password-gameid)
 
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
-  (swap! app-state assoc :password-gameid nil)
-  (swap! app-state dissoc :gameid :side)
+  (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
@@ -246,7 +245,7 @@
             [:p
              [:button {:type "button" :on-click #(join prompt)}
               prompt]
-             [:span.fake-link {:on-click #(do (swap! app-state assoc :password-gameid nil) (om/set-state! owner :prompt false))}
+             [:span.fake-link {:on-click #(do (swap! app-state dissoc :password-gameid) (om/set-state! owner :prompt false))}
               "Cancel"]]
             (when-let [error-msg (om/get-state owner :error-msg)]
               [:p.flash-message error-msg])])])))))
