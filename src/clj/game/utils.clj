@@ -33,7 +33,10 @@
       (and (keyword? value) (string? cv)) (= value (keyword (.toLowerCase cv)))
       :else (= value cv))))
 
-(defn zone [zone coll]
+(defn zone
+  "Associate the specified zone to each item in the collection.
+  Zone can be a singleton or a sequential collection"
+  [zone coll]
   (let [dest (if (sequential? zone) (vec zone) [zone])]
     (map #(assoc % :zone dest) coll)))
 
@@ -201,4 +204,4 @@
   (or (#{:hq :rd :archives} zone) :remote))
 
 (defn private-card [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted]))
+  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))

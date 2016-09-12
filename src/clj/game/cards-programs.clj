@@ -59,7 +59,9 @@
 
    "Chakana"
    {:leave-play (effect (update-all-advancement-costs))
-    :events {:successful-run {:effect (effect (add-counter card :virus 1)) :req (req (= target :rd))}
+    :events {:successful-run {:silent (req true)
+                              :req (req (= target :rd))
+                              :effect (effect (add-counter card :virus 1))}
              :pre-advancement-cost {:req (req (>= (get-virus-counters state side card) 3))
                                     :effect (effect (advancement-cost-bonus 1))}
              :counter-added
@@ -113,7 +115,8 @@
                  :msg "break 1 subroutine"}]}
 
    "DaVinci"
-   {:events {:successful-run {:effect (effect (add-counter card :power 1))}}
+   {:events {:successful-run {:silent (req true)
+                              :effect (effect (add-counter card :power 1))}}
     :abilities [{:effect
                  (req (let [c card]
                         (resolve-ability state side
@@ -128,7 +131,8 @@
 
    "Datasucker"
    {:events (let [ds {:effect (req (update! state side (dissoc card :datasucker-count)))}]
-              {:successful-run {:effect (effect (add-counter card :virus 1))
+              {:successful-run {:silent (req true)
+                                :effect (effect (add-counter card :virus 1))
                                 :req (req (#{:hq :rd :archives} target))}
                :pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
                                                  (:datasucker-count card)))
@@ -142,7 +146,8 @@
                               (update-ice-strength state side current-ice))}]}
 
    "Deep Thought"
-   {:events {:successful-run {:effect (effect (add-counter card :virus 1))
+   {:events {:successful-run {:silent (req true)
+                              :effect (effect (add-counter card :virus 1))
                               :req (req (= target :rd))}
              :runner-turn-begins
                              {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
@@ -202,6 +207,22 @@
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
 
+   "Equivocation"
+   (let [force-draw (fn [title]
+                      {:optional {:prompt (str "Force the Corp to draw " title "?")
+                                  :yes-ability {:effect (effect (draw :corp 1)
+                                                                (system-msg :corp (str "is forced to draw " title)))}}})
+         reveal {:optional {:prompt "Reveal the top card of R&D?"
+                            :yes-ability {:delayed-completion true
+                                          :effect (req (let [topcard (-> corp :deck first :title)]
+                                                         (system-msg state :runner (str "reveals " topcard
+                                                                                        " from the top of R&D"))
+                                                         (continue-ability state side (force-draw topcard) card nil)))}}}]
+     {:events {:successful-run {:req (req (= target :rd))
+                                :delayed-completion true
+                                :interactive (req true)
+                                :effect (effect (continue-ability reveal card nil))}}})
+
    "Expert Schedule Analyzer"
    {:abilities
     [{:cost [:click 1] :msg "make a run on HQ"
@@ -260,7 +281,8 @@
                      (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"
-   {:events {:successful-run {:effect (effect (add-counter card :virus 1))}}
+   {:events {:successful-run {:silent (req true)
+                              :effect (effect (add-counter card :virus 1))}}
     :abilities [{:counter-cost [:virus 2]
                  :cost [:click 1]
                  :req (req (> (count (:hand corp)) 0))
@@ -391,7 +413,8 @@
                                         (> (get-virus-counters state side card) 0)))
                          :effect (req (toast state :runner "Click Medium to choose fewer than all additional R&D accesses." "info")
                                       (update! state side (assoc card :medium-active true)))}
-             :successful-run {:req (req (and (= target :rd)
+             :successful-run {:silent (req true)
+                              :req (req (and (= target :rd)
                                              (or (:medium-active card)
                                                  (zero? (get-in card [:counter :virus] 0)))))
                               :effect (effect (add-counter card :virus 1))}
@@ -545,7 +568,8 @@
    {:recurring (req (when (< (get card :rec-counter 0) (get-in card [:counter :virus] 0))
                       (set-prop state side card :rec-counter
                                 (get-in card [:counter :virus] 0))))
-    :events {:successful-run {:req (req (= target :hq))
+    :events {:successful-run {:silent (req true)
+                              :req (req (= target :hq))
                               :effect (effect (add-counter card :virus 1))}}}
 
    "Progenitor"
@@ -654,7 +678,8 @@
                  :effect (effect (run :archives
                                    {:req (req (= target :archives))
                                     :successful-run
-                                    {:effect (req (swap! state assoc-in [:run :server] [:hq])
+                                    {:silent (req true)
+                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
                                                   ; remove the :req from the run-effect, so that other cards that replace
                                                   ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
                                                   (swap! state dissoc-in [:run :run-effect :req])

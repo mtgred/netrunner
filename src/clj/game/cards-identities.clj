@@ -7,24 +7,24 @@
 
 (def cards-identities
   {"Adam: Compulsive Hacker"
-   (let [titles #{"Safety First" "Always Be Running" "Neutralize All Threats"}
-         one-of-each   (fn [cards] (->> cards (group-by :title) (map second) (map first)))
-         get-directives (fn [source] (filter #(some #{(:title %)} titles) source))]
    {:events {:pre-start-game
              {:req (req (= side :runner))
-              :effect (req (let [directives (-> (:deck runner) (concat (:hand runner)) (get-directives) one-of-each)]
-                             (when (not= 3 (count directives))
-                               (toast state :runner
-                                      (str "Your deck doesn't contain enough directives for Adam's ability. The deck "
-                                           "needs to contain at least one copy of each directive. They are not counted "
-                                           "against the printed decksize limit, so Adam's minimum decksize on this "
-                                           "site is 48 cards.")
-                                      "warning"
-                                      {:time-out 0 :close-button true}))
+              :effect (req (let [is-directive? #(has-subtype? % "Directive")
+                                 directives (filter is-directive? (vals @all-cards))
+                                 directives (map make-card directives)
+                                 directives (zone :play-area directives)]
+                             ;; Add directives to :play-area - should be empty
+                             (swap! state assoc-in [:runner :play-area] directives)
+                             ;; If more directives are printed this is probably where the runner gets to choose
                              (doseq [c directives]
                                (runner-install state side c {:no-cost true
                                                              :custom-message (str "starts with " (:title c) " in play")}))
-                             (draw state :runner (count (filter in-hand? directives)) {:suppress-event true})))}}})
+                             (when (< 3 (count directives))
+                               ;; Extra directives have been added, ask player to use /rfg on the directives not used.
+                               ;; This implementation is just to make this more future proof, if extra directives are
+                               ;; actually added then a selection would be better
+                               (toast state :runner
+                                      (str "Please use /rfg to remove any directives other than the 3 you intend to start with.")))))}}}
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
@@ -40,8 +40,8 @@
                                               (in-hand? %))}
                   :req (req (> (count (:hand runner)) 0))
                   :effect (effect (runner-install target {:facedown true}))}]
-   {:events {:runner-turn-begins ability}
-    :abilities [ability]})
+     {:events {:runner-turn-begins ability}
+      :abilities [ability]})
 
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
@@ -158,6 +158,9 @@
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
+   "Ele \"Smoke\" Scovak: Cynosure of the Net"
+   {:recurring 1}
+
    "Exile: Streethawk"
    {:events {:pre-start-game {:req (req (= side :runner))
                               :effect (effect (gain :link 1))}
@@ -181,7 +184,8 @@
                :pre-start-game {:effect draft-points-target}})}
 
    "Gabriel Santiago: Consummate Professional"
-   {:events {:successful-run {:msg "gain 2 [Credits]" :once :per-turn
+   {:events {:successful-run {:silent (req true)
+                              :msg "gain 2 [Credits]" :once :per-turn
                               :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
@@ -202,11 +206,11 @@
                    ((constantly false)
                      (toast state :runner "Cannot steal due to Haarpsichord Studios." "warning"))
                    true))]
-   {:events {:agenda-stolen
-             {:effect (effect (register-turn-flag! card :can-steal haarp))}}
-    :effect (req (when-not (first-event state side :agenda-stolen)
-                   (register-turn-flag! state side card :can-steal haarp)))
-    :leave-play (effect (clear-turn-flag! card :can-steal))})
+     {:events {:agenda-stolen
+               {:effect (effect (register-turn-flag! card :can-steal haarp))}}
+      :effect (req (when-not (first-event state side :agenda-stolen)
+                     (register-turn-flag! state side card :can-steal haarp)))
+      :leave-play (effect (clear-turn-flag! card :can-steal))})
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -249,12 +253,12 @@
                      (continue-ability
                        state side
                        {:optional {:prompt (msg "Install another " type " from your Grip?")
-                                  :yes-ability
-                                  {:prompt (msg "Choose another " type " to install from your grip")
-                                   :choices {:req #(and (is-type? % type)
-                                                        (in-hand? %))}
-                                   :msg (msg "install " (:title target))
-                                   :effect (effect (runner-install eid target nil))}}}
+                                   :yes-ability
+                                   {:prompt (msg "Choose another " type " to install from your grip")
+                                    :choices {:req #(and (is-type? % type)
+                                                         (in-hand? %))}
+                                    :msg (msg "install " (:title target))
+                                    :effect (effect (runner-install eid target nil))}}}
                        card nil)))}}}
 
    "Iain Stirling: Retired Spook"
@@ -262,11 +266,11 @@
                   :once :per-turn
                   :msg "gain 2 [Credits]"
                   :effect (effect (gain :credit 2))}]
-   {:flags {:drip-economy true}
-    :events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :runner-turn-begins ability}
-    :abilities [ability]})
+     {:flags {:drip-economy true}
+      :events {:pre-start-game {:req (req (= side :runner))
+                                :effect (effect (gain :link 1))}
+               :runner-turn-begins ability}
+      :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
    {:events {:pre-trash {:effect (effect (trash-cost-bonus
@@ -385,42 +389,47 @@
               :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
                              (install-cost-bonus state side [:credit -1])
                              (resolve-ability state side
-                               {:prompt "Choose an icebreaker to install from your Grip"
-                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
-                                :msg (msg "install " (:title target))
-                                :effect (effect (runner-install target))}
-                              card nil)))}}}
+                                              {:prompt "Choose an icebreaker to install from your Grip"
+                                               :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                               :msg (msg "install " (:title target))
+                                               :effect (effect (runner-install target))}
+                                              card nil)))}}}
 
    "Laramy Fisk: Savvy Investor"
-   {:events {:successful-run {:delayed-completion true
-                              :req (req (and (is-central? (:server run))
-                                             (empty? (let [successes (turn-events state side :successful-run)]
-                                                       (filter #(is-central? %) successes)))))
-                              :effect (effect (continue-ability
-                                                {:optional
-                                                 {:prompt "Force the Corp to draw a card?"
-                                                  :yes-ability {:msg "force the Corp to draw 1 card"
-                                                                :effect (effect (draw :corp))}}} card nil))}}}
+   {:events
+    {:successful-run
+     {:delayed-completion true
+      :interactive (req true)
+      :req (req (and (is-central? (:server run))
+                     (empty? (let [successes (turn-events state side :successful-run)]
+                               (filter #(is-central? %) successes)))))
+      :effect (effect (continue-ability
+                        {:optional
+                         {:prompt "Force the Corp to draw a card?"
+                          :yes-ability {:msg "force the Corp to draw 1 card"
+                                        :effect (effect (draw :corp))}
+                          :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
+                        card nil))}}}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
-                :prompt  "Select an unrezzed card to return to HQ"
+                :prompt "Select an unrezzed card to return to HQ"
                 :choices {:req #(and (not (:rezzed %)) (card-is? % :side :corp))}
-                :msg     (msg "add " (card-str state target) " to HQ")
-                :effect  (final-effect (move :corp target :hand))}]
-   {:flags {:slow-hq-access (req true)}
-    :events {:agenda-scored leela
-             :agenda-stolen leela}})
+                :msg (msg "add " (card-str state target) " to HQ")
+                :effect (final-effect (move :corp target :hand))}]
+     {:flags {:slow-hq-access (req true)}
+      :events {:agenda-scored leela
+               :agenda-stolen leela}})
 
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
                   :once :per-turn
                   :effect (effect (mill 2) (draw))}]
-   {:flags {:runner-turn-draw true
-            :runner-phase-12 (req (and (not (:disabled card))
-                                       (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner))))}
-    :events {:runner-turn-begins ability}
-    :abilities [ability]})
+     {:flags {:runner-turn-draw true
+              :runner-phase-12 (req (and (not (:disabled card))
+                                         (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner))))}
+      :events {:runner-turn-begins ability}
+      :abilities [ability]})
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:pre-start-game {:req (req (= side :runner))
@@ -459,7 +468,7 @@
                                                                      (clear-wait-prompt :runner))
                                                      :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                            card nil))}}}
+                             card nil))}}}
 
    "NBN: Making News"
    {:recurring 2}
@@ -550,7 +559,7 @@
              :pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                        :effect (effect (rez-cost-bonus 1))}
              :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-                              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
+                   :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Rielle \"Kit\" Peddler: Transhuman"
    {:abilities [{:req (req (and (:run @state)
@@ -572,11 +581,12 @@
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run
-             {:delayed-completion true
+             {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
+              :delayed-completion true
               :req (req (= target :hq)) :once :per-turn
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
-                                                :effect (effect (expose target)) :msg "expose 1 card"}
-                                               card nil))}}}
+                                                 :effect (effect (expose target)) :msg "expose 1 card"}
+                                                card nil))}}}
 
    "Spark Agency: Worldswide Reach"
    {:events
@@ -616,12 +626,12 @@
                               :effect (effect (update! (assoc card :sync-front true)) (tag-remove-bonus -1))}}
     :abilities [{:cost [:click 1]
                  :effect (req (if (:sync-front card)
-                           (do (tag-remove-bonus state side 1)
-                               (trash-resource-bonus state side 2)
-                               (update! state side (-> card (assoc :sync-front false) (assoc :code "sync"))))
-                           (do (tag-remove-bonus state side -1)
-                               (trash-resource-bonus state side -2)
-                               (update! state side (-> card (assoc :sync-front true)(assoc :code "09001"))))))
+                                (do (tag-remove-bonus state side 1)
+                                    (trash-resource-bonus state side 2)
+                                    (update! state side (-> card (assoc :sync-front false) (assoc :code "sync"))))
+                                (do (tag-remove-bonus state side -1)
+                                    (trash-resource-bonus state side -2)
+                                    (update! state side (-> card (assoc :sync-front true) (assoc :code "09001"))))))
                  :msg (msg "flip their ID")}]
     :leave-play (req (if (:sync-front card)
                        (tag-remove-bonus state side 1)

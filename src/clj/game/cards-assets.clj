@@ -727,7 +727,7 @@
    "Plan B"
    (advance-ambush
     0
-    {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+    {:req (req (pos? (:advance-counter (get-card state card) 0)))
      :effect
      (effect (resolve-ability
               {:prompt "Choose an Agenda in HQ to score"
@@ -938,11 +938,11 @@
    "Shi.Kyū"
    {:access
     {:delayed-completion true
+     :req (req (not= (first (:zone card)) :deck))
      :effect (effect (show-wait-prompt :runner "Corp to use Shi.Kyū")
                      (continue-ability
                        {:optional
-                        {:req (req (not= (first (:zone card)) :deck))
-                         :prompt "Pay [Credits] to use Shi.Kyū?"
+                        {:prompt "Pay [Credits] to use Shi.Kyū?"
                          :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
                                        :msg (msg "attempt to do " target " net damage")
                                        :delayed-completion true

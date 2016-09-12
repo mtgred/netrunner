@@ -195,6 +195,12 @@
                  :msg "add 2 strength (using at least 1 stealth [Credits])"
                  :effect (effect (pump card 2)) :pump 2}]}
 
+   "Blackstone"
+   {:abilities [(break-sub 1 1 "barrier")
+                {:cost [:credit 3]
+                 :msg "add 4 strength (using at least 1 stealth [Credits])"
+                 :effect (effect (pump card 4 :all-run)) :pump 4}]}
+
    "Brahman"
    (auto-icebreaker ["All"]
                     {:abilities [(break-sub 1 2 "ICE")
@@ -452,7 +458,7 @@
                  :msg (msg "increase strength by " target " and break " target " barrier subroutine"
                            (when (not= target 1) "s"))}]
     :events {:rez install
-             :pass-ice install
+             :approach-ice install
              :run install}})
 
 

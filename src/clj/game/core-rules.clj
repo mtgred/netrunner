@@ -160,15 +160,18 @@
   (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
                   (do (if-not (or (get-in @state [:damage :damage-replace]))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
-                          (let [hand (get-in @state [:runner :hand])]
+                          (let [hand (get-in @state [:runner :hand])
+                                cards-trashed (take n (shuffle hand))
+                                trashed-msg (join ", " (map :title cards-trashed))]
                             (when (= type :brain)
                               (swap! state update-in [:runner :brain-damage] #(+ % n))
                               (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                            (system-msg state :runner (str "trashes " trashed-msg " due to damage"))
                             (if (< (count hand) n)
                               (do (flatline state)
-                                  (trash-cards state side (make-eid state) (take n (shuffle hand))
+                                  (trash-cards state side (make-eid state) cards-trashed
                                                {:unpreventable true}))
-                              (do (trash-cards state side (make-eid state) (take n (shuffle hand))
+                              (do (trash-cards state side (make-eid state) cards-trashed
                                                {:unpreventable true :cause type})
                                   (trigger-event state side :damage type card))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)

@@ -172,6 +172,27 @@
       (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
+(deftest equivocation
+  "Equivocation - interactions with other successful-run events."
+  (do-game
+    (new-game
+      (default-corp [(qty "Restructure" 3) (qty "Hedge Fund" 3)])
+      (make-deck "Laramy Fisk: Savvy Investor" [(qty "Equivocation" 1) (qty "Desperado" 1)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Equivocation")
+    (play-from-hand state :runner "Desperado")
+    (run-empty-server state :rd)
+    (prompt-choice :runner "Laramy Fisk: Savvy Investor")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:hand (get-corp)))) "Corp forced to draw by Fisk")
+    (prompt-choice :runner "Yes") ; Equivocation prompt
+    (prompt-choice :runner "Yes") ; force the draw
+    (is (= 1 (:credit (get-runner))) "Runner gained 1cr from Desperado")
+    (is (= 3 (count (:hand (get-corp)))) "Corp forced to draw by Equivocation")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)) "Run ended")))
+
 (deftest false-echo
   "False Echo - choice for Corp"
   (do-game

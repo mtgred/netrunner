@@ -164,9 +164,9 @@
                        "identity card to trigger the ability."]}
             {:id "adam"
              :title "How do I install Adam's directives?"
-             :content [:p "Adam's directives are installed automatically at the game start. However, every Adam deck needs to "
-                       "put one copy of each directive in the deck in addition to your normal deck. Yes, that means that "
-                       "minimal Adam decksize on Jinteki.net is 48."]}
+             :content [:p "Adam's directives are installed automatically at the game start. The directives are pulled "
+                       "directly from the game-server so do not need to be a part of your deck. The previous workaround "
+                       "of explicitly adding the 3 directives to the deck is no longer necessary."]}
             {:id "napdmwl"
              :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
              :content (list
