@@ -270,8 +270,9 @@
                               (toast state :runner (str "You must trash Mumbad Virtual Tour by paying its "
                                                         "trash cost or using an Imp counter, if able")))
                             (if (and (can-pay? state :runner nil :credit trash-cost)
-                                     (empty? (filter #(and (= "Imp" (:title %))
-                                                           (pos? (get-in % [:counter :virus] 0)))
+                                     (empty? (filter #(or (and (= "Imp" (:title %))
+                                                               (pos? (get-in % [:counter :virus] 0)))
+                                                          (= "Salsette Slums" (:title %)))
                                                      (all-installed state :runner))))
                               (swap! state assoc-in [:runner :register :force-trash] true)
                               (toast state :runner (str "You must use any credit sources (Whizzard, Scrubber, "

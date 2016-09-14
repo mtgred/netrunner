@@ -193,7 +193,8 @@
                                                      card nil))}
                          :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
                                                    (clear-wait-prompt state :runner))}}} card nil))}
-    :abilities [(trace-ability 6 {:choices {:req installed?}
+    :abilities [(trace-ability 6 {:choices {:req #(and (installed? %)
+                                                       (card-is? % :side :runner))}
                                   :label "Add 1 installed card to the Runner's Grip"
                                   :msg "add 1 installed card to the Runner's Grip"
                                   :effect (effect (move :runner target :hand true)
