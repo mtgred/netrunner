@@ -28,8 +28,7 @@
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1)
-                                              (draw 4 {:suppress-event true}))}}
+                              :effect (effect (draw 4 {:suppress-event true}))}}
     :mulligan (effect (draw 4 {:suppress-event true}))}
 
    "Apex: Invasive Predator"
@@ -56,9 +55,7 @@
                                  (system-msg state side "suffers 2 meat damage"))))}}}
 
    "Armand \"Geist\" Walker: Tech Lord"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
+   {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                             :msg "draw a card"
                             :effect (effect (draw 1))}}}
 
@@ -146,9 +143,7 @@
                         (gain :runner :hand-size-modification 1))}
 
    "Edward Kim: Humanitys Hammer"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :access {:once :per-turn
+   {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (effect (trash target))
@@ -162,9 +157,7 @@
    {:recurring 1}
 
    "Exile: Streethawk"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :runner-install {:req (req (and (is-type? target "Program")
+   {:events {:runner-install {:req (req (and (is-type? target "Program")
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
                               :effect (effect (draw 1))}}}
@@ -267,9 +260,7 @@
                   :msg "gain 2 [Credits]"
                   :effect (effect (gain :credit 2))}]
      {:flags {:drip-economy true}
-      :events {:pre-start-game {:req (req (= side :runner))
-                                :effect (effect (gain :link 1))}
-               :runner-turn-begins ability}
+      :events {:runner-turn-begins ability}
       :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
@@ -368,9 +359,7 @@
                                 (update! state side (assoc (get-card state card) :biotech-used true))))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
+   {:events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                           (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (effect (install-cost-bonus [:credit -1]))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
@@ -432,9 +421,7 @@
       :abilities [ability]})
 
    "Nasir Meidan: Cyber Explorer"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :rez {:req (req (and (:run @state)
+   {:events {:rez {:req (req (and (:run @state)
                                   ;; check that the rezzed item is the encountered ice
                                   (= (:cid target)
                                      (:cid (get-card state current-ice)))))
@@ -481,9 +468,7 @@
    {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
 
    "Nero Severn: Information Broker"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}}
-    :abilities [{:req (req (has-subtype? current-ice "Sentry"))
+   {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
                  :once :per-turn
                  :msg "jack out when encountering a sentry"
                  :effect (effect (jack-out nil))}]}
@@ -554,9 +539,7 @@
    {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
 
    "Reina Roja: Freedom Fighter"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 1))}
-             :pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
+   {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                        :effect (effect (rez-cost-bonus 1))}
              :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                    :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
@@ -613,9 +596,9 @@
               :effect (effect (move :corp target :deck)
                               (shuffle! :corp :deck))}}}
 
+   ;; No special implementation
    "Sunny Lebeau: Security Specialist"
-   {:events {:pre-start-game {:req (req (= side :runner))
-                              :effect (effect (gain :link 2))}}}
+   {}
 
    "SYNC: Everything, Everywhere"
    {:effect (req (when (> (:turn @state) 1)
