@@ -566,7 +566,8 @@
 
    "Silhouette: Stealth Operative"
    {:events {:successful-run
-             {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
+             {:interactive (req (and (some #(not (rezzed? %)) (all-installed state :corp))
+                                     (= target :hq)))
               :delayed-completion true
               :req (req (= target :hq)) :once :per-turn
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
