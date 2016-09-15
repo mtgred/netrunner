@@ -149,6 +149,7 @@
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
+                                                  (nil? (:replace-access (:run-effect target)))
                                                   (not= (:max-access target) 0)
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
