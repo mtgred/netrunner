@@ -664,6 +664,21 @@
                                   :effect (effect (damage eid :brain 1 {:card card})
                                                   (tag-runner :runner 1))})]}
 
+   "Information Overload"
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (:tag runner 0) " subroutines")}
+                (tag-trace 1)
+                trash-installed]}
+
+   "IP Block"
+   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-installed state :runner))))
+                                :label "Give the Runner 1 tag if there is an installed AI")
+                (tag-trace 3)
+                {:label "End the run if the Runner is tagged"
+                 :req (req tagged)
+                 :msg "end the run"
+                 :effect (effect (end-run))}]}
+
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
                    (fn [k ref old new]
@@ -675,12 +690,6 @@
     :strength-bonus (req (count (:hand corp)))
     :rez-cost-bonus (req (count (:hand corp)))
     :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
-
-   "Information Overload"
-   {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:tag runner 0) " subroutines")}
-                (tag-trace 1)
-                trash-installed]}
 
    "Ireress"
    {:abilities [{:label "Gain subroutines"
