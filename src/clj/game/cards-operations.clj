@@ -552,6 +552,18 @@
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
 
+   "Observe and Destroy"
+   {:req (req (and (pos? (:tag runner))
+                   (< (:credit runner) 6)))
+    :delayed-completion true
+    :effect (effect (continue-ability
+                      {:prompt "Choose an installed card to trash"
+                       :choices {:req installed?}
+                       :msg (msg "remove 1 Runner tag and trash " (:title target))
+                       :effect (effect (lose :runner :tag 1)
+                                       (trash target))}
+                     card nil))}
+
    "Oversight AI"
    {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
