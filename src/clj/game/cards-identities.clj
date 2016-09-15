@@ -440,7 +440,8 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:delayed-completion true
-              :req (req (and (first-event state side :runner-trash)
+              :req (req (and (let [trashes (flatten (turn-events state side :runner-trash))]
+                               (empty? (filter #(card-is? % :side :corp) trashes)))
                              (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")

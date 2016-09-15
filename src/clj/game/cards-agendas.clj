@@ -73,6 +73,7 @@
 
    "Award Bait"
    {:access {:delayed-completion true
+             :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
              :effect (effect (show-wait-prompt :runner "Corp to place advancement tokens with Award Bait")
                              (continue-ability
                                {:delayed-completion true
