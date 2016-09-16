@@ -153,7 +153,7 @@
    (let [get-side #(-> % :card :side game.utils/to-keyword)
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
-         opponent (other-side (:active-player @state))
+         opponent (other-side active-player)
          is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
 
          ;; prepare the list of the given player's handlers for this event.
@@ -167,7 +167,7 @@
                                      (cons card-ability abis)
                                      abis)]
                           (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                        (check-req state side (get-card state (:card %))targets %))
+                                        (check-req state side (get-card state (:card %)) targets (:ability %)))
                                   abis)))
          active-player-events (get-handlers active-player)
          opponent-events (get-handlers opponent)]
