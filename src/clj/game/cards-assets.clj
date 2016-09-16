@@ -989,14 +989,15 @@
 
    "Space Camp"
    {:access {:delayed-completion true
-             :effect (effect (show-wait-prompt :runner "Corp to place an advancement with Space Camp")
+             :effect (effect (show-wait-prompt :runner "Corp to use Space Camp")
                              (continue-ability
-                               {:msg (msg "place 1 advancement token on " (card-str state target))
-                                :choices {:req can-be-advanced?}
-                                :cancel-effect (effect (clear-wait-prompt :runner))
-                                :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                                (clear-wait-prompt :runner))}
-                              card nil))}}
+                               {:optional
+                                {:prompt "Place 1 advancement token?"
+                                 :end-effect (effect (clear-wait-prompt :runner))
+                                 :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
+                                               :choices {:req can-be-advanced?}
+                                               :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}
+                               card nil))}}
 
    "Sundew"
    {:events {:runner-spent-click {:once :per-turn
