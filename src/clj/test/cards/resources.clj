@@ -426,12 +426,11 @@
                               (qty "Adjusted Chronotype" 1)]))
    (take-credits state :corp)
    (play-from-hand state :runner "Adjusted Chronotype")
-   (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
-     (play-from-hand state :runner "Gene Conditioning Shoppe")
-     (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
-     (core/trash state :runner (get-in @state [:runner :rig :resource 1]))
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))))))
+   (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
+   (play-from-hand state :runner "Gene Conditioning Shoppe")
+   (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
+   (core/trash state :runner (get-in @state [:runner :rig :resource 1]))
+   (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
 
 (deftest gene-conditioning-shoppe-redundancy
   "Gene Conditioning Shoppe - set :genetics-trigger-twice flag - ensure redundant copies work"
@@ -444,16 +443,16 @@
    (take-credits state :corp)
    (play-from-hand state :runner "Adjusted Chronotype")
    (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
+     (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
      (play-from-hand state :runner "Gene Conditioning Shoppe")
      (play-from-hand state :runner "Gene Conditioning Shoppe")
      (let [gcs1 (get-in @state [:runner :rig :resource 1])
            gcs2 (get-in @state [:runner :rig :resource 2])]
-       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
        (core/trash state :runner gcs1)
-       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
        (core/trash state :runner gcs2)
-       (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))))))
+       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))))
 
 (deftest globalsec-security-clearance
   "Globalsec Security Clearance - Ability, click lost on use"

@@ -1066,10 +1066,10 @@
                     (trash target)
                     (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
                     (register-persistent-flag!
-                             card :cannot-advance
+                             card :can-advance
                              (fn [state side card]
-                                 ((constantly true) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
-    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
+                                 ((constantly false) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
                                               (unregister-events card))}}}
 
    "Three Steps Ahead"
