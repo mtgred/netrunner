@@ -98,12 +98,9 @@
   (register-flag! state side card :persistent flag condition))
 
 (defn persistent-flag?
-  "Check if any conditions for the flag evaluate to true for the given card."
+  "Checks if any cards explicitly forbids the flag"
   [state side card flag]
-  (some true?
-        (for [condition (get-in @state [:stack :persistent flag])
-              :let [result ((:condition condition) state side card)]]
-          result)))
+  (check-flag? state side card :persistent flag))
 
 (defn clear-persistent-flag!
   "Remove any entry associated with card for the given flag"

@@ -20,7 +20,7 @@
                                           (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]
                                             (or (empty? click-losses)
                                                 (and (= (count click-losses) 1)
-                                                     (persistent-flag? state side card :triggers-twice))))))
+                                                     (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aesops Pawnshop"
@@ -387,7 +387,7 @@
                               :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :req (req (or (first-event state side :successful-run)
                                             (and (second-event state side :successful-run)
-                                                 (persistent-flag? state side card :triggers-twice))))}}}
+                                                 (has-flag? state side :persistent :genetics-trigger-twice))))}}}
 
    "Fall Guy"
    {:prevent {:trash [:resource]}
@@ -433,10 +433,8 @@
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
-    :effect (effect (register-persistent-flag! card :triggers-twice
-                                               (fn [state side card]
-                                                 (has? card :subtype "Genetics"))))
-    :leave-play (effect (clear-persistent-flag! card :triggers-twice))}
+    :effect (effect (register-persistent-flag! card :genetics-trigger-twice (constantly true)))
+    :leave-play (effect (clear-persistent-flag! card :genetics-trigger-twice))}
 
    "Ghost Runner"
    {:data {:counter {:credit 3}}
@@ -1050,14 +1048,14 @@
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
                                                (and (second-event state side :runner-click-draw)
-                                                    (persistent-flag? state side card :triggers-twice))))
+                                                    (has-flag? state side :persistent :genetics-trigger-twice))))
                                  :msg "gain 1 [Credits]"
                                  :effect (effect (gain :credit 1))}}}
 
    "Synthetic Blood"
    {:events {:damage {:req (req (or (first-event state side :damage)
                                     (and (second-event state side :damage)
-                                         (persistent-flag? state side card :triggers-twice))))
+                                         (has-flag? state side :persistent :genetics-trigger-twice))))
                       :msg "draw 1 card"
                       :effect (effect (draw :runner))}}}
 
