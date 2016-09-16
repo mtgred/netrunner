@@ -104,7 +104,8 @@
    "Bank Job"
    {:data {:counter {:credit 8}}
     :events {:successful-run
-             {:req (req (is-remote? (:server run)))
+             {:silent (req true)
+              :req (req (is-remote? (:server run)))
               :effect (req (let [bj card]
                              (when-not (:replace-access (get-in @state [:run :run-effect]))
                                (swap! state assoc-in [:run :run-effect :replace-access]
@@ -201,6 +202,21 @@
    {:events
     {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
+
+   "Citadel Sanctuary"
+   {:prevent {:damage [:meat]}
+    :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"
+                 :msg "trash all cards in their Grip and prevent all meat damage"
+                 :effect (req (trash state side card {:cause :ability-cost})
+                              (doseq [c (:hand runner)]
+                                (trash state side c {:unpreventable true}))
+                              (damage-prevent state side :meat Integer/MAX_VALUE))}]
+    :events {:runner-turn-ends
+             {:req (req (pos? (:tag runner)))
+              :msg "force the Corp to initiate a trace"
+              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
+              :trace {:base 1 :unsuccessful {:effect (effect (lose :runner :tag 1))
+                                             :msg "remove 1 tag"}}}}}
 
    "Compromised Employee"
    {:recurring 1
@@ -356,7 +372,8 @@
       :abilities [ability]})
 
    "Enhanced Vision"
-   {:events {:successful-run {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
+   {:events {:successful-run {:silent (req true)
+                              :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
                               :req (req (or (first-event state side :successful-run)
                                             (and (second-event state side :successful-run)
                                                  (persistent-flag? state side card :triggers-twice))))}}}
@@ -622,13 +639,17 @@
     :abilities [ability]})
 
    "Mr. Li"
-   {:abilities [{:cost [:click 1] :prompt "Card to keep?"
-                 :choices (req (take 2 (:deck runner))) :not-distinct true :msg "choose 1 card to draw"
-                 :effect (req (move state side target :hand)
-                              (if (= target (first (:deck runner)))
-                                (move state side (second (:deck runner)) :deck)
-                                (move state side (first (:deck runner)) :deck))
-                              (trigger-event state side :runner-draw))}]}
+   {:abilities [{:cost [:click 1]
+                 :msg (msg "draw 2 cards")
+                 :effect (req (draw state side 2)
+                              (let [drawn (take-last 2 (conj (take 2 (:deck runner)) (:hand runner)))]
+                                (resolve-ability
+                                  state side
+                                  {:prompt (str "Choose 1 card to add to the bottom of the Stack")
+                                   :msg (msg "add 1 card to the bottom of the Stack")
+                                   :choices {:req #(and (in-hand? %)
+                                                        (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                   :effect (req (move state side target :deck))} card nil)))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability

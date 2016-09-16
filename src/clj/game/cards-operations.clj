@@ -483,7 +483,8 @@
                     card nil)))}
 
    "Manhunt"
-   {:events {:successful-run {:req (req (first-event state side :successful-run))
+   {:events {:successful-run {:interactive (req true)
+                              :req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
                                       :effect (effect (tag-runner :runner 1))}}}}
 

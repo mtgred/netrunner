@@ -443,6 +443,41 @@
       (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
       (is (= 3 (count (:hand (get-corp)))) "Drew all 3 cards"))))
 
+(deftest genetics-pavilion-mr-li
+  "Genetics Pavilion - Mr. Li interaction. #1594"
+  (do-game
+    (new-game (default-corp [(qty "Genetics Pavilion" 1)])
+              (default-runner [(qty "Mr. Li" 1) (qty "Account Siphon" 1) (qty "Faerie" 1)
+                               (qty "Sure Gamble" 1) (qty "John Masanori" 1) (qty "Desperado" 1)]))
+    (starting-hand state :runner ["Mr. Li"])
+    (play-from-hand state :corp "Genetics Pavilion" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mr. Li")
+    (let [mrli (get-in @state [:runner :rig :resource 0])]
+      (is (= 0 (count (:hand (get-runner)))))
+      ;use Mr. Li with 2 draws allowed
+      (card-ability state :runner mrli 0)
+      (is (= 2 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner))))
+      (is (= 1 (count (:hand (get-runner)))))
+      ;use Mr. Li with 0 draws allowed
+      (card-ability state :runner mrli 0)
+      (is (= 1 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner)))) ;will fail because not a valid target
+      (prompt-choice :runner "Done") ;cancel out
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/draw state :runner)
+      (is (= 2 (count (:hand (get-runner)))))
+      ;use Mr. Li with 1 draw allowed
+      (card-ability state :runner mrli 0)
+      (is (= 3 (count (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner)))) ;will fail
+      (prompt-select :runner (second (:hand (get-runner)))) ;will fail
+      (prompt-select :runner (second (rest (:hand (get-runner)))))
+      (is (= 2 (count (:hand (get-runner))))))))
+
 (deftest ghost-branch
   "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
   (do-game
@@ -613,6 +648,27 @@
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
       (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
+
+(deftest plan-b
+  "Plan B - score agenda with adv cost <= # of adv counters"
+  (do-game
+    (new-game (default-corp [(qty "Plan B" 1)
+                             (qty "Braintrust" 1)
+                             (qty "The Future Perfect" 1)
+                             (qty "Mushin No Shin" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mushin No Shin")
+    (prompt-select :corp (find-card "Plan B" (:hand (get-corp))))
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    ;; prompt for corp to use Plan B
+    (prompt-choice :corp "Yes")
+    ;; Pick TFP, does not score
+    (prompt-select :corp (find-card "The Future Perfect" (:hand (get-corp))))
+    (is (find-card "The Future Perfect" (:hand (get-corp))) "TFP is not scored")
+    ;; Pick Brain Trust, scores
+    (prompt-select :corp (find-card "Braintrust" (:hand (get-corp))))
+    (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
 
 (deftest political-dealings
   (do-game
@@ -917,6 +973,24 @@
       (prompt-choice :runner "Yes")
       (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
 
+(deftest space-camp-archives
+  "Space Camp - bugged interaction from Archives. Issue #1929."
+  (do-game
+    (new-game (default-corp [(qty "Space Camp" 1) (qty "News Team" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Space Camp")
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "News Team")
+    (prompt-choice :runner "Take 2 tags")
+    (prompt-choice :runner "Space Camp")
+    (prompt-select :corp (get-content state :remote1 0))
+    (is (= 1 (:advance-counter (get-content state :remote1 0))) "Agenda advanced once from Space Camp")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (is (not (:run @state)) "Run completed")))
+
 (deftest sundew
   "Sundew"
   (do-game
@@ -1032,23 +1106,20 @@
     (play-from-hand state :corp "Team Sponsorship" "New remote")
     (core/rez state :corp (get-content state :remote3 0))
     (score-agenda state :corp (get-content state :remote1 1))
-    (prompt-choice :corp "Team Sponsorship")
     (prompt-select :corp (find-card "AstroScript Pilot Program" (:hand (get-corp))))
     (is (= 0 (get-counters (second (:scored (get-corp))) :agenda)) "AstroScript not resolved yet")
     (prompt-choice :corp "Server 1")
-    (is (= 1 (get-counters (second (:scored (get-corp))) :agenda)) "AstroScript not resolved yet")
+    (is (= 1 (get-counters (second (:scored (get-corp))) :agenda)) "AstroScript resolved")
     (card-ability state :corp (first (:scored (get-corp))) 0)
     (prompt-select :corp (get-content state :remote1 1))
     (card-ability state :corp (second (:scored (get-corp))) 0)
     (prompt-select :corp (get-content state :remote1 1))
     (core/score state :corp {:card (get-content state :remote1 1)})
-    (prompt-choice :corp "Team Sponsorship")
     (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
     (prompt-choice :corp "Server 1")
     (card-ability state :corp (second (next (:scored (get-corp)))) 0)
     (prompt-select :corp (get-content state :remote1 1))
     (core/score state :corp {:card (get-content state :remote1 1)})
-    (prompt-choice :corp "Team Sponsorship")
     (prompt-choice :corp "Done")
     (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
 

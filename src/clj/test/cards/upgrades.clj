@@ -185,6 +185,22 @@
       (is (= 0 (:current-strength (refresh q1)))
           "Inner Quandary back to default 0 strength after turn ends"))))
 
+(deftest crisium-grid
+  "Crisium Grid - various interactions"
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)])
+              (default-runner [(qty "Desperado" 1) (qty "Temüjin Contract" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (is (= 4 (:credit (get-corp))) "Corp has 4 credits")
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "Desperado")
+    (play-from-hand state :runner "Temüjin Contract")
+    (prompt-choice :runner "HQ")
+    (run-empty-server state "HQ")
+    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")))
+
 (deftest cyberdex-virus-suite-purge
   "Cyberdex Virus Suite - Purge ability"
   (do-game
@@ -493,6 +509,31 @@
     (prompt-choice :runner "Yes")
     (run-empty-server state "HQ")
     (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
+
+(deftest prisec-dedicated-response-team
+  "Multiple unrezzed upgrades in Archives interaction with DRT."
+  (do-game
+    (new-game (default-corp [(qty "Prisec" 2) (qty "Dedicated Response Team" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (play-from-hand state :corp "Prisec" "Archives")
+    (play-from-hand state :corp "Prisec" "Archives")
+    (core/gain state :corp :click 1 :credit 14)
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+
+    (run-empty-server state :archives)
+    (is (:run @state) "Run still active")
+    (prompt-choice :runner "Unrezzed upgrade in Archives")
+    (prompt-select :runner (get-content state :archives 0))
+    (prompt-choice :corp "Yes") ; corp pay for PriSec
+    (prompt-choice :runner "No") ; runner don't pay to trash
+    (is (:run @state) "Run still active")
+    (prompt-choice :runner "Unrezzed upgrade in Archives")
+    (prompt-choice :corp "Yes") ; corp pay for PriSec
+    (prompt-choice :runner "No") ; runner don't pay to trash
+    (is (not (:run @state)) "Run ended")
+    (is (= 4 (count (:discard (get-runner)))) "Runner took 4 meat damage")))
 
 (deftest product-placement
   "Product Placement - Gain 2 credits when Runner accesses it"

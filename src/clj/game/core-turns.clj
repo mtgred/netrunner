@@ -4,6 +4,13 @@
          turn-message)
 
 ;;; Functions for the creation of games and the progression of turns.
+(defn- identity-init
+  "Initialise the identity"
+  [state side identity]
+  (card-init state side identity)
+  (when-let [baselink (:baselink identity)]
+    (gain state side :link baselink)))
+
 (defn init-game
   "Initializes a new game with the given players vector."
   [{:keys [players gameid spectatorhands] :as game}]
@@ -36,8 +43,8 @@
                           :agenda-point 0
                           :hq-access 1 :rd-access 1 :tagged 0
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
-    (card-init state :corp corp-identity)
-    (card-init state :runner runner-identity)
+    (identity-init state :corp corp-identity)
+    (identity-init state :runner runner-identity)
     (swap! game-states assoc gameid state)
     (trigger-event state :corp :pre-start-game)
     (trigger-event state :runner :pre-start-game)
@@ -50,10 +57,17 @@
     @game-states))
 
 (defn server-card
-  ([title] (server-card title))
+  ([title] (@all-cards title))
   ([title user]
    (let [c (@all-cards title)]
      (or (when (:special user) (@all-cards-alt title)) c))))
+
+(defn make-card
+  "Makes a proper card from an @all-cards card"
+  [card]
+  (-> card
+      (assoc :cid (make-cid))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
@@ -61,10 +75,8 @@
   ([deck] (create-deck deck nil))
   ([deck user]
    (shuffle (mapcat #(map (fn [card]
-                            (let [c (or (server-card (:title card) user) card)
-                                  c (assoc c :cid (make-cid))
-                                  c (dissoc c :setname :text :_id :influence :number :influencelimit
-                                            :factioncost)]
+                            (let [card (or (server-card (:title card) user) card)
+                                  c (make-card card)]
                               (if-let [init (:init (card-def c))] (merge c init) c)))
                           (repeat (:qty %) (:card %)))
                     (shuffle (vec (:cards deck)))))))

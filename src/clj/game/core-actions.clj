@@ -274,29 +274,28 @@
         (add-prop state side (get-card state card) :advance-counter 1)))))
 
 (defn score
-  "Score an agenda."
+  "Score an agenda. It trusts the card data passed to it."
   [state side args]
-  (let [card (get-card state (or (:card args) args))]
-    (when (can-score? state side card)
-      (when (and (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-                 (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
-
-        ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
-        (let [moved-card (move state :corp card :scored)
-              c (card-init state :corp moved-card false)
-              points (get-agenda-points state :corp c)]
-          (when-completed (trigger-event-simult state :corp :agenda-scored
-                                                {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                                                (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-                                                                (trash state side current)))}
-                                                (card-as-handler c) c)
-                          (let [c (get-card state c)
-                                points (or (get-agenda-points state :corp c) points)]
-                            (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                            (system-msg state :corp (str "scores " (:title c) " and gains " points
-                                                         " agenda point" (when (> points 1) "s")))
-                            (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                            (gain-agenda-point state :corp points))))))))
+  (let [card (or (:card args) args)]
+    (when (and (can-score? state side card)
+               (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+               (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
+      ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
+      (let [moved-card (move state :corp card :scored)
+            c (card-init state :corp moved-card false)
+            points (get-agenda-points state :corp c)]
+        (when-completed (trigger-event-simult state :corp :agenda-scored
+                                              {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
+                                                              (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                                                              (trash state side current)))}
+                                              (card-as-handler c) c)
+                        (let [c (get-card state c)
+                              points (or (get-agenda-points state :corp c) points)]
+                          (set-prop state :corp (get-card state moved-card) :advance-counter 0)
+                          (system-msg state :corp (str "scores " (:title c) " and gains " points
+                                                       " agenda point" (when (> points 1) "s")))
+                          (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                          (gain-agenda-point state :corp points)))))))
 
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
