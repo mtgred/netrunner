@@ -149,6 +149,7 @@
                       :effect (effect (trash target))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
+                                                  (nil? (:replace-access (:run-effect target)))
                                                   (not= (:max-access target) 0)
                                                   (seq (filter #(is-type? % "Operation") (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
@@ -204,6 +205,23 @@
       :effect (req (when-not (first-event state side :agenda-stolen)
                      (register-turn-flag! state side card :can-steal haarp)))
       :leave-play (effect (clear-turn-flag! card :can-steal))})
+
+   "Haas-Bioroid: Architects of Tomorrow"
+   {:events {:pass-ice
+             {:once :per-turn
+              :req (req (and (rezzed? target)
+                             (has-subtype? target "Bioroid")))
+              :effect (req (when (some (fn [c] (and (has? c :subtype "Bioroid") (not (rezzed? c)))) (all-installed state :corp))
+                             (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
+                             (resolve-ability state side
+                               {:prompt "Choose a bioroid to rez" :player :corp
+                                :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                :msg (msg "rez " (:title target))
+                                :cancel-effect (effect (clear-wait-prompt :runner))
+                                :effect (effect (rez-cost-bonus -4)
+                                                (rez target)
+                                                (clear-wait-prompt :runner))}
+                              card nil)))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -440,7 +458,8 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:delayed-completion true
-              :req (req (and (first-event state side :runner-trash)
+              :req (req (and (let [trashes (flatten (turn-events state side :runner-trash))]
+                               (empty? (filter #(card-is? % :side :corp) trashes)))
                              (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")

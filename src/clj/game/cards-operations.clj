@@ -249,6 +249,16 @@
               " [Credits]")
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
+   "Door to Door"
+   {:events {:runner-turn-begins
+             {:trace {:base 1 :msg (msg (if tagged "do 1 meat damage" "give the Runner 1 tag"))
+                      :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
+                      :delayed-completion true
+                      :effect (req (if tagged
+                                     (damage state side eid :meat 1 {:card card})
+                                     (do (tag-runner state :runner 1)
+                                         (effect-completed state side eid card))))}}}}
+
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
                    (filter #(not (= (:cid %) (:cid card))))
@@ -551,6 +561,18 @@
    {:req (req (:made-run runner-reg))
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
+
+   "Observe and Destroy"
+   {:req (req (and (pos? (:tag runner))
+                   (< (:credit runner) 6)))
+    :delayed-completion true
+    :effect (effect (continue-ability
+                      {:prompt "Choose an installed card to trash"
+                       :choices {:req installed?}
+                       :msg (msg "remove 1 Runner tag and trash " (:title target))
+                       :effect (effect (lose :runner :tag 1)
+                                       (trash target))}
+                     card nil))}
 
    "Oversight AI"
    {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}

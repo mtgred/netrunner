@@ -490,8 +490,8 @@
                                    :req (req (let [successes (rest (turn-events state side :successful-run))]
                                                (and (#{[:rd] [:hq]} (:server target))
                                                     (empty? (filter #(#{'(:rd) '(:hq)} %) successes)))))
-                                   :msg (msg "draw " (:cards-accessed target) " cards")
-                                   :effect (effect (draw (:cards-accessed target)))}}}
+                                   :msg (msg "draw " (:cards-accessed target 0) " cards")
+                                   :effect (effect (draw (:cards-accessed target 0)))}}}
 
    "Omni-drive"
    {:recurring 1
