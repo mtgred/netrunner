@@ -48,6 +48,25 @@
   [state side flag-type flag]
   (not (empty? (get-in @state [:stack flag-type flag]))))
 
+(defn- clear-all-flags!
+  "Clears all flags of specified type"
+  [state flag-type]
+  (swap! state assoc-in [:stack flag-type] nil))
+
+(defn- clear-flag-for-card!
+  "Remove all entries for specified card for flag-type and flag"
+  [state side card flag-type flag]
+  (swap! state update-in [:stack flag-type flag]
+         (fn [flag-map card] (remove #(= (:cid (:card %)) (:cid card)) flag-map)) card))
+
+(defn clear-all-flags-for-card!
+  "Removes all flags set by the card - of any flag type"
+  [state side card]
+  (let [flag-types [:current-run :current-turn :persistent]
+        flag-type-iter (fn [flag-type] (iterate #(clear-flag-for-card! state side card flag-type %)
+                                                (keys (get-in @state [:stack flag-type]))))]
+    (iterate flag-type-iter flag-types)))
+
 ;;; Run flag - cleared at end of run
 (defn register-run-flag!
   "Registers a flag for the current run only. The flag gets cleared in end-run.
@@ -63,13 +82,12 @@
 (defn clear-run-register!
   "Clears the run-flag register."
   [state]
-  (swap! state assoc-in [:stack :current-run] nil))
+  (clear-all-flags! state :current-run))
 
 (defn clear-run-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :current-run flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :current-run flag))
 
 ;;; Turn flag - cleared at end of turn
 (defn register-turn-flag!
@@ -83,13 +101,12 @@
   (check-flag? state side card :current-turn flag))
 
 (defn clear-turn-register! [state]
-  (swap! state assoc-in [:stack :current-turn] nil))
+  (clear-all-flags! state :current-turn))
 
 (defn clear-turn-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :current-turn flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :current-turn flag))
 
 ;;; Persistent flag - has to be cleared manually
 (defn register-persistent-flag!
@@ -105,8 +122,7 @@
 (defn clear-persistent-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :persistent flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :persistent flag))
 
 ;;; Functions related to servers that can be run
 (defn prevent-run-on-server
