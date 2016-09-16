@@ -1096,7 +1096,12 @@
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
    "Victoria Jenkins"
-   {:effect (effect (lose :runner :click-per-turn 1)) :leave-play (effect (gain :runner :click-per-turn 1))
+   {:effect (req (lose state :runner :click-per-turn 1)
+                 (when (= (:active-player @state) :runner)
+                   (lose state :runner :click 1)))
+    :leave-play (req (gain state :runner :click-per-turn 1)
+                     (when (= (:active-player @state) :runner)
+                       (gain state :runner :click 1)))
     :trash-effect {:when-unrezzed true
                    :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
 
