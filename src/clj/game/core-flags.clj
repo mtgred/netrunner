@@ -4,7 +4,7 @@
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
-  ;TODO: add a register for mutable state card flags, separate from this
+  ;; TODO: add a register for mutable state card flags, separate from this
   [card flag-key value]
   (let [cdef (card-def card)]
     (= value (get-in cdef [:flags flag-key]))))
@@ -23,13 +23,18 @@
   (or (pos? (get-in state [:runner :tag]))
       (pos? (get-in state [:runner :tagged]))))
 
+;;; Generic flag functions
+(defn- register-flag!
+  "Register a flag of the specific type."
+  [state side card flag-type flag condition]
+  (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
+
+;;; Run flag - cleared at end of run
 (defn register-run-flag!
   "Registers a flag for the current run only. The flag gets cleared in end-run.
   Example: Blackmail flags the inability to rez ice."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :current-run flag])]
-    (swap! state assoc-in [:stack :current-run flag]
-           (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :current-run flag condition))
 
 (defn run-flag?
   "Execute all conditions for the given run flag
@@ -54,11 +59,11 @@
   (swap! state update-in [:stack :current-run flag]
          #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
 
+;;; Turn flag - cleared at end of turn
 (defn register-turn-flag!
   "As register-run-flag, but for the entire turn."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :current-turn flag])]
-    (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :current-turn flag condition))
 
 (defn turn-flag? [state side card flag]
   (empty?
@@ -76,11 +81,11 @@
   (swap! state update-in [:stack :current-turn flag]
          #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
 
+;;; Persistent flag - has to be cleared manually
 (defn register-persistent-flag!
   "A flag that persists until cleared."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :persistent flag])]
-    (swap! state assoc-in [:stack :persistent flag] (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :persistent flag condition))
 
 (defn persistent-flag?
   "Check if any conditions for the flag evaluate to true for the given card."
