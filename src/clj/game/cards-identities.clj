@@ -206,6 +206,23 @@
                      (register-turn-flag! state side card :can-steal haarp)))
       :leave-play (effect (clear-turn-flag! card :can-steal))})
 
+   "Haas-Bioroid: Architects of Tomorrow"
+   {:events {:pass-ice
+             {:once :per-turn
+              :req (req (and (rezzed? target)
+                             (has-subtype? target "Bioroid")))
+              :effect (req (when (some (fn [c] (and (has? c :subtype "Bioroid") (not (rezzed? c)))) (all-installed state :corp))
+                             (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
+                             (resolve-ability state side
+                               {:prompt "Choose a bioroid to rez" :player :corp
+                                :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                :msg (msg "rez " (:title target))
+                                :cancel-effect (effect (clear-wait-prompt :runner))
+                                :effect (effect (rez-cost-bonus -4)
+                                                (rez target)
+                                                (clear-wait-prompt :runner))}
+                              card nil)))}}}
+
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}

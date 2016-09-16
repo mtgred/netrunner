@@ -433,6 +433,14 @@
                                     :effect (effect (access-bonus (max 0 target))
                                                     (update! (dissoc (get-card state card) :medium-active)))} card nil))}]}
 
+   "Misdirection"
+   {:abilities [{:cost [:click 2]
+                 :prompt "How many [Credits] to spend to remove that number of tags?"
+                 :choices {:number (req (min (:credit runner) (:tag runner)))}
+                 :msg (msg "spend " target " [Credits] and remove " target " tags")
+                 :effect (effect (lose :credit target)
+                                 (lose :tag target))}]}
+
    "Multithreader"
    {:recurring 2}
 
