@@ -30,12 +30,23 @@
   (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
 
 (defn- check-flag?
-  "Flag condition will ask for permission to do something, e.g. :can-rez
-  If allowed, return true, if not allowed, return false. Therefore check for any false conditions."
+  "Flag condition will ask for permission to do something, e.g. :can-rez, :can-advance
+  If allowed, return true, if not allowed, return false. Therefore check for any false conditions.
+  Returns true if no flags are present."
   [state side card flag-type flag]
   (let [conditions (get-in @state [:stack flag-type flag])]
     ;; check that every condition returns true
     (every? #((:condition %) state side card) conditions)))
+
+(defn check-flag-types?
+  "Checks flag that the specified flag types are permitting the flag"
+  [state side card flag flag-types]
+  (every? #(check-flag? state side card % flag) flag-types))
+
+(defn has-flag?
+  "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
+  [state side flag-type flag]
+  (not (empty? (get-in @state [:stack flag-type flag]))))
 
 ;;; Run flag - cleared at end of run
 (defn register-run-flag!
@@ -45,10 +56,7 @@
   (register-flag! state side card :current-run flag condition))
 
 (defn run-flag?
-  "Execute all conditions for the given run flag
-  The resulting collection is expected to be empty if nothing is blocking the action
-  If the collection has any contents, the flag is considered to be false
-  (consider it as something has flagged the action as not being allowed)"
+  "Checks if any cards explicitly forbids the flag this run"
   [state side card flag]
   (check-flag? state side card :current-run flag))
 
@@ -69,7 +77,9 @@
   [state side card flag condition]
   (register-flag! state side card :current-turn flag condition))
 
-(defn turn-flag? [state side card flag]
+(defn turn-flag?
+  "Checks if any cards explicitly forbids the flag this turn"
+  [state side card flag]
   (check-flag? state side card :current-turn flag))
 
 (defn clear-turn-register! [state]
@@ -244,19 +254,18 @@
 
 (defn can-steal?
   ([state side card] (can-steal? state side card nil))
-  ([state side card {:as args}]
-   (and (turn-flag? state side card :can-steal)
-        (run-flag? state side card :can-steal))))
+  ([state side card args]
+   (check-flag-types? state side card :can-steal [:current-turn :current-run])))
 
 (defn can-advance?
   ([state side card] (can-advance? state side card nil))
-  ([state side card {:as args}]
-   (not (persistent-flag? state side card :cannot-advance))))
+  ([state side card args]
+   (check-flag-types? state side card :can-advance [:current-turn :persistent])))
 
 (defn can-score?
   ([state side card] (can-score? state side card nil))
-  ([state side card {:as args}]
-   (turn-flag? state side card :can-score)))
+  ([state side card args]
+   (check-flag-types? state side card :can-score [:current-turn :persistent])))
 
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
