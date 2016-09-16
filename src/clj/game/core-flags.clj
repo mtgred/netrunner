@@ -29,6 +29,14 @@
   [state side card flag-type flag condition]
   (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
 
+(defn- check-flag?
+  "Flag condition will ask for permission to do something, e.g. :can-rez
+  If allowed, return true, if not allowed, return false. Therefore check for any false conditions."
+  [state side card flag-type flag]
+  (let [conditions (get-in @state [:stack flag-type flag])]
+    ;; check that every condition returns true
+    (every? #((:condition %) state side card) conditions)))
+
 ;;; Run flag - cleared at end of run
 (defn register-run-flag!
   "Registers a flag for the current run only. The flag gets cleared in end-run.
@@ -42,11 +50,7 @@
   If the collection has any contents, the flag is considered to be false
   (consider it as something has flagged the action as not being allowed)"
   [state side card flag]
-  (empty?
-    (for [condition (get-in @state [:stack :current-run flag])
-          :let [result ((:condition condition) state side card)]
-          :when (not result)]
-      [result])))
+  (check-flag? state side card :current-run flag))
 
 (defn clear-run-register!
   "Clears the run-flag register."
@@ -66,11 +70,7 @@
   (register-flag! state side card :current-turn flag condition))
 
 (defn turn-flag? [state side card flag]
-  (empty?
-    (for [condition (get-in @state [:stack :current-turn flag])
-          :let [result ((:condition condition) state side card)]
-          :when (not result)]
-      [result])))
+  (check-flag? state side card :current-turn flag))
 
 (defn clear-turn-register! [state]
   (swap! state assoc-in [:stack :current-turn] nil))
