@@ -249,6 +249,16 @@
               " [Credits]")
     :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
+   "Door to Door"
+   {:events {:runner-turn-begins
+             {:trace {:base 1 :msg (msg (if tagged "do 1 meat damage" "give the Runner 1 tag"))
+                      :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
+                      :delayed-completion true
+                      :effect (req (if tagged
+                                     (damage state side eid :meat 1 {:card card})
+                                     (do (tag-runner state :runner 1)
+                                         (effect-completed state side eid card))))}}}}
+
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
                    (filter #(not (= (:cid %) (:cid card))))
