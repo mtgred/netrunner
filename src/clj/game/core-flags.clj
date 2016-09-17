@@ -114,6 +114,7 @@
   [state side card flag condition]
   (register-flag! state side card :persistent flag condition))
 
+;; Currently unused after Efficiency Committee and Genetics refactor
 (defn persistent-flag?
   "Checks if any cards explicitly forbids the flag"
   [state side card flag]
@@ -164,6 +165,7 @@
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
+;; This function appears unused as well
 (defn prevent-steal [state side]
   (swap! state assoc-in [:runner :register :cannot-steal] true))
 
@@ -211,12 +213,12 @@
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
   [state side card]
-  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
+  (is-scored? state :corp card))
 
 (defn in-runner-scored?
   "Checks if the specified card is in the Runner score area."
   [state side card]
-  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:runner :scored])))))
+  (is-scored? state :runner card))
 
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
@@ -249,6 +251,7 @@
            (installed? card)
            (not (facedown? card)))))
 
+;; This appears unused, can it be removed?
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
@@ -266,19 +269,19 @@
           true))))
 
 (defn can-steal?
-  ([state side card] (can-steal? state side card nil))
-  ([state side card args]
-   (check-flag-types? state side card :can-steal [:current-turn :current-run])))
+  "Checks if the runner can steal agendas"
+  [state side card]
+  (check-flag-types? state side card :can-steal [:current-turn :current-run]))
 
 (defn can-advance?
-  ([state side card] (can-advance? state side card nil))
-  ([state side card args]
-   (check-flag-types? state side card :can-advance [:current-turn :persistent])))
+  "Checks if the corp can advance cards"
+  [state side card]
+  (check-flag-types? state side card :can-advance [:current-turn :persistent]))
 
 (defn can-score?
-  ([state side card] (can-score? state side card nil))
-  ([state side card args]
-   (check-flag-types? state side card :can-score [:current-turn :persistent])))
+  "Checks if the corp can score cards"
+  [state side card]
+  (check-flag-types? state side card :can-score [:current-turn :persistent]))
 
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
