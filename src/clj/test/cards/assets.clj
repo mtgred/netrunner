@@ -986,6 +986,7 @@
     (prompt-choice :runner "News Team")
     (prompt-choice :runner "Take 2 tags")
     (prompt-choice :runner "Space Camp")
+    (prompt-choice :corp "Yes")
     (prompt-select :corp (get-content state :remote1 0))
     (is (= 1 (:advance-counter (get-content state :remote1 0))) "Agenda advanced once from Space Camp")
     (is (= 2 (:tag (get-runner))) "Runner has 2 tags")

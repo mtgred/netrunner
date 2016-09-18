@@ -501,6 +501,25 @@
       "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
 
+(deftest manhunt-every-run
+  "Manhunt - only fires once per turn. Unreported issue."
+  (do-game
+    (new-game (default-corp [(qty "Manhunt" 1) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Manhunt")
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (is (:prompt (get-corp)) "Manhunt trace initiated")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)) "Run ended")
+    (run-empty-server state "HQ")
+    (is (empty? (:prompt (get-corp))) "No Manhunt trace on second run")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)) "Run ended")))
+
 (deftest midseason-replacements
   "Midseason Replacements - Trace to give Runner tags after they steal an agenda"
   (do-game

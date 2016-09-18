@@ -204,12 +204,13 @@
                                                                      card nil))}
                          :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
                                                    (clear-wait-prompt state :runner))}}} card nil))}
-    :subroutines [(trace-ability 6 {:choices {:req installed?}
-                                    :label "Add 1 installed card to the Runner's Grip"
-                                    :msg "add 1 installed card to the Runner's Grip"
-                                    :effect (effect (move :runner target :hand true)
-                                                    (system-msg (str "adds " (:title target)
-                                                                     " to the Runner's Grip")))})]}
+   :subroutines [(trace-ability 6 {:choices {:req #(and (installed? %)
+                                                        (card-is? % :side :runner))}
+                                   :label "Add 1 installed card to the Runner's Grip"
+                                   :msg "add 1 installed card to the Runner's Grip"
+                                   :effect (effect (move :runner target :hand true)
+                                                   (system-msg (str "adds " (:title target)
+                                                                    " to the Runner's Grip")))})]}
 
    "Archer"
    {:additional-cost [:forfeit]
@@ -691,6 +692,21 @@
                                                     (tag-runner :runner 1))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
+   "Information Overload"
+   {:abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (:tag runner 0) " subroutines")}
+                (tag-trace 1)]
+    :subroutines [trash-installed]}
+
+   "IP Block"
+   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-installed state :runner))))
+                                :label "Give the Runner 1 tag if there is an installed AI")
+                (tag-trace 3)
+                {:label "End the run if the Runner is tagged"
+                 :req (req tagged)
+                 :msg "end the run"
+                 :effect (effect (end-run))}]}
+
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
                             (fn [k ref old new]
@@ -702,12 +718,6 @@
     :strength-bonus (req (count (:hand corp)))
     :rez-cost-bonus (req (count (:hand corp)))
     :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
-
-   "Information Overload"
-   {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:tag runner 0) " subroutines")}
-                (tag-trace 1)]
-    :subroutines [trash-installed]}
 
    "Ireress"
    {:abilities [{:label "Gain subroutines"

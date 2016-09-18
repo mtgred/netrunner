@@ -275,6 +275,44 @@
       (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (is (:prompt (get-runner)) "Runner has next access prompt"))))
 
+(deftest obelus
+  "Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Obelus" 1) (qty "Nerve Agent" 1)
+                               (qty "Sure Gamble" 3) (qty "Cache" 3)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Obelus" "Nerve Agent"])
+    (core/gain state :runner :credit 10 :click 3)
+    (play-from-hand state :runner "Nerve Agent")
+    (let [nerve (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state :hq)
+      (is (= 1 (get-counters (refresh nerve) :virus)) "1 virus counter on Nerve Agent")
+      (prompt-choice :runner "OK")
+      (play-from-hand state :runner "Obelus")
+      (core/gain state :runner :tag 1)
+      (is (= 6 (core/hand-size state :runner)) "Max hand size is 6")
+      (core/lose state :runner :tag 1)
+      (is (= 5 (core/hand-size state :runner)) "Max hand size is 5")
+      (run-empty-server state :hq)
+      (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "OK")
+      (is (empty? (:hand (get-runner))) "No cards drawn by Obelus, already had successful HQ run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= 3 (get-counters (refresh nerve) :virus)) "3 virus counters on Nerve Agent")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "OK")
+      (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
+
 (deftest plascrete
   "Plascrete Carapace - Prevent meat damage"
   (do-game

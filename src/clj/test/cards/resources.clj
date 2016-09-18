@@ -1393,6 +1393,20 @@
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
+(deftest temujin-contract
+  "Temüjin Contract - Multiple times in one turn. Issue #1952."
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Silhouette: Stealth Operative" [(qty "Temüjin Contract" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Temüjin Contract")
+    (prompt-choice :runner "Archives")
+    (run-empty-server state "Archives")
+    (is (= 5 (:credit (get-runner))) "Gained 4cr")
+    (run-empty-server state "Archives")
+    (is (= 9 (:credit (get-runner))) "Gained 4cr")
+    (is (= 12 (get-counters (get-resource state 0) :credit)) "Temjin has 12 credits remaining")))
+
 (deftest tri-maf-contact
   "Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed"
   (do-game
@@ -1409,6 +1423,7 @@
       (take-credits state :runner)
       (core/trash state :runner tmc)
       (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
+
 
 (deftest virus-breeding-ground-gain
   "Virus Breeding Ground - Gain counters"
