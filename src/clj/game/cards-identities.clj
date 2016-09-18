@@ -48,11 +48,11 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (tag-runner state :runner 1)
-                                 (system-msg state side "takes 1 tag")
+                             (do (system-msg state side "chooses to take 1 tag")
+                                 (tag-runner state :runner 1)
                                  (effect-completed state side eid nil))
-                             (do (damage state :runner eid :meat 2 {:unboostable true :card card})
-                                 (system-msg state side "suffers 2 meat damage"))))}}}
+                             (do (system-msg state side "chooses to suffer 2 meat damage")
+                                 (damage state :runner eid :meat 2 {:unboostable true :card card}))))}}}
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
