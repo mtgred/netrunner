@@ -734,7 +734,7 @@
     (take-credits state :corp)
     ;; Runner run on archives to trigger access choice
     (run-empty-server state :archives)
-    (is (not (some #(= "Psychic Field" %) (get-in @state [:runner :prompt :choices])))
+    (is (not (some #{"Psychic Field"} (get-in @state [:runner :prompt :choices])))
         "Psychic Field is not a choice to access in Archives")))
 
 (deftest psychic-field-neutralize-all-threats
