@@ -2,6 +2,14 @@
 
 (declare close-access-prompt)
 
+(defn- genetics-trigger?
+  "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
+  [state side event]
+  (or (first-event state side event)
+      (and (has-flag? state side :persistent :genetics-trigger-twice)
+           (second-event state side event))))
+
+;;; Card definitions
 (def cards-resources
   {"Access to Globalsec"
    {:in-play [:link 1]}
@@ -385,9 +393,7 @@
    "Enhanced Vision"
    {:events {:successful-run {:silent (req true)
                               :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
-                              :req (req (or (first-event state side :successful-run)
-                                            (and (second-event state side :successful-run)
-                                                 (has-flag? state side :persistent :genetics-trigger-twice))))}}}
+                              :req (req (genetics-trigger? state side :successful-run))}}}
 
    "Fall Guy"
    {:prevent {:trash [:resource]}
@@ -1046,16 +1052,12 @@
                              (runner-install state side (dissoc target :facedown))))}]}
 
    "Symmetrical Visage"
-   {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
-                                               (and (second-event state side :runner-click-draw)
-                                                    (has-flag? state side :persistent :genetics-trigger-twice))))
+   {:events {:runner-click-draw {:req (req (genetics-trigger? state side :runner-click-draw))
                                  :msg "gain 1 [Credits]"
                                  :effect (effect (gain :credit 1))}}}
 
    "Synthetic Blood"
-   {:events {:damage {:req (req (or (first-event state side :damage)
-                                    (and (second-event state side :damage)
-                                         (has-flag? state side :persistent :genetics-trigger-twice))))
+   {:events {:damage {:req (req (genetics-trigger? state side :damage))
                       :msg "draw 1 card"
                       :effect (effect (draw :runner))}}}
 
