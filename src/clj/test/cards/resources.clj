@@ -222,6 +222,28 @@
       (core/rez state :corp (get-content state :remote1 0))
       (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained"))))
 
+(deftest councilman
+  ;; Councilman reverses the rezz and prevents re-rezz
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Councilman" 1)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Councilman")
+    (let [jesus (get-content state :remote1 0)
+          judas (get-resource state 0)]
+      (core/rez state :corp jesus)
+      ;; Runner triggers Councilman
+      (card-ability state :runner judas 0)
+      (prompt-select :runner jesus)
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (core/rez state :corp (refresh jesus))
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
+      (take-credits state :runner)
+      ;; Next turn
+      (core/rez state :corp (refresh jesus))
+      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
+
 (deftest daily-casts
   "Play and tick through all turns of daily casts"
   (do-game

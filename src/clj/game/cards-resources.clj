@@ -260,8 +260,8 @@
                                     {:msg (msg "pay " creds " [Credit] and derez " (:title c) ". Councilman is trashed")
                                      :effect (req (lose state :runner :credit creds)
                                                   (derez state :corp c)
-                                                  (register-turn-flag! state side
-                                                    card :can-rez
+                                                  (register-turn-flag!
+                                                    state side card :can-rez
                                                     (fn [state side card]
                                                       (if (= (:cid card) (:cid c))
                                                         ((constantly false)
