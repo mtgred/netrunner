@@ -57,15 +57,18 @@
   "Remove all entries for specified card for flag-type and flag"
   [state side card flag-type flag]
   (swap! state update-in [:stack flag-type flag]
-         (fn [flag-map card] (remove #(= (:cid (:card %)) (:cid card)) flag-map)) card))
+         (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
 
 (defn clear-all-flags-for-card!
   "Removes all flags set by the card - of any flag type"
   [state side card]
-  (let [flag-types [:current-run :current-turn :persistent]
-        flag-type-iter (fn [flag-type] (iterate #(clear-flag-for-card! state side card flag-type %)
-                                                (keys (get-in @state [:stack flag-type]))))]
-    (iterate flag-type-iter flag-types)))
+  (letfn [(clear-flag-type! [flag-type]
+            (map #(clear-flag-for-card! state side card flag-type %)
+                 (keys (get-in @state [:stack flag-type]))))]
+    ;; Only care about the side-effects of this
+    (map clear-flag-type! #{:current-run :current-turn :persistent})
+    ;; Return the card again
+    card))
 
 ;;; Run flag - cleared at end of run
 (defn register-run-flag!
