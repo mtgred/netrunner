@@ -416,24 +416,31 @@
                                                          card nil)
                                         (effect-completed state side eid nil))))))})
 
+(defn- relevant-in-archives?
+  "Returns true if the specified card should show up in the archives access list"
+  [state side card]
+  (let [check-req (fn [access-def]
+                    (or (not (:req access-def))
+                        ((:req access-def) state side (make-eid state) card nil)))
+        cdef (card-def card)
+        access (:access cdef)]
+    (or (is-type? card "Agenda")
+        (= (last (:zone card)) :content)
+        (and access
+             (not (:optional access))
+             (not (:psi access))
+             (check-req access))
+        (and (:optional access)
+             (check-req (:optional access)))
+        (and (:psi access)
+             (check-req (:psi access))))))
+
 (defmethod choose-access :archives [cards server]
   {:delayed-completion true
-   :effect (req (let [; only include agendas and cards with an :access ability whose :req is true
-                      ; (or don't have a :req, or have an :optional with no :req, or :optional with a true :req.)
-                      cards (filter #(let [cdef (card-def %)]
-                                      (or (is-type? % "Agenda")
-                                          (= (last (:zone %)) :content)
-                                          (and (:access cdef)
-                                               (not (get-in cdef [:access :optional]))
-                                               (or (not (get-in cdef [:access :req]))
-                                                   ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
-                                          (and (get-in cdef [:access :optional])
-                                               (or (not (get-in cdef [:access :optional :req]))
-                                                   ((get-in cdef [:access :optional :req]) state side (make-eid state) % nil)))))
-                                    cards)]
+   :effect (req (let [cards (filter (partial relevant-in-archives? state side) cards)]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
-                      (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
+                      (do (system-msg state side (str "accesses " (:title (first cards))))
                           (handle-access state side eid cards))
                       (continue-ability state side (access-helper-archives cards) card nil))
                     (effect-completed state side eid nil))))})
