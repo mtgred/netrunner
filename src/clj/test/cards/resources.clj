@@ -244,6 +244,28 @@
       (core/rez state :corp (refresh jesus))
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
 
+(deftest-pending councilman-zone-change
+  ;; Rezz no longer prevented when card changes zone (issues #1571)
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Councilman" 1)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Councilman")
+    (take-credits state :runner)
+    (let [jesus (get-content state :remote1 0)
+          judas (get-resource state 0)]
+      (core/rez state :corp jesus)
+      ;; Runner triggers Councilman
+      (card-ability state :runner judas 0)
+      (prompt-select :runner jesus)
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (core/move state :corp (refresh jesus) :hand))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (let [jesus (get-content state :remote2 0)]
+      (core/rez state :corp jesus)
+      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
+
 (deftest daily-casts
   "Play and tick through all turns of daily casts"
   (do-game
