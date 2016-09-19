@@ -59,6 +59,7 @@
   (swap! state update-in [:stack flag-type flag]
          (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
 
+;; Currently unused
 (defn clear-all-flags-for-card!
   "Removes all flags set by the card - of any flag type"
   [state side card]
