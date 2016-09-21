@@ -394,12 +394,12 @@
    {:events {:pass-ice
              {:once :per-turn
               :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
-                             (install-cost-bonus state side [:credit -1])
                              (resolve-ability state side
                                               {:prompt "Choose an icebreaker to install from your Grip"
                                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
                                                :msg (msg "install " (:title target))
-                                               :effect (effect (runner-install target))}
+                                               :effect (effect (install-cost-bonus [:credit -1])
+                                                               (runner-install target))}
                                               card nil)))}}}
 
    "Laramy Fisk: Savvy Investor"
