@@ -148,8 +148,9 @@
                  interaction with New Angeles Sol and Employee Strike
   card-ability:  a card's ability that triggers at the same time as the event trigger, but is coded as a card ability
                  and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
+  after-active-player: an ability to resolve after the active player's triggers resolve, before the opponent's get to act
   targets:       a varargs list of targets to the event, as usual"
-  ([state side eid event first-ability card-ability & targets]
+  ([state side eid event {:keys [first-ability card-ability after-active-player] :as options} & targets]
    (let [get-side #(-> % :card :side game.utils/to-keyword)
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
@@ -178,7 +179,9 @@
                              {:priority -1})
            (when-completed
              (trigger-event-simult-player state side event active-player-events targets)
-             (do (clear-wait-prompt state opponent)
+             (do (when after-active-player
+                   (resolve-ability state side after-active-player nil nil))
+                 (clear-wait-prompt state opponent)
                  (show-wait-prompt state active-player
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
