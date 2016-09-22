@@ -431,13 +431,7 @@
                       cards (filter #(let [cdef (card-def %)]
                                       (or (is-type? % "Agenda")
                                           (= (last (:zone %)) :content)
-                                          (and (:access cdef)
-                                               (not (get-in cdef [:access :optional]))
-                                               (or (not (get-in cdef [:access :req]))
-                                                   ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
-                                          (and (get-in cdef [:access :optional])
-                                               (or (not (get-in cdef [:access :optional :req]))
-                                                   ((get-in cdef [:access :optional :req]) state side (make-eid state) % nil)))))
+                                          (should-trigger? state side card nil (:access cdef))))
                                     cards)]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
