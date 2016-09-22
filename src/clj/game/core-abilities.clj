@@ -6,8 +6,8 @@
 
 ;;;; Functions for implementing card abilities and prompts
 
-;;; Abilities
-(defn is-ability
+;;; Ability related function
+(defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
   [{:keys [effect optional trace psi] :as abi}]
   (or effect optional trace psi))

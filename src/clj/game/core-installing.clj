@@ -86,7 +86,7 @@
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
-     (if (and resolve (is-ability cdef))
+     (if (and resolve (is-ability? cdef))
        (resolve-ability state side eid cdef c nil)
        (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
