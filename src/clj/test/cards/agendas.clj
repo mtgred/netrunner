@@ -789,6 +789,36 @@
       (play-from-hand state :corp "Scorched Earth")
       (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
 
+(deftest the-future-perfect
+  ;; The Future Perfect - cannot steal on failed psi game (if not installed)
+  (do-game
+    (new-game (default-corp [(qty "The Future Perfect" 2)])
+              (default-runner))
+    (play-from-hand state :corp "The Future Perfect" "New remote")
+    (take-credits state :corp)
+
+    (testing "No steal on not-equal Psi game"
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      ;; Cannot steal prompt
+      (prompt-choice :runner "OK")
+      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))
+
+    (testing "Successful steal on equal Psi game"
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (prompt-choice :runner "Steal")
+      (is (= 3 (:agenda-point (get-runner))) "Runner stole TFP"))
+
+    (testing "No Psi game and successful steal when installed"
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Steal")
+      (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game on installed TFP"))))
+
 (deftest underway-renovation
   "Underway Renovation - Mill the Runner when advanced"
   (do-game
