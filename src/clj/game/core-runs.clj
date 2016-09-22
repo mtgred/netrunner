@@ -184,10 +184,13 @@
        (if (or (empty? acost) (pay state side anon-card acost))
          ;; Either there were no access costs, or the runner could pay them.
          (let [cdef (card-def c)
-               c (assoc c :seen true)]
+               c (assoc c :seen true)
+               access-effect (:access cdef)]
            (when-let [name (:title c)]
-             (if (is-type? c "Agenda") ; accessing an agenda
-               (if-let [access-effect (:access cdef)]
+             (if (is-type? c "Agenda")
+               ;; Accessing an agenda
+               (if (and access-effect
+                        (can-trigger? state side access-effect c nil))
                  ;; deal with access effects first. This is where Film Critic can be used to prevent these
                  (continue-ability state :runner
                                    {:delayed-completion true
@@ -198,10 +201,10 @@
                                                    (access-agenda state side eid c)))} c nil)
                  (access-agenda state side eid c))
                ;; Accessing a non-agenda
-               (do (if-let [access-effect (:access cdef)]
-                     (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                     (access-non-agenda state side eid c))
-                     (access-non-agenda state side eid c))))))
+               (if access-effect
+                 (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                 (access-non-agenda state side eid c))
+                 (access-non-agenda state side eid c)))))
          ;; The runner cannot afford the cost to access the card
          (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {}))))))
 

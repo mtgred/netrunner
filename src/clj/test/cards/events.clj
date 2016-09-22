@@ -289,9 +289,10 @@
     (run-continue state)
     (run-successful state)
     (is (= 1 (count (:prompt (get-runner)))) "Deuces prompt not queued")
-    (prompt-choice :runner "Steal")
+    (prompt-choice :runner "Access")
     (prompt-choice :corp "0")
     (prompt-choice :runner "0")
+    (prompt-choice :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
 
     (core/gain state :runner :tag 1)
