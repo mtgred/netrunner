@@ -241,23 +241,29 @@
    {:events {:pre-corp-draw
              {:msg "draw additional cards"
               :once :per-turn
-              :once-key :daily-business-show
+              :once-key :daily-business-show-draw-bonus
               :req (req (first-event state side :pre-corp-draw))
               :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
                                                     (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
              :corp-draw
-             {:delayed-completion true
+             {:once :per-turn
+              :once-key :daily-business-show-register-draws
+              :effect (req (let [drawn (take-last (get-in @state [:corp :register :drawn-this-turn]) (:hand corp))]
+                             (swap! state assoc-in [:corp :register :dbs-drawn] drawn)))}
+             :post-corp-draw
+             {:once :per-turn
+              :once-key :daily-business-show-put-bottom
+              :delayed-completion true
               :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
                                                     (all-installed state :corp)))
-                                 drawn (take-last (get-in @state [:corp :register :drawn-this-turn]) (:hand corp))]
+                                 drawn (get-in @state [:corp :register :dbs-drawn])]
                              (continue-ability
                                state side
                                {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
                                 :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to the bottom of R&D")
                                 :choices {:max dbs
-                                          :req #(and (in-hand? %)
-                                                     (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                          :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
                                 :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
 
    "Dedicated Response Team"
@@ -740,25 +746,32 @@
     "Score an Agenda from HQ?")
 
    "Political Dealings"
-   {:events
-    {:corp-draw
-     {:delayed-completion true
-      :req (req (let [drawn (take-last target (:hand corp))
-                      agendas (filter #(is-type? % "Agenda") drawn)]
-                  (seq agendas)))
-      :effect (req (let [drawn (take-last target (:hand corp))
-                         agendas (filter #(is-type? % "Agenda") drawn)]
-                     (doseq [c agendas]
-                       (continue-ability
-                         state side
-                         {:optional
-                          {:prompt (msg "Reveal and install " (:title c) "?")
-                           :yes-ability {:msg (msg "reveal " (:title c))
-                                         :effect (req (corp-install state side c nil
-                                                                    {:install-state
-                                                                     (or (:install-state (card-def c))
-                                                                         :rezzed-no-cost)}))
-                                         }}} card nil))))}}}
+   (let [pdhelper (fn pd [agendas n]
+                    {:optional
+                     {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
+                      :yes-ability {:delayed-completion true
+                                    :msg (msg "reveal " (:title (nth agendas n)))
+                                    :effect (req (when-completed
+                                                   (corp-install state side (nth agendas n) nil
+                                                                 {:install-state
+                                                                  (or (:install-state (card-def (nth agendas n)))
+                                                                      :rezzed-no-cost)})
+                                                   (if (< (inc n) (count agendas))
+                                                     (continue-ability state side (pd agendas (inc n)) card nil)
+                                                     (effect-completed state side eid))))}
+                      :no-ability {:delayed-completion true
+                                   :effect (req (if (< (inc n) (count agendas))
+                                                  (continue-ability state side (pd agendas (inc n)) card nil)
+                                                  (effect-completed state side eid)))}}})]
+     {:events
+      {:corp-draw
+       {:delayed-completion true
+        :req (req (let [drawn (take-last target (:hand corp))
+                        agendas (filter #(is-type? % "Agenda") drawn)]
+                    (seq agendas)))
+        :effect (req (let [drawn (take-last target (:hand corp))
+                           agendas (filter #(is-type? % "Agenda") drawn)]
+                       (continue-ability state side (pdhelper agendas 0) card nil)))}}})
 
    "Primary Transmission Dish"
    {:recurring 3}

@@ -92,7 +92,9 @@
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
          (swap! state update-in [:bonus] dissoc :draw)
          (when (and (not suppress-event) (pos? deck-count))
-           (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent))
+           (when-completed
+             (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
+             (trigger-event state side (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent)))
          (when (= 0 (remaining-draws state side))
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
