@@ -434,7 +434,7 @@
                                     cards)]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
-                      (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
+                      (do (system-msg state side (str "accesses " (:title (first cards))))
                           (handle-access state side eid cards))
                       (continue-ability state side (access-helper-archives cards) card nil))
                     (effect-completed state side eid nil))))})
