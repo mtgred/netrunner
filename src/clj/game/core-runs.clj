@@ -138,9 +138,9 @@
   (trigger-event state side :pre-steal-cost c)
   (if-not (can-steal? state side c)
     ;; The runner cannot steal this agenda.
-    (do (when-completed (resolve-steal-events state side c)
-                        (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
-                            (effect-completed state side eid c))))
+    (when-completed (resolve-steal-events state side c)
+                    (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
+                        (effect-completed state side eid c)))
     ;; The runner can potentially steal this agenda.
     (let [cost (steal-cost state side c)
           name (:title c)]
@@ -179,8 +179,7 @@
      (trigger-event state side :pre-access-card c)
      (let [acost (access-cost state side c)
            ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-           anon-card (dissoc c :title)
-           card c]
+           anon-card (dissoc c :title)]
        (if (or (empty? acost) (pay state side anon-card acost))
          ;; Either there were no access costs, or the runner could pay them.
          (let [cdef (card-def c)
