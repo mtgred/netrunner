@@ -750,7 +750,7 @@
       (is (= 1 (:brain-damage (get-runner)))))))
 
 ;; OHG still not working...
-(deftest-pending tgtbt
+(deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"
   (do-game
     (new-game (default-corp [(qty "TGTBT" 2) (qty "Old Hollywood Grid" 1)])

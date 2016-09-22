@@ -477,7 +477,7 @@
      (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on Server 1")
      (is (= nil (refresh otg)) "Off the Grid trashed"))))
 
-(deftest-pending old-hollywood-grid
+(deftest old-hollywood-grid
   "Old Hollywood Grid - Ability"
   (do-game
     (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
@@ -503,7 +503,7 @@
       (prompt-choice :runner "Yes")
       (is (= 2 (count (:scored (get-runner)))) "2 scored agendas"))))
 
-(deftest-pending old-hollywood-grid-central
+(deftest old-hollywood-grid-central
   "Old Hollywood Grid - Central server"
   (do-game
     (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
