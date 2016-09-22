@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare check-req clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
+(declare can-trigger? clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -104,16 +104,16 @@
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
-                   :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
-                                   (when-completed
-                                     (resolve-ability state side (:ability to-resolve)
-                                                      (:card to-resolve) event-targets)
-                                     (if (< 1 (count handlers))
-                                       (continue-ability state side
-                                                         (choose-handler
-                                                           (remove-once #(not= target (:title (:card %))) handlers))
-                                                         nil event-targets)
-                                       (effect-completed state side eid nil)))))})))]
+                   :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
+                                      the-card (get-card state (:card to-resolve))]
+                                  (when-completed
+                                    (resolve-ability state side (:ability to-resolve) the-card event-targets)
+                                    (if (< 1 (count handlers))
+                                      (continue-ability state side
+                                                        (choose-handler
+                                                          (remove-once #(not= target (:title (:card %))) handlers))
+                                                        nil event-targets)
+                                      (effect-completed state side eid nil)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid nil)))
@@ -167,7 +167,7 @@
                                      (cons card-ability abis)
                                      abis)]
                           (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                        (check-req state side (get-card state (:card %)) targets (:ability %)))
+                                        (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
                                   abis)))
          active-player-events (get-handlers active-player)
          opponent-events (get-handlers opponent)]
