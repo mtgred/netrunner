@@ -85,17 +85,17 @@
     (update-ice-strength state side b-new)))
 
 ;; Load all card definitions into the current namespace.
-(load "cards/cards-agendas")
-(load "cards/cards-assets")
-(load "cards/cards-events")
-(load "cards/cards-hardware")
-(load "cards/cards-ice")
-(load "cards/cards-icebreakers")
-(load "cards/cards-identities")
-(load "cards/cards-operations")
-(load "cards/cards-programs")
-(load "cards/cards-resources")
-(load "cards/cards-upgrades")
+(load "cards/agendas")
+(load "cards/assets")
+(load "cards/events")
+(load "cards/hardware")
+(load "cards/ice")
+(load "cards/icebreakers")
+(load "cards/identities")
+(load "cards/operations")
+(load "cards/programs")
+(load "cards/resources")
+(load "cards/upgrades")
 
 (def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
                   cards-operations cards-programs cards-resources cards-upgrades))
