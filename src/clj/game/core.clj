@@ -17,18 +17,18 @@
 (def all-cards (atom {}))
 (def all-cards-alt (atom {}))
 
-(load "core-cards")     ; retrieving and updating cards
-(load "core-events")    ; triggering of events
-(load "core-costs")     ; application of costs to play
-(load "core-rules")     ; core game rules
-(load "core-turns")     ; the turn sequence
-(load "core-actions")   ; functions linked to UI actions
-(load "core-abilities") ; support for card abilities and prompts
-(load "core-installing"); installing and interacting with installed cards and servers
-(load "core-hosting")   ; hosting routines
-(load "core-runs")      ; the run sequence
-(load "core-ice")       ; ice and icebreaker interactions
-(load "core-flags")     ; various miscellaneous manipulations of specific effects
-(load "core-io")        ; routines for parsing input or printing to the log
-(load "core-misc")      ; misc stuff
-(load "cards/cards")    ; card definitions
+(load "core/core-cards")     ; retrieving and updating cards
+(load "core/core-events")    ; triggering of events
+(load "core/core-costs")     ; application of costs to play
+(load "core/core-rules")     ; core game rules
+(load "core/core-turns")     ; the turn sequence
+(load "core/core-actions")   ; functions linked to UI actions
+(load "core/core-abilities") ; support for card abilities and prompts
+(load "core/core-installing"); installing and interacting with installed cards and servers
+(load "core/core-hosting")   ; hosting routines
+(load "core/core-runs")      ; the run sequence
+(load "core/core-ice")       ; ice and icebreaker interactions
+(load "core/core-flags")     ; various miscellaneous manipulations of specific effects
+(load "core/core-io")        ; routines for parsing input or printing to the log
+(load "core/core-misc")      ; misc stuff
+(load "cards")               ; card definitions
