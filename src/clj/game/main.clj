@@ -2,12 +2,13 @@
   (:import [org.zeromq ZMQ ZMQQueue])
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [all-cards all-cards-alt game-states old-states show-error-toast toast
-                               card-is-public?] :as core]
+            [game.core :refer [all-cards all-cards-alt game-states show-error-toast toast card-is-public?] :as core]
             [game.utils :refer [private-card]]
             [environ.core :refer [env]]
             [differ.core :as differ])
   (:gen-class :main true))
+
+(def old-states (atom {}))
 
 (add-encoder java.lang.Object encode-str)
 

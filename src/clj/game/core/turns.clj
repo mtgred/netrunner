@@ -1,7 +1,9 @@
 (in-ns 'game.core)
 
-(declare card-flag-fn? clear-turn-register! clear-wait-prompt create-deck hand-size keep-hand mulligan show-wait-prompt
-         turn-message)
+(declare all-active card-flag-fn? clear-turn-register! clear-wait-prompt create-deck hand-size keep-hand mulligan
+         show-wait-prompt turn-message)
+
+(def game-states (atom {}))
 
 ;;; Functions for the creation of games and the progression of turns.
 (defn- identity-init

@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare active? all-active all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run ice?
-         has-subtype? register-events remove-from-host remove-icon rezzed?
-         trash update-hosted! update-ice-strength unregister-events)
+(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run has-subtype? ice?
+         make-eid register-events remove-from-host remove-icon rezzed? trash trigger-event update-hosted!
+         update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
 (defn card-def
