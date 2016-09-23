@@ -83,9 +83,9 @@
 ;;; In-game chat commands
 (defn set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
-  (trigger-event state side :advancement-placed target)
   (system-msg state side (str "sets advancement counters to " value " on "
-                              (card-str state target))))
+                              (card-str state target)))
+  (trigger-event state side :advancement-placed target))
 
 (defn command-adv-counter [state side value]
   (resolve-ability state side
