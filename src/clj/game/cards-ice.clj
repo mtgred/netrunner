@@ -148,10 +148,10 @@
 
 ;;; For Morph ICE
 (defn morph [state side card new old]
-  (update! state side (assoc card :subtype
-                             (->> (remove #(= old %) (.split (:subtype card) " - "))
-                                  vec (concat [new]) distinct (join " - "))))
-  (update! state side (assoc card :subtype-target new))
+  (update! state side (assoc card
+                        :subtype-target new
+                        :subtype (->> (remove #(= old %) (.split (:subtype card) " - "))
+                                      vec (concat [new]) distinct (join " - "))))
   (update-ice-strength state side card))
 
 (defn morph-effect
@@ -344,11 +344,11 @@
      {:prompt "Choose one subtype"
       :choices ["Barrier" "Code Gate" "Sentry"]
       :msg (msg "make it gain " target " until the end of the turn")
-      :effect (effect (update! (assoc card :subtype
-                                      (->> (vec (.split (:subtype card) " - "))
-                                           (concat [target])
-                                           (join " - "))))
-                      (update! (assoc card :subtype-target target))
+      :effect (effect (update! (assoc card
+                                  :subtype-target target
+                                  :subtype (->> (vec (.split (:subtype card) " - "))
+                                                (concat [target])
+                                                (join " - "))))
                       (update-ice-strength card))
       :events {:runner-turn-ends turn-end-ability
                :corp-turn-ends turn-end-ability}
