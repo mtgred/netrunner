@@ -31,4 +31,4 @@
 (load "core-flags")     ; various miscellaneous manipulations of specific effects
 (load "core-io")        ; routines for parsing input or printing to the log
 (load "core-misc")      ; misc stuff
-(load "cards")          ; card definitions
+(load "cards/cards")    ; card definitions
