@@ -522,7 +522,12 @@
           current-strength [:div.darkbg.strength current-strength])
         (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
         (when server-target [:div.darkbg.server-target server-target])
-        (when subtype-target [:div.darkbg.subtype-target subtype-target])
+        (when subtype-target
+          (let [colour-type (case subtype-target
+                              ("Barrier" "Sentry") (lower-case subtype-target)
+                              "Code Gate" "code-gate"
+                              nil)]
+            [:div.darkbg.subtype-target {:class colour-type} subtype-target]))
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
           (let [centrals ["Archives" "R&D" "HQ"]
                 remotes (concat (remote-list remotes) ["New remote"])
