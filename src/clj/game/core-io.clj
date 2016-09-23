@@ -81,10 +81,15 @@
 
 
 ; In-game chat commands
+(defn set-adv-counter [state side target value]
+  (set-prop state side target :advance-counter value)
+  (trigger-event state side :advancement-placed target)
+  (system-msg state side (str "sets advancement counters to " value " on "
+                              (card-str state target))))
+
 (defn command-adv-counter [state side value]
   (resolve-ability state side
-                   {:effect (effect (set-prop target :advance-counter value)
-                                    (system-msg (str "sets advancement counters to " value " on " (card-str state target))))
+                   {:effect (effect (set-adv-counter target value))
                     :choices {:req (fn [t] (card-is? t :side side))}}
                    {:title "/adv-counter command"} nil))
 
@@ -98,9 +103,7 @@
                                      (and (is-type? target "Agenda") (is-scored? target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter c-type)]
-                    (cond advance (do (set-prop state side target :advance-counter value)
-                                      (system-msg state side (str "sets advancement counters to " value " on "
-                                                                  (card-str state target))))
+                    (cond advance (do (set-adv-counter state side target value))
                           (not c-type) (toast state side "You need to specify a counter type for that card." "error"
                                               {:time-out 0 :close-button true})
                           :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
