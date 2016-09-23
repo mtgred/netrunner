@@ -1278,7 +1278,7 @@ nav ul
     &.red
       background-color: red
 
-  .server-target
+  .server-target, .subtype-target
     position: absolute
     z-index: 10
     padding: 0
@@ -1527,6 +1527,10 @@ nav ul
 
             .strength
               transform(rotate(90deg))
+
+            .subtype-target
+              transform(rotate(90deg), translateX(100%))
+              transform-origin(100% 0)
 
             .icon
               transform(rotate(90deg))
