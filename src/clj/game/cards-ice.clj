@@ -340,7 +340,7 @@
 
    "Chimera"
    (let [turn-end-ability {:effect (effect (derez :corp card)
-                             (update! (assoc (get-card state card) :subtype "Mythic")))}]
+                                           (update! (assoc (get-card state card) :subtype "Mythic")))}]
      {:prompt "Choose one subtype"
       :choices ["Barrier" "Code Gate" "Sentry"]
       :msg (msg "make it gain " target " until the end of the turn")
