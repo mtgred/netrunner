@@ -80,7 +80,7 @@
          :else nil))
 
 
-; In-game chat commands
+;;; In-game chat commands
 (defn set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
   (trigger-event state side :advancement-placed target)
@@ -103,7 +103,7 @@
                                      (and (is-type? target "Agenda") (is-scored? target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter c-type)]
-                    (cond advance (do (set-adv-counter state side target value))
+                    (cond advance (set-adv-counter state side target value)
                           (not c-type) (toast state side "You need to specify a counter type for that card." "error"
                                               {:time-out 0 :close-button true})
                           :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
