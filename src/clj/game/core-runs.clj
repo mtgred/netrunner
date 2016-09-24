@@ -440,6 +440,12 @@
                       (continue-ability state side (access-helper-archives cards) card nil))
                     (effect-completed state side eid nil))))})
 
+(defn get-all-hosted [hosts]
+  (let [hosted-cards (mapcat :hosted hosts)]
+    (if (empty? hosted-cards)
+      hosted-cards
+      (concat hosted-cards (get-all-hosted hosted-cards)))))
+
 
 ;; Don't call access directly; use handle-access instead.
 ;; access methods return a list of cards in the server.
@@ -459,7 +465,7 @@
 
 (defmethod access :remote [state side server]
   (let [contents (get-in @state [:corp :servers (first server) :content])]
-    (concat contents (mapcat :hosted contents))))
+    (concat contents (get-all-hosted contents))))
 
 (defn do-access
   "Starts the access routines for the run's server."
