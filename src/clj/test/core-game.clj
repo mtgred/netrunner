@@ -180,23 +180,28 @@
 (deftest trash-corp-hosted
   "Hosted Corp cards are included in all-installed and fire leave-play effects when trashed"
   (do-game
-    (new-game (default-corp [(qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
+    (new-game (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
               (default-runner))
-    (play-from-hand state :corp "Worlds Plaza" "New remote")
-    (let [wp (get-content state :remote1 0)]
-      (core/rez state :corp wp)
-      (card-ability state :corp wp 0)
-      (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
-      (let [dh (first (:hosted (refresh wp)))]
-        (is (:rezzed dh) "Director Haas was rezzed")
-        (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
-        (is (= 2 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
-        (take-credits state :corp)
-        (run-empty-server state "Server 1")
-        (prompt-select :runner dh)
-        (prompt-choice :runner "Yes") ; trash Director Haas
-        (prompt-choice :runner "Done")
-        (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn")))))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Worlds Plaza" (:hand (get-corp))))
+      (let [wp (first (:hosted (refresh fir)))]
+        (core/rez state :corp wp)
+        (card-ability state :corp wp 0)
+        (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
+        (let [dh (first (:hosted (refresh wp)))]
+          (is (:rezzed dh) "Director Haas was rezzed")
+          (is (= 0 (:credit (get-corp))) "Corp has 0 credits")
+          (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
+          (is (= 3 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
+          (take-credits state :corp)
+          (run-empty-server state "Server 1")
+          (prompt-select :runner dh)
+          (prompt-choice :runner "Yes") ; trash Director Haas
+          (prompt-choice :runner "Done")
+          (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
 (deftest trash-remove-per-turn-restriction
   "Trashing a card should remove it from [:per-turn] - Issue #1345"
