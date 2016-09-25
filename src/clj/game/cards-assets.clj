@@ -246,18 +246,13 @@
               :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
                                                     (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
-             :corp-draw
-             {:once :per-turn
-              :once-key :daily-business-show-register-draws
-              :effect (req (let [drawn (take-last (get-in @state [:corp :register :drawn-this-turn]) (:hand corp))]
-                             (swap! state assoc-in [:corp :register :dbs-drawn] drawn)))}
              :post-corp-draw
              {:once :per-turn
               :once-key :daily-business-show-put-bottom
               :delayed-completion true
               :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
                                                     (all-installed state :corp)))
-                                 drawn (get-in @state [:corp :register :dbs-drawn])]
+                                 drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (continue-ability
                                state side
                                {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
@@ -766,10 +761,10 @@
      {:events
       {:corp-draw
        {:delayed-completion true
-        :req (req (let [drawn (take-last target (:hand corp))
+        :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
                         agendas (filter #(is-type? % "Agenda") drawn)]
                     (seq agendas)))
-        :effect (req (let [drawn (take-last target (:hand corp))
+        :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
                            agendas (filter #(is-type? % "Agenda") drawn)]
                        (continue-ability state side (pdhelper agendas 0) card nil)))}}})
 

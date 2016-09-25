@@ -75,6 +75,7 @@
   ([state side] (draw state side 1 nil))
   ([state side n] (draw state side n nil))
   ([state side n {:keys [suppress-event] :as args}]
+   (swap! state assoc-in [side :register :most-recent-drawn] nil) ;clear the most recent draw in case draw prevented
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
          n (-> n (+ (or (get-in @state [:bonus :draw]) 0)))
@@ -89,6 +90,7 @@
        (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
          (swap! state update-in [side :hand] #(concat % drawn))
          (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+         (swap! state assoc-in [side :register :most-recent-drawn] drawn)
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
          (swap! state update-in [:bonus] dissoc :draw)
          (when (and (not suppress-event) (pos? deck-count))
