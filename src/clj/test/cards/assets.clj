@@ -1124,6 +1124,59 @@
     (prompt-choice :corp "Done")
     (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
 
+(deftest the-board
+  "The Board - Modifies everything in the score area"
+  (do-game
+    (new-game (default-corp [(qty "The Board" 1)
+                             (qty "News Team" 1)
+                             (qty "Firmware Updates" 2)])
+              (default-runner [(qty "Artist Colony" 3)
+                               (qty "Fan Site" 3)]))
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "News Team" "New remote")
+    (play-from-hand state :corp "Firmware Updates" "New remote")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Artist Colony")
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Firmware Updates" "New remote")
+    (score-agenda state :corp (get-content state :remote4 0))
+    (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+
+    (take-credits state :corp)
+
+    (run-empty-server state :remote3)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (count (:scored (get-runner)))) "Firmware Updates stolen")
+    (is (= 1 (:agenda-point (get-runner))) "Runner has 1 agenda point")
+
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= -1 (:agenda-point (get-runner))) "Runner has -1 agenda points")
+
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Add News Team to score area")
+    (prompt-choice :runner "Yes")
+    (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
+    (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
+
+    ; (is (= (:title (get-resource state 0)) "Artist Colony"))
+    ; (card-ability state :runner (get-resource state 0) 0)
+    ; (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
+    ;       prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+    ;   (prompt-choice :runner (first (prompt-names))))
+    ; (prompt-choice :runner "Fan Site")
+    ; (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
+    ; (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
+
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Yes")
+    ; (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
+    (is (= 4 (count (:scored (get-runner)))) "The Board added to Runner score area")
+    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
+
 (deftest the-root
   "The Root - recurring credits refill at Step 1.2"
   (do-game
