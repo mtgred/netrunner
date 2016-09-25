@@ -157,6 +157,77 @@
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
 
+(deftest daily-business-show
+  "Daily Business Show - Full test"
+  (do-game
+    (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Daily Business Show" "Daily Business Show" "Daily Business Show" "Hedge Fund"])
+    (core/gain state :corp :credit 1)
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (core/rez state :corp (get-content state :remote3 0))
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-corp)))))
+    (take-credits state :runner)
+    (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
+    (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
+    (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+    (is (= 2 (count (:hand (get-corp)))))
+    (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
+    (is (= "Jackson Howard" (:title (second (:hand (get-corp))))))
+    (is (= "Resistor" (:title (last (:deck (get-corp))))) "Resistor last card in deck")
+    (is (= "Product Placement" (:title (last (butlast (:deck (get-corp))))))
+        "Product Placement second last card in deck")
+    (is (= "Breaking News" (:title (last (butlast (butlast (:deck (get-corp)))))))
+        "Breaking News third last card in deck")))
+
+(deftest daily-business-show-sensie-actors-union
+  "Daily Business Show - Sensie Actors Union interaction"
+  (do-game
+    (new-game (default-corp [(qty "Daily Business Show" 1) (qty "Sensie Actors Union" 2)
+                             (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Daily Business Show" "Sensie Actors Union" "Sensie Actors Union" "Hedge Fund"])
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (play-from-hand state :corp "Sensie Actors Union" "New remote")
+    (play-from-hand state :corp "Sensie Actors Union" "New remote")
+    (let [sensie1 (get-content state :remote2 0)
+          sensie2 (get-content state :remote3 0)]
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/rez state :corp sensie1)
+      (core/rez state :corp sensie2)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      ; Use first Sensie
+      (is (= 1 (count (:hand (get-corp)))))
+      (card-ability state :corp sensie1 0)
+      (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
+      (prompt-select :corp (find-card "Resistor" (:hand (get-corp)))) ; DBS target
+      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
+      (is (= 3 (count (:hand (get-corp)))))
+      (is (= "Hedge Fund" (:title (last (:deck (get-corp))))) "Hedge Fund last card in deck")
+      (is (= "Resistor" (:title (last (butlast (:deck (get-corp))))))
+          "Resistor second last card in deck")
+      ; Try to use first Sensie again
+      (card-ability state :corp sensie1 0)
+      (is (empty? (get-in @state [:corp :prompt])) "Sensie didn't activate")
+      (is (= 3 (count (:hand (get-corp)))))
+      ; Use second Sensie
+      (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
+      (is (= 2 (count (:hand (get-corp)))))
+      (card-ability state :corp sensie2 0)
+      (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
+      (prompt-select :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
+      (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
+
 (deftest dedicated-response-team
   "Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged"
   (do-game
@@ -671,31 +742,65 @@
     (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
 
 (deftest political-dealings
+  "Political Dealings - Full test"
   (do-game
     (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])
               (default-runner))
     (core/move state :corp (find-card "Medical Breakthrough" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Oaktown Renovation" (:hand (get-corp))) :deck)
     (play-from-hand state :corp "Political Dealings" "New remote")
-    (is (= "Political Dealings" (:title (get-content state :remote1 0))) "Political Dealings installed")
-    (let [pd (get-content state :remote1 0)]
-      (core/rez state :corp (refresh pd))
-      (core/draw state :corp)
-      (let [mb (first (:hand (get-corp)))]
-        (card-ability state :corp pd 0)
-        (prompt-choice :corp mb)
-        (prompt-choice :corp "New remote")
-        (is (= "Medical Breakthrough" (:title (get-content state :remote2 0)))
-            "Medical Breakthrough installed by Political Dealings")
-        (core/draw state :corp)
-        (let [oak (first (:hand (get-corp)))]
-          (card-ability state :corp pd 0)
-          (prompt-choice :corp oak)
-          (prompt-choice :corp "New remote")
-          (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
-              "Oaktown Renovation installed by Political Dealings")
-          (is (= true (:rezzed (get-content state :remote3 0)))
-              "Oaktown Renovation installed face up"))))))
+    (core/rez state :corp (get-content state :remote1 0))
+    ; Install Medical Breakthrough
+    (core/draw state :corp)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "New remote")
+    (is (= "Medical Breakthrough" (:title (get-content state :remote2 0)))
+        "Medical Breakthrough installed by Political Dealings")
+    ; Install Oaktown Renovation
+    (core/draw state :corp)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "New remote")
+    (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
+        "Oaktown Renovation installed by Political Dealings")
+    (is (= true (:rezzed (get-content state :remote3 0)))
+        "Oaktown Renovation installed face up")))
+
+(deftest political-dealings-daily-business-show
+  "Political Dealings - Daily Business Show interaction.
+   Draw 2 agendas, install both of them but return 1 to bottom of R&D"
+  (do-game
+    (new-game (default-corp [(qty "Political Dealings" 1) (qty "Daily Business Show" 1) (qty "Turtlebacks" 1)
+                             (qty "Breaking News" 1) (qty "Project Beale" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Political Dealings" "Daily Business Show" "Turtlebacks"])
+    (core/gain state :corp :credit 3)
+    (play-from-hand state :corp "Political Dealings" "New remote")
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (play-from-hand state :corp "Turtlebacks" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (core/rez state :corp (get-content state :remote3 0))
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-corp)))))
+    (let [agenda1 (first (:deck (get-corp)))
+          agenda2 (second (:deck (get-corp)))]
+      (take-credits state :runner)
+      ; Install first agenda
+      (is (= 2 (count (:hand (get-corp)))))
+      (is (= 0 (:credit (get-corp))))
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "New remote")
+      (is (= (:cid agenda1) (:cid (get-content state :remote4 0))))
+      (is (= 1 (:credit (get-corp))) "Turtlebacks triggered")
+      ; Install second agenda
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "New remote")
+      (is (= (:cid agenda2) (:cid (get-content state :remote5 0))))
+      (is (= 2 (:credit (get-corp))) "Turtlebacks triggered")
+      ; DBS - put first agenda at bottom of R&D
+      (prompt-select :corp (get-content state :remote4 0))
+      (is (= 0 (count (:hand (get-corp)))))
+      (is (= (:cid agenda1) (:cid (last (:deck (get-corp)))))))))
 
 (deftest psychic-field
   "Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed"
