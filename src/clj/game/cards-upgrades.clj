@@ -364,6 +364,16 @@
    {:init {:root "HQ"}
     :in-play [:hand-size-modification 2]}
 
+   "Ruhr Valley"
+   {:events {:run {:req (req this-server)
+                   :effect (effect (lose :runner :click 1))
+                   :msg "force the runner to spend an additional [Click]"}
+             :runner-turn-begins {:req (req (> (:click-per-turn runner) 1))
+                               :effect (req (enable-run-on-server state card (second (:zone card))))}
+             :runner-spent-click {:req (req (<= 1 (:click runner)))
+                                  :effect (req (prevent-run-on-server state card (second (:zone card))))}
+             :leave-play (req (enable-run-on-server state card (second (:zone card))))}}
+
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
                               :effect (effect (init-trace-bonus 2))}}}
