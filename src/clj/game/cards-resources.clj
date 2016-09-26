@@ -954,7 +954,8 @@
                                 :effect (effect (draw 1))}}}
 
    "Salsette Slums"
-   {:events {:runner-install
+   {:flags {:slow-trash (req true)}
+    :events {:runner-install
              {:req (req (= card target))
               :silent (req true)
               :effect (effect (update! (assoc card :slums-active true)))}

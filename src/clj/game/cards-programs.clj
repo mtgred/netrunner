@@ -327,7 +327,8 @@
                  :msg "gain [Click] [Click] [Click]"}]}
 
    "Imp"
-   {:data {:counter {:virus 2}}
+   {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
+    :data {:counter {:virus 2}}
     :abilities [{:counter-cost [:virus 1]
                  :msg "trash at no cost"
                  :once :per-turn
