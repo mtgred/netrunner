@@ -1042,15 +1042,17 @@
                  :msg (msg "derez " (:advance-counter card)) :effect (effect (trash card))}]}
 
    "The Board"
-   (let [lose-agenda-point (effect (lose :runner :agenda-point 1))]
-     {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
-      :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
-      :trash-effect {:when-unrezzed true
-                     :req (req (:access @state))
-                     :effect (effect (as-agenda :runner card 2))}
-      :events {:agenda-stolen {:effect lose-agenda-point}
-               :card-moved {:req (req (some #{(:cid target)} (map :cid (:scored runner))))
-                            :effect lose-agenda-point}}})
+   {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
+    :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
+    :trash-effect {:when-unrezzed true
+                   :req (req (:access @state))
+                   :effect (effect (as-agenda :runner card 2))}
+    :events {:agenda-stolen {:effect (effect (lose :runner :agenda-point 1))}
+             :card-moved {:req (req (or (some #{:scored} (:zone (first targets)))
+                                        (some #{:scored} (:zone (second targets)))))
+                          :effect (req (if (some #{:scored} (:zone (first targets)))
+                                           (gain state :runner :agenda-point 1)
+                                           (lose state :runner :agenda-point 1)))}}}
 
    "The News Now Hour"
    {:events {:runner-turn-begins {:effect (req (prevent-current state side))}}

@@ -1125,7 +1125,7 @@
     (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
 
 (deftest the-board
-  "The Board - Modifies everything in the score area"
+  "The Board - Modify everything in the score area (regression test for #1938)"
   (do-game
     (new-game (default-corp [(qty "The Board" 1)
                              (qty "News Team" 1)
@@ -1162,16 +1162,15 @@
     (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
     (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
 
-    ; (card-ability state :runner (get-resource state 0) 0)
-    ; (prompt-choice :runner (->> @state :runner :prompt first :choices first))
-    ; (prompt-choice :runner (first (:scored (get-runner))))
-    ; (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
-    ; (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
+    (card-ability state :runner (get-resource state 0) 0)
+    (prompt-choice :runner (->> @state :runner :prompt first :choices first))
+    (prompt-choice :runner (first (:scored (get-runner))))
+    (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
+    (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
 
     (run-empty-server state :remote1)
     (prompt-choice :runner "Yes")
-    ; (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
-    (is (= 4 (count (:scored (get-runner)))) "The Board added to Runner score area")
+    (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
 (deftest the-root
