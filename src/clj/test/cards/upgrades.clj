@@ -379,6 +379,57 @@
       (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
       (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
 
+(deftest mumbad-virtual-tour-force-trash
+  ;; Tests that Mumbad Virtual Tour forces trash when no :slow-trash
+  (do-game
+    (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    ;; MVT does not force trash when not installed
+    (prompt-choice :runner "No")
+    (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT in HQ")
+    (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
+    (run-empty-server state "Server 1")
+    ;; Toast should show at this point to notify runner they were forced to trash MVT
+    (is (= 0 (:credit (get-runner))) "Runner forced to trash MVT")
+    (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed")))
+
+(deftest mumbad-virtual-tour-slow-trash
+  ;; Tests that Mumbad Virtual Tour does not force trash with no :slow-trash
+  (do-game
+    (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
+              (default-runner [(qty "Imp" 1) (qty "Salsette Slums" 1)]))
+    (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+    (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    ;; Reset credits to 5
+    (core/gain state :runner :credit 2)
+    (run-empty-server state "Server 1")
+    ;; Runner not force to trash since Imp is installed
+    (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
+    (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
+    (let [imp (get-program state 0)]
+      (card-ability state :runner imp 0)
+      (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp)))))
+          "MVT trashed with Imp")
+      ;; Trash Imp to reset :slow-trash flag
+      (core/move state :runner (refresh imp) :discard)
+      (is (not (core/any-flag-fn? state :runner :slow-trash true))))
+    (play-from-hand state :runner "Salsette Slums")
+    ;; Reset credits to 5
+    (core/gain state :runner :credit 2)
+    (run-empty-server state "Server 2")
+    ;; Runner not force to trash since Salsette Slums is installed
+    (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Slums installed")
+    (let [slums (get-resource state 0)]
+      (card-ability state :runner slums 0)
+      (is (= "Mumbad Virtual Tour" (:title (first (:rfg (get-corp)))))
+          "MVT removed from game with Salsette Slums")
+      (is (= 0 (:credit (get-runner))) "Runner paid trash cost with Slums"))))
+
 (deftest neotokyo-grid
   "NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement"
   (do-game
