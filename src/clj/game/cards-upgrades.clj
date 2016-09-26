@@ -263,20 +263,15 @@
 
    "Mumbad Virtual Tour"
    {:access {:req (req installed)
-             :effect (req (let [trash-cost (trash-cost state side card)]
-                            (when (some #(and (= "Imp" (:title %))
-                                              (pos? (get-in % [:counter :virus] 0)))
-                                        (all-installed state :runner))
-                              (toast state :runner (str "You must trash Mumbad Virtual Tour by paying its "
-                                                        "trash cost or using an Imp counter, if able")))
+             :effect (req (let [trash-cost (trash-cost state side card)
+                                slow-trash (any-flag-fn? state :runner :slow-trash true)]
                             (if (and (can-pay? state :runner nil :credit trash-cost)
-                                     (empty? (filter #(or (and (= "Imp" (:title %))
-                                                               (pos? (get-in % [:counter :virus] 0)))
-                                                          (= "Salsette Slums" (:title %)))
-                                                     (all-installed state :runner))))
-                              (swap! state assoc-in [:runner :register :force-trash] true)
-                              (toast state :runner (str "You must use any credit sources (Whizzard, Scrubber, "
-                                                        "Ghost Runner, Net Celebrity) to trash Mumbad Virtual Tour, if able")))))}
+                                     (not slow-trash))
+                              (do (toast state :runner "You have been forced to trash Mumbad Virtual Tour" "info")
+                                  (swap! state assoc-in [:runner :register :force-trash] true))
+                              (toast state :runner
+                                     (str "You must trash Mumbad Virtual Tour, if able, using any available means "
+                                          "(Whizzard, Imp, Ghost Runner, Net Celebrity...)")))))}
     :trash-effect {:when-unrezzed true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
