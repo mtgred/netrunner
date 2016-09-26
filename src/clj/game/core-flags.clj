@@ -17,6 +17,14 @@
         func (get-in cdef [:flags flag-key])]
     (and func (= (func state side (make-eid state) card nil) value))))
 
+(defn any-flag-fn?
+  "Checks `card-flag-fn? on all installed cards on specified side for the value with the flag-key
+  Default value of `cards` is `(all-active state side)`"
+  ([state side flag-key value]
+    (any-flag-fn? state side flag-key value (all-active state side)))
+  ([state side flag-key value cards]
+   (some #(card-flag-fn? state side % flag-key value) cards)))
+
 (defn is-tagged?
   "Returns true if the runner is tagged."
   [state]
