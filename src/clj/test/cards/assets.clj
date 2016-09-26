@@ -1162,12 +1162,9 @@
     (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
     (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
 
-    ; (is (= (:title (get-resource state 0)) "Artist Colony"))
     ; (card-ability state :runner (get-resource state 0) 0)
-    ; (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
-    ;       prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
-    ;   (prompt-choice :runner (first (prompt-names))))
-    ; (prompt-choice :runner "Fan Site")
+    ; (prompt-choice :runner (->> @state :runner :prompt first :choices first))
+    ; (prompt-choice :runner (first (:scored (get-runner))))
     ; (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
     ; (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
 
