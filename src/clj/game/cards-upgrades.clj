@@ -369,10 +369,10 @@
                    :effect (effect (lose :runner :click 1))
                    :msg "force the runner to spend an additional [Click]"}
              :runner-turn-begins {:req (req (> (:click-per-turn runner) 1))
-                                  :effect (effect (enable-run-on-server (second (:zone card))))}
+                                  :effect (req (enable-run-on-server state card (second (:zone card))))}
              :runner-spent-click {:req (req (<= 1 (:click runner)))
-                                  :effect (effect (prevent-run-on-server (second (:zone card))))}
-             :leave-play (effect (enable-run-on-server (second (:zone card))))}}
+                                  :effect (req (prevent-run-on-server state card (second (:zone card))))}
+             :leave-play (req (enable-run-on-server state card (second (:zone card))))}}
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)
