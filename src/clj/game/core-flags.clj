@@ -267,18 +267,50 @@
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
+(defn- can-rez-reason
+  "Checks if the corp can rez the card.
+  Returns true if so, otherwise the reason:
+  :side card is not on :corp side
+  :run-flag run flag prevents rez
+  :turn-flag turn flag prevents rez
+  :unique fails unique check
+  :req does not meet rez requirement"
+  [state side card]
+  (let [uniqueness (:uniqueness card)
+        req (:rez-req (card-def card))]
+    (cond
+      ;; Card on same side?
+      (not (same-side? side (:side card))) :side
+      ;; No flag restrictions?
+      (not (run-flag? state side card :can-rez)) :run-flag
+      (not (turn-flag? state side card :can-rez)) :turn-flag
+      ;; Uniqueness check
+      (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
+      ;; Rez req check
+      (and req (not (req state side (make-eid state) card nil))) :req
+      ;; No problems - return true
+      :default true)))
+
 (defn can-rez?
+  "Checks if the card can be rezzed. Toasts the reason if not."
   ([state side card] (can-rez? state side card nil))
-  ([state side card {:as args}]
-   (and (same-side? side (:side card))
-        (run-flag? state side card :can-rez)
-        (turn-flag? state side card :can-rez)
-        (or (not (:uniqueness card))
-            (empty? (filter #(and (:uniqueness %) (:rezzed %) (= (:code card) (:code %)))
-                            (all-installed state :corp))))
-        (if-let [rez-req (:rez-req (card-def card))]
-          (rez-req state side (make-eid state) card nil)
-          true))))
+  ([state side card _]
+   (let [reason (can-rez-reason state side card)
+         reason-toast #(do (toast state side %) false)
+         title (:title card)]
+     (case reason
+       ;; Do nothing special if true
+       true true
+       ;; No need to toast if on different side
+       :side false
+       ;; Flag restrictions - toast handled by flag
+       :run-flag false
+       :turn-flag false
+       ;; Uniqueness
+       :unique (reason-toast (str "Cannot rez a second copy of " title " since it is unique. Please trash the other"
+                                  " copy first"))
+       ;; Rez requirement
+       :req (reason-toast (str "Rez requirements for " title " are not fulfilled"))))))
 
 (defn can-steal?
   "Checks if the runner can steal agendas"
