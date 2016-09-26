@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare clear-run-register! run-cleanup
+(declare any-flag-fn? clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability7
          get-remote-names card-name can-steal?
@@ -237,8 +237,9 @@
 
 (defmethod choose-access :remote [cards server]
   {:delayed-completion true
-   :effect (req (if (and (>= 1 (count cards)) (not (some #(card-flag-fn? state :runner % :slow-remote-access true)
-                                                         (concat (all-active state :runner) (all-active state :corp)))))
+   :effect (req (if (and (>= 1 (count cards))
+                         (not (any-flag-fn? state :runner :slow-remote-access true
+                                            (concat (all-active state :runner) (all-active state :corp)))))
                   (handle-access state side eid cards)
                   (continue-ability state side (access-helper-remote cards) card nil)))})
 
@@ -308,8 +309,7 @@
 (defmethod choose-access :hq [cards server]
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
-                  (if (and (= 1 (count cards)) (not (some #(card-flag-fn? state :runner % :slow-hq-access true)
-                                                          (all-active state :runner))))
+                  (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
                     (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
                         (handle-access state side eid cards))
                     (let [in-root (filter #(= (last (:zone %)) :content) cards)
