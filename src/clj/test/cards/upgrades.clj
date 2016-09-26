@@ -634,7 +634,7 @@
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
 (deftest ruhr-valley
-  "Ruhr Valley - As an additional cost to make a run on this server, the Runner must spend a click."
+  ;; Ruhr Valley - As an additional cost to make a run on this server, the Runner must spend a click.
    (do-game
     (new-game (default-corp [(qty "Ruhr Valley" 1)])
               (default-runner))
@@ -663,7 +663,7 @@
       (is (= 1 (:click (get-runner)))))))
 
 (deftest ruhr-valley-enable-state
-  "Ruhr Valley - As an additional cost to make a run on this server, the Runner must spend a click."
+  ;; Ruhr Valley - If the runner trashes with one click left, the ability to run is enabled
    (do-game
     (new-game (default-corp [(qty "Ruhr Valley" 1)])
               (default-runner))
