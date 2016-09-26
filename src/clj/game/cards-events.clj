@@ -1085,11 +1085,7 @@
               (resolve-ability
                  state :runner
                  {:msg (msg "make " (card-str state ice) " gain sentry, code gate, and barrier until the end of the turn")
-                  :effect (effect (update! (assoc ice :subtype
-                                                      (->> (vec (.split (:subtype ice) " - "))
-                                                           (concat ["Sentry" "Code Gate" "Barrier"])
-                                                           distinct
-                                                           (join " - "))))
+                  :effect (effect (update! (assoc ice :subtype (combine-subtypes true (:subtype ice) "Sentry" "Code Gate" "Barrier")))
                                   (update-ice-strength (get-card state ice))
                                   (register-events {:runner-turn-ends
                                                     {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}

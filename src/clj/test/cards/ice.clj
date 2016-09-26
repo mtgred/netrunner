@@ -115,6 +115,19 @@
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
       (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
 
+(deftest chimera
+  ;; Chimera - Gains chosen subtype
+  (do-game
+    (new-game (default-corp [(qty "Chimera" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Chimera" "HQ")
+    (let [ch (get-ice state :hq 0)]
+      (core/rez state :corp ch)
+      (prompt-choice :corp "Barrier")
+      (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has barrier")
+      (take-credits state :corp)
+      (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have barrier"))))
+
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
   (do-game
@@ -448,6 +461,25 @@
         (is (= false (has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
         (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest mother-goddess
+  ;; Mother Goddess - Gains other ice subtypes
+  (do-game
+    (new-game (default-corp [(qty "Mother Goddess" 1) (qty "NEXT Bronze" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 1)
+    (play-from-hand state :corp "Mother Goddess" "HQ")
+    (play-from-hand state :corp "NEXT Bronze" "R&D")
+    (let [mg (get-ice state :hq 0)
+          nb (get-ice state :rd 0)]
+      (core/rez state :corp mg)
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
+      (is (not (core/has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have code gate")
+      (is (not (core/has-subtype? (refresh mg) "NEXT")) "Mother Goddess does not have NEXT")
+      (core/rez state :corp nb)
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
+      (is (core/has-subtype? (refresh mg) "Code Gate") "Mother Goddess has code gate")
+      (is (core/has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice

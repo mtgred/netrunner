@@ -205,3 +205,15 @@
 
 (defn private-card [card]
   (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
+
+(defn combine-subtypes [is-distinct subtypes & new-subtypes]
+  (let [do-distinct #(if is-distinct (distinct %) %)]
+    (->> (split (or subtypes " - ") #" - ")
+         (concat new-subtypes)
+         do-distinct
+         (join " - "))))
+
+(defn remove-subtypes [subtypes & subtypes-to-remove]
+  (->> (split (or subtypes " - ") #" - ")
+       (remove #(some #{%} subtypes-to-remove))
+       (join " - ")))
