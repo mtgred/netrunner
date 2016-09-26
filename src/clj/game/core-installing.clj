@@ -267,6 +267,8 @@
                                         (update! state side c)
                                         (card-init state side c true))]
                    (runner-install-message state side (:title card) cost-str params)
+                   (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
+                     (toast state :runner "You have run out of memory units!"))
                    (handle-virus-counter-flag state side installed-card)
                    (when (is-type? card "Resource")
                      (swap! state assoc-in [:runner :register :installed-resource] true))
