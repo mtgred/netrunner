@@ -194,23 +194,59 @@
                          (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
                      (when-let [dre (:derezzed-events cdef)]
                        (when-not (:rezzed (get-card state moved-card))
-                         (register-events state side dre moved-card))))))))
+                         (register-events state side dre moved-card)))))))
+           ;; Cannot install due to region restriction - toast
+           (toast state side (str "Cannot install " (:title card) " in " server
+                                  ", limited to one Region per server")))
          (clear-install-cost-bonus state side)
          (when-not (:delayed-completion cdef)
            (effect-completed state side eid card)))))))
 
 
 ;;; Installing a runner card
-(defn- runner-can-install?
+(defn- runner-can-install-reason
   "Checks if the specified card can be installed.
-   Checks uniqueness of card and installed console"
-  [state side {:keys [uniqueness] :as card} facedown]
-  (and (or (not uniqueness) (not (in-play? state card)) facedown) ; checks uniqueness
-       (or (not (and (has-subtype? card "Console") (not facedown)))
-           (not (some #(has-subtype? % "Console") (all-installed state :runner)))) ; console check
-       (if-let [req (:req (card-def card))]
-         (or facedown (req state side (make-eid state) card nil)) ; checks req for install
-         true)))
+   Checks uniqueness of card and installed console.
+   Returns true if there are no problems
+   Returns :console if Console check fails
+   Returns :unique if uniqueness check fails
+   Returns :req if card-def :req check fails
+   !! NB: This should only be used in a check with `true?` as all return values are truthy"
+  [state side card facedown]
+  (let [req (:req (card-def card))
+        uniqueness (:uniqueness card)]
+    (cond
+      ;; Can always install a card facedown
+      facedown true
+      ;; Console check
+      (and (has-subtype? card "Console")
+           (some #(has-subtype? % "Console") (all-installed state :runner)))
+      :console
+      ;; Uniqueness check
+      (and uniqueness (in-play? state card)) :unique
+      ;; Req check
+      (and req (not (req state side (make-eid state) card nil))) :req
+      ;; Nothing preventing install
+      :default true)))
+
+(defn- runner-can-install?
+  "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
+  [state side card facedown]
+  (let [reason (runner-can-install-reason state side card facedown)
+        reason-toast #(do (toast state side % "warning") false)
+        title (:title card)]
+    (case reason
+      ;; pass on true value
+      true true
+      ;; failed unique check
+      :unique
+      (reason-toast (str "Cannot install a second copy of " title " since it is unique. Please trash currently"
+                         " installed copy first"))
+      ;; failed console check
+      :console
+      (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
+      :req
+      (reason-toast (str "Installation requirements are not fulfilled for " title)))))
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"
