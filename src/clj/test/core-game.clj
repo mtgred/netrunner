@@ -1,7 +1,7 @@
 (in-ns 'test.core)
 
 (deftest corp-rez-unique
-  "Rezzing a second copy of a unique Corp card"
+  ;; Rezzing a second copy of a unique Corp card
   (do-game
     (new-game (default-corp [(qty "Caprice Nisei" 2)])
               (default-runner))
@@ -13,7 +13,7 @@
     (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
 
 (deftest runner-install-program
-  "runner-install - Program; ensure costs are paid"
+  ;; runner-install - Program; ensure costs are paid
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Gordian Blade" 1)]))
@@ -24,7 +24,7 @@
       (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
 
 (deftest runner-installing-uniques
-  "Installing a copy of an active unique Runner card is prevented"
+  ;; Installing a copy of an active unique Runner card is prevented
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
@@ -55,7 +55,7 @@
       (is (= 1 (:click (get-runner))) "Not charged a click"))))
 
 (deftest deactivate-program
-  "deactivate - Program; ensure MU are restored"
+  ;; deactivate - Program; ensure MU are restored
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Gordian Blade" 1)]))
@@ -66,7 +66,7 @@
       (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner
-  "forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda"
+  ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
   (do-game
     (new-game (default-corp [(qty "Mandatory Upgrades" 1)])
               (default-runner [(qty "Data Dealer" 1)]))
@@ -82,7 +82,7 @@
       (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn"))))
 
 (deftest agenda-forfeit-corp
-  "forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda"
+  ;; forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda
   (do-game
     (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Corporate Town" 1)])
               (default-runner))
@@ -95,7 +95,7 @@
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 
 (deftest refresh-recurring-credits-hosted
-  "host - Recurring credits on cards hosted after install refresh properly"
+  ;; host - Recurring credits on cards hosted after install refresh properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Compromised Employee" 1) (qty "Off-Campus Apartment" 1)]))
@@ -120,7 +120,7 @@
             "Compromised Employee recurring credit refreshed")))))
 
 (deftest card-str-test-simple
-  "ensure card-str names cards in simple situations properly"
+  ;; ensure card-str names cards in simple situations properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)])
               (default-runner [(qty "Corroder" 1)
@@ -164,7 +164,7 @@
              "Parasite hosted on Ice Wall protecting HQ at position 0")))))
 
 (deftest invalid-score-attempt
-  "Test scoring with an incorrect number of advancement tokens"
+  ;; Test scoring with an incorrect number of advancement tokens
   (do-game
     (new-game (default-corp [(qty "Ancestral Imager" 1)])
               (default-runner))
@@ -178,7 +178,7 @@
       (is (not (nil? (get-content state :remote1 0)))))))
 
 (deftest trash-corp-hosted
-  "Hosted Corp cards are included in all-installed and fire leave-play effects when trashed"
+  ;; Hosted Corp cards are included in all-installed and fire leave-play effects when trashed
   (do-game
     (new-game (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
               (default-runner))
@@ -204,7 +204,7 @@
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
 (deftest trash-remove-per-turn-restriction
-  "Trashing a card should remove it from [:per-turn] - Issue #1345"
+  ;; Trashing a card should remove it from [:per-turn] - Issue #1345
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3)])
               (default-runner [(qty "Imp" 2) (qty "Scavenge" 1)]))
@@ -229,7 +229,7 @@
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
-  "Trash installed assets that are both seen and unseen by runner"
+  ;; Trash installed assets that are both seen and unseen by runner
   (do-game
     (new-game (default-corp [(qty "PAD Campaign" 3)])
               (default-runner))
@@ -250,7 +250,7 @@
     (is (not (:seen (get-content state :remote1 0))) "New asset is unseen")))
 
 (deftest reinstall-seen-asset
-  "Install a faceup card in Archives, make sure it is not :seen"
+  ;; Install a faceup card in Archives, make sure it is not :seen
   (do-game
     (new-game (default-corp [(qty "PAD Campaign" 1) (qty "Interns" 1)])
               (default-runner))
@@ -267,7 +267,7 @@
     (is (not (:seen (get-content state :remote2 0))) "New asset is unseen")))
 
 (deftest all-installed-runner-test
-  "Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs"
+  ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
   (do-game
     (new-game (default-corp [(qty "Wraparound" 1)])
               (default-runner [(qty "Omni-drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
@@ -307,7 +307,7 @@
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
 (deftest counter-manipulation-commands
-  "Test interactions of various cards with /counter and /adv-counter commands"
+  ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
     (new-game (default-corp [(qty "Adonis Campaign" 1)
                              (qty "Public Support" 2)
@@ -373,7 +373,7 @@
     (core/command-counter state :corp ["power" 1])
     (prompt-select :corp (refresh publics1))
     (is (= 1 (get-counters (refresh publics1) :power)))
-    ; let's adjust Adonis while at it
+    ;; let's adjust Adonis while at it
     (is (= 9 (get-counters (refresh adonis) :credit)))
     (core/command-counter state :corp ["credit" 3])
     (prompt-select :corp (refresh adonis))
@@ -397,7 +397,7 @@
     (is (= 12 (:credit (get-corp)))))))
 
 (deftest run-bad-publicity-credits
-  "Should not lose BP credits until a run is completely over. Issue #1721."
+  ;; Should not lose BP credits until a run is completely over. Issue #1721.
   (do-game
     (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
               (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
@@ -417,10 +417,10 @@
     (run-empty-server state :rd)
     (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
-    (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))11111111
+    (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
 (deftest purge-nested
-  "Purge nested-hosted virus counters"
+  ;; Purge nested-hosted virus counters
   (do-game
     (new-game (default-corp [(qty "Cyberdex Trial" 1)])
               (default-runner [(qty "Djinn" 1) (qty "Imp" 1) (qty "Leprechaun" 1)]))

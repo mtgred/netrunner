@@ -8,7 +8,7 @@
 
 
 (deftest au-revoir
-  "Au Revoir - Gain 1 credit every time you jack out"
+  ;; Au Revoir - Gain 1 credit every time you jack out
   (do-game
     (new-game (default-corp) (default-runner [(qty "Au Revoir" 2)]))
     (take-credits state :corp)
@@ -24,7 +24,7 @@
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
 (deftest crescentus
-  "Crescentus should only work on rezzed ice"
+  ;; Crescentus should only work on rezzed ice
   (do-game
     (new-game (default-corp [(qty "Quandary" 1)])
               (default-runner [(qty "Crescentus" 1)]))
@@ -43,7 +43,7 @@
       (is (not (get-in (refresh q) [:rezzed])) "Quandary is no longer rezzed"))))
 
 (deftest datasucker
-  "Datasucker - Reduce strength of encountered ICE"
+  ;; Datasucker - Reduce strength of encountered ICE
   (do-game
     (new-game (default-corp [(qty "Fire Wall" 1)])
               (default-runner [(qty "Datasucker" 1)]))
@@ -69,7 +69,7 @@
       (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
 
 (deftest datasucker-trashed
-  "Datasucker - does not affect next ice when current is trashed. Issue #1788."
+  ;; Datasucker - does not affect next ice when current is trashed. Issue #1788.
   (do-game
     (new-game
       (default-corp [(qty "Wraparound" 1) (qty "Spiderweb" 1)])
@@ -95,7 +95,7 @@
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
 
 (deftest diwan
-  "Diwan - Full test"
+  ;; Diwan - Full test
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Fire Wall" 3) (qty "Crisium Grid" 2)])
               (default-runner [(qty "Diwan" 1)]))
@@ -121,7 +121,7 @@
     (is (= 3 (:credit (get-corp))) "No charge for installs after Diwan purged")))
 
 (deftest djinn-host-chakana
-  "Djinn - Hosted Chakana does not disable advancing agendas. Issue #750"
+  ;; Djinn - Hosted Chakana does not disable advancing agendas. Issue #750
   (do-game
     (new-game (default-corp [(qty "Priority Requisition" 1)])
               (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
@@ -142,7 +142,7 @@
         (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
 
 (deftest djinn-host-program
-  "Djinn - Host a non-icebreaker program"
+  ;; Djinn - Host a non-icebreaker program
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
@@ -157,7 +157,7 @@
       (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
 
 (deftest djinn-tutor-virus
-  "Djinn - Tutor a virus program"
+  ;; Djinn - Tutor a virus program
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Djinn" 1) (qty "Parasite" 1)]))
@@ -173,7 +173,7 @@
       (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
 (deftest equivocation
-  "Equivocation - interactions with other successful-run events."
+  ;; Equivocation - interactions with other successful-run events.
   (do-game
     (new-game
       (default-corp [(qty "Restructure" 3) (qty "Hedge Fund" 3)])
@@ -194,7 +194,7 @@
     (is (not (:run @state)) "Run ended")))
 
 (deftest false-echo
-  "False Echo - choice for Corp"
+  ;; False Echo - choice for Corp
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3)])
               (default-runner [(qty "False Echo" 3)]))
@@ -217,9 +217,8 @@
       (is (:rezzed (get-ice state :archives 0)) "Ice Wall rezzed")
       (is (= 2 (count (:discard (get-runner)))) "False Echo trashed"))))
 
-
 (deftest gravedigger
-  "Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp"
+  ;; Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Enigma" 2)])
               (default-runner [(qty "Gravedigger" 1)]))
@@ -242,7 +241,7 @@
       (is (= 3 (count (:discard (get-corp)))) "Milled 1 card from R&D"))))
 
 (deftest harbinger-blacklist
-  "Harbinger - install facedown when Blacklist installed"
+  ;; Harbinger - install facedown when Blacklist installed
   (do-game
     (new-game (default-corp [(qty "Blacklist" 1)])
               (default-runner [(qty "Harbinger" 1)]))
@@ -255,7 +254,7 @@
     (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
 
 (deftest hyperdriver
-  "Hyperdriver - Remove from game to gain 3 clicks"
+  ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Hyperdriver" 1)]))
@@ -299,7 +298,7 @@
       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
 
 (deftest incubator-transfer-virus-counters
-  "Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program"
+  ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Incubator" 1) (qty "Datasucker" 1)]))
@@ -322,7 +321,7 @@
       (is (= 3 (:click (get-runner)))))))
 
 (deftest ixodidae
-  "Ixodidae should not trigger on psi-games"
+  ;; Ixodidae should not trigger on psi-games
   (do-game
     (new-game (default-corp [(qty "Snowflake" 1)])
               (default-runner [(qty "Ixodidae" 1) (qty "Lamprey" 1)]))
@@ -349,7 +348,7 @@
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
 (deftest lamprey
-  "Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge"
+  ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Lamprey" 1)]))
@@ -367,7 +366,7 @@
       (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
 
 (deftest leprechaun-mu-savings
-  "Leprechaun - Keep MU the same when hosting or trashing hosted programs"
+  ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Leprechaun" 1) (qty "Hyperdriver" 1) (qty "Imp" 1)]))
@@ -391,7 +390,7 @@
       (is (= 3 (:memory (get-runner))) "Imp 1 MU not added to available MU"))))
 
 (deftest magnum-opus-click
-  "Magnum Opus - Gain 2 cr"
+  ;; Magnum Opus - Gain 2 cr
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Magnum Opus" 1)]))
@@ -404,7 +403,7 @@
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
 (deftest origami
-  "Origami - Increases Runner max hand size"
+  ;; Origami - Increases Runner max hand size
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Origami" 2)]))
@@ -415,7 +414,7 @@
     (is (= 9 (core/hand-size state :runner)) "Max hand size increased by 2 for each copy installed")))
 
 (deftest paintbrush
-  "Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run"
+  ;; Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 1)])
               (default-runner [(qty "Paintbrush" 1)]))
@@ -439,7 +438,7 @@
       (is (= false (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest parasite-apex
-  "Parasite - Installed facedown w/ Apex"
+  ;; Parasite - Installed facedown w/ Apex
   (do-game
     (new-game (default-corp)
               (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
@@ -449,7 +448,7 @@
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
 
 (deftest parasite-architect
-  "Parasite - Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
+  ;; Parasite - Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative
   (do-game
     (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
@@ -472,7 +471,7 @@
         (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
 
 (deftest parasite-builder-moved
-  "Parasite - Should stay on hosted card moved by Builder"
+  ;; Parasite - Should stay on hosted card moved by Builder
   (do-game
     (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
               (default-runner [(qty "Parasite" 3)]))
@@ -504,7 +503,7 @@
           _ (is (= 2 (get-counters (refresh updated-psite) :virus)) "Parasite counters still incremented")])))
 
 (deftest parasite-gain-counter
-  "Parasite - Gain 1 counter every Runner turn"
+  ;; Parasite - Gain 1 counter every Runner turn
   (do-game
     (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
@@ -524,7 +523,7 @@
         (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
 
 (deftest parasite-hivemind-instant-ice-trash
-  "Parasite - Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
+  ;; Parasite - Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength
   (do-game
     (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 1)
@@ -547,7 +546,7 @@
         (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
 (deftest parasite-ice-trashed
-  "Parasite - Trashed along with host ICE when its strength has been reduced to 0"
+  ;; Parasite - Trashed along with host ICE when its strength has been reduced to 0
   (do-game
     (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
               (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
@@ -567,7 +566,7 @@
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
 (deftest progenitor-host-hivemind
-  "Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738"
+  ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Progenitor" 1) (qty "Virus Breeding Ground" 1) (qty "Hivemind" 1)]))
@@ -592,7 +591,7 @@
         (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
 
 (deftest progenitor-mu-savings
-  "Progenitor - Keep MU the same when hosting or trashing hosted programs"
+  ;; Progenitor - Keep MU the same when hosting or trashing hosted programs
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Progenitor" 1) (qty "Hivemind" 1)]))
@@ -609,7 +608,7 @@
       (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
 
 (deftest scheherazade
-  "Scheherazade - Gain 1 credit when it hosts a program"
+  ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Scheherazade" 1) (qty "Cache" 1)
@@ -633,7 +632,7 @@
       (is (= 1 (count (:hand (get-runner))))))))
 
 (deftest sneakdoor-nerve-agent
-  "Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955"
+  ;; Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Sneakdoor Beta" 1) (qty "Nerve Agent" 1)]))
@@ -651,8 +650,8 @@
       (is (= 2 (get-counters (refresh nerve) :virus))))))
 
 (deftest sneakdoor-ash
-  "Sneakdoor Beta - Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits.
-  Issue #1138."
+  ;; Sneakdoor Beta - Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits.
+  ;; Issue #1138.
   (do-game
     (new-game (default-corp [(qty "Ash 2X3ZB9CY" 1)])
               (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Sneakdoor Beta" 1)]))
@@ -672,7 +671,7 @@
       (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
 
 (deftest sneakdoor-crisium
-  "Sneakdoor Beta - do not switch to HQ if Archives has Crisium Grid. Issue #1229."
+  ;; Sneakdoor Beta - do not switch to HQ if Archives has Crisium Grid. Issue #1229.
   (do-game
     (new-game (default-corp [(qty "Crisium Grid" 1) (qty "Priority Requisition" 1) (qty "Private Security Force" 1)])
               (default-runner [(qty "Sneakdoor Beta" 1)]))
@@ -688,7 +687,7 @@
       (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
 
 (deftest sneakdoor-sectest
-  "Sneakdoor Beta - Grant Security Testing credits on HQ."
+  ;; Sneakdoor Beta - Grant Security Testing credits on HQ.
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Security Testing" 1) (qty "Sneakdoor Beta" 1)]))
@@ -706,7 +705,7 @@
       (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
 
 (deftest snitch
-  "Snitch - Only works on unrezzed ice"
+  ;; Snitch - Only works on unrezzed ice
   (do-game
     (new-game (default-corp [(qty "Quandary" 2)])
               (default-runner [(qty "Snitch" 1)]))
@@ -717,22 +716,22 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Snitch")
     (let [snitch (get-in @state [:runner :rig :program 0])]
-      ;unrezzed ice scenario
+      ;; unrezzed ice scenario
       (run-on state "R&D")
       (card-ability state :runner snitch 0)
       (is (prompt-is-card? :runner snitch) "Option to jack out")
       (prompt-choice :runner "Yes")
-      ;rezzed ice scenario
+      ;; rezzed ice scenario
       (run-on state "HQ")
       (card-ability state :runner snitch 0)
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out")
-      ;no ice scenario
+      ;; no ice scenario
       (run-on state "Archives")
       (card-ability state :runner snitch 0)
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
 
 (deftest surfer
-  "Surfer - Swap position with ice before or after when encountering a barrier ice"
+  ;; Surfer - Swap position with ice before or after when encountering a barrier ice
   (do-game
    (new-game (default-corp [(qty "Ice Wall" 1) (qty "Quandary" 1)])
              (default-runner [(qty "Surfer" 1)]))

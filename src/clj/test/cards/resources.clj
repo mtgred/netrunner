@@ -7,7 +7,7 @@
 
 
 (deftest activist-support
-  "Activist Support - Take tag if you have none; Corp gains bad pub if they have none"
+  ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Activist Support" 1)]))
@@ -25,7 +25,7 @@
     (is (= 1 (:bad-publicity (get-corp))) "Corp had 1 bad pub; didn't take another")))
 
 (deftest adjusted-chronotype
-  "Ensure adjusted chronotype gains only 1 click when 2 clicks are lost"
+  ;; Ensure adjusted chronotype gains only 1 click when 2 clicks are lost
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Adjusted Chronotype" 1) (qty "Beach Party" 2)]))
@@ -41,7 +41,7 @@
    (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
 
 (deftest adjusted-chronotype-gcs
-  "Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed"
+  ;; Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Adjusted Chronotype" 1)
@@ -64,7 +64,7 @@
    (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks")))
 
 (deftest aesops-pawnshop
-  "Tests use cases for Aesop's Pawnshop"
+  ;; Tests use cases for Aesop's Pawnshop
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Aesop's Pawnshop" 1) (qty "Cache" 1)]))
@@ -85,7 +85,7 @@
         (is (not= ap nil) "Aesops should still be installed")))))
 
 (deftest all-nighter
-  "All-nighter - Click/trash to gain 2 clicks"
+  ;; All-nighter - Click/trash to gain 2 clicks
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "All-nighter" 1)]))
@@ -97,7 +97,7 @@
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
 (deftest bank-job-manhunt
-  "Bank Job - Manhunt trace happens first"
+  ;; Bank Job - Manhunt trace happens first
   (do-game
     (new-game (default-corp [(qty "Manhunt" 1) (qty "PAD Campaign" 1)])
               (default-runner [(qty "Bank Job" 1)]))
@@ -116,29 +116,29 @@
     (is (= 1 (count (:discard (get-runner)))))))
 
 (deftest bank-job-multiple-copies
-  "Bank Job - Choose which to use when 2+ copies are installed"
-    (do-game
-      (new-game (default-corp [(qty "PAD Campaign" 1)])
-                (default-runner [(qty "Bank Job" 2)]))
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Bank Job")
+  ;; Bank Job - Choose which to use when 2+ copies are installed
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Bank Job" 2)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bank Job")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner 4)
+    (play-from-hand state :runner "Bank Job")
+    (let [bj1 (get-resource state 0)
+          bj2 (get-resource state 1)]
+      (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Run ability")
-      (prompt-choice :runner 4)
-      (play-from-hand state :runner "Bank Job")
-      (let [bj1 (get-resource state 0)
-            bj2 (get-resource state 1)]
-        (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
-        (run-empty-server state "Server 1")
-        (prompt-choice :runner "Run ability")
-        (prompt-select :runner bj2)
-        (prompt-choice :runner 6)
-        (is (= 13 (:credit (get-runner))))
-        (is (= 2 (get-counters (refresh bj2) :credit)) "2 credits remaining on 2nd copy"))))
+      (prompt-select :runner bj2)
+      (prompt-choice :runner 6)
+      (is (= 13 (:credit (get-runner))))
+      (is (= 2 (get-counters (refresh bj2) :credit)) "2 credits remaining on 2nd copy"))))
 
 (deftest bank-job-sectesting
-  "Bank Job - Security Testing takes priority"
+  ;; Bank Job - Security Testing takes priority
   (do-game
     (new-game (default-corp [(qty "PAD Campaign" 1)])
               (default-runner [(qty "Bank Job" 1) (qty "Security Testing" 1)]))
@@ -155,7 +155,7 @@
     (is (= 8 (:credit (get-runner))) "Security Testing paid 2c")))
 
 (deftest bazaar-grip-only
-  "Bazaar - Only triggers when installing from Grip"
+  ;; Bazaar - Only triggers when installing from Grip
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1)
@@ -171,7 +171,7 @@
       (is (empty? (:prompt (get-runner))) "No Bazaar prompt from install off Peddler"))))
 
 (deftest beach-party
-  "Beach Party - Lose 1 click when turn begins; hand size increased by 5"
+  ;; Beach Party - Lose 1 click when turn begins; hand size increased by 5
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Beach Party" 1)]))
@@ -183,7 +183,7 @@
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
 
 (deftest chrome-parlor
-  "Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics"
+  ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game
     (new-game (default-corp [(qty "Traffic Accident" 1)])
               (default-runner [(qty "Chrome Parlor" 1) (qty "Titanium Ribs" 1)
@@ -204,7 +204,7 @@
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
 (deftest compromised-employee
-  "Compromised Employee - Gain 1c every time Corp rezzes ICE"
+  ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
     (new-game (default-corp [(qty "Pup" 2) (qty "Launch Campaign" 1)])
               (default-runner [(qty "Compromised Employee" 1)]))
@@ -267,7 +267,7 @@
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
 
 (deftest daily-casts
-  "Play and tick through all turns of daily casts"
+  ;; Play and tick through all turns of daily casts
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Daily Casts" 3)]))
@@ -295,7 +295,7 @@
       (is (nil? (get-in @state [:runner :rig :resource 0]))))))
 
 (deftest data-folding
-  "Data Folding - Gain 1c at start of turn if 2+ unused MU"
+  ;; Data Folding - Gain 1c at start of turn if 2+ unused MU
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Data Folding" 1) (qty "Hyperdriver" 1)]))
@@ -313,7 +313,7 @@
     (is (= 8 (:credit (get-runner))) "No credits gained at turn start")))
 
 (deftest ddos
-  "Prevent rezzing of outermost ice for the rest of the turn"
+  ;; Prevent rezzing of outermost ice for the rest of the turn
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3)])
               (default-runner [(qty "DDoS" 1)]))
@@ -340,7 +340,7 @@
       (is (get-in (refresh iwall) [:rezzed])))))
 
 (deftest decoy
-  "Decoy - Trash to avoid 1 tag"
+  ;; Decoy - Trash to avoid 1 tag
   (do-game
     (new-game (default-corp [(qty "SEA Source" 1)])
               (default-runner [(qty "Decoy" 1)]))
@@ -357,7 +357,7 @@
     (is (= 0 (:tag (get-runner))) "Tag avoided")))
 
 (deftest eden-shard
-  "Eden Shard - Install from Grip in lieu of accessing R&D; trash to make Corp draw 2"
+  ;; Eden Shard - Install from Grip in lieu of accessing R&D; trash to make Corp draw 2
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Eden Shard" 1)]))
@@ -373,7 +373,7 @@
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
 
 (deftest fan-site
-  "Fan Site - Add to score area as 0 points when Corp scores an agenda"
+  ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1)])
               (default-runner [(qty "Fan Site" 1)]))
@@ -386,7 +386,7 @@
     (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
 
 (deftest fan-site-eoi
-  "Fan Site - Don't trigger after swap with Exchange of Information. Issue #1824"
+  ;; Fan Site - Don't trigger after swap with Exchange of Information. Issue #1824
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Exchange of Information" 1)])
               (default-runner [(qty "Fan Site" 1)]))
@@ -411,7 +411,7 @@
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
 
 (deftest fester
-  "Fester - Corp loses 2c (if able) when purging viruses"
+  ;; Fester - Corp loses 2c (if able) when purging viruses
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Fester" 1)]))
@@ -427,7 +427,7 @@
     (is (= 1 (:credit (get-corp))) "Lost no credits when purging, only had 1c")))
 
 (deftest film-critic-discarded-executives
-  "Film Critic - Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042"
+  ;; Film Critic - Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042
   (do-game
     (new-game (default-corp [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) (qty "Hedge Fund" 1)])
               (default-runner [(qty "Film Critic" 1)]))
@@ -445,7 +445,7 @@
       (is (empty? (:scored (get-runner))) "Nothing in Runner scored"))))
 
 (deftest film-critic-fetal-ai
-  "Film Critic - Fetal AI interaction"
+  ;; Film Critic - Fetal AI interaction
   (do-game
     (new-game (default-corp [(qty "Fetal AI" 3)])
               (default-runner [(qty "Film Critic" 1) (qty "Sure Gamble" 3)]))
@@ -463,7 +463,7 @@
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
 (deftest gene-conditioning-shoppe
-  "Gene Conditioning Shoppe - set :genetics-trigger-twice flag"
+  ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
   (do-game
    (new-game (default-corp [(qty "Hedge Fund" 3)])
              (default-runner [(qty "Gene Conditioning Shoppe" 1)
@@ -477,7 +477,7 @@
    (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
 
 (deftest gene-conditioning-shoppe-redundancy
-  "Gene Conditioning Shoppe - set :genetics-trigger-twice flag - ensure redundant copies work"
+  ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag - ensure redundant copies work
   (do-game
    (new-game (default-corp [(qty "Hedge Fund" 3)])
              (default-runner [(qty "Gene Conditioning Shoppe" 2)
@@ -499,7 +499,7 @@
        (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))))
 
 (deftest globalsec-security-clearance
-  "Globalsec Security Clearance - Ability, click lost on use"
+  ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Globalsec Security Clearance" 1)]))
@@ -517,7 +517,7 @@
       (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
 
 (deftest grifter
-  "Grifter - Gain 1c if you made a successful run this turn, otherwise trash it"
+  ;; Grifter - Gain 1c if you made a successful run this turn, otherwise trash it
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Grifter" 1)]))
@@ -533,7 +533,7 @@
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
 (deftest hard-at-work
-  "Hard at Work - Gain 2c and lose 1 click when turn begins"
+  ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Hard at Work" 1)]))
@@ -545,7 +545,7 @@
     (is (= 3 (:click (get-runner))) "Lost 1 click")))
 
 (deftest ice-carver
-  "Ice Carver - lower ice strength on encounter"
+  ;; Ice Carver - lower ice strength on encounter
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 1)])
               (default-runner [(qty "Ice Carver" 1)]))
@@ -560,7 +560,7 @@
       (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
 (deftest investigative-journalism
-  "Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub"
+  ;; Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Investigative Journalism" 1)]))
@@ -577,7 +577,7 @@
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
 (deftest john-masanori
-  "John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run"
+  ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "John Masanori" 3)
@@ -599,7 +599,7 @@
     (is (= 1 (:tag (get-runner))) "No tag taken from second unsuccessful run")))
 
 (deftest joshua-b
-  "Joshua B. - Take 1 tag at turn end if you choose to gain the extra click"
+  ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Joshua B." 1)]))
@@ -613,7 +613,7 @@
     (is (= 1 (:tag (get-runner))) "Took 1 tag")))
 
 (deftest kati-jones
-  "Kati Jones - Click to store and take"
+  ;; Kati Jones - Click to store and take
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Kati Jones" 1)]))
@@ -640,7 +640,7 @@
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
 
 (deftest london-library
-  "Install non-virus programs on London library. Includes #325/409"
+  ;; Install non-virus programs on London library. Includes #325/409
   (do-game
     (new-game (default-corp) (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
                                               (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
@@ -685,7 +685,7 @@
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
 
 (deftest muertos-trashed
-  "Muertos Gang Member - Install and Trash"
+  ;; Muertos Gang Member - Install and Trash
   (do-game
     (new-game (default-corp [(qty "Tollbooth" 1) (qty "Ice Wall" 1)])
               (default-runner [(qty "Hedge Fund" 3) (qty "Muertos Gang Member" 1)]))
@@ -708,7 +708,7 @@
         (is (:rezzed (refresh toll)) "Tollbooth was rezzed")))))
 
 (deftest muertos-reina
-  "Muertos Gang Member - Account for Reina interaction, #1098."
+  ;; Muertos Gang Member - Account for Reina interaction, #1098.
   (do-game
     (new-game (default-corp [(qty "Tollbooth" 1) (qty "Ice Wall" 1)])
               (make-deck "Reina Roja: Freedom Fighter" [(qty "Hedge Fund" 3)
@@ -734,7 +734,7 @@
         (is (= 0 (:credit (get-corp))) "Corp has 0 credits")))))
 
 (deftest net-mercur
-  "Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used"
+  ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Net Mercur" 1) (qty "Silencer" 1) (qty "Ghost Runner" 1)]))
@@ -762,7 +762,7 @@
       (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
 
 (deftest new-angeles-city-hall
-  "New Angeles City Hall - Avoid tags; trash when agenda is stolen"
+  ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
   (do-game
     (new-game (default-corp [(qty "SEA Source" 1) (qty "Breaking News" 1)])
               (default-runner [(qty "New Angeles City Hall" 1)]))
@@ -787,7 +787,7 @@
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
 (deftest patron
-  "Patron - Ability"
+  ;; Patron - Ability
   (do-game
     (new-game (default-corp [(qty "Jackson Howard" 1)])
               (default-runner [(qty "Patron" 4) (qty "Easy Mark" 4)]))
@@ -812,7 +812,7 @@
       (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
 
 (deftest patron-manual
-  "Patron - Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744."
+  ;; Patron - Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744.
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Patron" 3) (qty "Jak Sinclair" 3)]))
@@ -833,7 +833,7 @@
       (is (empty? (:prompt (get-runner))) "No second prompt for Patron"))))
 
 (deftest professional-contacts
-  "Professional Contacts - Click to gain 1 credit and draw 1 card"
+  ;; Professional Contacts - Click to gain 1 credit and draw 1 card
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Professional Contacts" 3)
@@ -852,7 +852,7 @@
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
 
 (deftest rolodex
-  "Rolodex - Full test"
+  ;; Rolodex - Full test
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Rolodex" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)
@@ -866,7 +866,7 @@
     (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
-    ;try starting over
+    ;; try starting over
     (prompt-choice :runner "Start over")
     (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
@@ -884,7 +884,7 @@
     (is (= "Corroder" (:title (first (:deck (get-runner))))))))
 
 (deftest sacrificial-construct
-  "Sacrificial Construct - Trash to prevent trash of installed program or hardware"
+  ;; Sacrificial Construct - Trash to prevent trash of installed program or hardware
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Sacrificial Construct" 2) (qty "Cache" 1)
@@ -909,7 +909,7 @@
     (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Astrolabe still installed")))
 
 (deftest safety-first
-  "Safety First - Reduce hand size by 2, draw 1 at turn end if below maximum"
+  ;; Safety First - Reduce hand size by 2, draw 1 at turn end if below maximum
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Safety First" 3) (qty "Cache" 3)]))
@@ -924,12 +924,12 @@
     (is (= 3 (count (:hand (get-runner)))) "Drew no cards, at maximum")))
 
 (deftest salsette-slums
-  "Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game"
+  ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game
   (do-game
     (new-game (default-corp [(qty "Hostile Infrastructure" 1) (qty "Tech Startup" 1) (qty "Thomas Haas" 1)
                              (qty "Hedge Fund" 3)])
               (default-runner [(qty "Salsette Slums" 2) (qty "Sure Gamble" 3)]))
-    ; Use Hostile Infrastructure to ensure on-trash effects don't fire.
+    ;; Use Hostile Infrastructure to ensure on-trash effects don't fire.
     (core/move state :corp (find-card "Hostile Infrastructure" (:deck (get-corp))) :hand)
     (core/move state :corp (find-card "Tech Startup" (:deck (get-corp))) :hand)
     (core/move state :corp (find-card "Thomas Haas" (:deck (get-corp))) :hand)
@@ -958,19 +958,19 @@
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
       (is (not (empty? (:prompt (get-runner)))) "Prompting to trash")
-      ; Only able to use the ability once per turn
+      ;; Only able to use the ability once per turn
       (card-ability state :runner salsette1 0)
       (is (not (empty? (:prompt (get-runner)))) "Still prompting to trash")
       (is (:run @state) "Run is still occurring")
-      ; Can't use the ability if you can't afford to trash
+      ;; Can't use the ability if you can't afford to trash
       (card-ability state :runner salsette2 0)
       (is (not (empty? (:prompt (get-runner)))) "Still prompting to trash")
       (is (:run @state) "Run is still occurring")
       (prompt-choice :runner "No")
-      ; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
+      ;; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
       (run-empty-server state :remote3)
       (prompt-choice :runner "Yes")
-      ; Can only use that first Slums once
+      ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
       (is (empty? (:prompt (get-runner))) "Not prompting the runner")
       (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game")
@@ -978,7 +978,7 @@
       (is (not (empty? (:prompt (get-runner)))) "Prompting the runner to choose a card")
       (prompt-select :runner (find-card "Thomas Haas" (:discard (get-corp))))
       (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game"))
-    ; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
+    ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
     (core/gain state :runner :credit 5)
     (run-empty-server state :remote2)
     (prompt-choice :runner "Yes")
@@ -988,11 +988,10 @@
           hostile2 (get-content state :remote2 0)]
       (card-ability state :runner salsette1 1)
       (prompt-select :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
-      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))
-    ))
+      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))))
 
 (deftest security-testing
-  "Security Testing - Ability"
+  ;; Security Testing - Ability
   (do-game
     (new-game (default-corp [(qty "Jackson Howard" 1)])
               (default-runner [(qty "Security Testing" 1)]))
@@ -1009,14 +1008,13 @@
       (prompt-choice :runner "No")
       (is (= 10 (:credit (get-runner))) "Did not gain credits on second run")
       (take-credits state :runner 2)
-
       (take-credits state :corp)
       (prompt-choice :runner "Server 1")
       (run-empty-server state "Archives")
       (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
 
 (deftest security-testing-multiple
-  "Security Testing - multiple copies"
+  ;; Security Testing - multiple copies
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Security Testing" 2)]))
@@ -1033,7 +1031,7 @@
     (is (= 11 (:credit (get-runner))))))
 
 (deftest spoilers
-  "Spoilers - Mill the Corp when it scores an agenda"
+  ;; Spoilers - Mill the Corp when it scores an agenda
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Hedge Fund" 1)])
               (default-runner [(qty "Spoilers" 1)]))
@@ -1049,7 +1047,7 @@
       (is (= 0 (count (:deck (get-corp)))) "Last card from R&D milled"))))
 
 (deftest stim-dealer
-  "Stim Dealer - Take 1 brain damage when it accumulates 2 power counters"
+  ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Stim Dealer" 1) (qty "Sure Gamble" 1) (qty "Feedback Filter" 1)]))
@@ -1074,7 +1072,7 @@
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
 
 (deftest street-peddler-ability
-  "Street Peddler - Ability"
+  ;; Street Peddler - Ability
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1)
@@ -1093,7 +1091,7 @@
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
 
 (deftest street-peddler-cant-afford
-  "Street Peddler - Can't afford install"
+  ;; Street Peddler - Can't afford install
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1) (qty "Gordian Blade" 3)]))
@@ -1112,7 +1110,7 @@
                "Street Peddler still installed with 3 hosted cards")))))
 
 (deftest street-peddler-kate-discount
-  "Street Peddler - Interaction with Kate discount"
+  ;; Street Peddler - Interaction with Kate discount
   (do-game
     (new-game (default-corp)
               (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker" [(qty "Street Peddler" 1)
@@ -1133,7 +1131,7 @@
       (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
 
 (deftest street-peddler-memory-units
-  "Street Peddler - Programs Should Cost Memory. Issue #708"
+  ;; Street Peddler - Programs Should Cost Memory. Issue #708
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1) (qty "Corroder" 3)]))
@@ -1150,7 +1148,7 @@
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
 (deftest street-peddler-in-play-effects
-  "Street Peddler - Trashing hardware should not reduce :in-play values"
+  ;; Street Peddler - Trashing hardware should not reduce :in-play values
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Street Peddler" 1) (qty "HQ Interface" 3)]))
@@ -1164,7 +1162,7 @@
          "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
 
 (deftest street-peddler-parasite-1cr
-  "Street Peddler - Installing Parasite with only 1cr. Issue #491."
+  ;; Street Peddler - Installing Parasite with only 1cr. Issue #491.
   (do-game
     (new-game (default-corp [(qty "Pop-up Window" 3)])
               (default-runner [(qty "Street Peddler" 1) (qty "Parasite" 3)]))
@@ -1186,7 +1184,7 @@
       (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
 
 (deftest street-peddler-tech-trader
-  "Street Peddler - Tech Trader install"
+  ;; Street Peddler - Tech Trader install
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1)
@@ -1203,7 +1201,7 @@
       (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
 
 (deftest symmetrical-visage
-  "Symmetrical Visage - Gain 1 credit the first time you click to draw each turn"
+  ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Symmetrical Visage" 3)
@@ -1218,7 +1216,7 @@
     (is (= 4 (:credit (get-runner))) "No credit gained from second click spent to draw")))
 
 (deftest symmetrical-visage-gcs
-  "Symmetrical Visage - Gain 1 credit the first and second time you click to draw each turn when GCS is installed"
+  ;; Symmetrical Visage - Gain 1 credit the first and second time you click to draw each turn when GCS is installed
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Symmetrical Visage" 3)
@@ -1235,14 +1233,14 @@
    (core/click-draw state :runner nil)
    (is (= 3 (:credit (get-runner)))
        "Gained 1 credit from second click spent to draw with Gene Conditioning Shoppe")
-   ; Move Fall Guy back to deck
+   ;; Move Fall Guy back to deck
    (core/move state :runner (find-card "Fall Guy" (:hand (get-runner))) :deck)
    (core/click-draw state :runner nil)
    (is (= 3 (:credit (get-runner)))
        "No credit gained from third click spent to draw with Gene Conditioning Shoppe")))
 
 (deftest synthetic-blood
-  "Synthetic Blood - The first time you take damage each turn, draw one card"
+  ;; Synthetic Blood - The first time you take damage each turn, draw one card
   (do-game
    (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
              (default-runner [(qty "Synthetic Blood" 3)
@@ -1264,7 +1262,7 @@
      (is (= 3 (count (:hand (get-runner)))) "no card drawn when receiving damage (2nd time)"))))
 
 (deftest synthetic-blood-gcs
-  "Synthetic Blood - The first and second time you take damage each turn (with GCS installed), draw one card"
+  ;; Synthetic Blood - The first and second time you take damage each turn (with GCS installed), draw one card
   (do-game
    (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
              (default-runner [(qty "Synthetic Blood" 3)
@@ -1287,7 +1285,7 @@
      (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (2nd time)"))))
 
 (deftest technical-writer
-  "Technical Writer - Gain 1c per program/hardware install; click/trash to take all credits"
+  ;; Technical Writer - Gain 1c per program/hardware install; click/trash to take all credits
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Technical Writer" 1) (qty "Faerie" 2)
@@ -1310,7 +1308,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Technical Writer trashed"))))
 
 (deftest the-helpful-ai
-  "The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn"
+  ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "The Helpful AI" 1) (qty "Corroder" 1)]))
@@ -1328,7 +1326,7 @@
       (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
 
 (deftest the-source
-  "The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal"
+  ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 2)])
               (default-runner [(qty "The Source" 2) (qty "Sure Gamble" 3)]))
@@ -1355,7 +1353,7 @@
       (is (= 3 (count (:discard (get-runner)))) "The Source is trashed"))))
 
 (deftest the-supplier-ability
-  "The Supplier - Ability"
+  ;; The Supplier - Ability
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "The Supplier" 1)
@@ -1382,7 +1380,7 @@
       (is (= 1 (count (:hosted (refresh ts)))) "One card still on The Supplier"))))
 
 (deftest the-supplier-kate-discount
-  "The Supplier - Interaction with Kate discount. Issue #578."
+  ;; The Supplier - Interaction with Kate discount. Issue #578.
   (do-game
     (new-game (default-corp)
               (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker"
@@ -1403,7 +1401,7 @@
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
 (deftest tech-trader
-  "Basic test"
+  ;; Basic test
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Tech Trader" 1) (qty "Fall Guy" 1)]))
@@ -1418,7 +1416,7 @@
       (is (= 7 (:credit (get-runner)))))))
 
 (deftest the-black-file
-  "The Black File - Prevent Corp from winning by agenda points"
+  ;; The Black File - Prevent Corp from winning by agenda points
   (do-game
     (new-game (default-corp [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)])
               (default-runner [(qty "The Black File" 1)]))
@@ -1444,7 +1442,7 @@
       (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
 
 (deftest the-black-file-flatline
-  "The Black File - Corp can still win by flatlining Runner"
+  ;; The Black File - Corp can still win by flatlining Runner
   (do-game
     (new-game (default-corp [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)])
               (default-runner [(qty "The Black File" 1)]))
@@ -1465,7 +1463,7 @@
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
 (deftest temujin-contract
-  "Temüjin Contract - Multiple times in one turn. Issue #1952."
+  ;; Temüjin Contract - Multiple times in one turn. Issue #1952.
   (do-game
     (new-game (default-corp)
               (make-deck "Silhouette: Stealth Operative" [(qty "Temüjin Contract" 1)]))
@@ -1479,7 +1477,7 @@
     (is (= 12 (get-counters (get-resource state 0) :credit)) "Temjin has 12 credits remaining")))
 
 (deftest tri-maf-contact
-  "Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed"
+  ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Tri-maf Contact" 2) (qty "Cache" 3)]))
@@ -1495,9 +1493,8 @@
       (core/trash state :runner tmc)
       (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
 
-
 (deftest virus-breeding-ground-gain
-  "Virus Breeding Ground - Gain counters"
+  ;; Virus Breeding Ground - Gain counters
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Virus Breeding Ground" 1)]))
@@ -1514,7 +1511,7 @@
           "Virus Breeding Ground gains 1 counter per turn"))))
 
 (deftest virus-breeding-ground-gain
-  "Virus Breeding Ground - Move counters"
+  ;; Virus Breeding Ground - Move counters
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Virus Breeding Ground" 1) (qty "Hivemind" 1)]))
@@ -1534,7 +1531,7 @@
       (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
 
 (deftest wasteland
-  "Wasteland - Gain 1c the first time you trash an installed card each turn"
+  ;; Wasteland - Gain 1c the first time you trash an installed card each turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Wasteland" 1) (qty "Fall Guy" 3)]))
@@ -1555,7 +1552,7 @@
     (is (= 11 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
 (deftest xanadu
-  "Xanadu - Increase all ICE rez cost by 1 credit"
+  ;; Xanadu - Increase all ICE rez cost by 1 credit
   (do-game
     (new-game (default-corp [(qty "Paper Wall" 2) (qty "Launch Campaign" 1)])
               (default-runner [(qty "Xanadu" 1)]))
@@ -1575,7 +1572,7 @@
       (is (= 2 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE"))))
 
 (deftest zona-sul-shipping
-  "Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged"
+  ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Zona Sul Shipping" 1)]))

@@ -6,7 +6,7 @@
             [clojure.test :refer :all]))
 
 (deftest twenty-four-seven-news-cycle-breaking-news
-  "24/7 News Cycle - Breaking News interaction"
+  ;; 24/7 News Cycle - Breaking News interaction
   (do-game
     (new-game (default-corp [(qty "Breaking News" 2) (qty "24/7 News Cycle" 3)])
               (default-runner))
@@ -28,7 +28,7 @@
       (is (= 2 (:tag (get-runner))) "Tags remained after Corp ended turn"))))
 
 (deftest twenty-four-seven-news-cycle-posted-bounty
-  "24/7 News Cycle and Posted Bounty interaction -- Issue #1043"
+  ;; 24/7 News Cycle and Posted Bounty interaction -- Issue #1043
   (do-game
     (new-game (default-corp [(qty "Posted Bounty" 2) (qty "24/7 News Cycle" 3)])
               (default-runner))
@@ -50,7 +50,7 @@
       (is (= 0 (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
 
 (deftest twenty-four-seven-news-cycle-swaps
-  "24/7 News Cycle - Swapped agendas are able to be used. #1555"
+  ;; 24/7 News Cycle - Swapped agendas are able to be used. #1555
   (do-game
     (new-game (default-corp [(qty "24/7 News Cycle" 1) (qty "Chronos Project" 1)
                              (qty "Philotic Entanglement" 1) (qty "Profiteering" 1)])
@@ -68,11 +68,11 @@
     (play-from-hand state :corp "24/7 News Cycle")
     (prompt-card :corp (find-card "Chronos Project" (:scored (get-corp))))
     (is (= "Chronos Project" (:title (first (:rfg (get-corp))))))
-    ;shouldn't work on an agenda in the Runner's scored area
+    ;; shouldn't work on an agenda in the Runner's scored area
     (is (= 2 (count (:hand (get-runner)))))
     (prompt-select :corp (find-card "Philotic Entanglement" (:scored (get-runner))))
     (is (= 2 (count (:hand (get-runner)))))
-    ;resolve 'when scored' ability on swapped Profiteering
+    ;; resolve 'when scored' ability on swapped Profiteering
     (is (= 8 (:credit (get-corp))))
     (prompt-select :corp (find-card "Profiteering" (:scored (get-corp))))
     (prompt-choice :corp "3")
@@ -81,7 +81,7 @@
     (is (= 23 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest accelerated-diagnostics
-  "Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan"
+  ;; Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan
   (do-game
     (new-game (default-corp [(qty "Accelerated Diagnostics" 1) (qty "Cerebral Overwriter" 1) (qty "Shipment from SanSan" 1)
                              (qty "Hedge Fund" 1) (qty "Back Channels" 1)])
@@ -107,9 +107,8 @@
       (prompt-select :corp (refresh co))
       (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
 
-
 (deftest big-brother
-  "Big Brother - Give the Runner 2 tags if already tagged"
+  ;; Big Brother - Give the Runner 2 tags if already tagged
   (do-game
     (new-game (default-corp [(qty "Big Brother" 1)])
               (default-runner))
@@ -120,7 +119,7 @@
     (is (= 3 (:tag (get-runner))) "Runner gained 2 tags")))
 
 (deftest biotic-labor
-  "Biotic Labor - Gain 2 clicks"
+  ;; Biotic Labor - Gain 2 clicks
   (do-game
     (new-game (default-corp [(qty "Biotic Labor" 1)])
               (default-runner))
@@ -129,7 +128,7 @@
     (is (= 4 (:click (get-corp))) "Spent 1 click to gain 2 additional clicks")))
 
 (deftest blue-level-clearance
-  "Blue Level Clearance - Gain 5 credits and draw 2 cards"
+  ;; Blue Level Clearance - Gain 5 credits and draw 2 cards
   (do-game
     (new-game (default-corp [(qty "Blue Level Clearance" 3)
                              (qty "Hedge Fund" 3)
@@ -141,7 +140,7 @@
     (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
 
 (deftest casting-call
-  "Casting Call - Only do card-init on the Public agendas.  Issue #1128"
+  ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
   (do-game
     (new-game (default-corp [(qty "Casting Call" 2) (qty "Oaktown Renovation" 1)
                              (qty "Improved Tracers" 1) (qty "Hunter" 1)])
@@ -170,7 +169,7 @@
           (is (= 2 (:tag (get-runner))) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
 (deftest cerebral-static-chaos-theory
-  "Cerebral Static - vs Chaos Theory"
+  ;; Cerebral Static - vs Chaos Theory
   (do-game
     (new-game (default-corp [(qty "Cerebral Static" 1) (qty "Lag Time" 1)])
               (make-deck "Chaos Theory: Wünderkind" [(qty "Sure Gamble" 3)]))
@@ -181,7 +180,7 @@
     (is (= 5 (:memory (get-runner))) "CT 5 memory restored")))
 
 (deftest closed-accounts
-  "Closed Accounts - Play if Runner is tagged to make Runner lose all credits"
+  ;; Closed Accounts - Play if Runner is tagged to make Runner lose all credits
   (do-game
     (new-game (default-corp [(qty "Closed Accounts" 1)])
               (default-runner))
@@ -194,7 +193,7 @@
     (is (= 0 (:credit (get-runner))) "Runner lost all credits")))
 
 (deftest consulting-visit
-  "Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation"
+  ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
   (do-game
     (new-game (default-corp [(qty "Consulting Visit" 1)
                              (qty "Beanstalk Royalties" 2)
@@ -214,7 +213,7 @@
       (is (= 6 (:credit (get-corp)))))))
 
 (deftest consulting-visit-mumbad
-  "Consulting Visit - Works properly when played with Mumbad City Hall"
+  ;; Consulting Visit - Works properly when played with Mumbad City Hall
   (do-game
     (new-game (default-corp [(qty "Mumbad City Hall" 1)
                              (qty "Beanstalk Royalties" 1)
@@ -243,7 +242,7 @@
       (is (= 5 (:credit (get-corp)))))))
 
 (deftest defective-brainchips
-  "Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn"
+  ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
   (do-game
     (new-game (default-corp [(qty "Defective Brainchips" 1) (qty "Viktor 1.0" 1)])
               (default-runner [(qty "Sure Gamble" 2) (qty "Shiv" 2)]))
@@ -275,7 +274,7 @@
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
 
 (deftest exchange-of-information
-  "Exchange of Information - Swapping agendas works correctly"
+  ;; Exchange of Information - Swapping agendas works correctly
   (do-game
     (new-game (default-corp [(qty "Exchange of Information" 1)
                              (qty "Market Research" 1)
@@ -307,7 +306,7 @@
       (is (= 4 (:agenda-point (get-corp))))))
 
 (deftest exchange-of-information-breaking-news
-  "Exchange of Information - Swapping a just scored Breaking News keeps the tags"
+  ;; Exchange of Information - Swapping a just scored Breaking News keeps the tags
   (do-game
     (new-game (default-corp [(qty "Exchange of Information" 1)
                              (qty "Market Research" 1)
@@ -336,7 +335,7 @@
       (is (= 2 (:tag (get-runner))) "Runner does not lose tags at end of turn")))
 
 (deftest exchange-of-information-fifteen-minutes
-  "Exchange of Information - Swapping a 15 Minutes still keeps the ability. #1783"
+  ;; Exchange of Information - Swapping a 15 Minutes still keeps the ability. #1783
   (do-game
     (new-game (default-corp [(qty "Exchange of Information" 2) (qty "15 Minutes" 1)
                              (qty "Project Beale" 1)])
@@ -354,7 +353,7 @@
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 0 (count (:deck (get-corp)))))
-    ;shuffle back into R&D from runner's scored area
+    ;; shuffle back into R&D from runner's scored area
     (let [fifm (get-in @state [:runner :scored 0])]
       (card-ability state :corp fifm 0))
     (is (= 2 (:agenda-point (get-corp))))
@@ -370,13 +369,13 @@
     (prompt-select :corp (find-card "Project Beale" (:scored (get-corp))))
     (is (= 1 (:agenda-point (get-corp))))
     (is (= 2 (:agenda-point (get-runner))))
-    ;shuffle back into R&D from corp's scored area
+    ;; shuffle back into R&D from corp's scored area
     (let [fifm (get-in @state [:corp :scored 0])]
       (card-ability state :corp fifm 0))
     (is (= "15 Minutes" (:title (first (:deck (get-corp))))))))
 
 (deftest exchange-of-information-mandatory-upgrades
-  "Exchange of Information - Swapping a Mandatory Upgrades gives the Corp an additional click per turn. #1687"
+  ;; Exchange of Information - Swapping a Mandatory Upgrades gives the Corp an additional click per turn. #1687
   (do-game
     (new-game (default-corp [(qty "Exchange of Information" 2) (qty "Mandatory Upgrades" 1)
                              (qty "Global Food Initiative" 1)])
@@ -439,7 +438,7 @@
     (is (= 9 (:credit (get-corp))))))
 
 (deftest housekeeping
-  "Housekeeping - Runner must trash a card from Grip on first install of a turn"
+  ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
   (do-game
     (new-game (default-corp [(qty "Housekeeping" 1)])
               (default-runner [(qty "Cache" 2) (qty "Fall Guy" 1) (qty "Mr. Li" 1)]))
@@ -456,12 +455,12 @@
     (is (empty? (:prompt (get-runner))) "Housekeeping didn't trigger on 2nd install")))
 
 (deftest invasion-of-privacy
-  "Invasion of Privacy - Full test"
+  ;; Invasion of Privacy - Full test
   (do-game
     (new-game (default-corp [(qty "Invasion of Privacy" 3)])
               (default-runner [(qty "Sure Gamble" 2) (qty "Fall Guy" 1) (qty "Cache" 2)]))
     (core/gain state :corp :click 3 :credit 6)
-    ;trash 2 cards
+    ;; trash 2 cards
     (play-from-hand state :corp "Invasion of Privacy")
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 0) ; Runner won't match
@@ -472,7 +471,7 @@
       (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
       (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))))
-    ;able to trash 2 cards but only 1 available target in Runner's hand
+    ;; able to trash 2 cards but only 1 available target in Runner's hand
     (play-from-hand state :corp "Invasion of Privacy")
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 0) ; Runner won't match
@@ -483,7 +482,7 @@
       (prompt-choice :corp (find-card "Fall Guy" (:hand (get-runner))))
       (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
     (is (= 2 (count (:hand (get-runner)))))
-    ;failed trace - take the bad publicity
+    ;; failed trace - take the bad publicity
     (play-from-hand state :corp "Invasion of Privacy")
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 2) ; Runner matches
@@ -502,7 +501,7 @@
     (is (= 7 (:credit (get-corp))))))
 
 (deftest manhunt-every-run
-  "Manhunt - only fires once per turn. Unreported issue."
+  ;; Manhunt - only fires once per turn. Unreported issue.
   (do-game
     (new-game (default-corp [(qty "Manhunt" 1) (qty "Hedge Fund" 3)])
               (default-runner))
@@ -521,7 +520,7 @@
     (is (not (:run @state)) "Run ended")))
 
 (deftest midseason-replacements
-  "Midseason Replacements - Trace to give Runner tags after they steal an agenda"
+  ;; Midseason Replacements - Trace to give Runner tags after they steal an agenda
   (do-game
     (new-game (default-corp [(qty "Midseason Replacements" 1) (qty "Breaking News" 1)])
               (default-runner))
@@ -541,7 +540,7 @@
       (is (= 6 (:tag (get-runner))) "Runner took 6 tags"))))
 
 (deftest mushin-no-shin
-  "Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn"
+  ;; Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn
   (do-game
     (new-game (default-corp [(qty "Mushin No Shin" 2) (qty "Ronin" 1) (qty "Profiteering" 1)])
               (default-runner))
@@ -568,7 +567,7 @@
         (is (= 1 (:agenda-point (get-corp))) "Profiteering was able to be scored")))))
 
 (deftest neural-emp
-  "Neural EMP - Play if Runner made a run the previous turn to do 1 net damage"
+  ;; Neural EMP - Play if Runner made a run the previous turn to do 1 net damage
   (do-game
     (new-game (default-corp [(qty "Neural EMP" 1)])
               (default-runner))
@@ -581,7 +580,7 @@
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
 (deftest oversight-ai
-  "Oversight AI - Rez a piece of ICE ignoring all costs"
+  ;; Oversight AI - Rez a piece of ICE ignoring all costs
   (do-game
     (new-game (default-corp [(qty "Oversight AI" 1) (qty "Archer" 1)])
               (default-runner))
@@ -595,7 +594,7 @@
           "Archer hosting OAI as a condition"))))
 
 (deftest patch
-  "Patch - +2 current strength"
+  ;; Patch - +2 current strength
   (do-game
     (new-game (default-corp [(qty "Patch" 1) (qty "Vanilla" 1)])
               (default-runner))
@@ -606,7 +605,7 @@
     (is (= 2 (:current-strength (get-ice state :hq 0))) "Vanilla at 2 strength")))
 
 (deftest paywall-implementation
-  "Paywall Implementation - Gain 1 credit for every successful run"
+  ;; Paywall Implementation - Gain 1 credit for every successful run
   (do-game
     (new-game (default-corp [(qty "Paywall Implementation" 1)])
               (default-runner))
@@ -621,7 +620,7 @@
     (is (= 9 (:credit (get-corp))) "Gained 1 credit from successful run")))
 
 (deftest peak-efficiency
-  "Peak Efficiency - Gain 1 credit for each rezzed ICE"
+  ;; Peak Efficiency - Gain 1 credit for each rezzed ICE
   (do-game
     (new-game (default-corp [(qty "Peak Efficiency" 1) (qty "Paper Wall" 3) (qty "Wraparound" 1)])
               (default-runner))
@@ -637,7 +636,7 @@
     (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed ICE; unrezzed ICE ignored")))
 
 (deftest power-shutdown
-  "Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware"
+  ;; Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware
   (do-game
     (new-game (default-corp [(qty "Power Shutdown" 3) (qty "Hive" 3)])
               (default-runner [(qty "Grimoire" 1) (qty "Cache" 1)]))
@@ -661,7 +660,7 @@
     (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
 
 (deftest precognition
-  "Precognition - Full test"
+  ;; Precognition - Full test
   (do-game
     (new-game (default-corp [(qty "Precognition" 1) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
                              (qty "Quandary" 1) (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
@@ -673,7 +672,7 @@
     (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
     (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
     (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
-    ;try starting over
+    ;; try starting over
     (prompt-choice :corp "Start over")
     (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
@@ -688,7 +687,7 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest psychographics
-  "Psychographics - Place advancements up to the number of Runner tags on a card"
+  ;; Psychographics - Place advancements up to the number of Runner tags on a card
   (do-game
     (new-game (default-corp [(qty "Psychographics" 1) (qty "Project Junebug" 1)])
               (default-runner))
@@ -702,7 +701,7 @@
       (is (= 4 (:advance-counter (refresh pj))) "Junebug has 4 advancements"))))
 
 (deftest punitive-counterstrike
-  "Punitive Counterstrike - deal meat damage equal to printed agenda points"
+  ;; Punitive Counterstrike - deal meat damage equal to printed agenda points
   (do-game
     (new-game (default-corp [(qty "Global Food Initiative" 1) (qty "Punitive Counterstrike" 1)])
               (default-runner))
@@ -718,7 +717,7 @@
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
 (deftest reuse
-  "Reuse - Gain 2 credits for each card trashed from HQ"
+  ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
     (new-game (default-corp [(qty "Reuse" 2) (qty "Hive" 1) (qty "IQ" 1)
                              (qty "Ice Wall" 1)])
@@ -733,7 +732,7 @@
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
 (deftest salems-hospitality
-  "Salem's Hospitality - Full test"
+  ;; Salem's Hospitality - Full test
   (do-game
     (new-game (default-corp [(qty "Salem's Hospitality" 3)])
               (default-runner [(qty "I've Had Worse" 3) (qty "Faust" 1)
@@ -747,7 +746,7 @@
     (is (= 2 (count (:hand (get-runner)))))))
 
 (deftest scorched-earth
-  "Scorched Earth - burn 'em"
+  ;; Scorched Earth - burn 'em
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
@@ -756,7 +755,7 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
 
 (deftest scorched-earth-no-tag
-  "Scorched Earth - not tagged"
+  ;; Scorched Earth - not tagged
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
@@ -765,7 +764,7 @@
     (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
 
 (deftest scorched-earth-flatline
-  "Scorched Earth - murderize 'em"
+  ;; Scorched Earth - murderize 'em
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 1)])
               (default-runner))
@@ -776,7 +775,7 @@
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
 (deftest subcontract-scorched
-  "Subcontract - Don't allow second operation until damage prevention completes"
+  ;; Subcontract - Don't allow second operation until damage prevention completes
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 2) (qty "Subcontract" 1)])
               (default-runner [(qty "Plascrete Carapace" 1)]))
@@ -792,7 +791,7 @@
     (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
 
 (deftest subcontract-terminal
-  "Subcontract - interaction with Terminal operations"
+  ;; Subcontract - interaction with Terminal operations
   (do-game
     (new-game
       (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
@@ -809,7 +808,7 @@
     (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
 (deftest shipment-from-sansan
-  "Shipment from SanSan - placing advancements"
+  ;; Shipment from SanSan - placing advancements
   (do-game
     (new-game (default-corp [(qty "Shipment from SanSan" 3) (qty "Ice Wall" 3)])
               (default-runner))
@@ -822,7 +821,7 @@
       (is (= 2 (:advance-counter (refresh iwall)))))))
 
 (deftest stock-buy-back
-  "Stock Buy-Back - Gain 3c for every agenda in Runner's area"
+  ;; Stock Buy-Back - Gain 3c for every agenda in Runner's area
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Stock Buy-Back" 3)])
               (default-runner))
@@ -839,7 +838,7 @@
     (is (= 11 (:credit (get-corp))))))
 
 (deftest subliminal-messaging
-  "Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand"
+  ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)])
               (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) (qty "Utopia Shard" 1)]))
@@ -879,7 +878,7 @@
     (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
 
 (deftest subliminal-messaging-archived
-  "Subliminal Messaging - Scenario involving Subliminal being added to HQ with Archived Memories"
+  ;; Subliminal Messaging - Scenario involving Subliminal being added to HQ with Archived Memories
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 2) (qty "Archived Memories" 1)])
               (default-runner))
@@ -902,7 +901,7 @@
         "Only 2 Subliminal prompts - there will be a third if flag not cleared")))
 
 (deftest subliminal-messaging-jackson
-  "Subliminal Messaging - Scenario involving Subliminal being reshuffled into R&D with Jackson"
+  ;; Subliminal Messaging - Scenario involving Subliminal being reshuffled into R&D with Jackson
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 1) (qty "Jackson Howard" 1)])
               (default-runner))
@@ -926,7 +925,7 @@
         "Subliminal prompt cleared - there will be a second prompt if flag not cleared")))
 
 (deftest subliminal-messaging-made-run
-  "Subliminal Messaging - Runner made run, ensure game asks again next turn"
+  ;; Subliminal Messaging - Runner made run, ensure game asks again next turn
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 2)])
               (default-runner))
@@ -945,7 +944,7 @@
   (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
 (deftest subliminal-messaging-no
-  "Subliminal Messaging - User declines to return to hand, ensure game asks again next turn"
+  ;; Subliminal Messaging - User declines to return to hand, ensure game asks again next turn
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 2)])
               (default-runner))
@@ -965,7 +964,7 @@
     (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
 (deftest successful-demonstration
-  "Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits"
+  ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
   (do-game
     (new-game (default-corp [(qty "Successful Demonstration" 1)])
               (default-runner))
