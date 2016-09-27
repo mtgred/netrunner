@@ -633,6 +633,54 @@
       (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest ruhr-valley
+  ;; Ruhr Valley - As an additional cost to make a run on this server, the Runner must spend a click.
+   (do-game
+    (new-game (default-corp [(qty "Ruhr Valley" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ruhr Valley" "HQ")
+    (take-credits state :corp)
+    (let [ruhr (get-content state :hq 0)]
+      (core/rez state :corp ruhr)
+      (is (= 4 (:click (get-runner))))
+      (run-on state :hq)
+      (run-jack-out state)
+      (is (= 2 (:click (get-runner))))
+      (take-credits state :runner 1)
+      (is (= 1 (:click (get-runner))))
+      (is (not (core/can-run-server? state "HQ")) "Runner can't run - no additional clicks")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 4 (:click (get-runner))))
+      (is (= 7 (:credit (get-runner))))
+      (run-on state :hq)
+      (run-successful state)
+      (prompt-choice :runner "Yes") ; pay to trash / 7 cr - 4 cr
+      (is (= 2 (:click (get-runner))))
+      (is (= 3 (:credit (get-runner))))
+      (run-on state :hq)
+      (run-jack-out state)
+      (is (= 1 (:click (get-runner)))))))
+
+(deftest ruhr-valley-enable-state
+  ;; Ruhr Valley - If the runner trashes with one click left, the ability to run is enabled
+   (do-game
+    (new-game (default-corp [(qty "Ruhr Valley" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ruhr Valley" "HQ")
+    (take-credits state :corp)
+    (let [ruhr (get-content state :hq 0)]
+      (core/rez state :corp ruhr)
+      (is (= 4 (:click (get-runner))))
+      (run-on state :rd)
+      (run-jack-out state)
+      (is (= 3 (:click (get-runner))))
+      (run-on state :hq)
+      (run-successful state)
+      (prompt-choice :runner "Yes") ; pay to trash / 6 cr - 4 cr
+      (is (= 1 (:click (get-runner))))
+      (run-on state :hq))))
+
 (deftest ryon-knight
   "Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining"
   (do-game
