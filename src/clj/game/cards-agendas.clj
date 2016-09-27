@@ -611,17 +611,15 @@
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
-   (let [get-assets (fn [state corp]
-                      (filter #(is-type? % "Asset")
-                              (concat (all-installed state :corp)
-                                      (:deck corp)
-                                      (:hand corp)
-                                      (:discard corp))))
-         add-ad (fn [state side c]
-                  (update! state side
-                           (assoc c :subtype (combine-subtypes false ;append ad even if it is already an ad
-                                                               (or (:subtype c) "")
-                                                               "Advertisement"))))]
+   (letfn [(get-assets [state corp]
+             (filter #(is-type? % "Asset") (concat (all-installed state :corp)
+                                                   (:deck corp)
+                                                   (:hand corp)
+                                                   (:discard corp))))
+           (add-ad [state side c]
+             (update! state side (assoc c :subtype (combine-subtypes false ;append ad even if it is already an ad
+                                                                     (:subtype c "")
+                                                                     "Advertisement"))))]
      {:interactive (req true)
       :msg "make all assets gain Advertisement"
       :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))
