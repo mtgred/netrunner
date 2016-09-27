@@ -842,13 +842,17 @@
 
    "Mother Goddess"
    (let [ab {:req (req (ice? target))
-             :effect (effect (update! (assoc card :subtype
-                                                  (->> (mapcat :ices (flatten (seq (:servers corp))))
-                                                       (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
-                                                       (mapcat #(split (:subtype %) #" - "))
-                                                       (cons "Mythic")
-                                                       distinct
-                                                       (join " - ")))))}]
+             :effect (effect (update! (let [subtype (->> (mapcat :ices
+                                                                 (flatten (seq (:servers corp))))
+                                                         (filter #(and (:rezzed %)
+                                                                 (not= (:cid card) (:cid %))))
+                                                         (mapcat #(split (:subtype %)
+                                                                 #" - "))
+                                                         (cons "Mythic")
+                                                         distinct
+                                                         (join " - "))]
+                                        (assoc card :subtype-target subtype
+                                                    :subtype subtype))))}]
      {:subroutines [end-the-run]
       :events {:rez ab :trash ab :derez ab}})
 
