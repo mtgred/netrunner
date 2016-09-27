@@ -851,7 +851,7 @@
                                                          (cons "Mythic")
                                                          distinct
                                                          (join " - "))]
-                                        (assoc card :subtype-target subtype
+                                        (assoc card :subtype-target (remove-subtypes subtype "Mythic")
                                                     :subtype subtype))))}]
      {:subroutines [end-the-run]
       :events {:rez ab :trash ab :derez ab}})
