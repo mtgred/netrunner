@@ -158,7 +158,7 @@
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
 
 (deftest daily-business-show
-  "Daily Business Show - Full test"
+  ;; Daily Business Show - Full test
   (do-game
     (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
                              (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
@@ -189,7 +189,7 @@
         "Breaking News third last card in deck")))
 
 (deftest daily-business-show-sensie-actors-union
-  "Daily Business Show - Sensie Actors Union interaction"
+  ;; Daily Business Show - Sensie Actors Union interaction
   (do-game
     (new-game (default-corp [(qty "Daily Business Show" 1) (qty "Sensie Actors Union" 2)
                              (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
@@ -206,7 +206,7 @@
       (core/rez state :corp sensie2)
       (take-credits state :corp)
       (take-credits state :runner)
-      ; Use first Sensie
+      ;; Use first Sensie
       (is (= 1 (count (:hand (get-corp)))))
       (card-ability state :corp sensie1 0)
       (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
@@ -216,11 +216,11 @@
       (is (= "Hedge Fund" (:title (last (:deck (get-corp))))) "Hedge Fund last card in deck")
       (is (= "Resistor" (:title (last (butlast (:deck (get-corp))))))
           "Resistor second last card in deck")
-      ; Try to use first Sensie again
+      ;; Try to use first Sensie again
       (card-ability state :corp sensie1 0)
       (is (empty? (get-in @state [:corp :prompt])) "Sensie didn't activate")
       (is (= 3 (count (:hand (get-corp)))))
-      ; Use second Sensie
+      ;; Use second Sensie
       (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
       (is (= 2 (count (:hand (get-corp)))))
       (card-ability state :corp sensie2 0)
@@ -742,7 +742,7 @@
     (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
 
 (deftest political-dealings
-  "Political Dealings - Full test"
+  ;; Political Dealings - Full test
   (do-game
     (new-game (default-corp [(qty "Political Dealings" 1) (qty "Medical Breakthrough" 1) (qty "Oaktown Renovation" 1)])
               (default-runner))
@@ -750,13 +750,13 @@
     (core/move state :corp (find-card "Oaktown Renovation" (:hand (get-corp))) :deck)
     (play-from-hand state :corp "Political Dealings" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
-    ; Install Medical Breakthrough
+    ;; Install Medical Breakthrough
     (core/draw state :corp)
     (prompt-choice :corp "Yes")
     (prompt-choice :corp "New remote")
     (is (= "Medical Breakthrough" (:title (get-content state :remote2 0)))
         "Medical Breakthrough installed by Political Dealings")
-    ; Install Oaktown Renovation
+    ;; Install Oaktown Renovation
     (core/draw state :corp)
     (prompt-choice :corp "Yes")
     (prompt-choice :corp "New remote")
@@ -766,8 +766,8 @@
         "Oaktown Renovation installed face up")))
 
 (deftest political-dealings-daily-business-show
-  "Political Dealings - Daily Business Show interaction.
-   Draw 2 agendas, install both of them but return 1 to bottom of R&D"
+  ;; Political Dealings - Daily Business Show interaction.
+  ;; Draw 2 agendas, install both of them but return 1 to bottom of R&D"
   (do-game
     (new-game (default-corp [(qty "Political Dealings" 1) (qty "Daily Business Show" 1) (qty "Turtlebacks" 1)
                              (qty "Breaking News" 1) (qty "Project Beale" 1)])
@@ -785,19 +785,19 @@
     (let [agenda1 (first (:deck (get-corp)))
           agenda2 (second (:deck (get-corp)))]
       (take-credits state :runner)
-      ; Install first agenda
+      ;; Install first agenda
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 0 (:credit (get-corp))))
       (prompt-choice :corp "Yes")
       (prompt-choice :corp "New remote")
       (is (= (:cid agenda1) (:cid (get-content state :remote4 0))))
       (is (= 1 (:credit (get-corp))) "Turtlebacks triggered")
-      ; Install second agenda
+      ;; Install second agenda
       (prompt-choice :corp "Yes")
       (prompt-choice :corp "New remote")
       (is (= (:cid agenda2) (:cid (get-content state :remote5 0))))
       (is (= 2 (:credit (get-corp))) "Turtlebacks triggered")
-      ; DBS - put first agenda at bottom of R&D
+      ;; DBS - put first agenda at bottom of R&D
       (prompt-select :corp (get-content state :remote4 0))
       (is (= 0 (count (:hand (get-corp)))))
       (is (= (:cid agenda1) (:cid (last (:deck (get-corp)))))))))

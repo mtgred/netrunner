@@ -243,20 +243,18 @@
               :once :per-turn
               :once-key :daily-business-show-draw-bonus
               :req (req (first-event state side :pre-corp-draw))
-              :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
-                                                    (all-installed state :corp)))]
+              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
              :post-corp-draw
              {:once :per-turn
               :once-key :daily-business-show-put-bottom
               :delayed-completion true
-              :effect (req (let [dbs (count (filter #(and (rezzed? %) (= (:title %) "Daily Business Show"))
-                                                    (all-installed state :corp)))
+              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (continue-ability
                                state side
-                               {:prompt (str "Choose " dbs " card" (if (> dbs 1) "s" "") " to add to the bottom of R&D")
-                                :msg (msg "add " dbs " card" (if (> dbs 1) "s" "") " to the bottom of R&D")
+                               {:prompt (str "Choose " dbs " card" (when (> dbs 1) "s") " to add to the bottom of R&D")
+                                :msg (msg "add " dbs " card" (when (> dbs 1) "s") " to the bottom of R&D")
                                 :choices {:max dbs
                                           :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
                                 :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
@@ -749,8 +747,8 @@
                                     :effect (req (when-completed
                                                    (corp-install state side (nth agendas n) nil
                                                                  {:install-state
-                                                                  (or (:install-state (card-def (nth agendas n)))
-                                                                      :rezzed-no-cost)})
+                                                                  (:install-state (card-def (nth agendas n))
+                                                                    :rezzed-no-cost)})
                                                    (if (< (inc n) (count agendas))
                                                      (continue-ability state side (pd agendas (inc n)) card nil)
                                                      (effect-completed state side eid))))}
