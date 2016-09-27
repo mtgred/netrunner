@@ -599,6 +599,21 @@
       (prompt-choice :runner "1 [Credits]")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
 
+(deftest noise
+  "Noise: Hacker Extraordinaire - Ability"
+  (do-game
+    (new-game
+      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "PAD Campaign" 3)])
+      (make-deck "Noise: Hacker Extraordinaire" [(qty "Datasucker" 1) (qty "Easy Mark" 2)]))
+    (is (= 6 (count (:hand (get-corp)))) "Corp should start with 6 cards in hand")
+    (is (= 3 (count (:deck (get-corp)))) "Corp deck should contain 3 cards")
+    (take-credits state :corp)
+    (is (= 0 (count (:discard (get-corp)))) "Archives started empty")
+    (play-from-hand state :runner "Datasucker")
+    (is (= 1 (count (:discard (get-corp)))) "Playing virus should cause card to be trashed from R&D")
+    (play-from-hand state :runner "Easy Mark")
+    (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")))
+
 (deftest null-ability
   "Null ability - once per turn"
   (do-game
@@ -829,18 +844,3 @@
     (prompt-choice :runner "Yes")
     (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
         "Sure Gamble still in Wyvern's discard")))
-
-(deftest noise
-  "Noise: Hacker Extraordinaire - Ability"
-  (do-game
-    (new-game
-      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "PAD Campaign" 3)])
-      (make-deck "Noise: Hacker Extraordinaire" [(qty "Datasucker" 1) (qty "Easy Mark" 2)]))
-    (is (= 6 (count (:hand (get-corp)))) "Corp should start with 6 cards in hand")
-    (is (= 3 (count (:deck (get-corp)))) "Corp deck should contain 3 cards")
-    (take-credits state :corp)
-    (is (= 0 (count (:discard (get-corp)))) "Archives started empty")
-    (play-from-hand state :runner "Datasucker")
-    (is (= 1 (count (:discard (get-corp)))) "Playing virus should cause card to be trashed from R&D")
-    (play-from-hand state :runner "Easy Mark")
-    (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")))
