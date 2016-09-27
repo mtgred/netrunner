@@ -574,13 +574,10 @@
                                 (:rezzed (get-card state current-ice))))
                  :once :per-turn :msg (msg "make " (:title current-ice) " gain code gate until the end of the run")
                  :effect (req (let [ice current-ice
-                                    stype-targets (:subtype-target ice)
                                     stypes (:subtype ice)]
-                                (update! state side (assoc ice :subtype-target (combine-subtypes true stype-targets "Code Gate")
-                                                               :subtype (combine-subtypes true stypes "Code Gate")))
+                                (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
                                 (register-events state side
-                                                 {:run-ends {:effect (effect (update! (assoc ice :subtype-target stype-targets
-                                                                                                 :subtype stypes))
+                                                 {:run-ends {:effect (effect (update! (assoc ice :subtype stypes))
                                                                              (unregister-events card))}} card)
                                 (update-ice-strength state side ice)
                                 (trigger-event state side :ice-subtype-changed)))}]
