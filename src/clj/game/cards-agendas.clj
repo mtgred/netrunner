@@ -711,8 +711,11 @@
                     (move target :hand) )}
 
    "The Future Perfect"
-   {:steal-req (req installed)
-    :access {:psi {:req (req (not installed)) :equal {:effect (final-effect (steal card))}}}}
+   {:access
+    {:psi {:req (req (not installed))
+           :not-equal {:msg (msg "prevent it from being stolen")
+                       :effect (final-effect (register-run-flag! card :can-steal
+                                                                 (fn [_ _ c] (not= (:cid c) (:cid card)))))}}}}
 
    "Underway Renovation"
    {:install-state :face-up

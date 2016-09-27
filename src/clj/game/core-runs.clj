@@ -52,30 +52,24 @@
                                          (trash state side current)))}
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
-       (do
-         (effect-completed state side eid nil))))))
+       (effect-completed state side eid nil)))))
 
-(defn resolve-steal-events
+(defn- resolve-steal-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
   ([state side card] (resolve-steal-events state side (make-eid state) card))
   ([state side eid card]
-   (let [cdef (card-def card)]
-     (if-let [access-effect (:access cdef)]
-       (when-completed (resolve-ability state (to-keyword (:side card)) access-effect card nil)
-                       (do (trigger-event state side :access card)
-                           (effect-completed state side eid card)))
-       (do (trigger-event state side :access card)
-           (effect-completed state side eid card))))))
+   (trigger-event state side :access card)
+   (effect-completed state side eid card)))
 
-(defn resolve-steal
+(defn- resolve-steal
   "Finish the stealing of an agenda."
   ([state side card] (resolve-steal state side (make-eid state) card))
   ([state side eid card]
    (let [cdef (card-def card)]
      (when-completed (resolve-steal-events state side card)
-                     (do (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
-                           (steal state :runner eid card)
-                           (effect-completed state side eid nil)))))))
+                     (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+                       (steal state :runner eid card)
+                       (effect-completed state side eid nil))))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -144,9 +138,9 @@
   (trigger-event state side :pre-steal-cost c)
   (if-not (can-steal? state side c)
     ;; The runner cannot steal this agenda.
-    (do (when-completed (resolve-steal-events state side c)
-                        (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
-                            (effect-completed state side eid c))))
+    (when-completed (resolve-steal-events state side c)
+                    (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
+                        (effect-completed state side eid c)))
     ;; The runner can potentially steal this agenda.
     (let [cost (steal-cost state side c)
           name (:title c)]
@@ -185,20 +179,31 @@
      (trigger-event state side :pre-access-card c)
      (let [acost (access-cost state side c)
            ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-           anon-card (dissoc c :title)
-           card c]
+           anon-card (dissoc c :title)]
        (if (or (empty? acost) (pay state side anon-card acost))
          ;; Either there were no access costs, or the runner could pay them.
          (let [cdef (card-def c)
-               c (assoc c :seen true)]
+               c (assoc c :seen true)
+               access-effect (:access cdef)]
            (when-let [name (:title c)]
-             (if (is-type? c "Agenda") ; accessing an agenda
-               (access-agenda state side eid c)
+             (if (is-type? c "Agenda")
+               ;; Accessing an agenda
+               (if (and access-effect
+                        (can-trigger? state side access-effect c nil))
+                 ;; deal with access effects first. This is where Film Critic can be used to prevent these
+                 (continue-ability state :runner
+                                   {:delayed-completion true
+                                    :prompt (str "You must access " name)
+                                    :choices ["Access"]
+                                    :effect (req (when-completed
+                                                   (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                                   (access-agenda state side eid c)))} c nil)
+                 (access-agenda state side eid c))
                ;; Accessing a non-agenda
-               (do (if-let [access-effect (:access cdef)]
-                     (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                     (access-non-agenda state side eid c))
-                     (access-non-agenda state side eid c))))))
+               (if access-effect
+                 (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                 (access-non-agenda state side eid c))
+                 (access-non-agenda state side eid c)))))
          ;; The runner cannot afford the cost to access the card
          (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {}))))))
 
@@ -425,17 +430,11 @@
                       cards (filter #(let [cdef (card-def %)]
                                       (or (is-type? % "Agenda")
                                           (= (last (:zone %)) :content)
-                                          (and (:access cdef)
-                                               (not (get-in cdef [:access :optional]))
-                                               (or (not (get-in cdef [:access :req]))
-                                                   ((get-in cdef [:access :req]) state side (make-eid state) % nil)))
-                                          (and (get-in cdef [:access :optional])
-                                               (or (not (get-in cdef [:access :optional :req]))
-                                                   ((get-in cdef [:access :optional :req]) state side (make-eid state) % nil)))))
+                                          (should-trigger? state side card nil (:access cdef))))
                                     cards)]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
-                      (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
+                      (do (system-msg state side (str "accesses " (:title (first cards))))
                           (handle-access state side eid cards))
                       (continue-ability state side (access-helper-archives cards) card nil))
                     (effect-completed state side eid nil))))})

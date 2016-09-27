@@ -723,6 +723,20 @@
       (prompt-choice :runner "0 [Credits]")
       (is (= 6 (count (:discard (get-runner)))) "Suffered 3 net damage on access and psi loss"))))
 
+(deftest psychic-field-no-access-choice-in-archives
+  ;; Regression test for issue #1965 (Psychic Field showing up as an option to access / trigger in archives
+  (do-game
+    (new-game (default-corp [(qty "Psychic Field" 2) (qty "Shock!" 2) (qty "Clone Retirement" 2)])
+              (default-runner))
+    (trash-from-hand state :corp "Psychic Field")
+    (trash-from-hand state :corp "Shock!")
+    (trash-from-hand state :corp "Clone Retirement")
+    (take-credits state :corp)
+    ;; Runner run on archives to trigger access choice
+    (run-empty-server state :archives)
+    (is (not-any? #{"Psychic Field"} (get-in @state [:runner :prompt :choices]))
+        "Psychic Field is not a choice to access in Archives")))
+
 (deftest psychic-field-neutralize-all-threats
   "Psychic Field - Interaction with Neutralize All Threats and Hostile Infrastructure, #1208"
   (do-game

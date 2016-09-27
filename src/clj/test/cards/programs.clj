@@ -269,6 +269,35 @@
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
       (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
+(deftest imp-the-future-perfect
+  ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
+  (do-game
+    (new-game (default-corp [(qty "The Future Perfect" 1)])
+              (default-runner [(qty "Imp" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (testing "Trash before access click"
+      (run-empty-server state "HQ")
+      ;; Should access TFP at this point
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (get-in @state [:runner :prompt])) "Should be no psi-game prompt for TFP")
+      (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
+      (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (testing "Trashing after lose psi game"
+      (run-empty-server state "HQ")
+      ;; Access prompt for TFP
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "0 [Credit]")
+      (prompt-choice :runner "1 [Credit]")
+      ;; Fail psi game
+      (card-ability state :runner (get-program state 0) 0)
+      (is (empty? (get-in @state [:runner :prompt])) "Should be no steal prompt for TFP")
+      (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+
 (deftest incubator-transfer-virus-counters
   "Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program"
   (do-game

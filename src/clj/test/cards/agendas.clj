@@ -274,6 +274,7 @@
     (play-from-hand state :corp "Explode-a-palooza" "New remote")
     (take-credits state :corp)
     (run-empty-server state :remote1)
+    (prompt-choice :runner "Access")
     (prompt-choice :runner "Steal")
     (prompt-choice :corp "Yes")
     (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
@@ -288,15 +289,17 @@
     (take-credits state :corp)
     (play-from-hand state :runner "The Turning Wheel")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "Steal")
+    (prompt-choice :runner "Access")
     (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Steal")
     (let [ttw (get-resource state 0)]
       (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
       (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
       (is (= 12 (:credit (get-corp))) "Gained 5 credits")
       (run-empty-server state :rd)
-      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "Access")
       (prompt-choice :corp "Yes")
+      (prompt-choice :runner "Steal")
       (is (= 0 (get-counters (refresh ttw) :power)) "TTW did not gain counters")
       (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
       (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
@@ -309,6 +312,7 @@
     (play-from-hand state :corp "Fetal AI" "New remote")
     (take-credits state :corp 2)
     (run-empty-server state "Server 1")
+    (prompt-choice :runner "Access")
     (prompt-choice :runner "Yes")
     (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
     (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
@@ -745,6 +749,7 @@
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+;; OHG still not working...
 (deftest tgtbt
   "TGTBT - Give the Runner 1 tag when they access"
   (do-game
@@ -760,12 +765,15 @@
       (core/rez state :corp ohg)
       (run-successful state)
       (prompt-select :runner tg1)
-      (prompt-choice :runner "OK") ; Accesses TGTBT but can't steal
+      ;; Accesses TGTBT but can't steal
+      (prompt-choice :runner "Access")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
       (prompt-select :runner ohg))
     (prompt-choice :runner "Yes") ; Trashes OHG
     (run-empty-server state "Server 2")
-    (prompt-choice :runner "Steal") ; Accesses TGTBT but can't steal
+    ;; Accesses TGTBT and can steal
+    (prompt-choice :runner "Access")
+    (prompt-choice :runner "Steal")
 
     (is (= 2 (:tag (get-runner))) "Runner took 1 tag from accessing and stealing")))
 
@@ -780,6 +788,36 @@
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
+
+(deftest the-future-perfect
+  ;; The Future Perfect - cannot steal on failed psi game (if not installed)
+  (do-game
+    (new-game (default-corp [(qty "The Future Perfect" 2)])
+              (default-runner))
+    (play-from-hand state :corp "The Future Perfect" "New remote")
+    (take-credits state :corp)
+
+    (testing "No steal on not-equal Psi game"
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      ;; Cannot steal prompt
+      (prompt-choice :runner "OK")
+      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))
+
+    (testing "Successful steal on equal Psi game"
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (prompt-choice :runner "Steal")
+      (is (= 3 (:agenda-point (get-runner))) "Runner stole TFP"))
+
+    (testing "No Psi game and successful steal when installed"
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Steal")
+      (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game on installed TFP"))))
 
 (deftest underway-renovation
   "Underway Renovation - Mill the Runner when advanced"

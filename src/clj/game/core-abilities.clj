@@ -1,13 +1,36 @@
 (in-ns 'game.core)
 (declare corp-trace-prompt optional-ability
          check-optional check-psi check-trace complete-ability
-         can-trigger? do-choices do-ability
+         do-choices do-ability
          psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
 
 ;;;; Functions for implementing card abilities and prompts
 
-;;; Abilities
-(defn is-ability
+;;; Ability related function
+(defn should-trigger?
+  "Checks if the specified ability definition should trigger.
+  Checks for a :req, either in the top level map, or in an :optional or :psi sub-map
+  Returns true if no :req found, returns nil if the supplied ability is nil"
+  ([state side card targets ability]
+    (should-trigger? state side (make-eid state) card targets ability))
+  ([state side eid card targets {:keys [req optional psi trace] :as ability}]
+   (when ability
+     (let [should-trigger? (partial should-trigger? state side eid card targets)]
+       (cond
+         req (req state side eid card targets)
+         optional (should-trigger? optional)
+         psi (should-trigger? psi)
+         trace (should-trigger? trace)
+         :else true)))))
+
+(defn can-trigger?
+  "Checks if ability can trigger. Checks that once-per-turn is not violated."
+  [state side {:keys [once once-key] :as ability} card targets]
+  (let [cid (:cid card)]
+    (and (not (get-in @state [once (or once-key cid)]))
+         (should-trigger? state side card targets ability))))
+
+(defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
   [{:keys [effect optional trace psi] :as abi}]
   (or effect optional trace psi))
@@ -122,14 +145,6 @@
             (and (or optional psi choices trace) (false? delayed-completion)))
     (effect-completed state side eid card)))
 
-(defn- check-req
-  "Check if the requirement is fulfilled, or no requirement present"
-  [state side card targets {:keys [eid] :as ability}]
-  (if-let [req (:req ability)]
-    (req state side eid card targets)
-    ;; return true if no requirement present
-    true))
-
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid] :as ability} card targets]
@@ -153,13 +168,6 @@
     (if (can-trigger? state side trace card targets)
       (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
       (effect-completed state side eid card))))
-
-(defn- can-trigger?
-  "Checks if ability can trigger. Checks that once-per-turn is not violated."
-  [state side {:keys [once once-key] :as ability} card targets]
-  (let [cid (:cid card)]
-    (and (not (get-in @state [once (or once-key cid)]))
-         (check-req state side card targets ability))))
 
 (defn- do-choices
   "Handle a choices ability"
