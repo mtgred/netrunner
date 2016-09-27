@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare check-req clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
+(declare can-trigger? clear-wait-prompt effect-completed event-title forfeit prompt! register-suppress
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -104,16 +104,16 @@
                   {:prompt  "Select a trigger to resolve"
                    :choices titles
                    :delayed-completion true
-                   :effect  (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)]
-                                   (when-completed
-                                     (resolve-ability state side (:ability to-resolve)
-                                                      (:card to-resolve) event-targets)
-                                     (if (< 1 (count handlers))
-                                       (continue-ability state side
-                                                         (choose-handler
-                                                           (remove-once #(not= target (:title (:card %))) handlers))
-                                                         nil event-targets)
-                                       (effect-completed state side eid nil)))))})))]
+                   :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
+                                      the-card (get-card state (:card to-resolve))]
+                                  (when-completed
+                                    (resolve-ability state side (:ability to-resolve) the-card event-targets)
+                                    (if (< 1 (count handlers))
+                                      (continue-ability state side
+                                                        (choose-handler
+                                                          (remove-once #(not= target (:title (:card %))) handlers))
+                                                        nil event-targets)
+                                      (effect-completed state side eid nil)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid nil)))
@@ -148,8 +148,9 @@
                  interaction with New Angeles Sol and Employee Strike
   card-ability:  a card's ability that triggers at the same time as the event trigger, but is coded as a card ability
                  and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
+  after-active-player: an ability to resolve after the active player's triggers resolve, before the opponent's get to act
   targets:       a varargs list of targets to the event, as usual"
-  ([state side eid event first-ability card-ability & targets]
+  ([state side eid event {:keys [first-ability card-ability after-active-player] :as options} & targets]
    (let [get-side #(-> % :card :side game.utils/to-keyword)
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
@@ -167,7 +168,7 @@
                                      (cons card-ability abis)
                                      abis)]
                           (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                        (check-req state side (get-card state (:card %)) targets (:ability %)))
+                                        (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
                                   abis)))
          active-player-events (get-handlers active-player)
          opponent-events (get-handlers opponent)]
@@ -178,7 +179,9 @@
                              {:priority -1})
            (when-completed
              (trigger-event-simult-player state side event active-player-events targets)
-             (do (clear-wait-prompt state opponent)
+             (do (when after-active-player
+                   (resolve-ability state side after-active-player nil nil))
+                 (clear-wait-prompt state opponent)
                  (show-wait-prompt state active-player
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})

@@ -2,6 +2,14 @@
 
 (declare close-access-prompt)
 
+(defn- genetics-trigger?
+  "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
+  [state side event]
+  (or (first-event state side event)
+      (and (has-flag? state side :persistent :genetics-trigger-twice)
+           (second-event state side event))))
+
+;;; Card definitions
 (def cards-resources
   {"Access to Globalsec"
    {:in-play [:link 1]}
@@ -20,7 +28,7 @@
                                           (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]
                                             (or (empty? click-losses)
                                                 (and (= (count click-losses) 1)
-                                                     (persistent-flag? state side card :triggers-twice))))))
+                                                     (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aesops Pawnshop"
@@ -252,8 +260,8 @@
                                     {:msg (msg "pay " creds " [Credit] and derez " (:title c) ". Councilman is trashed")
                                      :effect (req (lose state :runner :credit creds)
                                                   (derez state :corp c)
-                                                  (register-turn-flag! state side
-                                                    card :can-rez
+                                                  (register-turn-flag!
+                                                    state side card :can-rez
                                                     (fn [state side card]
                                                       (if (= (:cid card) (:cid c))
                                                         ((constantly false)
@@ -385,9 +393,7 @@
    "Enhanced Vision"
    {:events {:successful-run {:silent (req true)
                               :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
-                              :req (req (or (first-event state side :successful-run)
-                                            (and (second-event state side :successful-run)
-                                                 (persistent-flag? state side card :triggers-twice))))}}}
+                              :req (req (genetics-trigger? state side :successful-run))}}}
 
    "Fall Guy"
    {:prevent {:trash [:resource]}
@@ -433,10 +439,8 @@
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
-    :effect (effect (register-persistent-flag! card :triggers-twice
-                                               (fn [state side card]
-                                                 (has? card :subtype "Genetics"))))
-    :leave-play (effect (clear-persistent-flag! card :triggers-twice))}
+    :effect (effect (register-persistent-flag! card :genetics-trigger-twice (constantly true)))
+    :leave-play (effect (clear-persistent-flag! card :genetics-trigger-twice))}
 
    "Ghost Runner"
    {:data {:counter {:credit 3}}
@@ -444,6 +448,7 @@
                  :msg "gain 1 [Credits]"
                  :req (req (:run @state))
                  :effect (req (gain state side :credit 1)
+                              (trigger-event state side :spent-stealth-credit card)
                               (when (zero? (get-in card [:counter :credit] 0))
                                 (trash state :runner card {:unpreventable true})))}]}
 
@@ -678,6 +683,30 @@
                       card nil))
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
+
+   "Net Mercur"
+   {:abilities [{:counter-cost [:credit 1]
+                 :msg "gain 1 [Credits]"
+                 :effect (effect (gain :credit 1)
+                                 (trigger-event :spent-stealth-credit card))}]
+    :events {:spent-stealth-credit
+             {:req (req (and (:run @state)
+                             (has-subtype? target "Stealth")))
+              :once :per-run
+              :delayed-completion true
+              :effect (effect (show-wait-prompt :corp "Runner to use Net Mercur")
+                              (continue-ability
+                                {:prompt "Place 1 [Credits] on Net Mercur or draw 1 card?"
+                                 :player :runner
+                                 :choices ["Place 1 [Credits]" "Draw 1 card"]
+                                 :effect (req (if (= target "Draw 1 card")
+                                                (do (draw state side)
+                                                    (clear-wait-prompt state :corp)
+                                                    (system-msg state :runner (str "uses Net Mercur to draw 1 card")))
+                                                (do (add-counter state :runner card :credit 1)
+                                                    (clear-wait-prompt state :corp)
+                                                    (system-msg state :runner (str "places 1 [Credits] on Net Mercur")))))}
+                               card nil))}}}
 
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
@@ -1048,16 +1077,12 @@
                              (runner-install state side (dissoc target :facedown))))}]}
 
    "Symmetrical Visage"
-   {:events {:runner-click-draw {:req (req (or (first-event state side :runner-click-draw)
-                                               (and (second-event state side :runner-click-draw)
-                                                    (persistent-flag? state side card :triggers-twice))))
+   {:events {:runner-click-draw {:req (req (genetics-trigger? state side :runner-click-draw))
                                  :msg "gain 1 [Credits]"
                                  :effect (effect (gain :credit 1))}}}
 
    "Synthetic Blood"
-   {:events {:damage {:req (req (or (first-event state side :damage)
-                                    (and (second-event state side :damage)
-                                         (persistent-flag? state side card :triggers-twice))))
+   {:events {:damage {:req (req (genetics-trigger? state side :damage))
                       :msg "draw 1 card"
                       :effect (effect (draw :runner))}}}
 

@@ -206,7 +206,7 @@
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
-    (let [imp (get-in @state [:runner :rig :program 0])]
+    (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
       (card-ability state :runner imp 0)
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
@@ -216,11 +216,12 @@
       (prompt-choice :runner "OK")
       (play-from-hand state :runner "Scavenge")
       (prompt-select :runner imp)
-      (prompt-select :runner (find-card "Imp" (:discard (get-runner))))
+      (prompt-select :runner (find-card "Imp" (:discard (get-runner)))))
+    (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0)
-      (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn"))))
+      (card-ability state :runner imp 0))
+    (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
   "Trash installed assets that are both seen and unseen by runner"

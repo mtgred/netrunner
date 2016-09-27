@@ -222,6 +222,50 @@
       (core/rez state :corp (get-content state :remote1 0))
       (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained"))))
 
+(deftest councilman
+  ;; Councilman reverses the rezz and prevents re-rezz
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Councilman" 1)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Councilman")
+    (let [jesus (get-content state :remote1 0)
+          judas (get-resource state 0)]
+      (core/rez state :corp jesus)
+      ;; Runner triggers Councilman
+      (card-ability state :runner judas 0)
+      (prompt-select :runner jesus)
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (core/rez state :corp (refresh jesus))
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
+      (take-credits state :runner)
+      ;; Next turn
+      (core/rez state :corp (refresh jesus))
+      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
+
+(deftest-pending councilman-zone-change
+  ;; Rezz no longer prevented when card changes zone (issues #1571)
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Councilman" 1)]))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Councilman")
+    (take-credits state :runner)
+    (let [jesus (get-content state :remote1 0)
+          judas (get-resource state 0)]
+      (core/rez state :corp jesus)
+      ;; Runner triggers Councilman
+      (card-ability state :runner judas 0)
+      (prompt-select :runner jesus)
+      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (core/move state :corp (refresh jesus) :hand))
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (let [jesus (get-content state :remote2 0)]
+      (core/rez state :corp jesus)
+      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
+
 (deftest daily-casts
   "Play and tick through all turns of daily casts"
   (do-game
@@ -426,12 +470,11 @@
                               (qty "Adjusted Chronotype" 1)]))
    (take-credits state :corp)
    (play-from-hand state :runner "Adjusted Chronotype")
-   (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
-     (play-from-hand state :runner "Gene Conditioning Shoppe")
-     (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
-     (core/trash state :runner (get-in @state [:runner :rig :resource 1]))
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))))))
+   (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
+   (play-from-hand state :runner "Gene Conditioning Shoppe")
+   (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
+   (core/trash state :runner (get-in @state [:runner :rig :resource 1]))
+   (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
 
 (deftest gene-conditioning-shoppe-redundancy
   "Gene Conditioning Shoppe - set :genetics-trigger-twice flag - ensure redundant copies work"
@@ -444,16 +487,16 @@
    (take-credits state :corp)
    (play-from-hand state :runner "Adjusted Chronotype")
    (let [adjusted-chronotype (get-in @state [:runner :rig :resource 0])]
-     (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))
+     (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
      (play-from-hand state :runner "Gene Conditioning Shoppe")
      (play-from-hand state :runner "Gene Conditioning Shoppe")
      (let [gcs1 (get-in @state [:runner :rig :resource 1])
            gcs2 (get-in @state [:runner :rig :resource 2])]
-       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
        (core/trash state :runner gcs1)
-       (is (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice))
+       (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
        (core/trash state :runner gcs2)
-       (is (not (core/persistent-flag? state :runner adjusted-chronotype :triggers-twice)))))))
+       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))))
 
 (deftest globalsec-security-clearance
   "Globalsec Security Clearance - Ability, click lost on use"
@@ -689,6 +732,34 @@
         (prompt-select :corp toll)
         (is (:rezzed (refresh toll)) "Tollbooth was rezzed")
         (is (= 0 (:credit (get-corp))) "Corp has 0 credits")))))
+
+(deftest net-mercur
+  "Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used"
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Net Mercur" 1) (qty "Silencer" 1) (qty "Ghost Runner" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 4 :credit 10)
+    (play-from-hand state :runner "Silencer")
+    (play-from-hand state :runner "Net Mercur")
+    (play-from-hand state :runner "Ghost Runner")
+    (let [sil (get-hardware state 0)
+          nm (get-resource state 0)
+          gr (get-resource state 1)]
+      (card-ability state :runner gr 0)
+      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
+      (run-on state :hq)
+      (card-ability state :runner sil 0)
+      (prompt-choice :runner "Place 1 [Credits]")
+      (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
+      (card-ability state :runner gr 0)
+      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt for 2nd stealth in run")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :runner nm 0)
+      (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
 
 (deftest new-angeles-city-hall
   "New Angeles City Hall - Avoid tags; trash when agenda is stolen"

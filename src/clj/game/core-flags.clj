@@ -4,7 +4,7 @@
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
-  ;TODO: add a register for mutable state card flags, separate from this
+  ;; TODO: add a register for mutable state card flags, separate from this
   [card flag-key value]
   (let [cdef (card-def card)]
     (= value (get-in cdef [:flags flag-key]))))
@@ -23,78 +23,111 @@
   (or (pos? (get-in state [:runner :tag]))
       (pos? (get-in state [:runner :tagged]))))
 
+;;; Generic flag functions
+(defn- register-flag!
+  "Register a flag of the specific type."
+  [state side card flag-type flag condition]
+  (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
+
+(defn- check-flag?
+  "Flag condition will ask for permission to do something, e.g. :can-rez, :can-advance
+  If allowed, return true, if not allowed, return false. Therefore check for any false conditions.
+  Returns true if no flags are present."
+  [state side card flag-type flag]
+  (let [conditions (get-in @state [:stack flag-type flag])]
+    ;; check that every condition returns true
+    (every? #((:condition %) state side card) conditions)))
+
+(defn check-flag-types?
+  "Checks flag that the specified flag types are permitting the flag"
+  [state side card flag flag-types]
+  (every? #(check-flag? state side card % flag) flag-types))
+
+(defn has-flag?
+  "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
+  [state side flag-type flag]
+  (not (empty? (get-in @state [:stack flag-type flag]))))
+
+(defn- clear-all-flags!
+  "Clears all flags of specified type"
+  [state flag-type]
+  (swap! state assoc-in [:stack flag-type] nil))
+
+(defn- clear-flag-for-card!
+  "Remove all entries for specified card for flag-type and flag"
+  [state side card flag-type flag]
+  (swap! state update-in [:stack flag-type flag]
+         (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
+
+;; Currently unused
+(defn clear-all-flags-for-card!
+  "Removes all flags set by the card - of any flag type"
+  [state side card]
+  (letfn [(clear-flag-type! [flag-type]
+            (map #(clear-flag-for-card! state side card flag-type %)
+                 (keys (get-in @state [:stack flag-type]))))]
+    ;; Only care about the side-effects of this
+    (map clear-flag-type! #{:current-run :current-turn :persistent})
+    ;; Return the card again
+    card))
+
+;;; Run flag - cleared at end of run
 (defn register-run-flag!
   "Registers a flag for the current run only. The flag gets cleared in end-run.
   Example: Blackmail flags the inability to rez ice."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :current-run flag])]
-    (swap! state assoc-in [:stack :current-run flag]
-           (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :current-run flag condition))
 
 (defn run-flag?
-  "Execute all conditions for the given run flag
-  The resulting collection is expected to be empty if nothing is blocking the action
-  If the collection has any contents, the flag is considered to be false
-  (consider it as something has flagged the action as not being allowed)"
+  "Checks if any cards explicitly forbids the flag this run"
   [state side card flag]
-  (empty?
-    (for [condition (get-in @state [:stack :current-run flag])
-          :let [result ((:condition condition) state side card)]
-          :when (not result)]
-      [result])))
+  (check-flag? state side card :current-run flag))
 
 (defn clear-run-register!
   "Clears the run-flag register."
   [state]
-  (swap! state assoc-in [:stack :current-run] nil))
+  (clear-all-flags! state :current-run))
 
 (defn clear-run-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :current-run flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :current-run flag))
 
+;;; Turn flag - cleared at end of turn
 (defn register-turn-flag!
   "As register-run-flag, but for the entire turn."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :current-turn flag])]
-    (swap! state assoc-in [:stack :current-turn flag] (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :current-turn flag condition))
 
-(defn turn-flag? [state side card flag]
-  (empty?
-    (for [condition (get-in @state [:stack :current-turn flag])
-          :let [result ((:condition condition) state side card)]
-          :when (not result)]
-      [result])))
+(defn turn-flag?
+  "Checks if any cards explicitly forbids the flag this turn"
+  [state side card flag]
+  (check-flag? state side card :current-turn flag))
 
 (defn clear-turn-register! [state]
-  (swap! state assoc-in [:stack :current-turn] nil))
+  (clear-all-flags! state :current-turn))
 
 (defn clear-turn-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :current-turn flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :current-turn flag))
 
+;;; Persistent flag - has to be cleared manually
 (defn register-persistent-flag!
   "A flag that persists until cleared."
   [state side card flag condition]
-  (let [stack (get-in @state [:stack :persistent flag])]
-    (swap! state assoc-in [:stack :persistent flag] (conj stack {:card card :condition condition}))))
+  (register-flag! state side card :persistent flag condition))
 
+;; Currently unused after Efficiency Committee and Genetics refactor
 (defn persistent-flag?
-  "Check if any conditions for the flag evaluate to true for the given card."
+  "Checks if any cards explicitly forbids the flag"
   [state side card flag]
-  (some true?
-        (for [condition (get-in @state [:stack :persistent flag])
-              :let [result ((:condition condition) state side card)]]
-          result)))
+  (check-flag? state side card :persistent flag))
 
 (defn clear-persistent-flag!
   "Remove any entry associated with card for the given flag"
   [state side card flag]
-  (swap! state update-in [:stack :persistent flag]
-         #(remove (fn [map] (= (:cid (map :card)) (:cid %2))) %1) card))
+  (clear-flag-for-card! state side card :persistent flag))
 
 ;;; Functions related to servers that can be run
 (defn prevent-run-on-server
@@ -136,6 +169,7 @@
 (defn prevent-jack-out [state side]
   (swap! state assoc-in [:run :cannot-jack-out] true))
 
+;; This function appears unused as well
 (defn prevent-steal [state side]
   (swap! state assoc-in [:runner :register :cannot-steal] true))
 
@@ -183,12 +217,12 @@
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
   [state side card]
-  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :scored])))))
+  (is-scored? state :corp card))
 
 (defn in-runner-scored?
   "Checks if the specified card is in the Runner score area."
   [state side card]
-  (not (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:runner :scored])))))
+  (is-scored? state :runner card))
 
 (defn is-type?
   "Checks if the card is of the specified type, where the type is a string."
@@ -221,6 +255,7 @@
            (installed? card)
            (not (facedown? card)))))
 
+;; This appears unused, can it be removed?
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
@@ -238,20 +273,19 @@
           true))))
 
 (defn can-steal?
-  ([state side card] (can-steal? state side card nil))
-  ([state side card {:as args}]
-   (and (turn-flag? state side card :can-steal)
-        (run-flag? state side card :can-steal))))
+  "Checks if the runner can steal agendas"
+  [state side card]
+  (check-flag-types? state side card :can-steal [:current-turn :current-run]))
 
 (defn can-advance?
-  ([state side card] (can-advance? state side card nil))
-  ([state side card {:as args}]
-   (not (persistent-flag? state side card :cannot-advance))))
+  "Checks if the corp can advance cards"
+  [state side card]
+  (check-flag-types? state side card :can-advance [:current-turn :persistent]))
 
 (defn can-score?
-  ([state side card] (can-score? state side card nil))
-  ([state side card {:as args}]
-   (turn-flag? state side card :can-score)))
+  "Checks if the corp can score cards"
+  [state side card]
+  (check-flag-types? state side card :can-score [:current-turn :persistent]))
 
 (defn can-be-advanced?
   "Returns true if the card can be advanced"

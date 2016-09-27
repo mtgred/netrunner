@@ -1,10 +1,30 @@
 (in-ns 'game.core)
 
+;;; Helper functions for Draft cards
 (def draft-points-target
   "Set each side's agenda points target at 6, per draft format rules"
   (req (swap! state assoc-in [:runner :agenda-point-req] 6)
        (swap! state assoc-in [:corp :agenda-point-req] 6)))
 
+(defn- has-most-faction?
+  "Checks if the faction has a plurality of rezzed / installed cards"
+  [state side fc]
+  (let [card-list (if (= side :corp)
+                    (filter :rezzed (all-installed state :corp))
+                    (all-installed state :runner))
+        faction-freq (frequencies (map :faction card-list))
+        reducer (fn [{:keys [max-count] :as acc} faction count]
+                  (cond
+                    ;; Has plurality update best-faction
+                    (> count max-count)
+                    {:max-count count :max-faction faction}
+                    ;; Lost plurality
+                    (= count max-count)
+                    (dissoc acc :max-faction)))
+        best-faction (:max-faction (reduce-kv reducer {:max-count 0 :max-faction nil} faction-freq))]
+    (= fc best-faction)))
+
+;;; Card definitions
 (def cards-identities
   {"Adam: Compulsive Hacker"
    {:events {:pre-start-game
@@ -48,11 +68,11 @@
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
-                             (do (tag-runner state :runner 1)
-                                 (system-msg state side "takes 1 tag")
+                             (do (system-msg state side "chooses to take 1 tag")
+                                 (tag-runner state :runner 1)
                                  (effect-completed state side eid nil))
-                             (do (damage state :runner eid :meat 2 {:unboostable true :card card})
-                                 (system-msg state side "suffers 2 meat damage"))))}}}
+                             (do (system-msg state side "chooses to suffer 2 meat damage")
+                                 (damage state :runner eid :meat 2 {:unboostable true :card card}))))}}}
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
@@ -71,15 +91,11 @@
                                 (swap! state update-in [:bonus] dissoc :cost)))}]}
 
    "Boris \"Syfr\" Kovac: Crafty Veteran"
-   {:events (let [bor {:req (req (let [facs (frequencies (map :faction (all-installed state :runner)))
-                                       an (get facs "Anarch" 0)
-                                       sh (get facs "Shaper" 0)
-                                       cr (get facs "Criminal" 0)]
-                                   (and (> cr sh) (> cr an) (pos? (:tag runner)))))
-                       :msg "remove 1 tag"
-                       :effect (effect (lose :tag 1))}]
-              {:runner-turn-begins bor
-               :pre-start-game {:effect draft-points-target}})}
+   {:events {:pre-start-game {:effect draft-points-target}
+             :runner-turn-begins {:req (req (and (has-most-faction? state :runner "Criminal")
+                                                 (pos? (:tag runner))))
+                                  :msg "remove 1 tag"
+                                  :effect (effect (lose :tag 1))}}}
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
@@ -164,18 +180,16 @@
                               :effect (effect (draw 1))}}}
 
    "Fringe Applications: Tomorrow, Today"
-   {:events (let [fap {:req (req (let [facs (frequencies (map :faction (filter :rezzed (all-installed state :corp))))
-                                       hb (get facs "Haas-Bioroid" 0)
-                                       ji (get facs "Jinteki" 0)
-                                       nb (get facs "NBN" 0)
-                                       we (get facs "Weyland Consortium" 0)]
-                                   (and (> we ji) (> we hb) (> we nb))))
-                       :msg (msg "place 1 advancement token on " (card-str state target))
-                       :prompt "Choose a piece of ICE to place 1 advancement token on it" :player :corp
-                       :choices {:req #(and (installed? %) (ice? %))}
-                       :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}]
-              {:runner-turn-begins fap
-               :pre-start-game {:effect draft-points-target}})}
+   {:events
+    {:pre-start-game {:effect draft-points-target}
+     :runner-turn-begins {:req (req (and (not (:disabled card))
+                                         (has-most-faction? state :corp "Weyland Consortium")
+                                         (some ice? (all-installed state side))))
+                          :msg (msg "place 1 advancement token on " (card-str state target))
+                          :prompt "Choose a piece of ICE to place 1 advancement token on"
+                          :player :corp
+                          :choices {:req #(and (installed? %) (ice? %))}
+                          :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}}}
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:silent (req true)
@@ -211,17 +225,17 @@
              {:once :per-turn
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")))
-              :effect (req (when (some (fn [c] (and (has? c :subtype "Bioroid") (not (rezzed? c)))) (all-installed state :corp))
+              :effect (req (when (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp))
                              (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                              (resolve-ability state side
-                               {:prompt "Choose a bioroid to rez" :player :corp
-                                :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
-                                :msg (msg "rez " (:title target))
-                                :cancel-effect (effect (clear-wait-prompt :runner))
-                                :effect (effect (rez-cost-bonus -4)
-                                                (rez target)
-                                                (clear-wait-prompt :runner))}
-                              card nil)))}}}
+                                              {:prompt "Choose a bioroid to rez" :player :corp
+                                               :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                               :msg (msg "rez " (:title target))
+                                               :cancel-effect (effect (clear-wait-prompt :runner))
+                                               :effect (effect (rez-cost-bonus -4)
+                                                               (rez target)
+                                                               (clear-wait-prompt :runner))}
+                                              card nil)))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -286,29 +300,21 @@
                                            (count (filter #(not (:seen %)) (:discard corp)))))}}}
 
    "Information Dynamics: All You Need To Know"
-   {:events (let [inf {:req (req (let [facs (frequencies (map :faction (filter :rezzed (all-installed state :corp))))
-                                       hb (get facs "Haas-Bioroid" 0)
-                                       ji (get facs "Jinteki" 0)
-                                       nb (get facs "NBN" 0)
-                                       we (get facs "Weyland Consortium" 0)]
-                                   (and (> nb ji) (> nb hb) (> nb we))))
+   {:events (let [inf {:req (req (and (not (:disabled card))
+                                      (has-most-faction? state :corp "NBN")))
                        :msg "give the Runner 1 tag"
                        :effect (effect (tag-runner :runner 1))}]
-              {:agenda-scored inf :agenda-stolen inf
-               :pre-start-game {:effect draft-points-target}})}
+              {:pre-start-game {:effect draft-points-target}
+               :agenda-scored inf :agenda-stolen inf})}
 
    "Jamie \"Bzzz\" Micken: Techno Savant"
-   {:events (let [jam {:req (req (let [facs (frequencies (map :faction (all-installed state :runner)))
-                                       an (get facs "Anarch" 0)
-                                       sh (get facs "Shaper" 0)
-                                       cr (get facs "Criminal" 0)]
-                                   (and (> sh an) (> sh cr) (pos? (count (:deck runner)))
-                                        (first-event state side :pre-install))))
-                       :msg "draw 1 card"
-                       :once :per-turn
-                       :effect (effect (draw 1))}]
-              {:pre-install jam
-               :pre-start-game {:effect draft-points-target}})}
+   {:events {:pre-start-game {:effect draft-points-target}
+             :pre-install {:req (req (and (has-most-faction? state :runner "Shaper")
+                                          (pos? (count (:deck runner)))
+                                          (first-event state side :pre-install)))
+                           :msg "draw 1 card"
+                           :once :per-turn
+                           :effect (effect (draw 1))}}}
 
    "Jesminder Sareen: Girl Behind the Curtain"
    {:events {:pre-tag {:once :per-run
@@ -394,12 +400,12 @@
    {:events {:pass-ice
              {:once :per-turn
               :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
-                             (install-cost-bonus state side [:credit -1])
                              (resolve-ability state side
                                               {:prompt "Choose an icebreaker to install from your Grip"
                                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
                                                :msg (msg "install " (:title target))
-                                               :effect (effect (runner-install target))}
+                                               :effect (effect (install-cost-bonus [:credit -1])
+                                                               (runner-install target))}
                                               card nil)))}}}
 
    "Laramy Fisk: Savvy Investor"
@@ -600,13 +606,9 @@
    "Strategic Innovations: Future Forward"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-turn-ends
-             {:req (req (let [facs (frequencies (map :faction (filter :rezzed (all-installed state :corp))))
-                              hb (get facs "Haas-Bioroid" 0)
-                              ji (get facs "Jinteki" 0)
-                              nb (get facs "NBN" 0)
-                              we (get facs "Weyland Consortium" 0)]
-                          (and (not (:disabled card))
-                               (> hb ji) (> hb nb) (> hb we) (pos? (count (:discard corp))))))
+             {:req (req (and (not (:disabled card))
+                             (has-most-faction? state :corp "Haas-Bioroid")
+                             (pos? (count (:discard corp)))))
               :prompt "Choose a card in Archives to shuffle into R&D"
               :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
               :player :corp :show-discard true :priority true
@@ -641,14 +643,9 @@
 
    "Synthetic Systems: The World Re-imagined"
    {:events {:pre-start-game {:effect draft-points-target}}
-    :flags {:corp-phase-12 (req (let [facs (frequencies (map :faction (filter :rezzed (all-installed state :corp))))
-                                      hb (get facs "Haas-Bioroid" 0)
-                                      ji (get facs "Jinteki" 0)
-                                      nb (get facs "NBN" 0)
-                                      we (get facs "Weyland Consortium" 0)]
-                                  (and (not (:disabled (get-card state card)))
-                                       (> ji hb) (> ji nb) (> ji we)
-                                       (> (count (filter #(ice? %) (all-installed state :corp))) 1))))}
+    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                     (has-most-faction? state :corp "Jinteki")
+                                     (> (count (filter ice? (all-installed state :corp))) 1)))}
     :abilities [{:prompt "Select two pieces of ICE to swap positions"
                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
                  :once :per-turn
@@ -712,14 +709,10 @@
    {:recurring 3}
 
    "Wyvern: Chemically Enhanced"
-   {:events (let [wyv {:req (req (let [facs (frequencies (map :faction (all-installed state :runner)))
-                                       an (get facs "Anarch" 0)
-                                       sh (get facs "Shaper" 0)
-                                       cr (get facs "Criminal" 0)]
-                                   (and (card-is? target :side :corp) (> an sh) (> an cr)
-                                        (pos? (count (:discard runner))))))
-                       :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
-                       :effect (effect (move :runner (last (:discard runner)) :deck)
-                                       (shuffle! :runner :deck))}]
-              {:pre-start-game {:effect draft-points-target}
-               :runner-trash wyv})}})
+   {:events {:pre-start-game {:effect draft-points-target}
+             :runner-trash {:req (req (and (has-most-faction? state :runner "Anarch")
+                                           (card-is? target :side :corp)
+                                           (pos? (count (:discard runner)))))
+                            :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
+                            :effect (effect (move :runner (last (:discard runner)) :deck)
+                                            (shuffle! :runner :deck))}}}})

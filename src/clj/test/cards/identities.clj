@@ -695,6 +695,34 @@
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
 
+(deftest silhouette-temujin-weirdness
+  ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.
+  (do-game
+    (new-game
+      (default-corp [(qty "PAD Campaign" 1) (qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "Beanstalk Royalties" 3)])
+      (make-deck "Silhouette: Stealth Operative" [(qty "Temüjin Contract" 1) (qty "Desperado" 1)]))
+    (starting-hand state :corp ["Hedge Fund" "PAD Campaign"])
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Temüjin Contract")
+    (prompt-choice :runner "HQ")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Temüjin Contract")
+    (prompt-select :runner (get-content state :remote1 0))
+    (prompt-choice :runner "OK")
+    (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+    (is (= 16 (get-counters (get-resource state 0) :credit)) "16 cr on Temujin")
+    (is (= 8 (:credit (get-runner))) "Gained 4cr")
+
+    ;; second run
+    (run-empty-server state :hq)
+    (prompt-choice :runner "OK")
+    (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+    (is (= 12 (:credit (get-runner))) "Gained 4cr")
+    (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
+
 (deftest spark-advertisements
   "Spark Agency - Rezzing advertisements"
   (do-game

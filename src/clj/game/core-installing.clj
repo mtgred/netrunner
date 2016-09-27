@@ -289,7 +289,7 @@
                    (when (has-subtype? c "Icebreaker")
                      (update-breaker-strength state side c))
                    (trigger-event-simult state side eid :runner-install
-                                         nil nil
+                                         nil
                                          installed-card))
                  (effect-completed state side eid))
                (effect-completed state side eid)))

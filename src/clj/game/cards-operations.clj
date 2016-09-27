@@ -103,6 +103,16 @@
                                             (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
                     card nil)))}
 
+   "Ark Lockdown"
+   {:delayed-completion true
+    :req (req (not-empty (:discard runner)))
+    :prompt "Name a card to remove all copies in the Heap from the game"
+    :choices (req (cancellable (:discard runner) :sorted))
+    :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
+    :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard runner))]
+                   (move state side c :rfg))
+                 (effect-completed state side eid card))}
+
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
@@ -374,6 +384,7 @@
    "Hatchet Job"
    {:trace {:base 5
             :choices {:req #(and (installed? %)
+                                 (card-is? % :side :runner)
                                  (not (has-subtype? % "Virtual")))}
             :msg "add an installed non-virtual card to the Runner's grip"
             :effect (effect (move :runner target :hand true))}}

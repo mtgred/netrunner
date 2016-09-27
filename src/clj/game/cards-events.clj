@@ -848,7 +848,7 @@
 
    "Rigged Results"
    (letfn [(choose-ice []
-             {:prompt "Choose a piece of ice to bypass"
+             {:prompt "Choose a piece of ICE to bypass"
               :choices {:req #(ice? %)}
               :effect (final-effect (system-msg :runner (str "chooses to bypass " (card-str state target)))
                                     (run (second (:zone target))))})
@@ -857,7 +857,7 @@
               :choices ["0" "1" "2"]
               :delayed-completion true
               :effect (req (system-msg state :runner (str "spends " spent "[Credit]. "
-                                       (-> corp :user :username) " guesses " target "[Credit]."))
+                                       (-> corp :user :username) " guesses " target "[Credit]"))
                            (clear-wait-prompt state :runner)
                            (if (not= (str spent) target)
                              (continue-ability state :runner (choose-ice) card nil)
@@ -1066,10 +1066,10 @@
                     (trash target)
                     (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
                     (register-persistent-flag!
-                             card :cannot-advance
+                             card :can-advance
                              (fn [state side card]
-                                 ((constantly true) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
-    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :cannot-advance)
+                                 ((constantly false) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
+    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
                                               (unregister-events card))}}}
 
    "Three Steps Ahead"
