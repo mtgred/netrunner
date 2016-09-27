@@ -7,7 +7,7 @@
 
 
 (deftest amazon-industrial-zone
-  "Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount"
+  ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
   (do-game
     (new-game (default-corp [(qty "Spiderweb" 1) (qty "Amazon Industrial Zone" 1)])
               (default-runner))
@@ -23,7 +23,7 @@
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
 (deftest bernice-mai
-  "Bernice Mai - successful and unsuccessful"
+  ;; Bernice Mai - successful and unsuccessful
   (do-game
     (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Hedge Fund" 3) (qty "Wall of Static" 3)])
               (default-runner))
@@ -53,7 +53,7 @@
     (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
 
 (deftest bernice-mai-drt
-  "Bernice Mai - interaction with Dedicated Response Team"
+  ;; Bernice Mai - interaction with Dedicated Response Team
   (do-game
     (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Dedicated Response Team" 1)])
               (default-runner))
@@ -71,7 +71,7 @@
     (is (= 2 (count (:discard (get-runner)))) "Runner took 1 meat damage")))
 
 (deftest breaker-bay-grid
-  "Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits"
+  ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
    (new-game (default-corp [(qty "Breaker Bay Grid" 2) (qty "The Root" 1) (qty "Strongbox" 1)])
              (default-runner))
@@ -92,7 +92,7 @@
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
 (deftest caprice-nisei
-  "Caprice Nisei - Psi game for ETR after runner passes last ice"
+  ;; Caprice Nisei - Psi game for ETR after runner passes last ice
   (do-game
    (new-game (default-corp [(qty "Caprice Nisei" 3) (qty "Quandary" 3)])
              (default-runner))
@@ -132,7 +132,7 @@
      (is (empty? (get-in @state [:corp :prompt])) "Caprice does not trigger on other servers"))))
 
 (deftest chilo-city-grid
-  "ChiLo City Grid - Give 1 tag for successful traces during runs on its server"
+  ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
   (do-game
     (new-game (default-corp [(qty "Caduceus" 2) (qty "ChiLo City Grid" 1)])
               (default-runner))
@@ -159,7 +159,7 @@
           "Runner took 1 tag given from successful trace during run on ChiLo server"))))
 
 (deftest corporate-troubleshooter
-  "Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE"
+  ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
     (new-game (default-corp [(qty "Quandary" 2) (qty "Corporate Troubleshooter" 1)])
               (default-runner))
@@ -186,7 +186,7 @@
           "Inner Quandary back to default 0 strength after turn ends"))))
 
 (deftest crisium-grid
-  "Crisium Grid - various interactions"
+  ;; Crisium Grid - various interactions
   (do-game
     (new-game (default-corp [(qty "Crisium Grid" 2)])
               (default-runner [(qty "Desperado" 1) (qty "Temüjin Contract" 1)]))
@@ -202,7 +202,7 @@
     (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")))
 
 (deftest cyberdex-virus-suite-purge
-  "Cyberdex Virus Suite - Purge ability"
+  ;; Cyberdex Virus Suite - Purge ability
   (do-game
     (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
               (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
@@ -228,7 +228,7 @@
           "Medium has no counters"))))
 
 (deftest cyberdex-virus-suite-access
-  "Cyberdex Virus Suite - Purge on access"
+  ;; Cyberdex Virus Suite - Purge on access
   (do-game
     (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
               (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
@@ -254,7 +254,7 @@
           "Medium has no counters"))))
 
 (deftest cyberdex-virus-suite-archives-access
-  "Cyberdex Virus Suite - Don't interrupt archives access. Issue #1647."
+  ;; Cyberdex Virus Suite - Don't interrupt archives access. Issue #1647.
   (do-game
     (new-game (default-corp [(qty "Cyberdex Virus Suite" 1) (qty "Braintrust" 1)])
               (default-runner [(qty "Cache" 1)]))
@@ -275,7 +275,7 @@
           "Cache has no counters"))))
 
 (deftest ghost-branch-dedicated-response-team
-  "Ghost Branch - with Dedicated Response Team"
+  ;; Ghost Branch - with Dedicated Response Team
   (do-game
     (new-game (default-corp [(qty "Ghost Branch" 1) (qty "Dedicated Response Team" 1)])
               (default-runner))
@@ -298,7 +298,7 @@
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
 (deftest georgia-emelyov
-  "Georgia Emelyov"
+  ;; Georgia Emelyov
   (do-game
     (new-game (default-corp [(qty "Georgia Emelyov" 1)])
               (default-runner))
@@ -321,7 +321,7 @@
         (is (= 2 (count (:discard (get-runner)))) "Runner did not take  damage")))))
 
 (deftest hokusai-grid
-  "Hokusai Grid - Do 1 net damage when run successful on its server"
+  ;; Hokusai Grid - Do 1 net damage when run successful on its server
   (do-game
     (new-game (default-corp [(qty "Hokusai Grid" 1)])
               (default-runner))
@@ -334,7 +334,7 @@
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
 (deftest keegan-lane
-  "Keegan Lane - Trash self and remove 1 Runner tag to trash a program"
+  ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
   (do-game
     (new-game (default-corp [(qty "Keegan Lane" 1)])
               (default-runner [(qty "Corroder" 1)]))
@@ -354,7 +354,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
 (deftest marcus-batty-security-nexus
-  "Marcus Batty - Simultaneous Interaction with Security Nexus"
+  ;; Marcus Batty - Simultaneous Interaction with Security Nexus
   (do-game
     (new-game (default-corp [(qty "Marcus Batty" 1) (qty "Enigma" 1)])
               (default-runner [(qty "Security Nexus" 1)]))
@@ -431,7 +431,7 @@
       (is (= 0 (:credit (get-runner))) "Runner paid trash cost with Slums"))))
 
 (deftest neotokyo-grid
-  "NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement"
+  ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game
     (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
                              (qty "Shipment from SanSan" 1) (qty "Ice Wall" 1)])
@@ -456,7 +456,7 @@
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
 (deftest off-the-grid
-  "Off the Grid run ability - and interaction with RP"
+  ;; Off the Grid run ability - and interaction with RP
   (do-game
    (new-game
     (make-deck "Jinteki: Replicating Perfection" [(qty "Off the Grid" 3)
@@ -478,7 +478,7 @@
      (is (= nil (refresh otg)) "Off the Grid trashed"))))
 
 (deftest old-hollywood-grid
-  "Old Hollywood Grid - Ability"
+  ;; Old Hollywood Grid - Ability
   (do-game
     (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
               (default-runner))
@@ -504,7 +504,7 @@
       (is (= 2 (count (:scored (get-runner)))) "2 scored agendas"))))
 
 (deftest old-hollywood-grid-central
-  "Old Hollywood Grid - Central server"
+  ;; Old Hollywood Grid - Central server
   (do-game
     (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
               (default-runner))
@@ -521,7 +521,7 @@
       (is (= 0 (count (:scored (get-runner)))) "No scored agendas"))))
 
 (deftest port-anson-grid
-  "Port Anson Grid - Prevent the Runner from jacking out until they trash a program"
+  ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
     (new-game (default-corp [(qty "Port Anson Grid" 1) (qty "Data Raven" 1)])
               (default-runner [(qty "Faerie" 1) (qty "Technical Writer" 1)]))
@@ -544,7 +544,7 @@
       (is (:cannot-jack-out (get-in @state [:run])) "Prevents jack out when upgrade is rezzed prior to run"))))
 
 (deftest prisec
-  "Prisec - Pay 2 credits to give runner 1 tag and do 1 meat damage, only when installed"
+  ;; Prisec - Pay 2 credits to give runner 1 tag and do 1 meat damage, only when installed
   (do-game
     (new-game (default-corp [(qty "Prisec" 2)])
               (default-runner))
@@ -562,7 +562,7 @@
     (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
 
 (deftest prisec-dedicated-response-team
-  "Multiple unrezzed upgrades in Archives interaction with DRT."
+  ;; Multiple unrezzed upgrades in Archives interaction with DRT.
   (do-game
     (new-game (default-corp [(qty "Prisec" 2) (qty "Dedicated Response Team" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
@@ -587,7 +587,7 @@
     (is (= 4 (count (:discard (get-runner)))) "Runner took 4 meat damage")))
 
 (deftest product-placement
-  "Product Placement - Gain 2 credits when Runner accesses it"
+  ;; Product Placement - Gain 2 credits when Runner accesses it
   (do-game
     (new-game (default-corp [(qty "Product Placement" 1)])
               (default-runner))
@@ -603,7 +603,7 @@
           "No credits gained when Product Placement accessed in Archives"))))
 
 (deftest red-herrings
-  "Red Herrings - Ability"
+  ;; Red Herrings - Ability
   (do-game
     (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
               (default-runner))
@@ -632,7 +632,7 @@
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
 (deftest red-herrings-trash
-  "Red Herrings - Cost increase even when trashed"
+  ;; Red Herrings - Cost increase even when trashed
   (do-game
     (new-game (default-corp [(qty "Red Herrings" 3) (qty "House of Knives" 3)])
               (default-runner))
@@ -654,7 +654,7 @@
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
 (deftest red-herrings-trash-from-hand
-  "Red Herrings - Trashed from Hand"
+  ;; Red Herrings - Trashed from Hand
   (do-game
     (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
               (default-runner))
@@ -668,7 +668,7 @@
         "Runner being asked to Steal")))
 
 (deftest red-herrings-other-server
-  "Red Herrings - Don't affect runs on other servers"
+  ;; Red Herrings - Don't affect runs on other servers
   (do-game
     (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
               (default-runner))
@@ -686,7 +686,7 @@
 
 (deftest ruhr-valley
   ;; Ruhr Valley - As an additional cost to make a run on this server, the Runner must spend a click.
-   (do-game
+  (do-game
     (new-game (default-corp [(qty "Ruhr Valley" 1)])
               (default-runner))
     (play-from-hand state :corp "Ruhr Valley" "HQ")
@@ -715,7 +715,7 @@
 
 (deftest ruhr-valley-enable-state
   ;; Ruhr Valley - If the runner trashes with one click left, the ability to run is enabled
-   (do-game
+  (do-game
     (new-game (default-corp [(qty "Ruhr Valley" 1)])
               (default-runner))
     (play-from-hand state :corp "Ruhr Valley" "HQ")
@@ -733,7 +733,7 @@
       (run-on state :hq))))
 
 (deftest ryon-knight
-  "Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining"
+  ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining
   (do-game
     (new-game (default-corp [(qty "Ryon Knight" 1)])
               (default-runner))
@@ -755,7 +755,7 @@
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
 (deftest satellite-grid
-  "Satellite Grid - Add 1 fake advancement on all ICE protecting server"
+  ;; Satellite Grid - Add 1 fake advancement on all ICE protecting server
   (do-game
     (new-game (default-corp [(qty "Satellite Grid" 1) (qty "Ice Wall" 2)])
               (default-runner))
@@ -778,7 +778,7 @@
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
 (deftest strongbox
-  "Strongbox - Ability"
+  ;; Strongbox - Ability
   (do-game
     (new-game (default-corp [(qty "Strongbox" 1) (qty "House of Knives" 1)])
               (default-runner))
@@ -805,7 +805,7 @@
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
 (deftest strongbox-trash
-  "Strongbox - Click cost even when trashed"
+  ;; Strongbox - Click cost even when trashed
   (do-game
     (new-game (default-corp [(qty "Strongbox" 3) (qty "House of Knives" 3)])
               (default-runner))
@@ -826,7 +826,7 @@
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
 (deftest surat-city-grid
-  "Surat City Grid - Trigger on rez of a card in/protecting same server to rez another card at 2c discount"
+  ;; Surat City Grid - Trigger on rez of a card in/protecting same server to rez another card at 2c discount
   (do-game
     (new-game (default-corp [(qty "Surat City Grid" 2) (qty "Cyberdex Virus Suite" 2)
                              (qty "Enigma" 1) (qty "Wraparound" 1)])
@@ -860,7 +860,7 @@
         (is (= (:cid scg2) (-> (get-corp) :prompt first :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
 (deftest tori-hanzo
-  "Tori Hanzō - Pay to do 1 brain damage instead of net damage"
+  ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (do-game
     (new-game (default-corp [(qty "Pup" 1) (qty "Tori Hanzō" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Net Shield" 1)]))
@@ -891,7 +891,7 @@
       (is (= 1 (:brain-damage (get-runner)))))))
 
 (deftest underway-grid
-  "Underway Grid - prevent expose of cards in server"
+  ;; Underway Grid - prevent expose of cards in server
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 1)
                              (qty "Underway Grid" 1)])
@@ -906,7 +906,7 @@
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
 (deftest valley-grid-trash
-  "Valley Grid - Reduce Runner max hand size and restore it even if trashed"
+  ;; Valley Grid - Reduce Runner max hand size and restore it even if trashed
   (do-game
     (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
               (default-runner))

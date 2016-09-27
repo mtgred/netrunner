@@ -7,7 +7,7 @@
 
 
 (deftest atman-install-0
-  "Atman - Installing with 0 power counters"
+  ;; Atman - Installing with 0 power counters
   (do-game
     (new-game (default-corp) (default-runner [(qty "Atman" 1)]))
     (take-credits state :corp)
@@ -19,7 +19,7 @@
       (is (= 0 (:current-strength atman)) "0 current strength"))))
 
 (deftest atman-install-2
-  "Atman - Installing with 2 power counters"
+  ;; Atman - Installing with 2 power counters
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Atman" 1)]))
@@ -32,7 +32,7 @@
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
 (deftest chameleon-clonechip
-  "Chameleon - Install on corp turn, only returns to hand at end of runner's turn"
+  ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn
   (do-game
     (new-game (default-corp) (default-runner [(qty "Chameleon" 1) (qty "Clone Chip" 1)]))
     (take-credits state :corp)
@@ -40,7 +40,7 @@
     (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
     (take-credits state :runner)
     (is (= 0 (count (:hand (get-runner)))))
-    ; Install Chameleon on corp turn
+    ;; Install Chameleon on corp turn
     (take-credits state :corp 1)
     (let [chip (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner chip 0)
@@ -52,20 +52,20 @@
     (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
 
 (deftest chameleon-scheherazade
-  "Chameleon - Returns to hand after hosting. #977"
+  ;; Chameleon - Returns to hand after hosting. #977
   (do-game
     (new-game (default-corp) (default-runner [(qty "Chameleon" 2) (qty "Scheherazade" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Chameleon")
     (prompt-choice :runner "Barrier")
     (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon")
-    ; Host the Chameleon on Scheherazade that was jsut played (as in Personal Workshop/Hayley ability scenarios)
+    ;; Host the Chameleon on Scheherazade that was just played (as in Personal Workshop/Hayley ability scenarios)
     (play-from-hand state :runner "Scheherazade")
     (let [scheherazade (get-in @state [:runner :rig :program 1])]
       (card-ability state :runner scheherazade 1) ; Host an installed program
       (prompt-select :runner (find-card "Chameleon" (:program (:rig (get-runner)))))
       (is (= 4 (:credit (get-runner))) "+1 from hosting onto Scheherazade")
-      ; Install another Chameleon directly onto Scheherazade
+      ;; Install another Chameleon directly onto Scheherazade
       (card-ability state :runner scheherazade 0) ; Install and host a program from Grip
       (prompt-select :runner (find-card "Chameleon" (:hand (get-runner))))
       (prompt-choice :runner "Code Gate")
@@ -76,7 +76,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
 
 (deftest cerberus
-  "Cerberus - boost 1 for 1 cred. Break for 1 counter"
+  ;; Cerberus - boost 1 for 1 cred. Break for 1 counter
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Cerberus \"Rex\" H2" 1)]))
@@ -95,7 +95,7 @@
      (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
 (deftest deus-x-multiple-hostile-infrastructure
-  "Multiple Hostile Infrastructure vs. Deus X"
+  ;; Multiple Hostile Infrastructure vs. Deus X
   (do-game
     (new-game
       (default-corp [(qty "Hostile Infrastructure" 3)])
@@ -118,7 +118,7 @@
       (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
 
 (deftest deus-x-fetal-jinteki-pe
-  "Multiple sources of net damage vs. Deus X"
+  ;; Multiple sources of net damage vs. Deus X
   (do-game
     (new-game
       (make-deck "Jinteki: Personal Evolution" [(qty "Fetal AI" 1)])
@@ -137,7 +137,7 @@
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 
 (deftest faust-pump
-  "Faust - Pump by discarding"
+  ;; Faust - Pump by discarding
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Faust" 1) (qty "Sure Gamble" 3)]))
@@ -150,7 +150,7 @@
       (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
 
 (deftest faust-pump
-  "Faust - Pump does not trigger trash prevention. #760"
+  ;; Faust - Pump does not trigger trash prevention. #760
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Faust" 1)
@@ -177,7 +177,7 @@
       (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource"))))
 
 (deftest femme-counter
-  "Femme Fatale counter test"
+  ;; Femme Fatale counter test
   (do-game
    (new-game (default-corp [(qty "Ice Wall" 1)])
              (default-runner [(qty "Femme Fatale" 2)]))
@@ -197,7 +197,7 @@
     (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
 
 (deftest overmind-counters
-  "Overmind - Start with counters equal to unused MU"
+  ;; Overmind - Start with counters equal to unused MU
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Overmind" 1) (qty "Akamatsu Mem Chip" 2)]))
@@ -212,7 +212,7 @@
       (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest shiv
-  "Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link"
+  ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
   (do-game
     (new-game
       (default-corp)
@@ -233,7 +233,7 @@
       (is (= 2 (:memory (get-runner))) "Shiv stops using MU when 2+ link"))))
 
 (deftest snowball
-  "Snowball - Strength boost until end of run when used to break a subroutine"
+  ;; Snowball - Strength boost until end of run when used to break a subroutine
   (do-game
    (new-game (default-corp [(qty "Spiderweb" 1) (qty "Fire Wall" 1) (qty "Hedge Fund" 1)])
              (default-runner [(qty "Snowball" 1)]))
@@ -267,7 +267,7 @@
      (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
 
 (deftest study-guide
-  "Study Guide - 2c to add a power counter; +1 strength per counter"
+  ;; Study Guide - 2c to add a power counter; +1 strength per counter
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Study Guide" 1) (qty "Sure Gamble" 1)]))
@@ -285,7 +285,7 @@
      (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
 
 (deftest wyrm
-  "Wyrm reduces strength of ice"
+  ;; Wyrm reduces strength of ice
   (do-game
    (new-game (default-corp [(qty "Ice Wall" 1)])
              (default-runner [(qty "Wyrm" 1)]))

@@ -7,7 +7,7 @@
 
 
 (deftest account-siphon-ability
-  "Account Siphon - Use ability"
+  ;; Account Siphon - Use ability
   (do-game
     (new-game (default-corp) (default-runner [(qty "Account Siphon" 3)]))
     (take-credits state :corp)
@@ -20,7 +20,7 @@
     (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
 
 (deftest account-siphon-access
-  "Account Siphon - Access"
+  ;; Account Siphon - Access
   (do-game
     (new-game (default-corp) (default-runner [(qty "Account Siphon" 3)]))
     (take-credits state :corp) ; pass to runner's turn by taking credits
@@ -33,7 +33,7 @@
     (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
 
 (deftest amped-up
-  "Amped Up - Gain 3 clicks and take 1 unpreventable brain damage"
+  ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Amped Up" 1)
@@ -50,7 +50,7 @@
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
 (deftest another-day-another-paycheck
-  "Another Day, Another Paycheck"
+  ;; Another Day, Another Paycheck
   (do-game
     (new-game
       (default-corp [(qty "Project Atlas" 2)])
@@ -63,11 +63,11 @@
     (prompt-choice :runner "Steal")
     (prompt-choice :corp 0)
     (prompt-choice :runner 1)
-    ; 4 credits after trace, should gain 4
+    ;; 4 credits after trace, should gain 4
     (is (= 8 (:credit (get-runner))) "Runner gained 8 credits")))
 
 (deftest apocalypse-hosting
-  "Apocalypse - Ensure MU is correct and no duplicate cards in heap"
+  ;; Apocalypse - Ensure MU is correct and no duplicate cards in heap
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Scheherazade" 1) (qty "Corroder" 1)
@@ -95,7 +95,7 @@
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
 (deftest apocalypse-in-play-ability
-  "Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains"
+  ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Logos" 3) (qty "Apocalypse" 3)]))
@@ -119,7 +119,7 @@
       (is (= 4 (:memory (get-runner))) "Memory reset with Logos facedown"))))
 
 (deftest apocalypse-turn-facedown
-  "Apocalypse - Turn Runner cards facedown without firing their leave play effects"
+  ;; Apocalypse - Turn Runner cards facedown without firing their leave play effects
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
@@ -141,7 +141,7 @@
           "No meat damage dealt by Tri-maf's leave play effect"))))
 
 (deftest blackmail
-  "Prevent rezzing of ice for one run"
+  ;; Prevent rezzing of ice for one run
   (do-game
     (new-game
       (default-corp [(qty "Ice Wall" 3)])
@@ -166,7 +166,7 @@
       (is (get-in (refresh iwall1) [:rezzed]) "First Ice Wall is rezzed"))))
 
 (deftest blackmail-tmi-interaction
-  "Regression test for a rezzed tmi breaking game state on a blackmail run"
+  ;; Regression test for a rezzed tmi breaking game state on a blackmail run
   (do-game
     (new-game (default-corp [(qty "TMI" 3)])
               (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
@@ -185,7 +185,7 @@
       (run-on state "Archives"))))
 
 (deftest cbi-raid
-  "CBI Raid - Full test"
+  ;; CBI Raid - Full test
   (do-game
     (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
                              (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
@@ -201,7 +201,7 @@
     (prompt-choice :corp (find-card "Quandary" (:hand (get-corp))))
     (prompt-choice :corp (find-card "Jackson Howard" (:hand (get-corp))))
     (prompt-choice :corp (find-card "Global Food Initiative" (:hand (get-corp))))
-    ;try starting over
+    ;; try starting over
     (prompt-choice :corp "Start over")
     (prompt-choice :corp (find-card "Global Food Initiative" (:hand (get-corp))))
     (prompt-choice :corp (find-card "Jackson Howard" (:hand (get-corp))))
@@ -218,7 +218,7 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest corporate-scandal
-  "Corporate Scandal - Corp has 1 additional bad pub even with 0"
+  ;; Corporate Scandal - Corp has 1 additional bad pub even with 0
   (do-game
     (new-game (default-corp [(qty "Elizabeth Mills" 1)])
               (default-runner [(qty "Corporate Scandal" 1) (qty "Activist Support" 1)
@@ -243,7 +243,7 @@
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
 (deftest data-breach
-  "Data Breach"
+  ;; Data Breach
   (do-game
     (new-game
       (default-corp)
@@ -266,7 +266,7 @@
     (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
 
 (deftest deuces-wild
-  "Deuces Wild"
+  ;; Deuces Wild
   (do-game
     (new-game (default-corp [(qty "Wraparound" 1)
                              (qty "The Future Perfect" 1)])
@@ -301,7 +301,7 @@
     (is (= 0 (:tag (get-runner))))))
 
 (deftest demolition-run
-  "Demolition Run - Trash at no cost"
+  ;; Demolition Run - Trash at no cost
   (do-game
     (new-game (default-corp [(qty "False Lead" 1)
                              (qty "Shell Corporation" 1)
@@ -327,7 +327,7 @@
       (is (empty? (:prompt (get-runner))) "Run concluded"))))
 
 (deftest dirty-laundry
-  "Dirty Laundry - Gain 5 credits at the end of the run if it was successful"
+  ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Dirty Laundry" 2)]))
@@ -342,7 +342,7 @@
     (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
 
 (deftest drive-by
-  "Drive By - Expose card in remote server and trash if asset or upgrade"
+  ;; Drive By - Expose card in remote server and trash if asset or upgrade
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 2)
                              (qty "Product Placement" 1)
@@ -379,7 +379,7 @@
           "Project Atlas not trashed from Server 3"))))
 
 (deftest employee-strike-blue-sun
-  "Employee Strike - vs Blue Sun, suppress Step 1.2"
+  ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
     (new-game (make-deck "Blue Sun: Powering the Future" [(qty "Ice Wall" 1)])
               (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
@@ -390,8 +390,8 @@
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
 
-    (deftest freelance-coding-contract
-  "Freelance Coding Contract - Gain 2 credits per program trashed from Grip"
+(deftest freelance-coding-contract
+  ;; Freelance Coding Contract - Gain 2 credits per program trashed from Grip
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Freelance Coding Contract" 1)
@@ -409,7 +409,7 @@
     (is (= 11 (:credit (get-runner))) "Gained 6 credits from 3 trashed programs")))
 
 (deftest game-day
-  "Game Day - draw until at handsize"
+  ;; Game Day - draw until at handsize
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Game Day" 3)
@@ -426,7 +426,7 @@
    (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
 (deftest independent-thinking
-  "Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards"
+  ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
     (new-game
       (default-corp)
@@ -451,7 +451,7 @@
       (is (= 4 (count (:hand (get-runner)))) "Trashing 2 cards draws 2 card"))))
 
 (deftest indexing
-  "Indexing - Full test"
+  ;; Indexing - Full test
   (do-game
     (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
                             (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
@@ -472,7 +472,7 @@
     (prompt-choice :runner (find-card "Quandary" (:deck (get-corp))))
     (prompt-choice :runner (find-card "Jackson Howard" (:deck (get-corp))))
     (prompt-choice :runner (find-card "Global Food Initiative" (:deck (get-corp))))
-    ;try starting over
+    ;; try starting over
     (prompt-choice :runner "Start over")
     (prompt-choice :runner (find-card "Global Food Initiative" (:deck (get-corp))))
     (prompt-choice :runner (find-card "Jackson Howard" (:deck (get-corp))))
@@ -487,7 +487,7 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest information-sifting
-  "Information Sifting - complicated interactions with damage prevention"
+  ;; Information Sifting - complicated interactions with damage prevention
   (do-game
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping"
                          [(qty "Snare!" 1) (qty "PAD Campaign" 1) (qty "Hostile Infrastructure" 1)
@@ -508,7 +508,7 @@
     (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp is waiting for Runner selection")
     (prompt-choice :runner "Pile 1")
     (prompt-choice :runner "Card from Pile 1")
-    ; the cards are selected randomly :(
+    ;; the cards are selected randomly :(
     (letfn [(prevent-snare [existing-dmg]
               (prompt-choice :corp "Yes")
               (card-ability state :runner (get-program state 0) 1)
@@ -516,7 +516,7 @@
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
               (prompt-choice :runner "Yes")
               (prompt-choice :runner "Done") ; don't prevent Hostile dmg
-              ; chronos prompt
+              ;; chronos prompt
               (prompt-choice :corp "Yes")
               (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
               (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
@@ -526,7 +526,7 @@
               (prompt-choice :runner "Done")
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf"))]
       (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
-        ; prevent the damage
+        ;; prevent the damage
         (do (prevent-snare (count (:discard (get-runner))))
             (prompt-choice :runner "Card from Pile 1")
             (allow-pad (count (:discard (get-runner)))))
@@ -543,7 +543,7 @@
     (is (= 1 (count (:scored (get-runner)))) "Runner stole agenda")))
 
 (deftest inject
-  "Inject - Draw 4 cards from Stack and gain 1 credit per trashed program"
+  ;; Inject - Draw 4 cards from Stack and gain 1 credit per trashed program
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Inject" 1) (qty "Imp" 2) (qty "Sure Gamble" 2)]))
@@ -561,7 +561,7 @@
         "Paid 1 credit to play Inject, gained 2 credits from trashed programs")))
 
 (deftest injection-attack
-  "Injection Attack"
+  ;; Injection Attack
   (do-game
     (new-game (default-corp [(qty "Paper Wall" 1)])
               (default-runner [(qty "Injection Attack" 1) (qty "Corroder" 1)]))
@@ -580,7 +580,7 @@
     (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
 
 (deftest ive-had-worse
-  "I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined"
+  ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 3) (qty "Pup" 3)])
               (default-runner [(qty "I've Had Worse" 2) (qty "Sure Gamble" 3) (qty "Imp" 2)]))
@@ -601,7 +601,7 @@
     (is (= 3 (count (:deck (get-runner)))) "No cards drawn from I've Had Worse")))
 
 (deftest lawyer-up
-  "Lawyer Up - Lose 2 tags and draw 3 cards"
+  ;; Lawyer Up - Lose 2 tags and draw 3 cards
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Lawyer Up" 1) (qty "Sure Gamble" 3)]))
@@ -616,7 +616,7 @@
     (is (= 1 (:tag (get-runner))) "Lost 2 tags")))
 
 (deftest making-an-entrance
-  "Making an Entrance - Full test"
+  ;; Making an Entrance - Full test
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Making an Entrance" 2) (qty "Sure Gamble" 1) (qty "Desperado" 1)
@@ -625,18 +625,18 @@
     (is (= 1 (count (:hand (get-runner)))))
     (take-credits state :corp)
     (play-from-hand state :runner "Making an Entrance")
-    ;trash cards
+    ;; trash cards
     (is (= 1 (count (:discard (get-runner)))))
     (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
     (is (= 3 (count (:discard (get-runner)))))
     (prompt-choice :runner "None")
-    ;start arranging
+    ;; start arranging
     (prompt-choice :runner (find-card "Making an Entrance" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
-    ;try starting over
+    ;; try starting over
     (prompt-choice :runner "Start over")
     (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
     (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
@@ -654,7 +654,7 @@
     (is (= 1 (count (:hand (get-runner)))) "Can only play on first click")))
 
 (deftest modded
-  "Modded - Install a program or piece of hardware at a 3 credit discount"
+  ;; Modded - Install a program or piece of hardware at a 3 credit discount
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Modded" 2)
@@ -674,26 +674,26 @@
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
 
 (deftest noble-path
-  "The Noble Path - Prevents damage during run"
+  ;; The Noble Path - Prevents damage during run
   (do-game
     (new-game (default-corp) (default-runner [(qty "The Noble Path" 1) (qty "Hedge Fund" 2)]))
     (let [hand-count #(count (:hand (get-runner)))]
       (starting-hand state :runner ["The Noble Path" "Hedge Fund"])
       (take-credits state :corp)
 
-      ; Play The Noble Path and confirm it trashes remaining cards in hand
+      ;; Play The Noble Path and confirm it trashes remaining cards in hand
       (is (= 2 (hand-count)) "Start with 2 cards")
       (play-from-hand state :runner "The Noble Path")
       (is (= 0 (hand-count)) "Playing Noble Path trashes the remaining cards in hand")
 
-      ; Put a card into hand so I can confirm it's not discarded by damage
-      ; Don't want to dealing with checking damage on a zero card hand
+      ;; Put a card into hand so I can confirm it's not discarded by damage
+      ;; Don't want to dealing with checking damage on a zero card hand
       (starting-hand state :runner ["Hedge Fund"])
 
       (core/damage state :runner :net 1)
       (is (= 1 (hand-count)) "Damage was prevented")
 
-      ; Finish the run and check that damage works again
+      ;; Finish the run and check that damage works again
       (prompt-choice :runner "HQ")
       (run-successful state)
       (prompt-choice :runner "OK")
@@ -701,7 +701,7 @@
       (is (= 0 (hand-count)) "Damage works again after run"))))
 
 (deftest notoriety
-  "Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point"
+  ;; Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 1)])
               (default-runner [(qty "Notoriety" 1)]))
@@ -715,7 +715,7 @@
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
 (deftest out-of-the-ashes
-  "Out of the Ashes - ensure card works when played/trashed/milled"
+  ;; Out of the Ashes - ensure card works when played/trashed/milled
   (do-game
     (new-game (default-corp [(qty "Kala Ghoda Real TV" 1) (qty "Underway Renovation" 1)])
               (default-runner [(qty "Out of the Ashes" 6)]))
@@ -736,7 +736,7 @@
       (core/advance state :corp {:card (refresh underway)}))
     (is (= 6 (count (:discard (get-runner)))))
     (take-credits state :corp)
-    ;remove 5 Out of the Ashes from the game
+    ;; remove 5 Out of the Ashes from the game
     (loop [x 5]
       (when (pos? x)
         (do (is (not (empty? (get-in @state [:runner :prompt]))))
@@ -750,7 +750,7 @@
     (is (= 5 (count (:rfg (get-runner)))))
     (take-credits state :runner)
     (take-credits state :corp)
-    ;ensure that if you decline the rfg, game will still ask the next turn
+    ;; ensure that if you decline the rfg, game will still ask the next turn
     (is (not (empty? (get-in @state [:runner :prompt]))))
     (prompt-choice :runner "Yes")
     (prompt-choice :runner "Archives")
@@ -760,7 +760,7 @@
     (is (= 6 (count (:rfg (get-runner)))))))
 
 (deftest political-graffiti
-  "Political Graffiti - swapping with Turntable works / purging viruses restores points"
+  ;; Political Graffiti - swapping with Turntable works / purging viruses restores points
   (do-game
     (new-game (default-corp [(qty "Breaking News" 1) (qty "Chronos Project" 1)])
               (default-runner [(qty "Turntable" 1) (qty "Political Graffiti" 1)]))
@@ -788,7 +788,7 @@
       (is (= 1 (:agenda-point (get-runner)))))))
 
 (deftest push-your-luck-correct-guess
-  "Push Your Luck - Corp guesses correctly"
+  ;; Push Your Luck - Corp guesses correctly
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Push Your Luck" 1)]))
@@ -799,7 +799,7 @@
     (is (= 0 (:credit (get-runner))) "Corp guessed correctly")))
 
 (deftest push-your-luck-incorrect-guess
-  "Push Your Luck - Corp guesses incorrectly"
+  ;; Push Your Luck - Corp guesses incorrectly
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Push Your Luck" 1)]))
@@ -823,7 +823,7 @@
       reina "Reina Roja: Freedom Fighter"]
 
   (deftest rebirth-kate
-    "Rebirth - Kate's discount applies after rebirth"
+    ;; Rebirth - Kate's discount applies after rebirth
     (do-game
       (new-game (default-corp) (default-runner ["Magnum Opus" "Rebirth"]) {:start-as :runner})
 
@@ -846,7 +846,7 @@
         (play-from-hand state :runner "Magnum Opus")))))
 
   (deftest-pending rebirth-kate-twice
-    "Rebirth - Kate's discount does not after rebirth if something already installed"
+    ;; Rebirth - Kate's discount does not after rebirth if something already installed
     (do-game
       (new-game (default-corp) (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"]) {:start-as :runner})
 
@@ -859,7 +859,7 @@
         "Discount not applied for 2nd install")))
 
   (deftest rebirth-whizzard
-    "Rebirth - Whizzard works after rebirth"
+    ;; Rebirth - Whizzard works after rebirth
     (do-game
       (new-game (default-corp ["Ice Wall"]) (make-deck reina ["Rebirth"]))
       (play-from-hand state :corp "Ice Wall" "R&D")
@@ -876,7 +876,7 @@
         "Reina is no longer active")))
 
   (deftest rebirth-lose-link
-    "Rebirth - Lose link from ID"
+    ;; Rebirth - Lose link from ID
     (do-game
       (new-game (default-corp)
                 (make-deck kate ["Rebirth" "Access to Globalsec"])
@@ -889,7 +889,7 @@
       (is (= 1 (:link (get-runner))) "1 link after rebirth")))
 
   (deftest rebirth-gain-link
-    "Rebirth - Gain link from ID"
+    ;; Rebirth - Gain link from ID
     (do-game
       (new-game (default-corp)
                 (default-runner ["Rebirth" "Access to Globalsec"])
@@ -902,7 +902,7 @@
       (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
 
 (deftest rigged-results
-  "Rigged Results - success and failure"
+  ;; Rigged Results - success and failure
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 1)])
               (default-runner [(qty "Rigged Results" 3)]))
@@ -920,7 +920,7 @@
     (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")))
 
 (deftest retrieval-run
-  "Retrieval Run - Run Archives successfully and install a program from Heap for free"
+  ;; Retrieval Run - Run Archives successfully and install a program from Heap for free
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Retrieval Run" 1) (qty "Morning Star" 1)]))
@@ -938,7 +938,7 @@
       (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
 
 (deftest rumor-mill
-  "Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects"
+  ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
   (do-game
     (new-game
       (default-corp [(qty "Project Atlas" 1)
@@ -1004,7 +1004,7 @@
     (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
 
 (deftest singularity
-  "Singularity - Run a remote; if successful, trash all contents at no cost"
+  ;; Singularity - Run a remote; if successful, trash all contents at no cost
   (do-game
     (new-game (default-corp [(qty "Caprice Nisei" 1)
                              (qty "Breaker Bay Grid" 1)
@@ -1024,7 +1024,7 @@
     (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")))
 
 (deftest stimhack
-  "Stimhack - Gain 9 temporary credits and take 1 brain damage after the run"
+  ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 1)])
               (default-runner [(qty "Stimhack" 1) (qty "Sure Gamble" 1)]))
@@ -1045,7 +1045,7 @@
     (is (= 1 (:brain-damage (get-runner))))))
 
 (deftest sure-gamble
-  "Sure Gamble"
+  ;; Sure Gamble
   (do-game
     (new-game (default-corp) (default-runner [(qty "Sure Gamble" 1)]))
     (take-credits state :corp)
@@ -1055,7 +1055,7 @@
 
 ;; Surge and virus counter flag tests
 (deftest surge-valid-target
-  "Add counters if target is a virus and had a counter added this turn"
+  ;; Add counters if target is a virus and had a counter added this turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
@@ -1068,7 +1068,7 @@
       (is (= 4 (get-counters (refresh imp) :virus)) "Imp has 4 counters after surge"))))
 
 (deftest surge-target-not-virus
-  "Don't fire surge if target is not a virus"
+  ;; Don't fire surge if target is not a virus
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Security Testing" 1) (qty "Surge" 1)]))
@@ -1080,7 +1080,7 @@
       (is (not (contains? st :counter)) "Surge does not fire on Security Testing"))))
 
 (deftest surge-target-no-token-this-turn
-  "Don't fire surge if target does not have virus counter flag set"
+  ;; Don't fire surge if target does not have virus counter flag set
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Imp" 1) (qty "Surge" 1)]))
@@ -1096,7 +1096,7 @@
           "Surge does not fire on Imp turn after install"))))
 
 (deftest surge-target-gorman-drip
-  "Don't allow surging Gorman Drip, since it happens on the corp turn"
+  ;; Don't allow surging Gorman Drip, since it happens on the corp turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Gorman Drip v1" 1) (qty "Surge" 1)]))
@@ -1113,7 +1113,7 @@
       (is (= 3 (get-counters (refresh gd) :virus)) "Surge does not trigger on Gorman Drip"))))
 
 (deftest test-run
-  "Test Run - Programs hosted after install get returned to Stack. Issue #1081"
+  ;; Test Run - Programs hosted after install get returned to Stack. Issue #1081
   (do-game
     (new-game (default-corp [(qty "Wraparound" 1)])
               (default-runner [(qty "Test Run" 2) (qty "Morning Star" 1)
@@ -1150,7 +1150,7 @@
               (is (= "Knight" (:title (first (:deck (get-runner))))) "Knight returned to Stack from host ICE"))))))))
 
 (deftest test-run-scavenge
-  "Test Run - Make sure program remains installed if Scavenged"
+  ;; Test Run - Make sure program remains installed if Scavenged
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Test Run" 1) (qty "Morning Star" 1)
@@ -1171,7 +1171,7 @@
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
 
 (deftest the-price-of-freedom
-  "The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn"
+  ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn
   (do-game
     (new-game (default-corp [(qty "NAPD Contract" 1)])
               (default-runner [(qty "Kati Jones" 1) (qty "The Price of Freedom" 1)]))
@@ -1201,9 +1201,8 @@
       (core/advance state :corp {:card (refresh napd)})
       (is (= 7 (:credit (get-corp))) "NAPD could be advanced (3 credits charged for advancing)"))))
 
-
 (deftest vamp
-  "Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp"
+  ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp
   (do-game
     (new-game (default-corp) (default-runner [(qty "Vamp" 1) (qty "Sure Gamble" 3)]))
     (take-credits state :corp)
@@ -1219,7 +1218,7 @@
     (is (= 0 (:credit (get-corp))) "Corp lost all 8 credits")))
 
 (deftest virus-counter-flag-on-enter
-  "Set counter flag when virus card enters play with counters"
+  ;; Set counter flag when virus card enters play with counters
   (do-game
     (new-game (default-corp) (default-runner [(qty "Surge" 1) (qty "Imp" 1) (qty "Crypsis" 1)]))
     (take-credits state :corp)
@@ -1228,7 +1227,7 @@
       (is (get-in imp [:added-virus-counter]) "Counter flag was not set on Imp"))))
 
 (deftest virus-counter-flag-on-add-prop
-  "Set counter flag when add-prop is called on a virus"
+  ;; Set counter flag when add-prop is called on a virus
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Crypsis" 1)]))
@@ -1241,7 +1240,7 @@
           "Counter flag was set on Crypsis"))))
 
 (deftest virus-counter-flag-clear-on-end-turn
-  "Clear the virus counter flag at the end of each turn"
+  ;; Clear the virus counter flag at the end of each turn
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Crypsis" 1)]))
