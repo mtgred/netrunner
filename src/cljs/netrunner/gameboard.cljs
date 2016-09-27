@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize lower-case]]
+            [clojure.string :refer [capitalize includes? join lower-case split]]
             [netrunner.main :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
@@ -526,8 +526,13 @@
           (let [colour-type (case subtype-target
                               ("Barrier" "Sentry") (lower-case subtype-target)
                               "Code Gate" "code-gate"
-                              nil)]
-            [:div.darkbg.subtype-target {:class colour-type} subtype-target]))
+                              nil)
+                label (if (includes? subtype-target " - ")
+                        (->> (split subtype-target #" - ")
+                             (map first)
+                             (join " - "))
+                        subtype-target)]
+            [:div.darkbg.subtype-target {:class colour-type} label]))
         (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
           (let [centrals ["Archives" "R&D" "HQ"]
                 remotes (concat (remote-list remotes) ["New remote"])
