@@ -658,7 +658,7 @@
    {:abilities [{:cost [:click 1]
                  :msg (msg "draw 2 cards")
                  :effect (req (draw state side 2)
-                              (let [drawn (take-last 2 (conj (take 2 (:deck runner)) (:hand runner)))]
+                              (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
                                 (resolve-ability
                                   state side
                                   {:prompt (str "Choose 1 card to add to the bottom of the Stack")

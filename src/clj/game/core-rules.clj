@@ -65,30 +65,42 @@
     (let [drawn-this-turn (get-in @state [side :register :drawn-this-turn] 0)]
       (max (- max-draw drawn-this-turn) 0))))
 
+(defn draw-bonus
+  "Registers a bonus of n draws to the next draw (Daily Business Show)"
+  [state side n]
+  (swap! state update-in [:bonus :draw] (fnil #(+ % n) 0)))
+
 (defn draw
   "Draw n cards from :deck to :hand."
   ([state side] (draw state side 1 nil))
   ([state side n] (draw state side n nil))
   ([state side n {:keys [suppress-event] :as args}]
+   (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
+   (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
+         n (-> n (+ (or (get-in @state [:bonus :draw]) 0)))
          draws-wanted n
-         n (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
-             (min n (remaining-draws state side))
-             n)
+         draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
+                                  (min n (remaining-draws state side))
+                                  n)
          deck-count (count (get-in @state [side :deck]))]
-     (when (and (= side :corp) (> n deck-count))
+     (when (and (= side :corp) (> draws-after-prevent deck-count))
        (win-decked state))
      (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
-       (let [drawn (zone :hand (take n (get-in @state [side :deck])))]
+       (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
          (swap! state update-in [side :hand] #(concat % drawn))
-         (swap! state update-in [side :deck] (partial drop n))
-         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % n) 0))
+         (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+         (swap! state assoc-in [side :register :most-recent-drawn] drawn)
+         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
+         (swap! state update-in [:bonus] dissoc :draw)
          (when (and (not suppress-event) (pos? deck-count))
-           (trigger-event state side (if (= side :corp) :corp-draw :runner-draw) n))
+           (when-completed
+             (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
+             (trigger-event state side (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent)))
          (when (= 0 (remaining-draws state side))
            (prevent-draw state side))))
-     (when (< n draws-wanted)
-       (let [prevented (- draws-wanted n)]
+     (when (< draws-after-prevent draws-wanted)
+       (let [prevented (- draws-wanted draws-after-prevent)]
          (system-msg state (other-side side) (str "prevents " prevented " card"
                                                   (when (> prevented 1) "s")
                                                   " from being drawn")))))))
