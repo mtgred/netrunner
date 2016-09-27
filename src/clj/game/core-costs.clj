@@ -8,7 +8,7 @@
   (swap! state update-in [side attr] (if (or (= attr :memory)
                                              (= attr :agenda-point)
                                              (= attr :hand-size-modification))
-                                       ;; Memory or hand size mod may be negative
+                                       ;; Memory, agenda points or hand size mod may be negative
                                        #(- % value)
                                        #(max 0 (- % value))))
   (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))

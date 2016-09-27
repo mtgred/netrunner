@@ -733,13 +733,13 @@
           ff (get-in @state [:runner :rig :hardware 0])]
       (run-on state "HQ")
       (core/rez state :corp viktor)
-      (card-ability state :corp viktor 0)
+      (card-subroutine state :corp viktor 0)
       (prompt-choice :runner "Done") ;don't prevent the brain damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
       (prompt-choice :runner "Done") ;so we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
-      (card-ability state :corp viktor 0)
+      (card-subroutine state :corp viktor 0)
       (card-ability state :runner ff 1) ;prevent the brain damage this time
       (prompt-choice :runner "Done")
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")

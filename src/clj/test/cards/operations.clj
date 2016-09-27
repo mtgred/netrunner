@@ -253,10 +253,10 @@
     (run-on state :hq)
     (let [vik (get-ice state :hq 0)]
       (core/rez state :corp vik)
-      (card-ability state :corp vik 0)
+      (card-subroutine state :corp vik 0)
       (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
-      (card-ability state :corp vik 0)
+      (card-subroutine state :corp vik 0)
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 

@@ -47,6 +47,8 @@
    "select" core/select
    "shuffle" core/shuffle-deck
    "ability" core/play-ability
+   "runner-ability" core/play-runner-ability
+   "subroutine" core/play-subroutine
    "trash-resource" core/trash-resource
    "auto-pump" core/auto-pump
    "toast" core/toast

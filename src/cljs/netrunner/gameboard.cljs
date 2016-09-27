@@ -176,29 +176,39 @@
 (defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
     (when (not-spectator? game-state app-state)
-      (if (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
+      (cond
+        ;; Selecting card
+        (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
         (send-command "select" {:card card})
-        (if (and (= (:type card) "Identity") (= side (keyword (.toLowerCase (:side card)))))
-          (handle-abilities card owner)
-          (if (= side :runner)
-            (case (first zone)
-              "hand" (if (:host card)
-                       (when (:installed card)
-                         (handle-abilities card owner))
-                       (send-command "play" {:card card}))
-              ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
-              nil)
-            (case (first zone)
-              "hand" (case type
-                       ("Upgrade" "ICE") (if root
-                                           (send-command "play" {:card card :server root})
-                                           (-> (om/get-node owner "servers") js/$ .toggle))
-                       ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
-                                            (send-command "play" {:card card :server "New remote"})
-                                            (-> (om/get-node owner "servers") js/$ .toggle))
-                       (send-command "play" {:card card}))
-              ("servers" "scored" "current" "onhost") (handle-abilities card owner)
-              nil)))))))
+        ;; Card is an identity of player's side
+        (and (= (:type card) "Identity")
+             (= side (keyword (.toLowerCase (:side card)))))
+        (handle-abilities card owner)
+        ;; Runner side
+        (= side :runner)
+        (case (first zone)
+          "hand" (if (:host card)
+                   (when (:installed card)
+                     (handle-abilities card owner))
+                   (send-command "play" {:card card}))
+          ("rig" "current" "onhost" "play-area") (handle-abilities card owner)
+          ("servers") (when (and (= type "ICE") (:rezzed card))
+                        ;; ICE that should show list of abilities that send messages to fire sub
+                        (-> (om/get-node owner "runner-abilities") js/$ .toggle))
+          nil)
+        ;; Corp side
+        (= side :corp)
+        (case (first zone)
+          "hand" (case type
+                   ("Upgrade" "ICE") (if root
+                                       (send-command "play" {:card card :server root})
+                                       (-> (om/get-node owner "servers") js/$ .toggle))
+                   ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
+                                        (send-command "play" {:card card :server "New remote"})
+                                        (-> (om/get-node owner "servers") js/$ .toggle))
+                   (send-command "play" {:card card}))
+          ("servers" "scored" "current" "onhost") (handle-abilities card owner)
+          nil)))))
 
 (defn in-play? [card]
   (let [dest (when (= (:side card) "Runner")
@@ -475,7 +485,7 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown server-target icon new]
+                         side rec-counter facedown server-target icon new runner-abilities subroutines]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -524,8 +534,26 @@
                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
                      label])
                   servers)]))
+        (when (pos? (+ (count runner-abilities) (count subroutines)))
+          [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
+           (map-indexed
+             (fn [i ab]
+               [:div {:on-click #(do (send-command "runner-ability" {:card @cursor
+                                                                     :ability i}))
+                      :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+             runner-abilities)
+           (when (> (count subroutines) 1)
+             [:div {:on-click #(send-command "system-msg"
+                                             {:msg (str "indicates to fire all subroutines on " title)})}
+              "Let all subroutines fire"])
+           (map (fn [sub]
+                  [:div {:on-click #(send-command "system-msg"
+                                                  {:msg (str "indicates to fire the \"" (:label sub)
+                                                             "\" subroutine on " title)})
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
+                subroutines)])
         (let [actions (action-list cursor)]
-          (when (or (> (+ (count actions) (count abilities)) 1)
+          (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                     (some #{"derez" "advance"} actions)
                     (= type "ICE"))
             [:div.blue-shade.panel.abilities {:ref "abilities"}
@@ -533,17 +561,23 @@
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
                   actions)
              (map-indexed
-               (fn [i ab]
-                 (if (:auto-pump ab)
-                   [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
-                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
-                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                  :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                             (dec i) i)})
-                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
-                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
-               abilities)]))
-        (when (#{"servers" "onhost"} (first zone))
+              (fn [i ab]
+                (if (:auto-pump ab)
+                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                  [:div {:on-click #(do (send-command "ability" {:card @cursor
+                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
+                                                                            (dec i) i)})
+                                        (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                         :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+              abilities)
+             (map-indexed
+               (fn [i sub]
+                 [:div {:on-click #(do (send-command "subroutine" {:card @cursor :subroutine i})
+                                       (-> (om/get-node owner "abilities") js/$ .fadeOut))
+                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
+               subroutines)]))
+       (when (#{"servers" "onhost"} (first zone))
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
             [:div.blue-shade.panel.menu.abilities {:ref "agenda"}

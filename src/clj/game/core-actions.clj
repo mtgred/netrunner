@@ -189,6 +189,27 @@
       (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
       (resolve-ability state side ab card targets))))
 
+(defn play-runner-ability
+  "Triggers a card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
+  [state side {:keys [card ability targets] :as args}]
+  (let [cdef (card-def card)
+        ab (get-in cdef [:runner-abilities ability])
+        cost (:cost ab)]
+    (when (or (nil? cost)
+              (apply can-pay? state side (:title card) cost))
+      (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
+      (resolve-ability state side ab card targets))))
+
+(defn play-subroutine
+  "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
+  [state side {:keys [card subroutine targets] :as args}]
+  (let [cdef (card-def card)
+        sub (get-in cdef [:subroutines subroutine])
+        cost (:cost sub)]
+    (when (or (nil? cost)
+              (apply can-pay? state side (:title card) cost))
+      (when-let [activatemsg (:activatemsg sub)] (system-msg state side activatemsg))
+      (resolve-ability state side sub card targets))))
 
 ;;; Corp actions
 (defn trash-resource

@@ -18,7 +18,7 @@
     (is (= [:hq] (get-in @state [:run :server])))
     (let [iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
-      (card-ability state :corp iwall 0)
+      (card-subroutine state :corp iwall 0)
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
@@ -64,12 +64,12 @@
       (take-credits state :corp)
       (run-on state "Archives")
       (core/rez state :corp bw)
-      (card-ability state :corp bw 0)
+      (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
       (run-successful state)
       (is (= 0 (:tag (get-runner))) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
-      (card-ability state :corp bw 0)
+      (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
       (run-jack-out state)
       (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
@@ -87,7 +87,7 @@
     (let [frog (get-ice state :hq 0)]
       (core/rez state :corp frog)
       (is (= :hq (first (get-in @state [:run :server]))))
-      (card-ability state :corp frog 0)
+      (card-subroutine state :corp frog 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "1 [Credits]")
       (prompt-choice :corp "R&D")
@@ -111,7 +111,7 @@
     (is (= 1 (get-in @state [:run :position])))
     (let [cp (get-ice state :hq 0)]
       (core/rez state :corp cp)
-      (card-ability state :corp cp 0)
+      (card-subroutine state :corp cp 0)
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
       (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
 
@@ -127,7 +127,7 @@
       (is (= 3 (:memory (get-runner))))
       (run-on state "HQ")
       (core/rez state :corp cort)
-      (card-ability state :corp cort 0)
+      (card-subroutine state :corp cort 0)
       (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 net damage"))))
 
 (deftest crick
@@ -145,7 +145,7 @@
       (core/rez state :corp cr2)
       (is (= 3 (:current-strength (refresh cr1))) "Normal strength over HQ")
       (is (= 6 (:current-strength (refresh cr2))) "+3 strength over Archives")
-      (card-ability state :corp cr2 0)
+      (card-subroutine state :corp cr2 0)
       (prompt-select :corp (find-card "Ice Wall" (:discard (get-corp))))
       (prompt-choice :corp "HQ")
       (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd ICE over HQ"))))
@@ -178,7 +178,7 @@
     (let [dh (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp dh)
-      (card-ability state :corp dh 0)
+      (card-subroutine state :corp dh 0)
       (prompt-choice :corp 2)
       (prompt-choice :runner 0)
       ;trash 1 card and rearrange the other 3
@@ -198,7 +198,7 @@
       (is (= "Patron" (:title (second (rest (:deck (get-runner)))))))
       (run-jack-out state)
       (run-on state "HQ")
-      (card-ability state :corp dh 0)
+      (card-subroutine state :corp dh 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 1)
       ;trash the only card automatically
@@ -218,7 +218,7 @@
       (prompt-choice :corp 4)
       (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
       (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
-      (card-ability state :corp drac 0)
+      (card-subroutine state :corp drac 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
@@ -235,7 +235,7 @@
       (run-on state "HQ")
       (is (= 3 (:click (get-runner))))
       (core/rez state :corp enig)
-      (card-ability state :corp enig 0)
+      (card-subroutine state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
 (deftest excalibur
@@ -248,7 +248,7 @@
     (let [excal (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp excal)
-      (card-ability state :corp excal 0)
+      (card-subroutine state :corp excal 0)
       (run-jack-out state)
       (run-on state "R&D")
       (is (not (:run @state)) "No run initiated")
@@ -269,7 +269,7 @@
       (run-on state "HQ")
       (core/rez state :corp fen)
       (is (= 1 (:bad-publicity (get-corp))) "Gained 1 bad pub")
-      (card-ability state :corp fen 0)
+      (card-subroutine state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (core/hand-size state :runner))))))
@@ -288,7 +288,7 @@
           cc (get-hardware state 1)]
       (run-on state :hq)
       (core/rez state :corp flare)
-      (card-ability state :corp flare 0)
+      (card-subroutine state :corp flare 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (prompt-select :corp cc)
@@ -310,11 +310,11 @@
     (let [gem (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp gem)
-      (card-ability state :corp gem 0)
+      (card-subroutine state :corp gem 0)
       (prompt-choice :corp 3) ; boost to trace strength 5
       (prompt-choice :runner 0)
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
-      (card-ability state :corp gem 0)
+      (card-subroutine state :corp gem 0)
       (prompt-choice :corp 3) ; boost to trace strength 5
       (prompt-choice :runner 5) ; match trace
       (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
@@ -331,7 +331,7 @@
     (let [gem (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp gem)
-      (card-ability state :corp gem 0)
+      (card-subroutine state :corp gem 0)
       (prompt-choice :corp 3) ; boost to trace strength 5
       (prompt-choice :runner 0)
       (prompt-choice :corp "Yes")
@@ -371,7 +371,7 @@
     (let [lock (get-ice state :rd 0)]
       (run-on state "R&D")
       (core/rez state :corp lock)
-      (card-ability state :corp lock 0)
+      (card-subroutine state :corp lock 0)
       (run-successful state)
       (play-from-hand state :runner "Diesel")
       (is (= 1 (count (:hand (get-runner)))) "No cards drawn")
@@ -418,7 +418,7 @@
     (run-on state :hq)
     (core/rez state :corp (get-ice state :hq 0))
     (is (= 6 (:credit (get-corp))))
-    (card-ability state :corp (get-ice state :hq 0) 0)
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
     (prompt-select :corp (find-card "Fire Wall" (:hand (get-corp))))
     (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
     (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second ICE")))
@@ -499,12 +499,12 @@
     (play-from-hand state :corp "Searchlight" "HQ")
     (let [searchlight (get-ice state :hq 0)]
       (core/rez state :corp searchlight)
-      (card-ability state :corp (refresh searchlight) 0)
+      (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
       (core/advance state :corp {:card (refresh searchlight)})
-      (card-ability state :corp (refresh searchlight) 0)
+      (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
@@ -520,7 +520,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (run-on state :hq)
     (core/rez state :corp (get-ice state :hq 0))
-    (card-ability state :corp (get-ice state :hq 0) 0)
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
     (prompt-select :corp (get-in @state [:runner :rig :program 0]))
@@ -540,7 +540,7 @@
     (let [shiro (get-ice state :hq 0)]
       (run-on state :hq)
       (core/rez state :corp shiro)
-      (card-ability state :corp shiro 0)
+      (card-subroutine state :corp shiro 0)
       (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
@@ -553,7 +553,7 @@
       (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
       (is (= "Quandary" (:title (second (:deck (get-corp))))))
       (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
-      (card-ability state :corp shiro 1)
+      (card-subroutine state :corp shiro 1)
       (is (= (:cid (first (:deck (get-corp))))
              (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
       (prompt-choice :runner "No")
@@ -570,11 +570,11 @@
     (run-on state :hq)
     (let [sf (get-ice state :hq 0)]
       (core/rez state :corp sf)
-      (card-ability state :corp sf 0)
+      (card-subroutine state :corp sf 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (:run @state) "Runner won psi, run continues")
-      (card-ability state :corp sf 0)
+      (card-subroutine state :corp sf 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "1 [Credits]")
       (is (not (:run @state)) "Run ended"))))
@@ -592,7 +592,7 @@
     (let [special (get-ice state :hq 1)]
       (core/rez state :corp special)
       (is (= 4 (:credit (get-corp))))
-      (card-ability state :corp special 0)
+      (card-subroutine state :corp special 0)
       (is (= 9 (:credit (get-corp))) "Special Offer paid 5 credits")
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
