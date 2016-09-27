@@ -397,7 +397,7 @@
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed")))
 
 (deftest mumbad-virtual-tour-slow-trash
-  ;; Tests that Mumbad Virtual Tour does not force trash with no :slow-trash
+  ;; Tests that Mumbad Virtual Tour does not force trash with :slow-trash
   (do-game
     (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
               (default-runner [(qty "Imp" 1) (qty "Salsette Slums" 1)]))
