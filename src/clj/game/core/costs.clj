@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare toast)
+(declare forfeit prompt! toast)
 
 (defn deduce
   "Deduct the value from the player's attribute."
