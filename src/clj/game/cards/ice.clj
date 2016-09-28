@@ -148,9 +148,11 @@
 
 ;;; For Morph ICE
 (defn morph [state side card new old]
-  (update! state side (assoc card :subtype
-                                  (->> (remove #(= old %) (.split (:subtype card) " - "))
-                                       vec (concat [new]) distinct (join " - "))))
+  (update! state side (assoc card
+                        :subtype-target new
+                        :subtype (combine-subtypes true
+                                                   (remove-subtypes (:subtype card) old)
+                                                   new)))
   (update-ice-strength state side card))
 
 (defn morph-effect
@@ -338,18 +340,17 @@
                            :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
 
    "Chimera"
-   (let [ab {:effect (effect (derez :corp card)
-                             (update! (assoc (get-card state card) :subtype "Mythic")))}]
+   (let [turn-end-ability {:effect (effect (derez :corp card)
+                                           (update! (assoc (get-card state card) :subtype "Mythic")))}]
      {:prompt "Choose one subtype"
       :choices ["Barrier" "Code Gate" "Sentry"]
       :msg (msg "make it gain " target " until the end of the turn")
-      :effect (effect (update! (assoc card :subtype
-                                           (->> (vec (.split (:subtype card) " - "))
-                                                (concat [target])
-                                                (join " - "))))
+      :effect (effect (update! (assoc card
+                                 :subtype-target target
+                                 :subtype (combine-subtypes true (:subtype card) target)))
                       (update-ice-strength card))
-      :events {:runner-turn-ends ab
-               :corp-turn-ends ab}
+      :events {:runner-turn-ends turn-end-ability
+               :corp-turn-ends turn-end-ability}
       :subroutines [end-the-run]})
 
    "Clairvoyant Monitor"
@@ -858,13 +859,14 @@
 
    "Mother Goddess"
    (let [ab {:req (req (ice? target))
-             :effect (effect (update! (assoc card :subtype
-                                                  (->> (mapcat :ices (flatten (seq (:servers corp))))
-                                                       (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
-                                                       (mapcat #(vec (.split (:subtype %) " - ")))
-                                                       (cons "Mythic")
-                                                       distinct
-                                                       (join " - ")))))}]
+             :effect (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
+                                                         (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
+                                                         (mapcat #(split (:subtype %) #" - "))
+                                                         (cons "Mythic")
+                                                         distinct
+                                                         (join " - "))]
+                                        (assoc card :subtype-target (remove-subtypes subtype "Mythic")
+                                                    :subtype subtype))))}]
      {:subroutines [end-the-run]
       :events {:rez ab :trash ab :derez ab}})
 

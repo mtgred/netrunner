@@ -18,7 +18,7 @@
       (is (= 3 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
 
 (deftest adam-palana
-  "Adam - Directives should not grant Pālanā credits."
+  ;; Adam - Directives should not grant Pālanā credits.
   (do-game
     (new-game
       (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
@@ -27,7 +27,7 @@
     (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
 
 (deftest adam-advanceable-traps
-  "Adam - Neutralize All Threats interaction with advanceable traps."
+  ;; Adam - Neutralize All Threats interaction with advanceable traps.
   (do-game
     (new-game
       (default-corp [(qty "Cerebral Overwriter" 3)])
@@ -42,7 +42,7 @@
     (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
 
 (deftest andromeda
-  "Andromeda - 9 card starting hand, 1 link"
+  ;; Andromeda - 9 card starting hand, 1 link
   (do-game
     (new-game
       (default-corp)
@@ -52,7 +52,7 @@
     (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
 
 (deftest andromeda-mulligan
-  "Andromeda - 9 card starting hand after mulligan"
+  ;; Andromeda - 9 card starting hand after mulligan
   (do-game
     (new-game
       (default-corp)
@@ -63,7 +63,7 @@
     (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
 
 (deftest andromeda-palana
-  "Andromeda - should not grant Palana credits."
+  ;; Andromeda - should not grant Palana credits.
   (do-game
     (new-game
       (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
@@ -71,9 +71,8 @@
                                                    (qty "Security Testing" 3) (qty "Bank Job" 3)]))
     (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand")))
 
-
 (deftest apex-facedown-console
-  "Apex - Allow facedown install of a second console. Issue #1326"
+  ;; Apex - Allow facedown install of a second console. Issue #1326
   (do-game
     (new-game
       (default-corp)
@@ -87,9 +86,8 @@
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
 
-
 (deftest cerebral-imaging-max-hand-size
-  "Cerebral Imaging - Maximum hand size equal to credits"
+  ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
     (new-game
       (make-deck "Cerebral Imaging: Infinite Frontiers" [(qty "Hedge Fund" 3)])
@@ -100,7 +98,7 @@
     (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
 (deftest chronos-protocol
-  "Chronos Protocol - Choose Runner discard for first net damage of a turn"
+  ;; Chronos Protocol - Choose Runner discard for first net damage of a turn
   (do-game
     (new-game
       (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Neural EMP" 2)])
@@ -129,7 +127,7 @@
         (is (= 3 (count (:discard (get-runner)))))))))
 
 (deftest edward-kim
-  "Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives"
+  ;; Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives
   (do-game
     (new-game
       (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2) (qty "PAD Campaign" 1)])
@@ -160,7 +158,7 @@
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
 (deftest gabriel-santiago
-  "Gabriel Santiago - Gain 2c on first successful HQ run each turn"
+  ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
   (do-game
     (new-game
       (default-corp)
@@ -174,7 +172,7 @@
     (is (= 7 (:credit (get-runner))) "No credits gained")))
 
 (deftest grndl-power-unleashed
-  "GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub."
+  ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
   (do-game
     (new-game
       (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
@@ -183,7 +181,7 @@
     (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
 
 (deftest grndl-valencia
-  "GRNDL vs Valencia - only 1 bad pub at start"
+  ;; GRNDL vs Valencia - only 1 bad pub at start
   (do-game
     (new-game
       (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
@@ -192,7 +190,7 @@
     (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
 
 (deftest haarpsichord-studios
-  "Haarpsichord Studios - Prevent stealing more than 1 agenda per turn"
+  ;; Haarpsichord Studios - Prevent stealing more than 1 agenda per turn
   (do-game
     (new-game
       (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
@@ -212,7 +210,7 @@
     (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
 
 (deftest haarpsichord-studios-employee-strike
-  "Haarpsichord Studios - Interactions with Employee Strike. Issue #1313."
+  ;; Haarpsichord Studios - Interactions with Employee Strike. Issue #1313.
   (do-game
     (new-game
       (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
@@ -232,7 +230,7 @@
     (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
 
 (deftest haas-bioroid-stronger-together
-  "Stronger Together - +1 strength for Bioroid ice"
+  ;; Stronger Together - +1 strength for Bioroid ice
   (do-game
     (new-game
       (make-deck "Haas-Bioroid: Stronger Together" [(qty "Eli 1.0" 1)])
@@ -243,7 +241,7 @@
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
 (deftest iain-stirling-credits
-  "Iain Stirling - Gain 2 credits when behind"
+  ;; Iain Stirling - Gain 2 credits when behind
   (do-game
     (new-game
       (default-corp [(qty "Breaking News" 1)])
@@ -259,7 +257,7 @@
       (is (= 8 (:credit (get-runner))) "Gained 2 credits from being behind on points"))))
 
 (deftest industrial-genomics-trash-cost
-  "Industrial Genomics - Increase trash cost"
+  ;; Industrial Genomics - Increase trash cost
   (do-game
     (new-game
       (make-deck "Industrial Genomics: Growing Solutions" [(qty "PAD Campaign" 3)
@@ -277,7 +275,7 @@
       (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
 
 (deftest jesminder-sareen-ability
-  "Jesminder Sareen - avoid tags only during a run"
+  ;; Jesminder Sareen - avoid tags only during a run
   (do-game
     (new-game (default-corp [(qty "SEA Source" 1) (qty "Data Raven" 1)])
               (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "Sure Gamble" 3)]))
@@ -302,7 +300,7 @@
       (is (= 2 (:tag (get-runner))) "Jesminder did not avoid the tag outside of a run"))))
 
 (deftest jesminder-john-masanori
-  "Jesminder Sareen - don't avoid John Masanori tag"
+  ;; Jesminder Sareen - don't avoid John Masanori tag
   (do-game
     (new-game (default-corp)
               (make-deck "Jesminder Sareen: Girl Behind the Curtain" [(qty "John Masanori" 1)]))
@@ -313,7 +311,7 @@
     (is (= 1 (:tag (get-runner))) "Jesminder did not avoid John Masanori tag")))
 
 (deftest jinteki-biotech-brewery
-  "Jinteki Biotech - Brewery net damage"
+  ;; Jinteki Biotech - Brewery net damage
   (do-game
     (new-game
       (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
@@ -325,7 +323,7 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
 
 (deftest jinteki-personal-evolution
-  "Personal Evolution - Prevent runner from running on remotes unless they first run on a central"
+  ;; Personal Evolution - Prevent runner from running on remotes unless they first run on a central
   (do-game
     (new-game
       (make-deck "Jinteki: Personal Evolution" [(qty "Braintrust" 1)])
@@ -337,7 +335,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
 
 (deftest jinteki-replicating-perfection
-  "Replicating Perfection - Prevent runner from running on remotes unless they first run on a central"
+  ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
   (do-game
     (new-game
       (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
@@ -349,7 +347,7 @@
     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest jinteki-replicating-perfection-employee-strike
-  "Replicating Perfection - interaction with Employee Strike. Issue #1313."
+  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313.
   (do-game
     (new-game
       (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
@@ -361,7 +359,7 @@
     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest kate-mac-mccaffrey-discount
-  "Kate 'Mac' McCaffrey - Install discount"
+  ;; Kate 'Mac' McCaffrey - Install discount
   (do-game
     (new-game (default-corp)
               (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker" [(qty "Magnum Opus" 1)]))
@@ -370,7 +368,7 @@
     (is (= 1 (:credit (get-runner))) "Installed Magnum Opus for 4 credits")))
 
 (deftest kate-mac-mccaffrey-no-discount
-  "Kate 'Mac' McCaffrey - No discount for 0 cost"
+  ;; Kate 'Mac' McCaffrey - No discount for 0 cost
   (do-game
     (new-game (default-corp)
               (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker"
@@ -382,7 +380,7 @@
     (is (= 0 (:credit (get-runner))) "No Kate discount on second program install")))
 
 (deftest kate-mac-mccaffrey-discount-cant-afford
-  "Kate 'Mac' McCaffrey - Can Only Afford With the Discount"
+  ;; Kate 'Mac' McCaffrey - Can Only Afford With the Discount
   (do-game
     (new-game (default-corp)
               (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker" [(qty "Magnum Opus" 1)]))
@@ -394,7 +392,7 @@
     (is (= 0 (:credit (get-runner))) "Installed Magnum Opus for 4 credits")))
 
 (deftest ken-tenma-run-event-credit
-  "Ken 'Express' Tenma - Gain 1 credit when first Run event played"
+  ;; Ken 'Express' Tenma - Gain 1 credit when first Run event played
   (do-game
     (new-game (default-corp)
               (make-deck "Ken \"Express\" Tenma: Disappeared Clone" [(qty "Account Siphon" 2)]))
@@ -406,7 +404,7 @@
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
 
 (deftest leela-gang-sign-complicated
-  "Leela Patel - complicated interaction with mutiple Gang Sign"
+  ;; Leela Patel - complicated interaction with mutiple Gang Sign
   (do-game
     (new-game
       (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 1)
@@ -436,7 +434,7 @@
     (prompt-choice :runner "Done")))
 
 (deftest leela-lingering-successful-run-prompt
-  "Leela Patel - issues with lingering successful run prompt"
+  ;; Leela Patel - issues with lingering successful run prompt
   (do-game
     (new-game
       (make-deck "NBN: Making News" [(qty "Breaking News" 1) (qty "SanSan City Grid" 1)])
@@ -450,7 +448,7 @@
     (is (not (:run @state)) "Run is over")))
 
 (deftest maxx-wyldside-start-of-turn
-  "MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click"
+  ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game
     (new-game (default-corp)
               (make-deck "MaxX: Maximum Punk Rock" [(qty "Wyldside" 3)
@@ -478,7 +476,7 @@
       (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
 (deftest nasir-ability-basic
-  "Nasir Ability - Basic"
+  ;; Nasir Ability - Basic
   (do-game
     (new-game
       (default-corp [(qty "Ice Wall" 3)])
@@ -495,7 +493,7 @@
       (is (= 1 (:credit (get-runner))) "Credits at 1 after Nasir ability trigger"))))
 
 (deftest nasir-ability-xanadu
-  "Nasir Ability - Xanadu"
+  ;; Nasir Ability - Xanadu
   (do-game
     (new-game
       (default-corp [(qty "Ice Wall" 1)])
@@ -514,7 +512,7 @@
       (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu"))))
 
 (deftest nbn-controlling-the-message
-  "NBN: Controlling the Message - Trace to tag Runner when first installed Corp card is trashed"
+  ;; NBN: Controlling the Message - Trace to tag Runner when first installed Corp card is trashed
   (do-game
     (new-game
       (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 2)])
@@ -534,9 +532,8 @@
     (prompt-choice :runner "Yes")
     (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
 
-
 (deftest nbn-controlling-the-message-drt
-  "NBN: Controlling the Message - Interaction with Dedicated Response Team"
+  ;; NBN: Controlling the Message - Interaction with Dedicated Response Team
   (do-game
     (new-game
       (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 1) (qty "Dedicated Response Team" 1)])
@@ -554,7 +551,7 @@
     (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
 
 (deftest new-angeles-sol-on-steal
-  "New Angeles Sol - interaction with runner stealing agendas"
+  ;; New Angeles Sol - interaction with runner stealing agendas
   (do-game
     (new-game
       (make-deck "New Angeles Sol: Your News" [(qty "Paywall Implementation" 2) (qty "Breaking News" 1)])
@@ -572,9 +569,8 @@
     (is (not (:run @state)) "Run ended")
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
 
-
 (deftest nisei-division
-  "Nisei Division - Gain 1 credit from every psi game"
+  ;; Nisei Division - Gain 1 credit from every psi game
   (do-game
     (new-game
       (make-deck "Nisei Division: The Next Generation" [(qty "Snowflake" 2)])
@@ -600,7 +596,7 @@
       (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
 
 (deftest noise
-  "Noise: Hacker Extraordinaire - Ability"
+  ;; Noise: Hacker Extraordinaire - Ability
   (do-game
     (new-game
       (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "PAD Campaign" 3)])
@@ -615,7 +611,7 @@
     (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")))
 
 (deftest null-ability
-  "Null ability - once per turn"
+  ;; Null ability - once per turn
   (do-game
     (new-game
       (default-corp [(qty "Wraparound" 3)])
@@ -641,7 +637,7 @@
       (is (= 7 (:current-strength (refresh wrap2))) "Outer Wraparound back to 7 strength"))))
 
 (deftest null-trashed
-  "Null ability - does not affect next ice when current is trashed. Issue #1788."
+  ;; Null ability - does not affect next ice when current is trashed. Issue #1788.
   (do-game
     (new-game
       (default-corp [(qty "Wraparound" 1) (qty "Spiderweb" 1)])
@@ -665,7 +661,7 @@
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Null"))))
 
 (deftest quetzal-ability
-  "Quetzal ability- once per turn"
+  ;; Quetzal ability- once per turn
   (do-game
     (new-game
       (default-corp [(qty "Ice Wall" 3)])
@@ -697,7 +693,7 @@
       (core/jack-out state :runner nil))))
 
 (deftest reina-rez-cost-increase
-  "Reina Roja - Increase cost of first rezzed ICE"
+  ;; Reina Roja - Increase cost of first rezzed ICE
   (do-game
     (new-game
       (default-corp [(qty "Quandary" 3)])
@@ -709,6 +705,21 @@
     (let [quan (get-ice state :rd 0)]
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
+
+(deftest rielle-kit-peddler-ability
+  ;; Rielle "Kit" Peddler - Give ice code gate
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 2)])
+              (make-deck "Rielle \"Kit\" Peddler: Transhuman" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [k (get-in @state [:runner :identity])
+          iwall (get-ice state :hq 0)]
+      (core/rez state :corp iwall)
+      (card-ability state :runner k 0)
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate"))))
 
 (deftest silhouette-temujin-weirdness
   ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.
@@ -739,7 +750,7 @@
     (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
 
 (deftest spark-advertisements
-  "Spark Agency - Rezzing advertisements"
+  ;; Spark Agency - Rezzing advertisements
   (do-game
     (new-game
       (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 2)])
@@ -758,7 +769,7 @@
           "Runner lost 1 credit from rez of advertisement (Runner turn)"))))
 
 (deftest strategic-innovations-future-forward
-  "Strategic Innovations: Future Forward - Ability"
+  ;; Strategic Innovations: Future Forward - Ability
   (do-game
     (new-game
       (make-deck "Strategic Innovations: Future Forward" [(qty "Hedge Fund" 2)
@@ -785,7 +796,7 @@
           "Corp not prompted to trigger Strategic Innovations"))))
 
 (deftest titan-agenda-counter
-  "Titan Transnational - Add a counter to a scored agenda"
+  ;; Titan Transnational - Add a counter to a scored agenda
   (do-game
     (new-game
       (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 1)])
@@ -801,7 +812,7 @@
         (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
 
 (deftest titan-corporate-sales-team
-  "Titan, only use one counter of Corporate Sales Team"
+  ;; Titan, only use one counter of Corporate Sales Team
   (do-game
     (new-game
       (make-deck "Titan Transnational: Investing In Your Future" [(qty "Corporate Sales Team" 1) (qty "Mark Yale" 1)])
@@ -830,7 +841,7 @@
         (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
 
 (deftest whizzard
-  "Whizzard - Recurring credits"
+  ;; Whizzard - Recurring credits
   (do-game
     (new-game (default-corp) (make-deck "Whizzard: Master Gamer" ["Sure Gamble"]))
 
@@ -845,7 +856,7 @@
       (is (changes-credits (get-runner) 0 (click-whizzard 1)) "Credits don't reset at start of Corp's turn"))))
 
 (deftest wyvern-chemically-enhanced
-  "Wyvern: Chemically Enhanced - Ability"
+  ;; Wyvern: Chemically Enhanced - Ability
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 3)])
               (make-deck "Wyvern: Chemically Enhanced" [(qty "Sure Gamble" 2)

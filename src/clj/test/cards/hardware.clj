@@ -7,7 +7,7 @@
 
 
 (deftest archives-interface
-  "Archives Interface - Remove 1 card in Archives from the game instead of accessing it"
+  ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
   (do-game
     (new-game (default-corp [(qty "Shock!" 1) (qty "Launch Campaign" 1)])
               (default-runner [(qty "Archives Interface" 1) (qty "Imp" 1)]))
@@ -22,7 +22,7 @@
     (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken")))
 
 (deftest astrolabe-memory
-  "Astrolabe - Gain 1 memory"
+  ;; Astrolabe - Gain 1 memory
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Astrolabe" 3)]))
@@ -31,7 +31,7 @@
     (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
 
 (deftest astrolabe-draw
-  "Astrolabe - Draw on new server install"
+  ;; Astrolabe - Draw on new server install
   (do-game
     (new-game (default-corp [(qty "Snare!" 3)])
               (default-runner [(qty "Astrolabe" 3) (qty "Sure Gamble" 3) (qty "Cloak" 1)]))
@@ -47,7 +47,7 @@
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
 (deftest box-e
-  "Box-E - +2 MU, +2 max hand size"
+  ;; Box-E - +2 MU, +2 max hand size
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Box-E" 1)]))
@@ -57,7 +57,7 @@
    (is (= 7 (core/hand-size state :runner)))))
 
 (deftest brain-chip
-  "Brain Chip handsize and memory limit"
+  ;; Brain Chip handsize and memory limit
   (do-game
    (new-game (default-corp)
              (default-runner [(qty "Brain Chip" 1)]))
@@ -74,7 +74,7 @@
    (is (= (get-in @state [:runner :memory]) 4) "Memory limit reset")))
 
 (deftest clone-chip
-  "Test clone chip usage- outside and during run"
+  ;; Test clone chip usage- outside and during run
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Datasucker" 1) (qty "Clone Chip" 2)]))
@@ -89,7 +89,7 @@
         (is (= (:title ds) "Datasucker"))))))
 
 (deftest comet-event-play
-  "Comet - Play event without spending a click after first event played"
+  ;; Comet - Play event without spending a click after first event played
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Comet" 3) (qty "Easy Mark" 2)]))
@@ -106,7 +106,7 @@
       (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
 
 (deftest cortez-chip
-  "Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn"
+  ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn
   (do-game
     (new-game (default-corp [(qty "Quandary" 1)])
               (default-runner [(qty "Cortez Chip" 1)]))
@@ -122,7 +122,7 @@
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
 (deftest dinosaurus-strength-boost-mu-savings
-  "Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
+  ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
@@ -143,7 +143,7 @@
         (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
 
 (deftest doppelganger
-  "Doppelgänger - run again when successful"
+  ;; Doppelgänger - run again when successful
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Doppelgänger" 1)]))
@@ -160,7 +160,7 @@
     (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
 
 (deftest feedback-filter
-  "Feedback Filter - Prevent net and brain damage"
+  ;; Feedback Filter - Prevent net and brain damage
   (do-game
     (new-game (default-corp [(qty "Data Mine" 1)
                              (qty "Cerebral Overwriter" 1)
@@ -194,7 +194,7 @@
         (is (empty? (get-in @state [:runner :rig :hardware])) "Feedback Filter trashed")))))
 
 (deftest grimoire
-  "Grimoire - Gain 2 MU, add a free virus counter to installed virus programs"
+  ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Grimoire" 1) (qty "Imp" 1)]))
@@ -206,7 +206,7 @@
       (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
 
 (deftest llds-processor
-  "LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install"
+  ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "LLDS Processor" 2) (qty "Inti" 1) (qty "Passport" 1)]))
@@ -224,7 +224,7 @@
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
 
 (deftest maya
-  "Maya - Move accessed card to bottom of R&D"
+  ;; Maya - Move accessed card to bottom of R&D
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
               (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3)]))
@@ -256,7 +256,7 @@
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")))))
 
 (deftest maya-multi-access
-  "Maya - Does not interrupt multi-access."
+  ;; Maya - Does not interrupt multi-access.
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
               (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3) (qty "R&D Interface" 1)]))
@@ -276,7 +276,7 @@
       (is (:prompt (get-runner)) "Runner has next access prompt"))))
 
 (deftest obelus
-  "Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run"
+  ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Obelus" 1) (qty "Nerve Agent" 1)
@@ -314,7 +314,7 @@
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
 
 (deftest plascrete
-  "Plascrete Carapace - Prevent meat damage"
+  ;; Plascrete Carapace - Prevent meat damage
   (do-game
     (new-game (default-corp [(qty "Scorched Earth" 1)])
               (default-runner [(qty "Plascrete Carapace" 1) (qty "Sure Gamble" 1)]))
@@ -334,7 +334,7 @@
       (is (empty? (get-in @state [:runner :rig :hardware])) "Plascrete depleted and trashed"))))
 
 (deftest rabbit-hole
-  "Rabbit Hole - +1 link, optionally search Stack to install more copies"
+  ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Sure Gamble" 1) (qty "Rabbit Hole" 3)]))
@@ -352,7 +352,7 @@
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
 
 (deftest replicator-bazaar
-  "Replicator - interaction with Bazaar. Issue #1511."
+  ;; Replicator - interaction with Bazaar. Issue #1511.
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Replicator" 1) (qty "Bazaar" 1) (qty "Spy Camera" 6)]))
@@ -361,29 +361,29 @@
       (starting-hand state :runner ["Replicator" "Bazaar" "Spy Camera"])
       (play-from-hand state :runner "Replicator")
       (play-from-hand state :runner "Bazaar")
-      (play-from-hand state :runner "Spy Camera") ;; 1 installed
+      (play-from-hand state :runner "Spy Camera") ; 1 installed
       (is (count-spy 1) "1 Spy Cameras installed")
-      (prompt-choice :runner "Yes") ;; for now, choosing Replicator then shows its optional Yes/No
-      (prompt-choice :runner "Yes") ;; Bazaar triggers, 2 installed
+      (prompt-choice :runner "Yes") ; for now, choosing Replicator then shows its optional Yes/No
+      (prompt-choice :runner "Yes") ; Bazaar triggers, 2 installed
       (is (count-spy 2) "2 Spy Cameras installed")
       (prompt-choice :runner "Yes")
-      (prompt-choice :runner "Yes")  ;; 3 installed
+      (prompt-choice :runner "Yes")  ; 3 installed
       (is (count-spy 3) "3 Spy Cameras installed")
 
       (prompt-choice :runner "Yes")
-      (prompt-choice :runner "Yes")  ;; 4 installed
+      (prompt-choice :runner "Yes")  ; 4 installed
       (is (count-spy 4) "4 Spy Cameras installed")
 
       (prompt-choice :runner "Yes")
-      (prompt-choice :runner "Yes")  ;; 5 installed
+      (prompt-choice :runner "Yes")  ; 5 installed
       (is (count-spy 5) "5 Spy Cameras installed")
 
       (prompt-choice :runner "Yes")
-      (prompt-choice :runner "Yes")  ;; 6 installed
+      (prompt-choice :runner "Yes")  ; 6 installed
       (is (count-spy 6) "6 Spy Cameras installed"))))
 
 (deftest spinal-modem
-  "Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run"
+  ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
   (do-game
     (new-game (default-corp [(qty "Caduceus" 1)])
               (default-runner [(qty "Spinal Modem" 1) (qty "Sure Gamble" 1)]))
@@ -404,7 +404,7 @@
       (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
 
 (deftest spy-camera
-  "Spy Camera - Full test"
+  ;; Spy Camera - Full test
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Spy Camera" 6) (qty "Sure Gamble" 1) (qty "Desperado" 1)
@@ -420,7 +420,7 @@
         (do (play-from-hand state :runner "Spy Camera")
             (recur (dec x)))))
     (let [spy (get-hardware state 5)]
-      ;look at top 6 cards
+      ;; look at top 6 cards
       (card-ability state :runner spy 0)
       (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
       (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
@@ -428,7 +428,7 @@
       (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
       (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
       (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
-      ;try starting over
+      ;; try starting over
       (prompt-choice :runner "Start over")
       (prompt-choice :runner (find-card "Kati Jones" (:deck (get-runner))))
       (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
@@ -443,14 +443,14 @@
       (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
       (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
       (is (= "Kati Jones" (:title (second (rest (rest (rest (rest (:deck (get-runner))))))))))
-      ;look at top card of R&D
+      ;; look at top card of R&D
       (card-ability state :runner spy 1)
       (let [topcard (get-in (first (get-in @state [:runner :prompt])) [:msg])]
         (is (= "The top card of R&D is Hedge Fund" topcard)))
       (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest the-personal-touch
-  "The Personal Touch - Give +1 strength to an icebreaker"
+  ;; The Personal Touch - Give +1 strength to an icebreaker
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "The Personal Touch" 1)
@@ -470,7 +470,7 @@
       (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
 
 (deftest titanium-ribs
-  "Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol"
+  ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol
   (do-game
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Viktor 1.0" 1)
                                                                      (qty "Neural EMP" 1)])
@@ -503,7 +503,7 @@
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
 (deftest turntable-swap
-  "Turntable - Swap a stolen agenda for a scored agenda"
+  ;; Turntable - Swap a stolen agenda for a scored agenda
   (do-game
     (new-game (default-corp [(qty "Domestic Sleepers" 1) (qty "Project Vitruvius" 1)])
               (default-runner [(qty "Turntable" 1)]))
@@ -524,8 +524,8 @@
         (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
 
 (deftest turntable-mandatory-upgrades
-  "Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
-             - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades"
+  ;; Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
+  ;;           - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades
   (do-game
     (new-game (default-corp [(qty "Mandatory Upgrades" 2) (qty "Project Vitruvius" 1)])
               (default-runner [(qty "Turntable" 1)]))
@@ -534,13 +534,13 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Turntable")
     (let [tt (get-in @state [:runner :rig :hardware 0])]
-      ;steal Project Vitruvius and swap for Mandatory Upgrades
+      ;; steal Project Vitruvius and swap for Mandatory Upgrades
       (core/steal state :runner (find-card "Project Vitruvius" (:hand (get-corp))))
       (is (prompt-is-card? :runner tt))
       (prompt-choice :runner "Yes")
       (prompt-select :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
-      ;steal second Mandatory Upgrades and swap for Project Vitruvius
+      ;; steal second Mandatory Upgrades and swap for Project Vitruvius
       (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
       (is (prompt-is-card? :runner tt))
       (prompt-choice :runner "Yes")
@@ -549,7 +549,7 @@
       (is (= 4 (:click-per-turn (get-corp)))))))
 
 (deftest vigil
-  "Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size"
+  ;; Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3) (qty "PAD Campaign" 2)])
               (default-runner [(qty "Vigil" 1) (qty "Sure Gamble" 2)]))

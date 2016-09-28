@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare card-init card-str close-access-prompt deactivate effect-completed enforce-msg gain-agenda-point
-         get-agenda-points handle-end-run is-type? in-corp-scored? prevent-draw resolve-steal-events show-prompt
-         trash-cards untrashable-while-rezzed? update-all-ice win win-decked)
+(declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points is-type? in-corp-scored?
+         prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
+         update-all-ice win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 

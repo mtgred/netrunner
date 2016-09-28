@@ -611,36 +611,25 @@
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
-   {:interactive (req true)
-    :msg "make all assets gain Advertisement"
-    :effect (req (doseq [c (filter #(is-type? % "Asset")
-                                   (concat (all-installed state :corp)
-                                           (:deck corp)
-                                           (:hand corp)
-                                           (:discard corp)))]
-                   (update! state side (assoc c :subtype
-                                              (->> (vec (.split (or (:subtype c) "") " - "))
-                                                   (cons "Advertisement") ;append ad even if it is already an ad
-                                                   (join " - "))))))
-    :swapped {:msg "make all assets gain Advertisement"
-              :effect (req (doseq [c (filter #(is-type? % "Asset")
-                                             (concat (all-installed state :corp)
-                                                     (:deck corp)
-                                                     (:hand corp)
-                                                     (:discard corp)))]
-                             (update! state side (assoc c :subtype
-                                                          (->> (vec (.split (or (:subtype c) "") " - "))
-                                                               (cons "Advertisement")
-                                                               (join " - "))))))}
-    :leave-play (req (doseq [c (filter #(is-type? % "Asset")
-                                       (concat (all-installed state :corp)
-                                               (:deck corp)
-                                               (:hand corp)
-                                               (:discard corp)))]
-                       (update! state side (assoc c :subtype
-                                                    (->> (vec (.split (or (:subtype c) "") " - "))
-                                                         (drop 1) ;so that all actual ads remain ads if agenda leaves play
-                                                         (join " - "))))))}
+   (letfn [(get-assets [state corp]
+             (filter #(is-type? % "Asset") (concat (all-installed state :corp)
+                                                   (:deck corp)
+                                                   (:hand corp)
+                                                   (:discard corp))))
+           (add-ad [state side c]
+             (update! state side (assoc c :subtype (combine-subtypes false ;append ad even if it is already an ad
+                                                                     (:subtype c "")
+                                                                     "Advertisement"))))]
+     {:interactive (req true)
+      :msg "make all assets gain Advertisement"
+      :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))
+      :swapped {:msg "make all assets gain Advertisement"
+                :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))}
+      :leave-play (req (doseq [c (get-assets state corp)]
+                         (update! state side (assoc c :subtype
+                                                      (->> (split (or (:subtype c) "") #" - ")
+                                                           (drop 1) ;so that all actual ads remain ads if agenda leaves play
+                                                           (join " - "))))))})
 
    "Remote Data Farm"
    {:silent (req true)

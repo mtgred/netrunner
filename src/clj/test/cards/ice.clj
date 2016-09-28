@@ -8,7 +8,7 @@
 
 
 (deftest end-the-run
-  "Since all ETR ice share a common ability, we only need one test"
+  ;; Since all ETR ice share a common ability, we only need one test
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Hedge Fund" 3) (qty "Restructure" 2)])
               (default-runner))
@@ -23,7 +23,7 @@
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
 (deftest architect-untrashable
-  "Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ"
+  ;; Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ
   (do-game
     (new-game (default-corp [(qty "Architect" 3)])
               (default-runner))
@@ -40,7 +40,7 @@
       (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
 
 (deftest asteroid-belt
-  "Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement"
+  ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
   (do-game
     (new-game (default-corp [(qty "Asteroid Belt" 1)])
               (default-runner))
@@ -55,7 +55,7 @@
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
 (deftest bandwidth
-  "Bandwidth - Give the Runner 1 tag; remove 1 tag if the run is successful"
+  ;; Bandwidth - Give the Runner 1 tag; remove 1 tag if the run is successful
   (do-game
     (new-game (default-corp [(qty "Bandwidth" 1)])
               (default-runner))
@@ -75,7 +75,7 @@
       (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
 
 (deftest bullfrog
-  "Bullfrog - Win psi to move to outermost position of another server and continue run there"
+  ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
   (do-game
     (new-game (default-corp [(qty "Bullfrog" 1) (qty "Pup" 2)])
               (default-runner))
@@ -96,7 +96,7 @@
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
 
 (deftest cell-portal
-  "Cell Portal - Bounce Runner to outermost position and derez itself"
+  ;; Cell Portal - Bounce Runner to outermost position and derez itself
   (do-game
     (new-game (default-corp [(qty "Cell Portal" 1) (qty "Paper Wall" 2)])
               (default-runner))
@@ -115,8 +115,21 @@
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
       (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
 
+(deftest chimera
+  ;; Chimera - Gains chosen subtype
+  (do-game
+    (new-game (default-corp [(qty "Chimera" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Chimera" "HQ")
+    (let [ch (get-ice state :hq 0)]
+      (core/rez state :corp ch)
+      (prompt-choice :corp "Barrier")
+      (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has barrier")
+      (take-credits state :corp)
+      (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have barrier"))))
+
 (deftest cortex-lock
-  "Cortex Lock - Do net damage equal to Runner's unused memory"
+  ;; Cortex Lock - Do net damage equal to Runner's unused memory
   (do-game
     (new-game (default-corp [(qty "Cortex Lock" 1)])
               (default-runner [(qty "Corroder" 2) (qty "Sure Gamble" 3)]))
@@ -131,7 +144,7 @@
       (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 net damage"))))
 
 (deftest crick
-  "Crick - Strength boost when protecting Archives; installs a card from Archives"
+  ;; Crick - Strength boost when protecting Archives; installs a card from Archives
   (do-game
     (new-game (default-corp [(qty "Crick" 2) (qty "Ice Wall" 1)])
               (default-runner))
@@ -151,7 +164,7 @@
       (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd ICE over HQ"))))
 
 (deftest curtain-wall
-  "Curtain Wall - Strength boost when outermost ICE"
+  ;; Curtain Wall - Strength boost when outermost ICE
   (do-game
     (new-game (default-corp [(qty "Curtain Wall" 1) (qty "Paper Wall" 1)])
               (default-runner))
@@ -167,7 +180,7 @@
         (is (= 6 (:current-strength (refresh curt))) "Curtain Wall back to default 6 strength")))))
 
 (deftest data-hound
-  "Data Hound - Full test"
+  ;; Data Hound - Full test
   (do-game
     (new-game (default-corp [(qty "Data Hound" 1)])
               (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
@@ -181,13 +194,13 @@
       (card-subroutine state :corp dh 0)
       (prompt-choice :corp 2)
       (prompt-choice :runner 0)
-      ;trash 1 card and rearrange the other 3
+      ;; trash 1 card and rearrange the other 3
       (prompt-choice :corp (find-card "Desperado" (:deck (get-runner))))
       (is (= 1 (count (:discard (get-runner)))))
       (prompt-choice :corp (find-card "Sure Gamble" (:deck (get-runner))))
       (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
       (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
-      ;try starting over
+      ;; try starting over
       (prompt-choice :corp "Start over")
       (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
       (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
@@ -201,12 +214,12 @@
       (card-subroutine state :corp dh 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 1)
-      ;trash the only card automatically
+      ;; trash the only card automatically
       (is (= 2 (count (:discard (get-runner)))))
       (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
 
 (deftest draco
-  "Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run"
+  ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game
     (new-game (default-corp [(qty "Dracō" 1)])
               (default-runner))
@@ -225,7 +238,7 @@
       (is (nil? (get-in @state [:run])) "Run was ended"))))
 
 (deftest enigma
-  "Enigma - Force Runner to lose 1 click if able"
+  ;; Enigma - Force Runner to lose 1 click if able
   (do-game
     (new-game (default-corp [(qty "Enigma" 1)])
               (default-runner))
@@ -239,7 +252,7 @@
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
 (deftest excalibur
-  "Excalibur - Prevent Runner from making another run this turn"
+  ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
     (new-game (default-corp [(qty "Excalibur" 1)])
               (default-runner [(qty "Stimhack" 1)]))
@@ -259,7 +272,7 @@
       (is (empty? (:discard (get-runner))) "Card not played from Grip"))))
 
 (deftest fenris
-  "Fenris - Illicit ICE give Corp 1 bad publicity when rezzed"
+  ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
   (do-game
     (new-game (default-corp [(qty "Fenris" 1)])
               (default-runner))
@@ -275,7 +288,7 @@
       (is (= 4 (core/hand-size state :runner))))))
 
 (deftest flare
-  "Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run"
+  ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run
   (do-game
     (new-game (default-corp [(qty "Flare" 1)])
               (default-runner [(qty "Plascrete Carapace" 1) (qty "Clone Chip" 1) (qty "Cache" 3)]))
@@ -299,7 +312,7 @@
       (is (not (:run @state)) "Run ended"))))
 
 (deftest gemini-kicker
-  "Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success"
+  ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (do-game
     (new-game (default-corp [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Dirty Laundry" 2)]))
@@ -320,7 +333,7 @@
       (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
 
 (deftest gemini-chronos-protocol
-  "Gemini - Interaction with Chronos Protocol and kicker"
+  ;; Gemini - Interaction with Chronos Protocol and kicker
   (do-game
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
               (default-runner [(qty "Sure Gamble" 1) (qty "Dirty Laundry" 2)]))
@@ -339,7 +352,7 @@
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
 
 (deftest iq
-  "IQ - Rez cost and strength equal to cards in HQ"
+  ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
     (new-game (default-corp [(qty "IQ" 3) (qty "Hedge Fund" 3)])
               (default-runner))
@@ -359,7 +372,7 @@
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
 
 (deftest lockdown
-  "Lockdown - Prevent Runner from drawing cards for the rest of the turn"
+  ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
     (new-game (default-corp [(qty "Lockdown" 1)])
               (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
@@ -382,7 +395,7 @@
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
 
 (deftest lotus-field-unlowerable
-  "Lotus Field strength cannot be lowered"
+  ;; Lotus Field strength cannot be lowered
   (do-game
     (new-game (default-corp [(qty "Lotus Field" 1) (qty "Lag Time" 1)])
               (default-runner [(qty "Ice Carver" 1) (qty "Parasite" 1)]))
@@ -446,7 +459,7 @@
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
 (deftest minelayer
-  "Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost"
+  ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
   (do-game
     (new-game (default-corp [(qty "Minelayer" 1) (qty "Fire Wall" 1)])
               (default-runner))
@@ -461,7 +474,7 @@
     (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second ICE")))
 
 (deftest morph-ice-subtype-changing
-  "Morph ice gain and lose subtypes from normal advancements and placed advancements"
+  ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
   (do-game
     (new-game (default-corp [(qty "Wendigo" 1)
                              (qty "Shipment from SanSan" 1)
@@ -486,8 +499,27 @@
         (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
+(deftest mother-goddess
+  ;; Mother Goddess - Gains other ice subtypes
+  (do-game
+    (new-game (default-corp [(qty "Mother Goddess" 1) (qty "NEXT Bronze" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 1)
+    (play-from-hand state :corp "Mother Goddess" "HQ")
+    (play-from-hand state :corp "NEXT Bronze" "R&D")
+    (let [mg (get-ice state :hq 0)
+          nb (get-ice state :rd 0)]
+      (core/rez state :corp mg)
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
+      (is (not (core/has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have code gate")
+      (is (not (core/has-subtype? (refresh mg) "NEXT")) "Mother Goddess does not have NEXT")
+      (core/rez state :corp nb)
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
+      (is (core/has-subtype? (refresh mg) "Code Gate") "Mother Goddess has code gate")
+      (is (core/has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
+
 (deftest next-bronze
-  "NEXT Bronze - Add 1 strength for every rezzed NEXT ice"
+  ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game
     (new-game (default-corp [(qty "NEXT Bronze" 2) (qty "NEXT Silver" 1)])
               (default-runner))
@@ -513,7 +545,7 @@
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
 
 (deftest resistor
-  "Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag"
+  ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
     (new-game (default-corp [(qty "Resistor" 1)])
               (default-runner))
@@ -529,7 +561,7 @@
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
 (deftest searchlight
-  "Searchlight - Trace bace equal to advancement counters"
+  ;; Searchlight - Trace bace equal to advancement counters
   (do-game
     (new-game (default-corp [(qty "Searchlight" 1)])
               (default-runner))
@@ -546,9 +578,8 @@
       (prompt-choice :runner 0)
       (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
 
-
 (deftest sherlock
-  "Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack"
+  ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
   (do-game
     (new-game (default-corp [(qty "Sherlock 1.0" 1)])
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
@@ -565,7 +596,7 @@
     (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
 
 (deftest shiro
-  "Shiro - Full test"
+  ;; Shiro - Full test
   (do-game
     (new-game (default-corp [(qty "Shiro" 1) (qty "Caprice Nisei" 1)
                              (qty "Quandary" 1) (qty "Jackson Howard" 1)])
@@ -581,7 +612,7 @@
       (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-      ;try starting over
+      ;; try starting over
       (prompt-choice :corp "Start over")
       (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
       (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
@@ -598,7 +629,7 @@
              (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
 
 (deftest snowflake
-  "Snowflake - Win a psi game to end the run"
+  ;; Snowflake - Win a psi game to end the run
   (do-game
     (new-game (default-corp [(qty "Snowflake" 1)])
               (default-runner))
@@ -617,7 +648,7 @@
       (is (not (:run @state)) "Run ended"))))
 
 (deftest special-offer-trash-ice-during-run
-  "Special Offer trashes itself and updates the run position"
+  ;; Special Offer trashes itself and updates the run position
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 1) (qty "Special Offer" 1)])
               (default-runner))
@@ -635,7 +666,7 @@
           "Run position updated; now approaching Ice Wall"))))
 
 (deftest tmi
-  "TMI ICE test"
+  ;; TMI ICE test
   (do-game
     (new-game (default-corp [(qty "TMI" 3)])
               (default-runner))
@@ -647,7 +678,7 @@
       (is (get-in (refresh tmi) [:rezzed])))))
 
 (deftest tmi-derez
-  "TMI ICE trace derez"
+  ;; TMI ICE trace derez
   (do-game
     (new-game (default-corp [(qty "TMI" 3)])
               (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
@@ -659,7 +690,7 @@
       (is (not (get-in (refresh tmi) [:rezzed]))))))
 
 (deftest turing-positional-strength
-  "Turing - Strength boosted when protecting a remote server"
+  ;; Turing - Strength boosted when protecting a remote server
   (do-game
     (new-game (default-corp [(qty "Turing" 2) (qty "Hedge Fund" 1)])
               (default-runner))
@@ -676,7 +707,7 @@
           "Turing increased to 5 strength over a remote server"))))
 
 (deftest wraparound
-  "Wraparound - Strength boosted when no fracter is installed"
+  ;; Wraparound - Strength boosted when no fracter is installed
   (do-game
     (new-game (default-corp [(qty "Wraparound" 1)])
               (default-runner [(qty "Corroder" 1)]))

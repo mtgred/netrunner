@@ -1278,20 +1278,33 @@ nav ul
     &.red
       background-color: red
 
-  .server-target
+  .server-target, .subtype-target
     position: absolute
     z-index: 10
     padding: 0
     text-align: center
-    background-color: sienna
     line-height: 16px
     font-size: 10px
     top: 3px
     right: 3px
     padding-left: 3px
     padding-right: 3px
-    height: 16px
-    width: auto
+    white-space: nowrap
+
+  .server-target
+    background-color: sienna
+
+  .subtype-target
+    background-color: dark-grey
+
+    &.barrier
+      background-color: anarch-orange
+
+    &.code-gate
+      background-color: shaper-green
+
+    &.sentry
+      background-color: criminal-blue
 
   .abilities, .servers-menu, .menu, .runner-abilities
     display: none
@@ -1528,6 +1541,10 @@ nav ul
             .strength
               transform(rotate(90deg))
 
+            .subtype-target
+              transform(rotate(90deg), translateX(100%))
+              transform-origin(100% 0)
+
             .icon
               transform(rotate(90deg))
 
@@ -1637,6 +1654,9 @@ nav ul
             transform(rotate(-90deg))
 
           .ices
+            .subtype-target
+              transform(rotate(-90deg), translateY(-100%))
+
             .hosted
               .card-frame
                 transform(rotate(-90deg))

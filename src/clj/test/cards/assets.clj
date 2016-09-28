@@ -60,7 +60,7 @@
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
 (deftest bio-ethics-multiple
-  "Bio-Ethics Association: preventing damage from multiple copies"
+  ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
     (new-game
       (default-corp [(qty "Bio-Ethics Association" 2)])
@@ -82,7 +82,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
 
 (deftest brain-taping-warehouse
-  "Brain-Taping Warehouse - Lower rez cost of bioroid ICE by 1 for each unspent Runner click"
+  ;; Brain-Taping Warehouse - Lower rez cost of bioroid ICE by 1 for each unspent Runner click
   (do-game
     (new-game (default-corp [(qty "Brain-Taping Warehouse" 1) (qty "Ichi 1.0" 1)
                              (qty "Eli 1.0" 1)])
@@ -105,7 +105,7 @@
       (is (= 1 (:credit (get-corp))) "Paid only 1c to rez Eli; reduction of 2c"))))
 
 (deftest capital-investors
-  "Capital Investors - Click for 2 credits"
+  ;; Capital Investors - Click for 2 credits
   (do-game
     (new-game (default-corp [(qty "Capital Investors" 1)])
               (default-runner))
@@ -118,7 +118,7 @@
       (is (= 7 (:credit (get-corp))) "Used twice, gained 4 credits"))))
 
 (deftest chairman-hiro
-  "Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him"
+  ;; Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him
   (do-game
     (new-game (default-corp [(qty "Chairman Hiro" 2)])
               (default-runner))
@@ -140,7 +140,7 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
 (deftest city-surveillance
-  "City Surveillance - Runner chooses to pay 1 credit or take 1 tag at start of their turn"
+  ;; City Surveillance - Runner chooses to pay 1 credit or take 1 tag at start of their turn
   (do-game
     (new-game (default-corp [(qty "City Surveillance" 1)])
               (default-runner))
@@ -229,7 +229,7 @@
       (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
 
 (deftest dedicated-response-team
-  "Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged"
+  ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
   (do-game
     (new-game (default-corp [(qty "Dedicated Response Team" 1)])
               (default-runner))
@@ -247,7 +247,7 @@
       (is (= 2 (count (:discard (get-runner)))) "Suffered 2 damage for successful run w/ tag"))))
 
 (deftest early-premiere
-  "Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server"
+  ;; Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server
   (do-game
     (new-game (default-corp [(qty "Early Premiere" 1) (qty "Ice Wall" 1)
                              (qty "Ghost Branch" 1) (qty "Blacklist" 1)])
@@ -274,7 +274,7 @@
       (is (= 4 (:credit (get-corp)))))))
 
 (deftest edge-of-world
-  "Edge of World - ability"
+  ;; Edge of World - ability
   (do-game
     (new-game (default-corp [(qty "Edge of World" 3) (qty "Ice Wall" 3)])
               (default-runner))
@@ -296,7 +296,7 @@
     (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
 
 (deftest elizabeth-mills
-  "Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location"
+  ;; Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location
   (do-game
     (new-game (default-corp [(qty "Elizabeth Mills" 1)])
               (default-runner [(qty "Earthrise Hotel" 1)]))
@@ -316,7 +316,7 @@
       (is (= 1 (:bad-publicity (get-corp))) "1 bad publicity taken from trashing a location"))))
 
 (deftest elizas-toybox
-  "Eliza's Toybox - Rez a card ignoring all costs"
+  ;; Eliza's Toybox - Rez a card ignoring all costs
   (do-game
     (new-game (default-corp [(qty "Eliza's Toybox" 1) (qty "Wotan" 1)])
               (default-runner))
@@ -334,7 +334,7 @@
       (is (= 1 (:credit (get-corp))) "No credits spent"))))
 
 (deftest encryption-protocol
-  "Encryption Protocol - Trash cost of installed cards increased by 1"
+  ;; Encryption Protocol - Trash cost of installed cards increased by 1
   (do-game
     (new-game (default-corp [(qty "Encryption Protocol" 2)])
               (default-runner))
@@ -368,7 +368,7 @@
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
 (deftest executive-boot-camp-suppress-start-of-turn
-  "Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346."
+  ;; Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346.
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
               (default-runner))
@@ -411,7 +411,7 @@
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
 (deftest full-immersion-recstudio
-  "Full Immmersion RecStudio - install directly, and via Interns"
+  ;; Full Immmersion RecStudio - install directly, and via Interns
   (do-game
     (new-game
       (default-corp [(qty "Full Immersion RecStudio" 1)
@@ -437,7 +437,7 @@
         (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
 
 (deftest full-immersion-recstudio-sandburg
-  "Full Immmersion RecStudio - hosting an asset with events does not double-register events. Issue #1827."
+  ;; Full Immmersion RecStudio - hosting an asset with events does not double-register events. Issue #1827.
   (do-game
     (new-game
       (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1) (qty "Vanilla" 1)
@@ -460,7 +460,7 @@
       (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
 (deftest genetics-pavilion
-  "Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn"
+  ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
   (do-game
     (new-game (default-corp [(qty "Genetics Pavilion" 1)])
               (default-runner [(qty "Diesel" 1) (qty "Sure Gamble" 3) (qty "Sports Hopper" 1)]))
@@ -515,7 +515,7 @@
       (is (= 3 (count (:hand (get-corp)))) "Drew all 3 cards"))))
 
 (deftest genetics-pavilion-mr-li
-  "Genetics Pavilion - Mr. Li interaction. #1594"
+  ;; Genetics Pavilion - Mr. Li interaction. #1594
   (do-game
     (new-game (default-corp [(qty "Genetics Pavilion" 1)])
               (default-runner [(qty "Mr. Li" 1) (qty "Account Siphon" 1) (qty "Faerie" 1)
@@ -550,7 +550,7 @@
       (is (= 2 (count (:hand (get-runner))))))))
 
 (deftest ghost-branch
-  "Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed"
+  ;; Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed
   (do-game
     (new-game (default-corp [(qty "Ghost Branch" 1)])
               (default-runner))
@@ -587,7 +587,7 @@
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
 
 (deftest it-department
-  "IT Department - Add strength to rezzed ICE until end of turn"
+  ;; IT Department - Add strength to rezzed ICE until end of turn
   (do-game
     (new-game (default-corp [(qty "IT Department" 1) (qty "Wall of Static" 1)])
               (default-runner))
@@ -623,7 +623,7 @@
       (is (= 3 (:current-strength (refresh wos))) "Back to default strength"))))
 
 (deftest jackson-howard-draw
-  "Jackson Howard - Draw 2 cards"
+  ;; Jackson Howard - Draw 2 cards
   (do-game
     (new-game (default-corp [(qty "Jackson Howard" 3)
                              (qty "Hedge Fund" 3)
@@ -654,7 +654,7 @@
       (is (= 4 (get-counters (refresh launch) :credit))))))
 
 (deftest mark-yale
-  "Mark Yale - Spend agenda counters or trash himself to gain credits"
+  ;; Mark Yale - Spend agenda counters or trash himself to gain credits
   (do-game
     (new-game (default-corp [(qty "Firmware Updates" 1) (qty "Mark Yale" 1)])
               (default-runner))
@@ -687,7 +687,7 @@
         (is (= 1 (count (:discard (get-corp)))) "Mark Yale trashed")))))
 
 (deftest mental-health-clinic
-  "Mental Health Clinic - Gain 1 credit when turn begins; Runner max hand size increased by 1"
+  ;; Mental Health Clinic - Gain 1 credit when turn begins; Runner max hand size increased by 1
   (do-game
     (new-game (default-corp [(qty "Mental Health Clinic" 1)])
               (default-runner))
@@ -700,7 +700,7 @@
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
 (deftest net-police
-  "Net Police - Recurring credits equal to Runner's link"
+  ;; Net Police - Recurring credits equal to Runner's link
   (do-game
     (new-game
       (default-corp [(qty "Net Police" 1)])
@@ -721,7 +721,7 @@
       (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
 
 (deftest plan-b
-  "Plan B - score agenda with adv cost <= # of adv counters"
+  ;; Plan B - score agenda with adv cost <= # of adv counters
   (do-game
     (new-game (default-corp [(qty "Plan B" 1)
                              (qty "Braintrust" 1)
@@ -803,7 +803,7 @@
       (is (= (:cid agenda1) (:cid (last (:deck (get-corp)))))))))
 
 (deftest psychic-field
-  "Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed"
+  ;; Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed
   (do-game
     (new-game (default-corp [(qty "Psychic Field" 2)])
               (default-runner [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]))
@@ -843,7 +843,7 @@
         "Psychic Field is not a choice to access in Archives")))
 
 (deftest psychic-field-neutralize-all-threats
-  "Psychic Field - Interaction with Neutralize All Threats and Hostile Infrastructure, #1208"
+  ;; Psychic Field - Interaction with Neutralize All Threats and Hostile Infrastructure, #1208
   (do-game
     (new-game (default-corp [(qty "Psychic Field" 3) (qty "Hostile Infrastructure" 3)])
               (default-runner [(qty "Neutralize All Threats" 1) (qty "Sure Gamble" 3)]))
@@ -859,7 +859,7 @@
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
 (deftest public-support
-  "Public support scoring and trashing"
+  ;; Public support scoring and trashing
   ;; TODO could also test for NOT triggering "when scored" events
   (do-game
     (new-game (default-corp [(qty "Public Support" 2)])
@@ -905,7 +905,7 @@
         (is (= 1 (:agendapoints scored-pub)))))))
 
 (deftest reality-threedee
-  "Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)"
+  ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)
   (do-game
     (new-game (default-corp [(qty "Reality Threedee" 1)])
               (default-runner))
@@ -922,7 +922,7 @@
       (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
 
 (deftest reversed-accounts
-  "Reversed Accounts - Trash to make Runner lose 4 credits per advancement"
+  ;; Reversed Accounts - Trash to make Runner lose 4 credits per advancement
   (do-game
     (new-game (default-corp [(qty "Reversed Accounts" 1)])
               (default-runner))
@@ -945,7 +945,7 @@
       (is (= 2 (:credit (get-runner))) "Runner lost 16 credits"))))
 
 (deftest ronald-five
-  "Ronald Five - Runner loses a click every time they trash a Corp card"
+  ;; Ronald Five - Runner loses a click every time they trash a Corp card
   (do-game
     (new-game (default-corp [(qty "Ronald Five" 1) (qty "Melange Mining Corp." 1)])
               (default-runner))
@@ -961,7 +961,7 @@
     (is (= 0 (:click (get-runner))) "Lost 1 click")))
 
 (deftest ronin
-  "Ronin - Click-trash to do 3 net damage when it has 4 or more advancements"
+  ;; Ronin - Click-trash to do 3 net damage when it has 4 or more advancements
   (do-game
     (new-game (default-corp [(qty "Ronin" 1) (qty "Mushin No Shin" 1)])
               (default-runner))
@@ -982,7 +982,7 @@
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
 
 (deftest sandburg
-  "Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c"
+  ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
   (do-game
     (new-game (default-corp [(qty "Sandburg" 1) (qty "Ice Wall" 2) (qty "Hedge Fund" 3)])
               (default-runner))
@@ -1013,7 +1013,7 @@
       (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
 
 (deftest sealed-vault
-  "Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click"
+  ;; Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click
   (do-game
     (new-game (default-corp [(qty "Sealed Vault" 1) (qty "Hedge Fund" 1)])
               (default-runner))
@@ -1040,7 +1040,7 @@
       (is (= 2 (count (:discard (get-corp)))) "Sealed Vault trashed"))))
 
 (deftest server-diagnostics
-  "Server Diagnostics - Gain 2c when turn begins; trashed when ICE is installed"
+  ;; Server Diagnostics - Gain 2c when turn begins; trashed when ICE is installed
   (do-game
     (new-game (default-corp [(qty "Server Diagnostics" 1) (qty "Pup" 1)
                              (qty "Launch Campaign" 1)])
@@ -1056,7 +1056,7 @@
     (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
 
 (deftest snare-cant-afford
-  "Snare! - Can't afford"
+  ;; Snare! - Can't afford
   (do-game
     (new-game (default-corp [(qty "Snare!" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
@@ -1073,7 +1073,7 @@
     (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")))
 
 (deftest snare-dedicated-response-team
-  "Snare! - with Dedicated Response Team"
+  ;; Snare! - with Dedicated Response Team
   (do-game
     (new-game (default-corp [(qty "Snare!" 1) (qty "Dedicated Response Team" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
@@ -1093,7 +1093,7 @@
       (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
 
 (deftest space-camp-archives
-  "Space Camp - bugged interaction from Archives. Issue #1929."
+  ;; Space Camp - bugged interaction from Archives. Issue #1929.
   (do-game
     (new-game (default-corp [(qty "Space Camp" 1) (qty "News Team" 1) (qty "Breaking News" 1)])
               (default-runner))
@@ -1112,7 +1112,7 @@
     (is (not (:run @state)) "Run completed")))
 
 (deftest sundew
-  "Sundew"
+  ;; Sundew
   (do-game
     (new-game (default-corp [(qty "Sundew" 1)])
               (default-runner))
@@ -1144,7 +1144,7 @@
 ;      (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew"))))
 
 (deftest team-sponsorship-hq
-  "Team Sponsorship - Install from HQ"
+  ;; Team Sponsorship - Install from HQ
   (do-game
     (new-game (default-corp [(qty "Domestic Sleepers" 1)
                              (qty "Team Sponsorship" 1)
@@ -1163,7 +1163,7 @@
       (is (nil? (find-card "Adonis Campaign" (:hand (get-corp)))) "No Adonis in hand"))))
 
 (deftest team-sponsorship-archives
-  "Team Sponsorship - Install from Archives"
+  ;; Team Sponsorship - Install from Archives
   (do-game
     (new-game (default-corp [(qty "Domestic Sleepers" 1)
                              (qty "Team Sponsorship" 1)
@@ -1183,7 +1183,7 @@
       (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard"))))
 
 (deftest team-sponsorship-multiple
-  "Team Sponsorship - Multiple installed"
+  ;; Team Sponsorship - Multiple installed
   (do-game
     (new-game (default-corp [(qty "Domestic Sleepers" 1)
                              (qty "Team Sponsorship" 2)
@@ -1210,7 +1210,7 @@
           "Adonis installed by Team Sponsorship"))))
 
 (deftest team-sponsorship-one-window
-  "Team Sponsorship - Score 5 points in one window"
+  ;; Team Sponsorship - Score 5 points in one window
   (do-game
     (new-game (default-corp [(qty "AstroScript Pilot Program" 3)
                              (qty "Team Sponsorship" 1)
@@ -1244,7 +1244,7 @@
     (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
 
 (deftest the-board
-  "The Board - Modify everything in the score area (regression test for #1938)"
+  ;; The Board - Modify everything in the score area (regression test for #1938)
   (do-game
     (new-game (default-corp [(qty "The Board" 1)
                              (qty "News Team" 1)
@@ -1293,7 +1293,7 @@
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
 (deftest the-root
-  "The Root - recurring credits refill at Step 1.2"
+  ;; The Root - recurring credits refill at Step 1.2
   (do-game
     (new-game (make-deck "Blue Sun: Powering the Future" [(qty "The Root" 1)])
               (default-runner))
@@ -1311,7 +1311,7 @@
       (is (= 3 (:rec-counter (refresh root))) "Recurring credits were refilled before Step 1.2 window"))))
 
 (deftest toshiyuki-sakai
-  "Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not"
+  ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not
   (do-game
     (new-game (default-corp [(qty "Toshiyuki Sakai" 1) (qty "Project Junebug" 1) (qty "Hedge Fund" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
@@ -1336,7 +1336,7 @@
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage")))))
 
 (deftest turtlebacks
-  "Turtlebacks - Gain 1 credit for every new server created"
+  ;; Turtlebacks - Gain 1 credit for every new server created
   (do-game
     (new-game (default-corp [(qty "Turtlebacks" 1) (qty "PAD Campaign" 2) (qty "Wraparound" 1)])
               (default-runner))
@@ -1352,7 +1352,7 @@
       (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))
 
 (deftest watchdog
-  "Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags"
+  ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags
   (do-game
     (new-game (default-corp [(qty "Watchdog" 1) (qty "Architect" 1) (qty "Wraparound" 1)])
               (default-runner))
