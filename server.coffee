@@ -5,7 +5,14 @@ io = require('socket.io')(server)
 stylus = require('stylus')
 config = require('./config')
 mongoskin = require('mongoskin')
-MongoStore = require('connect-mongo')(express)
+# Stuff formerly provided by express
+session = require('express-session')
+favicon = require('serve-favicon')
+methodOverride = require('method-override')
+cookieParser = require('cookie-parser')
+bodyParser = require('body-parser')
+#
+MongoStore = require('connect-mongo')({session: session})
 crypto = require('crypto')
 bcrypt = require('bcrypt')
 passport = require('passport')
@@ -292,24 +299,22 @@ sendLobby = () ->
 setInterval(sendLobby, 1000)
 
 # Express config
-app.configure ->
-  app.use express.favicon(__dirname + "/resources/public/img/jinteki.ico")
-  app.set 'port', 1042
-  app.set 'ipaddr', "0.0.0.0"
-  app.use express.methodOverride() # provide PUT DELETE
-  app.use express.cookieParser()
-  app.use express.urlencoded()
-  app.use express.json()
-  app.use express.session
-    store: new MongoStore(url: mongoUrl)
-    secret: config.salt
-    cookie: { maxAge: 2592000000 } # 30 days
-  app.use passport.initialize()
-  app.use passport.session()
-  app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
-  app.use express.static(__dirname + '/resources/public')
-  app.use app.router
-  app.locals.version = process.env['APP_VERSION'] || "0.1.0"
+app.use favicon(__dirname + "/resources/public/img/jinteki.ico")
+app.set 'port', 1042
+app.set 'ipaddr', "0.0.0.0"
+app.use methodOverride() # provide PUT DELETE
+app.use cookieParser()
+app.use bodyParser.urlencoded()
+app.use bodyParser.json()
+app.use session
+  store: new MongoStore(url: mongoUrl)
+  secret: config.salt
+  cookie: { maxAge: 2592000000 } # 30 days
+app.use passport.initialize()
+app.use passport.session()
+app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
+app.use express.static(__dirname + '/resources/public')
+app.locals.version = process.env['APP_VERSION'] || "0.1.0"
 
 # Auth
 passport.use new localStrategy (username, password, done) ->
@@ -334,7 +339,7 @@ app.options('*', cors())
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     throw err if err
-    res.json(200, {user: req.user})
+    res.status(200).json({user: req.user})
 
 app.get '/logout', (req, res) ->
   req.logout()
@@ -364,9 +369,9 @@ app.post '/register', (req, res) ->
             if demoDecks.length > 0
               db.collection('decks').insert demoDecks, (err, newDecks) ->
                 throw err if err
-                res.json(200, {user: req.user, decks: newDecks})
+                res.status(200).json({user: req.user, decks: newDecks})
             else
-              res.json(200, {user: req.user, decks: []})
+              res.status(200).json({user: req.user, decks: []})
 
 app.post '/forgot', (req, res) ->
   async.waterfall [
@@ -406,7 +411,7 @@ app.post '/forgot', (req, res) ->
       }
       smtpTransport.sendMail mailOptions, (err, response) ->
         throw err if err
-        res.send {message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'}, 200 
+        res.send {message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'}, 200
   ]
 
 app.get '/check/:username', (req, res) ->
@@ -434,7 +439,7 @@ app.post '/reset/:token', (req, res) ->
           # req.flash('error', 'Password reset token is invalid or has expired.');
           return res.redirect('back');
 
-        # To be implemented: checking password == confirm 
+        # To be implemented: checking password == confirm
         #if (req.body.password != req.body.confirm)
         #  res.send {message: 'Password does not match Confirm'}, 412
 
@@ -475,18 +480,18 @@ hashPassword = (password, cb) ->
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
     throw err if err
-    res.json(200, data.reverse())
+    res.status(200).json(data.reverse())
 
 app.get '/data/decks', (req, res) ->
   if req.user
     db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
       throw err if err
-      res.json(200, data)
+      res.status(200).json(data)
   else
     db.collection('decks').find({username: "__demo__"}).toArray (err, data) ->
       throw err if err
       delete deck._id for deck in data
-      res.json(200, data)
+      res.status(200).json(data)
 
 app.post '/data/decks', (req, res) ->
   deck = req.body
@@ -501,7 +506,7 @@ app.post '/data/decks', (req, res) ->
     else
       db.collection('decks').insert deck, (err, data) ->
         console.log(err) if err
-        res.json(200, data[0])
+        res.status(200).json(data[0])
   else
     res.send {message: 'Unauthorized'}, 401
 
@@ -515,7 +520,7 @@ app.post '/data/decks/delete', (req, res) ->
 
 app.get '/data/donators', (req, res) ->
   db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
-    res.json(200, (d.username or d.name for d in data))
+    res.status(200).json((d.username or d.name for d in data))
 
 app.get '/data/news', (req, res) ->
   if process.env['TRELLO_API_KEY']
@@ -527,18 +532,18 @@ app.get '/data/news', (req, res) ->
         data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
           for d in data when d.labels.length == 0)
         cache.put('news', data, 60000) # 60 seconds timeout
-        res.json(200, data)
+        res.status(200).json(data)
     else
-      res.json(200, cached)
+      res.status(200).json(cached)
   else
-    res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
+    res.status(200).json([{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
   if req.params.collection != 'users' && req.params.collection != 'games'
     db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
       throw err if err
       delete d._id for d in data
-      res.json(200, data)
+      res.status(200).json(data)
   else
     res.send {message: 'Unauthorized'}, 401
 
@@ -549,7 +554,7 @@ app.get '/data/:collection/:field/:value', (req, res) ->
     db.collection(req.params.collection).find(filter).toArray (err, data) ->
       console.error(err) if err
       delete d._id for d in data
-      res.json(200, data)
+      res.status(200).json(data)
   else
     res.send {message: 'Unauthorized'}, 401
 
@@ -566,7 +571,8 @@ app.post '/announce', (req, res) ->
   else
     res.send {message: 'Unauthorized'}, 401
 
-app.configure 'development', ->
+env = process.env.NODE_ENV || 'development'
+if 'development' == env
   console.log "Dev environment"
   app.get '/*', (req, res) ->
     if req.user
@@ -574,7 +580,7 @@ app.configure 'development', ->
       token = jwt.sign(req.user, config.salt)
     res.render('index.jade', { user: req.user, env: 'dev', token: token, version: app.locals.version})
 
-app.configure 'production', ->
+if 'production' == env
   console.log "Prod environment"
   app.get '/*', (req, res) ->
     if req.user
