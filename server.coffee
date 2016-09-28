@@ -1,24 +1,28 @@
+crypto = require('crypto')
+http = require('http')
+
 express = require('express')
 app = express()
-server = require('http').createServer(app)
-io = require('socket.io')(server)
-stylus = require('stylus')
-config = require('./config')
-mongoskin = require('mongoskin')
-MongoStore = require('connect-mongo')(express)
-crypto = require('crypto')
+server = http.createServer(app)
+
+async = require('async')
 bcrypt = require('bcrypt')
+MongoStore = require('connect-mongo')(express)
+cors = require('cors')
+jwt = require('jsonwebtoken')
+cache = require('memory-cache')
+moment = require('moment')
+mongoskin = require('mongoskin')
+trello = require('node-trello')
+uuid = require('node-uuid')
+nodemailer = require('nodemailer')
 passport = require('passport')
 localStrategy = require('passport-local').Strategy
-uuid = require('node-uuid')
-jwt = require('jsonwebtoken')
+io = require('socket.io')(server)
+stylus = require('stylus')
 zmq = require('zmq')
-cors = require('cors')
-async = require('async');
-nodemailer = require('nodemailer')
-moment = require('moment')
-trello = require('node-trello')
-cache = require('memory-cache')
+
+config = require('./config')
 
 # MongoDB connection
 appName = 'netrunner'
