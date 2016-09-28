@@ -144,7 +144,9 @@
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "C.I. Fund"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -278,7 +280,9 @@
    "Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2]
@@ -1054,6 +1058,7 @@
     :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
     :trash-effect {:when-unrezzed true
                    :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}
     :events {:agenda-stolen {:effect (effect (lose :runner :agenda-point 1))}
              :card-moved {:req (req (or (some #{:scored} (:zone (first targets)))
@@ -1113,7 +1118,9 @@
                      (when (= (:active-player @state) :runner)
                        (gain state :runner :click 1)))
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
