@@ -408,6 +408,43 @@
       (take-credits state :corp 2)
       (is (= 5 (:current-strength (refresh lotus))) "Lotus Field strength increased"))))
 
+(deftest mausolus
+  ;; Mausolus - 3 adv tokens change the subroutines
+  (do-game
+    (new-game (default-corp [(qty "Mausolus" 1)])
+              (default-runner[(qty "NetChip" 5)]))
+    (play-from-hand state :corp "Mausolus" "HQ")
+    (let [mau (get-ice state :hq 0)]
+      (core/rez state :corp mau)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (is (= (:credit (get-corp)) 3) "corp starts encounter with 3 crs")
+      (is (= (count (:discard (get-runner))) 0) "runner starts encounter with no cards in heap")
+      (is (= (:tag (get-runner)) 0) "runner starts encounter with 0 tags")
+      (card-subroutine state :corp mau 0)
+      (card-subroutine state :corp mau 1)
+      (card-subroutine state :corp mau 2)
+      (is (= (:credit (get-corp)) 4) "corp ends encounter with 4 crs")
+      (is (= (count (:discard (get-runner))) 1) "runner ends encounter with 1 card in heap")
+      (is (= (:tag (get-runner)) 1) "runner ends encounter with 1 tag")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh mau)})
+      (core/advance state :corp {:card (refresh mau)})
+      (core/advance state :corp {:card (refresh mau)})
+      (run-on state :hq)
+      (is (= (:credit (get-corp)) 1) "corp starts encounter with 1 crs")
+      (is (= (count (:discard (get-runner))) 1) "runner starts encounter with 1 card in heap")
+      (is (= (:tag (get-runner)) 1) "runner starts encounter with 1 tags")
+      (card-subroutine state :corp mau 0)
+      (card-subroutine state :corp mau 1)
+      (card-subroutine state :corp mau 2)
+      (is (= (:credit (get-corp)) 4) "corp ends encounter with 4 crs")
+      (is (= (count (:discard (get-runner))) 4) "runner ends encounter with 4 cards in heap")
+      (is (= (:tag (get-runner)) 2) "runner ends encounter with 2 tags")
+      (is (not (:run @state)) "Run is ended")
+      (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
+
 (deftest minelayer
   "Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost"
   (do-game
