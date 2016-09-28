@@ -18,11 +18,11 @@ cache = require('memory-cache')
 methodOverride = require('method-override')
 moment = require('moment')
 mongoskin = require('mongoskin')
-trello = require('node-trello')
+Trello = require('node-trello')
 uuid = require('node-uuid')
 nodemailer = require('nodemailer')
 passport = require('passport')
-localStrategy = require('passport-local').Strategy
+LocalStrategy = require('passport-local').Strategy
 io = require('socket.io')(server)
 stylus = require('stylus')
 zmq = require('zmq')
@@ -322,7 +322,7 @@ app.use express.static(__dirname + '/resources/public')
 app.locals.version = process.env['APP_VERSION'] || "0.1.0"
 
 # Auth
-passport.use new localStrategy (username, password, done) ->
+passport.use new LocalStrategy (username, password, done) ->
   db.collection('users').findOne {username: RegExp("^#{username}$", "i")}, (err, user) ->
     return done(err) if err or not user
     bcrypt.compare password, user.password, (err, valid) ->
@@ -472,7 +472,7 @@ app.post '/reset/:token', (req, res) ->
           'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
       }
       smtpTransport.sendMail mailOptions, (err) ->
-        #req.flash 'success', 'Success! Your password has been changed.'
+        # req.flash 'success', 'Success! Your password has been changed.'
         throw err if err
         done(err)
   ], (err) ->
@@ -531,7 +531,7 @@ app.get '/data/news', (req, res) ->
   if process.env['TRELLO_API_KEY']
     cached = cache.get('news')
     if not cached
-      t = new trello(process.env['TRELLO_API_KEY'])
+      t = new Trello(process.env['TRELLO_API_KEY'])
       t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name,labels'}, (err, data) ->
         throw err if err
         data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
