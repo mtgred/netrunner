@@ -836,7 +836,6 @@
                    :msg (msg "do " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) " net damage")
                    :effect (effect (damage eid :net (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) {:card card}))}
                   {:label "Give the Runner 1 tag (and end the run)"
-                   :delayed-completion true
                    :msg (msg "give the Runner 1 tag"
                           (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) " and end the run"))
                    :effect (req (tag-runner state :runner 1)
