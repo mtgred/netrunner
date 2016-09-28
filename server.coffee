@@ -7,10 +7,15 @@ server = http.createServer(app)
 
 async = require('async')
 bcrypt = require('bcrypt')
-MongoStore = require('connect-mongo')(express)
+bodyParser = require('body-parser')
+session = require('express-session')
+MongoStore = require('connect-mongo')(session)
+cookieParser = require('cookie-parser')
 cors = require('cors')
+favicon = require('serve-favicon')
 jwt = require('jsonwebtoken')
 cache = require('memory-cache')
+methodOverride = require('method-override')
 moment = require('moment')
 mongoskin = require('mongoskin')
 trello = require('node-trello')
@@ -102,16 +107,16 @@ sendGameResponse = (game, response) ->
       # The response will either have a diff or a state. we don't actually send both,
       # whichever is null will not be sent over the socket.
       lobby.to(player.id).emit("netrunner", {type: response.action,\
-                                                   diff: response.corpdiff, \
-                                                   state: response.corpstate})
+                                             diff: response.corpdiff, \
+                                             state: response.corpstate})
     else if player.side is "Runner"
       lobby.to(player.id).emit("netrunner", {type: response.action, \
-                                                   diff: response.runnerdiff, \
-                                                   state: response.runnerstate})
+                                             diff: response.runnerdiff, \
+                                             state: response.runnerstate})
   for spect in game.spectators
     lobby.to(spect.id).emit("netrunner", {type: response.action,\
-                                                diff: response.spectdiff, \
-                                                state: response.spectstate})
+                                          diff: response.spectdiff, \
+                                          state: response.spectstate})
 
 requester.on 'message', (data) ->
   response = JSON.parse(data)
@@ -296,24 +301,25 @@ sendLobby = () ->
 setInterval(sendLobby, 1000)
 
 # Express config
-app.configure ->
-  app.use express.favicon(__dirname + "/resources/public/img/jinteki.ico")
-  app.set 'port', 1042
-  app.set 'ipaddr', "0.0.0.0"
-  app.use express.methodOverride() # provide PUT DELETE
-  app.use express.cookieParser()
-  app.use express.urlencoded()
-  app.use express.json()
-  app.use express.session
-    store: new MongoStore(url: mongoUrl)
-    secret: config.salt
-    cookie: { maxAge: 2592000000 } # 30 days
-  app.use passport.initialize()
-  app.use passport.session()
-  app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
-  app.use express.static(__dirname + '/resources/public')
-  app.use app.router
-  app.locals.version = process.env['APP_VERSION'] || "0.1.0"
+app.use favicon(__dirname + "/resources/public/img/jinteki.ico")
+app.set 'port', 1042
+app.set 'ipaddr', "0.0.0.0"
+app.use methodOverride() # provide PUT DELETE
+app.use cookieParser()
+app.use bodyParser.urlencoded(extended: false)
+app.use bodyParser.json()
+app.use session
+  secret: config.salt
+  saveUninitialized: false
+  resave: false
+  store: new MongoStore(url: mongoUrl)
+  cookie: { maxAge: 2592000000 } # 30 days
+app.use passport.initialize()
+app.use passport.session()
+app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
+app.use express.static(__dirname + '/resources/public')
+
+app.locals.version = process.env['APP_VERSION'] || "0.1.0"
 
 # Auth
 passport.use new localStrategy (username, password, done) ->
@@ -338,7 +344,7 @@ app.options('*', cors())
 app.post '/login', passport.authenticate('local'), (req, res) ->
   db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
     throw err if err
-    res.json(200, {user: req.user})
+    res.status(200).json({user: req.user})
 
 app.get '/logout', (req, res) ->
   req.logout()
@@ -347,9 +353,9 @@ app.get '/logout', (req, res) ->
 app.post '/register', (req, res) ->
   db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
-      res.send {message: 'Username taken'}, 422
+      res.status(422).send({message: 'Username taken'})
     else if req.body.username.length < 4 or req.body.username.length > 16
-      res.send {message: 'Username too short/too long'}, 423
+      res.status(423).send({message: 'Username too short/too long'})
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
@@ -358,7 +364,7 @@ app.post '/register', (req, res) ->
       hashPassword req.body.password, (err, hash) ->
         req.body.password = hash
         db.collection('users').insert req.body, (err) ->
-          res.send "error: #{err}" if err
+          res.send("error: #{err}") if err
           req.login req.body, (err) -> next(err) if err
           db.collection('decks').find({username: '__demo__'}).toArray (err, demoDecks) ->
             throw err if err
@@ -368,9 +374,9 @@ app.post '/register', (req, res) ->
             if demoDecks.length > 0
               db.collection('decks').insert demoDecks, (err, newDecks) ->
                 throw err if err
-                res.json(200, {user: req.user, decks: newDecks})
+                res.status(200).json({user: req.user, decks: newDecks})
             else
-              res.json(200, {user: req.user, decks: []})
+              res.status(200).json({user: req.user, decks: []})
 
 app.post '/forgot', (req, res) ->
   async.waterfall [
@@ -381,7 +387,7 @@ app.post '/forgot', (req, res) ->
     (token, done) ->
       db.collection('users').findOne { email: req.body.email }, (err, user) ->
         if (!user)
-          res.send {message: 'No account with that email address exists.'}, 421
+          res.status(421).send({message: 'No account with that email address exists.'})
         else
           # 1 hour expiration
           resetPasswordToken = token
@@ -390,7 +396,7 @@ app.post '/forgot', (req, res) ->
           db.collection('users').update { email: req.body.email }, {$set: {resetPasswordToken: resetPasswordToken, resetPasswordExpires: resetPasswordExpires}}, (err) ->
             throw err if err
             done(err, token, user)
-#            res.send {message: 'Password reset sent.'}, 200
+            # res.status(200).send({message: 'Password reset sent.'})
     (token, user, done) ->
       smtpTransport = nodemailer.createTransport {
         service: 'SendGrid',
@@ -410,25 +416,25 @@ app.post '/forgot', (req, res) ->
       }
       smtpTransport.sendMail mailOptions, (err, response) ->
         throw err if err
-        res.send {message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'}, 200 
+        res.status(200).send({message: 'An e-mail has been sent to ' + user.email + ' with further instructions.'})
   ]
 
 app.get '/check/:username', (req, res) ->
   db.collection('users').findOne username: req.params.username, (err, user) ->
     if user
-      res.send {message: 'Username taken'}, 422
+      res.status(422).send({message: 'Username taken'})
     else
-      res.send {message: 'OK'}, 200
+      res.status(200).send({message: 'OK'})
 
 app.get '/reset/:token', (req, res) ->
   db.collection('users').findOne resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } , (err, user) ->
     if (!user)
       #req.flash 'error', 'Password reset token is invalid or has expired.'
-      return res.redirect '/forgot'
+      return res.redirect('/forgot')
     if user
       db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(user, config.salt, {expiresInMinutes: 360})
-    res.render 'reset.jade', { user: req.user }
+    res.render('reset.jade', { user: req.user })
 
 app.post '/reset/:token', (req, res) ->
   async.waterfall [
@@ -438,9 +444,9 @@ app.post '/reset/:token', (req, res) ->
           # req.flash('error', 'Password reset token is invalid or has expired.');
           return res.redirect('back');
 
-        # To be implemented: checking password == confirm 
-        #if (req.body.password != req.body.confirm)
-        #  res.send {message: 'Password does not match Confirm'}, 412
+        # To be implemented: checking password == confirm
+        # if (req.body.password != req.body.confirm)
+        #   res.status(412).send({message: 'Password does not match Confirm'})
 
         hashPassword req.body.password, (err, hash) ->
           password = hash
@@ -479,18 +485,18 @@ hashPassword = (password, cb) ->
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
     throw err if err
-    res.json(200, data.reverse())
+    res.status(200).json(data.reverse())
 
 app.get '/data/decks', (req, res) ->
   if req.user
     db.collection('decks').find({username: req.user.username}).toArray (err, data) ->
       throw err if err
-      res.json(200, data)
+      res.status(200).json(data)
   else
     db.collection('decks').find({username: "__demo__"}).toArray (err, data) ->
       throw err if err
       delete deck._id for deck in data
-      res.json(200, data)
+      res.status(200).json(data)
 
 app.post '/data/decks', (req, res) ->
   deck = req.body
@@ -501,25 +507,25 @@ app.post '/data/decks', (req, res) ->
       delete deck._id
       db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
         console.log(err) if err
-        res.send {message: 'OK'}, 200
+        res.status(200).send({message: 'OK'})
     else
       db.collection('decks').insert deck, (err, data) ->
         console.log(err) if err
-        res.json(200, data[0])
+        res.status(200).json(data[0])
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 app.post '/data/decks/delete', (req, res) ->
   deck = req.body
   if req.user
     db.collection('decks').remove {_id: mongoskin.helper.toObjectID(deck._id), username: req.user.username}, (err) ->
-      res.send {message: 'OK'}, 200
+      res.status(200).send({message: 'OK'})
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 app.get '/data/donators', (req, res) ->
   db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
-    res.json(200, (d.username or d.name for d in data))
+    res.status(200).json(d.username or d.name for d in data)
 
 app.get '/data/news', (req, res) ->
   if process.env['TRELLO_API_KEY']
@@ -531,20 +537,20 @@ app.get '/data/news', (req, res) ->
         data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
           for d in data when d.labels.length == 0)
         cache.put('news', data, 60000) # 60 seconds timeout
-        res.json(200, data)
+        res.status(200).json(data)
     else
-      res.json(200, cached)
+      res.status(200).json(cached)
   else
-    res.json(200, [{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
+    res.status(200).json([{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
   if req.params.collection != 'users' && req.params.collection != 'games'
     db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
       throw err if err
       delete d._id for d in data
-      res.json(200, data)
+      res.status(200).json(data)
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 app.get '/data/:collection/:field/:value', (req, res) ->
   if req.params.collection != 'users' && req.params.collection != 'games'
@@ -553,24 +559,26 @@ app.get '/data/:collection/:field/:value', (req, res) ->
     db.collection(req.params.collection).find(filter).toArray (err, data) ->
       console.error(err) if err
       delete d._id for d in data
-      res.json(200, data)
+      res.status(200).json(data)
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 app.get '/announce', (req, res) ->
   if req.user and req.user.isadmin
     res.render('announce.jade', {user : req.user})
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 app.post '/announce', (req, res) ->
   if req.user and req.user.isadmin
     requester.send(JSON.stringify({action: "alert", command: req.body.message}))
-    res.send {text: req.body.message, result: "ok"}, 200
+    res.status(200).send({text: req.body.message, result: "ok"})
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
-app.configure 'development', ->
+env = process.env['NODE_ENV'] || 'development'
+
+if env == 'development'
   console.log "Dev environment"
   app.get '/*', (req, res) ->
     if req.user
@@ -578,7 +586,7 @@ app.configure 'development', ->
       token = jwt.sign(req.user, config.salt)
     res.render('index.jade', { user: req.user, env: 'dev', token: token, version: app.locals.version})
 
-app.configure 'production', ->
+if env == 'production'
   console.log "Prod environment"
   app.get '/*', (req, res) ->
     if req.user
