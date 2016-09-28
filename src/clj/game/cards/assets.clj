@@ -46,6 +46,13 @@
      :events {:corp-turn-begins ability}
      :abilities [ability]}))
 
+(defn as-trashed-agenda
+  "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
+  [state side card n]
+  (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored) ; if the runner did not trash the card on access, then this will work
+      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored)) ; if the runner did trash it, then this will work
+  (gain-agenda-point state side n))
+
 ;;; Card definitions
 (declare in-server?)
 
@@ -679,14 +686,11 @@
                                 :prompt "Take 2 tags or take News Team as -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                               (do (or (move state :runner (assoc card :agendapoints -1) :scored)
-                                                       (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored))
-                                                   (gain-agenda-point state :runner -1)
-                                                   (system-msg state side
-                                                    (str "adds News Team to their score area as -1 agenda point")))
+                                               (do (as-trashed-agenda state :runner card -1)
+                                                   (system-msg state side (str "adds News Team to their score area as -1 agenda point")))
                                                (do (tag-runner state :runner 2)
                                                    (system-msg state side (str "takes 2 tags from News Team")))))}
-                              card targets))}}
+                               card targets))}}
 
    "PAD Campaign"
    (let [ability {:msg "gain 1 [Credits]"
@@ -962,15 +966,11 @@
                                                           :delayed-completion true
                                                           :effect (let [dmg target]
                                                                     (req (if (= target "Add Shi.Kyū to score area")
-                                                                           (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
-                                                                                   (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
-                                                                               (gain-agenda-point state :runner -1)
-                                                                               (system-msg state side
-                                                                                           (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                                           (do (as-trashed-agenda state :runner card -1)
+                                                                               (system-msg state side (str "adds Shi.Kyū to their score area as -1 agenda point"))
                                                                                (effect-completed state side eid))
                                                                            (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :corp
-                                                                                           (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                                               (system-msg state :corp (str "uses Shi.Kyū to do " dmg " net damage"))))))}
                                                         card targets))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                       card targets))}}
