@@ -827,21 +827,17 @@
 
    "Mausolus"
    {:advanceable :always
-    :subroutines [{:label "Gain 1 (Gain 3)"
+    :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
                    :msg (msg "gain " (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) 1 3) " [Credit]")
-                   :effect (req (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3)
-                                  (gain state side :credit 1)
-                                  (gain state side :credit 3)))}
+                   :effect (effect (gain :credit (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) 1 3)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
                    :delayed-completion true
                    :msg (msg "do " (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) 1 3) " net damage")
-                   :effect (req (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3)
-                                  (damage state side eid :net 1 {:card card})
-                                  (damage state side eid :net 3 {:card card})))}
+                   :effect (effect (damage eid :net (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) 1 3) {:card card}))}
                   {:label "Give the Runner 1 tag (and end the run)"
                    :delayed-completion true
                    :msg (msg "give the Runner 1 tag"
-                          (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) "" " and end the run"))
+                          (when (>= (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3) " and end the run"))
                    :effect (req (if (< (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 3)
                                   (tag-runner state :runner 1)
                                   (do (tag-runner state :runner 1) (end-run state side))))}]}
