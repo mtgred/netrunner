@@ -837,6 +837,19 @@
     (play-from-hand state :corp "Stock Buy-Back")
     (is (= 11 (:credit (get-corp))))))
 
+(deftest sub-boost
+  ;; Sub Boost - Give ice barrier
+  (do-game
+    (new-game (default-corp [(qty "Sub Boost" 1) (qty "Quandary" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Quandary" "HQ")
+    (play-from-hand state :corp "Sub Boost")
+    (let [qu (get-ice state :hq 0)]
+      (core/rez state :corp qu)
+      (prompt-select :corp qu)
+      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has code gate")
+      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary has barrier"))))
+
 (deftest subliminal-messaging
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (do-game

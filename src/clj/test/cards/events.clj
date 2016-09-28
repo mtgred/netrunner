@@ -1201,6 +1201,29 @@
       (core/advance state :corp {:card (refresh napd)})
       (is (= 7 (:credit (get-corp))) "NAPD could be advanced (3 credits charged for advancing)"))))
 
+(deftest tinkering
+  ;; Tinkering - Add subtypes to ice
+  (do-game
+    (new-game
+      (default-corp [(qty "Ice Wall" 1)])
+      (default-runner [(qty "Tinkering" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tinkering")
+    (let [iwall (get-ice state :hq 0)]
+      (prompt-select :runner iwall)
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (core/rez state :corp iwall)
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (take-credits state :runner)
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
+      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have code gate")
+      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have sentry"))))
+
 (deftest vamp
   ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp
   (do-game
