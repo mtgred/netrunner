@@ -478,9 +478,11 @@
 
 (defn face-down?
   "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed] :as card}]
+  [{:keys [side type facedown rezzed host] :as card}]
   (if (= side "Corp")
-    (and (not= type "Operation") (not rezzed))
+    (and (not= type "Operation")
+         (not rezzed)
+         (not= (:side host) "Runner"))
     facedown))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
