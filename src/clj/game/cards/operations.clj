@@ -85,7 +85,7 @@
                                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                                     (trigger-event state :runner :run s)))}
                        :no-ability {:effect (effect (as-agenda :corp (last (:discard corp)) 1))
-                                    :msg "add it to their score area and gain 1 agenda point"}}}
+                                    :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 
    "Anonymous Tip"
@@ -202,7 +202,7 @@
     :leave-play (effect (enable-identity :runner))}
 
    "\"Clones are not People\""
-   {:events {:agenda-scored {:msg "add it to their score area and gain 1 agenda point"
+   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
                              :effect (effect (as-agenda :corp card 1))}}}
 
    "Closed Accounts"
@@ -684,7 +684,7 @@
                                      card nil)))}
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg "do meat damage equal to agenda points stolen last turn"
+   {:trace {:base 5 :msg "do meat damage equal to the number of agenda points stolen last turn"
             :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
                             (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 

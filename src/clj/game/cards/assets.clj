@@ -377,7 +377,7 @@
 
    "Franchise City"
    {:events {:access {:req (req (is-type? target "Agenda"))
-                      :msg "add it to their score area and gain 1 agenda point"
+                      :msg "add it to their score area as an agenda worth 1 agenda point"
                       :effect (effect (as-agenda :corp card 1))}}}
 
    "Full Immersion RecStudio"
@@ -679,17 +679,17 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
+   {:access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
              :delayed-completion true
              :effect (effect (continue-ability
                                {:player :runner
-                                :prompt "Take 2 tags or take News Team as -1 agenda point?"
+                                :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
                                                (do (as-trashed-agenda state :runner card -1)
-                                                   (system-msg state side (str "adds News Team to their score area as -1 agenda point")))
+                                                   (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point")))
                                                (do (tag-runner state :runner 2)
-                                                   (system-msg state side (str "takes 2 tags from News Team")))))}
+                                                   (system-msg state :runner (str "takes 2 tags from News Team")))))}
                                card targets))}}
 
    "PAD Campaign"
@@ -801,7 +801,7 @@
     :events {:corp-turn-begins
              {:effect (req (add-counter state side card :power -1)
                            (when (<= (get-in card [:counter :power]) 1)
-                             (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
+                             (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Reality Threedee"
@@ -961,16 +961,16 @@
                                        :effect (effect (clear-wait-prompt :runner)
                                                        (continue-ability
                                                          {:player :runner
-                                                          :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
+                                                          :prompt (str "Take " target " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
                                                           :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
                                                           :delayed-completion true
                                                           :effect (let [dmg target]
                                                                     (req (if (= target "Add Shi.Kyū to score area")
                                                                            (do (as-trashed-agenda state :runner card -1)
-                                                                               (system-msg state side (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                                               (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
                                                                                (effect-completed state side eid))
                                                                            (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :corp (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))))))}
                                                         card targets))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                       card targets))}}
