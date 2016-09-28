@@ -142,7 +142,9 @@ io.use (socket, next) ->
   if socket.handshake.query.token
     jwt.verify socket.handshake.query.token, config.salt, (err, user) ->
       socket.request.user = user unless err
-  next()
+      next()
+  else
+    next()
 
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
@@ -433,7 +435,7 @@ app.get '/reset/:token', (req, res) ->
       return res.redirect('/forgot')
     if user
       db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
-      token = jwt.sign(user, config.salt, {expiresInMinutes: 360})
+      token = jwt.sign(user, config.salt, {expiresIn: '6h'})
     res.render('reset.jade', { user: req.user })
 
 app.post '/reset/:token', (req, res) ->
@@ -480,7 +482,7 @@ app.post '/reset/:token', (req, res) ->
     res.redirect('/')
 
 hashPassword = (password, cb) ->
-    bcrypt.hash password, 10, cb
+  bcrypt.hash password, 10, cb
 
 app.get '/messages/:channel', (req, res) ->
   db.collection('messages').find({channel: req.params.channel}).sort(date: -1).limit(100).toArray (err, data) ->
@@ -591,7 +593,7 @@ if env == 'production'
   app.get '/*', (req, res) ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
-      token = jwt.sign(req.user, config.salt, {expiresInMinutes: 360})
+      token = jwt.sign(req.user, config.salt, {expiresIn: '6h'})
     res.render('index.jade', { user: req.user, env: 'prod', token: token, version: app.locals.version})
 
 # Server
