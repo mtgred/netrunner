@@ -26,6 +26,7 @@
     "method-override": "^2.3.6",
     "mkdirp": "^0.5.1",
     "moment": "^2.15.1",
+    "mongodb": "^2.2.10",
     "mongoskin": "^2.1.0",
     "node-trello": "^1.1.2",
     "node-uuid": "^1.4.7",
