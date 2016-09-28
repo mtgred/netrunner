@@ -141,6 +141,9 @@ io.set("heartbeat timeout", 30000)
 io.use (socket, next) ->
   if socket.handshake.query.token
     jwt.verify socket.handshake.query.token, config.salt, (err, user) ->
+      user = Object.assign({}, user)
+      delete user.exp
+      delete user.iat
       socket.request.user = user unless err
       next()
   else
