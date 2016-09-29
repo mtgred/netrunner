@@ -300,12 +300,24 @@
     (take-credits state :corp)
     (take-credits state :runner 2)
     (is (= 2 (:click (get-runner))))
-    (is (boolean (core/can-run-server? state "HQ")) "Runner can run - two clicks")
+    (is (core/can-run-server? state "HQ") "Runner can run - two clicks")
     (take-credits state :runner 1)
     (is (= 1 (:click (get-runner))))
     (run-on state :hq)
-    (run-jack-out state)
-    (is (= 1 (:click (get-runner))) "Run not available - not enough clicks")))
+    (is (not (:run @state)) "No run initiated - not enough clicks")))
+
+(deftest enhanced-login-protocol-keyhole
+  ;; Enhanced Login Protocol - tests interaction with runs initiated from programs
+  (do-game
+    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+              (default-runner [(qty "Keyhole" 1)]))
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keyhole")
+    (is (= 3 (:click (get-runner))) "Runner has 3 clicks before run")
+    (let [sneak (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner sneak 0)
+      (is (= 2 (:click (get-runner))) "Runner has 2 clicks after using sneakdoor"))))
 
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
