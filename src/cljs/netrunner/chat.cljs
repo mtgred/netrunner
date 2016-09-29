@@ -100,7 +100,7 @@
        [:div.chat-app
         [:div.blue-shade.panel.channel-list
          [:h4 "Channels"]
-         (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :português :sverige :stimhack-league]]
+         (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska :português :sverige :stimhack-league]]
            (om/build channel-view {:channel ch :active-channel (:channel state)}
                      {:init-state {:channel-ch (:channel-ch state)}}))]
         [:div.chat-box
