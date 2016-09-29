@@ -34,7 +34,6 @@
                                   (when-not no-additional-cost additional-cost))] ; play cost can be paid
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
-             (trigger-event state side (if (= side :corp) :play-operation :play-event) c)
              (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
                      (when-let [current (first (get-in @state [s :current]))] ; trash old current
@@ -47,7 +46,8 @@
                      (move state side c :discard))
                    (when (has-subtype? card "Terminal")
                      (lose state side :click (-> @state side :click))
-                     (swap! state assoc-in [:corp :register :terminal] true)))))
+                     (swap! state assoc-in [:corp :register :terminal] true))))
+             (trigger-event state side (if (= side :corp) :play-operation :play-event) c))
            ;; could not pay the card's price; mark the effect as being over.
            (effect-completed state side eid card))
          ;; card's req was not satisfied; mark the effect as being over.
