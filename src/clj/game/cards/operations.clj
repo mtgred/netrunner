@@ -994,6 +994,10 @@
                                        tol nil)))}
                      card nil)))}
 
+   "Violet Level Clearance"
+   {:msg "gain 8 [Credits] and draw 4 cards"
+    :effect (effect (gain :credit 8) (draw 4))}
+   
    "Voter Intimidation"
    {:req (req (seq (:scored runner)))
     :psi {:not-equal {:player :corp :prompt "Choose a resource to trash"
