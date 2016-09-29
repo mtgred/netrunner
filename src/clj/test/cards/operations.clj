@@ -315,8 +315,8 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Keyhole")
     (is (= 3 (:click (get-runner))) "Runner has 3 clicks before run")
-    (let [sneak (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner sneak 0)
+    (let [keyhole (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner keyhole 0)
       (is (= 2 (:click (get-runner))) "Runner has 2 clicks after using sneakdoor"))))
 
 (deftest exchange-of-information
