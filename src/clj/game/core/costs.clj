@@ -123,3 +123,9 @@
      (swap! state update-in [:bonus] dissoc :install-cost)
      (swap! state update-in [:bonus] dissoc :ignore-install-cost)
      cost)))
+
+(defn click-run-bonus [state side & n]
+  (swap! state update-in [:bonus :click-run] #(merge-costs (concat % n))))
+
+(defn clear-click-run-bonus [state side]
+  (swap! state update-in [:bonus] dissoc :click-run))

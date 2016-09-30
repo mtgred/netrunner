@@ -291,6 +291,11 @@
                               :effect (effect (trash target))}
                             card nil)))}}
 
+   "Enhanced Login Protocol"
+   {:events {:pre-click-run {:once :per-turn
+                             :msg "increase the cost of running"
+                             :effect (effect (click-run-bonus [:click 1]))}}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
