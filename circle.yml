@@ -1,3 +1,7 @@
+machine:
+  node:
+    version: 5.5.0
+
 dependencies:
   cache_directories:
     - mongodb-linux-x86_64-2.6.4
