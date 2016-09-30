@@ -435,15 +435,20 @@ nav ul
   top: 0
   left: 0
   right: 0
-  padding: 0 20px
   color: orange
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
 
-  #left-menu > ul li
-    margin-right: 20px
+  #left-menu, #right-menu
+    margin: 0 10px
 
-  #right-menu > ul li
-    margin-left: 20px
+    > ul li
+      margin: 0 10px
+
+      &.usermenu
+        margin: 0
+
+        .dropdown-menu
+          margin-right: -5px
 
   li, #status
     display: inline-block
@@ -576,10 +581,6 @@ nav ul
   color: orangered
   font-size: 14px
   margin-bottom: 10px
-
-.usermenu
-  padding: 0 10px
-  margin-right: -20px
 
 .block-link
   cursor: pointer

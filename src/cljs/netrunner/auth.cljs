@@ -21,13 +21,14 @@
 (defn logged-menu [user owner]
   (om/component
    (sab/html
-    [:li.dropdown.usermenu
-     [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-      (om/build avatar user {:key :username :opts {:size 22}})
-      (:username user)
-      [:b.caret]]
-     [:div.dropdown-menu.blue-shade.float-right
-      [:a.block-link {:href "/logout"} "Logout"]]])))
+    [:ul
+     [:li.dropdown.usermenu
+      [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
+       (om/build avatar user {:key :username :opts {:size 22}})
+       (:username user)
+       [:b.caret]]
+      [:div.dropdown-menu.blue-shade.float-right
+       [:a.block-link {:href "/logout"} "Logout"]]]])))
 
 (defn unlogged-menu [user owner]
   (om/component
