@@ -248,68 +248,67 @@
                   (handle-access state side eid cards)
                   (continue-ability state side (access-helper-remote cards) card nil)))})
 
-(defn access-helper-hq [from-hq from-root already-accessed]
-  {:prompt "Select a card to access."
-   :delayed-completion true
-   :choices (concat (when (pos? from-hq) ["Card from hand"])
-                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in HQ") from-root))
-   :effect (req (case target
-                  "Unrezzed upgrade in HQ"
-                  ;; accessing an unrezzed upgrade
-                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) from-root)]
-                    (if (= 1 (count unrezzed))
-                      ;; only one unrezzed upgrade; access it and continue
-                      (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                          (when-completed (handle-access state side unrezzed)
-                                          (if (or (pos? from-hq) (< 1 (count from-root)))
-                                            (continue-ability
-                                              state side
-                                              (access-helper-hq
-                                                from-hq
-                                                (filter #(not= (:cid %) (:cid (first unrezzed))) from-root)
-                                                already-accessed)
-                                              card nil)
-                                            (effect-completed state side eid nil))))
-                      ;; more than one unrezzed upgrade. allow user to select.
-                      (continue-ability
-                        state side
-                        {:prompt "Choose an upgrade in HQ to access."
-                         :choices {:req #(= (second (:zone %)) :hq)}
-                         :delayed-completion true
-                         :effect (req (system-msg state side (str "accesses " (:title target)))
-                                      (when-completed (handle-access state side [target])
-                                                      (continue-ability
-                                                        state side
-                                                        (access-helper-hq
-                                                          from-hq
-                                                          (remove-once #(not= (:cid %) (:cid target)) from-root)
-                                                          already-accessed)
-                                                        card nil)))}
-                        card nil)))
-                  ;; accessing a card in hand
-                  "Card from hand"
-                  (if-let [accessed (some #(when-not (contains? already-accessed %) %) (shuffle (get-in @state [:corp :hand])))]
-                    (do (system-msg state side (str "accesses " (:title accessed)))
-                        (when-completed (handle-access state side [accessed])
-                                        (if (or (< 1 from-hq) (not-empty from-root))
+(defn access-helper-hq [state from-hq already-accessed]
+  (letfn [(get-root-content [state]
+            (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers :hq :content])))]
+    {:delayed-completion true
+     :prompt "Select a card to access."
+     :choices (concat (when (pos? from-hq) ["Card from hand"])
+                      (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in HQ") (get-root-content state)))
+     :effect (req (case target
+                    "Unrezzed upgrade in HQ"
+                    ;; accessing an unrezzed upgrade
+                    (let [from-root (get-root-content state)
+                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                                           from-root)]
+                      (if (= 1 (count unrezzed))
+                        ;; only one unrezzed upgrade; access it and continue
+                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
+                            (when-completed (handle-access state side unrezzed)
+                                            (if (or (pos? from-hq) (< 1 (count from-root)))
+                                              (continue-ability
+                                                state side
+                                                (access-helper-hq state from-hq (conj already-accessed (first unrezzed)))
+                                                card nil)
+                                              (effect-completed state side eid))))
+                        ;; more than one unrezzed upgrade. allow user to select.
+                        (continue-ability
+                          state side
+                          {:delayed-completion true
+                           :prompt "Choose an upgrade in HQ to access."
+                           :choices {:req #(and (= (second (:zone %)) :hq)
+                                                (not (contains? already-accessed %)))}
+                           :effect (req (system-msg state side (str "accesses " (:title target)))
+                                        (when-completed (handle-access state side [target])
+                                                        (continue-ability
+                                                          state side
+                                                          (access-helper-hq state from-hq (conj already-accessed target))
+                                                          card nil)))}
+                          card nil)))
+                    ;; accessing a card in hand
+                    "Card from hand"
+                    (if-let [accessed (some #(when-not (contains? already-accessed %) %)
+                                            (shuffle (get-in @state [:corp :hand])))]
+                      (do (system-msg state side (str "accesses " (:title accessed)))
+                          (when-completed (handle-access state side [accessed])
+                                          (let [from-root (get-root-content state)]
+                                            (if (or (< 1 from-hq) (not-empty from-root))
+                                              (continue-ability
+                                                state side
+                                                (access-helper-hq state (dec from-hq) (conj already-accessed accessed))
+                                                card nil)
+                                              (effect-completed state side eid)))))
+                      (effect-completed state side eid nil))
+                    ;; accessing a rezzed upgrade
+                    (do (system-msg state side (str "accesses " target))
+                        (when-completed (handle-access state side [(some #(when (= (:title %) target) %)
+                                                                         (get-root-content state))])
+                                        (if (or (pos? from-hq) (< 1 (count (get-root-content state))))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq (dec from-hq)
-                                                              from-root
-                                                              (conj already-accessed accessed))
+                                            (access-helper-hq state from-hq (conj already-accessed target))
                                             card nil)
-                                          (effect-completed state side eid nil))))
-                    (effect-completed state side eid nil))
-                  ;; accessing a rezzed upgrade
-                  (do (system-msg state side (str "accesses " target))
-                      (when-completed (handle-access state side [(some #(when (= (:title %) target) %) from-root)])
-                                      (if (or (pos? from-hq) (< 1 (count from-root)))
-                                        (continue-ability
-                                          state side
-                                          (access-helper-hq from-hq
-                                                            (remove-once #(not= (:title %) target) from-root)
-                                                            already-accessed) card nil)
-                                        (effect-completed state side eid nil))))))})
+                                          (effect-completed state side eid nil))))))}))
 
 (defmethod choose-access :hq [cards server]
   {:delayed-completion true
@@ -317,127 +316,152 @@
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
                     (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
                         (handle-access state side eid cards))
-                    (let [in-root (filter #(= (last (:zone %)) :content) cards)
-                          from-hq (access-count state side :hq-access)]
-                      (when-completed (resolve-ability state side (access-helper-hq from-hq in-root #{}) card nil)
-                                      (effect-completed state side eid nil))))
-                  (effect-completed state side eid nil)))})
+                    (let [from-hq (access-count state side :hq-access)]
+                      (continue-ability state side (access-helper-hq state from-hq #{}) card nil)))
+                  (effect-completed state side eid)))})
 
-(defn access-helper-rd [cards]
-  {:prompt "Select a card to access."
-   :delayed-completion true
-   :choices (concat (when (some #(= (first (:zone %)) :deck) cards) ["Card from deck"])
-                    (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in R&D")
-                         (filter #(= (last (:zone %)) :content) cards)))
-   :effect (req (case target
-                  "Unrezzed upgrade in R&D"
-                  ;; accessing an unrezzed upgrade
-                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) cards)]
-                    (if (= 1 (count unrezzed))
-                      ;; only one unrezzed upgrade; access it and continue
-                      (do (when-completed (handle-access state side unrezzed)
-                                          (if (< 1 (count cards))
-                                            (continue-ability
-                                              state side (access-helper-rd
-                                                           (filter #(not= (:cid %) (:cid (first unrezzed))) cards))
-                                              card nil)
-                                            (effect-completed state side eid nil))))
-                      ;; more than one unrezzed upgrade. allow user to select with mouse.
-                      (continue-ability
-                        state side
-                        {:prompt "Choose an upgrade in R&D to access."
-                         :delayed-completion true
-                         :choices {:req #(= (second (:zone %)) :rd)}
-                         :effect (req (system-msg state side (str "accesses " (:title target)))
-                                      (when-completed (handle-access state side [target])
-                                                      (continue-ability
-                                                        state side
-                                                        (access-helper-rd
-                                                          (remove-once #(not= (:cid %) (:cid target)) cards))
-                                                        card nil)))}
-                        card nil)))
-                  ;; accessing a card in deck or a rezzed upgade
-                  "Card from deck"
-                  (do (when-completed (handle-access state side [(first cards)])
-                                      (if (< 1 (count cards))
-                                        (continue-ability state side (access-helper-rd (rest cards)) card nil)
-                                        (effect-completed state side eid nil))))
-                  ;; accessing a rezzed upgrade
-                  (do (system-msg state side (str "accesses " target))
-                      (when-completed (handle-access state side [(some #(when (= (:title %) target) %) cards)])
-                                      (if (< 1 (count cards))
-                                        (continue-ability state side
-                                                          (access-helper-rd
-                                                            (remove-once #(not= (:title %) target) cards)) card nil)
-                                        (effect-completed state side eid nil))))))})
+(defn access-helper-rd [state from-rd already-accessed]
+  (letfn [(get-root-content [state]
+            (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers :rd :content])))]
+    {:delayed-completion true
+     :prompt "Select a card to access."
+     :choices (concat (when (pos? from-rd) ["Card from deck"])
+                      (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in R&D")
+                           (get-root-content state)))
+     :effect (req (case target
+                    "Unrezzed upgrade in R&D"
+                    ;; accessing an unrezzed upgrade
+                    (let [from-root (get-root-content state)
+                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                                           from-root)]
+                      (if (= 1 (count unrezzed))
+                        ;; only one unrezzed upgrade; access it and continue
+                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
+                            (when-completed (handle-access state side unrezzed)
+                                            (if (or (pos? from-rd) (< 1 (count from-root)))
+                                              (continue-ability
+                                                state side
+                                                (access-helper-rd state from-rd (conj already-accessed (first unrezzed)))
+                                                card nil)
+                                              (effect-completed state side eid))))
+                        ;; more than one unrezzed upgrade. allow user to select with mouse.
+                        (continue-ability
+                          state side
+                          {:delayed-completion true
+                           :prompt "Choose an upgrade in R&D to access."
+                           :choices {:req #(and (= (second (:zone %)) :rd)
+                                                (not (contains? already-accessed %)))}
+                           :effect (req (system-msg state side (str "accesses " (:title target)))
+                                        (when-completed (handle-access state side [target])
+                                                        (continue-ability
+                                                          state side
+                                                          (access-helper-rd state from-rd (conj already-accessed target))
+                                                          card nil)))}
+                          card nil)))
+                    ;; accessing a card in deck
+                    "Card from deck"
+                    (let [accessed (-> @state :corp :deck first)]
+                      (when-completed (handle-access state side [accessed])
+                                      (let [from-root (get-root-content state)]
+                                        (if (or (< 1 from-rd) (not-empty from-root))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-rd state (dec from-rd) (conj already-accessed accessed))
+                                            card nil)
+                                          (effect-completed state side eid)))))
+                    ;; accessing a rezzed upgrade
+                    (do (system-msg state side (str "accesses " target))
+                        (when-completed (handle-access state side [(some #(when (= (:title %) target) %)
+                                                                         (get-root-content state))])
+                                        (if (or (pos? from-rd) (< 1 (count (get-root-content state))))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-rd state from-rd (conj already-accessed target))
+                                            card nil)
+                                          (effect-completed state side eid))))))}))
 
 (defmethod choose-access :rd [cards server]
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
                     (handle-access state side eid cards)
-                    (continue-ability state side (access-helper-rd cards) card nil))
-                  (effect-completed state side eid nil)))})
+                    (let [from-rd (access-count state side :rd-access)]
+                      (continue-ability state side (access-helper-rd state from-rd #{}) card nil)))
+                  (effect-completed state side eid)))})
 
-(defn access-helper-archives [cards]
-  {:prompt "Select a card to access. You must access all cards."
-   :delayed-completion true
-   :choices (map #(if (= (last (:zone %)) :content)
-                   (if (rezzed? %) (:title %) "Unrezzed upgrade in Archives")
-                   (:title %)) cards)
-   :effect (req (case target
-                  "Unrezzed upgrade in Archives"
-                  ;; accessing an unrezzed upgrade
-                  (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %))) cards)]
-                    (if (= 1 (count unrezzed))
-                      ;; only one unrezzed upgrade; access it and continue
-                      (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                          (when-completed (handle-access state side unrezzed)
-                                          (if (< 1 (count cards))
+
+(defn- get-archives-accessible [state]
+  ;; only include agendas and cards with an :access ability whose :req is true
+  ;; (or don't have a :req, or have an :optional with no :req, or :optional with a true :req.)
+  (filter #(let [cdef (card-def %)]
+            (or (is-type? % "Agenda")
+                (should-trigger? state :corp % nil (:access cdef))))
+          (get-in @state [:corp :discard])))
+
+(defn access-helper-archives [state already-accessed]
+  (letfn [(get-root-content [state]
+            (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers :archives :content])))
+          (get-accessible [state]
+            (filter #(not (contains? already-accessed %)) (get-archives-accessible state)))]
+    {:delayed-completion true
+     :prompt "Select a card to access. You must access all cards."
+     :choices (concat (map :title (get-accessible state))
+                      (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in Archives") (get-root-content state)))
+     :effect (req (case target
+                    "Unrezzed upgrade in Archives"
+                    ;; accessing an unrezzed upgrade
+                    (let [from-root (get-root-content state)
+                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                                           from-root)]
+                      (if (= 1 (count unrezzed))
+                        ;; only one unrezzed upgrade; access it and continue
+                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
+                            (when-completed (handle-access state side unrezzed)
+                                            (if (< 1 (count cards))
+                                              (continue-ability
+                                                state side
+                                                (access-helper-archives state (conj already-accessed (first unrezzed)))
+                                                card nil)
+                                              (effect-completed state side eid))))
+                        ;; more than one unrezzed upgrade. allow user to select with mouse.
+                        (continue-ability
+                          state side
+                          {:delayed-completion true
+                           :prompt "Choose an upgrade in Archives to access."
+                           :choices {:req #(and (= (second (:zone %)) :archives)
+                                                (not (contains? already-accessed %)))}
+                           :effect (req (system-msg state side (str "accesses " (:title target)))
+                                        (when-completed (handle-access state side [target])
+                                                        (continue-ability
+                                                          state side
+                                                          (access-helper-archives state (conj already-accessed target))
+                                                          card nil)))}
+                          card nil)))
+                    ;; accessing a rezzed upgrade, or a card in archives
+                    (do (system-msg state side (str "accesses " target))
+                        (when-completed (handle-access state side
+                                                       [(some #(when (= (:title %) target) %)
+                                                              (concat (get-accessible state) (get-root-content state)))])
+                                        (let [accessible (get-accessible state)
+                                              from-root (get-root-content state)]
+                                          (if (< 1 (+ (count accessible) (count from-root)))
                                             (continue-ability
-                                              state side (access-helper-archives
-                                                           (filter #(not= (:cid %) (:cid (first unrezzed))) cards))
+                                              state side
+                                              (access-helper-archives state (conj already-accessed
+                                                                                  (some #(when (= (:title %) target) %)
+                                                                                        (concat accessible from-root))))
                                               card nil)
-                                            (effect-completed state side eid nil))))
-                      ;; more than one unrezzed upgrade. allow user to select with mouse.
-                      (continue-ability
-                        state side
-                        {:prompt "Choose an upgrade in Archives to access."
-                         :choices {:req #(= (second (:zone %)) :archives)}
-                         :delayed-completion true
-                         :effect (req  (system-msg state side (str "accesses " (:title target)))
-                                       (when-completed (handle-access state side [target])
-                                                       (continue-ability
-                                                         state side
-                                                         (access-helper-archives
-                                                           (remove-once #(not= (:cid %) (:cid target))
-                                                                        cards))
-                                                         card nil)))}
-                        card nil)))
-                  ;; accessing a rezzed upgrade, or a card in archives
-                  (do (system-msg state side (str "accesses " target))
-                      (when-completed (handle-access state side [(some #(when (= (:title %) target) %) cards)])
-                                      (if (< 1 (count cards))
-                                        (continue-ability state side (access-helper-archives
-                                                                       (remove-once #(not= (:title %) target) cards))
-                                                         card nil)
-                                        (effect-completed state side eid nil))))))})
+                                            (effect-completed state side eid)))))))}))
 
 (defmethod choose-access :archives [cards server]
   {:delayed-completion true
-   :effect (req (let [; only include agendas and cards with an :access ability whose :req is true
-                      ; (or don't have a :req, or have an :optional with no :req, or :optional with a true :req.)
-                      cards (filter #(let [cdef (card-def %)]
-                                      (or (is-type? % "Agenda")
-                                          (= (last (:zone %)) :content)
-                                          (should-trigger? state side card nil (:access cdef))))
-                                    cards)]
+   :effect (req (let [cards (concat (get-archives-accessible state) (get-in @state [:corp :servers :archives :content]))]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
                       (do (system-msg state side (str "accesses " (:title (first cards))))
                           (handle-access state side eid cards))
-                      (continue-ability state side (access-helper-archives cards) card nil))
-                    (effect-completed state side eid nil))))})
+                      (continue-ability state side (access-helper-archives state #{}) card nil))
+                    (effect-completed state side eid))))})
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]

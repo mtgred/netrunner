@@ -471,6 +471,38 @@
     (prompt-select :runner (get-content state :remote1 0))
     (is (not (:run @state)) "Run is over")))
 
+(deftest leela-upgrades
+  ;; Leela Patel - upgrades returned to hand in the middle of a run do not break the run. Issue #2008.
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 3) (qty "Project Atlas" 3) (qty "Shock!" 1)])
+              (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
+    (starting-hand state :corp ["Crisium Grid" "Crisium Grid" "Crisium Grid" "Project Atlas" "Shock!" "Project Atlas"])
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (play-from-hand state :corp "Crisium Grid" "Archives")
+    (play-from-hand state :corp "Crisium Grid" "R&D")
+    (trash-from-hand state :corp "Project Atlas")
+    (trash-from-hand state :corp "Shock!")
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Card from hand")
+    (prompt-choice :runner "Steal")
+    (prompt-select :runner (get-content state :hq 0))
+    (is (not (get-content state :hq 0)) "Upgrade returned to hand")
+    (is (not (:run @state)) "Run ended, no more accesses")
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "Card from deck")
+    (prompt-choice :runner "Steal")
+    (prompt-select :runner (get-content state :rd 0))
+    (is (not (get-content state :rd 0)) "Upgrade returned to hand")
+    (is (not (:run @state)) "Run ended, no more accesses")
+    (run-empty-server state "Archives")
+    (prompt-choice :runner "Shock!")
+    (prompt-choice :runner "Project Atlas")
+    (prompt-choice :runner "Steal")
+    (prompt-select :runner (get-content state :archives 0))
+    (is (not (get-content state :archives 0)) "Upgrade returned to hand")
+    (is (not (:run @state)) "Run ended, no more accesses")))
+
 (deftest maxx-wyldside-start-of-turn
   ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game
