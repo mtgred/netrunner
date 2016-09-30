@@ -273,6 +273,53 @@
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
 
+(deftest enhanced-login-protocol
+  ;; Enhanced Login Protocol - tests interaction with run events, interaction with runs, and inability to run last click
+  (do-game
+    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+              (default-runner [(qty "Dirty Laundry" 1)]))
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+    (is (= 4 (:click (get-runner))) "Runner starts turn with 4 clicks")
+    (play-from-hand state :runner "Dirty Laundry")
+    (prompt-choice :runner "Archives")
+    (run-successful state)
+    (is (= 3 (:click (get-runner))) "Run event only takes 1 click")
+    (run-on state :hq)
+    (run-jack-out state)
+    (is (= 1 (:click (get-runner))) "first non-event run takes 2 clicks")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-jack-out state)
+    (is (= 2 (:click (get-runner))) "first run takes 2 clicks")
+    (run-on state :hq)
+    (is (= 1 (:click (get-runner))) "second run takes 1 click")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (take-credits state :runner 2)
+    (is (= 2 (:click (get-runner))))
+    (is (core/can-run-server? state "HQ") "Runner can run - two clicks")
+    (take-credits state :runner 1)
+    (is (= 1 (:click (get-runner))))
+    (run-on state :hq)
+    (is (not (:run @state)) "No run initiated - not enough clicks")
+    (is (= 1 (:click (get-runner))))))
+
+(deftest enhanced-login-protocol-keyhole
+  ;; Enhanced Login Protocol - tests interaction with runs initiated from programs
+  (do-game
+    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+              (default-runner [(qty "Keyhole" 1)]))
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keyhole")
+    (is (= 3 (:click (get-runner))) "Runner has 3 clicks before run")
+    (let [keyhole (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner keyhole 0)
+      (is (= 2 (:click (get-runner))) "Runner has 2 clicks after using Keyhole"))))
+
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
   (do-game
