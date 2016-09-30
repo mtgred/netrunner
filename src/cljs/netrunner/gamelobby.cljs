@@ -108,12 +108,13 @@
   (send {:action "leave-lobby" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
   (om/update! cursor :message []))
+  (swap! app-state dissoc :password-gameid)
 
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
-  (swap! app-state dissoc :gameid :side)
+  (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
@@ -210,16 +211,17 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
-(defn game-view [{:keys [title password started players gameid current-game] :as game} owner]
+(defn game-view [{:keys [title password started players gameid current-game password-game] :as game} owner]
   (reify
     om/IRenderState
     (render-state [this state]
      (letfn [(join [action]
-               (if (empty? password)
-                 (join-game gameid owner action nil)
-                 (if-let [input-password (om/get-state owner :password)]
-                   (join-game gameid owner action input-password)
-                   (om/set-state! owner :prompt action))))]
+                (let [password (:password password-game password)]
+                 (if (empty? password)
+                  (join-game (if password-game (:gameid password-game) gameid) owner action nil)
+                  (if-let [input-password (om/get-state owner :password)]
+                    (join-game (if password-game (:gameid password-game) gameid) owner action input-password)
+                    (do (swap! app-state assoc :password-gameid gameid) (om/set-state! owner :prompt action))))))]
        (sab/html
         [:div.gameline {:class (when (= current-game gameid) "active")}
          (when (and (:allowspectator game) (not current-game))
@@ -235,7 +237,7 @@
          [:div (om/build-all player-view (map (fn [%] {:player % :game game}) (:players game)))]
          (when-let [prompt (om/get-state owner :prompt)]
            [:div.password-prompt
-            [:h3 (str "Password for " title)]
+            [:h3 (str "Password for " (if password-game (:title password-game) title))]
             [:p
              [:input.game-title {:on-change #(om/set-state! owner :password (.. % -target -value))
                                  :type "password"
@@ -243,20 +245,20 @@
             [:p
              [:button {:type "button" :on-click #(join prompt)}
               prompt]
-             [:span.fake-link {:on-click #(om/set-state! owner :prompt false)}
+             [:span.fake-link {:on-click #(do (swap! app-state dissoc :password-gameid) (om/set-state! owner :prompt false))}
               "Cancel"]]
             (when-let [error-msg (om/get-state owner :error-msg)]
               [:p.flash-message error-msg])])])))))
 
-(defn game-list [{:keys [games gameid] :as cursor} owner]
+(defn game-list [{:keys [games gameid password-game] :as cursor} owner]
   (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)]
     [:div.game-list
      (if (empty? roomgames)
        [:h4 "No games"]
        (for [game roomgames]
-        (om/build game-view (assoc game :current-game gameid))))]))
+        (om/build game-view (assoc game :current-game gameid :password-game password-game))))]))
 
-(defn game-lobby [{:keys [games gameid messages user] :as cursor} owner]
+(defn game-lobby [{:keys [games gameid messages user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -281,7 +283,8 @@
             [:div.rooms
              (room-tab "competitive" "Competitive")
              (room-tab "casual" "Casual")])]
-         (game-list cursor owner)]
+        (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
+         (game-list (assoc cursor :password-game password-game) owner))]
 
         [:div.game-panel
          (if (:editing state)
