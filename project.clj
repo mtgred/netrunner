@@ -1,6 +1,8 @@
 (defproject netrunner "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+  :description "Browser implementation of Android: Netrunner card game."
+  :url "https://github.com/mtgred/netrunner"
+  :license {:name "The MIT License (MIT)"
+            :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.7.228"]
