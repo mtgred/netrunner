@@ -46,6 +46,13 @@
      :events {:corp-turn-begins ability}
      :abilities [ability]}))
 
+(defn as-trashed-agenda
+  "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
+  [state side card n]
+  (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored) ; if the runner did not trash the card on access, then this will work
+      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored)) ; if the runner did trash it, then this will work
+  (gain-agenda-point state side n))
+
 ;;; Card definitions
 (declare in-server?)
 
@@ -137,7 +144,9 @@
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "C.I. Fund"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -271,7 +280,9 @@
    "Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2]
@@ -370,7 +381,7 @@
 
    "Franchise City"
    {:events {:access {:req (req (is-type? target "Agenda"))
-                      :msg "add it to their score area and gain 1 agenda point"
+                      :msg "add it to their score area as an agenda worth 1 agenda point"
                       :effect (effect (as-agenda :corp card 1))}}}
 
    "Full Immersion RecStudio"
@@ -672,21 +683,18 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:msg (msg "give the Runner 2 tags or -1 agenda point")
+   {:access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
              :delayed-completion true
              :effect (effect (continue-ability
                                {:player :runner
-                                :prompt "Take 2 tags or take News Team as -1 agenda point?"
+                                :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                               (do (or (move state :runner (assoc card :agendapoints -1) :scored)
-                                                       (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored))
-                                                   (gain-agenda-point state :runner -1)
-                                                   (system-msg state side
-                                                    (str "adds News Team to their score area as -1 agenda point")))
+                                               (do (as-trashed-agenda state :runner card -1)
+                                                   (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point")))
                                                (do (tag-runner state :runner 2)
-                                                   (system-msg state side (str "takes 2 tags from News Team")))))}
-                              card targets))}}
+                                                   (system-msg state :runner (str "takes 2 tags from News Team")))))}
+                               card targets))}}
 
    "PAD Campaign"
    (let [ability {:msg "gain 1 [Credits]"
@@ -797,7 +805,7 @@
     :events {:corp-turn-begins
              {:effect (req (add-counter state side card :power -1)
                            (when (<= (get-in card [:counter :power]) 1)
-                             (system-msg state :corp "adds Public Support to his scored area and gains 1 agenda point")
+                             (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Reality Threedee"
@@ -957,20 +965,16 @@
                                        :effect (effect (clear-wait-prompt :runner)
                                                        (continue-ability
                                                          {:player :runner
-                                                          :prompt (str "Take " target " net damage or take Shi.Kyū as -1 agenda point?")
+                                                          :prompt (str "Take " target " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
                                                           :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
                                                           :delayed-completion true
                                                           :effect (let [dmg target]
                                                                     (req (if (= target "Add Shi.Kyū to score area")
-                                                                           (do (or (move state :runner (assoc card :agendapoints -1) :scored) ; if the runner did not trash the card on access, then this will work
-                                                                                   (move state :runner (assoc card :agendapoints -1 :zone [:discard]) :scored)) ;if the runner did trash it, then this will work
-                                                                               (gain-agenda-point state :runner -1)
-                                                                               (system-msg state side
-                                                                                           (str "adds Shi.Kyū to their score area as -1 agenda point"))
+                                                                           (do (as-trashed-agenda state :runner card -1)
+                                                                               (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
                                                                                (effect-completed state side eid))
                                                                            (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :corp
-                                                                                           (str "uses Shi.Kyū to do " dmg " net damage"))))))}
+                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))))))}
                                                         card targets))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                       card targets))}}
@@ -1054,13 +1058,12 @@
     :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
     :trash-effect {:when-unrezzed true
                    :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}
     :events {:agenda-stolen {:effect (effect (lose :runner :agenda-point 1))}
              :card-moved {:req (req (or (some #{:scored} (:zone (first targets)))
                                         (some #{:scored} (:zone (second targets)))))
-                          :effect (req (if (some #{:scored} (:zone (first targets)))
-                                           (gain state :runner :agenda-point 1)
-                                           (lose state :runner :agenda-point 1)))}}}
+                          :effect (effect ((if (some #{:scored} (:zone (first targets))) gain lose) :runner :agenda-point 1))}}}
 
    "The News Now Hour"
    {:events {:runner-turn-begins {:effect (req (prevent-current state side))}}
@@ -1115,7 +1118,9 @@
                      (when (= (:active-player @state) :runner)
                        (gain state :runner :click 1)))
     :trash-effect {:when-unrezzed true
-                   :req (req (:access @state)) :effect (effect (as-agenda :runner card 2))}}
+                   :req (req (:access @state))
+                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                   :effect (effect (as-agenda :runner card 2))}}
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
