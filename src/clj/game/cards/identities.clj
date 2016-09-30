@@ -223,19 +223,22 @@
    "Haas-Bioroid: Architects of Tomorrow"
    {:events {:pass-ice
              {:once :per-turn
+              :delayed-completion true
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")))
-              :effect (req (when (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp))
-                             (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
-                             (resolve-ability state side
-                                              {:prompt "Choose a bioroid to rez" :player :corp
-                                               :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
-                                               :msg (msg "rez " (:title target))
-                                               :cancel-effect (effect (clear-wait-prompt :runner))
-                                               :effect (effect (rez-cost-bonus -4)
-                                                               (rez target)
-                                                               (clear-wait-prompt :runner))}
-                                              card nil)))}}}
+              :effect (req (if (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp))
+                             (do (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
+                                 (continue-ability state side
+                                                   {:prompt "Choose a bioroid to rez" :player :corp
+                                                    :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                                    :msg (msg "rez " (:title target))
+                                                    :cancel-effect (effect (clear-wait-prompt :runner)
+                                                                           (effect-completed))
+                                                    :effect (effect (rez-cost-bonus -4)
+                                                                    (rez target)
+                                                                    (clear-wait-prompt :runner))}
+                                                   card nil))
+                             (effect-completed state side)))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -399,14 +402,17 @@
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
              {:once :per-turn
-              :effect (req (when (some (fn [c] (has? c :subtype "Icebreaker")) (:hand runner))
-                             (resolve-ability state side
-                                              {:prompt "Choose an icebreaker to install from your Grip"
-                                               :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
-                                               :msg (msg "install " (:title target))
-                                               :effect (effect (install-cost-bonus [:credit -1])
-                                                               (runner-install target))}
-                                              card nil)))}}}
+              :delayed-completion true
+              :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
+                             (continue-ability state side
+                                               {:prompt "Choose an icebreaker to install from your Grip"
+                                                :delayed-completion true
+                                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
+                                                :msg (msg "install " (:title target))
+                                                :effect (effect (install-cost-bonus [:credit -1])
+                                                                (runner-install eid target nil))}
+                                               card nil)
+                             (effect-completed state side)))}}}
 
    "Laramy Fisk: Savvy Investor"
    {:events
