@@ -291,6 +291,17 @@
                               :effect (effect (trash target))}
                             card nil)))}}
 
+   "Enhanced Login Protocol"
+   {:events {:run {:once :per-turn
+                   ;; TODO: Find more elegant way of seeing if its a run event
+                   :req (req (nil? (:card (:run-effect (:run @state)))))
+                   :effect (effect (update! (assoc card :elp-fire true))
+                                   (lose :runner :click 1))
+                   :msg "force the Runner to spend an additional [Click]"}
+             :runner-spent-click {:req (req (and (not (:elp-fire card)) (>= 2 (:click runner))))
+                                  :effect (effect (prevent-run))}
+             :runner-phase-12 {:effect (effect (update! (assoc card :elp-fire false)))}}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
