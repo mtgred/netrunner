@@ -660,6 +660,98 @@
       (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Null"))))
 
+(deftest omar-ability
+  ;; Omar Keung - Make a successful run on the chosen server once per turn
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (let [omar (get-in @state [:runner :identity])]
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (prompt-choice :runner "HQ")
+      (is (= [:hq] (-> (get-runner) :register :successful-run)))
+      (is (= "You accessed Hedge Fund" (-> (get-runner) :prompt first :msg)))
+      (prompt-choice :runner "OK")
+      (is (= 3 (:click (get-runner))))
+      (card-ability state :runner omar 0)
+      (is (= 3 (:click (get-runner))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (is (= [:rd] (-> (get-runner) :register :successful-run)))
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (prompt-choice :runner "HQ")
+      (is (= [:hq :rd] (-> (get-runner) :register :successful-run))))))
+
+(deftest omar-ash
+  ;; Omar Keung - Ash prevents access, but not successful run
+  (do-game
+    (new-game
+      (default-corp [(qty "Ash 2X3ZB9CY" 1)])
+      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+    (take-credits state :corp)
+    (let [omar (get-in @state [:runner :identity])
+          ash (get-content state :hq 0)]
+      (core/rez state :corp ash)
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (prompt-choice :runner "HQ")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)))
+      (is (= :hq (-> (get-runner) :register :successful-run first))))))
+
+(deftest omar-crisium-grid
+  ;; Omar Keung - Crisium Grid prevents prompt
+  (do-game
+    (new-game
+      (default-corp [(qty "Crisium Grid" 1)])
+      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Crisium Grid" "Archives")
+    (take-credits state :corp)
+    (let [omar (get-in @state [:runner :identity])
+          cr (get-content state :archives 0)]
+      (core/rez state :corp cr)
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (is (= (:cid cr) (-> (get-runner) :prompt first :card :cid)))
+      (is (empty? (-> (get-runner) :register :successful-run)))
+      (is (= :archives (get-in @state [:run :server 0]))))))
+
+(deftest omar-medium
+  ;; Omar Keung - When selecting R&D, ability adds counters to Medium
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Medium" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Medium")
+    (let [omar (get-in @state [:runner :identity])
+          medium (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (prompt-choice :runner "R&D")
+      (is (= 1 (get-counters (refresh medium) :virus))))))
+
+(deftest omar-nerve-agent
+  ;; Omar Keung - When selecting HQ, ability adds counters to Nerve Agent
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Nerve Agent" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nerve Agent")
+    (let [omar (get-in @state [:runner :identity])
+          nerve (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner omar 0)
+      (run-successful state)
+      (prompt-choice :runner "HQ")
+      (is (= 1 (get-counters (refresh nerve) :virus))))))
+
 (deftest quetzal-ability
   ;; Quetzal ability- once per turn
   (do-game
