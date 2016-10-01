@@ -7,6 +7,9 @@
     "type": "git",
     "url": "https://github.com/mtgred/netrunner.git"
   },
+  "scripts": {
+    "postinstall": "bower install"
+  },
   "devDependencies": {
     "bower": "^1.7.9",
     "coffee-script": "^1.11.0"

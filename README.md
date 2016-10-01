@@ -26,22 +26,15 @@ The implementation of the game rules is in progress. About 95% of the cards are 
 * Leiningen (version 2+)
 * MongoDB
 * Coffeescript
-* Bower
 * Zero MQ
 
 
 ## Installation
 
-Install Node.js dependencies:
+Install frontend dependencies:
 
 ```
 $ npm install
-```
-
-Install JavaScript dependencies:
-
-```
-$ bower install
 ```
 
 Launch MongoDB and fetch card data:
