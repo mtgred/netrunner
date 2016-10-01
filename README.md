@@ -25,7 +25,6 @@ The implementation of the game rules is in progress. About 95% of the cards are 
 * Node.js, Node Package Manager
 * Leiningen (version 2+)
 * MongoDB
-* Coffeescript
 * Zero MQ
 
 
@@ -41,8 +40,7 @@ Launch MongoDB and fetch card data:
 
 ```
 $ mongod
-$ cd data
-$ coffee fetch.coffee
+$ npm run fetch
 ```
 
 Compile and watch client side Clojurescript files:
@@ -66,7 +64,7 @@ $ java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar
 Launch the Node server:
 
 ```
-$ coffee server.coffee
+$ npm start
 ```
 
 ## Tests
