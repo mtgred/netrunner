@@ -679,7 +679,8 @@
                                  (runner-install target))}]}
 
    "Sneakdoor Beta"
-   {:abilities [{:cost [:click 1] :msg "make a run on Archives"
+   {:abilities [{:cost [:click 1]
+                 :msg "make a run on Archives"
                  :effect (effect (run :archives
                                    {:req (req (= target :archives))
                                     :successful-run
@@ -691,7 +692,7 @@
                                                   (trigger-event state :corp :no-action)
                                                   (system-msg state side
                                                               (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
-                                  card))}]}
+                                   card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
