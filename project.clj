@@ -43,6 +43,7 @@
                   :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
+                  :closure-warnings {:externs-validation :off}
                   :externs ["resources/public/lib/jquery/jquery.min.js"
                             "resources/public/lib/jqueryui/jquery-ui.min.js"
                             "resources/public/lib/react/react.min.js"
