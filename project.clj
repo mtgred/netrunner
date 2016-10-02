@@ -21,8 +21,12 @@
                                   [figwheel-sidecar "0.5.0-6"]
                                   [com.cemerick/piggieback "0.2.1"]]}}
 
+  ; aot only the namespaces needed for the main game in uberjar
+  :aot [game.utils
+        game.main
+        game.macros
+        game.core]
   :main game.main
-  :aot :all
 
   :plugins [[lein-cljsbuild "1.1.3"]
             [lein-figwheel "0.5.2"]]
