@@ -202,7 +202,7 @@
                                                                      {:optional
                                                                       {:player :runner
                                                                        :prompt "Allow Archangel trace to fire?" :priority 1
-                                                                       :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                                       :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
                                                                      card nil))}
                          :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
                                                    (clear-wait-prompt state :runner))}}} card nil))}
@@ -377,7 +377,7 @@
                                                               {:optional
                                                                {:player :runner
                                                                 :prompt "Allow Chrysalis subroutine to fire?" :priority 1
-                                                                :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                                :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
                                                              card nil))}
                                  :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Chrysalis")
                                                            (clear-wait-prompt state :runner))}}}
