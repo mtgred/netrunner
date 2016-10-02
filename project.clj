@@ -43,13 +43,7 @@
                   :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
-                  :closure-warnings {:externs-validation :off}
-                  :externs ["resources/public/lib/jquery/jquery.min.js"
-                            "resources/public/lib/jqueryui/jquery-ui.min.js"
-                            "resources/public/lib/react/react.min.js"
-                            "resources/public/lib/moment/min/moment.min.js"
-                            "resources/public/lib/bootstrap/dist/js/bootstrap.min.js"
-                            "node_modules/socket.io/node_modules/socket.io-client/socket.io.js"]}}]}
+                  :externs ["src/js/externs.js"]}}]}
 
   :figwheel {:http-server-root "public"
              :server-port 3449
