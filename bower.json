@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "license": "MIT",
   "dependencies": {
-    "jquery": "~2.0.3",
-    "jqueryui": "~1.11.4",
-    "react": "0.14.3",
     "bootstrap": "~3.1.1",
-    "moment": "~2.6.0",
+    "jquery": "^2.2.4",
+    "jqueryui": "^1.12.1",
     "marked": "~0.3.5",
+    "moment": "~2.6.0",
+    "react": "0.14.3",
     "toastr": "~2.1.2"
   }
 }
