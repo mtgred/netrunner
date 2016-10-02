@@ -381,7 +381,7 @@
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
    "\"Freedom Through Equality\""
-   {:events {:agenda-stolen {:msg "add it to their score area and gain 1 agenda point"
+   {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
                              :effect (effect (as-agenda :runner card 1))}}}
 
    "Freelance Coding Contract"
@@ -676,7 +676,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
-    :msg "add it to their score area and gain 1 agenda point"}
+    :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "Out of the Ashes"
    (letfn [(ashes-flag []
