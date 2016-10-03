@@ -436,8 +436,8 @@
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"
-   {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
-                                                              (assoc card :zone '(:discard))))
+   {:effect (effect (run :archives nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run
              {:silent (req true)
               :req (req (= target :archives))
@@ -1032,8 +1032,8 @@
                       card targets))}
 
    "The Makers Eye"
-   {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
-                                                        (assoc card :zone '(:discard))))
+   {:effect (effect (run :rd nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
                               :effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
