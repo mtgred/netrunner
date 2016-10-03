@@ -53,7 +53,7 @@
                             "resources/public/lib/react/react.min.js"
                             "resources/public/lib/moment/min/moment.min.js"
                             "resources/public/lib/bootstrap/dist/js/bootstrap.min.js"
-                            "node_modules/socket.io/node_modules/socket.io-client/socket.io.js"]}}]}
+                            "node_modules/socket.io-client/socket.io.js"]}}]}
 
   :figwheel {:http-server-root "public"
              :server-port 3449
