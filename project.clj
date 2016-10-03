@@ -1,4 +1,5 @@
-(defproject netrunner "0.1.0-SNAPSHOT"
+(defproject netrunner "1.0"
+  ; the version string gets replaced by the git rev version plugin anyway
   :description "Browser implementation of Android: Netrunner card game."
   :url "https://github.com/mtgred/netrunner"
   :license {:name "The MIT License (MIT)"
@@ -29,9 +30,15 @@
   :main game.main
 
   :plugins [[lein-cljsbuild "1.1.3"]
-            [lein-figwheel "0.5.2"]]
+            [lein-figwheel "0.5.2"]
+            [com.gfredericks/lein-sha-version "0.1.1-p1"]]
 
   :source-paths ["src/clj" "src/cljs"]
+
+  :jar-name "netrunner.jar"
+  :uberjar-name "netrunner-standalone.jar"
+
+  :omit-source true
 
   :cljsbuild {
     :builds [
