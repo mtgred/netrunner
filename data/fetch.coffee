@@ -30,6 +30,13 @@ setFields = {
   "cycle_code" : (k, t) -> ["cycle", capitalize(t.replace(/-/g, " "))]
 }
 
+mwlFields = {
+  "name" : same
+  "code" : same
+  "active" : same
+  "cards" : same
+}
+
 mapFactions = {
   "haas-bioroid" : "Haas-Bioroid",
   "jinteki" : "Jinteki",
@@ -121,4 +128,15 @@ fetchCards = (callback) ->
           console.log("#{cards.length} cards fetched")
         callback(null, cards.length)
 
-async.series [fetchSets, fetchCards, () -> db.close()]
+fetchMWL = (callback) ->
+  request.get baseurl + "mwl", (error, response, body) ->
+    if !error and response.statusCode is 200
+      data = JSON.parse(body).data
+      mwl = selectFields(mwlFields, data)
+      db.collection("mwl").remove ->
+      db.collection("mwl").insert mwl, (err, result) ->
+        fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
+          console.log("#{mwl.length} MWL lists fetched")
+        callback(null, mwl.length)
+
+async.series [fetchSets, fetchCards, fetchMWL, () -> db.close()]

@@ -135,7 +135,7 @@
       (aset input "value" "")
       (.focus input))))
 
-(defn deckselect-modal [{:keys [gameid games decks user]} owner opts]
+(defn deckselect-modal [{:keys [gameid games decks sets user]} owner opts]
   (om/component
    (sab/html
     [:div.modal.fade#deck-select
@@ -148,7 +148,7 @@
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
              [:img {:src (image-url (:identity deck))}]
-             [:div.float-right (deck-status-span deck)]
+             [:div.float-right (deck-status-span sets deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
              [:p (get-in deck [:identity :title])]])])]]])))
@@ -258,7 +258,7 @@
        (for [game roomgames]
         (om/build game-view (assoc game :current-game gameid :password-game password-game))))]))
 
-(defn game-lobby [{:keys [games gameid messages user password-gameid] :as cursor} owner]
+(defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -359,13 +359,13 @@
                     [:div
                      (om/build player-view {:player player})
                      (when-let [deck (:deck player)]
-                       [:span {:class (deck-status-label deck)}
+                       [:span {:class (deck-status-label sets deck)}
                         [:span.label
                          (if (= (:user player) user)
                            (:name deck)
                            "Deck selected")]])
                      (when-let [deck (:deck player)]
-                       [:div.float-right (deck-status-span deck true)])
+                       [:div.float-right (deck-status-span sets deck true)])
                      (when (= (:user player) user)
                        [:span.fake-link.deck-load
                         {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
