@@ -98,11 +98,9 @@
   (system-msg state side "concedes")
   (win state (if (= side :corp) :runner :corp) "Concede"))
 
-(defn- finish-prompt
-  [state side prompt card]
+(defn- finish-prompt [state side prompt card]
   (when-let [end-effect (:end-effect prompt)]
     (end-effect state side (make-eid state) card nil))
-
   ;; remove the prompt from the queue
   (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
   ;; This is a dirty hack to end the run when the last access prompt is resolved.
@@ -121,13 +119,13 @@
                (@all-cards (:title card))
                servercard)
         prompt (first (get-in @state [side :prompt]))
+        choices (:choices prompt)
         choice (if (= (:choices prompt) :credit)
                  (min choice (get-in @state [side :credit]))
                  choice)]
     (if (not= choice "Cancel")
-      ;; The user did not choose "cancel"
-      (if (:card-title (:choices prompt)) ;; check the card title function to see if it's accepted
-        (let [title-fn (:card-title (:choices prompt))
+      (if (:card-title choices) ; check the card has a :card-title function
+        (let [title-fn (:card-title choices)
               found (some #(when (= (lower-case choice) (lower-case (:title %))) %) (vals @all-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
@@ -135,17 +133,17 @@
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
             (toast state side (str "Could not find a card named " choice ".") "warning")))
-        (do (when (= (:choices prompt) :credit) ; :credit prompts require a pay
+        (do (when (= choices :credit) ; :credit prompts require payment
               (pay state side card :credit choice))
-            (when (and (map? (:choices prompt))
-                       (:counter (:choices prompt)))
+            (when (and (map? choices)
+                       (:counter choices))
               ;; :Counter prompts deduct counters from the card
-              (add-counter state side (:card prompt) (:counter (:choices prompt)) (- choice)))
+              (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
             ((:effect prompt) (or choice card))
             (finish-prompt state side prompt card)))
       (do (if-let [cancel-effect (:cancel-effect prompt)]
-            ;; the user chose "cancel" -- trigger the cancel effect.
+            ;; trigger the cancel effect
             (cancel-effect choice)
             (effect-completed state side (:eid prompt) nil))
           (finish-prompt state side prompt card)))))
@@ -384,18 +382,19 @@
                     (get-card state (nth run-ice (dec pos))))
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
-      (trigger-event state side :pass-ice cur-ice)
-      (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-      (swap! state update-in [:run :position] dec)
-      (swap! state assoc-in [:run :no-action] false)
-      (system-msg state side "continues the run")
-      (when cur-ice
-        (update-ice-strength state side cur-ice))
-      (when next-ice
-        (trigger-event state side :approach-ice next-ice))
-      (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
-        (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-        (update-breaker-strength state side p)))))
+      (when-completed (trigger-event-sync state side :pass-ice cur-ice)
+                      (do (update-ice-in-server
+                            state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                          (swap! state update-in [:run :position] dec)
+                          (swap! state assoc-in [:run :no-action] false)
+                          (system-msg state side "continues the run")
+                          (when cur-ice
+                            (update-ice-strength state side cur-ice))
+                          (when next-ice
+                            (trigger-event state side :approach-ice next-ice))
+                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                            (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

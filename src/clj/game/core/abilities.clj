@@ -224,8 +224,8 @@
                            #(- (or % 0) (or (second counter-cost) 0)))
                 card)
             c (if advance-counter-cost
-                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                  c)]
+                (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                c)]
         ;; Remove any counters.
         (when (or counter-cost advance-counter-cost)
           (update! state side c)
@@ -301,11 +301,11 @@
   ([state side card msg choices ability] (prompt! state side card msg choices ability nil))
   ([state side card msg choices ability args]
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
-       (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
-                    (-> args
-                        (wrap-function :cancel-effect)
-                        (wrap-function :end-effect))))))
+            (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+     (show-prompt state side (:eid ability) card msg choices #(resolve-ability state side ability card [%])
+                  (-> args
+                      (wrap-function :cancel-effect)
+                      (wrap-function :end-effect))))))
 
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked

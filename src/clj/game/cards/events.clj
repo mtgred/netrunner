@@ -436,8 +436,8 @@
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"
-   {:effect (effect (run :archives nil card) (register-events (:events (card-def card))
-                                                              (assoc card :zone '(:discard))))
+   {:effect (effect (run :archives nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run
              {:silent (req true)
               :req (req (= target :archives))
@@ -796,7 +796,11 @@
                                            (= (last (:zone %)) :content)
                                            (not (:rezzed %)))}
                       :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
-                      :effect (effect (gain :credit (* 2 c)) (add-prop :corp target :advance-counter c {:placed true}))}
+                      :effect (effect (gain :credit (* 2 c))
+                                      (add-prop :corp target :advance-counter c {:placed true})
+                                      (register-turn-flag! card :can-access
+                                                           ;; prevent access of advanced card
+                                                           (fn [_ _ card] (not (same-card? target card)))))}
                      card nil)))}
 
    "Quest Completed"
@@ -1028,8 +1032,8 @@
                       card targets))}
 
    "The Makers Eye"
-   {:effect (effect (run :rd nil card) (register-events (:events (card-def card))
-                                                        (assoc card :zone '(:discard))))
+   {:effect (effect (run :rd nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
                               :effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}

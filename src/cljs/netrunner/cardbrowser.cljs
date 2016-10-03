@@ -8,7 +8,10 @@
 
 (def cards-channel (chan))
 
-(go (swap! app-state assoc :sets (:json (<! (GET "/data/sets")))))
+;; Load in sets and mwl lists
+(go (let [sets (:json (<! (GET "/data/sets")))
+          mwl (:json (<! (GET "/data/mwl")))]
+      (swap! app-state assoc :sets sets :mwl mwl)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)

@@ -51,6 +51,13 @@
   [state side card flag flag-types]
   (every? #(check-flag? state side card % flag) flag-types))
 
+(defn get-preventing-cards
+  "Returns all cards that are preventing specified flag, checking in the specified flag-types"
+  [state side card flag flag-types]
+  (let [conditions (mapcat #(get-in @state [:stack % flag]) flag-types)
+        predicate (complement #((:condition %) state side card))]
+    (map :card (filter predicate conditions))))
+
 (defn has-flag?
   "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
   [state side flag-type flag]
@@ -316,6 +323,20 @@
   "Checks if the runner can steal agendas"
   [state side card]
   (check-flag-types? state side card :can-steal [:current-turn :current-run]))
+
+(defn can-access?
+  "Checks if the runner can access the specified card"
+  [state side card]
+  (check-flag-types? state side card :can-access [:current-run :current-turn :persistent]))
+
+(defn can-access-loud
+  "Checks if the runner can access the card, toasts card that is preventing it"
+  [state side card]
+  (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
+    (if (empty? cards)
+      true
+      (do (toast state side (str "Cannot access " (card-str state card) " because of " (join ", " (map :title cards))) "info")
+          false))))
 
 (defn can-advance?
   "Checks if the corp can advance cards"

@@ -106,25 +106,27 @@
                                   :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
    "Crisium Grid"
-   {:suppress {:successful-run {:req (req (and this-server (not= (:cid target) (:cid card))))}}
-    :events {:successful-run {:silent (req true)
-                              :req (req this-server)
-                              :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
-                                           (swap! state update-in [:run] dissoc :successful)
-                                           (swap! state update-in [:runner :register :successful-run] #(rest %)))}}}
+   (let [suppress-event {:req (req (and this-server (not= (:cid target) (:cid card))))}]
+     {:suppress {:pre-successful-run suppress-event
+                 :successful-run suppress-event}
+      :events {:pre-successful-run {:silent (req true)
+                                    :req (req this-server)
+                                    :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                                                 (swap! state update-in [:run] dissoc :successful)
+                                                 (swap! state update-in [:runner :register :successful-run] #(rest %)))}}})
 
    "Cyberdex Virus Suite"
    {:access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Cyberdex Virus Suite")
                              (continue-ability
-                               {:optional {:prompt "Purge viruses with Cyberdex Virus Suite?"
-                                           :yes-ability {:msg (msg "purge viruses")
+                               {:optional {:prompt "Purge virus counters with Cyberdex Virus Suite?"
+                                           :yes-ability {:msg (msg "purge virus counters")
                                                          :effect (effect (clear-wait-prompt :runner)
                                                                          (purge))}
                                            :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                                card nil))}
     :abilities [{:label "[Trash]: Purge virus counters"
-                 :msg "purge viruses" :effect (effect (trash card) (purge))}]}
+                 :msg "purge virus counters" :effect (effect (trash card) (purge))}]}
 
    "Dedicated Technician Team"
    {:recurring 2}
