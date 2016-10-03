@@ -170,16 +170,16 @@
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
   (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
-                  (do (if-not (or (get-in @state [:damage :damage-replace]))
+                  (do (when-not (get-in @state [:damage :damage-replace])
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
                           (when (pos? n)
                             (let [hand (get-in @state [:runner :hand])
-                                  cards-trashed (take n (shuffle hand))
-                                  trashed-msg (join ", " (map :title cards-trashed))]
+                                  cards-trashed (take n (shuffle hand))]
                               (when (= type :brain)
                                 (swap! state update-in [:runner :brain-damage] #(+ % n))
                                 (swap! state update-in [:runner :hand-size-modification] #(- % n)))
-                              (system-msg state :runner (str "trashes " trashed-msg " due to damage"))
+                              (when-let [trashed-msg (join ", " (map :title cards-trashed))]
+                                (system-msg state :runner (str "trashes " trashed-msg " due to damage")))
                               (if (< (count hand) n)
                                 (do (flatline state)
                                     (trash-cards state side (make-eid state) cards-trashed

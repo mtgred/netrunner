@@ -3,7 +3,7 @@
 (declare any-flag-fn? clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability7
-         get-remote-names card-name can-steal?
+         get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out)
 
 ;;; Steps in the run sequence
@@ -446,31 +446,31 @@
       (concat hosted-cards (get-all-hosted hosted-cards)))))
 
 
-;; Don't call access directly; use handle-access instead.
-;; access methods return a list of cards in the server.
-(defmulti access (fn [state side server] (get-server-type (first server))))
+(defmulti cards-to-access
+  "Gets the list of cards to access for the server"
+  (fn [state side server] (get-server-type (first server))))
 
-(defmethod access :hq [state side server]
+(defmethod cards-to-access :hq [state side server]
   (concat (take (access-count state side :hq-access) (shuffle (get-in @state [:corp :hand])))
           (get-in @state [:corp :servers :hq :content])))
 
-(defmethod access :rd [state side server]
+(defmethod cards-to-access :rd [state side server]
   (concat (take (access-count state side :rd-access) (get-in @state [:corp :deck]))
           (get-in @state [:corp :servers :rd :content])))
 
-(defmethod access :archives [state side server]
+(defmethod cards-to-access :archives [state side server]
   (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
   (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
 
-(defmethod access :remote [state side server]
+(defmethod cards-to-access :remote [state side server]
   (let [contents (get-in @state [:corp :servers (first server) :content])]
-    (concat contents (get-all-hosted contents))))
+    (filter (partial can-access-loud state side) (concat contents (get-all-hosted contents)))))
 
 (defn do-access
   "Starts the access routines for the run's server."
   [state side eid server]
   (trigger-event state side :pre-access (first server))
-  (let [cards (access state side server)
+  (let [cards (cards-to-access state side server)
         n (count cards)]
     ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
     (when-not (or (= (get-in @state [:run :max-access]) 0)
