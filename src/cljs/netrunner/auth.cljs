@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put!] :as async]
-            [netrunner.main :refer [app-state]]
+            [netrunner.appstate :refer [app-state]]
             [netrunner.ajax :refer [POST GET]]))
 
 (defn avatar [{:keys [emailhash]} owner opts]
