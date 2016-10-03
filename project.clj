@@ -54,12 +54,12 @@
                   :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
-                  :closure-warnings {:externs-validation :off}
-                  :externs ["resources/public/lib/jquery/jquery.min.js"
-                            "resources/public/lib/jqueryui/jquery-ui.min.js"
-                            "resources/public/lib/moment/min/moment.min.js"
-                            "resources/public/lib/bootstrap/dist/js/bootstrap.min.js"
-                            "node_modules/socket.io-client/socket.io.js"]}}]}
+                  :externs ["src/cljs/externs/extras.js"
+                            "src/cljs/externs/$.js"
+                            "src/cljs/externs/io.js"
+                            "src/cljs/externs/marked.js"
+                            "src/cljs/externs/moment.js"
+                            "src/cljs/externs/toastr.js"]}}]}
 
   :figwheel {:http-server-root "public"
              :server-port 3449
