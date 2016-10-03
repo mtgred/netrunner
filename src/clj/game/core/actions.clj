@@ -382,18 +382,19 @@
                     (get-card state (nth run-ice (dec pos))))
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
-      (trigger-event state side :pass-ice cur-ice)
-      (update-ice-in-server state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-      (swap! state update-in [:run :position] dec)
-      (swap! state assoc-in [:run :no-action] false)
-      (system-msg state side "continues the run")
-      (when cur-ice
-        (update-ice-strength state side cur-ice))
-      (when next-ice
-        (trigger-event state side :approach-ice next-ice))
-      (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
-        (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-        (update-breaker-strength state side p)))))
+      (when-completed (trigger-event-sync state side :pass-ice cur-ice)
+                      (do (update-ice-in-server
+                            state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                          (swap! state update-in [:run :position] dec)
+                          (swap! state assoc-in [:run :no-action] false)
+                          (system-msg state side "continues the run")
+                          (when cur-ice
+                            (update-ice-strength state side cur-ice))
+                          (when next-ice
+                            (trigger-event state side :approach-ice next-ice))
+                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                            (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."
