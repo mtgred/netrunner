@@ -202,7 +202,7 @@
                                                                      {:optional
                                                                       {:player :runner
                                                                        :prompt "Allow Archangel trace to fire?" :priority 1
-                                                                       :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                                       :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
                                                                      card nil))}
                          :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
                                                    (clear-wait-prompt state :runner))}}} card nil))}
@@ -377,7 +377,7 @@
                                                               {:optional
                                                                {:player :runner
                                                                 :prompt "Allow Chrysalis subroutine to fire?" :priority 1
-                                                                :yes-ability {:effect (req (play-ability state side {:card card :ability 0}))}}}
+                                                                :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
                                                              card nil))}
                                  :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Chrysalis")
                                                            (clear-wait-prompt state :runner))}}}
@@ -1273,7 +1273,8 @@
                   {:msg "look at the top card of R&D"
                    :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                               :yes-ability {:effect (effect (move (first (:deck corp)) :deck)
-                                                            (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}}}]}
+                                                            (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}
+                              :no-ability {:effect (req (system-msg state :corp (str "does not use Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
    {:subroutines [(do-brain-damage 1)]
