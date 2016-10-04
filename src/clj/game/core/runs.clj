@@ -300,15 +300,15 @@
                                               (effect-completed state side eid)))))
                       (effect-completed state side eid nil))
                     ;; accessing a rezzed upgrade
-                    (do (system-msg state side (str "accesses " target))
-                        (when-completed (handle-access state side [(some #(when (= (:title %) target) %)
-                                                                         (get-root-content state))])
-                                        (if (or (pos? from-hq) (< 1 (count (get-root-content state))))
-                                          (continue-ability
-                                            state side
-                                            (access-helper-hq state from-hq (conj already-accessed target))
-                                            card nil)
-                                          (effect-completed state side eid nil))))))}))
+                    (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
+                      (system-msg state side (str "accesses " (:title accessed)))
+                      (when-completed (handle-access state side [])
+                                      (if (or (pos? from-hq) (< 1 (count (get-root-content state))))
+                                        (continue-ability
+                                          state side
+                                          (access-helper-hq state from-hq (conj already-accessed accessed))
+                                          card nil)
+                                        (effect-completed state side eid nil))))))}))
 
 (defmethod choose-access :hq [cards server]
   {:delayed-completion true
@@ -370,15 +370,15 @@
                                             card nil)
                                           (effect-completed state side eid)))))
                     ;; accessing a rezzed upgrade
-                    (do (system-msg state side (str "accesses " target))
-                        (when-completed (handle-access state side [(some #(when (= (:title %) target) %)
-                                                                         (get-root-content state))])
-                                        (if (or (not-empty from-rd) (< 1 (count (get-root-content state))))
-                                          (continue-ability
-                                            state side
-                                            (access-helper-rd state from-rd (conj already-accessed target))
-                                            card nil)
-                                          (effect-completed state side eid))))))}))
+                    (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
+                      (system-msg state side (str "accesses " (:title accessed)))
+                      (when-completed (handle-access state side [accessed])
+                                      (if (or (not-empty from-rd) (< 1 (count (get-root-content state))))
+                                        (continue-ability
+                                          state side
+                                          (access-helper-rd state from-rd (conj already-accessed accessed))
+                                          card nil)
+                                        (effect-completed state side eid))))))}))
 
 (defmethod choose-access :rd [cards server]
   {:delayed-completion true
@@ -437,20 +437,17 @@
                                                           card nil)))}
                           card nil)))
                     ;; accessing a rezzed upgrade, or a card in archives
-                    (do (system-msg state side (str "accesses " target))
-                        (when-completed (handle-access state side
-                                                       [(some #(when (= (:title %) target) %)
-                                                              (concat (get-accessible state) (get-root-content state)))])
-                                        (let [accessible (get-accessible state)
-                                              from-root (get-root-content state)]
-                                          (if (< 1 (+ (count accessible) (count from-root)))
-                                            (continue-ability
-                                              state side
-                                              (access-helper-archives state (conj already-accessed
-                                                                                  (some #(when (= (:title %) target) %)
-                                                                                        (concat accessible from-root))))
-                                              card nil)
-                                            (effect-completed state side eid)))))))}))
+                    (let [accessed (some #(when (= (:title %) target) %) (concat (get-accessible state) (get-root-content state)))]
+                      (system-msg state side (str "accesses " (:title accessed)))
+                      (when-completed (handle-access state side [accessed])
+                                      (let [accessible (get-accessible state)
+                                            from-root (get-root-content state)]
+                                        (if (< 1 (+ (count accessible) (count from-root)))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-archives state (conj already-accessed accessed))
+                                            card nil)
+                                          (effect-completed state side eid)))))))}))
 
 (defmethod choose-access :archives [cards server]
   {:delayed-completion true
