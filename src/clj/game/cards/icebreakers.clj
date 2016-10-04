@@ -195,6 +195,27 @@
                  :msg "add 2 strength (using at least 1 stealth [Credits])"
                  :effect (effect (pump card 2)) :pump 2}]}
 
+   "Black Orchestra"
+   (let [install {:req (req (and (= (:zone card) [:discard])
+                                 (rezzed? current-ice)
+                                 (has-subtype? current-ice "Code Gate")))
+                  :optional {:player :runner
+                             :prompt "Install Black Orchestra?"
+                             :yes-ability {:effect (effect (unregister-events card)
+                                                           (runner-install :runner card))}}}
+         heap-event (req (when (= (:zone card) [:discard])
+                           (unregister-events state side card)
+                           (register-events state side
+                                            (:events (card-def card))
+                                            (assoc card :zone [:discard]))))]
+   {:move-zone heap-event
+    :abilities [{:cost [:credit 3]
+                 :effect (effect (pump card 2)) :pump 2
+                 :msg "add 2 strength and break up to 2 subroutines"}]
+    :events {:rez install
+             :approach-ice install
+             :run install}})
+
    "Blackstone"
    {:abilities [(break-sub 1 1 "barrier")
                 {:cost [:credit 3]
@@ -382,6 +403,12 @@
    "GS Striker M1"
    (global-sec-breaker "Code Gate")
 
+   "Houdini"
+   {:abilities [(break-sub 1 1 "code gate")
+                {:cost [:credit 2]
+                 :msg "add 4 strength (using at least 1 stealth [Credits])"
+                 :effect (effect (pump card 4 :all-run)) :pump 4}]}
+
    "Inti"
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 1 1 "barrier")
@@ -486,6 +513,17 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 2 1 "code gate")
                                  (strength-pump 2 3)]})
+
+   "Peregrine"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [(break-sub 1 1 "code gate")
+                                 (strength-pump 3 3)
+                                 {:label "Derez a code gate and return Peregrine to your Grip"
+                                  :cost [:credit 2]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Code Gate")))
+                                  :msg (msg "derez " (:title current-ice) " and return Peregrine to their Grip")
+                                  :effect (effect (derez current-ice)
+                                                  (move card :hand))}]})
 
    "Pipeline"
    (auto-icebreaker ["Sentry"]
