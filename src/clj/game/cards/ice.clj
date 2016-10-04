@@ -646,9 +646,9 @@
                                       card nil))))}]}
 
    "Himitsu-Bako"
-   {:abilities {:msg "add it to HQ"
+   {:abilities [{:msg "add it to HQ"
                 :cost [:credit 1]
-                :effect (effect (move card :hand))}
+                :effect (effect (move card :hand))}]
     :subroutines [end-the-run]}
 
    "Hive"
