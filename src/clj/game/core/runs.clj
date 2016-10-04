@@ -442,7 +442,7 @@
                       (when-completed (handle-access state side [accessed])
                                       (let [accessible (get-accessible state)
                                             from-root (get-root-content state)]
-                                        (if (< 1 (+ (count accessible) (count from-root)))
+                                        (if (pos? (+ (count accessible) (count from-root)))
                                           (continue-ability
                                             state side
                                             (access-helper-archives state (conj already-accessed accessed))
