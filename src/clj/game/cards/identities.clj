@@ -412,7 +412,7 @@
                                                 :effect (effect (install-cost-bonus [:credit -1])
                                                                 (runner-install eid target nil))}
                                                card nil)
-                             (effect-completed state side)))}}}
+                             (effect-completed state side eid)))}}}
 
    "Laramy Fisk: Savvy Investor"
    {:events
