@@ -532,7 +532,8 @@
                    :effect (req (if (= target "Pay 1 [Credits]")
                                   (do (pay state side card :credit 1)
                                       (system-msg state side "pays 1 [Credits]"))
-                                  (resolve-ability state :runner trash-installed card nil)))}]}
+                                  (resolve-ability state :runner trash-installed card nil)))}]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Fairchild 2.0"
    {:subroutines [{:label "Force the Runner to pay 2 [Credits] or trash an installed card"
@@ -544,7 +545,8 @@
                                   (do (pay state side card :credit 2)
                                       (system-msg state side "pays 2 [Credits]"))
                                   (resolve-ability state :runner trash-installed card nil)))}
-                  (do-brain-damage 1)]}
+                  (do-brain-damage 1)]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Fairchild 3.0"
    {:subroutines [{:label "Force the Runner to pay 3 [Credits] or trash an installed card"
@@ -562,7 +564,8 @@
                    :msg (msg (lower-case target))
                    :effect (req (if (= target "Do 1 brain damage")
                                   (damage state side eid :brain 1 {:card card})
-                                  (end-run state side)))}]}
+                                  (end-run state side)))}]
+    :runner-abilities [(runner-break [:click 3] 3)]}
 
    "Fenris"
    {:effect take-bad-pub
