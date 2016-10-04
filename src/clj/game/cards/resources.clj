@@ -429,6 +429,12 @@
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
+   "First Responders"
+   {:abilities [{:cost [:credit 2]
+                 :req (req (not-empty (turn-events state side :damage)))
+                 :msg "draw 1 card"
+                 :effect (effect (draw))}]}   
+
    "Gang Sign"
    {:events {:agenda-scored {:delayed-completion true
                              :interactive (req true)
