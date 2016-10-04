@@ -477,3 +477,22 @@
       (is (= "Manhunt" (-> (get-runner) :prompt first :card :title)))
       (prompt-choice :runner "OK")
       (is (not (:run @state)) "Run ended"))))
+
+(deftest multi-steal-archives
+  ;; stealing multiple agendas from archives
+  (do-game
+    (new-game (default-corp [(qty "Breaking News" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Breaking News")
+    (trash-from-hand state :corp "Breaking News")
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Breaking News")
+    (prompt-choice :runner "Steal")
+    (prompt-choice :runner "Breaking News")
+    (prompt-choice :runner "Steal")
+    (prompt-choice :runner "Breaking News")
+    (prompt-choice :runner "Steal")
+    (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
+    (is (empty (:discard (get-corp))) "0 agendas left in archives")))

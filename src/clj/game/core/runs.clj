@@ -400,11 +400,11 @@
 (defn access-helper-archives [state already-accessed]
   (letfn [(get-root-content [state]
             (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers :archives :content])))
-          (get-accessible [state]
+          (get-accessible [state already-accessed]
             (filter #(not (contains? already-accessed %)) (get-archives-accessible state)))]
     {:delayed-completion true
      :prompt "Select a card to access. You must access all cards."
-     :choices (concat (map :title (get-accessible state))
+     :choices (concat (map :title (get-accessible state already-accessed))
                       (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in Archives") (get-root-content state)))
      :effect (req (case target
                     "Unrezzed upgrade in Archives"
@@ -437,10 +437,11 @@
                                                           card nil)))}
                           card nil)))
                     ;; accessing a rezzed upgrade, or a card in archives
-                    (let [accessed (some #(when (= (:title %) target) %) (concat (get-accessible state) (get-root-content state)))]
+                    (let [accessed (some #(when (= (:title %) target) %)
+                                         (concat (get-accessible state already-accessed) (get-root-content state)))]
                       (system-msg state side (str "accesses " (:title accessed)))
                       (when-completed (handle-access state side [accessed])
-                                      (let [accessible (get-accessible state)
+                                      (let [accessible (get-accessible state (conj already-accessed accessed))
                                             from-root (get-root-content state)]
                                         (if (pos? (+ (count accessible) (count from-root)))
                                           (continue-ability
