@@ -238,7 +238,7 @@
                                                                     (rez target)
                                                                     (clear-wait-prompt :runner))}
                                                    card nil))
-                             (effect-completed state side)))}}}
+                             (effect-completed state side eid)))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
