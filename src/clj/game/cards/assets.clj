@@ -109,10 +109,9 @@
                                                                       (str "pays " target " [Credits] to prevent "
                                                                            (int (/ target 2)) " random card"
                                                                            (when (> (int (/ target 2)) 1) "s")
-                                                                           " in HQ from being shuffled into R&D"))
-                                                          (clear-wait-prompt state :corp))
-                                                      (do (shuffle-into-deck state :corp :hand)
-                                                          (clear-wait-prompt state :corp))))} card nil))
+                                                                           " in HQ from being shuffled into R&D")))
+                                                      (shuffle-into-deck state :corp :hand))
+                                                    (clear-wait-prompt state :corp))} card nil))
                                 (resolve-ability
                                   state side
                                   {:msg "shuffle all cards in HQ into R&D"
