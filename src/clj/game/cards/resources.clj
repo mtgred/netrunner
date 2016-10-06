@@ -429,6 +429,18 @@
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
+   "Find the Truth"
+   {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
+                                          (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
+             :successful-run {:optional
+                              {:delayed-completion true
+                               :req (req (first-event state side :successful-run))
+                               :prompt "Use Find the Truth to look at the top card of R&D?"
+                               :yes-ability {:effect (req (toast state :runner (str "The top card of R&D is: "
+                                                                                    (:title (first (get-in @state [:runner :deck])))) "info")
+                                                          (effect-completed state side eid))}
+                               :no-ability {:effect (req (effect-completed state side eid))}}}}}
+
    "First Responders"
    {:abilities [{:cost [:credit 2]
                  :req (req (not-empty (turn-events state side :damage)))
