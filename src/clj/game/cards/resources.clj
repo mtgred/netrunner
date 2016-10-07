@@ -436,8 +436,8 @@
                               {:delayed-completion true
                                :req (req (first-event state side :successful-run))
                                :prompt "Use Find the Truth to look at the top card of R&D?"
-                               :yes-ability {:effect (req (toast state :runner (str "The top card of R&D is: "
-                                                                                    (:title (first (get-in @state [:runner :deck])))) "info")
+                               :yes-ability {:effect (req (prompt! state :runner card (str "The top card of R&D is "
+                                                                                           (:title (first (:deck corp)))) ["OK"] {})
                                                           (effect-completed state side eid))}
                                :no-ability {:effect (req (effect-completed state side eid))}}}}}
 
