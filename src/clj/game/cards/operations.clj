@@ -689,14 +689,33 @@
                             (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
-   {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
+   {:prompt "Choose a card from Archives"
     :show-discard true
     :choices {:req #(and (= (:side %) "Corp")
                          (not= (:title %) "Reclamation Order")
                          (= (:zone %) [:discard]))}
-    :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
-                   (move state side c :hand))
-                 (effect-completed state side eid card))}
+    :msg (msg "name " (:title target))
+    :effect (req (let [title (:title target)
+                       cards (filter #(= title (:title %)) (:discard corp))
+                       n (count cards)]
+                   (continue-ability state side
+                                     {:prompt (str "Choose how many copies of "
+                                                   title " to reveal")
+                                      :choices {:number (req n)}
+                                      :msg (msg "reveal " target
+                                                " cop" (if (= 1 target) "y" "ies")
+                                                " of " title
+                                                " from Archives"
+                                                (when (pos? target)
+                                                  (str " and add "
+                                                       (if (= 1 target) "it" "them")
+                                                       " to HQ")))
+                                      :effect (req (doseq [c (->> cards
+                                                                  (sort-by :seen)
+                                                                  reverse
+                                                                  (take target))]
+                                                     (move state side c :hand)))}
+                                     card nil)))}
 
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
