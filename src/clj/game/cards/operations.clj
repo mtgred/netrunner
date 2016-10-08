@@ -1030,10 +1030,18 @@
                                        tol nil)))}
                      card nil)))}
 
+   "Wetwork Refit"
+   {:choices {:req #(and (ice? %)
+                         (has-subtype? % "Bioroid")
+                         (rezzed? %))}
+    :msg (msg "give " (card-str state target {:visible true}) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+    :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
+
    "Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"
     :effect (effect (gain :credit 8) (draw 4))}
-   
+
    "Voter Intimidation"
    {:req (req (seq (:scored runner)))
     :psi {:not-equal {:player :corp :prompt "Choose a resource to trash"
