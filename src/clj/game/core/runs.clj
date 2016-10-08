@@ -108,27 +108,26 @@
     (if-let [trash-cost (trash-cost state side c)]
       ;; The card has a trash cost (Asset, Upgrade)
       (let [card (assoc c :seen true)
-            name (:title card)]
+            name (:title card)
+            trash-msg (str trash-cost " [Credits] to trash " name " from " (name-zone :corp (:zone card)))]
         (if (and (get-in @state [:runner :register :force-trash])
                  (can-pay? state :runner name :credit trash-cost))
           ;; If the runner is forced to trash this card (Neutralize All Threats)
           (continue-ability state :runner
-                           {:cost [:credit trash-cost]
-                            :delayed-completion true
-                            :effect (effect (trash eid card nil)
-                                            (system-msg (str "is forced to pay " trash-cost
-                                                             " [Credits] to trash " name)))} card nil)
+                            {:cost [:credit trash-cost]
+                             :delayed-completion true
+                             :effect (effect (trash eid card nil)
+                                             (system-msg (str "is forced to pay " trash-msg)))}
+                            card nil)
           ;; Otherwise, show the option to pay to trash the card.
-          (continue-ability
-            state :runner
-            {:optional
-             {:prompt (str "Pay " trash-cost "[Credits] to trash " name "?")
-              :yes-ability {:cost [:credit trash-cost]
-                            :delayed-completion true
-                            :effect (effect (trash eid card nil)
-                                            (system-msg (str "pays " trash-cost
-                                                             " [Credits] to trash " name)))}}}
-            card nil)))
+          (continue-ability state :runner
+                            {:optional
+                             {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                              :yes-ability {:cost [:credit trash-cost]
+                                            :delayed-completion true
+                                            :effect (effect (trash eid card nil)
+                                                            (system-msg (str "pays " trash-msg)))}}}
+                            card nil)))
       ;; The card does not have a trash cost
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
     (effect-completed state side eid)))
