@@ -230,6 +230,13 @@
 ;; choose-access implements game prompts allowing the runner to choose the order of access.
 (defmulti choose-access (fn [cards server] (get-server-type (first server))))
 
+(defn- handle-central-access
+  ([state side eid cards]
+   (handle-central-access state side eid cards (:title (first cards))))
+  ([state side eid cards title]
+   (system-msg state side (str "accesses " title))
+   (handle-access state side eid cards)))
+
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
    :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
@@ -314,9 +321,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
-                    (do (when (pos? (count cards))
-                          (system-msg state side (str "accesses " (:title (first cards)))))
-                      (handle-access state side eid cards))
+                    (handle-central-access state side eid cards)
                     (let [from-hq (access-count state side :hq-access)]
                       (continue-ability state side (access-helper-hq state from-hq #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -386,9 +391,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (do (when (pos? (count cards))
-                          (system-msg state side "accesses an unseen card"))
-                      (handle-access state side eid cards))
+                    (handle-central-access state side eid cards "an unseen card")
                     (let [from-rd (take (access-count state side :rd-access) (-> @state :corp :deck))]
                       (continue-ability state side (access-helper-rd state from-rd #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -459,8 +462,7 @@
    :effect (req (let [cards (concat (get-archives-accessible state) (get-in @state [:corp :servers :archives :content]))]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
-                      (do (system-msg state side (str "accesses " (:title (first cards))))
-                          (handle-access state side eid cards))
+                      (handle-central-access state side eid cards)
                       (continue-ability state side (access-helper-archives state #{}) card nil))
                     (effect-completed state side eid))))})
 
