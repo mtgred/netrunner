@@ -291,6 +291,15 @@
                               :effect (effect (trash target))}
                             card nil)))}}
 
+   "Enhanced Login Protocol"
+   {:events {:pre-click-run {:once :per-turn
+                             :msg "add an additional cost of 1 [Click] to make the run"
+                             :effect (effect (update! (assoc card :elp-run-activated true))
+                                             (click-run-cost-bonus [:click 1]))}
+             :run-ends {:req (req (:elp-run-activated card))
+                        :effect (effect (click-run-cost-bonus [:click -1])
+                                        (update! (dissoc card :elp-run-activated)))}}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
@@ -779,6 +788,15 @@
             :msg "give the Runner 1 tag"
             :label "Give the Runner 1 tag"
             :effect (effect (tag-runner :runner 1))}}
+
+   "Service Outage"
+   {:events {:pre-click-run {:once :per-turn
+                             :msg "add an additional cost of 1 [Credit] to make the run"
+                             :effect (effect (update! (assoc card :so-run-activated true))
+                                             (click-run-cost-bonus [:credit 1]))}
+             :run-ends {:req (req (:so-run-activated card))
+                        :effect (effect (click-run-cost-bonus [:credit -1])
+                                        (update! (dissoc card :so-run-activated)))}}}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}

@@ -341,14 +341,16 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run]))
-             (can-run-server? state server)
-             (can-pay? state :runner "a run" :click 1))
-    (run state side server)
-    (let [cost (pay state :runner nil :click 1)
-          spent (build-spend-msg cost "make a run on")
-          message (str spent server)]
-      (system-msg state :runner message))))
+  (trigger-event state side :pre-click-run)
+  (let [bonus (get-in @state [:bonus :click-run-cost])]
+    (when (and (not (get-in @state [:runner :register :cannot-run]))
+               (can-run-server? state server)
+               (can-pay? state :runner "a run" :click 1 bonus))
+      (run state side server)
+      (let [cost (pay state :runner nil :click 1 bonus)
+            spent (build-spend-msg cost "make a run on")
+            message (str spent server)]
+        (system-msg state :runner message)))))
 
 (defn remove-tag
   "Click to remove a tag."
