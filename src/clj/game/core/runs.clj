@@ -309,7 +309,7 @@
                       (effect-completed state side eid nil))
                     ;; accessing a rezzed upgrade
                     (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
-                      (when-completed (msg-handle-access state side (make-eid state) [] (:title accessed))
+                      (when-completed (msg-handle-access state side [accessed])
                                       (if (or (pos? from-hq) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
