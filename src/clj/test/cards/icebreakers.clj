@@ -111,10 +111,8 @@
       (run-on state "Archives")
       (core/rez state :corp (get-ice state :archives 0))
       (core/gain state :runner :credit 4)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 0)
+      (card-ability state :runner (refresh crypsis) 0) ; Match strength
+      (card-ability state :runner (refresh crypsis) 1) ; Break
       (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 1 virus counter")
       (run-continue state)
@@ -126,10 +124,8 @@
 
       (run-on state "Archives")
       (core/gain state :runner :credit 4)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 1)
-      (card-ability state :runner crypsis 0)
+      (card-ability state :runner (refresh crypsis) 0) ; Match strength
+      (card-ability state :runner (refresh crypsis) 1) ; Break
       (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
