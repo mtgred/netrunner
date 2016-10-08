@@ -291,6 +291,15 @@
                               :effect (effect (trash target))}
                             card nil)))}}
 
+   "Enhanced Login Protocol"
+   {:events {:pre-click-run {:once :per-turn
+                             :msg "add an additional cost of 1 [Click] to make the run"
+                             :effect (effect (update! (assoc card :elp-run-activated true))
+                                             (click-run-cost-bonus [:click 1]))}
+             :run-ends {:req (req (:elp-run-activated card))
+                        :effect (effect (click-run-cost-bonus [:click -1])
+                                        (update! (dissoc card :elp-run-activated)))}}}
+
    "Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))
