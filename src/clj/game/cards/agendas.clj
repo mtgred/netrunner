@@ -585,10 +585,11 @@
    "Project Wotan"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
-    :abilities [{:req (req (and (ice? current-ice) (rezzed? current-ice)
+    :abilities [{:req (req (and (ice? current-ice)
+                                (rezzed? current-ice)
                                 (has-subtype? current-ice "Bioroid")))
                  :counter-cost [:agenda 1]
-                 :msg "add an 'End the run' subroutine to the approached ICE"}]}
+                 :msg "make the approached piece of bioroid ICE gain \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"}]}
 
    "Puppet Master"
    {:events {:successful-run
