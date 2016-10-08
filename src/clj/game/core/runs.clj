@@ -213,7 +213,10 @@
   ([state side eid cards]
    (msg-handle-access state side eid cards (:title (first cards))))
   ([state side eid cards title]
-   (system-msg state side (str "accesses " title))
+   (system-msg state side
+               (str "accesses " title
+                    (when (pos? (count cards))
+                      (str " from " (->> cards first :zone (name-zone side))))))
    (handle-access state side eid cards)))
 
 (defn max-access
