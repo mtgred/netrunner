@@ -854,6 +854,59 @@
     (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
     (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
+(deftest service-outage
+  ;; Service Outage - First run each turn costs a credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (run-on state :archives)
+    (is (= 4 (:credit (get-runner))) "Runner spends 1 credit to make the first run")
+    (run-successful state)
+    (run-on state :archives)
+    (is (= 4 (:credit (get-runner))) "Runner doesn't spend 1 credit to make the second run")
+    (run-successful state)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/lose state :runner :credit 6)
+    (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+    (run-on state :archives)
+    (is (not (:run @state)) "No run was initiated")
+    (is (= 0 (:credit (get-runner))) "Runner has 0 credits")))
+
+(deftest service-outage-card-ability
+  ;; Service Outage - Card abilities don't cost a credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner [(qty "Keyhole" 1)]))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keyhole")
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (let [keyhole (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner keyhole 0)
+      (is (= 1 (:credit (get-runner))) "Runner doesn't spend 1 credit to run with a card ability")
+      (run-successful state))
+    (run-on state :archives)
+    (is (= 0 (:credit (get-runner))) "Runner spends 1 credit to make a run")))
+
+(deftest service-outage-run-events
+  ;; Service Outage - Run events don't cost an extra credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner [(qty "Out of the Ashes" 1)]))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Out of the Ashes")
+    (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+    (prompt-choice :runner "Archives")
+    (is (= 4 (:credit (get-runner))) "Runner doesn't spend 1 credit to run with a run event")
+    (run-successful state)
+    (run-on state :archives)
+    (is (= 3 (:credit (get-runner))) "Runner spends 1 credit to make a run")))
+
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements
   (do-game
