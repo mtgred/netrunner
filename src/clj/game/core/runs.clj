@@ -314,8 +314,9 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
-                    (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
-                        (handle-access state side eid cards))
+                    (do (when (pos? (count cards))
+                          (system-msg state side (str "accesses " (:title (first cards)))))
+                      (handle-access state side eid cards))
                     (let [from-hq (access-count state side :hq-access)]
                       (continue-ability state side (access-helper-hq state from-hq #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -361,6 +362,7 @@
                     ;; accessing a card in deck
                     "Card from deck"
                     (let [accessed (first from-rd)]
+                      (system-msg state side "accesses an unseen card")
                       (when-completed (handle-access state side [accessed])
                                       (let [from-root (get-root-content state)]
                                         (if (or (< 1 (count from-rd)) (not-empty from-root))
@@ -384,7 +386,9 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (handle-access state side eid cards)
+                    (do (when (pos? (count cards))
+                          (system-msg state side "accesses an unseen card"))
+                      (handle-access state side eid cards))
                     (let [from-rd (take (access-count state side :rd-access) (-> @state :corp :deck))]
                       (continue-ability state side (access-helper-rd state from-rd #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -496,8 +500,6 @@
     ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
     (when-not (or (= (get-in @state [:run :max-access]) 0)
                   (empty? cards))
-      (if (= (first server) :rd)
-        (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
       (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                       (effect-completed state side eid nil))
       (swap! state assoc-in [:run :cards-accessed] n)))
