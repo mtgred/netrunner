@@ -780,6 +780,19 @@
             :label "Give the Runner 1 tag"
             :effect (effect (tag-runner :runner 1))}}
 
+   "Service Outage"
+   (let [remove-effect (req (when (:so-run-activated card)
+                              (run-cost-bonus state side [:credit -1])
+                              (update! state side (dissoc card :so-run-activated))))
+         remove-ability {:req (req (:so-run-activated card))
+                         :effect remove-effect}]
+     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+                                    :effect (effect (update! (assoc card :so-run-activated true))
+                                                    (run-cost-bonus [:credit 1]))}
+               :runner-turn-ends remove-ability
+               :run-ends remove-ability}
+      :leave-play remove-effect})
+
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
