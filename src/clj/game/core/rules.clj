@@ -20,6 +20,10 @@
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
                              (:additional-cost cdef))
+           additional-cost (if (and (has-subtype? card "Run")
+                                    (get-in @state [:bonus :run-cost]))
+                             (concat additional-cost (get-in @state [:bonus :run-cost]))
+                             additional-cost)
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
        (if (and (if-let [req (:req cdef)]

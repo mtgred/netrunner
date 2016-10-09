@@ -557,6 +557,7 @@
                   :once :per-turn
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
+                  :makes-run true
                   :effect (effect (run target))}]
    {:flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (* -1 (:link runner))])

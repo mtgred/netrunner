@@ -168,7 +168,7 @@
 (defn- do-play-ability [state side card ability targets]
   (let [cost (:cost ability)]
     (when (or (nil? cost)
-              (apply can-pay? state side (:title card) cost))
+              (apply can-pay? state side (:title card) cost (get-in @state [:bonus :run-cost])))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))
@@ -341,14 +341,14 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run]))
-             (can-run-server? state server)
-             (can-pay? state :runner "a run" :click 1))
-    (run state side server)
-    (let [cost (pay state :runner nil :click 1)
-          spent (build-spend-msg cost "make a run on")
-          message (str spent server)]
-      (system-msg state :runner message))))
+  (let [cost-bonus (get-in @state [:bonus :run-cost])]
+    (when (and (not (get-in @state [:runner :register :cannot-run]))
+               (can-run-server? state server)
+               (can-pay? state :runner "a run" :click 1 cost-bonus))
+      (run state side server)
+      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus)]
+        (system-msg state :runner
+                    (str (build-spend-msg cost-str "make a run on") server))))))
 
 (defn remove-tag
   "Click to remove a tag."
