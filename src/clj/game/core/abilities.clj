@@ -473,3 +473,21 @@
   (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
   (show-prompt state :corp card "Boost trace strength?" :credit
                #(init-trace state :corp card trace %) {:priority 2}))
+
+(defn rfg-and-shuffle-rd-effect [state side card n]
+  (move state side card :rfg)
+  (resolve-ability state side
+                   {:show-discard true
+                    :choices {:max n
+                              :req #(and (:side % "Corp") (= (:zone %) [:discard]))}
+                    :msg (msg "shuffle "
+                              (let [seen (filter :seen targets)
+                                    m (count (filter #(not (:seen %)) targets))]
+                                (str (join ", " (map :title seen))
+                                     (when (pos? m)
+                                       (str (when-not (empty? seen) " and ") m " card"
+                                            (when (> m 1) "s")))))
+                              " into R&D")
+                    :effect (req (doseq [c targets] (move state side c :deck))
+                                 (shuffle! state side :deck))}
+                   card nil))

@@ -686,6 +686,22 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest preemptive-action
+  ;; Preemptive Action - Shuffles cards into R&D and removes itself from game
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 3)
+                             (qty "Preemptive Action" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Preemptive Action")
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-select :corp (second (:discard (get-corp))))
+    (prompt-select :corp (last (:discard (get-corp))))
+    (is (= 0 (count (:discard (get-corp)))))
+    (is (= 1 (count (:rfg (get-corp)))))))
+
 (deftest psychographics
   ;; Psychographics - Place advancements up to the number of Runner tags on a card
   (do-game
