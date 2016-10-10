@@ -998,7 +998,7 @@
    {:choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")
                          (rezzed? %))}
-    :msg (msg "give " (card-str state target {:visible true}) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+    :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
     :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
                     (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
