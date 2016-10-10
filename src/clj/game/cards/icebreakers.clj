@@ -426,11 +426,11 @@
    "Knight"
    {:abilities [{:cost [:click 1] :label "Host Knight on a piece of ICE"
                  :effect (req (let [k (get-card state card)
-                                    hosted? (ice? (:host k))
+                                    hosted (ice? (:host k))
                                     icepos (ice-index state (get-card state (:host k)))]
                                 (resolve-ability state side
-                                 {:prompt (msg "Host Knight on a piece of ICE" (when hosted? " not before or after the current host ICE"))
-                                  :choices {:req #(if hosted?
+                                 {:prompt (msg "Host Knight on a piece of ICE" (when hosted " not before or after the current host ICE"))
+                                  :choices {:req #(if hosted
                                                     (and (or (when (= (:zone %) (:zone (:host k)))
                                                                (not= 1 (abs (- (ice-index state %) icepos))))
                                                              (not= (:zone %) (:zone (:host k))))
