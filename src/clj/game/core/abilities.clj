@@ -102,13 +102,11 @@
                some ability once between all of them, then the card should specify a manual :once-key that can
                be any value, preferrably a unique keyword.
   :optional -- shows a 'Yes/No' prompt to let the user decide whether to resolve the ability.
-  :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn."
-
+  :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn.
+  :makes-run -- indicates if the ability makes a run."
   ;; perhaps the most important function in the game logic
   ([state side {:keys [eid] :as ability} card targets]
-   (if eid
-     (resolve-ability-eid state side (assoc ability :eid eid) card targets)
-     (resolve-ability-eid state side (assoc ability :eid (or eid (make-eid state))) card targets)))
+   (resolve-ability state side (or eid (make-eid state)) ability card targets))
   ([state side eid ability card targets]
    (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
@@ -118,7 +116,10 @@
      (effect-completed state side eid card)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
-       (when ability
+       (when-let [ability (if (and (:makes-run ability)
+                                   (get-in @state [:bonus :run-cost]))
+                            (assoc ability :cost (concat (:cost ability) (get-in @state [:bonus :run-cost])))
+                            ability)]
          ;; Is this an optional ability?
          (check-optional state side ability card targets)
          ;; Is this a psi game?
@@ -473,3 +474,21 @@
   (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
   (show-prompt state :corp card "Boost trace strength?" :credit
                #(init-trace state :corp card trace %) {:priority 2}))
+
+(defn rfg-and-shuffle-rd-effect [state side card n]
+  (move state side card :rfg)
+  (resolve-ability state side
+                   {:show-discard true
+                    :choices {:max n
+                              :req #(and (:side % "Corp") (= (:zone %) [:discard]))}
+                    :msg (msg "shuffle "
+                              (let [seen (filter :seen targets)
+                                    m (count (filter #(not (:seen %)) targets))]
+                                (str (join ", " (map :title seen))
+                                     (when (pos? m)
+                                       (str (when-not (empty? seen) " and ") m " card"
+                                            (when (> m 1) "s")))))
+                              " into R&D")
+                    :effect (req (doseq [c targets] (move state side c :deck))
+                                 (shuffle! state side :deck))}
+                   card nil))

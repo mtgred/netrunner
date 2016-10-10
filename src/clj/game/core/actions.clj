@@ -165,6 +165,13 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side)))))))
 
+(defn- do-play-ability [state side card ability targets]
+  (let [cost (:cost ability)]
+    (when (or (nil? cost)
+              (apply can-pay? state side (:title card) cost (get-in @state [:bonus :run-cost])))
+      (when-let [activatemsg (:activatemsg ability)]
+        (system-msg state side activatemsg))
+      (resolve-ability state side ability card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
@@ -179,24 +186,17 @@
                            (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
                              (trigger-event state side :spent-stealth-credit card)))}
-             (get-in cdef [:abilities ability]))
-        cost (:cost ab)]
-    (when (and (not (:disabled card))
-               (or (nil? cost)
-                   (apply can-pay? state side (:title card) cost)))
-      (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
-      (resolve-ability state side ab card targets))))
+             (get-in cdef [:abilities ability]))]
+    (when-not (:disabled card)
+      (do-play-ability state side card ab targets))))
+
 
 (defn play-runner-ability
-  "Triggers a card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
+  "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
   [state side {:keys [card ability targets] :as args}]
   (let [cdef (card-def card)
-        ab (get-in cdef [:runner-abilities ability])
-        cost (:cost ab)]
-    (when (or (nil? cost)
-              (apply can-pay? state side (:title card) cost))
-      (when-let [activatemsg (:activatemsg ab)] (system-msg state side activatemsg))
-      (resolve-ability state side ab card targets))))
+        ab (get-in cdef [:runner-abilities ability])]
+    (do-play-ability state side card ab targets)))
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
@@ -341,14 +341,14 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (when (and (not (get-in @state [:runner :register :cannot-run]))
-             (can-run-server? state server)
-             (can-pay? state :runner "a run" :click 1))
-    (run state side server)
-    (let [cost (pay state :runner nil :click 1)
-          spent (build-spend-msg cost "make a run on")
-          message (str spent server)]
-      (system-msg state :runner message))))
+  (let [cost-bonus (get-in @state [:bonus :run-cost])]
+    (when (and (not (get-in @state [:runner :register :cannot-run]))
+               (can-run-server? state server)
+               (can-pay? state :runner "a run" :click 1 cost-bonus))
+      (run state side server)
+      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus)]
+        (system-msg state :runner
+                    (str (build-spend-msg cost-str "make a run on") server))))))
 
 (defn remove-tag
   "Click to remove a tag."

@@ -344,12 +344,17 @@
    "Drug Dealer"
    {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-installed state :runner)))}
     :abilities [{:label "Lose 1 [Credits] (start of turn)"
-                 :msg "lose 1 [Credits]"
+                 :msg (msg (if (= (get-in @state [:runner :credit]) 0) "lose 0 [Credits] (runner has no credits to lose)" "lose 1 [Credits]"))
                  :req (req (:runner-phase-12 @state))
                  :once :per-turn
                  :effect (effect (lose :credit 1))}]
-    :events {:corp-turn-begins {:msg "draw 1 card" :effect (effect (draw :runner 1))}
-             :runner-turn-begins {:msg "lose 1 [Credits]"
+    :events {:corp-turn-begins {:msg (msg "draw " (if (= (count (get-in @state [:runner :deck])) 0)
+                                                   "0 cards (runner's stack is empty)"
+                                                   "1 card"))
+                                :effect (effect (draw :runner 1))}
+             :runner-turn-begins {:msg (msg "lose " (if (= (get-in @state [:runner :credit]) 0)
+                                                             "0 [Credits] (runner has no credits to lose)"
+                                                             "1 [Credits]"))
                                   :once :per-turn
                                   :effect (effect (lose :credit 1))}}}
 
@@ -428,6 +433,18 @@
                  :msg (msg (let [c (first (:hosted card))]
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
+
+   "Find the Truth"
+   {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
+                                          (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
+             :successful-run {:optional
+                              {:delayed-completion true
+                               :req (req (first-event state side :successful-run))
+                               :prompt "Use Find the Truth to look at the top card of R&D?"
+                               :yes-ability {:effect (req (prompt! state :runner card (str "The top card of R&D is "
+                                                                                           (:title (first (:deck corp)))) ["OK"] {})
+                                                          (effect-completed state side eid))}
+                               :no-ability {:effect (req (effect-completed state side eid))}}}}}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
@@ -557,6 +574,7 @@
                   :once :per-turn
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
+                  :makes-run true
                   :effect (effect (run target))}]
    {:flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (* -1 (:link runner))])

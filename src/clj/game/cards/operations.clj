@@ -655,6 +655,10 @@
    "Predictive Algorithm"
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
+   "Preemptive Action"
+   {:msg "remove Preemptive Action from the game"
+    :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
+
    "Product Recall"
    {:prompt "Choose a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
@@ -689,14 +693,33 @@
                             (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
-   {:prompt "Choose a card from Archives" :msg (msg "add copies of " (:title target) " to HQ")
+   {:prompt "Choose a card from Archives"
     :show-discard true
     :choices {:req #(and (= (:side %) "Corp")
                          (not= (:title %) "Reclamation Order")
                          (= (:zone %) [:discard]))}
-    :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard corp))]
-                   (move state side c :hand))
-                 (effect-completed state side eid card))}
+    :msg (msg "name " (:title target))
+    :effect (req (let [title (:title target)
+                       cards (filter #(= title (:title %)) (:discard corp))
+                       n (count cards)]
+                   (continue-ability state side
+                                     {:prompt (str "Choose how many copies of "
+                                                   title " to reveal")
+                                      :choices {:number (req n)}
+                                      :msg (msg "reveal " target
+                                                " cop" (if (= 1 target) "y" "ies")
+                                                " of " title
+                                                " from Archives"
+                                                (when (pos? target)
+                                                  (str " and add "
+                                                       (if (= 1 target) "it" "them")
+                                                       " to HQ")))
+                                      :effect (req (doseq [c (->> cards
+                                                                  (sort-by :seen)
+                                                                  reverse
+                                                                  (take target))]
+                                                     (move state side c :hand)))}
+                                     card nil)))}
 
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
@@ -779,6 +802,19 @@
             :msg "give the Runner 1 tag"
             :label "Give the Runner 1 tag"
             :effect (effect (tag-runner :runner 1))}}
+
+   "Service Outage"
+   (let [remove-effect (req (when (:so-run-activated card)
+                              (run-cost-bonus state side [:credit -1])
+                              (update! state side (dissoc card :so-run-activated))))
+         remove-ability {:req (req (:so-run-activated card))
+                         :effect remove-effect}]
+     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+                                    :effect (effect (update! (assoc card :so-run-activated true))
+                                                    (run-cost-bonus [:credit 1]))}
+               :runner-turn-ends remove-ability
+               :run-ends remove-ability}
+      :leave-play remove-effect})
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}

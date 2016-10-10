@@ -238,7 +238,7 @@
                                                                     (rez target)
                                                                     (clear-wait-prompt :runner))}
                                                    card nil))
-                             (effect-completed state side)))}}}
+                             (effect-completed state side eid)))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -333,9 +333,12 @@
              :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Potential Unleashed"
-   {:events {:pre-resolve-damage {:req (req (and (= target :net) (> (last targets) 0)))
-                                  :msg "trash the top card of the Runner's Stack"
-                                  :effect (effect (mill :runner))}}}
+   {:events {:pre-resolve-damage
+             {:req (req (and (= target :net) (pos? (last targets))))
+              :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                             (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
+                                                          " from the top of the Runner's Stack"))
+                             (mill state :runner)))}}}
 
    "Jinteki: Replicating Perfection"
    {:events
@@ -565,6 +568,7 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"
                  :once :per-turn
+                 :makes-run true
                  :effect (effect (update! (assoc card :omar-run-activated true))
                                  (run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)

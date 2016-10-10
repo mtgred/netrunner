@@ -81,6 +81,9 @@
         (+ (or (get-in @state [:bonus :cost]) 0))
         (max 0))))
 
+(defn run-cost-bonus [state side n]
+  (swap! state update-in [:bonus :run-cost] #(merge-costs (concat % n))))
+
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
 

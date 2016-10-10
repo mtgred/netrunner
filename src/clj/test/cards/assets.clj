@@ -42,6 +42,24 @@
       (is (= 3 (get-in @state [:corp :credit])))
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))
 
+(deftest alexa-belsky
+  (do-game
+    (new-game
+      (default-corp [(qty "Alexa Belsky" 1) (qty "Hedge Fund" 1) (qty "Breaking News" 1)
+                     (qty "Gutenberg" 1) (qty "Product Placement" 1) (qty "Jackson Howard" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Alexa Belsky" "New remote")
+    (let [alexa (get-content state :remote1 0)]
+      (core/rez state :corp alexa)
+      (card-ability state :corp alexa 0)
+      (is (= 1 (count (:discard (get-corp)))) "Alexa Belsky trashed")
+      (is (= 5 (count (:hand (get-corp)))))
+      (is (= 0 (count (:deck (get-corp)))))
+      (prompt-choice :runner 5) ;Runner chooses to pay 5 credits so 2 cards are prevented from being shuffled
+      (is (= 2 (count (:hand (get-corp)))))
+      (is (= 3 (count (:deck (get-corp)))))
+      (is (= 0 (:credit (get-runner)))))))
+
 (deftest alix-t4lb07
   (do-game
     (new-game

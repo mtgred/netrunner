@@ -3,8 +3,9 @@
 (declare add-icon remove-icon)
 
 (def breaker-auto-pump
-  "Updates an icebreaker's abilities with a pseudo-ability to trigger the auto-pump routine in
-  core, IF we are encountering a rezzed ice with a subtype we can break."
+  "Updates an icebreaker's abilities with a pseudo-ability to trigger the
+  auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
+  we can break."
   {:effect
    (req (let [abs (filter #(not (:auto-pump %)) (:abilities card))
               pumpabi (some #(when (:pump %) %) abs)
@@ -31,21 +32,21 @@
                                        abs))
                             abs)))))})
 
-;; IMPORTANT: Icebreakers can only use this shortcut method if they do NOT handle any of the
-;; events shown below in the merge below. Wyrm, for example, handles :run-ends and therefore
-;; can't use this shortcut. Takes a vector of ice subtypes that can be broken (or ["All"] for
-;; AI breakers) and a card definition, and returns a new card definition that hooks up
-;; breaker-auto-pump to the necessary events.
+;; Takes a vector of ice subtypes that can be broken (or ["All"] for
+;; AI breakers) and a card definition, and returns a new card definition that
+;; hooks up breaker-auto-pump to the necessary events.
+;; IMPORTANT: Events on cdef take precedence, and should call
+;; (:effect breaker-auto-pump) themselves.
 (defn auto-icebreaker [breaks cdef]
-  (assoc cdef :data (merge (:data cdef) {:breaks breaks})
-              :events (merge (:events cdef)
-                             {:run breaker-auto-pump
+  (assoc cdef :data (merge {:breaks breaks} (:data cdef))
+              :events (merge {:run breaker-auto-pump
                               :pass-ice breaker-auto-pump
                               :run-ends breaker-auto-pump
                               :ice-strength-changed breaker-auto-pump
                               :ice-subtype-changed breaker-auto-pump
                               :breaker-strength-changed breaker-auto-pump
-                              :approach-ice breaker-auto-pump })))
+                              :approach-ice breaker-auto-pump }
+                             (:events cdef))))
 
 (defn cloud-icebreaker [cdef]
   (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
@@ -76,12 +77,14 @@
   "Creates a break subroutine ability.
   If num = 0 then any number of subs are broken."
   ([cost num] (break-sub cost num nil))
-  ([cost num subtype]
+  ([cost num subtype] (break-sub cost num subtype nil))
+  ([cost num subtype effect]
    {:msg (str "break " (when (> num 1) "up to ")
               (if (pos? num) num "any number of")
               (when subtype (str " " subtype))
               " subroutine" (when-not (= num 1) "s"))
-    :cost [:credit cost]}))
+    :cost [:credit cost]
+    :effect effect}))
 
 ;;; Breaker sets
 (defn- cerberus
@@ -115,7 +118,7 @@
   "Deva breakers"
   [name]
   (auto-icebreaker ["All"]
-                   {:abilities [(break-sub 1 1 "ice")
+                   {:abilities [(break-sub 1 1 "ICE")
                                 (strength-pump 1 1)
                                 {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
                                  :label "Swap with a deva program from your Grip" :cost [:credit 2]
@@ -267,13 +270,19 @@
 
    "Crypsis"
    (auto-icebreaker ["All"]
-                    {:abilities [(break-sub 1 1 "ice")
+                    {:abilities [(break-sub 1 1 "ICE" (effect (update! (assoc card :crypsis-broke true))))
                                  (strength-pump 1 1)
-                                 {:cost [:click 1] :msg "place 1 virus counter"
-                                  :effect (effect (add-counter card :virus 1))}
-                                 {:counter-cost [:virus 1]
-                                  :label "Remove 1 hosted virus counter"
-                                  :msg "remove 1 virus counter"}]})
+                                 {:cost [:click 1]
+                                  :msg "place 1 virus counter"
+                                  :effect (effect (add-counter card :virus 1))}]
+                     :events (let [encounter-ends-effect {:req (req (:crypsis-broke card))
+                                                          :effect (req ((:effect breaker-auto-pump) state side eid card targets)
+                                                                       (if (pos? (get-in card [:counter :virus]))
+                                                                         (add-counter state side card :virus -1)
+                                                                         (trash state side card {:cause :self-trash}))
+                                                                       (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
+                               {:pass-ice encounter-ends-effect
+                                :run-ends encounter-ends-effect})})
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]
@@ -299,7 +308,7 @@
    "Darwin"
    {:flags {:runner-phase-12 (req true)}
     :events {:purge {:effect (effect (update-breaker-strength card))}}
-    :abilities [(break-sub 2 1 "ice")
+    :abilities [(break-sub 2 1 "ICE")
                 {:label "Place 1 virus counter (start of turn)"
                  :cost [:credit 1]
                  :msg "place 1 virus counter"
@@ -587,21 +596,26 @@
    (deva "Vamadeva")
 
    "Wyrm"
-   {:abilities [{:cost [:credit 3] :msg "break 1 subroutine on ICE with 0 or less strength"}
-                {:cost [:credit 1]
-                 :label "Give -1 strength to current ice"
-                 :msg (msg "give -1 strength to " (:title current-ice))
-                 :req (req current-ice)
-                 :effect (req (update! state side
-                                       (update-in card [:wyrm-count] (fnil inc 0)))
-                              (update-ice-strength state side current-ice))}
-                (strength-pump 1 1)]
-    :events (let [wy {:effect (req (update! state side (dissoc card :wyrm-count)))}]
-              {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
-                                                 (:wyrm-count card)))
-                                  :effect (req (let [c (:wyrm-count (get-card state card))]
-                                                 (ice-strength-bonus state side (- c) target)))}
-               :pass-ice wy :run-ends wy})}
+   (auto-icebreaker ["All"]
+                    {:abilities [{:cost [:credit 3]
+                                  :msg "break 1 subroutine on ICE with 0 or less strength"}
+                                 {:cost [:credit 1]
+                                  :label "Give -1 strength to current ice"
+                                  :req (req current-ice)
+                                  :msg (msg "give -1 strength to " (:title current-ice))
+                                  :effect (effect (update! (update-in card [:wyrm-count] (fnil inc 0)))
+                                                  (update-ice-strength current-ice))}
+                                 (strength-pump 1 1)]
+                     :events (let [auto-pump (fn [state side eid card targets]
+                                               ((:effect breaker-auto-pump) state side eid card targets))
+                                   wy {:effect (effect (update! (dissoc card :wyrm-count))
+                                                       (auto-pump eid card targets))}]
+                               {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
+                                                                  (:wyrm-count card)))
+                                                   :effect (effect (ice-strength-bonus (- (:wyrm-count (get-card state card))) target)
+                                                                   (auto-pump eid card targets))}
+                                :pass-ice wy
+                                :run-ends wy})})
 
    "Yog.0"
    {:abilities [(break-sub 0 1 "code gate")]}

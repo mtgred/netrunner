@@ -226,19 +226,24 @@
              :successful-run-ends
              {:optional
               {:req (req (:dopp-active card))
-               :prompt "Use Doppelgänger to run again?" :player :runner
+               :player :runner
+               :prompt "Use Doppelgänger to run again?"
                :yes-ability {:prompt "Choose a server"
                              :choices (req runnable-servers)
                              :msg (msg "make a run on " target)
-                             :effect (effect (update! (dissoc card :dopp-active)) (run target))}}}}}
+                             :makes-run true
+                             :effect (effect (update! (dissoc card :dopp-active))
+                                             (run target))}}}}}
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
     :abilities [{:counter-cost [:power 1]
                  :cost [:click 1]
                  :req (req (not run))
-                 :prompt "Choose a server" :choices (req runnable-servers)
+                 :prompt "Choose a server"
+                 :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
+                 :makes-run true
                  :effect (effect (update! (assoc card :dorm-active true))
                                  (run target))}]
     :events {:pre-tag {:req (req (:dorm-active card))

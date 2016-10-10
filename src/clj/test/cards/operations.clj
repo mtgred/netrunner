@@ -686,6 +686,22 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest preemptive-action
+  ;; Preemptive Action - Shuffles cards into R&D and removes itself from game
+  (do-game
+    (new-game (default-corp [(qty "Subliminal Messaging" 3)
+                             (qty "Preemptive Action" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Preemptive Action")
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-select :corp (second (:discard (get-corp))))
+    (prompt-select :corp (last (:discard (get-corp))))
+    (is (= 0 (count (:discard (get-corp)))))
+    (is (= 1 (count (:rfg (get-corp)))))))
+
 (deftest psychographics
   ;; Psychographics - Place advancements up to the number of Runner tags on a card
   (do-game
@@ -806,6 +822,113 @@
     (prompt-choice :runner 0)
     (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
     (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
+
+(deftest service-outage
+  ;; Service Outage - First click run each turn costs a credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner [(qty "Employee Strike" 1)]))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (run-on state :archives)
+    (is (= 4 (:credit (get-runner)))
+        "Runner spends 1 credit to make the first run")
+    (run-successful state)
+
+    (run-on state :archives)
+    (is (= 4 (:credit (get-runner)))
+        "Runner doesn't spend 1 credit to make the second run")
+    (run-successful state)
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (core/lose state :runner :credit 6)
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+    (run-on state :archives)
+    (is (not (:run @state)) "No run was initiated")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (core/lose state :runner :credit 2)
+    (play-from-hand state :runner "Employee Strike")
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+
+    (run-on state :archives)
+    (is (= 1 (:credit (get-runner)))
+        "Runner doesn't spend 1 credit to make a run")))
+
+(deftest service-outage-card-ability
+  ;; Service Outage - First card ability run each turn costs an additional credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner [(qty "Sneakdoor Beta" 1)]))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (take-credits state :runner 1)
+
+    (is (= 2 (:credit (get-runner))) "Runner has 2 credits")
+    (let [sneakdoor (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner sneakdoor 0)
+      (is (= 1 (:credit (get-runner)))
+          "Runner spends 1 additional credit to run with a card ability")
+      (run-successful state)
+
+      (run-on state :archives)
+      (is (= 1 (:credit (get-runner)))
+          "Runner doesn't spend 1 credit to make a run")
+      (run-successful state)
+
+      (take-credits state :runner)
+      (take-credits state :corp)
+
+      (core/lose state :runner :credit 1)
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+      (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+      (card-ability state :runner sneakdoor 0)
+      (is (not (:run @state)) "No run was initiated")
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+      (is (= 0 (:credit (get-runner))) "Runner has 0 credits"))))
+
+(deftest service-outage-run-events
+  ;; Service Outage - First run event each turn costs an additional credit
+  (do-game
+    (new-game (default-corp [(qty "Service Outage" 1)])
+              (default-runner [(qty "Out of the Ashes" 2)]))
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (play-from-hand state :runner "Out of the Ashes")
+    (is (= 3 (:credit (get-runner)))
+        "Runner spends 1 additional credit to run with a run event")
+    (prompt-choice :runner "Archives")
+    (run-successful state)
+
+    (run-on state :archives)
+    (is (= 3 (:credit (get-runner)))
+        "Runner doesn't spend 1 credit to make a run")
+    (run-successful state)
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "No") ; Out of the Ashes prompt
+
+    (core/lose state :runner :credit 4)
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (play-from-hand state :runner "Out of the Ashes")
+    (is (empty? (get-in @state [:runner :prompt]))
+        "Out of the Ashes was not played")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements

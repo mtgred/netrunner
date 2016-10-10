@@ -2,7 +2,9 @@
 
 (def cards-programs
   {"Analog Dreamers"
-   {:abilities [{:cost [:click 1] :msg "make a run on R&D"
+   {:abilities [{:cost [:click 1]
+                 :msg "make a run on R&D"
+                 :makes-run true
                  :effect (effect (run :rd {:req (req (= target :rd))
                                            :replace-access
                                            {:prompt "Choose a card to shuffle into R&D"
@@ -224,12 +226,13 @@
                                 :effect (effect (continue-ability reveal card nil))}}})
 
    "Expert Schedule Analyzer"
-   {:abilities
-    [{:cost [:click 1] :msg "make a run on HQ"
-      :effect (effect (run :hq {:req (req (= target :hq))
-                                :replace-access
-                                {:msg (msg "reveal cards in HQ: "
-                                           (join ", " (map :title (:hand corp))))}} card))}]}
+   {:abilities [{:cost [:click 1]
+                 :msg "make a run on HQ"
+                 :makes-run true
+                 :effect (effect (run :hq {:req (req (= target :hq))
+                                           :replace-access
+                                           {:msg (msg "reveal cards in HQ: "
+                                                      (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
    {:abilities [{:req (req (and run
@@ -349,13 +352,17 @@
              :purge {:effect (effect (trash card))}}}
 
    "Keyhole"
-   {:abilities [{:cost [:click 1] :msg "make a run on R&D"
+   {:abilities [{:cost [:click 1]
+                 :msg "make a run on R&D"
+                 :makes-run true
                  :effect (effect (run :rd
                                    {:req (req (= target :rd))
                                     :replace-access
-                                    {:prompt "Choose a card to trash" :not-distinct true
+                                    {:prompt "Choose a card to trash"
+                                     :not-distinct true
                                      :msg (msg "trash " (:title target))
-                                     :choices (req (take 3 (:deck corp))) :mandatory true
+                                     :choices (req (take 3 (:deck corp)))
+                                     :mandatory true
                                      :effect (effect (trash (assoc target :seen true))
                                                      (shuffle! :corp :deck))}} card))}]}
 
@@ -681,6 +688,7 @@
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"
+                 :makes-run true
                  :effect (effect (run :archives
                                    {:req (req (= target :archives))
                                     :successful-run

@@ -88,6 +88,30 @@
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
                              (continue-ability state side ab agg nil)))})
 
+   "Alexa Belsky"
+   {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
+                 :effect (req (trash state side card)
+                              (do (show-wait-prompt state :corp "Runner to decide whether or not to prevent Alexa Belsky")
+                                  (resolve-ability
+                                    state side
+                                    {:prompt "How many credits?"
+                                     :choices :credit :player :runner
+                                     :msg (msg "shuffle " (- (count (:hand corp)) (quot target 2)) " card"
+                                               (when-not (= 1 (- (count (:hand corp)) (quot target 2))) "s")
+                                               " in HQ into R&D")
+                                     :effect (req (if (pos? (quot target 2))
+                                                    (do (doseq [c (take (- (count (:hand corp)) (quot target 2))
+                                                                        (shuffle (:hand corp)))]
+                                                          (move state :corp c :deck))
+                                                        (shuffle! state :corp :deck)
+                                                        (system-msg state :runner
+                                                                    (str "pays " target " [Credits] to prevent "
+                                                                         (quot target 2) " random card"
+                                                                         (when (> (quot target 2) 1) "s")
+                                                                         " in HQ from being shuffled into R&D")))
+                                                    (shuffle-into-deck state :corp :hand))
+                                                  (clear-wait-prompt state :corp))} card nil)))}]}
+
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
@@ -494,22 +518,7 @@
    {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
                 {:label "Shuffle up to 3 cards from Archives into R&D"
                  :activatemsg "removes Jackson Howard from the game"
-                 :effect (effect
-                          (move card :rfg)
-                          (resolve-ability
-                           {:show-discard true
-                            :choices {:max 3 :req #(and (:side % "Corp") (= (:zone %) [:discard]))}
-                            :msg (msg "shuffle "
-                                      (let [seen (filter :seen targets)]
-                                        (str (join ", " (map :title seen))
-                                             (let [n (count (filter #(not (:seen %)) targets))]
-                                               (when (pos? n)
-                                                 (str (when-not (empty? seen) " and ") n " card"
-                                                      (when (> n 1) "s"))))))
-                                      " into R&D")
-                            :effect (req (doseq [c targets] (move state side c :deck))
-                                         (shuffle! state side :deck))}
-                           card nil))}]}
+                 :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
    {:abilities [{:label "Gain [Click]"
