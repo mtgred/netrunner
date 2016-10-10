@@ -88,6 +88,30 @@
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
                              (continue-ability state side ab agg nil)))})
 
+   "Alexa Belsky"
+   {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
+                 :effect (req (trash state side card)
+                              (do (show-wait-prompt state :corp "Runner to decide whether or not to prevent Alexa Belsky")
+                                  (resolve-ability
+                                    state side
+                                    {:prompt "How many credits?"
+                                     :choices :credit :player :runner
+                                     :msg (msg "shuffle " (- (count (:hand corp)) (quot target 2)) " card"
+                                               (when-not (= 1 (- (count (:hand corp)) (quot target 2))) "s")
+                                               " in HQ into R&D")
+                                     :effect (req (if (pos? (quot target 2))
+                                                    (do (doseq [c (take (- (count (:hand corp)) (quot target 2))
+                                                                        (shuffle (:hand corp)))]
+                                                          (move state :corp c :deck))
+                                                        (shuffle! state :corp :deck)
+                                                        (system-msg state :runner
+                                                                    (str "pays " target " [Credits] to prevent "
+                                                                         (quot target 2) " random card"
+                                                                         (when (> (quot target 2) 1) "s")
+                                                                         " in HQ from being shuffled into R&D")))
+                                                    (shuffle-into-deck state :corp :hand))
+                                                  (clear-wait-prompt state :corp))} card nil)))}]}
+
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1] :label "Gain 2 [Credits] for each counter on Alix T4LB07"
