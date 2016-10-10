@@ -102,13 +102,11 @@
                some ability once between all of them, then the card should specify a manual :once-key that can
                be any value, preferrably a unique keyword.
   :optional -- shows a 'Yes/No' prompt to let the user decide whether to resolve the ability.
-  :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn."
-
+  :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn.
+  :makes-run -- indicates if the ability makes a run."
   ;; perhaps the most important function in the game logic
   ([state side {:keys [eid] :as ability} card targets]
-   (if eid
-     (resolve-ability-eid state side (assoc ability :eid eid) card targets)
-     (resolve-ability-eid state side (assoc ability :eid (or eid (make-eid state))) card targets)))
+   (resolve-ability state side (or eid (make-eid state)) ability card targets))
   ([state side eid ability card targets]
    (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
@@ -118,7 +116,10 @@
      (effect-completed state side eid card)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
-       (when ability
+       (when-let [ability (if (and (:makes-run ability)
+                                   (get-in @state [:bonus :run-cost]))
+                            (assoc ability :cost (concat (:cost ability) (get-in @state [:bonus :run-cost])))
+                            ability)]
          ;; Is this an optional ability?
          (check-optional state side ability card targets)
          ;; Is this a psi game?

@@ -568,6 +568,7 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"
                  :once :per-turn
+                 :makes-run true
                  :effect (effect (update! (assoc card :omar-run-activated true))
                                  (run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)
