@@ -94,6 +94,44 @@
      (is (= 1 (:credit (get-runner))) "No credits spent to break")
      (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
+(deftest crypsis
+  ;; Crypsis - Loses a virus counter after encountering ice it broke
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Crypsis" 1)]))
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (core/gain state :runner :credit 8)
+    (let [crypsis (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner crypsis 2)
+      (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
+          "Crypsis has 1 virus counter")
+
+      (run-on state "Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (core/gain state :runner :credit 4)
+      (card-ability state :runner (refresh crypsis) 0) ; Match strength
+      (card-ability state :runner (refresh crypsis) 1) ; Break
+      (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
+          "Crypsis has 1 virus counter")
+      (run-continue state)
+      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+          "Crypsis has 0 virus counters")
+      (run-jack-out state)
+      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+          "Crypsis has 0 virus counters")
+
+      (run-on state "Archives")
+      (core/gain state :runner :credit 4)
+      (card-ability state :runner (refresh crypsis) 0) ; Match strength
+      (card-ability state :runner (refresh crypsis) 1) ; Break
+      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+          "Crypsis has 0 virus counters")
+      (run-jack-out state)
+      (is (= "Crypsis" (:title (first (:discard (get-runner)))))
+          "Crypsis was trashed"))))
+
 (deftest deus-x-multiple-hostile-infrastructure
   ;; Multiple Hostile Infrastructure vs. Deus X
   (do-game
