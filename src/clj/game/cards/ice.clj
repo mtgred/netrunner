@@ -850,7 +850,7 @@
    "Mausolus"
    {:advanceable :always
     :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
-                   :msg (msg "gain " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 2) " [Credits]")
+                   :msg (msg "gain " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) " [Credits]")
                    :effect (effect (gain :credit (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
                    :delayed-completion true
