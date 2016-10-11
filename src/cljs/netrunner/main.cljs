@@ -28,7 +28,7 @@
   (om/component
    (sab/html
     [:ul.carousel-indicator {}
-     (for [page [["Jinteki" "/" 0]
+     (for [page [["Chat" "/" 0]
                  ["Cards" "/cards" 1]
                  ["Deck Builder" "/deckbuilder" 2]
                  ["Play" "/play" 3]
