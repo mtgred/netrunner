@@ -38,6 +38,7 @@
     (advance state (get-content state :remote1 0) 2)
     (take-credits state :corp)
     (run-empty-server state :remote1)
+    (prompt-choice :runner "No") ; Dismiss prompt from non-exiled Find the Truth directive
     (prompt-choice :corp "Yes")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
     (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
