@@ -957,7 +957,8 @@
     :runner-abilities [(runner-break [:credit 1] 1)]}
 
    "Pup"
-   {:subroutines [(do-net-damage 1)]}
+   {:subroutines [(do-net-damage 1)]
+    :runner-abilities [(runner-break [:credit 1] 1)]}
 
    "Quandary"
    {:subroutines [end-the-run]}
@@ -1109,7 +1110,8 @@
     :advanceable :always
     :abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
-    :subroutines [trash-program]}
+    :subroutines [trash-program]
+    :runner-abilities [(runner-break [:credit 3] 1)]}
 
    "Swordsman"
    {:subroutines [(do-net-damage 1)
