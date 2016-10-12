@@ -17,11 +17,12 @@
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
-  [state side {:keys [disabled installed rezzed facedown zone] :as card}]
+  [state side {:keys [disabled installed rezzed facedown zone host] :as card}]
   (when-let [leave-effect (:leave-play (card-def card))]
     (when (and (not disabled)
                (or (and (= (:side card) "Runner") installed (not facedown))
                    rezzed
+                   (and host (not facedown))
                    (= (first zone) :current)
                    (= (first zone) :scored)))
       (leave-effect state side (make-eid state) card nil))))
