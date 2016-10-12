@@ -140,6 +140,15 @@
     (f (if (= "exception" type) (build-exception-msg msg (:last-error @game-state)) msg))
     (send-command "toast")))
 
+(defn play-sfx
+  "Plays a list of sounds one after another."
+  [sfx soundbank]
+  (when-not (empty? sfx)
+    (when-let [sfx-key (keyword (first sfx))]
+      (.play (sfx-key soundbank)))
+    (play-sfx (rest sfx) soundbank)))
+
+
 (defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
       (#(if (or (and (= type "Agenda")
@@ -919,8 +928,46 @@
     ;; remove restricted servers from all servers to just return allowed servers
     (remove (set restricted-servers) servers)))
 
+(defn update-audio [{:keys [gameid sfx sfx-current-id] :as cursor} owner]
+  ;; When it's the first game played with this state or when the sound history comes from different game, we skip the cacophony
+  (let [sfx-last-played (om/get-state owner :sfx-last-played)]
+    (when (and (not (nil? sfx-last-played))
+               (= gameid (:gameid sfx-last-played)))
+      ;; Skip the SFX from queue with id smaller than the one last played, queue the rest
+      (let [sfx-to-play (reduce (fn [sfx-list {:keys [id name]}]
+                                  (if (> id (:id sfx-last-played))
+                                    (conj sfx-list name)
+                                    sfx-list)) [] sfx)]
+        (play-sfx sfx-to-play (om/get-state owner :soundbank)))))
+  ;; Remember the most recent sfx id as last played so we don't repeat it later
+  (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id}))
+
 (defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
   (reify
+    om/IInitState
+    (init-state [this]
+      (let [audio-sfx (fn [name] (list (keyword name)
+                                       (new js/Howl (clj->js {:urls [(str "/sound/" name ".ogg")
+                                                                     (str "/sound/" name ".mp3")]}))))]
+        {:soundbank
+         (apply hash-map (concat
+                           (audio-sfx "agenda-score")
+                           (audio-sfx "agenda-steal")
+                           (audio-sfx "click-advance")
+                           (audio-sfx "click-card")
+                           (audio-sfx "click-credit")
+                           (audio-sfx "click-run")
+                           (audio-sfx "click-remove-tag")
+                           (audio-sfx "game-end")
+                           (audio-sfx "install-corp")
+                           (audio-sfx "install-runner")
+                           (audio-sfx "play-instant")
+                           (audio-sfx "rez-ice")
+                           (audio-sfx "rez-other")
+                           (audio-sfx "run-successful")
+                           (audio-sfx "run-unsuccessful")
+                           (audio-sfx "virus-purge")))}))
+
     om/IWillMount
     (will-mount [this]
       (go (while true
@@ -937,7 +984,8 @@
       (when (= "card-title" (get-in cursor [side :prompt 0 :prompt-type]))
         (-> "#card-title" js/$ .focus))
       (doseq [{:keys [msg type options]} (get-in cursor [side :toast])]
-        (toast msg type options)))
+        (toast msg type options))
+      (update-audio cursor owner))
 
     om/IRenderState
     (render-state [this state]
