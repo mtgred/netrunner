@@ -47,6 +47,7 @@
                                        (swap! state update-in [:runner :register :stole-agenda]
                                               #(+ (or % 0) (:agendapoints c)))
                                        (gain-agenda-point state :runner points)
+                                       (play-sfx state side "agenda-steal")
                                        (when-let [current (first (get-in @state [:corp :current]))]
                                          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                          (trash state side current)))}
@@ -625,10 +626,14 @@
   (cond
     ;; Successful
     (:successful run)
-    (trigger-event-sync state side eid :successful-run-ends run)
+    (do
+      (play-sfx state side "run-successful")
+      (trigger-event-sync state side eid :successful-run-ends run))
     ;; Unsuccessful
     (:unsuccessful run)
-    (trigger-event-sync state side eid :unsuccessful-run-ends run)
+    (do
+      (play-sfx state side "run-unsuccessful")
+      (trigger-event-sync state side eid :unsuccessful-run-ends run))
     ;; Neither
     :else
     (effect-completed state side eid)))
