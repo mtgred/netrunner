@@ -197,7 +197,8 @@
                                          {:title "/rez command"} nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
         "/rfg"        #(resolve-ability %1 %2 {:prompt "Select a card to remove from the game"
-                                               :effect (effect (move target :rfg))
+                                               :effect (req (let [c (deactivate %1 %2 target)]
+                                                              (move %1 %2 c :rfg)))
                                                :choices {:req (fn [t] (card-is? t :side %2))}}
                                         {:title "/rfg command"} nil)
         "/move-bottom"  #(resolve-ability %1 %2 {:prompt "Select a card in hand to put on the bottom of your deck"
