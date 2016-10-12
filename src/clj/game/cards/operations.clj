@@ -292,19 +292,24 @@
                             card nil)))}}
 
    "Enhanced Login Protocol"
-   (let [remove-effect (req (when (:elp-click-run card)
+   (let [remove-effect (req (when (:elp-trigger-effect card)
                               (click-run-cost-bonus state side [:click -1])
-                              (update! state side (dissoc card :elp-click-run))))
+                              (update! state side (dissoc card :elp-trigger-effect))))
          remove-ability {:req (req (and
-                                     (:elp-click-run card)
-                                     (:elp-fired card)))
+                                     (:elp-trigger-effect card)
+                                     (:clicked-to-run card)))
                          :effect remove-effect}]
-     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
-                                    :effect (effect (update! (assoc card :elp-click-run true))
-                                              (click-run-cost-bonus [:click 1]))}
+     {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
+      :effect (effect (update! (assoc card :elp-trigger-effect true))
+                      (click-run-cost-bonus [:click 1]))
+      :events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
+                                    :effect (effect (update! (assoc card :elp-trigger-effect true))
+                                                    (click-run-cost-bonus [:click 1]))}
                :runner-turn-ends {:effect remove-effect}
-               :run {:req (req (when (nil? (:card (:run-effect (:run @state))))
-                                 (update! state side (assoc card :elp-fired true))))}
+               :corp-turn-ends {:effect remove-effect} ; needed for sol
+               :run {:req (req (if (nil? (:card (:run-effect (:run @state))))
+                                 (update! state side (assoc card :clicked-to-run true))
+                                 (update! state side (assoc card :clicked-to-run false))))}
                :run-ends remove-ability}
       :leave-play remove-effect})
 

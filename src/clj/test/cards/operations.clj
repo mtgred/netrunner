@@ -321,6 +321,32 @@
       (card-ability state :runner keyhole 0)
       (is (= 2 (:click (get-runner))) "Runner has 2 clicks after using keyhole"))))
 
+(deftest enhanced-login-protocol-sol
+  ;; Enhanced Login Protocol - tests interaction with ELP played on runners turn
+  (do-game
+    (new-game
+      (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Enhanced Login Protocol" (:hand (get-corp))))
+    (is (not (:run @state)) "Run ended")
+    (is (find-card "Enhanced Login Protocol" (:current (get-corp))) "ELP in play")
+    (is (= 3 (:click (get-runner))) "runner has 3 clicks when ELP is in play")
+    (run-on state :hq)
+    (run-jack-out state)
+    (is (= 1 (:click (get-runner))) "first non-event run takes 2 clicks")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 4 (:click (get-runner))) "runner has 4 clicks on start of turn")
+    (run-on state :hq)
+    (run-jack-out state)
+    (is (= 2 (:click (get-runner))) "ELP still works correctly")))
+
+
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
   (do-game
