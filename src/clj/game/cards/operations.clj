@@ -292,9 +292,21 @@
                             card nil)))}}
 
    "Enhanced Login Protocol"
-   {:events {:pre-click-run {:once :per-turn
-                             :msg "increase the cost of running"
-                             :effect (effect (click-run-bonus [:click 1]))}}}
+   (let [remove-effect (req (when (:elp-click-run card)
+                              (click-run-cost-bonus state side [:click -1])
+                              (update! state side (dissoc card :elp-click-run))))
+         remove-ability {:req (req (and
+                                     (:elp-click-run card)
+                                     (:elp-fired card)))
+                         :effect remove-effect}]
+     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
+                                    :effect (effect (update! (assoc card :elp-click-run true))
+                                              (click-run-cost-bonus [:click 1]))}
+               :runner-turn-ends {:effect remove-effect}
+               :run {:req (req (when (nil? (:card (:run-effect (:run @state))))
+                                 (update! state side (assoc card :elp-fired true))))}
+               :run-ends remove-ability}
+      :leave-play remove-effect})
 
    "Exchange of Information"
    {:req (req (and tagged

@@ -84,6 +84,9 @@
 (defn run-cost-bonus [state side n]
   (swap! state update-in [:bonus :run-cost] #(merge-costs (concat % n))))
 
+(defn click-run-cost-bonus [state side & n]
+  (swap! state update-in [:bonus :click-run-cost] #(merge-costs (concat % n))))
+
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))
 
@@ -126,9 +129,3 @@
      (swap! state update-in [:bonus] dissoc :install-cost)
      (swap! state update-in [:bonus] dissoc :ignore-install-cost)
      cost)))
-
-(defn click-run-bonus [state side & n]
-  (swap! state update-in [:bonus :click-run] #(merge-costs (concat % n))))
-
-(defn clear-click-run-bonus [state side]
-  (swap! state update-in [:bonus] dissoc :click-run))
