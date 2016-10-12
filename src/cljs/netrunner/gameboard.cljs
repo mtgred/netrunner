@@ -550,14 +550,14 @@
                 servers (case type
                           ("Upgrade" "ICE") (concat centrals remotes)
                           ("Agenda" "Asset") remotes)]
-            [:div.blue-shade.panel.servers-menu {:ref "servers"}
+            [:div.panel.blue-shade.servers-menu {:ref "servers"}
              (map (fn [label]
                     [:div {:on-click #(do (send-command "play" {:card @cursor :server label})
                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
                      label])
                   servers)]))
         (when (pos? (+ (count runner-abilities) (count subroutines)))
-          [:div.blue-shade.panel.runner-abilities {:ref "runner-abilities"}
+          [:div.panel.blue-shade.runner-abilities {:ref "runner-abilities"}
            (map-indexed
              (fn [i ab]
                [:div {:on-click #(do (send-command "runner-ability" {:card @cursor
@@ -578,7 +578,7 @@
           (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                     (some #{"derez" "advance"} actions)
                     (= type "ICE"))
-            [:div.blue-shade.panel.abilities {:ref "abilities"}
+            [:div.panel.blue-shade.abilities {:ref "abilities"}
              (map (fn [action]
                     [:div {:on-click #(do (send-command action {:card @cursor}))} (capitalize action)])
                   actions)
@@ -602,11 +602,11 @@
        (when (#{"servers" "onhost"} (first zone))
           (cond
             (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
-            [:div.blue-shade.panel.menu.abilities {:ref "agenda"}
+            [:div.panel.blue-shade.menu.abilities {:ref "agenda"}
              [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
              [:div {:on-click #(send-command "score" {:card @cursor})} "Score"]]
             (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
-            [:div.blue-shade.panel.menu.abilities {:ref "advance"}
+            [:div.panel.blue-shade.menu.abilities {:ref "advance"}
              [:div {:on-click #(send-command "advance" {:card @cursor})} "Advance"]
              [:div {:on-click #(send-command "rez" {:card @cursor})} "Rez"]]))]
        (when (pos? (count hosted))
@@ -1014,8 +1014,8 @@
                 (om/build rfg-view {:cards (:current opponent) :name "Current"})
                 (om/build rfg-view {:cards (:current me) :name "Current"})]
                (when-not (= side :spectator)
-                 [:div.button-pane { :on-mouse-over card-preview-mouse-over
-                                     :on-mouse-out  card-preview-mouse-out  }
+                 [:div.button-pane {:on-mouse-over card-preview-mouse-over
+                                    :on-mouse-out  card-preview-mouse-out}
                   (if-let [prompt (first (:prompt me))]
                     [:div.panel.blue-shade
                      [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
@@ -1092,13 +1092,13 @@
                       [:div.panel.blue-shade
                        (if (= (keyword active-player) side)
                          (when (and (zero? (:click me)) (not end-turn) (not runner-phase-12) (not corp-phase-12))
-                               [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
+                           [:button {:on-click #(handle-end-turn cursor owner)} "End Turn"])
                          (when end-turn
                            [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
                        (when (and (= (keyword active-player) side)
                                   (or runner-phase-12 corp-phase-12))
-                           [:button {:on-click #(send-command "end-phase-12")}
-                            (if (= side :corp) "Mandatory Draw" "Take Clicks")])
+                         [:button {:on-click #(send-command "end-phase-12")}
+                          (if (= side :corp) "Mandatory Draw" "Take Clicks")])
                        (when (= side :runner)
                          [:div
                           (cond-button "Remove Tag"
@@ -1110,7 +1110,7 @@
                            (cond-button "Run" (and (pos? (:click me))
                                                    (not (get-in me [:register :cannot-run])))
                                         #(-> (om/get-node owner "servers") js/$ .toggle))
-                           [:div.blue-shade.panel.servers-menu {:ref "servers"}
+                           [:div.panel.blue-shade.servers-menu {:ref "servers"}
                             (map (fn [label]
                                    [:div {:on-click #(do (send-command "run" {:server label})
                                                          (-> (om/get-node owner "servers")

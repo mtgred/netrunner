@@ -1018,7 +1018,7 @@ nav ul
   .games, .game-panel
     flex(1)
     display-flex()
-    flex-direction: column
+    flex-direction(column)
 
   .game-panel
     border-left: 1px solid white
@@ -1107,7 +1107,7 @@ nav ul
       left: 15px
       right: 15px
       display-flex()
-      flex-direction: column
+      flex-direction(column)
 
     .button-bar button
       min-width: 80px
@@ -1162,15 +1162,14 @@ nav ul
 // Gameboard
 
 #gameboard
+  width: 100%
+  height: 100%
   display: none
 
 .gameboard
-  overflow-x: auto;
-  position: absolute
-  top: 31px
-  bottom: 0
-  left: 0
-  right: 0
+  width: 100%
+  height: 100%
+  overflow-x: auto
   display-flex()
   justify-content(space-between)
 
