@@ -6,20 +6,20 @@
             :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.7.228"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [org.zeromq/jeromq "0.3.4"]
-                 [cheshire "5.4.0"]
-                 [org.omcljs/om "0.8.8"]
+                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/core.async "0.2.391"]
+                 [org.zeromq/jeromq "0.3.6"]
+                 [cheshire "5.6.3"]
+                 [org.omcljs/om "0.9.0"]
                  [sablono "0.3.4"]
-                 [environ "1.0.0"]
-                 [com.novemberain/monger "3.0.0-rc2"]
-                 [org.slf4j/slf4j-nop "1.7.12"]
+                 [environ "1.1.0"]
+                 [com.novemberain/monger "3.1.0"]
+                 [org.slf4j/slf4j-nop "1.7.21"]
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [differ "0.2.1"]]
+                 [differ "0.3.1"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.5.2"]
-                                  [figwheel-sidecar "0.5.0-6"]
+  :profiles {:dev {:dependencies [[figwheel "0.5.8"]
+                                  [figwheel-sidecar "0.5.8"]
                                   [com.cemerick/piggieback "0.2.1"]]}}
 
   ; aot only the namespaces needed for the main game in uberjar
