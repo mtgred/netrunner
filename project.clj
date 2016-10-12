@@ -29,8 +29,8 @@
         game.core]
   :main game.main
 
-  :plugins [[lein-cljsbuild "1.1.3"]
-            [lein-figwheel "0.5.2"]
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [lein-figwheel "0.5.8"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]]
 
   :source-paths ["src/clj" "src/cljs"]
