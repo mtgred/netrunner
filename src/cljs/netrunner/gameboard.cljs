@@ -1150,15 +1150,12 @@
              ;; card implementation info
              (when-let [card (om/get-state owner :zoom)]
                (let [implemented (:implementation card)]
-                 [:div.implementation
-                  (case implemented
-                    ;; no icon if fully implemented
-                    :full nil
-                    "full" nil
-                    ;; not implemented
-                    nil [:span.unimplemented "Unimplemented"]
-                    ;; special implementation message
-                    [:span.impl-msg implemented])]))
+                 (case implemented
+                   (:full "full") nil
+                   [:div.panel.blue-shade.implementation
+                    (case implemented
+                      nil [:span.unimplemented "Unimplemented"]
+                      [:span.impl-msg implemented])])))
              (om/build log-pane (:log cursor))]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})
