@@ -386,7 +386,7 @@ span.small
   right: 0
   bottom: 0
   left: 0
-  z-index: 1050
+  z-index: 10001
   display: none
   overflow: auto
   overflow-y: scroll
@@ -413,7 +413,7 @@ span.small
   right: 0
   bottom: 0
   left: 0
-  z-index: 1040
+  z-index: 10000
   background-color: black
   transition(all 0.2s ease-in-out)
 
@@ -471,7 +471,7 @@ nav ul
       color: white
 
 .panel
-  radius: 4px
+  border-radius: 4px
   padding: 5px 10px
   border: 1px solid rgba(39, 56, 76, 0.9)
   margin: 5px
@@ -603,7 +603,7 @@ nav ul
     height: 100%
 
     .item
-      padding-top: 29px
+      padding-top: 31px
       height: 100%
       color: white
 
@@ -1169,7 +1169,7 @@ nav ul
 .gameboard
   width: 100%
   height: 100%
-  overflow-x: auto
+  overflow: auto
   display-flex()
   justify-content(space-between)
 
@@ -1182,7 +1182,7 @@ nav ul
     position: absolute
     top: 0
     left: 0
-    z-index: 2
+    z-index: 1
     padding: 1px 4px
     font-size: 10px
     line-height: 14px
@@ -1190,19 +1190,14 @@ nav ul
   .darkbg
     background: rgba(0, 0, 0, 0.6)
     text-shadow 1px 1px 2px black
-    radius: 4px
+    border-radius: 4px
 
   .card
-    display: inline-block
     position: relative
     height: 84px
     width: 60px
     border-radius: 4px
-
-    .servers-menu
-      top: auto
-      width: 120px
-      bottom: -5px
+    display-flex()
 
     .cardname
       float: left
@@ -1221,7 +1216,7 @@ nav ul
     bottom: 0
     left: 0
     right: 0
-    z-index: 5
+    z-index: 10
     display-flex()
     flex-direction(column)
     justify-content(center)
@@ -1313,13 +1308,16 @@ nav ul
     &.sentry
       background-color: criminal-blue
 
+  .abilities, .servers-menu, .menu, .runner-abilities, .popup
+    left: 0
+    bottom: 100%
+    margin: 6px -1px
+
   .abilities, .servers-menu, .menu, .runner-abilities
     display: none
     position: absolute
-    z-index: 10
+    z-index: 30
     width: 200px
-    left: 58px
-    top: -5px
     font-size: 12px
     line-height: 16px
 
@@ -1336,42 +1334,16 @@ nav ul
       &:hover
         border-color: orange
 
-  .playable
-    cursor: pointer
-    border-radius: 4px
-
-    .card
-      box-shadow(0 0 1px 2px orange)
-
-  .bg
-    position: absolute
-    left: 0
-    bottom: 0
-
-  .deck, .discard, .identity
-    height: 86px
-    width: 62px
-    padding: 0
-
-  .deck, .rfg, > .card, .identity, .discard
-    margin-left: 16px
-    margin-right: 16px
-    flex-shrink: 0
-
-  .shift
-    position: relative
-    left: -16px
-
-  .discard
-    position: relative
-
-  .discard .popup, .deck .popup
+  .popup
     display: none
     position: absolute
-    bottom: 85px
     width: 590px
     min-height: 92px
-    z-index: 15
+    z-index: 20
+
+    &.opponent
+      top: 100%
+      bottom: auto
 
     .card
       float: left
@@ -1381,15 +1353,41 @@ nav ul
       display: inline-block
       margin: 0 10px 8px 4px
 
-  .deck .popup
-    left: -271px
+  .playable
+    cursor: pointer
+    border-radius: 4px
 
-  .discard .popup
-    left: -6px
+    .card
+      box-shadow(0 0 1px 2px orange)
 
-  .discard .popup.opponent
-    top: 85px
-    bottom: auto
+  .bg
+    position: absolute
+    top: 0
+    left: 0
+
+  .deck, .discard, .identity
+    position: relative
+    height: 84px
+    width: 60px
+    border-radius: 4px
+
+  .server-card
+    position: relative
+    min-height: 84px
+    min-width: 60px
+
+    &.central
+      margin-top: 24px
+
+    &.shift
+      margin-left: -15px
+
+  .rfg
+    margin-left: 16px
+    margin-right: 16px
+
+  .discard
+    position: relative
 
   .hand, .scored, .rfg
     height: 86px
@@ -1401,7 +1399,7 @@ nav ul
 
   .card-wrapper
     display: inline-block
-    margin: 0 4px 0 0
+    margin-right: 4px
     transition(all 0.3s ease-in-out)
 
     &:last-child
@@ -1426,145 +1424,155 @@ nav ul
       display: block
 
   .hosted
-    height: 84px
-    width: auto
     margin-left: 24px
     margin-top: -65px
+    display-flex()
 
-    > div
-      float: left
+    .card-frame:not(:first-child)
       margin-left: -15px
 
-  .centralpane
-    display-flex()
-    flex(1)
-
-  .secondary-pane
-    width: 186px
-    justify-content(space-between)
-    display-flex()
-    flex-direction(column)
-
-    > div
-      width: 100%
-      display-flex()
-      flex-direction(column)
-
-    .panel
-      margin: 0
-
-    .button-pane
-      .panel
-        padding: 8px
-
-      .run-button
-        position: relative
-
-        .servers-menu
-          bottom: 0
-          top: auto
-          left: 100px
-          width: 120px
-
-      h4
-        text-align: center
-        margin-bottom: 10px
-
-      button
-        width: 100%
-        font-size: 11px
-        margin: 0 0 5px 0
-        padding: 0 8px 1px
-
-        &:last-child
-          margin-bottom: 0
-
-      .credit-select
-        text-align: center
-        margin-bottom: 10px
-
-        select
-          margin-right: 5px
-
   .leftpane
-    width: 201px
-    margin-top: -5px
-    margin-bottom: -5px
     display-flex()
     flex-direction(column)
     justify-content(space-between)
 
-    > div
-      width: 100%
+    .inner-leftpane
+      flex(1)
+      display-flex()
 
-  .mainpane
+      .left-inner-leftpane
+        width: 201px
+        margin-top: -5px
+        margin-bottom: -5px
+        display-flex()
+        flex-direction(column)
+        justify-content(space-between)
+
+        > div
+          width: 100%
+
+      .right-inner-leftpane
+        width: 186px
+        justify-content(space-between)
+        display-flex()
+        flex-direction(column)
+
+        > div
+          width: 100%
+          display-flex()
+          flex-direction(column)
+
+        .panel
+          margin: 0
+
+        .button-pane
+          .panel
+            padding: 8px
+
+          .run-button
+            position: relative
+
+            .servers-menu
+              left: 100%
+              bottom: 0
+              width: 120px
+              margin: 3px
+              z-index: 40
+
+          h4
+            text-align: center
+            margin-bottom: 10px
+
+          button
+            width: 100%
+            font-size: 11px
+            margin: 0 0 5px 0
+            padding: 0 8px 1px
+
+            &:last-child
+              margin-bottom: 0
+
+          .credit-select
+            text-align: center
+            margin-bottom: 10px
+
+            select
+              margin-right: 5px
+
+  .centralpane
+    flex(1)
     display-flex()
     flex-direction(column)
-    flex(1)
 
-    .board
+    .card-wrapper
+      margin: 3px 6px
+
+    .runner-board
       flex(1)
       display-flex()
       flex-direction(column)
-      margin-left: 1px
 
       > div
-        flex(1)
-
-      .runner-board
-        padding: 10px
-        display: flex;
-        flex-direction: column;
-
-        > div:first-child
-          margin-top: auto
-
-      .content.shift > .card-frame
-        margin-left: 8px
-        margin-top: -16px
-
-      .runner-board.opponent
-        > div:first-child
-          margin-top: 0px
-
-        > div:last-child
-          margin-bottom: auto
-
-      .corp-board
         display-flex()
 
-        .server
-          margin: 0 4px
-          transform(rotate(180deg))
+        &:first-child
+          margin-top: auto
+
+      .runner-centrals
+        flex(0)
+        padding: 5px 0
+        display-flex()
+
+        .deck, .discard, .identity
+          margin-left: 16px
+          margin-right: 16px
+
+    .runner-board.opponent
+      > div:first-child
+        margin-top: 0
+
+      > div:last-child
+        margin-bottom: auto
+
+    .corp-board
+      flex(1)
+      display-flex()
+      flex-direction(row-reverse)
+      justify-content(flex-end)
+
+      .server
+        position: relative
+        min-width: 84px
+        margin: 0 4px
+        transform(rotate(180deg))
+        display-flex()
+        flex-direction(column-reverse)
+        justify-content(flex-end)
+        align-items(center)
+
+        .ices
           position: relative
-          z-index: 1
+          display-flex()
+          flex-direction(column-reverse)
+          justify-content(flex-end)
+          align-items(center)
 
-          .ices
+          .run-card
+            margin-top: 62px
+            transform(rotate(180deg))
+
+          .run-arrow
             position: relative
-            width: 86px
-            margin-top: 22px
+            top: 15%
+            animation: fadein 0.5s
 
-            .strength
-              transform(rotate(90deg))
-
-            .subtype-target
-              transform(rotate(90deg), translateX(100%))
-              transform-origin(100% 0)
-
-            .icon
-              transform(rotate(90deg))
-
-            .run-arrow
+            > div
               position: absolute
-              animation: fadein 0.5s
-              z-index: 10
               left: 50%
-              top: 5px
-              bottom: -62px
+              top: 0
+              bottom: -70px
               width: 16px
-              border: 1px solid orange
-              border-top: none
-              background-color: rgba(255, 165, 0, 0.5)
+              background-color: transparent-orange
               transform(translateX(-50%))
               border-radius: 0 0 4px 4px
 
@@ -1580,107 +1588,110 @@ nav ul
                 bottom: 100%
                 left: 50%
                 transform(translateX(-50%))
-                border-bottom: 22px solid rgba(255, 165, 0, 0.5)
+                border-bottom: 22px solid transparent-orange
 
-            .run-card
-              position: absolute
-              text-align: center
-              bottom: -154px
-              transform(rotate(180deg))
-              width: 100%
+          .ice
+            margin: -7px 0
+            transform(rotate(90deg))
+            cursor: pointer
 
-            .hosted
-              position: absolute
+            &.host
+              margin-bottom: 5px
 
-              .card-frame
-                transform(rotate(90deg))
-                margin: -44px 0 0 0
+            .run-arrow
+              top: auto
+              bottom: 50%
+              left: 95%
+              transform: rotate(-90deg)
 
-                .counters
-                  transform(rotate(-90deg))
+          .hosted
+            margin-top: -69px
+            flex-direction(column)
 
-                .abilities, .runner-abilities
-                  transform(rotate(0))
-
-            .counter
+            .card-frame
+              margin-left: 0
               transform(rotate(90deg))
 
-            > .card-frame
-              position: relative
-              left: -1px
-              margin-top: -22px
-              transform(rotate(90deg))
-              cursor: pointer
+              &:not(:first-child)
+                margin-top: -42px
 
-            .abilities
-              transform(rotate(90deg))
-              top: -73px
-              left: 12px
+              .counters
+                transform(rotate(-90deg))
 
-            .runner-abilities
-              transform(rotate(-90deg))
-              top: -95px
-              left: 34px
-
-          .content.center
-            left: -13px
-
-          .content
-            transform(rotate(180deg))
-            position: absolute
-            top: -90px
-            display-flex()
-            width: 86px
-            height: 86px
-
-            .card
-              margin: 0 -40px 0 0
               .abilities, .runner-abilities
-                left: -145px
-                bottom: 85px
                 top: auto
+                bottom: 100%
+                left: 0
+                margin: 6px -1px
+                transform(initial)
 
-      .corp-board.opponent .server
-        transform(rotate(0))
+          .strength
+            transform(rotate(90deg))
 
-        &:nth-child(n+4)
-          z-index: auto
-
-        .content
-          transform(rotate(0))
-
-        .content.center
-          left: 13px
-
-        .strength
-          transform(rotate(-90deg))
-
-        .icon
-          transform(rotate(-90deg))
-
-        .ices
           .subtype-target
-            transform(rotate(-90deg), translateY(-100%))
+            transform(rotate(90deg), translateX(100%))
+            transform-origin(100% 0)
 
-          .hosted .card-frame
-            transform(rotate(-90deg))
-
-            .counters
-              transform(rotate(-90deg))
+          .icon
+            transform(rotate(90deg))
 
           .counter
+            transform(rotate(90deg))
+
+          .abilities, .runner-abilities
+            left: 100%
+            margin: -1px 6px
+
+          .abilities
+            top: 0
+            bottom: auto
+            transform(rotate(90deg) translateY(-100%))
+            transform-origin(0 0)
+
+          .runner-abilities
+            bottom: 0
+            transform(rotate(-90deg) translateY(100%))
+            transform-origin(0 100%)
+
+        .content
+          position: relative
+          min-height: 84px
+          margin: 5px
+          transform(rotate(180deg))
+          display-flex()
+
+    .corp-board.opponent .server
+      transform(initial)
+
+      .content
+        transform(initial)
+
+      .strength
+        transform(rotate(-90deg))
+
+      .icon
+        transform(rotate(-90deg))
+
+      .ices
+        .subtype-target
+          transform(rotate(-90deg), translateY(-100%))
+
+        .hosted
+          .card-frame
             transform(rotate(-90deg))
 
-          .run-card
-            transform(rotate(0deg))
+          .counters
+            transform(rotate(90deg))
 
-      .card-wrapper
-        margin-right: 10px
-        margin-bottom: 5px
+          .abilities, .runner-abilities
+            top: 100%
+            bottom: auto
 
-    .dashboard
-      display-flex()
-      align-items(flex-end)
+        .counter
+          transform(rotate(-90deg))
+
+        .run-card
+          transform(initial)
 
   .rightpane
     position: relative

@@ -331,7 +331,7 @@
       (sab/html
        [:div.log { :on-mouse-over card-preview-mouse-over
                    :on-mouse-out  card-preview-mouse-out  }
-        [:div.messages.panel.blue-shade {:ref "msg-list"}
+        [:div.panel.blue-shade.messages {:ref "msg-list"}
          (for [msg messages]
            (if (= (:user msg) "__system__")
              [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
@@ -636,25 +636,25 @@
           name (if (= side "Corp") "HQ" "Grip")]
       [:div.panel.blue-shade.hand
        (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
-       (om/build label (:hand player) {:opts {:name name}})
-       (map-indexed (fn [i card]
-                      [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
-                                                          (= (:user player) (:user @app-state))
-                                                          (not (:selected card)) (playable? card))
-                                                   "playable" "")
-                                          :style {:left (* (/ 320 (dec size)) i)}}
-                       (if (or (= (:user player) (:user @app-state))
-                               (:openhand player)
-                               (and (get-in @game-state [:options :spectatorhands])
-                                    (not (not-spectator? game-state app-state))))
-                         (om/build card-view (assoc card :remotes remotes))
-                         [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
-                    (:hand player))]))))
+       [:div
+        (map-indexed (fn [i card]
+                       [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                                           (= (:user player) (:user @app-state))
+                                                           (not (:selected card)) (playable? card))
+                                                    "playable" "")
+                                           :style {:left (* (/ 320 (dec size)) i)}}
+                        (if (or (= (:user player) (:user @app-state))
+                                (:openhand player)
+                                (and (get-in @game-state [:options :spectatorhands])
+                                     (not (not-spectator? game-state app-state))))
+                          (om/build card-view (assoc card :remotes remotes))
+                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
+                     (:hand player))]
+       (om/build label (:hand player) {:opts {:name name}})]))))
 
 (defn show-deck [event owner ref]
   (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
   (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  ;(send-command "system-msg" {:msg "looks at their deck"})
   (send-command "view-deck"))
 
 (defn close-popup [event owner ref msg shuffle? deck?]
@@ -665,75 +665,71 @@
     msg (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
 
-(defmulti deck-view #(get-in % [:identity :side]))
-
-(defmethod deck-view "Runner" [{:keys [deck] :as cursor} owner]
+(defn identity-view [player owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck
-     (drop-area (:side @game-state) "Stack"
-                {:on-click #(-> (om/get-node owner "stack-menu") js/$ .toggle)})
-     (om/build label deck {:opts {:name "Stack"}})
-     (when (= (:side @game-state) :runner)
-       [:div.panel.blue-shade.menu {:ref "stack-menu"}
-        [:div {:on-click #(do (send-command "shuffle")
-                              (-> (om/get-node owner "stack-menu") js/$ .fadeOut))} "Shuffle"]
-        [:div {:on-click #(show-deck % owner "stack")} "Show"]])
-     (when (= (:side @game-state) :runner)
-       [:div.panel.blue-shade.popup {:ref "stack-content"}
-        [:div
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" false true)}
-          "Close"]
-         [:a {:on-click #(close-popup % owner "stack-content" "stops looking at their deck" true true)}
-          "Close & Shuffle"]]
-        (om/build-all card-view deck {:key :cid})])
-     (when (pos? (count deck))
-       [:img.card.bg {:src "/img/runner.png"}])])))
+    [:div.blue-shade.identity
+     (om/build card-view (:identity player))])))
 
-(defmethod deck-view "Corp" [{:keys [deck servers] :as cursor} owner]
+(defn deck-view [{:keys [identity deck] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.deck
-     (drop-area (:side @game-state) "R&D"
-                {:on-click #(-> (om/get-node owner "rd-menu") js/$ .toggle)
-                 :class (when (> (count (get-in servers [:rd :content])) 0) "shift")})
-      (om/build label deck {:opts {:name "R&D"}})
-     (when (= (:side @game-state) :corp)
-       [:div.panel.blue-shade.menu {:ref "rd-menu"}
-        [:div {:on-click #(do (send-command "shuffle")
-                              (-> (om/get-node owner "rd-menu") js/$ .fadeOut))} "Shuffle"]
-        [:div {:on-click #(show-deck % owner "rd")} "Show"]])
-     (when (= (:side @game-state) :corp)
-       [:div.panel.blue-shade.popup {:ref "rd-content"}
-        [:div
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" false true)} "Close"]
-         [:a {:on-click #(close-popup % owner "rd-content" "stops looking at their deck" true true)} "Close & Shuffle"]]
-        (om/build-all card-view deck {:key :cid})])
-     (when (pos? (count deck))
-       [:img.card.bg {:src "/img/corp.png"}])])))
+    (let [is-runner (= "Runner" (:side identity))
+          side (if is-runner :runner :corp)
+          name (if is-runner "Stack" "R&D")
+          ref (if is-runner "stack" "rd")
+          menu-ref (str ref "-menu")
+          content-ref (str ref "-content")]
+      [:div.blue-shade.deck
+       (drop-area (:side @game-state) name
+                  {:on-click #(-> (om/get-node owner menu-ref) js/$ .toggle)})
+       (if (pos? (count deck))
+         [:img.card.bg {:src (if is-runner "/img/runner.png" "/img/corp.png")}])
+       (om/build label deck {:opts {:name name}})
+       (when (= (:side @game-state) side)
+         [:div.panel.blue-shade.menu {:ref menu-ref}
+          [:div {:on-click #(do (send-command "shuffle")
+                                (-> (om/get-node owner menu-ref) js/$ .fadeOut))} "Shuffle"]
+          [:div {:on-click #(show-deck % owner ref)} "Show"]])
+       (when (= (:side @game-state) side)
+         [:div.panel.blue-shade.popup {:ref content-ref}
+          [:div
+           [:a {:on-click #(close-popup % owner content-ref "stops looking at their deck" false true)}
+            "Close"]
+           [:a {:on-click #(close-popup % owner content-ref "stops looking at their deck" true true)}
+            "Close & Shuffle"]]
+          (om/build-all card-view deck {:key :cid})])]))))
 
 (defmulti discard-view #(get-in % [:identity :side]))
 
 (defmethod discard-view "Runner" [{:keys [discard] :as cursor} owner]
   (om/component
    (sab/html
-    [:div.panel.blue-shade.discard
+    [:div.blue-shade.discard
      (drop-area :runner "Heap" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+     (when-not (empty? discard)
+       (om/build card-view (last discard)))
      (om/build label discard {:opts {:name "Heap"}})
      [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
       [:div
        [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]]
-      (om/build-all card-view discard {:key :cid})]
-     (when-not (empty? discard)
-       (om/build card-view (last discard)))])))
+      (om/build-all card-view discard {:key :cid})]])))
 
 (defmethod discard-view "Corp" [{:keys [discard servers] :as cursor} owner]
   (om/component
    (sab/html
     (let [faceup? #(or (:seen %) (:rezzed %))]
-     [:div.panel.blue-shade.discard
-      (drop-area :corp "Archives" {:class (when (> (count (get-in servers [:discard :content])) 0) "shift")
-                                   :on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+     [:div.blue-shade.discard
+      (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+
+      (when-not (empty? discard)
+        (let [c (last discard)]
+          (if (= (:side @game-state) :corp)
+            (om/build card-view c)
+            (if (faceup? c)
+              (om/build card-view c)
+              [:img.card {:src "/img/corp.png"}]))))
+
       (om/build label discard {:opts {:name "Archives"
                                       :fn (fn [cursor] (let [total (count cursor)
                                                              face-up (count (filter faceup? cursor))]
@@ -751,15 +747,7 @@
            (om/build card-view c)
            (if (not= (:side @game-state) :corp)
              [:img.card {:src "/img/corp.png"}]
-             [:div.unseen (om/build card-view c)])))]
-
-      (when-not (empty? discard)
-        (let [c (last discard)]
-          (if (= (:side @game-state) :corp)
-            (om/build card-view c)
-            (if (faceup? c)
-              (om/build card-view c)
-              [:img.card {:src "/img/corp.png"}]))))]))))
+             [:div.unseen (om/build card-view c)])))]]))))
 
 (defn rfg-view [{:keys [cards name] :as cursor}]
   (om/component
@@ -767,11 +755,11 @@
     (when-not (empty? cards)
       (let [size (count cards)]
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
-         (om/build label cards {:opts {:name name}})
          (map-indexed (fn [i card]
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
                          [:div (om/build card-view card)]])
-                      cards)])))))
+                      cards)
+         (om/build label cards {:opts {:name name}})])))))
 
 (defn play-area-view [{:keys [name player] :as cursor}]
   (om/component
@@ -781,24 +769,24 @@
           side (get-in player [:identity :side])]
       (when-not (empty? cards)
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
-         (om/build label cards {:opts {:name name}})
          (map-indexed (fn [i card]
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
                          (if (= (:user player) (:user @app-state))
                            (om/build card-view card)
                            [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
-                      cards)])))))
+                      cards)
+         (om/build label cards {:opts {:name name}})])))))
 
 (defn scored-view [{:keys [scored] :as cursor}]
   (om/component
    (sab/html
     (let [size (count scored)]
       [:div.panel.blue-shade.scored.squeeze
-       (om/build label scored {:opts {:name "Scored Area"}})
        (map-indexed (fn [i card]
                       [:div.card-wrapper {:style {:left (* (/ 128 (dec size)) i)}}
                        [:div (om/build card-view card)]])
-                    scored)]))))
+                    scored)
+       (om/build label scored {:opts {:name "Scored Area"}})]))))
 
 (defn controls [key]
   (sab/html
@@ -814,7 +802,7 @@
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
-      [:div.stats.panel.blue-shade {:class (when active "active-player")}
+      [:div.panel.blue-shade.stats {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (not= credit 1) "s" "")
@@ -836,7 +824,7 @@
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
-      [:div.stats.panel.blue-shade {:class (when active "active-player")}
+      [:div.panel.blue-shade.stats {:class (when active "active-player")}
        [:h4.ellipsis (om/build avatar user {:opts {:size 22}}) (:username user)]
        [:div (str click " Click" (if (not= click 1) "s" "")) (when me? (controls :click))]
        [:div (str credit " Credit" (if (not= credit 1) "s" "")) (when me? (controls :credit))]
@@ -847,24 +835,42 @@
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
 
-(defn server-view [{:keys [server central run] :as cursor} owner opts]
+(defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
    (sab/html
     (let [content (:content server)]
       [:div.server
-       (let [ices (:ices server)]
-         [:div.ices
-          (when run
-            [:div.run-arrow {:style {:top (str (+ 20 (* 64 (:position run))) "px")}}])
-          (for [ice ices]
-            (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}}))
+       (let [ices (:ices server)
+             run-pos (:position run)
+             current-ice (when (and run (pos? run-pos))
+                           (nth ices (dec run-pos)))
+             run-arrow (sab/html [:div.run-arrow [:div]])
+             max-hosted (apply max (map #(count (:hosted %)) ices))]
+         [:div.ices {:style {:width (when (pos? max-hosted)
+                                      (+ 84 3 (* 42 (dec max-hosted))))}}
           (when-let [run-card (:card (:run-effect run))]
-            [:div.run-card (om/build card-img run-card)])])
-       (when (not-empty content)
-         [:div.content {:class (str (when (= (count content) 1) "center") " " (when central "shift"))}
-          (for [card content]
-            (om/build card-view card {:opts {:flipped (not (:rezzed card))}}))
-          (om/build label content {:opts opts})])]))))
+            [:div.run-card (om/build card-img run-card)])
+          (for [ice (reverse ices)]
+            [:div.ice {:class (when (not-empty (:hosted ice)) "host")}
+             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}})
+             (when (and current-ice (= (:cid current-ice) (:cid ice)))
+               run-arrow)])
+          (when (and run (not current-ice))
+            run-arrow)])
+       [:div.content
+        (when central-view
+          central-view)
+        (when (not-empty content)
+          (for [card content
+                :let [is-first (= card (first content))]]
+            [:div.server-card {:class (str (when central-view "central ")
+                                           (when (or central-view
+                                                 (and (< 1 (count content))
+                                                      (not is-first)))
+                                             "shift"))}
+             (om/build card-view card {:opts {:flipped (not (:rezzed card))}})
+             (when (and (not central-view) is-first)
+               (om/build label content {:opts opts}))]))]]))))
 
 (defmulti board-view #(get-in % [:player :identity :side]))
 
@@ -875,37 +881,37 @@
           s (:server run)
           server-type (first s)]
       [:div.corp-board {:class (when (= (:side @game-state) :runner) "opponent")}
-       (om/build server-view {:server (:archives servers) :central true
-                              :run (when (= server-type "archives") run)})
-       (om/build server-view {:server (:rd servers) :central true
-                              :run (when (= server-type "rd") run)})
-       (om/build server-view {:server (:hq servers) :central true
+       (for [server (reverse (get-remotes servers))
+             :let [num (remote->num (first server))]]
+         (om/build server-view {:server (second server)
+                                :run (when (= server-type (str "remote" num)) run)}
+                               {:opts {:name (remote->name (first server))}}))
+       (om/build server-view {:server (:hq servers)
+                              :central-view (om/build identity-view player)
                               :run (when (= server-type "hq") run)})
-       (for [server (get-remotes servers)]
-         (let [num (remote->num (first server))]
-           (om/build server-view {:server (second server)
-                                  :run (when (= server-type (str "remote" num)) run)}
-                                 {:opts {:name (remote->name (first server))}})))]))))
+       (om/build server-view {:server (:rd servers)
+                              :central-view (om/build deck-view player)
+                              :run (when (= server-type "rd") run)})
+       (om/build server-view {:server (:archives servers)
+                              :central-view (om/build discard-view player)
+                              :run (when (= server-type "archives") run)})]))))
 
-(defmethod board-view "Runner" [{:keys [player run]}]
+(defmethod board-view "Runner" [{:keys [player run opponent]}]
   (om/component
    (sab/html
-    [:div.runner-board {:class (when-not (= (:side @game-state) :runner) "opponent")}
-     (for [zone [:program :hardware :resource :facedown]]
-       [:div (for [c (zone (:rig player))]
-               [:div.card-wrapper {:class (when (playable? c) "playable")}
-                (om/build card-view c)])])])))
-
-(defn zones [{:keys [player remotes]} cursor]
-  (om/component
-   (sab/html
-    [:div.dashboard
-     (om/build hand-view {:player player :remotes remotes})
-     (om/build discard-view player)
-     (om/build deck-view player)
-     [:div.panel.blue-shade.identity
-      {:class (when (> (count (get-in player [:servers :hq :content])) 0) "shift")}
-      (om/build card-view (:identity player))]])))
+    (let [centrals (sab/html
+                    [:div.runner-centrals
+                     (om/build discard-view player)
+                     (om/build deck-view player)
+                     (om/build identity-view player)])]
+      [:div.runner-board {:class (when-not (= (:side @game-state) :runner) "opponent")}
+       (when opponent centrals)
+       (for [zone [:program :hardware :resource :facedown]]
+         [:div
+          (for [c (zone (:rig player))]
+            [:div.card-wrapper {:class (when (playable? c) "playable")}
+             (om/build card-view c)])])
+       (when (not opponent) centrals)]))))
 
 (defn cond-button [text cond f]
   (sab/html
@@ -942,7 +948,7 @@
   ;; Remember the most recent sfx id as last played so we don't repeat it later
   (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id}))
 
-(defn gameboard [{:keys [side gameid active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
+(defn gameboard [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 turn] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -994,10 +1000,12 @@
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
-            [:div.mainpane
-             (om/build zones {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})
-             [:div.centralpane
-              [:div.leftpane
+            [:div.leftpane
+             [:div.opponent
+              (om/build hand-view {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})]
+
+             [:div.inner-leftpane
+              [:div.left-inner-leftpane
                [:div
                 (om/build stats-view opponent)
                 (om/build scored-view opponent)]
@@ -1005,7 +1013,7 @@
                 (om/build scored-view me)
                 (om/build stats-view me)]]
 
-              [:div.secondary-pane
+              [:div.right-inner-leftpane
                [:div
                 (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
                 (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
@@ -1127,13 +1135,14 @@
                                                                 (pos? (:tag opponent))))
                                       #(send-command "trash-resource")))
                        (cond-button "Draw" (pos? (:click me)) #(send-command "draw"))
-                       (cond-button "Gain Credit" (pos? (:click me)) #(send-command "credit"))]))])]
+                       (cond-button "Gain Credit" (pos? (:click me)) #(send-command "credit"))]))])]]
 
-              [:div.board
-               (om/build board-view {:player opponent :run run})
-               (om/build board-view {:player me :run run})]]
              [:div.me
-              (om/build zones {:player me :remotes (get-remotes (get-in cursor [:corp :servers]))})]]
+              (om/build hand-view {:player me :remotes (get-remotes (get-in cursor [:corp :servers]))})]]
+             [:div.centralpane
+              (om/build board-view {:player opponent :run run :opponent true})
+              (om/build board-view {:player me :run run})]
+
             [:div.rightpane {}
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
