@@ -56,6 +56,7 @@
                   :pretty-print false
                   :externs ["src/cljs/externs/extras.js"
                             "src/cljs/externs/$.js"
+                            "src/cljs/externs/howler.js"
                             "src/cljs/externs/io.js"
                             "src/cljs/externs/marked.js"
                             "src/cljs/externs/moment.js"
