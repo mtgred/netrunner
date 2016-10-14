@@ -332,7 +332,7 @@ passport.use new LocalStrategy (username, password, done) ->
     bcrypt.compare password, user.password, (err, valid) ->
     	return done(err) if err
     	return done(null, false) if not valid
-    	done(null, {username: user.username, emailhash: user.emailhash, _id: user._id})
+    	done(null, {username: user.username, emailhash: user.emailhash, background: user.background, _id: user._id})
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
@@ -482,6 +482,14 @@ app.post '/reset/:token', (req, res) ->
   ], (err) ->
     throw err if err
     res.redirect('/')
+
+app.post '/update-profile', (req, res) ->
+  if req.user
+    db.collection('users').update {username: req.user.username}, {$set: {background: req.body.background}}, (err) ->
+      console.log(err) if err
+      res.send {message: 'OK', background: req.body.background}, 200
+  else
+    res.send {message: 'Unauthorized'}, 401
 
 hashPassword = (password, cb) ->
   bcrypt.hash password, 10, cb
