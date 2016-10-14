@@ -330,9 +330,11 @@ passport.use new LocalStrategy (username, password, done) ->
   db.collection('users').findOne {username: RegExp("^#{username}$", "i")}, (err, user) ->
     return done(err) if err or not user
     bcrypt.compare password, user.password, (err, valid) ->
-    	return done(err) if err
-    	return done(null, false) if not valid
-    	done(null, {username: user.username, emailhash: user.emailhash, background: user.background, _id: user._id})
+      return done(err) if err
+      return done(null, false) if not valid
+      if not user.options then user.options = {}
+      done(null, {username: user.username, emailhash: user.emailhash, _id: user._id,\
+        isadmin: user.isadmin, options: {enablesounds: user.options.enablesounds, background: user.options.background }})
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
@@ -340,7 +342,9 @@ passport.serializeUser (user, done) ->
 passport.deserializeUser (id, done) ->
   db.collection('users').findById id, (err, user) ->
     console.log err if err
-    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special, isadmin: user.isadmin})
+    if not user.options then user.options = {}
+    done(err, {username: user.username, emailhash: user.emailhash, _id: user._id, special: user.special,\
+      isadmin: user.isadmin, options: {enablesounds: user.options.enablesounds, background: user.options.background}})
 
 # Routes
 app.options('*', cors())
@@ -485,9 +489,11 @@ app.post '/reset/:token', (req, res) ->
 
 app.post '/update-profile', (req, res) ->
   if req.user
-    db.collection('users').update {username: req.user.username}, {$set: {background: req.body.background}}, (err) ->
-      console.log(err) if err
-      res.send {message: 'OK', background: req.body.background}, 200
+    db.collection('users').update {username: req.user.username}, {$set: {options: {background: req.body.background,\
+      enablesounds: req.body.enablesounds}}}, \
+      (err) ->
+        console.log(err) if err
+        res.send {message: 'OK', background: req.body.background, enablesounds: req.body.enablesounds}, 200
   else
     res.send {message: 'Unauthorized'}, 401
 
