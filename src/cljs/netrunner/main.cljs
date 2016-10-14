@@ -8,7 +8,7 @@
             [netrunner.gamelobby :as gamelobby])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/about"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/about" "/account"])
 
 (def history (Html5History.))
 
@@ -33,7 +33,8 @@
                  ["Deck Builder" "/deckbuilder" 2]
                  ["Play" "/play" 3]
                  ["Help" "/help" 4]
-                 ["About" "/about" 5]]]
+                 ["About" "/about" 5]
+                 ["My Account" "/account" 5]]]
        (let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
@@ -66,4 +67,3 @@
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
-

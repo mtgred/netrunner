@@ -1000,7 +1000,7 @@
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
-            [:div.leftpane
+            [:div.leftpane {:class (:background (:user @app-state))}]
              [:div.opponent
               (om/build hand-view {:player opponent :remotes (get-remotes (get-in cursor [:corp :servers]))})]
 
