@@ -34,7 +34,7 @@
                  ["Play" "/play" 3]
                  ["Help" "/help" 4]
                  ["About" "/about" 5]
-                 ["My Account" "/account" 5]]]
+                 ["My Account" "/account" 6]]]
        (let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
