@@ -27,6 +27,7 @@ The implementation of the game rules is in progress. About 95% of the cards are 
 * MongoDB
 * Coffeescript
 * Bower
+* Zero MQ
 
 
 ## Installation
