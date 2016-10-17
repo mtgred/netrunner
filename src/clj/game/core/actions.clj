@@ -341,12 +341,13 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (let [cost-bonus (get-in @state [:bonus :run-cost])]
+  (let [cost-bonus (get-in @state [:bonus :run-cost])
+        click-cost-bonus (get-in @state [:bonus :click-run-cost])]
     (when (and (not (get-in @state [:runner :register :cannot-run]))
                (can-run-server? state server)
-               (can-pay? state :runner "a run" :click 1 cost-bonus))
+               (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (run state side server)
-      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus)]
+      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))))))
 
