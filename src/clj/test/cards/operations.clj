@@ -1004,6 +1004,56 @@
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")))
 
+(deftest service-outage-runner-turn-first-run
+  ;; Service Outage - Works when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
+                                                       (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 3)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
+    (is (find-card "Service Outage" (:current (get-corp)))
+        "Service Outage is in play")
+
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (run-on state :archives)
+    (is (= 0 (:credit (get-runner)))
+        "Runner spends 1 additional credit to make a run")))
+
+(deftest service-outage-runner-turn-second-run
+  ;; Service Outage - Doesn't fire if already run when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
+                                                       (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (run-on state :hq)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+
+    (core/gain state :runner :credit 3)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
+    (is (find-card "Service Outage" (:current (get-corp)))
+        "Service Outage is in play")
+
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (run-on state :archives)
+    (is (= 1 (:credit (get-runner)))
+        "Runner doesn't spend 1 additional credit to make a run")))
+
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements
   (do-game

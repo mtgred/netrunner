@@ -826,17 +826,24 @@
             :effect (effect (tag-runner :runner 1))}}
 
    "Service Outage"
-   (let [remove-effect (req (when (:so-run-activated card)
-                              (run-cost-bonus state side [:credit -1])
-                              (update! state side (dissoc card :so-run-activated))))
-         remove-ability {:req (req (:so-run-activated card))
-                         :effect remove-effect}]
-     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
-                                    :effect (effect (update! (assoc card :so-run-activated true))
-                                                    (run-cost-bonus [:credit 1]))}
+   (let [add-effect (fn [state side card]
+                      (update! state side (assoc card :so-activated true))
+                      (run-cost-bonus state side [:credit 1]))
+         remove-effect (fn [state side card]
+                         (run-cost-bonus state side [:credit -1])
+                         (update! state side (dissoc card :so-activated)))
+         remove-ability {:req (req (:so-activated card))
+                         :effect (effect (remove-effect card))}]
+     {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+      :effect (req (when (empty? (:made-run runner-reg))
+                     (add-effect state side card)))
+      :events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+                                    :effect (effect (add-effect card))}
                :runner-turn-ends remove-ability
+               :corp-turn-ends remove-ability
                :run-ends remove-ability}
-      :leave-play remove-effect})
+      :leave-play (req (when (:so-activated card)
+                         (remove-effect state side card)))})
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
