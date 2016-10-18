@@ -292,21 +292,22 @@
                             card nil)))}}
 
    "Enhanced Login Protocol"
-   (let [add-effect (fn [state side card]
-                      (update! state side (assoc card :elp-activated true))
-                      (click-run-cost-bonus state side [:click 1]))
-         remove-effect (fn [state side card]
-                         (click-run-cost-bonus state side [:click -1])
-                         (update! state side (dissoc card :elp-activated)))
-         remove-ability {:req (req (:elp-activated card))
-                         :effect (effect (remove-effect card))}]
-     {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
-      :effect (req (when (not (:made-click-run runner-reg))
+   (letfn [(add-effect [state side card]
+             (update! state side (assoc card :elp-activated true))
+             (click-run-cost-bonus state side [:click 1]))
+           (remove-effect [state side card]
+             (click-run-cost-bonus state side [:click -1])
+             (update! state side (dissoc card :elp-activated)))]
+     {:msg (msg (when (and (= :runner (:active-player @state))
+                           (not (:made-click-run runner-reg)))
+                  "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"))
+      :effect (req (when (and (= :runner (:active-player @state))
+                              (not (:made-click-run runner-reg)))
                      (add-effect state side card)))
       :events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
                                     :effect (effect (add-effect card))}
-               :runner-turn-ends remove-ability
-               :corp-turn-ends remove-ability
+               :runner-turn-ends {:req (req (:elp-activated card))
+                                  :effect (effect (remove-effect card))}
                :run-ends {:req (req (and (:elp-activated card)
                                          (:made-click-run runner-reg)))
                           :effect (effect (remove-effect card))}}
@@ -834,13 +835,15 @@
                          (update! state side (dissoc card :so-activated)))
          remove-ability {:req (req (:so-activated card))
                          :effect (effect (remove-effect card))}]
-     {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
-      :effect (req (when (empty? (:made-run runner-reg))
+     {:msg (msg (when (and (= :runner (:active-player @state))
+                           (empty? (:made-run runner-reg)))
+             "add an additional cost of 1 [Credit] to make the first run this turn"))
+      :effect (req (when (and (= :runner (:active-player @state))
+                              (empty? (:made-run runner-reg)))
                      (add-effect state side card)))
       :events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
                                     :effect (effect (add-effect card))}
                :runner-turn-ends remove-ability
-               :corp-turn-ends remove-ability
                :run-ends remove-ability}
       :leave-play (req (when (:so-activated card)
                          (remove-effect state side card)))})
