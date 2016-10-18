@@ -193,28 +193,23 @@
                                                                  (effect-completed state side eid))}}}}}))
 
    "Director Haas Pet Project"
-   (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
-                              :show-discard true
-                              :choices {:req #(and (= (:side %) "Corp")
-                                                   (not (is-type? % "Operation"))
-                                                   (#{[:hand] [:discard]} (:zone %)))}
-                              :effect (req (corp-install state side target
-                                                         (last (get-remote-names @state))
-                                                         {:no-install-cost true})
-                                           (if (< n 2)
-                                             (continue-ability state side (dpp (inc n)) card nil)
-                                             (effect-completed state side eid card)))
-                              :msg (msg (corp-install-msg target))})]
-     {:optional {:prompt "Create a new remote server?"
-                 :yes-ability {:prompt "Select a card to install"
-                               :show-discard true
-                               :choices {:req #(and (= (:side %) "Corp")
-                                                    (not (is-type? % "Operation"))
-                                                    (#{[:hand] [:discard]} (:zone %)))}
-                               :effect (req (corp-install state side target "New remote"
-                                                          {:no-install-cost true})
-                                            (continue-ability state side (dhelper 1) card nil))
-                               :msg "create a new remote server, installing cards at no cost"}}})
+   (letfn [(install-ability [server-name n]
+             {:prompt "Select a card to install"
+              :show-discard true
+              :choices {:req #(and (= (:side %) "Corp")
+                                   (not (is-type? % "Operation"))
+                                   (#{[:hand] [:discard]} (:zone %)))}
+              :effect (req (corp-install state side target server-name {:no-install-cost true})
+                           (if (< n 2)
+                             (continue-ability state side
+                                               (install-ability (last (get-remote-names @state)) (inc n))
+                                               card nil)
+                             (effect-completed state side eid card)))
+              :msg (msg (if (pos? n)
+                          (corp-install-msg target)
+                          "create a new remote server, installing cards from HQ or Archives, ignoring all install costs"))})]
+     {:optional {:prompt "Install cards in a new remote server?"
+                 :yes-ability (install-ability "New remote" 0)}})
 
    "Domestic Sleepers"
    {:agendapoints-runner (req (do 0))
