@@ -96,13 +96,6 @@
   [eid result]
   (assoc eid :result result))
 
-;; Appears to be unused???
-(def reset-value
-  {:corp {:credit 5 :bad-publicity 0
-          :hand-size-base 5 :hand-size-modification 0}
-   :runner {:credit 5 :run-credit 0 :link 0 :memory 4
-            :hand-size-base 5 :hand-size-modification 0}})
-
 (defn mulligan
   "Mulligan starting hand."
   [state side args]
