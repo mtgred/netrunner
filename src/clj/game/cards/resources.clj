@@ -953,7 +953,7 @@
                                                                   (count from) from) card nil)
                      (do (clear-wait-prompt state :corp)
                          (effect-completed state side eid card)))))
-    :leave-play (effect (mill :runner 3))}
+    :trash-effect {:effect (effect (mill :runner 3))}}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
@@ -1273,7 +1273,7 @@
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
                  :effect (effect (gain :credit 2))}]
-    :leave-play (effect (damage eid :meat 3 {:unboostable true :card card}))}
+    :trash-effect {:effect (effect (damage eid :meat 3 {:unboostable true :card card}))}}
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
