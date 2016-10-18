@@ -832,8 +832,8 @@
                   (fn [x] (assoc (server-card (:title target) (get-in @state [:runner :user]))
                             :zone [:identity])))
 
-               ;; enable-identity does not do everything that identity-init does
-               (identity-init state side (get-in @state [:runner :identity]))
+               ;; enable-identity does not do everything that init-identity does
+               (init-identity state side (get-in @state [:runner :identity]))
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary"))}
