@@ -273,13 +273,16 @@
           (if gameid
             [:button.float-left {:class "disabled"} "New game"]
             [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
-          (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
-                room-tab (fn [room roomname]
-                           [:span.roomtab
-                            (if (= room (om/get-state owner :current-room))
-                              {:class "current"}
-                              {:on-click #(om/set-state! owner :current-room room)})
-                            roomname " (" (count-games room) ")"])]
+          (letfn [(count-games [room]
+                    (count (filter #(= room (:room %)) games)))
+                  (count-pending-games [room]
+                    (count (filter #(and (= room (:room %)) (not (:started %))) games)))
+                  (room-tab [room roomname]
+                    [:span.roomtab
+                     (if (= room (om/get-state owner :current-room))
+                       {:class "current"}
+                       {:on-click #(om/set-state! owner :current-room room)})
+                     roomname " (" (count-pending-games room) "/" (count-games room) ")"])]
             [:div.rooms
              (room-tab "competitive" "Competitive")
              (room-tab "casual" "Casual")])]
