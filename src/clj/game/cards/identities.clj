@@ -561,7 +561,7 @@
              {:req (req (= (:cid target) (get-in card [:null-target :cid])))
               :effect (effect (ice-strength-bonus -2 target))}
              :run-ends
-             {:effect (effect (update! (dissoc card :null-target)))}}}
+             {:effect (req (swap! state dissoc-in [:runner :identity :null-target]))}}}
 
    "Omar Keung: Conspiracy Theorist"
    {:abilities [{:cost [:click 1]
@@ -583,7 +583,7 @@
                                                  (trigger-event state :corp :no-action)
                                                  (swap! state update-in [:runner :register :successful-run] #(conj % target-server))
                                                  (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
-             :run-ends {:effect (effect (update! (dissoc card :omar-run-activated)))}}}
+             :run-ends {:effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}}}
 
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:msg "gain 1 [Credits]"
