@@ -300,11 +300,11 @@
              (update! state side (dissoc card :elp-activated)))]
      {:msg (msg (when (and (= :runner (:active-player @state))
                            (not (:made-click-run runner-reg)))
-                  "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"))
+                  "add an additional cost of [Click] to make the first run not through a card ability this turn"))
       :effect (req (when (and (= :runner (:active-player @state))
                               (not (:made-click-run runner-reg)))
                      (add-effect state side card)))
-      :events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
+      :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
                                     :effect (effect (add-effect card))}
                :runner-turn-ends {:req (req (:elp-activated card))
                                   :effect (effect (remove-effect card))}
