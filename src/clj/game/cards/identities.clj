@@ -29,22 +29,25 @@
   {"Adam: Compulsive Hacker"
    {:events {:pre-start-game
              {:req (req (= side :runner))
-              :effect (req (let [is-directive? #(has-subtype? % "Directive")
+              :delayed-completion true
+              :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
+                           (let [is-directive? #(has-subtype? % "Directive")
                                  directives (filter is-directive? (vals @all-cards))
                                  directives (map make-card directives)
                                  directives (zone :play-area directives)]
-                             ;; Add directives to :play-area - should be empty
+                             ;; Add directives to :play-area - assumed to be empty
                              (swap! state assoc-in [:runner :play-area] directives)
-                             ;; If more directives are printed this is probably where the runner gets to choose
-                             (doseq [c directives]
-                               (runner-install state side c {:no-cost true
-                                                             :custom-message (str "starts with " (:title c) " in play")}))
-                             (when (< 3 (count directives))
-                               ;; Extra directives have been added, ask player to use /rfg on the directives not used.
-                               ;; This implementation is just to make this more future proof, if extra directives are
-                               ;; actually added then a selection would be better
-                               (toast state :runner
-                                      (str "Please use /rfg to remove any directives other than the 3 you intend to start with.")))))}}}
+                             (continue-ability state side
+                                               {:prompt (str "Choose 3 starting directives")
+                                                :choices {:max 3
+                                                          :req #(and (= (:side %) "Runner")
+                                                                     (= (:zone %) [:play-area]))}
+                                                :effect (req (doseq [c targets]
+                                                               (runner-install state side c {:no-cost true
+                                                                                             :custom-message (str "starts with " (:title c) " in play")}))
+                                                             (swap! state assoc-in [:runner :play-area] [])
+                                                             (clear-wait-prompt state :corp))}
+                                               card nil)))}}}
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))

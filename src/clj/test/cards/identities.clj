@@ -5,26 +5,38 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(deftest adam-no-directives
-  ;; Test generate directives from @all-cards
+(deftest adam-directives
+  ;; Adam - Allow runner to choose directives
   (do-game
     (new-game
       (default-corp)
-      (make-deck "Adam: Compulsive Hacker" [(qty "Bank Job" 3)]))
+      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+      {:dont-start-game true})
+    (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
+    (is (= 0 (count (get-in @state [:runner :hand]))))
+    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+    (is (= 3 (count (get-in @state [:runner :rig :resource]))) "3 directives were installed")
+    (is (= 0 (count (get-in @state [:runner :play-area]))) "The play area is empty")
     (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
           sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
-          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))
-          ftt (find-card "Find the Truth" (get-in @state [:runner :rig :resource]))]
-      (is (and nat sf abr ftt) "4 directives installed")
-      (is (= 4 (count (get-in @state [:runner :rig :resource]))) "Only the directives were installed"))))
+          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
+      (is (and nat sf abr) "The chosen directives were installed"))))
 
 (deftest adam-palana
   ;; Adam - Directives should not grant Pālanā credits.
   (do-game
     (new-game
       (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
-      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 1) (qty "Safety First" 1)
-                                            (qty "Always Be Running" 1) (qty "Bank Job" 3)]))
+      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+      {:dont-start-game true})
+    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+    (prompt-choice :corp "Keep")
+    (prompt-choice :runner "Keep")
+    (core/start-turn state :corp nil)
     (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
 
 (deftest adam-advanceable-traps
@@ -32,8 +44,15 @@
   (do-game
     (new-game
       (default-corp [(qty "Cerebral Overwriter" 3)])
-      (make-deck "Adam: Compulsive Hacker" [(qty "Neutralize All Threats" 1) (qty "Safety First" 1)
-                                            (qty "Always Be Running" 1) (qty "Bank Job" 3)]))
+      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+      {:dont-start-game true})
+    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+    (prompt-choice :corp "Keep")
+    (prompt-choice :runner "Keep")
+    (core/start-turn state :corp nil)
+
     (play-from-hand state :corp "Cerebral Overwriter" "New remote")
     (advance state (get-content state :remote1 0) 2)
     (take-credits state :corp)
@@ -318,7 +337,7 @@
     (new-game
       (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
       (default-runner)
-      {:dont-start true})
+      {:dont-start-turn true})
     (prompt-choice :corp "[The Brewery~brewery]")
     (core/start-turn state :corp nil)
     (card-ability state :corp (:identity (get-corp)) 1)
