@@ -521,23 +521,27 @@
                                 :bad-publicity (Integer/parseInt target)))}
 
    "Project Ares"
-   {:silent (req true)
-    :req (req (and (> (:advance-counter card) 4) (pos? (count (all-installed state :runner)))))
-    :msg (msg (str "force the Runner to trash " (- (:advance-counter card) 4)
-                   " installed card" (when (> (- (:advance-counter card) 4) 1) "s")
-                   " and take 1 bad publicity"))
-    :delayed-completion true
-    :effect (req (show-wait-prompt state :corp "Runner to trash installed cards")
-                 (continue-ability
-                   state :runner
-                   {:prompt (msg "Choose " (- (:advance-counter card) 4) " installed card"
-                                 (when (> (- (:advance-counter card) 4) 1) "s") " to trash")
-                    :choices {:req #(and (:installed %) (= (:side %) "Runner"))
-                              :max (min (- (:advance-counter card) 4) (count (all-installed state :runner)))}
-                    :effect (final-effect (trash-cards targets)
-                                          (system-msg (str "trashes " (join ", " (map :title targets))))
-                                          (gain :corp :bad-publicity 1))} card nil)
-                 (clear-wait-prompt state :corp))}
+   (letfn [(trash-count-str [card]
+             (str (- (:advance-counter card) 4) " installed card"
+                  (when (> (- (:advance-counter card) 4) 1) "s")))]
+     {:silent (req true)
+      :req (req (and (> (:advance-counter card) 4)
+                     (pos? (count (all-installed state :runner)))))
+      :msg (msg "force the Runner to trash " (trash-count-str card) " and take 1 bad publicity")
+      :delayed-completion true
+      :effect (effect (show-wait-prompt :corp "Runner to trash installed cards")
+                      (continue-ability
+                       :runner
+                       {:prompt (msg "Select " (trash-count-str card) " installed cards to trash")
+                        :choices {:max (min (- (:advance-counter card) 4)
+                                            (count (all-installed state :runner)))
+                                  :req #(and (= (:side %) "Runner")
+                                             (:installed %))}
+                        :effect (final-effect (trash-cards targets)
+                                              (system-msg (str "trashes " (join ", " (map :title targets))))
+                                              (gain :corp :bad-publicity 1))}
+                       card nil)
+                      (clear-wait-prompt :corp))})
 
    "Project Atlas"
    {:silent (req true)
