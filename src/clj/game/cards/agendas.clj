@@ -313,21 +313,19 @@
                  :msg "gain [Click][Click]"}]}
 
    "Encrypted Portals"
-   {:msg (msg "gain " (reduce (fn [c server]
-                                (+ c (count (filter #(and (has-subtype? % "Code Gate")
-                                                          (rezzed? %)) (:ices server)))))
-                              0 (flatten (seq (:servers corp))))
-              " [Credits]")
-    :interactive (req true)
-    :effect (effect (gain :credit
-                          (reduce (fn [c server]
-                                    (+ c (count (filter #(and (has-subtype? % "Code Gate")
-                                                              (rezzed? %)) (:ices server)))))
-                                  0 (flatten (seq (:servers corp)))))
-                    (update-all-ice))
-    :swapped {:effect (req (update-all-ice state side))}
-    :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
-                                :effect (effect (ice-strength-bonus 1 target))}}}
+   (letfn [(count-code-gates [corp]
+             (reduce (fn [c server]
+                       (+ c (count (filter #(and (has-subtype? % "Code Gate")
+                                                 (rezzed? %))
+                                           (:ices server)))))
+                     0 (flatten (seq (:servers corp)))))]
+     {:msg (msg "gain " (count-code-gates corp) " [Credits] for rezzed code gates")
+      :interactive (req true)
+      :effect (effect (gain :credit (count-code-gates corp))
+                      (update-all-ice))
+      :swapped {:effect (req (update-all-ice state side))}
+      :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
+                                  :effect (effect (ice-strength-bonus 1 target))}}})
 
    "Escalate Vitriol"
    {:abilities [{:label "Gain 1 [Credit] for each Runner tag"
