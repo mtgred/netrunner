@@ -74,11 +74,11 @@ removePlayer = (socket) ->
       delete games[k]
       refreshLobby("delete", v.gameid)
 
-joinGame = (socket, gameid) ->
+joinGame = (socket, gameid, options) ->
   game = games[gameid]
   if game and game.players.length < 2
     side = if game.players.length is 1 then swapSide(game.players[0].side) else "Corp"
-    game.players.push({user: socket.request.user, id: socket.id, side: side})
+    game.players.push({user: socket.request.user, id: socket.id, side: side, options: options})
     socket.join(gameid)
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
@@ -177,7 +177,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           spectatorhands: msg.spectatorhands
           password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
           room: msg.room
-          players: [{user: socket.request.user, id: socket.id, side: msg.side}]
+          players: [{user: socket.request.user, id: socket.id, side: msg.side, options: msg.options}]
           spectators: []
         games[gameid] = game
         socket.join(gameid)
@@ -207,7 +207,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
         if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           fn("join ok")
-          joinGame(socket, msg.gameid)
+          joinGame(socket, msg.gameid, msg.options)
           socket.broadcast.to(msg.gameid).emit 'netrunner',
             type: "say"
             user: "__system__"
@@ -235,7 +235,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "reconnect"
         game = games[msg.gameid]
         if game and game.started
-          joinGame(socket, msg.gameid)
+          joinGame(socket, msg.gameid, null)
           requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} reconnected."}))
 
       when "say"
@@ -334,7 +334,7 @@ passport.use new LocalStrategy (username, password, done) ->
       return done(null, false) if not valid
       if not user.options then user.options = {}
       done(null, {username: user.username, emailhash: user.emailhash, _id: user._id,\
-        isadmin: user.isadmin, options: {enablesounds: user.options.enablesounds, background: user.options.background }})
+        isadmin: user.isadmin, options: user.options})
 
 passport.serializeUser (user, done) ->
   done(null, user._id) if user
@@ -490,10 +490,10 @@ app.post '/reset/:token', (req, res) ->
 app.post '/update-profile', (req, res) ->
   if req.user
     db.collection('users').update {username: req.user.username}, {$set: {options: {background: req.body.background,\
-      enablesounds: req.body.enablesounds, 'alt-arts': req.body['alt-arts']}}}, \
+      'alt-arts': req.body['alt-arts'], 'opponent-alt-art': req.body['opponent-alt-art']}}}, \
       (err) ->
         console.log(err) if err
-        res.send {message: 'OK', background: req.body.background, enablesounds: req.body.enablesounds, altarts: req.body['alt-arts']}, 200
+        res.send {message: 'OK', background: req.body.background, altarts: req.body['alt-arts']}, 200
   else
     res.send {message: 'Unauthorized'}, 401
 

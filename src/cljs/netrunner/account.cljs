@@ -20,13 +20,12 @@
 (defn handle-post [event owner url ref]
   (.preventDefault event)
   (om/set-state! owner :flash-message "Updating profile...")
-  (swap! app-state assoc-in [:options :enablesounds] (om/get-state owner :enablesounds))
+  (swap! app-state assoc-in [:options :sounds] (om/get-state owner :sounds))
   (swap! app-state assoc-in [:options :background] (om/get-state owner :background))
-
-  (.setItem js/localStorage "enablesounds" (om/get-state owner :enablesounds))
+  (swap! app-state assoc-in [:options :opponent-alt-art] (om/get-state owner :opponent-alt-art))
+  (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
 
   (let [params (:options @app-state)]
-    (prn params)
     (go (let [response (<! (POST url params :json))]
           (if (= (:status response) 200)
             (om/set-state! owner :flash-message "Profile updated!")
@@ -51,8 +50,9 @@
 
     om/IWillMount
     (will-mount [this]
-      (om/set-state! owner :background (get-in user [:options :background]))
-      (om/set-state! owner :enablesounds (get-in user [:options :enablesounds]))
+      (om/set-state! owner :background (get-in @app-state [:options :background]))
+      (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
+      (om/set-state! owner :opponent-alt-art (get-in @app-state [:options :opponent-alt-art]))
       (go (while true
             (let [cards (<! alt-arts-channel)]
               (om/set-state! owner :cards cards)))))
@@ -73,10 +73,9 @@
             [:h3 {:style {:margin-top "1em"}} "Sounds"]
             [:div
              [:label [:input {:type "checkbox"
-                              :name "enablesounds"
                               :value true
-                              :checked (om/get-state owner :enablesounds)
-                              :on-change #(om/set-state! owner :enablesounds (.. % -target -checked))}
+                              :checked (om/get-state owner :sounds)
+                              :on-change #(om/set-state! owner :sounds (.. % -target -checked))}
                       "Enable sounds"]]]
             [:h3 {:style {:margin-top "1em"}} "Game board background"]
             (for [option [{:name "Beanstalk"      :ref "home-bg"}
@@ -93,13 +92,22 @@
                                 :checked (= (om/get-state owner :background) (:ref option))}]
                 (:name option)]])
 
+            [:h3 {:style {:margin-top "1em"}} "Alt arts"]
+            [:div
+             [:label [:input {:type "checkbox"
+                              :name "opponent-alt-art"
+                              :checked (om/get-state owner :opponent-alt-art)
+                              :on-change #(om/set-state! owner :opponent-alt-art (.. % -target -checked))}]
+              "Show opponent's alternate card arts"]]
+
             (when (or (:special user) true) ; temporarily showing to all users on test server
-              [:div [:h3 {:style {:margin-top "1em"}} "Alt arts"]
+              [:div {:style {:margin-top "10px"}}
+               [:h4 "My alternate card arts"]
                [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
-                                         (om/set-state! owner :alt-card-version
-                                                        (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))] "default")))}
-                (for [card (sort-by :title (vals (:alt-arts @app-state)))]
-                  [:option {:value (:code card)} (:title card)])]
+                                              (om/set-state! owner :alt-card-version
+                                                             (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))] "default")))}
+                     (for [card (sort-by :title (vals (:alt-arts @app-state)))]
+                       [:option {:value (:code card)} (:title card)])]
 
                [:div
                 (for [version (get-in @app-state [:alt-arts (om/get-state owner :alt-card) :versions])]
@@ -111,8 +119,7 @@
                                              :value version
                                              :on-change #(do (om/set-state! owner :alt-card-version (.. % -target -value))
                                                              (swap! app-state update-in [:options :alt-arts]
-                                                                    assoc (keyword (om/get-state owner :alt-card)) (.. % -target -value))
-                                                             (prn (get-in @app-state [:options :alt-arts])))
+                                                                    assoc (keyword (om/get-state owner :alt-card)) (.. % -target -value)))
                                              :checked (= (om/get-state owner :alt-card-version) version)}]
                              (alt-art-name version)]]]
                      [:div

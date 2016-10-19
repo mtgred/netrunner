@@ -6,13 +6,21 @@
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
+            [netrunner.cardbrowser :refer [add-symbols] :as cb]
             [differ.core :as differ]
             [om.dom :as dom]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
+
+(defn image-url
+  [{:keys [side code] :as card} player]
+  (let [version (if (and (not= (:side @game-state) (keyword (lower-case side)))
+                         (not (get-in @app-state [:options :opponent-alt-art])))
+                  "default"
+                  (get-in @game-state [player :user :options :alt-arts (keyword (:code card))] "default"))]
+    (str "/img/cards/" (:code card) (when-not (= version "default") (str "-" version)) ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -480,7 +488,7 @@
       [:div.card-frame
        [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
-        (when-let [url (image-url cursor)]
+        (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
           [:div
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
@@ -514,7 +522,7 @@
                                                 (put! zoom-channel cursor))
                               :on-mouse-leave #(put! zoom-channel false)
                               :on-click #(handle-card-click @cursor owner)}
-        (when-let [url (image-url cursor)]
+        (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
           (if (or (not code) flipped facedown)
             [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
             [:div

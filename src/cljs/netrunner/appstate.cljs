@@ -4,7 +4,8 @@
   (atom {:active-page "/"
          :user (js->clj js/user :keywordize-keys true)
          :options (merge {:background "lobby-bg"
-                          :enablesounds (let [sounds (js->clj (.getItem js/localStorage "enablesounds"))]
+                          :opponent-alt-art true
+                          :enablesounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
                                           (if (nil? sounds) true sounds))}
                          (:options (js->clj js/user :keywordize-keys true)))
          :cards [] :sets [] :mwl []
