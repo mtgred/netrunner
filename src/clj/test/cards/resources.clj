@@ -1480,7 +1480,7 @@
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Tri-maf Contact" 2) (qty "Cache" 3)]))
+              (default-runner [(qty "Tri-maf Contact" 1) (qty "Cache" 3) (qty "Shiv" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Tri-maf Contact")
     (let [tmc (get-resource state 0)]
@@ -1489,8 +1489,13 @@
       (is (= 2 (:click (get-runner))) "Spent 1 click")
       (card-ability state :runner tmc 0)
       (is (= 5 (:credit (get-runner))) "No credits gained; already used this turn")
+      (core/move state :runner tmc :hand)
+      (is (= 5 (count (:hand (get-runner)))) "No meat damage")
+      (play-from-hand state :runner "Tri-maf Contact")
+      (core/gain state :runner :tag 1)
       (take-credits state :runner)
-      (core/trash state :runner tmc)
+      (core/trash-resource state :corp nil)
+      (prompt-select :corp (get-resource state 0))
       (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
 
 (deftest virus-breeding-ground-gain

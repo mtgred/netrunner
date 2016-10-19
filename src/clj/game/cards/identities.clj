@@ -232,8 +232,7 @@
                                                    {:prompt "Choose a bioroid to rez" :player :corp
                                                     :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
                                                     :msg (msg "rez " (:title target))
-                                                    :cancel-effect (effect (clear-wait-prompt :runner)
-                                                                           (effect-completed))
+                                                    :cancel-effect (final-effect (clear-wait-prompt :runner))
                                                     :effect (effect (rez-cost-bonus -4)
                                                                     (rez target)
                                                                     (clear-wait-prompt :runner))}
