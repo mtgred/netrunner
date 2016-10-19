@@ -79,8 +79,7 @@
 (defn server-card
   ([title] (@all-cards title))
   ([title user]
-   (let [c (@all-cards title)]
-     (or (when (:special user) (@all-cards-alt title)) c))))
+   (@all-cards title)))
 
 (defn make-card
   "Makes a proper card from an @all-cards card"
