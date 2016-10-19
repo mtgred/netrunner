@@ -93,7 +93,7 @@
                                 :checked (= (om/get-state owner :background) (:ref option))}]
                 (:name option)]])
 
-            (when (:special user)
+            (when (or (:special user) true) ; temporarily showing to all users on test server
               [:div [:h3 {:style {:margin-top "1em"}} "Alt arts"]
                [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
                                          (om/set-state! owner :alt-card-version
