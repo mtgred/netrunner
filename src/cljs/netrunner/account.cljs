@@ -8,14 +8,16 @@
             [netrunner.ajax :refer [POST GET]]))
 
 (def alt-arts-channel (chan))
-(go (let [cards (->> (<! (GET "/data/altarts"))
+(defn load-alt-arts []
+  (go (let [cards (->> (<! (GET "/data/altarts"))
                      :json
                      (filter :versions)
                      (map #(update-in % [:versions] conj "default"))
                      (map #(assoc % :title (some (fn [c] (when (= (:code c) (:code %)) (:title c))) (:cards @app-state))))
                      (into {} (map (juxt :code identity))))]
-      (swap! app-state assoc :alt-arts cards)
-      (put! alt-arts-channel cards)))
+        (swap! app-state assoc :alt-arts cards)
+        (put! alt-arts-channel cards))))
+(load-alt-arts)
 
 (defn handle-post [event owner url ref]
   (.preventDefault event)
@@ -108,6 +110,8 @@
                                                              (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))] "default")))}
                      (for [card (sort-by :title (vals (:alt-arts @app-state)))]
                        [:option {:value (:code card)} (:title card)])]
+               (when (empty? (:alt-arts @app-state))
+                 [:span.fake-link {:style {:margin-left "5px"} :on-click #(load-alt-arts)} "Reload"])
 
                [:div
                 (for [version (get-in @app-state [:alt-arts (om/get-state owner :alt-card) :versions])]
