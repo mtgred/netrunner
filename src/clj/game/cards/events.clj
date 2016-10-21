@@ -324,7 +324,7 @@
                                        (let [n (Integer/parseInt target)]
                                          {:choices {:req #(and (contains? % :advance-counter)
                                                                (= (:server run) (vec (rest (butlast (:zone %))))))}
-                                          :msg (msg "remove " n " advancement " (pluralize "token" n)
+                                          :msg (msg "remove " (quantify n "advancement token")
                                                     " from " (card-str state target))
                                           :effect (req (add-prop state :corp target :advance-counter (- n))
                                                        (swap! state update-in [:runner :prompt] rest)
@@ -483,10 +483,21 @@
                              (do-access state side eid (:server run))))}}}
 
    "Independent Thinking"
-   (let [cards-to-draw (fn [ts] (* (count ts) (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) ts) 2 1)))]
-     {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
-      :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
-      :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
+   (letfn [(cards-to-draw [targets]
+             (* (count targets)
+                (if (some #(and (not (facedown? %))
+                                (has-subtype? % "Directive"))
+                          targets)
+                  2
+                  1)))]
+     {:choices {:max 5
+                :req #(and (= (:side %) "Runner")
+                           (:installed %))}
+      :effect (effect (trash-cards targets)
+                      (draw :runner (cards-to-draw targets)))
+      :msg (msg (let [m (count targets)
+                      n (cards-to-draw targets)]
+                  (str "trash " (quantify m "card") " and draw " (quantify n "card"))))})
 
    "Indexing"
    {:delayed-completion true

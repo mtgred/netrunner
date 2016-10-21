@@ -525,8 +525,7 @@
 
    "Project Ares"
    (letfn [(trash-count-str [card]
-             (str (- (:advance-counter card) 4) " installed card"
-                  (when (> (- (:advance-counter card) 4) 1) "s")))]
+             (quantify (- (:advance-counter card) 4) "installed card"))]
      {:silent (req true)
       :req (req (and (> (:advance-counter card) 4)
                      (pos? (count (all-installed state :runner)))))

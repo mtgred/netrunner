@@ -42,8 +42,8 @@
      (when-completed
        (trigger-event-simult
          state :runner :agenda-stolen
-         {:first-ability {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains " points
-                                                                      " agenda point" (when (> points 1) "s")))
+         {:first-ability {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
+                                                                      (quantify points "agenda point")))
                                        (swap! state update-in [:runner :register :stole-agenda]
                                               #(+ (or % 0) (:agendapoints c)))
                                        (gain-agenda-point state :runner points)

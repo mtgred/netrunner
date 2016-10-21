@@ -491,8 +491,8 @@
                                     m (count (filter #(not (:seen %)) targets))]
                                 (str (join ", " (map :title seen))
                                      (when (pos? m)
-                                       (str (when-not (empty? seen) " and ") m " card"
-                                            (when (> m 1) "s")))))
+                                       (str (when-not (empty? seen) " and ")
+                                            (quantify m "unseen card")))))
                               " into R&D")
                     :effect (req (doseq [c targets] (move state side c :deck))
                                  (shuffle! state side :deck))}

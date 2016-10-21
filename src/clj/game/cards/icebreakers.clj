@@ -75,14 +75,15 @@
 
 (defn- break-sub
   "Creates a break subroutine ability.
-  If num = 0 then any number of subs are broken."
-  ([cost num] (break-sub cost num nil))
-  ([cost num subtype] (break-sub cost num subtype nil))
-  ([cost num subtype effect]
-   {:msg (str "break " (when (> num 1) "up to ")
-              (if (pos? num) num "any number of")
+  If n = 0 then any number of subs are broken."
+  ([cost n] (break-sub cost n nil))
+  ([cost n subtype] (break-sub cost n subtype nil))
+  ([cost n subtype effect]
+   {:msg (str "break "
+              (when (> n 1) "up to ")
+              (if (pos? n) n "any number of")
               (when subtype (str " " subtype))
-              " subroutine" (when-not (= num 1) "s"))
+              (pluralize " subroutine" n))
     :cost [:credit cost]
     :effect effect}))
 
@@ -491,8 +492,8 @@
                  :choices :credit
                  :prompt "How many credits?"
                  :effect (effect (pump card target))
-                 :msg (msg "increase strength by " target " and break " target " Barrier subroutine"
-                           (when (not= target 1) "s"))}]
+                 :msg (msg "increase strength by " target " and break "
+                           (quantify target "Barrier subroutine"))}]
     :events {:rez install
              :approach-ice install
              :run install}})

@@ -431,9 +431,10 @@
                  :req (req (not (empty? (:hosted card))))
                  :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
                                 (gain-agenda-point state :runner (get-agenda-points state :runner c))))
-                 :msg (msg (let [c (first (:hosted card))]
-                             (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
-                                  " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
+                 :msg (msg (let [c (first (:hosted card))
+                                 n (get-agenda-points state :runner c)]
+                             (str "add " (:title c) " to their score area and gain " n
+                                  (quantify n "agenda point"))))}]}
 
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
@@ -457,8 +458,10 @@
    "Gang Sign"
    {:events {:agenda-scored {:delayed-completion true
                              :interactive (req true)
-                             :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
-                                       (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
+                             :msg (msg "access "
+                                       (quantify (get-in @state [:runner :hq-access])
+                                                 "card")
+                                       " from HQ")
                              :effect (req (let [from-hq (access-count state side :hq-access)]
                                             (continue-ability
                                               state side
@@ -820,12 +823,13 @@
                                       :msg "shuffle their Stack"
                                       :effect (req (trigger-event state side :searched-stack nil)
                                                    (shuffle! state :runner :deck)
-                                                   (doseq [c (take (int target) cards)]
+                                                   (doseq [c (take target cards)]
                                                      (trash state side c {:unpreventable true}))
-                                                   (when (> (int target) 0)
-                                                     (system-msg state side (str "trashes " (int target)
-                                                                                 " cop" (if (> (int target) 1) "ies" "y")
-                                                                                 " of " title))))}}}))]
+                                                   (when (pos? target)
+                                                     (system-msg state side
+                                                                 (str "trashes "
+                                                                      (quantify target "cop" "y" "ies")
+                                                                      " of " title))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
                                 :delayed-completion true
                                 :effect (effect (continue-ability

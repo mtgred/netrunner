@@ -105,8 +105,8 @@
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]
-         (system-msg state (other-side side) (str "prevents " prevented " card"
-                                                  (when (> prevented 1) "s")
+         (system-msg state (other-side side) (str "prevents "
+                                                  (quantify prevented "card")
                                                   " from being drawn")))))))
 
 ;;; Damage
@@ -247,7 +247,7 @@
 (defn resolve-tag [state side n args]
   (when (pos? n)
     (gain state :runner :tag n)
-    (toast state :runner (str "Took " n " tag" (when (> n 1) "s") "!") "info")
+    (toast state :runner (str "Took " (quantify n "tag") "!") "info")
     (trigger-event state side :runner-gain-tag n)))
 
 (defn tag-runner

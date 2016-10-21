@@ -82,7 +82,7 @@
                                  n (:advance-counter agg 0)
                                  ab (-> trash-program
                                         (assoc-in [:choices :max] n)
-                                        (assoc :prompt (msg "Choose " n " program" (when (> n 1) "s") " to trash")
+                                        (assoc :prompt (msg "Choose " (quantify n "program") " to trash")
                                                :delayed-completion true
                                                :effect (effect (trash-cards eid targets nil))
                                                :msg (msg "trash " (join ", " (map :title targets)))))]
@@ -91,26 +91,28 @@
    "Alexa Belsky"
    {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
                  :effect (req (trash state side card)
-                              (do (show-wait-prompt state :corp "Runner to decide whether or not to prevent Alexa Belsky")
-                                  (resolve-ability
-                                    state side
-                                    {:prompt "How many credits?"
-                                     :choices :credit :player :runner
-                                     :msg (msg "shuffle " (- (count (:hand corp)) (quot target 2)) " card"
-                                               (when-not (= 1 (- (count (:hand corp)) (quot target 2))) "s")
-                                               " in HQ into R&D")
-                                     :effect (req (if (pos? (quot target 2))
-                                                    (do (doseq [c (take (- (count (:hand corp)) (quot target 2))
-                                                                        (shuffle (:hand corp)))]
-                                                          (move state :corp c :deck))
-                                                        (shuffle! state :corp :deck)
-                                                        (system-msg state :runner
-                                                                    (str "pays " target " [Credits] to prevent "
-                                                                         (quot target 2) " random card"
-                                                                         (when (> (quot target 2) 1) "s")
-                                                                         " in HQ from being shuffled into R&D")))
-                                                    (shuffle-into-deck state :corp :hand))
-                                                  (clear-wait-prompt state :corp))} card nil)))}]}
+                              (show-wait-prompt state :corp "Runner to decide whether or not to prevent Alexa Belsky")
+                              (resolve-ability
+                               state side
+                               {:player :runner
+                                :prompt "Choose how many credits to pay to prevent Alexa Belsky"
+                                :choices :credit
+                                :msg (msg "shuffle "
+                                          (quantify (- (count (:hand corp)) (quot target 2)) "card")
+                                          " in HQ into R&D")
+                                :effect (req (if (pos? (quot target 2))
+                                               (let [n (quot target 2)]
+                                                 (doseq [c (take (- (count (:hand corp)) n)
+                                                                 (shuffle (:hand corp)))]
+                                                     (move state :corp c :deck))
+                                                 (shuffle! state :corp :deck)
+                                                 (system-msg state :runner
+                                                             (str "pays " target " [Credits] to prevent "
+                                                                  (quantify n "random card")
+                                                                  " in HQ from being shuffled into R&D")))
+                                               (shuffle-into-deck state :corp :hand))
+                                             (clear-wait-prompt state :corp))}
+                               card nil))}]}
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
@@ -321,8 +323,8 @@
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (continue-ability
                                state side
-                               {:prompt (str "Select " dbs " card" (when (> dbs 1) "s") " to add to the bottom of R&D")
-                                :msg (msg "add " dbs " card" (when (> dbs 1) "s") " to the bottom of R&D")
+                               {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
+                                :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                 :choices {:max dbs
                                           :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
                                 :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
@@ -473,8 +475,8 @@
 
    "Ghost Branch"
    (advance-ambush 0 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
-                      :msg (msg "give the Runner " (:advance-counter (get-card state card) 0) " tag"
-                                (when (> (:advance-counter (get-card state card) 0) 1) "s"))
+                      :msg (msg "give the Runner "
+                                (quantify (:advance-counter (get-card state card) 0) "tag"))
                       :effect (effect (tag-runner :runner (:advance-counter (get-card state card) 0)))})
 
    "GRNDL Refinery"
@@ -718,12 +720,12 @@
                  :once :per-turn
                  :once-key :museum-of-history
                  :msg (msg "shuffle "
-                           (let [seen (filter :seen targets)]
+                           (let [seen (filter :seen targets)
+                                 n (count (filter #(not (:seen %)) targets))]
                              (str (join ", " (map :title seen))
-                                  (let [n (count (filter #(not (:seen %)) targets))]
-                                    (when (pos? n)
-                                      (str (when-not (empty? seen) " and ") n " card"
-                                           (when (> n 1) "s"))))))
+                                  (when (pos? n)
+                                    (str (when-not (empty? seen) " and ")
+                                         (quantify n "card")))))
                            " into R&D")
                  :effect (req (doseq [c targets] (move state side c :deck))
                               (shuffle! state side :deck))}]}

@@ -537,7 +537,7 @@
                     state side
                     {:prompt "How many copies?"
                      :choices {:number (req (count cs))}
-                     :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
+                     :msg (msg "add " (quantify target "cop" "y" "ies") " of " c " to HQ")
                      :effect (req (shuffle! state :corp :deck)
                                   (doseq [c (take target cs)]
                                     (move state side c :hand)))}
@@ -746,8 +746,8 @@
                                      {:prompt (str "Choose how many copies of "
                                                    title " to reveal")
                                       :choices {:number (req n)}
-                                      :msg (msg "reveal " target
-                                                " cop" (if (= 1 target) "y" "ies")
+                                      :msg (msg "reveal "
+                                                (quantify target "cop" "y" "ies")
                                                 " of " title
                                                 " from Archives"
                                                 (when (pos? target)
@@ -803,8 +803,9 @@
                       :choices {:max n
                                 :req #(and (= (:side %) "Corp")
                                            (in-hand? %))}
-                      :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
-                                " and gain " (* 2 (count targets)) " [Credits]")
+                      :msg (msg (let [m (count targets)]
+                                  (str "trash " (quantify m "card")
+                                       " and gain " (* 2 m) " [Credits]")))
                       :effect (effect (trash-cards targets)
                                       (gain :credit (* 2 (count targets))))} card nil)))}
 
