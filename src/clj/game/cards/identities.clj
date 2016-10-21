@@ -303,7 +303,7 @@
                                              (turn-events state side :pass-ice)))))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
-                                {:prompt "Choose a bioroid to rez" :player :corp
+                                {:prompt "Choose a Bioroid to rez" :player :corp
                                  :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
                                  :msg (msg "rez " (:title target))
                                  :cancel-effect (final-effect (clear-wait-prompt :runner))
@@ -614,7 +614,7 @@
    "Nero Severn: Information Broker"
    {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
                  :once :per-turn
-                 :msg "jack out when encountering a sentry"
+                 :msg "jack out when encountering a Sentry"
                  :effect (effect (jack-out nil))}]}
 
    "New Angeles Sol: Your News"
@@ -703,7 +703,7 @@
                            :effect (effect (gain :corp :credit 1))}}}
 
    "Quetzal: Free Spirit"
-   {:abilities [{:once :per-turn :msg "break 1 barrier subroutine"}]}
+   {:abilities [{:once :per-turn :msg "break 1 Barrier subroutine"}]}
 
    "Reina Roja: Freedom Fighter"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
@@ -714,7 +714,7 @@
    "Rielle \"Kit\" Peddler: Transhuman"
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed (get-card state current-ice))))
-                 :once :per-turn :msg (msg "make " (:title current-ice) " gain code gate until the end of the run")
+                 :once :per-turn :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
                  :effect (req (let [ice current-ice
                                     stypes (:subtype ice)]
                                 (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
@@ -769,7 +769,7 @@
                           (empty? (filter #(has-subtype? % "Advertisement")
                                           (flatten (turn-events state :corp :rez))))))
            :effect (effect (lose :runner :credit 1))
-           :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
+           :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 
    "Steve Cambridge: Master Grifter"
    {:events {:successful-run
