@@ -288,3 +288,13 @@
     (if-not (empty? left)
       (remove-subtypes-once part left)
       part)))
+
+(defn pluralize
+  "Makes a string plural based on the number n. Takes specific suffixes for singular and plural cases if necessary."
+  ([string n] (pluralize string "s" n))
+  ([string suffix n] (pluralize string "" suffix n))
+  ([string single-suffix plural-suffix n]
+   (if (or (= 1 n)
+           (= -1 n))
+     (str string single-suffix)
+     (str string plural-suffix))))
