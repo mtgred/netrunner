@@ -75,14 +75,14 @@
 (defn costs-to-symbol
   "Used during steal to print runner prompt for payment"
   [costs]
-  (clojure.string/join ", " (map #(let [key (first %) value (last %)]
-                                   (case key
-                                     :credit (str value " [Credits]")
-                                     :click (reduce str (for [i (range value)] "[Click]"))
-                                     :net-damage (str value " net damage")
-                                     :mill (str value " card mill")
-                                     :hardware (str value " installed hardware")
-                                     (str value (str key)))) (partition 2 (flatten costs)))))
+  (join ", " (map #(let [key (first %) value (last %)]
+                     (case key
+                       :credit (str value " [Credits]")
+                       :click (reduce str (for [i (range value)] "[Click]"))
+                       :net-damage (str value " net damage")
+                       :mill (str value " card mill")
+                       :hardware (str value " installed hardware")
+                       (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))
@@ -102,7 +102,7 @@
       (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
   (catch Exception e nil)))
 
-(def safe-split (fnil clojure.string/split ""))
+(def safe-split (fnil split ""))
 
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
