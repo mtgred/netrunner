@@ -136,7 +136,7 @@
                                (swap! state assoc-in [:run :run-effect :replace-access]
                                       {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-installed state :runner))) 1)
                                                       (resolve-ability state side
-                                                        {:prompt "Choose a copy of Bank Job to use"
+                                                        {:prompt "Select a copy of Bank Job to use"
                                                          :choices {:req #(and installed? (= (:title %) "Bank Job"))}
                                                          :effect (req (let [c target
                                                                             creds (get-in c [:counter :credit])]
@@ -284,7 +284,7 @@
                  :effect (effect (add-counter card :power 1))}
                 {:cost [:click 1]
                  :label "Install a program from your Grip"
-                 :prompt "Choose a program to install from your Grip"
+                 :prompt "Select a program to install from your Grip"
                  :choices {:req #(and (is-type? % "Program") (in-hand? %))}
                  :msg (msg "install " (:title target))
                  :effect (req (install-cost-bonus state side [:credit (* -1 (get-in card [:counter :power] 0))])
@@ -339,7 +339,7 @@
                    :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                           " that was just rezzed") "info")
                                 (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}}
-    :abilities [{:prompt "Choose an asset or upgrade that was just rezzed"
+    :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
                                       (or (is-type? % "Asset") (is-type? % "Upgrade")))}
                  :effect (req (let [c target
@@ -484,7 +484,8 @@
    "Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
     :abilities [{:req (req (:runner-phase-12 @state))
-                 :prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
+                 :prompt "Select an installed card to make its text box blank for the remainder of the turn"
+                 :once :per-turn
                  :choices {:req installed?}
                  :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
                  :effect (req (let [c target]
@@ -893,7 +894,8 @@
                                        :choices ["Yes" "No"] :player :corp
                                        :effect (final-effect (resolve-ability
                                                                (if (= target "Yes")
-                                                                 {:prompt "Choose an agenda to forfeit" :player :corp
+                                                                 {:player :corp
+                                                                  :prompt "Select an agenda to forfeit"
                                                                   :choices {:req #(in-corp-scored? state side %)}
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
@@ -910,7 +912,7 @@
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
                  :cost [:click 1]
-                 :prompt "Choose a non-virus program to install on London Library from your grip"
+                 :prompt "Select a non-virus program to install on London Library from your grip"
                  :choices {:req #(and (is-type? % "Program")
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
@@ -953,22 +955,23 @@
                               (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
                                 (resolve-ability
                                   state side
-                                  {:prompt (str "Choose 1 card to add to the bottom of the Stack")
-                                   :msg (msg "add 1 card to the bottom of the Stack")
+                                  {:prompt "Select 1 card to add to the bottom of the Stack"
                                    :choices {:req #(and (in-hand? %)
                                                         (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                   :msg (msg "add 1 card to the bottom of the Stack")
                                    :effect (req (move state side target :deck))} card nil)))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability
                    state :corp
-                   {:prompt "Choose a card to derez"
-                    :choices {:req #(and (= (:side %) "Corp") (:rezzed %))}
+                   {:prompt "Select a card to derez"
+                    :choices {:req #(and (= (:side %) "Corp")
+                                         (:rezzed %))}
                     :effect (req (derez state side target))}
                   card nil))
     :leave-play (req (resolve-ability
                        state :corp
-                       {:prompt "Choose a card to rez, ignoring the rez cost"
+                       {:prompt "Select a card to rez, ignoring the rez cost"
                         :choices {:req #(not (:rezzed %))}
                         :effect (req (rez state side target {:ignore-cost :rez-cost})
                                      (system-msg state side (str "rezzes " (:title target) " at no cost")))}
@@ -1027,7 +1030,7 @@
    {:abilities [{:label "Install and host a connection on Off-Campus Apartment"
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
-                                    :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                                    :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
                                     :choices {:req #(and (has-subtype? % "Connection")
                                                          (can-pay? state side nil :credit (:cost %))
                                                          (in-hand? %))}
@@ -1035,7 +1038,7 @@
                                     :effect (effect (runner-install target {:host-card card}) (draw))}
                                   card nil))}
                 {:label "Host an installed connection"
-                 :prompt "Choose a connection to host on Off-Campus Apartment"
+                 :prompt "Select a connection to host on Off-Campus Apartment"
                  :choices {:req #(and (has-subtype? % "Connection")
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
@@ -1142,7 +1145,7 @@
                          (add-counter state side target :power -1)))}]
      {:flags {:drip-economy true}
       :abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
-                   :prompt "Choose a card to host on Personal Workshop"
+                   :prompt "Select a card to host on Personal Workshop"
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
                                         (in-hand? %)
                                         (= (:side %) "Runner"))}
@@ -1175,7 +1178,7 @@
 
    "Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :abilities [{:prompt "Choose a rezzed card with a trash cost"
+    :abilities [{:prompt "Select a rezzed card with a trash cost"
                  :choices {:req #(and (:trash %) (rezzed? %))}
                  :effect (req (let [c target]
                                 (trigger-event state side :pre-trash c)
@@ -1361,7 +1364,7 @@
    {:abilities [{:cost [:click 2]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                 (< 0 (count (filter #(is-type? % "Event") (:discard runner))))))
-                 :prompt "Choose an event to play"
+                 :prompt "Select an event to play"
                  :msg (msg "play " (:title target))
                  :show-discard true
                  :choices {:req #(and (is-type? % "Event")
@@ -1580,7 +1583,7 @@
                                                                        (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
    {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
     :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
-                 :prompt "Choose a card to host on The Supplier"
+                 :prompt "Select a card to host on The Supplier"
                  :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
                                       (in-hand? %))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def trash-program {:prompt "Choose a program to trash"
+(def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
@@ -8,21 +8,21 @@
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
-(def trash-hardware {:prompt "Choose a piece of hardware to trash"
+(def trash-hardware {:prompt "Select a piece of hardware to trash"
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(and (installed? %)
                                           (is-type? % "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-resource-sub {:prompt "Choose a resource to trash"
+(def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
                          :choices {:req #(and (installed? %)
                                               (is-type? % "Resource"))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-installed {:prompt "Choose an installed card to trash"
+(def trash-installed {:prompt "Select an installed card to trash"
                       :player :runner
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
@@ -47,7 +47,7 @@
 
   ([reorder_side wait_side remaining chosen n original] (reorder-choice reorder_side wait_side remaining chosen n original nil))
   ([reorder_side wait_side remaining chosen n original dest]
-  {:prompt (str "Choose a card to move next "
+  {:prompt (str "Select a card to move next "
                 (if (= dest "bottom") "under " "onto ")
                 (if (= reorder_side :corp) "R&D" "your Stack"))
    :choices remaining
