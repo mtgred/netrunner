@@ -414,6 +414,18 @@
     (prompt-choice :runner "1 [Credits]")
     (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
 
+(deftest early-bird
+  ;; Early Bird - Makes a run and gains a click
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Early Bird" 1)])
+              {:start-as :runner})
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (play-from-hand state :runner "Early Bird")
+    (prompt-choice :runner "Archives")
+    (is (:run @state) "A run was initiated")
+    (is (= 4 (:click (get-runner))) "Runner gained a click")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
