@@ -106,7 +106,7 @@
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
     :optional {:prompt "Trigger the ability of a scored agenda?"
-               :yes-ability {:prompt "Choose an agenda to trigger its \"when scored\" ability"
+               :yes-ability {:prompt "Select an agenda to trigger the \"when scored\" ability of"
                              :choices {:req #(and (is-type? % "Agenda")
                                                   (not= (:title %) "Bifrost Array")
                                                   (= (first (:zone %)) :scored)
@@ -128,7 +128,7 @@
                :msg "make the Runner lose 2 tags"}}
 
    "Character Assassination"
-   {:prompt "Choose a resource to trash"
+   {:prompt "Select a resource to trash"
     :choices {:req #(and (installed? %)
                          (is-type? % "Resource"))}
     :msg (msg "trash " (:title target))
@@ -175,7 +175,7 @@
 
    "Dedicated Neural Net"
    (letfn [(access-hq [cards]
-             {:prompt "Select a card to access."
+             {:prompt "Choose a card to access"
               :player :runner
               :choices [(str "Card from HQ")]
               :effect (req (system-msg state side (str "accesses " (:title (first cards))))
@@ -332,7 +332,7 @@
 
    "Hades Fragment"
    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
-    :abilities [{:prompt "Choose a card to add to the bottom of R&D"
+    :abilities [{:prompt "Select a card to add to the bottom of R&D"
                  :show-discard true
                  :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
                  :effect (effect (move target :deck))
@@ -414,11 +414,12 @@
 
    "License Acquisition"
    {:interactive (req true)
-    :prompt "Choose an asset or upgrade to install from Archives or HQ" :show-discard true
-    :msg (msg "install and rez " (:title target))
+    :prompt "Select an asset or upgrade to install from Archives or HQ"
+    :show-discard true
     :choices {:req #(and (#{"Asset" "Upgrade"} (:type %))
                          (#{[:hand] [:discard]} (:zone %))
                          (= (:side %) "Corp"))}
+    :msg (msg "install and rez " (:title target) ", ignoring all costs")
     :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}
 
    "Mandatory Upgrades"
@@ -458,7 +459,7 @@
              {:optional
               {:req (req (= (:cid card) (:cid target)))
                :prompt "Install a card from HQ in a new remote?"
-               :yes-ability {:prompt "Choose a card in HQ to install"
+               :yes-ability {:prompt "Select a card to install"
                              :choices {:req #(and (not (is-type? % "Operation"))
                                                   (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
@@ -598,7 +599,8 @@
               :effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
                            (continue-ability
                              state :corp
-                             {:prompt "Choose a card to place 1 advancement token on with Puppet Master" :player :corp
+                             {:prompt "Select a card to place 1 advancement token on"
+                              :player :corp
                               :choices {:req can-be-advanced?}
                               :cancel-effect (final-effect (clear-wait-prompt :runner))
                               :msg (msg "place 1 advancement token on " (card-str state target))
@@ -645,11 +647,11 @@
     :req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
     :delayed-completion true
     :effect (effect (continue-ability
-                      {:prompt "Choose another installed copy of Research Grant to score"
-                       :choices {:req #(= (:title %) "Research Grant")}
-                       :effect (effect (set-prop target :advance-counter (:advancementcost target))
-                                       (score target))
-                       :msg "score another copy of Research Grant"}
+                     {:prompt "Select another installed copy of Research Grant to score"
+                      :choices {:req #(= (:title %) "Research Grant")}
+                      :effect (effect (set-prop target :advance-counter (:advancementcost target))
+                                      (score target))
+                      :msg "score another installed copy of Research Grant"}
                      card nil))}
 
    "Restructured Datapool"

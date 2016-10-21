@@ -122,7 +122,7 @@
                                 (strength-pump 1 1)
                                 {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
                                  :label "Swap with a deva program from your Grip" :cost [:credit 2]
-                                 :prompt (str "Choose a deva program in your Grip to swap with " name)
+                                 :prompt (str "Select a deva program in your Grip to swap with " name)
                                  :choices {:req #(and in-hand? (has-subtype? % "Deva"))}
                                  :msg (msg "swap in " (:title target) " from their Grip")
                                  :effect (req (if-let [hostcard (:host card)]
@@ -334,7 +334,7 @@
 
    "Endless Hunger"
    {:abilities [{:label "Trash 1 installed card to break 1 \"End the run.\" subroutine"
-                 :prompt "Choose a card to trash for Endless Hunger"
+                 :prompt "Select a card to trash for Endless Hunger"
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
@@ -348,26 +348,26 @@
 
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
-                 :prompt "Choose a card from your grip to trash for Faust"
+                 :prompt "Select a card from your grip to trash for Faust"
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and break 1 subroutine")
                  :effect (effect (trash target {:unpreventable true}))}
                 {:label "Trash 1 card from Grip to add 2 strength"
-                 :prompt "Choose a card from your grip to trash for Faust"
+                 :prompt "Select a card from your grip to trash for Faust"
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and add 2 strength")
                  :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
-                    {:prompt "Choose a piece of ICE to target for bypassing"
+                    {:prompt "Select a piece of ICE to target for bypassing"
                      :choices {:req ice?}
                      :leave-play (req (remove-icon state side card))
                      :effect (req (let [ice target
                                         serv (zone->name (second (:zone ice)))]
                                     (add-icon state side card ice "F" "blue")
                                     (system-msg state side
-                                                (str "chooses " (card-str state ice)
+                                                (str "selects " (card-str state ice)
                                                      " for Femme Fatale's bypass ability"))))
                      :abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 2 1)]})

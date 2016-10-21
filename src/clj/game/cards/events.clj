@@ -74,7 +74,7 @@
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
-   {:prompt "Choose a resource to install from your Grip"
+   {:prompt "Select a resource to install from your Grip"
     :choices {:req #(and (is-type? % "Resource")
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
@@ -135,7 +135,8 @@
                      state :corp
                      {:optional
                       {:prompt (msg "Rez a piece of ICE protecting " serv "?")
-                       :yes-ability {:prompt (msg "Choose a piece of " serv " ICE to rez") :player :corp
+                       :yes-ability {:prompt (msg "Select a piece of ICE protecting " serv " to rez")
+                                     :player :corp
                                      :choices {:req #(and (not (:rezzed %))
                                                           (= (last (:zone %)) :ices))}
                                      :effect (req (rez state :corp target nil))}
@@ -454,7 +455,7 @@
                                                (continue-ability
                                                  state side
                                                  {:delayed-completion true
-                                                  :prompt (msg "Choose a rezzed copy of " icename " to trash")
+                                                  :prompt (msg "Select a rezzed copy of " icename " to trash")
                                                   :choices {:req #(and (ice? %)
                                                                        (rezzed? %)
                                                                        (= (:title %) icename))}
@@ -496,7 +497,7 @@
 
    "Information Sifting"
    (letfn [(access-pile [cards pile]
-             {:prompt "Select a card to access. You must access all cards."
+             {:prompt "Choose a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
               :effect (req (system-msg state side (str "accesses " (:title (first cards))))
                            (when-completed
@@ -523,7 +524,7 @@
                                   :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
                                             :max (req (dec (count (:hand corp))))}
                                   :effect (effect (clear-wait-prompt :runner)
-                                                  (show-wait-prompt :corp "Runner to choose a pile")
+                                                  (show-wait-prompt :corp "Runner to select a pile")
                                                   (continue-ability
                                                     :runner
                                                     (which-pile (shuffle targets)
@@ -550,7 +551,7 @@
     :delayed-completion true
     :effect (effect (run target nil card)
                     (continue-ability
-                      {:prompt "Choose an icebreaker"
+                      {:prompt "Select an icebreaker"
                        :choices {:req #(and (installed? %) (has-subtype? % "Icebreaker"))}
                        :effect (effect (pump target 2 :all-run))}
                       card nil))}
@@ -582,7 +583,7 @@
                        servname target]
                    (resolve-ability
                      state :corp
-                     {:prompt (msg "Choose a piece of ICE in " target " to trash")
+                     {:prompt (msg "Select a piece of ICE in " target " to trash")
                       :choices {:req #(and (= (last (:zone %)) :ices)
                                            (= serv (rest (butlast (:zone %)))))}
                       :effect (req (trash state :corp target)
@@ -658,7 +659,7 @@
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
    "Modded"
-   {:prompt "Choose a program or piece of hardware to install from your Grip"
+   {:prompt "Select a program or piece of hardware to install from your Grip"
     :choices {:req #(and (or (is-type? % "Hardware")
                              (is-type? % "Program"))
                          (in-hand? %))}
@@ -737,7 +738,7 @@
       :effect (effect (run :archives
                         {:req (req (= target :archives))
                          :replace-access
-                         {:prompt "Choose an agenda to host Political Graffiti"
+                         {:prompt "Select an agenda to host Political Graffiti"
                           :choices {:req #(in-corp-scored? state side %)}
                           :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
                           :effect (req (host state :runner (get-card state target)
@@ -775,7 +776,8 @@
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
                     (resolve-ability
                       {:player :corp :prompt "Guess whether the Runner will spend an Odd or Even number of credits with Push Your Luck"
-                       :choices ["Even" "Odd"] :msg "make the Corp choose a guess"
+                       :choices ["Even" "Odd"]
+                       :msg "force the Corp to make a guess"
                        :effect (req (let [guess target]
                                       (clear-wait-prompt state :runner)
                                       (resolve-ability
@@ -856,10 +858,10 @@
 
    "Rigged Results"
    (letfn [(choose-ice []
-             {:prompt "Choose a piece of ICE to bypass"
+             {:prompt "Select a piece of ICE to bypass"
               :choices {:req #(ice? %)}
-              :effect (final-effect (system-msg :runner (str "chooses to bypass " (card-str state target)))
-                                    (run (second (:zone target))))})
+              :msg (msg "bypass " (card-str state target))
+              :effect (final-effect (run (second (:zone target))))})
            (corp-choice [spent]
              {:prompt "Guess how many credits were spent"
               :choices ["0" "1" "2"]
@@ -918,14 +920,14 @@
    "Scavenge"
    {:req (req (and (some #(is-type? % "Program") (all-installed state :runner))
                    (some #(is-type? % "Program") (concat (:hand runner) (:discard runner)))))
-    :prompt "Choose an installed program to trash"
+    :prompt "Select an installed program to trash"
     :choices {:req #(and (is-type? % "Program")
                          (installed? %))}
     :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
                    (trash state side trashed)
                    (resolve-ability
                      state side
-                     {:prompt "Choose a program to install from your Grip or Heap"
+                     {:prompt "Select a program to install from your Grip or Heap"
                       :show-discard true
                       :choices {:req #(and (is-type? % "Program")
                                            (#{[:hand] [:discard]} (:zone %))
@@ -967,13 +969,13 @@
                                          (trash state side c))))}} card))}
 
    "Social Engineering"
-   {:prompt "Choose an unrezzed piece of ICE"
+   {:prompt "Select an unrezzed piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (not (rezzed? %)) (ice? %))}
     :effect (req (let [ice target
                        serv (zone->name (second (:zone ice)))]
               (resolve-ability
                  state :runner
-                 {:msg (msg "choose the ICE at position " (ice-index state ice) " of " serv)
+                 {:msg (msg "select the piece of ICE at position " (ice-index state ice) " of " serv)
                   :effect (effect (register-events {:pre-rez-cost
                                                     {:req (req (= target ice))
                                                      :effect (req (let [cost (rez-cost state side (get-card state target))]
@@ -1067,7 +1069,7 @@
 
    "The Price of Freedom"
    {:req (req (some #(has-subtype? % "Connection") (all-installed state :runner)))
-    :prompt "Choose an installed connection to trash"
+    :prompt "Select an installed connection to trash"
     :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
     :msg (msg "trash " (:title target) " to prevent the corp from advancing cards during their next turn")
     :effect (effect (move (find-cid (:cid card) (:discard runner)) :rfg)
@@ -1085,7 +1087,7 @@
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
-   {:prompt "Choose a piece of ICE"
+   {:prompt "Select a piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (ice? %))}
     :effect (req (let [ice target
                        serv (zone->name (second (:zone ice)))
@@ -1102,7 +1104,7 @@
     :events {:runner-turn-ends nil}}
 
    "Trade-In"
-   {:prompt "Choose a hardware to trash"
+   {:prompt "Select a hardware to trash"
     :choices {:req #(and (installed? %)
                          (is-type? % "Hardware"))}
     :msg (msg "trash " (:title target) " and gain " (quot (:cost target) 2) " [Credits]")
