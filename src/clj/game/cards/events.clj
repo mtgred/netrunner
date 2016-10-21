@@ -1092,7 +1092,7 @@
                        stypes (:subtype ice)]
               (resolve-ability
                  state :runner
-                 {:msg (msg "make " (card-str state ice) " gain sentry, code gate, and barrier until the end of the turn")
+                 {:msg (msg "make " (card-str state ice) " gain Sentry, Code Gate, and Barrier until the end of the turn")
                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true (:subtype ice) "Sentry" "Code Gate" "Barrier")))
                                   (update-ice-strength (get-card state ice))
                                   (register-events {:runner-turn-ends

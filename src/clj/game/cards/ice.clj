@@ -6,7 +6,7 @@
 
 ;;; Runner abilites for breaking subs
 (defn runner-break
-  "Ability to break a subroutine by spending a resource (bioroids, Negotiator, Turing etc)"
+  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, Turing etc)"
   [cost subs]
   (let [cost-str (build-cost-str [cost])
         subs-str (str subs " subroutine" (when (< 1 subs) "s"))]

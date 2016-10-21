@@ -902,7 +902,7 @@
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
 
 (deftest rielle-kit-peddler-ability
-  ;; Rielle "Kit" Peddler - Give ice code gate
+  ;; Rielle "Kit" Peddler - Give ICE Code Gate
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 2)])
               (make-deck "Rielle \"Kit\" Peddler: Transhuman" [(qty "Sure Gamble" 3)]))
@@ -913,8 +913,8 @@
           iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
       (card-ability state :runner k 0)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate"))))
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
 (deftest silhouette-temujin-weirdness
   ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.

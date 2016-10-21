@@ -41,7 +41,7 @@
 
    "Ad Blitz"
    (let [abhelp (fn ab [n total]
-                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                  {:prompt "Select an Advertisement to install and rez" :show-discard true
                    :delayed-completion true
                    :choices {:req #(and (= (:side %) "Corp")
                                         (has-subtype? % "Advertisement")
@@ -52,10 +52,10 @@
                                   (if (< n total)
                                     (continue-ability state side (ab (inc n) total) card nil)
                                     (effect-completed state side eid))))})]
-     {:prompt "How many advertisements?"
+     {:prompt "How many Advertisements?"
       :delayed-completion true
       :choices :credit
-      :msg (msg "install and rez " target " advertisements")
+      :msg (msg "install and rez " target " Advertisements")
       :effect (effect (continue-ability (abhelp 1 target) card nil))})
 
    "Aggressive Negotiation"
@@ -760,7 +760,7 @@
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
                   (if (pos? left)
-                    {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
+                    {:prompt (str "Select a Sysop (" (inc (- total left)) "/" total ")")
                      :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
@@ -772,10 +772,10 @@
                                     card nil))}
                     {:effect (effect (shuffle! :corp :deck))
                      :msg (msg "shuffle R&D")}))]
-   {:prompt "How many sysops?"
+   {:prompt "How many Sysops?"
     :delayed-completion true
     :choices :credit
-    :msg (msg "search for " target " sysops")
+    :msg (msg "search for " target " Sysops")
     :effect (effect (continue-ability (rthelp target target []) card nil))})
 
    "Restoring Face"

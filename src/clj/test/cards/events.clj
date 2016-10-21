@@ -1277,17 +1277,17 @@
     (play-from-hand state :runner "Tinkering")
     (let [iwall (get-ice state :hq 0)]
       (prompt-select :runner iwall)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (core/rez state :corp iwall)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (take-credits state :runner)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have code gate")
-      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have sentry"))))
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
+      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
 
 (deftest vamp
   ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp

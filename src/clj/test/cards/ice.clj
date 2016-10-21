@@ -141,9 +141,9 @@
     (let [ch (get-ice state :hq 0)]
       (core/rez state :corp ch)
       (prompt-choice :corp "Barrier")
-      (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has barrier")
+      (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has Barrier")
       (take-credits state :corp)
-      (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have barrier"))))
+      (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
@@ -527,12 +527,12 @@
     (let [mg (get-ice state :hq 0)
           nb (get-ice state :rd 0)]
       (core/rez state :corp mg)
-      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
-      (is (not (core/has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have code gate")
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
+      (is (not (core/has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have Code Gate")
       (is (not (core/has-subtype? (refresh mg) "NEXT")) "Mother Goddess does not have NEXT")
       (core/rez state :corp nb)
-      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has mythic")
-      (is (core/has-subtype? (refresh mg) "Code Gate") "Mother Goddess has code gate")
+      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
+      (is (core/has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (core/has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
 (deftest next-bronze

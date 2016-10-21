@@ -588,7 +588,8 @@
                                 (rezzed? current-ice)
                                 (has-subtype? current-ice "Bioroid")))
                  :counter-cost [:agenda 1]
-                 :msg "make the approached piece of bioroid ICE gain \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"}]}
+                 :msg (str "make the approached piece of Bioroid ICE gain \"[Subroutine] End the run\""
+                           "after all its other subroutines for the remainder of this run")}]}
 
    "Puppet Master"
    {:events {:successful-run

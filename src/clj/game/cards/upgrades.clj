@@ -28,18 +28,18 @@
                                       :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
-   {:abilities [{:label "Host a piece of bioroid ICE"
+   {:abilities [{:label "Host a piece of Bioroid ICE"
                  :cost [:click 1]
-                 :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
+                 :prompt "Choose a piece of Bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
-                 :msg "host a piece of bioroid ICE"
+                 :msg "host a piece of Bioroid ICE"
                  :effect (effect (trigger-event :corp-install target)
                                  (host card target {:facedown true}))}
                 {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
-                 :label "Rez a hosted piece of bioroid ICE"
-                 :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
+                 :label "Rez a hosted piece of Bioroid ICE"
+                 :prompt "Choose a piece of Bioroid ICE to rez" :choices (req (:hosted card))
                  :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
                  :effect (effect (rez-cost-bonus -7) (rez target)
                                  (update! (dissoc (get-card state target) :facedown))
@@ -509,7 +509,7 @@
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 
    "Tyrs Hand"
-   {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
+   {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ice from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has-subtype? current-ice "Bioroid")))
                  :effect (effect (trash card))
