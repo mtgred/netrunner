@@ -515,8 +515,8 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target))
-                         (effect (gain :memory (:memoryunits target)))}]}
+                 :effect (effect (host card target)
+                         (gain :memory (:memoryunits target)))}]}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
