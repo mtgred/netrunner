@@ -619,8 +619,8 @@
                    :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                   (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                    :msg (msg (let [c (get-agenda card)]
-                               (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
-                                    " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]})
+                               (str "add " (:title c) " to their score area and gain "
+                                    (quantify (get-agenda-points state :runner c) "agenda point"))))}]})
 
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
@@ -646,8 +646,7 @@
    {:events {:agenda-scored
              {:delayed-completion true
               :interactive (req true)
-              :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
-                        (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
+              :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
               :effect (req (when-completed
                              ; manually trigger the pre-access event to alert Nerve Agent.
                              (trigger-event-sync state side :pre-access :hq)
@@ -1098,7 +1097,7 @@
                                                        (trash state side c {:unpreventable true}))
                                                      (when (> (int target) 0)
                                                        (system-msg state side (str "trashes " target
-                                                                                   " cop" (if (not= target 1) "ies" "y")
+                                                                                   (quantify target "cop" "y" "ies")
                                                                                    " of " title)))))}}}))]
      {:events {:runner-install {:req (req (first-event? state side :runner-install))
                                 :delayed-completion true

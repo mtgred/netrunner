@@ -486,7 +486,8 @@
                                       (continue-ability state side
                                         {:choices {:req #(and (contains? % :advance-counter)
                                                               (= (first (:server run)) (second (:zone %))))}
-                                         :msg (msg "remove " c " advancement" (when (> c 1) "s") " from " (card-str state target))
+                                         :msg (msg "remove " (quantify c "advancement token")
+                                                   " from " (card-str state target))
                                          :effect (req (add-prop state :corp target :advance-counter (- c))
                                                       (clear-wait-prompt state :corp)
                                                       (effect-completed state side eid))}
@@ -683,13 +684,17 @@
                             card nil))}}}
 
    "Independent Thinking"
-   (let [cards-to-draw (fn [ts] (* (count ts) (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) ts) 2 1)))]
+   (letfn [(cards-to-draw [targets]
+             (* (count targets)
+                (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) targets) 2 1)))]
      {:delayed-completion true
       :prompt "Choose up to 5 installed cards to trash with Independent Thinking"
-      :choices {:max 5 :req #(and (installed? %) (= (:side %) "Runner"))}
+      :choices {:max 5
+                :req #(and (installed? %)
+                           (= (:side %) "Runner"))}
       :effect (req (when-completed (trash-cards state side targets nil)
                                    (draw state :runner (cards-to-draw targets))))
-      :msg (msg "trash " (join ", " (map :title targets)) " and draw " (cards-to-draw targets) " cards")})
+      :msg (msg "trash " (join ", " (map :title targets)) " and draw " (quantify (cards-to-draw targets) "card"))})
 
    "Indexing"
    {:delayed-completion true

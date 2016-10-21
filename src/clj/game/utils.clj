@@ -298,3 +298,10 @@
            (= -1 n))
      (str string single-suffix)
      (str string plural-suffix))))
+
+(defn quantify
+  "Ensures the string is correctly pluralized based on the number n."
+  ([n string] (str n " " (pluralize string n)))
+  ([n string suffix] (str n " " (pluralize string suffix n)))
+  ([n string single-suffix plural-suffix]
+   (str n " " (pluralize string single-suffix plural-suffix n))))

@@ -9,7 +9,7 @@
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, Turing etc)"
   [cost subs]
   (let [cost-str (build-cost-str [cost])
-        subs-str (str subs " subroutine" (when (< 1 subs) "s"))]
+        subs-str (quantify subs "subroutine")]
     {:cost cost
      :label (str "break " subs-str)
      :effect (req (system-msg state :runner (str "spends " cost-str " to break " subs-str " on " (:title card))))}))
