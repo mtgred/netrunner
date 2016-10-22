@@ -108,27 +108,26 @@
     (if-let [trash-cost (trash-cost state side c)]
       ;; The card has a trash cost (Asset, Upgrade)
       (let [card (assoc c :seen true)
-            name (:title card)]
+            name (:title card)
+            trash-msg (str trash-cost " [Credits] to trash " name " from " (name-zone :corp (:zone card)))]
         (if (and (get-in @state [:runner :register :force-trash])
                  (can-pay? state :runner name :credit trash-cost))
           ;; If the runner is forced to trash this card (Neutralize All Threats)
           (continue-ability state :runner
-                           {:cost [:credit trash-cost]
-                            :delayed-completion true
-                            :effect (effect (trash eid card nil)
-                                            (system-msg (str "is forced to pay " trash-cost
-                                                             " [Credits] to trash " name)))} card nil)
+                            {:cost [:credit trash-cost]
+                             :delayed-completion true
+                             :effect (effect (trash eid card nil)
+                                             (system-msg (str "is forced to pay " trash-msg)))}
+                            card nil)
           ;; Otherwise, show the option to pay to trash the card.
-          (continue-ability
-            state :runner
-            {:optional
-             {:prompt (str "Pay " trash-cost "[Credits] to trash " name "?")
-              :yes-ability {:cost [:credit trash-cost]
-                            :delayed-completion true
-                            :effect (effect (trash eid card nil)
-                                            (system-msg (str "pays " trash-cost
-                                                             " [Credits] to trash " name)))}}}
-            card nil)))
+          (continue-ability state :runner
+                            {:optional
+                             {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                              :yes-ability {:cost [:credit trash-cost]
+                                            :delayed-completion true
+                                            :effect (effect (trash eid card nil)
+                                                            (system-msg (str "pays " trash-msg)))}}}
+                            card nil)))
       ;; The card does not have a trash cost
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
     (effect-completed state side eid)))
@@ -207,6 +206,18 @@
          ;; The runner cannot afford the cost to access the card
          (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {}))))))
 
+(defn msg-handle-access
+  ([state side cards]
+   (msg-handle-access state side (make-eid state) cards))
+  ([state side eid cards]
+   (msg-handle-access state side eid cards (:title (first cards))))
+  ([state side eid cards title]
+   (system-msg state side
+               (str "accesses " title
+                    (when (pos? (count cards))
+                      (str " from " (->> cards first :zone (name-zone side))))))
+   (handle-access state side eid cards)))
+
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
   [state side n]
@@ -234,7 +245,7 @@
   {:prompt "Click a card to access it. You must access all cards in this server."
    :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
    :delayed-completion true
-   :effect (req (when-completed (handle-access state side [target])
+   :effect (req (when-completed (msg-handle-access state side [target])
                                 (if (< 1 (count cards))
                                   (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
                                                     card nil)
@@ -245,7 +256,7 @@
    :effect (req (if (and (>= 1 (count cards))
                          (not (any-flag-fn? state :runner :slow-remote-access true
                                             (concat (all-active state :runner) (all-active state :corp)))))
-                  (handle-access state side eid cards)
+                  (msg-handle-access state side eid cards)
                   (continue-ability state side (access-helper-remote cards) card nil)))})
 
 (defn access-helper-hq [state from-hq already-accessed]
@@ -263,14 +274,13 @@
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
-                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                            (when-completed (handle-access state side unrezzed)
-                                            (if (or (pos? from-hq) (< 1 (count from-root)))
-                                              (continue-ability
-                                                state side
-                                                (access-helper-hq state from-hq (conj already-accessed (first unrezzed)))
-                                                card nil)
-                                              (effect-completed state side eid))))
+                        (when-completed (msg-handle-access state side unrezzed)
+                                        (if (or (pos? from-hq) (< 1 (count from-root)))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-hq state from-hq (conj already-accessed (first unrezzed)))
+                                            card nil)
+                                          (effect-completed state side eid)))
                         ;; more than one unrezzed upgrade. allow user to select.
                         (continue-ability
                           state side
@@ -278,8 +288,7 @@
                            :prompt "Choose an upgrade in HQ to access."
                            :choices {:req #(and (= (second (:zone %)) :hq)
                                                 (not (contains? already-accessed %)))}
-                           :effect (req (system-msg state side (str "accesses " (:title target)))
-                                        (when-completed (handle-access state side [target])
+                           :effect (req (when-completed (msg-handle-access state side [target])
                                                         (continue-ability
                                                           state side
                                                           (access-helper-hq state from-hq (conj already-accessed target))
@@ -289,20 +298,18 @@
                     "Card from hand"
                     (if-let [accessed (some #(when-not (contains? already-accessed %) %)
                                             (shuffle (get-in @state [:corp :hand])))]
-                      (do (system-msg state side (str "accesses " (:title accessed)))
-                          (when-completed (handle-access state side [accessed])
-                                          (let [from-root (get-root-content state)]
-                                            (if (or (< 1 from-hq) (not-empty from-root))
-                                              (continue-ability
-                                                state side
-                                                (access-helper-hq state (dec from-hq) (conj already-accessed accessed))
-                                                card nil)
-                                              (effect-completed state side eid)))))
+                      (when-completed (msg-handle-access state side [accessed])
+                                      (let [from-root (get-root-content state)]
+                                        (if (or (< 1 from-hq) (not-empty from-root))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-hq state (dec from-hq) (conj already-accessed accessed))
+                                            card nil)
+                                          (effect-completed state side eid))))
                       (effect-completed state side eid nil))
                     ;; accessing a rezzed upgrade
                     (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
-                      (system-msg state side (str "accesses " (:title accessed)))
-                      (when-completed (handle-access state side [])
+                      (when-completed (msg-handle-access state side [accessed])
                                       (if (or (pos? from-hq) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
@@ -314,8 +321,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
-                    (do (when (pos? (count cards)) (system-msg state side (str "accesses " (:title (first cards)))))
-                        (handle-access state side eid cards))
+                    (msg-handle-access state side eid cards)
                     (let [from-hq (access-count state side :hq-access)]
                       (continue-ability state side (access-helper-hq state from-hq #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -336,14 +342,13 @@
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
-                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                            (when-completed (handle-access state side unrezzed)
-                                            (if (or (not-empty from-rd) (< 1 (count from-root)))
-                                              (continue-ability
-                                                state side
-                                                (access-helper-rd state from-rd (conj already-accessed (first unrezzed)))
-                                                card nil)
-                                              (effect-completed state side eid))))
+                        (when-completed (msg-handle-access state side unrezzed)
+                                        (if (or (not-empty from-rd) (< 1 (count from-root)))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-rd state from-rd (conj already-accessed (first unrezzed)))
+                                            card nil)
+                                          (effect-completed state side eid)))
                         ;; more than one unrezzed upgrade. allow user to select with mouse.
                         (continue-ability
                           state side
@@ -351,8 +356,7 @@
                            :prompt "Choose an upgrade in R&D to access."
                            :choices {:req #(and (= (second (:zone %)) :rd)
                                                 (not (contains? already-accessed %)))}
-                           :effect (req (system-msg state side (str "accesses " (:title target)))
-                                        (when-completed (handle-access state side [target])
+                           :effect (req (when-completed (msg-handle-access state side [target])
                                                         (continue-ability
                                                           state side
                                                           (access-helper-rd state from-rd (conj already-accessed target))
@@ -361,7 +365,7 @@
                     ;; accessing a card in deck
                     "Card from deck"
                     (let [accessed (first from-rd)]
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (msg-handle-access state side (make-eid state) [accessed] "an unseen card")
                                       (let [from-root (get-root-content state)]
                                         (if (or (< 1 (count from-rd)) (not-empty from-root))
                                           (continue-ability
@@ -371,8 +375,7 @@
                                           (effect-completed state side eid)))))
                     ;; accessing a rezzed upgrade
                     (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
-                      (system-msg state side (str "accesses " (:title accessed)))
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (msg-handle-access state side [accessed])
                                       (if (or (not-empty from-rd) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
@@ -384,7 +387,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (handle-access state side eid cards)
+                    (msg-handle-access state side eid cards "an unseen card")
                     (let [from-rd (take (access-count state side :rd-access) (-> @state :corp :deck))]
                       (continue-ability state side (access-helper-rd state from-rd #{}) card nil)))
                   (effect-completed state side eid)))})
@@ -414,14 +417,13 @@
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
-                        (do (system-msg state side (str "accesses " (:title (first unrezzed))))
-                            (when-completed (handle-access state side unrezzed)
-                                            (if (< 1 (count cards))
-                                              (continue-ability
-                                                state side
-                                                (access-helper-archives state (conj already-accessed (first unrezzed)))
-                                                card nil)
-                                              (effect-completed state side eid))))
+                        (when-completed (msg-handle-access state side unrezzed)
+                                        (if (< 1 (count cards))
+                                          (continue-ability
+                                            state side
+                                            (access-helper-archives state (conj already-accessed (first unrezzed)))
+                                            card nil)
+                                          (effect-completed state side eid)))
                         ;; more than one unrezzed upgrade. allow user to select with mouse.
                         (continue-ability
                           state side
@@ -429,8 +431,7 @@
                            :prompt "Choose an upgrade in Archives to access."
                            :choices {:req #(and (= (second (:zone %)) :archives)
                                                 (not (contains? already-accessed %)))}
-                           :effect (req (system-msg state side (str "accesses " (:title target)))
-                                        (when-completed (handle-access state side [target])
+                           :effect (req (when-completed (msg-handle-access state side [target])
                                                         (continue-ability
                                                           state side
                                                           (access-helper-archives state (conj already-accessed target))
@@ -439,8 +440,7 @@
                     ;; accessing a rezzed upgrade, or a card in archives
                     (let [accessed (some #(when (= (:title %) target) %)
                                          (concat (get-accessible state already-accessed) (get-root-content state)))]
-                      (system-msg state side (str "accesses " (:title accessed)))
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (msg-handle-access state side [accessed])
                                       (let [accessible (get-accessible state (conj already-accessed accessed))
                                             from-root (get-root-content state)]
                                         (if (pos? (+ (count accessible) (count from-root)))
@@ -455,8 +455,7 @@
    :effect (req (let [cards (concat (get-archives-accessible state) (get-in @state [:corp :servers :archives :content]))]
                   (if (pos? (count cards))
                     (if (= 1 (count cards))
-                      (do (system-msg state side (str "accesses " (:title (first cards))))
-                          (handle-access state side eid cards))
+                      (msg-handle-access state side eid cards)
                       (continue-ability state side (access-helper-archives state #{}) card nil))
                     (effect-completed state side eid))))})
 
@@ -496,8 +495,6 @@
     ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
     (when-not (or (= (get-in @state [:run :max-access]) 0)
                   (empty? cards))
-      (if (= (first server) :rd)
-        (system-msg state side (str "accesses " n " card" (when (> n 1) "s"))))
       (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                       (effect-completed state side eid nil))
       (swap! state assoc-in [:run :cards-accessed] n)))
