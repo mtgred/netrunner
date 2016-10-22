@@ -516,7 +516,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                         (gain :memory (:memoryunits target)))}]}
+                                 (gain :memory (:memoryunits target)))}]}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
