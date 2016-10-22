@@ -30,12 +30,22 @@
   [identity]
   (if (is-draft-id? identity) INFINITY (:influencelimit identity)))
 
+(defn not-alternate [card]
+  (if (= (:setname card) "Alternates")
+    (some #(and (not= (:setname %) "Alternates")
+                (= (:title %) (:title card))
+                %)
+          (:cards @app-state))
+    card))
+
 (defn- check-mwl-map
   "Check if card is in specified mwl map"
   [mwl-map card]
-  (let [mwl-cards (:cards mwl-map)
-        code (keyword (:code card))]
-    (contains? mwl-cards code)))
+  (->> card
+       not-alternate
+       :code
+       keyword
+       (contains? (:cards mwl-map))))
 
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
@@ -406,12 +416,6 @@
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
-
-(defn not-alternate [card]
-  (if (= (:setname card) "Alternates")
-    (some #(when (and (not= (:setname %) "Alternates") (= (:title %) (:title card))) %)
-          (:cards @app-state))
-    card))
 
 ;; Dot definitions
 (def zws "&#8203;")                                         ; zero-width space for wrapping dots
