@@ -346,6 +346,7 @@
     (when (and (not (get-in @state [:runner :register :cannot-run]))
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
+      (swap! state assoc-in [:runner :register :made-click-run] true)
       (run state side server)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
         (system-msg state :runner

@@ -274,78 +274,156 @@
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
 
 (deftest enhanced-login-protocol
-  ;; Enhanced Login Protocol - tests interaction with run events, interaction with runs, and inability to run last click
+  ;; Enhanced Login Protocol - First click run each turn costs an additional click
   (do-game
     (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-              (default-runner [(qty "Dirty Laundry" 1)]))
+              (default-runner [(qty "Employee Strike" 1)]))
     (play-from-hand state :corp "Enhanced Login Protocol")
     (take-credits state :corp)
-    (is (= 4 (:click (get-runner))) "Runner starts turn with 4 clicks")
-    (play-from-hand state :runner "Dirty Laundry")
-    (prompt-choice :runner "Archives")
+
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (run-on state :archives)
+    (is (= 2 (:click (get-runner)))
+        "Runner spends 1 additional click to make the first run")
     (run-successful state)
-    (is (= 3 (:click (get-runner))) "Run event only takes 1 click")
-    (run-on state :hq)
-    (run-jack-out state)
-    (is (= 1 (:click (get-runner))) "first non-event run takes 2 clicks")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (is (= 4 (:click (get-runner))) "Runner starts turn with 4 clicks")
-    (run-on state :hq)
-    (run-jack-out state)
-    (is (= 2 (:click (get-runner))) "first run takes 2 clicks")
-    (run-on state :hq)
-    (is (= 1 (:click (get-runner))) "second run takes 1 click")
-    (run-jack-out state)
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (take-credits state :runner 2)
-    (is (= 2 (:click (get-runner))))
-    (is (core/can-run-server? state "HQ") "Runner can run - two clicks")
-    (take-credits state :runner 1)
-    (is (= 1 (:click (get-runner))))
-    (run-on state :hq)
-    (is (not (:run @state)) "No run initiated - not enough clicks")
-    (is (= 1 (:click (get-runner))) "Runner still has last click")))
 
-(deftest enhanced-login-protocol-keyhole
-  ;; Enhanced Login Protocol - tests interaction with runs initiated from programs
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner)))
+        "Runner doesn't spend 1 additional click to make the second run")
+    (run-successful state)
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (take-credits state :runner 3)
+
+    (is (= 1 (:click (get-runner))) "Runner has 1 click")
+    (run-on state :archives)
+    (is (not (:run @state)) "No run was initiated")
+    (is (= 1 (:click (get-runner))) "Runner has 1 click")
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Employee Strike")
+
+    (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
+    (run-on state :archives)
+    (is (= 2 (:click (get-runner)))
+        "Runner doesn't spend 1 additional click to make a run")))
+
+(deftest enhanced-login-protocol-card-ability
+  ;; Enhanced Login Protocol - Card ability runs don't cost additional clicks
   (do-game
     (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-              (default-runner [(qty "Keyhole" 1)]))
+              (default-runner [(qty "Sneakdoor Beta" 1)]))
     (play-from-hand state :corp "Enhanced Login Protocol")
     (take-credits state :corp)
-    (play-from-hand state :runner "Keyhole")
-    (is (= 3 (:click (get-runner))) "Runner has 3 clicks before run")
-    (let [keyhole (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner keyhole 0)
-      (is (= 2 (:click (get-runner))) "Runner has 2 clicks after using keyhole"))))
-
-(deftest enhanced-login-protocol-sol
-  ;; Enhanced Login Protocol - tests interaction with ELP played on runners turn
-  (do-game
-    (new-game
-      (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :runner "Sneakdoor Beta")
+    (take-credits state :runner)
     (take-credits state :corp)
-    (run-empty-server state :remote1)
+
+    (is (= 4 (:click (get-runner))) "Runner has 2 clicks")
+    (let [sneakdoor (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner sneakdoor 0)
+      (is (= 3 (:click (get-runner)))
+          "Runner doesn't spend 1 additional click to run with a card ability")
+      (run-successful state)
+
+      (run-on state :archives)
+      (is (= 1 (:click (get-runner)))
+          "Runner spends 1 additional click to make a run")
+      (run-successful state)
+
+      (take-credits state :runner)
+      (take-credits state :corp)
+
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+      (run-on state :archives)
+      (is (= 2 (:click (get-runner)))
+          "Runner spends 1 additional click to make a run"))))
+
+(deftest enhanced-login-protocol-run-events
+  ;; Enhanced Login Protocol - Run event don't cost additional clicks
+  (do-game
+    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+              (default-runner [(qty "Out of the Ashes" 1)]))
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (play-from-hand state :runner "Out of the Ashes")
+    (prompt-choice :runner "Archives")
+    (is (= 3 (:click (get-runner)))
+        "Runner doesn't spend 1 additional click to run with a run event")
+    (run-successful state)
+
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner)))
+        "Runner spends 1 additional click to make a run")
+    (run-successful state)
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "No") ; Out of the Ashes prompt
+
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (run-on state :archives)
+    (is (= 2 (:click (get-runner)))
+        "Runner spends 1 additional click to make a run")))
+
+(deftest enhanced-login-protocol-runner-turn-first-run
+  ;; Enhanced Login Protocol - Works when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News"
+                         [(qty "Enhanced Login Protocol" 1)
+                          (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
     (prompt-choice :runner "Steal")
     (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Enhanced Login Protocol" (:hand (get-corp))))
-    (is (not (:run @state)) "Run ended")
-    (is (find-card "Enhanced Login Protocol" (:current (get-corp))) "ELP in play")
-    (is (= 3 (:click (get-runner))) "runner has 3 clicks when ELP is in play")
-    (run-on state :hq)
-    (run-jack-out state)
-    (is (= 1 (:click (get-runner))) "first non-event run takes 2 clicks")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (is (= 4 (:click (get-runner))) "runner has 4 clicks on start of turn")
-    (run-on state :hq)
-    (run-jack-out state)
-    (is (= 2 (:click (get-runner))) "ELP still works correctly")))
+    (prompt-select :corp (find-card "Enhanced Login Protocol"
+                                    (:hand (get-corp))))
+    (is (find-card "Enhanced Login Protocol" (:current (get-corp)))
+        "Enhanced Login Protocol is in play")
 
+    (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner)))
+        "Runner spends 1 additional click to make a run")))
+
+(deftest enhanced-login-protocol-runner-turn-second-run
+  ;; Enhanced Login Protocol - Doesn't fire if already run when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News"
+                         [(qty "Enhanced Login Protocol" 1)
+                          (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (run-on state :hq)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Enhanced Login Protocol"
+                                    (:hand (get-corp))))
+    (is (find-card "Enhanced Login Protocol" (:current (get-corp)))
+        "Enhanced Login Protocol is in play")
+
+    (is (= 2 (:click (get-runner))) "Runner has 2 clicks")
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner)))
+        "Runner doesn't spend 1 additional click to make a run")))
 
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
@@ -1003,6 +1081,56 @@
         "Out of the Ashes was not played")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")))
+
+(deftest service-outage-runner-turn-first-run
+  ;; Service Outage - Works when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
+                                                       (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 3)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
+    (is (find-card "Service Outage" (:current (get-corp)))
+        "Service Outage is in play")
+
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (run-on state :archives)
+    (is (= 0 (:credit (get-runner)))
+        "Runner spends 1 additional credit to make a run")))
+
+(deftest service-outage-runner-turn-second-run
+  ;; Service Outage - Doesn't fire if already run when played on the runner's turn
+  (do-game
+    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
+                                                       (qty "Breaking News" 1)])
+              (default-runner [(qty "Hades Shard" 1)]))
+    (trash-from-hand state :corp "Breaking News")
+    (take-credits state :corp)
+
+    (run-on state :hq)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+
+    (core/gain state :runner :credit 3)
+    (play-from-hand state :runner "Hades Shard")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
+    (is (find-card "Service Outage" (:current (get-corp)))
+        "Service Outage is in play")
+
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (run-on state :archives)
+    (is (= 1 (:credit (get-runner)))
+        "Runner doesn't spend 1 additional credit to make a run")))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements
