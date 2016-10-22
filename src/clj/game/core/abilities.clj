@@ -480,7 +480,8 @@
   (resolve-ability state side
                    {:show-discard true
                     :choices {:max n
-                              :req #(and (:side % "Corp") (= (:zone %) [:discard]))}
+                              :req #(and (= (:side %) "Corp")
+                                         (= (:zone %) [:discard]))}
                     :msg (msg "shuffle "
                               (let [seen (filter :seen targets)
                                     m (count (filter #(not (:seen %)) targets))]

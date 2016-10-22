@@ -55,8 +55,9 @@
    (let [ability {:prompt "Select a card to install facedown"
                   :label "Install a card facedown (start of turn)"
                   :once :per-turn
-                  :choices {:max 1 :req #(and (:side % "Runner")
-                                              (in-hand? %))}
+                  :choices {:max 1
+                            :req #(and (= (:side %) "Runner")
+                                       (in-hand? %))}
                   :req (req (> (count (:hand runner)) 0))
                   :effect (effect (runner-install target {:facedown true}))}]
      {:events {:runner-turn-begins ability}
@@ -524,7 +525,7 @@
    "NEXT Design: Guarding the Net"
    (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
                                            "Choose a piece of ICE in HQ to install:")
-                              :choices {:req #(and (:side % "Corp")
+                              :choices {:req #(and (= (:side %) "Corp")
                                                    (ice? %)
                                                    (in-hand? %))}
                               :effect (req (corp-install state side target nil)

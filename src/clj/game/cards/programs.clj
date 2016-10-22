@@ -747,7 +747,9 @@
                           (gain :memory 1)
                           (resolve-ability
                            {:show-discard true
-                            :choices {:max (get-in card [:counter :power] 0) :req #(and (:side % "Runner") (= (:zone %) [:discard]))}
+                            :choices {:max (get-in card [:counter :power] 0)
+                                      :req #(and (= (:side %) "Runner")
+                                                 (= (:zone %) [:discard]))}
                             :msg (msg "shuffle " (join ", " (map :title targets))
                                       " into their Stack")
                             :effect (req (doseq [c targets] (move state side c :deck))

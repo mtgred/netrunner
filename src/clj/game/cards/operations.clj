@@ -183,8 +183,9 @@
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
-   {:choices {:max 5 :req #(and (:side % "Corp")
-                                (in-hand? %))}
+   {:choices {:max 5
+              :req #(and (= (:side %) "Corp")
+                         (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (final-effect (gain :credit (* 2 (count targets))))}
 
@@ -490,8 +491,8 @@
                     (continue-ability {:player :corp
                                        :prompt "Choose a card to install"
                                        :delayed-completion true
-                                       :choices {:req #(and (not (is-type? % "Operation"))
-                                                            (:side % "Corp")
+                                       :choices {:req #(and (= (:side %) "Corp")
+                                                            (not (is-type? % "Operation"))
                                                             (in-hand? %))}
                                        :effect (effect (corp-install eid target nil nil))
                                        :msg (msg (corp-install-msg target))}
@@ -783,8 +784,9 @@
     :effect (req (let [n (count (:hand corp))]
                    (continue-ability state side
                      {:prompt (msg "Choose up to " n " cards in HQ to trash with Reuse")
-                      :choices {:max n :req #(and (:side % "Corp")
-                                                  (in-hand? %))}
+                      :choices {:max n
+                                :req #(and (= (:side %) "Corp")
+                                           (in-hand? %))}
                       :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
                                 " and gain " (* 2 (count targets)) " [Credits]")
                       :effect (effect (trash-cards targets)
@@ -858,7 +860,7 @@
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
                              :priority -1
                              :delayed-completion true
-                             :choices {:req #(and (:side % "Corp")
+                             :choices {:req #(and (= (:side %) "Corp")
                                                   (not (is-type? % "Operation"))
                                                   (in-hand? %))}
                              :effect (req (when-completed
@@ -913,8 +915,9 @@
 
    "Special Report"
    {:prompt "Choose any number of cards in HQ to shuffle into R&D"
-    :choices {:max (req (count (:hand corp))) :req #(and (:side % "Corp")
-                                                         (in-hand? %))}
+    :choices {:max (req (count (:hand corp)))
+              :req #(and (= (:side %) "Corp")
+                         (in-hand? %))}
     :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
     :effect (req (doseq [c targets]
                    (move state side c :deck))
