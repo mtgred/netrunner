@@ -43,16 +43,34 @@
                                                 (system-msg "trashes Autoscripter"))}}}
 
    "Blackguard"
-   {:implementation "Forces rez even on cards with additional cost"
-    :in-play [:memory 2]
-    :events {:expose {:msg (msg "attempt to force the rez of " (:title target))
-                      :effect (effect (rez :corp target))}}}
+   {:in-play [:memory 2]
+    :events {:expose
+             {:msg (msg "attempt to force the rez of " (:title target))
+              :delayed-completion true
+              :effect (req (let [c target
+                                 cdef (card-def c)
+                                 cname (:title c)]
+                             (if (:additional-cost cdef)
+                               (do (show-wait-prompt state :runner (str "Corp to decide if they will rez " cname))
+                                   (continue-ability state side
+                                     {:optional
+                                      {:prompt (msg "Pay additional cost to rez " cname "?")
+                                       :player :corp
+                                       :yes-ability {:effect (effect (rez :corp c)
+                                                                     (clear-wait-prompt :runner))}
+                                       :no-ability {:effect (effect (system-msg :corp (str "declines to pay additional costs"
+                                                                                       " and is not forced to rez " cname))
+                                                                    (clear-wait-prompt :runner))}}}
+                                    card nil))
+                               (do (rez :corp target)
+                                   (effect-completed state side eid)))))}}}
 
    "Bookmark"
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
-                 :choices {:max 3 :req #(and (:side % "Runner")
-                                             (in-hand? %))}
+                 :choices {:max 3
+                           :req #(and (= (:side %) "Runner")
+                                      (in-hand? %))}
                  :effect (req (doseq [c targets]
                                  (host state side (get-card state card) c {:facedown true})))}
                 {:label "Add all hosted cards to Grip" :cost [:click 1] :msg "add all hosted cards to their Grip"

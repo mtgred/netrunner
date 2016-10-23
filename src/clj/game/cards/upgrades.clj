@@ -135,7 +135,8 @@
    (letfn [(dhq [n i]
              {:req (req (pos? i))
               :prompt "Choose a card in HQ to add to the bottom of R&D"
-              :choices {:req #(and (:side % "Corp") (in-hand? %))}
+              :choices {:req #(and (= (:side %) "Corp")
+                                   (in-hand? %))}
               :msg "add a card to the bottom of R&D"
               :effect (req (move state side target :deck)
                            (when (< n i)

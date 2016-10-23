@@ -19,7 +19,7 @@
    (letfn [(abt [n i]
              {:req (req (pos? i))
               :prompt "Select a piece of ICE from the Temporary Zone to install"
-              :choices {:req #(and (:side % "Corp")
+              :choices {:req #(and (= (:side %) "Corp")
                                    (ice? %)
                                    (= (:zone %) [:play-area]))}
               :effect (req (corp-install state side target nil
@@ -208,7 +208,7 @@
      {:optional {:prompt "Create a new remote server?"
                  :yes-ability {:prompt "Select a card to install"
                                :show-discard true
-                               :choices {:req #(and (:side % "Corp")
+                               :choices {:req #(and (= (:side %) "Corp")
                                                     (not (is-type? % "Operation"))
                                                     (#{[:hand] [:discard]} (:zone %)))}
                                :effect (req (corp-install state side target "New remote"

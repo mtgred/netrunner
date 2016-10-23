@@ -185,8 +185,9 @@
                       :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
-   {:choices {:max 5 :req #(and (:side % "Corp")
-                                (in-hand? %))}
+   {:choices {:max 5
+              :req #(and (= (:side %) "Corp")
+                         (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (final-effect (gain :credit (* 2 (count targets))))}
 
@@ -294,26 +295,27 @@
                             card nil)))}}
 
    "Enhanced Login Protocol"
-   (let [remove-effect (req (when (:elp-trigger-effect card)
-                              (click-run-cost-bonus state side [:click -1])
-                              (update! state side (dissoc card :elp-trigger-effect))))
-         remove-ability {:req (req (and
-                                     (:elp-trigger-effect card)
-                                     (:clicked-to-run card)))
-                         :effect remove-effect}]
-     {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
-      :effect (effect (update! (assoc card :elp-trigger-effect true))
-                      (click-run-cost-bonus [:click 1]))
-      :events {:runner-turn-begins {:msg "add an additional cost of 1 [Click] to make the first run not through a card ability this turn"
-                                    :effect (effect (update! (assoc card :elp-trigger-effect true))
-                                                    (click-run-cost-bonus [:click 1]))}
-               :runner-turn-ends {:effect remove-effect}
-               :corp-turn-ends {:effect remove-effect} ; needed for sol
-               :run {:req (req (if (nil? (:card (:run-effect (:run @state))))
-                                 (update! state side (assoc card :clicked-to-run true))
-                                 (update! state side (assoc card :clicked-to-run false))))}
-               :run-ends remove-ability}
-      :leave-play remove-effect})
+   (letfn [(add-effect [state side card]
+             (update! state side (assoc card :elp-activated true))
+             (click-run-cost-bonus state side [:click 1]))
+           (remove-effect [state side card]
+             (click-run-cost-bonus state side [:click -1])
+             (update! state side (dissoc card :elp-activated)))]
+     {:msg (msg (when (and (= :runner (:active-player @state))
+                           (not (:made-click-run runner-reg)))
+                  "add an additional cost of [Click] to make the first run not through a card ability this turn"))
+      :effect (req (when (and (= :runner (:active-player @state))
+                              (not (:made-click-run runner-reg)))
+                     (add-effect state side card)))
+      :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
+                                    :effect (effect (add-effect card))}
+               :runner-turn-ends {:req (req (:elp-activated card))
+                                  :effect (effect (remove-effect card))}
+               :run-ends {:req (req (and (:elp-activated card)
+                                         (:made-click-run runner-reg)))
+                          :effect (effect (remove-effect card))}}
+      :leave-play (req (when (:elp-activated card)
+                         (remove-effect state side card)))})
 
    "Exchange of Information"
    {:req (req (and tagged
@@ -491,8 +493,8 @@
                     (continue-ability {:player :corp
                                        :prompt "Choose a card to install"
                                        :delayed-completion true
-                                       :choices {:req #(and (not (is-type? % "Operation"))
-                                                            (:side % "Corp")
+                                       :choices {:req #(and (= (:side %) "Corp")
+                                                            (not (is-type? % "Operation"))
                                                             (in-hand? %))}
                                        :effect (effect (corp-install eid target nil nil))
                                        :msg (msg (corp-install-msg target))}
@@ -785,8 +787,9 @@
     :effect (req (let [n (count (:hand corp))]
                    (continue-ability state side
                      {:prompt (msg "Choose up to " n " cards in HQ to trash with Reuse")
-                      :choices {:max n :req #(and (:side % "Corp")
-                                                  (in-hand? %))}
+                      :choices {:max n
+                                :req #(and (= (:side %) "Corp")
+                                           (in-hand? %))}
                       :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
                                 " and gain " (* 2 (count targets)) " [Credits]")
                       :effect (effect (trash-cards targets)
@@ -829,17 +832,26 @@
             :effect (effect (tag-runner :runner 1))}}
 
    "Service Outage"
-   (let [remove-effect (req (when (:so-run-activated card)
-                              (run-cost-bonus state side [:credit -1])
-                              (update! state side (dissoc card :so-run-activated))))
-         remove-ability {:req (req (:so-run-activated card))
-                         :effect remove-effect}]
-     {:events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
-                                    :effect (effect (update! (assoc card :so-run-activated true))
-                                                    (run-cost-bonus [:credit 1]))}
+   (let [add-effect (fn [state side card]
+                      (update! state side (assoc card :so-activated true))
+                      (run-cost-bonus state side [:credit 1]))
+         remove-effect (fn [state side card]
+                         (run-cost-bonus state side [:credit -1])
+                         (update! state side (dissoc card :so-activated)))
+         remove-ability {:req (req (:so-activated card))
+                         :effect (effect (remove-effect card))}]
+     {:msg (msg (when (and (= :runner (:active-player @state))
+                           (empty? (:made-run runner-reg)))
+             "add an additional cost of 1 [Credit] to make the first run this turn"))
+      :effect (req (when (and (= :runner (:active-player @state))
+                              (empty? (:made-run runner-reg)))
+                     (add-effect state side card)))
+      :events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+                                    :effect (effect (add-effect card))}
                :runner-turn-ends remove-ability
                :run-ends remove-ability}
-      :leave-play remove-effect})
+      :leave-play (req (when (:so-activated card)
+                         (remove-effect state side card)))})
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
@@ -851,7 +863,7 @@
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
                              :priority -1
                              :delayed-completion true
-                             :choices {:req #(and (:side % "Corp")
+                             :choices {:req #(and (= (:side %) "Corp")
                                                   (not (is-type? % "Operation"))
                                                   (in-hand? %))}
                              :effect (req (when-completed
@@ -906,8 +918,9 @@
 
    "Special Report"
    {:prompt "Choose any number of cards in HQ to shuffle into R&D"
-    :choices {:max (req (count (:hand corp))) :req #(and (:side % "Corp")
-                                                         (in-hand? %))}
+    :choices {:max (req (count (:hand corp)))
+              :req #(and (= (:side %) "Corp")
+                         (in-hand? %))}
     :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
     :effect (req (doseq [c targets]
                    (move state side c :deck))

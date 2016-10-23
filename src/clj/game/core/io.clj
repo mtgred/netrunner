@@ -83,11 +83,10 @@
          [:discard] (if (= side "Runner") "Heap" "Archives")
          [:deck] (if (= side "Runner") "Stack" "R&D")
          [:rig _] "Rig"
-         [:servers :hq _] "HQ Server"
-         [:servers :rd _] "R&D Server"
-         [:servers :archives _] "Archives Server"
-         [:servers :remote id _] (str "Remote Server " id)
-         :else nil))
+         [:servers :hq _] "the root of HQ"
+         [:servers :rd _] "the root of R&D"
+         [:servers :archives _] "the root of Archives"
+         :else (zone->name (second zone))))
 
 
 ;;; In-game chat commands

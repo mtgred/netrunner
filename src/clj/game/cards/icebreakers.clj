@@ -279,7 +279,7 @@
                                   :effect (effect (add-counter card :virus 1))}]
                      :events (let [encounter-ends-effect {:req (req (:crypsis-broke card))
                                                           :effect (req ((:effect breaker-auto-pump) state side eid card targets)
-                                                                       (if (pos? (get-in card [:counter :virus]))
+                                                                       (if (pos? (get-in card [:counter :virus] 0))
                                                                          (add-counter state side card :virus -1)
                                                                          (trash state side card {:cause :self-trash}))
                                                                        (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
