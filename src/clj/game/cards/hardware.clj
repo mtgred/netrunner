@@ -513,6 +513,7 @@
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-drive"
                  :choices {:req #(and (is-type? % "Program")
+                                      (<= (:memoryunits %) 1)
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
