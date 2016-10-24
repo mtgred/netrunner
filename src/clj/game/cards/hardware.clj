@@ -62,7 +62,7 @@
                                                                                        " and is not forced to rez " cname))
                                                                     (clear-wait-prompt :runner))}}}
                                     card nil))
-                               (do (rez :corp target)
+                               (do (rez state :corp target)
                                    (effect-completed state side eid)))))}}}
 
    "Bookmark"
