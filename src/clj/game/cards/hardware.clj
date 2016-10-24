@@ -522,7 +522,7 @@
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (lose :memory (:memoryunits target)))}}
+                                          (lose :memory (:memoryunits target)))}}}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
