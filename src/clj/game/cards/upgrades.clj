@@ -314,7 +314,8 @@
                                 card :can-steal
                                 (fn [state side card]
                                   (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                                    ((constantly false) (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                                    ((constantly false)
+                                     (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                                     true))))}]
      (assoc-in ohg [:events :run] ohg))
 

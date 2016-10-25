@@ -73,7 +73,8 @@
              :can-rez
              (fn [state side card]
                (if (ice? card)
-                 ((constantly false) (system-msg state side (str "is prevented from rezzing ICE on this run by Blackmail")))
+                 ((constantly false)
+                  (toast state :corp "Cannot rez ICE on this run due to Blackmail"))
                  true)))))
 
    "Bribery"
