@@ -536,7 +536,8 @@
                                 card :can-steal
                                 (fn [state _ card]
                                   (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                                    ((constantly false) (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                                    ((constantly false)
+                                      (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                                     true))))}]
      {:trash-effect
               {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
