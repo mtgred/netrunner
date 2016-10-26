@@ -62,7 +62,7 @@
                                                                                        " and is not forced to rez " cname))
                                                                     (clear-wait-prompt :runner))}}}
                                     card nil))
-                               (do (rez :corp target)
+                               (do (rez state :corp target)
                                    (effect-completed state side eid)))))}}}
 
    "Bookmark"
@@ -531,13 +531,20 @@
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card}))}
+                                 (runner-install target {:host-card card})
+                                 (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-drive"
                  :choices {:req #(and (is-type? % "Program")
+                                      (<= (:memoryunits %) 1)
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target))}]}
+                 :effect (effect (host card target)
+                                 (gain :memory (:memoryunits target))
+                                 (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
+   :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
+                          :effect (effect (update! (dissoc card :Omnidrive-prog))
+                                          (lose :memory (:memoryunits target)))}}}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
