@@ -11,7 +11,7 @@
    (sab/html
     (when emailhash
       [:img.avatar
-       {:src (str "http://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
+       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
