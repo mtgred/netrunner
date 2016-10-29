@@ -432,7 +432,8 @@
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
-    :trash-effect {:req (req (#{:meat :net} target))
+    :trash-effect {:when-inactive true
+                   :req (req (#{:meat :net} target))
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"

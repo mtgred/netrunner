@@ -193,7 +193,7 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}}
@@ -329,7 +329,7 @@
 
    "Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}}
@@ -1092,7 +1092,7 @@
    "The Board"
    {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
     :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}
@@ -1153,7 +1153,7 @@
     :leave-play (req (gain state :runner :click-per-turn 1)
                      (when (= (:active-player @state) :runner)
                        (gain state :runner :click 1)))
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}}
