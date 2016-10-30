@@ -401,6 +401,19 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content])))
           "Project Atlas not trashed from Server 3"))))
 
+(deftest drive-by-psychic-field
+  ;; Drive By - Psychic Field trashed after psi game. Issue #2127.
+  (do-game
+    (new-game (default-corp [(qty "Psychic Field" 1)])
+              (default-runner [(qty "Drive By" 3)]))
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Drive By")
+    (prompt-select :runner (get-content state :remote1 0))
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
