@@ -458,8 +458,16 @@
                              :interactive (req true)
                              :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
                                        (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
-                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (continue-ability state :runner (choose-access c '(:hq)) card nil)))}}}
+                             :effect (req (let [from-hq (access-count state side :hq-access)]
+                                            (continue-ability
+                                              state side
+                                              (access-helper-hq
+                                                state from-hq
+                                                ; access-helper-hq uses a set to keep track of which cards have already
+                                                ; been accessed. by adding HQ root's contents to this set, we make the runner
+                                                ; unable to access those cards, as Gang Sign intends.
+                                                (set (get-in @state [:corp :servers :hq :content])))
+                                              card nil)))}}}
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"

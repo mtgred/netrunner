@@ -208,6 +208,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "15 Minutes" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :runner "Card from hand")
     (prompt-choice :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
 

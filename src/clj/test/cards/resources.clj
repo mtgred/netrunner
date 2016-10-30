@@ -462,6 +462,34 @@
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest gang-sign
+  ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 3) (qty "Braintrust" 2) (qty "Crisium Grid" 1)])
+              (default-runner [(qty "Gang Sign" 2) (qty "HQ Interface" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Gang Sign")
+    (play-from-hand state :runner "Gang Sign")
+    (play-from-hand state :runner "HQ Interface")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :runner "Gang Sign") ; simultaneous effect resolution
+    (let [gs1 (-> (get-runner) :prompt first)]
+      (is (= (:choices gs1) ["Card from hand"]) "Gang Sign does not let Runner access upgrade in HQ root")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "Steal")
+      (is (= (:card gs1) (-> (get-runner) :prompt first :card)) "Second access from first Gang Sign triggered")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "Steal")
+      (is (not= (:card gs1) (-> (get-runner) :prompt first :card)) "First access from second Gang Sign triggered")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "Steal"))))
+
 (deftest gene-conditioning-shoppe
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
   (do-game
