@@ -202,8 +202,7 @@
                                                        (clear-wait-prompt :runner)
                                                        (continue-ability
                                                          :runner {:optional
-                                                                  {:delayed-completion true
-                                                                   :player :runner
+                                                                  {:player :runner
                                                                    :prompt "Allow Archangel trace to fire?"
                                                                    :priority 1
                                                                    :yes-ability {:delayed-completion true
@@ -211,16 +210,21 @@
                                                                    :no-ability {:effect (effect (effect-completed eid))}}}
                                                          card nil))}
                          :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
-                                                      (clear-wait-prompt :runner)
-                                                      (effect-completed eid))}}}
+                                                      (clear-wait-prompt :runner))}}}
                        card nil))}
-   :subroutines [(trace-ability 6 {:choices {:req #(and (installed? %)
-                                                        (card-is? % :side :runner))}
-                                   :label "Add 1 installed card to the Runner's Grip"
-                                   :msg "add 1 installed card to the Runner's Grip"
-                                   :effect (effect (move :runner target :hand true)
-                                                   (system-msg (str "adds " (:title target)
-                                                                    " to the Runner's Grip")))})]}
+   :subroutines [(trace-ability 6 {:delayed-completion true
+                                   :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
+                                                   (continue-ability {:choices {:req #(and (installed? %)
+                                                                                           (card-is? % :side :runner))}
+                                                                      :label "Add 1 installed card to the Runner's Grip"
+                                                                      :msg "add 1 installed card to the Runner's Grip"
+                                                                      :effect (effect (clear-wait-prompt :runner)
+                                                                                      (move :runner target :hand true)
+                                                                                      (system-msg (str "adds " (:title target)
+                                                                                                       " to the Runner's Grip")))
+                                                                      :cancel-effect (effect (clear-wait-prompt :runner)
+                                                                                             (effect-completed eid))}
+                                                                     card nil))})]}
 
    "Archer"
    {:additional-cost [:forfeit]
@@ -373,22 +377,27 @@
 
    "Chrysalis"
    {:subroutines [(do-net-damage 2)]
-    :access {:req (req (not= (first (:zone card)) :discard))
+    :access {:delayed-completion true
+             :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Chrysalis")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:req (req (not= (first (:zone card)) :discard))
                                  :prompt "Force the Runner to encounter Chrysalis?"
-                                 :yes-ability {:effect (req (system-msg state :corp "forces the Runner to encounter Chrysalis")
-                                                            (clear-wait-prompt state :runner)
-                                                            (resolve-ability state :runner
-                                                              {:optional
-                                                               {:player :runner
-                                                                :prompt "Allow Chrysalis subroutine to fire?" :priority 1
-                                                                :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
-                                                             card nil))}
-                                 :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Chrysalis")
-                                                           (clear-wait-prompt state :runner))}}}
+                                 :yes-ability {:delayed-completion true
+                                               :effect (effect (system-msg :corp "forces the Runner to encounter Chrysalis")
+                                                               (clear-wait-prompt :runner)
+                                                               (continue-ability
+                                                                 :runner {:optional
+                                                                          {:player :runner
+                                                                           :prompt "Allow Chrysalis subroutine to fire?"
+                                                                           :priority 1
+                                                                           :yes-ability {:delayed-completion true
+                                                                                         :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
+                                                                           :no-ability {:effect (effect (effect-completed eid))}}}
+                                                                 card nil))}
+                                 :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Chrysalis")
+                                                              (clear-wait-prompt :runner))}}}
                               card nil))}}
 
    "Chum"
