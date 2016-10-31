@@ -190,22 +190,30 @@
 
    "Archangel"
    {:access
-    {:req (req (not= (first (:zone card)) :discard))
+    {:delayed-completion true
+     :req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
-                     (resolve-ability
+                     (continue-ability
                        {:optional
                         {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
                          :yes-ability {:cost [:credit 3]
-                                       :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
-                                                    (clear-wait-prompt state :runner)
-                                                    (resolve-ability state :runner
-                                                                     {:optional
-                                                                      {:player :runner
-                                                                       :prompt "Allow Archangel trace to fire?" :priority 1
-                                                                       :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
-                                                                     card nil))}
-                         :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
-                                                   (clear-wait-prompt state :runner))}}} card nil))}
+                                       :delayed-completion true
+                                       :effect (effect (system-msg :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
+                                                       (clear-wait-prompt :runner)
+                                                       (continue-ability
+                                                         :runner {:optional
+                                                                  {:delayed-completion true
+                                                                   :player :runner
+                                                                   :prompt "Allow Archangel trace to fire?"
+                                                                   :priority 1
+                                                                   :yes-ability {:delayed-completion true
+                                                                                 :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
+                                                                   :no-ability {:effect (effect (effect-completed eid))}}}
+                                                         card nil))}
+                         :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
+                                                      (clear-wait-prompt :runner)
+                                                      (effect-completed eid))}}}
+                       card nil))}
    :subroutines [(trace-ability 6 {:choices {:req #(and (installed? %)
                                                         (card-is? % :side :runner))}
                                    :label "Add 1 installed card to the Runner's Grip"
