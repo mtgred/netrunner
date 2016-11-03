@@ -143,6 +143,11 @@
                                             (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     {:title "/rez-all command"} nil))
 
+(defn command-close-prompt [state side]
+  (when-let [fprompt (-> @state side :prompt first)]
+    (swap! state update-in [side :prompt] rest)
+    (effect-completed state side (:eid fprompt))))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (string->num (first args))] n 1)
@@ -179,7 +184,7 @@
         "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
         "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
         "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
-        "/close-prompt" #(swap! %1 update-in [%2 :prompt] rest)
+        "/close-prompt" #(command-close-prompt %1 %2)
         "/rez"        #(when (= %2 :corp)
                         (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
                                                 :choices {:req (fn [t] (card-is? t :side %2))}}

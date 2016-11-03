@@ -463,7 +463,7 @@
   (system-msg state side (str "exposes " (card-str state target {:visible true})))
   (if-let [ability (:expose (card-def target))]
     (when-completed (resolve-ability state side ability target nil)
-                    (trigger-event-sync state side eid :expose target))
+                    (trigger-event-sync state side (make-result eid true) :expose target))
     (trigger-event-sync state side (make-result eid true) :expose target)))
 
 (defn expose
