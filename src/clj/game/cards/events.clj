@@ -399,7 +399,7 @@
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
    "Government Investigations"
-   {:flags {:psi-prevent-spend (req (prn "GI") 2)}}
+   {:flags {:psi-prevent-spend (req 2)}}
 
    "Hacktivist Meeting"
    {:events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
