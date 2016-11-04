@@ -422,10 +422,10 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (trigger-event state side :psi-game bet opponent-bet)
-          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
-            (effect-completed state side eid card)))
+          (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
+                          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+                            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
+                            (effect-completed state side eid card))))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
