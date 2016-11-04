@@ -763,6 +763,19 @@
                     (damage eid :meat 2 {:card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
+   "Top Hat"
+   (letfn [(ability [n]
+             {:delayed-completion true
+              :mandatory true
+              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+              :choices (take n ["1" "2" "3" "4" "5"])
+              :effect (effect (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
+     {:events {:successful-run
+               {:req (req (= target :rd))
+                :optional {:prompt "Use Top Hat to choose one of the top 5 cards in R&D to access?"
+                           :yes-ability {:effect (req (swap! state assoc-in [:run :run-effect :replace-access]
+                                                             (ability (count (:deck corp)))))}}}}})
+
    "Turntable"
    {:in-play [:memory 1]
     :events {:agenda-stolen
