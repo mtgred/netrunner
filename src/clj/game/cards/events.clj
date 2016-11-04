@@ -398,6 +398,9 @@
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
+   "Government Investigations"
+   {:flags {:psi-prevent-spend (req (prn "GI") 2)}}
+
    "Hacktivist Meeting"
    {:events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether

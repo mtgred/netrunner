@@ -1,5 +1,5 @@
 (in-ns 'game.core)
-(declare corp-trace-prompt optional-ability
+(declare any-flag-fn? corp-trace-prompt optional-ability
          check-optional check-psi check-trace complete-ability
          do-choices do-ability
          psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
@@ -403,10 +403,14 @@
    (swap! state assoc :psi {})
    (register-once state psi card)
    (doseq [s [:corp :runner]]
-     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
-                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                  #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
-                  {:priority 2}))))
+     (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
+           valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
+                                      (any-flag-fn? state :runner :psi-prevent-spend %))
+                                 all-amounts)]
+       (show-prompt state s card (str "Choose an amount to spend for " (:title card))
+                    (map #(str % " [Credits]") valid-amounts)
+                    #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                    {:priority 2})))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
