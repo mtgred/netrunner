@@ -718,7 +718,7 @@
      (when-not (empty? discard)
        (om/build card-view (last discard)))
      (om/build label discard {:opts {:name "Heap"}})
-     [:div.panel.blue-shade.popup {:ref "popup" :class (when-not (= (:side @game-state) :runner) "opponent")}
+     [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "me" "opponent")}
       [:div
        [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]]
       (om/build-all card-view discard {:key :cid})]])))
@@ -744,7 +744,7 @@
                                                          ;; use non-breaking space to keep counts on same line.
                                                          (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
-      [:div.panel.blue-shade.popup {:ref "popup" :class (when (= (:side @game-state) :runner) "opponent")}
+      [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
        [:div
         [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
         [:label (let [total (count discard)
@@ -888,7 +888,7 @@
     (let [servers (:servers player)
           s (:server run)
           server-type (first s)]
-      [:div.corp-board {:class (when (= (:side @game-state) :runner) "opponent")}
+      [:div.corp-board {:class (if (= (:side @game-state) :runner) "opponent" "me")}
        (for [server (reverse (get-remotes servers))
              :let [num (remote->num (first server))]]
          (om/build server-view {:server (second server)
@@ -904,22 +904,23 @@
                               :central-view (om/build discard-view player)
                               :run (when (= server-type "archives") run)})]))))
 
-(defmethod board-view "Runner" [{:keys [player run opponent]}]
+(defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
    (sab/html
-    (let [centrals (sab/html
+    (let [is-opponent (= (:side @game-state) :corp)
+          centrals (sab/html
                     [:div.runner-centrals
                      (om/build discard-view player)
                      (om/build deck-view player)
                      (om/build identity-view player)])]
-      [:div.runner-board {:class (when-not (= (:side @game-state) :runner) "opponent")}
-       (when opponent centrals)
+      [:div.runner-board {:class (if is-opponent "opponent" "me")}
+       (when is-opponent centrals)
        (for [zone [:program :hardware :resource :facedown]]
          [:div
           (for [c (zone (:rig player))]
             [:div.card-wrapper {:class (when (playable? c) "playable")}
              (om/build card-view c)])])
-       (when (not opponent) centrals)]))))
+       (when-not is-opponent centrals)]))))
 
 (defn cond-button [text cond f]
   (sab/html
@@ -1150,7 +1151,7 @@
              [:div.me
               (om/build hand-view {:player me :remotes (get-remotes (get-in cursor [:corp :servers]))})]]
              [:div.centralpane
-              (om/build board-view {:player opponent :run run :opponent true})
+              (om/build board-view {:player opponent :run run})
               (om/build board-view {:player me :run run})]
 
             [:div.rightpane {}
