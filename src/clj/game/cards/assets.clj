@@ -457,6 +457,12 @@
                  :msg "install and host an asset or agenda"
                  :effect (req (corp-install state side target card))}]}
 
+   "Fumiko Yamamori"
+   {:events {:psi-game {:req (req (not= (first targets) (second targets)))
+                        :delayed-completion true
+                        :msg "do 1 meat damage"
+                        :effect (effect (damage eid :meat 1 {:card card}))}}}
+
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)
