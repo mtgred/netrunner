@@ -558,6 +558,17 @@
     :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))
     :strength-bonus (req (:memory runner))}
 
+   "Saker"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [(break-sub 1 1 "barrier")
+                                 (strength-pump 2 2)
+                                 {:label "Derez a barrier and return Saker to your Grip"
+                                  :cost [:credit 2]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Barrier")))
+                                  :msg (msg "derez " (:title current-ice) " and return Saker to their Grip")
+                                  :effect (effect (derez current-ice)
+                                                  (move card :hand))}]})
+
    "Snowball"
    (auto-icebreaker ["Barrier"]
                     {:abilities [{:cost [:credit 1] :msg "break 1 barrier subroutine"
