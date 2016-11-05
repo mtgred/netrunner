@@ -507,6 +507,18 @@
                                      (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
+   "Data Ward"
+   {:runner-abilities [{:label "Pay 3 [Credits]"
+                        :effect (req (pay state :runner card :credit 3)
+                                     (system-msg state :runner "chooses to pay 3 [Credits] on encountering Data Ward"))}
+                       {:label "Take 1 tag"
+                        :effect (req (tag-runner state :runner 1)
+                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Ward"))}]
+    :subroutines [{:label "End the run if the Runner is tagged"
+                   :req (req tagged)
+                   :msg "end the run"
+                   :effect (effect (end-run))}]}
+
    "DNA Tracker"
    {:abilities [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
                  :effect (req (when-completed (damage state side :net 1 {:card card})

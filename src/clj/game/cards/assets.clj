@@ -198,6 +198,15 @@
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}}
 
+   "Chief Slee"
+   {:abilities [{:label "Add 1 power counter"
+                 :effect (effect (add-counter card :power 1)
+                                 (system-msg (str "adds 1 power counter to Chief Slee")))}
+                {:counter-cost [:power 5] :cost [:click 1]
+                 :delayed-completion true
+                 :msg "do 5 meat damage"
+                 :effect (effect (damage eid :meat 5 {:card card}))}]}
+
    "C.I. Fund"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (> (:credit corp) 0))}
@@ -447,6 +456,12 @@
                                       (= (:side %) "Corp"))}
                  :msg "install and host an asset or agenda"
                  :effect (req (corp-install state side target card))}]}
+
+   "Fumiko Yamamori"
+   {:events {:psi-game {:req (req (not= (first targets) (second targets)))
+                        :delayed-completion true
+                        :msg "do 1 meat damage"
+                        :effect (effect (damage eid :meat 1 {:card card}))}}}
 
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
