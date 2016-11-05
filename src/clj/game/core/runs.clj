@@ -4,7 +4,7 @@
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability7
          get-remote-names card-name can-access-loud can-steal?
-         prevent-jack-out)
+         prevent-jack-out card-flag?)
 
 ;;; Steps in the run sequence
 (defn run
@@ -120,14 +120,17 @@
                                              (system-msg (str "is forced to pay " trash-msg)))}
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
-          (continue-ability state :runner
-                            {:optional
-                             {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                              :yes-ability {:cost [:credit trash-cost]
-                                            :delayed-completion true
-                                            :effect (effect (trash eid card nil)
-                                                            (system-msg (str "pays " trash-msg)))}}}
-                            card nil)))
+          (if-not (and (is-type? card "Operation")
+                       (card-flag? card :can-trash-operation true))
+            ;; Don't show the option if Edward Kim's auto-trash flag is true.
+            (continue-ability state :runner
+                              {:optional
+                               {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                                :yes-ability {:cost [:credit trash-cost]
+                                              :delayed-completion true
+                                              :effect (effect (trash eid card nil)
+                                                              (system-msg (str "pays " trash-msg)))}}}
+                              card nil))))
       ;; The card does not have a trash cost
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
     (effect-completed state side eid)))
