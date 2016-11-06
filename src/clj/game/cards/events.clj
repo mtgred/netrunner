@@ -276,17 +276,23 @@
                                  :effect (effect (resolve-ability (es) card nil))}} card))})
 
    "Eureka!"
-   {:effect
-    (req (let [topcard (first (:deck runner))
-               caninst (some #(= % (:type topcard)) '("Hardware" "Resource" "Program"))
-               cost (min 10 (:cost topcard))]
-           (when caninst
-             (do (gain state side :credit cost)
-                 (runner-install state side topcard)))
-           (when (get-card state topcard) ; only true if card was not installed
-             (do (system-msg state side (str "reveals and trashes " (:title topcard)))
-                 (trash state side topcard)
-                 (when caninst (lose state side :credit cost))))))}
+   {:effect (req (let [topcard (first (:deck runner))
+                       caninst (or (is-type? topcard "Hardware")
+                                   (is-type? topcard "Program")
+                                   (is-type? topcard "Resource"))]
+                   (if caninst
+                     (resolve-ability
+                       state side
+                       {:optional {:prompt (msg "Install " (:title topcard) "?")
+                                   :yes-ability {:effect (effect (install-cost-bonus [:credit -10])
+                                                                 (runner-install topcard))}
+                                   :no-ability {:effect (effect (trash topcard {:unpreventable true})
+                                                                (system-msg (str "reveals and trashes "
+                                                                                 (:title topcard))))}}} card nil)
+                     (do (trash state side topcard {:unpreventable true})
+                         (system-msg
+                           state side
+                           (str "reveals and trashes " (:title topcard)))))))}
 
    "Exclusive Party"
    {:msg (msg "draw 1 card and gain "
