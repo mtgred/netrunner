@@ -290,9 +290,7 @@
                                                                 (system-msg (str "reveals and trashes "
                                                                                  (:title topcard))))}}} card nil)
                      (do (trash state side topcard {:unpreventable true})
-                         (system-msg
-                           state side
-                           (str "reveals and trashes " (:title topcard)))))))}
+                         (system-msg state side (str "reveals and trashes " (:title topcard)))))))}
 
    "Exclusive Party"
    {:msg (msg "draw 1 card and gain "

@@ -426,6 +426,23 @@
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
 
+(deftest eureka!
+  ;; Eureka! - Install the program but trash the event
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Eureka!" 2) (qty "Torch" 1) (qty "Sure Gamble" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 1)
+    (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Eureka!")
+    (prompt-choice :runner "Yes")
+    (is (= 3 (:credit (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :program]))))
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Eureka!")
+    (is (= 0 (:credit (get-runner))))
+    (is (= 3 (count (:discard (get-runner)))))))
+
 (deftest frantic-coding-install
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed
   (do-game
