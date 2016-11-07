@@ -11,16 +11,17 @@
     "code": "01099",
     "versions": ["alt"]
 }, {
-    "code": "01107","versions": ["alt"]
+    "code": "01107",
+    "versions": ["alt"]
 }, {
     "code": "01008",
     "versions": ["alt"]
 }, {
     "code": "01056",
-    "versions": ["alt"]
+    "versions": ["alt", "wc2015"]
 }, {
     "code": "02110",
-    "versions": ["alt"]
+    "versions": ["alt", "wc2015"]
 }, {
     "code": "02091",
     "versions": ["alt"]
@@ -35,7 +36,7 @@
     "versions": ["alt"]
 }, {
     "code": "01054",
-    "versions": ["alt"]
+    "versions": ["alt", "wc2015"]
 }, {
     "code": "01067",
     "versions": ["alt"]
@@ -83,7 +84,7 @@
     "versions": ["alt"]
 }, {
     "code": "04015",
-    "versions": ["alt"]
+    "versions": ["alt", "wc2015"]
 }, {
     "code": "06095",
     "versions": ["alt"]
@@ -92,7 +93,7 @@
     "versions": ["alt"]
 }, {  
     "code":"04119",
-    "versions": ["alt"]
+    "versions": ["alt", "wc2015"]
 },  {  
     "code":"03054",
     "versions": ["alt", "wc2015"]
@@ -161,6 +162,54 @@
     "versions": ["wc2015"]
 }, {
     "code": "06033",
+    "versions": ["wc2015"]
+}, {
+    "code": "02051",
+    "versions": ["wc2015"]
+}, {
+    "code": "01055",
+    "versions": ["wc2015"]
+}, {
+    "code": "09026",
+    "versions": ["wc2015"]
+}, {
+    "code": "02092",
+    "versions": ["wc2015"]
+}, {
+    "code": "08040",
+    "versions": ["wc2015"]
+}, {
+    "code": "04114",
+    "versions": ["wc2015"]
+}, {
+    "code": "02013",
+    "versions": ["wc2015"]
+}, {
+    "code": "01110",
+    "versions": ["wc2015"]
+}, {
+    "code": "01058",
+    "versions": ["wc2015"]
+}, {
+    "code": "06061",
+    "versions": ["wc2015"]
+}, {
+    "code": "07027",
+    "versions": ["wc2015"]
+}, {
+    "code": "06061",
+    "versions": ["wc2015"]
+}, {
+    "code": "01090",
+    "versions": ["wc2015"]
+}, {
+    "code": "01062",
+    "versions": ["wc2015"]
+}, {
+    "code": "03017",
+    "versions": ["wc2015"]
+}, {
+    "code": "01111",
     "versions": ["wc2015"]
 }
 
