@@ -100,7 +100,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
 
 (deftest brain-taping-warehouse
-  ;; Brain-Taping Warehouse - Lower rez cost of bioroid ICE by 1 for each unspent Runner click
+  ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
   (do-game
     (new-game (default-corp [(qty "Brain-Taping Warehouse" 1) (qty "Ichi 1.0" 1)
                              (qty "Eli 1.0" 1)])

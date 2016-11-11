@@ -4,7 +4,7 @@
                                 dissoc-in cancellable card-is? side-str build-cost-str build-spend-msg cost-names
                                 zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
                                 is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes]]
+                                combine-subtypes remove-subtypes pluralize quantify]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case]]
             [clojure.core.match :refer [match]]))

@@ -7,7 +7,7 @@
     :additional-cost [:forfeit]
     :effect (req (continue-ability
                    state side
-                   {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                   {:prompt "Select an agenda in your score area to trigger its \"when scored\" ability"
                     :choices {:req #(and (is-type? % "Agenda")
                                          (is-scored? state :corp %))}
                     :msg (msg "trigger the \"when scored\" ability of " (:title target))
@@ -41,7 +41,7 @@
 
    "Ad Blitz"
    (let [abhelp (fn ab [n total]
-                  {:prompt "Select an advertisement to install and rez" :show-discard true
+                  {:prompt "Select an Advertisement to install and rez" :show-discard true
                    :delayed-completion true
                    :choices {:req #(and (= (:side %) "Corp")
                                         (has-subtype? % "Advertisement")
@@ -52,10 +52,10 @@
                                   (if (< n total)
                                     (continue-ability state side (ab (inc n) total) card nil)
                                     (effect-completed state side eid))))})]
-     {:prompt "How many advertisements?"
+     {:prompt "How many Advertisements?"
       :delayed-completion true
       :choices :credit
-      :msg (msg "install and rez " target " advertisements")
+      :msg (msg "install and rez " target " Advertisements")
       :effect (effect (continue-ability (abhelp 1 target) card nil))})
 
    "Aggressive Negotiation"
@@ -95,7 +95,8 @@
    "Archived Memories"
    {:effect (req (let [cid (:cid card)]
                    (resolve-ability state side
-                     {:prompt "Choose a card from Archives to add to HQ" :show-discard true
+                     {:prompt "Select a card from Archives to add to HQ"
+                      :show-discard true
                       :choices {:req #(and (not= (:cid %) cid)
                                            (= (:side %) "Corp")
                                            (= (:zone %) [:discard]))}
@@ -114,7 +115,7 @@
                  (effect-completed state side eid card))}
 
    "Back Channels"
-   {:prompt "Choose an installed card in a server to trash"
+   {:prompt "Select an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
                          (is-remote? (second (:zone %))))}
     :effect (final-effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
@@ -249,7 +250,7 @@
     :effect (effect (purge))}
 
    "Dedication Ceremony"
-   {:prompt "Choose a faceup card"
+   {:prompt "Select a faceup card"
     :choices {:req rezzed?}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
     :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
@@ -298,7 +299,7 @@
             :effect (req (let [f (:faction (:identity runner))]
                            (continue-ability
                              state side
-                             {:prompt "Choose an installed card not matching the faction of the Runner's identity"
+                             {:prompt "Select an installed card not matching the faction of the Runner's identity"
                               :choices {:req #(and (installed? %) (not= f (:faction %)) (card-is? % :side :runner))}
                               :msg (msg "trash " (:title target))
                               :effect (effect (trash target))}
@@ -335,14 +336,14 @@
     :effect (req
               (continue-ability
                 state side
-                {:prompt "Choose a stolen agenda in the Runner's score area to swap"
+                {:prompt "Select a stolen agenda in the Runner's score area to swap"
                  :choices {:req #(in-runner-scored? state side %)}
                  :delayed-completion true
                  :effect (req
                            (let [stolen target]
                              (continue-ability
                                state side
-                               {:prompt (msg "Choose a scored agenda to swap for " (:title stolen))
+                               {:prompt (msg "Select a scored agenda to swap for " (:title stolen))
                                 :choices {:req #(in-corp-scored? state side %)}
                                 :effect (req (let [scored target]
                                                (swap-agendas state side scored stolen)
@@ -372,7 +373,8 @@
                             :delayed-completion true
                             :effect (final-effect (continue-ability
                                                     (if (= target "Yes")
-                                                      {:prompt "Choose a resource to trash" :player :runner
+                                                      {:player :runner
+                                                       :prompt "Select a resource to trash"
                                                        :choices {:req #(and (is-type? % "Resource") (installed? %))}
                                                        :effect (req (trash state side target {:unpreventable true})
                                                                     (system-msg state :runner
@@ -390,7 +392,7 @@
 
    "Foxfire"
    {:trace {:base 7
-            :prompt "Choose 1 card to trash"
+            :prompt "Select 1 card to trash"
             :not-distinct true
             :choices {:req #(and (installed? %)
                                  (or (has-subtype? % "Virtual")
@@ -443,23 +445,23 @@
    {:delayed-completion true
     :effect (effect (draw 3)
                     (continue-ability
-                      {:prompt "Choose a card in HQ to put on top of R&D"
-                       :choices {:req #(and (in-hand? %)
-                                            (= (:side %) "Corp"))}
+                      {:prompt "Select a card in HQ to put on top of R&D"
+                       :choices {:req #(and (= (:side %) "Corp")
+                                            (in-hand? %))}
                        :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
                        :effect (effect (move target :deck {:front true}))}
                       card nil))}
 
    "Housekeeping"
    {:events {:runner-install {:player :runner
-                              :choices {:req #(and (in-hand? %)
-                                                   (= (:side %) "Runner"))}
-                              :prompt "Choose a card from your Grip to trash for Housekeeping" :once :per-turn
+                              :prompt "Select a card from your Grip to trash for Housekeeping" :once :per-turn
+                              :choices {:req #(and (= (:side %) "Runner")
+                                                   (in-hand? %))}
                               :msg (msg "force the Runner to trash " (:title target) " from their Grip")
                               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Interns"
-   {:prompt "Choose a card to install from Archives or HQ"
+   {:prompt "Select a card to install from Archives or HQ"
     :show-discard true
     :not-distinct true
     :choices {:req #(and (not (is-type? % "Operation"))
@@ -501,13 +503,13 @@
     :msg "gain 4 [Credits]"
     :effect (effect (gain :credit 4)
                     (continue-ability {:player :corp
-                                       :prompt "Choose a card to install"
-                                       :delayed-completion true
+                                       :prompt "Select a card to install"
                                        :choices {:req #(and (= (:side %) "Corp")
                                                             (not (is-type? % "Operation"))
                                                             (in-hand? %))}
-                                       :effect (effect (corp-install eid target nil nil))
-                                       :msg (msg (corp-install-msg target))}
+                                       :delayed-completion true
+                                       :msg (msg (corp-install-msg target))
+                                       :effect (effect (corp-install eid target nil nil))}
                                       card nil))}
 
    "Liquidation"
@@ -515,8 +517,10 @@
     :effect (req (let [n (count (filter #(and (rezzed? %)
                                               (not (is-type? % "Agenda"))) (all-installed state :corp)))]
                    (continue-ability state side
-                     {:prompt "Choose any number of rezzed cards to trash"
-                      :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
+                     {:prompt "Select any number of rezzed cards to trash"
+                      :choices {:max n
+                                :req #(and (rezzed? %)
+                                           (not (is-type? % "Agenda")))}
                       :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
@@ -533,7 +537,7 @@
                     state side
                     {:prompt "How many copies?"
                      :choices {:number (req (count cs))}
-                     :msg (msg "add " target " cop" (if (= target 1) "y" "ies") " of " c " to HQ")
+                     :msg (msg "add " (quantify target "cop" "y" "ies") " of " c " to HQ")
                      :effect (req (shuffle! state :corp :deck)
                                   (doseq [c (take target cs)]
                                     (move state side c :hand)))}
@@ -558,7 +562,7 @@
                             (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
 
    "Mushin No Shin"
-   {:prompt "Choose a card to install from HQ"
+   {:prompt "Select a card to install from HQ"
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
                          (= (:side %) "Corp")
                          (in-hand? %))}
@@ -581,7 +585,7 @@
 
    "Mutate"
    {:req (req (seq (filter (every-pred rezzed? ice?) (all-installed state :corp))))
-    :prompt "Choose a rezzed piece of ICE to trash"
+    :prompt "Select a rezzed piece of ICE to trash"
     :choices {:req (every-pred rezzed? ice?)}
     :msg (msg "to trash " (:title target))
     :effect (req (let [i (ice-index state target)
@@ -614,7 +618,7 @@
                    (< (:credit runner) 6)))
     :delayed-completion true
     :effect (effect (continue-ability
-                      {:prompt "Choose an installed card to trash"
+                      {:prompt "Select an installed card to trash"
                        :choices {:req installed?}
                        :msg (msg "remove 1 Runner tag and trash " (:title target))
                        :effect (effect (lose :runner :tag 1)
@@ -670,7 +674,7 @@
     :effect (req (mill state :corp target)
                  (let [n target]
                    (continue-ability state :runner
-                                     {:prompt "Choose a Program or piece of Hardware to trash"
+                                     {:prompt "Select a Program or piece of Hardware to trash"
                                       :choices {:req #(and (#{"Hardware" "Program"} (:type %))
                                                            (<= (:cost %) n))}
                                       :msg (msg "trash " (:title target))
@@ -696,7 +700,7 @@
     :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Product Recall"
-   {:prompt "Choose a rezzed asset or upgrade to trash"
+   {:prompt "Select a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
                          (or (is-type? % "Asset") (is-type? % "Upgrade")))}
     :effect (req (let [c target]
@@ -729,7 +733,7 @@
                             (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
 
    "Reclamation Order"
-   {:prompt "Choose a card from Archives"
+   {:prompt "Select a card from Archives"
     :show-discard true
     :choices {:req #(and (= (:side %) "Corp")
                          (not= (:title %) "Reclamation Order")
@@ -742,8 +746,8 @@
                                      {:prompt (str "Choose how many copies of "
                                                    title " to reveal")
                                       :choices {:number (req n)}
-                                      :msg (msg "reveal " target
-                                                " cop" (if (= 1 target) "y" "ies")
+                                      :msg (msg "reveal "
+                                                (quantify target "cop" "y" "ies")
                                                 " of " title
                                                 " from Archives"
                                                 (when (pos? target)
@@ -760,7 +764,7 @@
    "Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
                   (if (pos? left)
-                    {:prompt (str "Select a sysop (" (inc (- total left)) "/" total ")")
+                    {:prompt (str "Choose a Sysop (" (inc (- total left)) "/" total ")")
                      :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                               (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
@@ -772,14 +776,14 @@
                                     card nil))}
                     {:effect (effect (shuffle! :corp :deck))
                      :msg (msg "shuffle R&D")}))]
-   {:prompt "How many sysops?"
+   {:prompt "How many Sysops?"
     :delayed-completion true
     :choices :credit
-    :msg (msg "search for " target " sysops")
+    :msg (msg "search for " target " Sysops")
     :effect (effect (continue-ability (rthelp target target []) card nil))})
 
    "Restoring Face"
-   {:prompt "Choose a Sysop, Executive or Clone to trash"
+   {:prompt "Select a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
     :choices {:req #(and (rezzed? %)
                          (or (has-subtype? % "Clone")
@@ -795,19 +799,20 @@
    {:delayed-completion true
     :effect (req (let [n (count (:hand corp))]
                    (continue-ability state side
-                     {:prompt (msg "Choose up to " n " cards in HQ to trash with Reuse")
+                     {:prompt (msg "Select up to " n " cards in HQ to trash with Reuse")
                       :choices {:max n
                                 :req #(and (= (:side %) "Corp")
                                            (in-hand? %))}
-                      :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
-                                " and gain " (* 2 (count targets)) " [Credits]")
+                      :msg (msg (let [m (count targets)]
+                                  (str "trash " (quantify m "card")
+                                       " and gain " (* 2 m) " [Credits]")))
                       :effect (effect (trash-cards targets)
                                       (gain :credit (* 2 (count targets))))} card nil)))}
 
    "Rework"
-   {:prompt "Choose a card from HQ to shuffle into R&D"
-    :choices {:req #(and (in-hand? %)
-                         (= (:side %) "Corp"))}
+   {:prompt "Select a card from HQ to shuffle into R&D"
+    :choices {:req #(and (= (:side %) "Corp")
+                         (in-hand? %))}
     :msg "shuffle a card from HQ into R&D"
     :effect (final-effect (move target :deck) (shuffle! :deck))}
 
@@ -926,7 +931,7 @@
                              card nil)))}}
 
    "Special Report"
-   {:prompt "Choose any number of cards in HQ to shuffle into R&D"
+   {:prompt "Select any number of cards in HQ to shuffle into R&D"
     :choices {:max (req (count (:hand corp)))
               :req #(and (= (:side %) "Corp")
                          (in-hand? %))}
@@ -1092,7 +1097,8 @@
 
    "Voter Intimidation"
    {:req (req (seq (:scored runner)))
-    :psi {:not-equal {:player :corp :prompt "Choose a resource to trash"
+    :psi {:not-equal {:player :corp
+                      :prompt "Select a resource to trash"
                       :choices {:req #(and (installed? %)
                                            (is-type? % "Resource"))}
                       :msg (msg "trash " (:title target))

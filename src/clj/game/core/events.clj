@@ -102,7 +102,7 @@
                        :effect (req (if (< 1 (count handlers))
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
                                       (effect-completed state side eid nil)))}))
-                  {:prompt "Select a trigger to resolve"
+                  {:prompt "Choose a trigger to resolve"
                    :choices titles
                    :delayed-completion true
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)

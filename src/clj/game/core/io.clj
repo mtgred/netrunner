@@ -220,11 +220,8 @@
 (defn event-title
   "Gets a string describing the internal engine event keyword"
   [event]
-  (case event
-    :agenda-scored "agenda-scored"
-    :agenda-stolen "agenda-stolen"
-    :runner-install "runner-install"
-    :successful-run "successful-run"
+  (if (keyword? event)
+    (name event)
     (str event)))
 
 (defn show-error-toast

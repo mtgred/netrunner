@@ -731,7 +731,7 @@
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
 
 (deftest surfer
-  ;; Surfer - Swap position with ice before or after when encountering a barrier ice
+  ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
   (do-game
    (new-game (default-corp [(qty "Ice Wall" 1) (qty "Quandary" 1)])
              (default-runner [(qty "Surfer" 1)]))

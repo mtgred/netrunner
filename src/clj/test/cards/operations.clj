@@ -1163,7 +1163,7 @@
     (is (= 11 (:credit (get-corp))))))
 
 (deftest sub-boost
-  ;; Sub Boost - Give ice barrier
+  ;; Sub Boost - Give ICE Barrier
   (do-game
     (new-game (default-corp [(qty "Sub Boost" 1) (qty "Quandary" 1)])
               (default-runner))
@@ -1172,8 +1172,8 @@
     (let [qu (get-ice state :hq 0)]
       (core/rez state :corp qu)
       (prompt-select :corp qu)
-      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has code gate")
-      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary has barrier"))))
+      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
+      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier"))))
 
 (deftest subliminal-messaging
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
@@ -1318,7 +1318,7 @@
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
 (deftest wetwork-refit
-  ;; Wetwork Refit - Only works on bioroid ice and adds a subroutine
+  ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
   (do-game
     (new-game (default-corp [(qty "Eli 1.0" 1)
                              (qty "Vanilla" 1)

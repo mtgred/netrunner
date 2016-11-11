@@ -1,20 +1,20 @@
 (in-ns 'game.core)
 
-(def trash-program {:prompt "Choose a program to trash"
+(def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
                                          (is-type? % "Program"))}
                     :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-hardware {:prompt "Choose a piece of hardware to trash"
+(def trash-hardware {:prompt "Select a piece of hardware to trash"
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(and (installed? %)
                                           (is-type? % "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-installed {:prompt "Choose an installed card to trash"
+(def trash-installed {:prompt "Select an installed card to trash"
                       :player :runner
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
@@ -27,41 +27,46 @@
   triggers"
   {:effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
 
-(declare reorder-final) ;forward reference since reorder-choice and reorder-final are mutually recursive
+(declare reorder-final) ; forward reference since reorder-choice and reorder-final are mutually recursive
+
 (defn reorder-choice
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)
 
-  reorder_side is the side to be reordered, i.e. :corp for Indexing and Precognition.
-  wait_side is the side that has a wait prompt while ordering is in progress, i.e. :corp for Indexing and Spy Camera.
+  reorder-side is the side to be reordered, i.e. :corp for Indexing and Precognition.
+  wait-side is the side that has a wait prompt while ordering is in progress, i.e. :corp for Indexing and Spy Camera.
 
   This is part 1 - the player keeps choosing cards until there are no more available choices. A wait prompt should
   exist before calling this function. See Indexing and Making an Entrance for examples on how to call this function."
-
-  [reorder_side wait_side remaining chosen n original]
-  {:prompt (str "Choose a card to move next onto " (if (= reorder_side :corp) "R&D" "your Stack"))
+  [reorder-side wait-side remaining chosen n original]
+  {:prompt (str "Choose the next card to put on the top of " (if (= reorder-side :corp) "R&D" "your Stack"))
    :choices remaining
    :delayed-completion true
    :effect (req (let [chosen (cons target chosen)]
                   (if (< (count chosen) n)
-                    (continue-ability state side (reorder-choice reorder_side wait_side (remove-once #(not= target %) remaining)
-                                                                 chosen n original) card nil)
-                    (continue-ability state side (reorder-final reorder_side wait_side chosen original) card nil))))})
+                    (continue-ability state side
+                                      (reorder-choice reorder-side wait-side
+                                                      (remove-once #(not= target %) remaining)
+                                                      chosen n original)
+                                      card nil)
+                    (continue-ability state side
+                                      (reorder-final reorder-side wait-side chosen original)
+                                      card nil))))})
 
 (defn- reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)
   This is part 2 - the player is asked for final confirmation of the reorder and is provided an opportunity to start over."
-
-  [reorder_side wait_side chosen original]
-  {:prompt (str "The top cards of " (if (= reorder_side :corp) "R&D" "your Stack")
-                " will be " (clojure.string/join  ", " (map :title chosen)) ".")
+  [reorder-side wait-side chosen original]
+  {:prompt (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
+                " will be " (join  ", " (map :title chosen)))
    :choices ["Done" "Start over"]
    :delayed-completion true
    :effect (req (if (= target "Done")
-                  (do (swap! state update-in [reorder_side :deck]
+                  (do (swap! state update-in [reorder-side :deck]
                              #(vec (concat chosen (drop (count chosen) %))))
-                      (clear-wait-prompt state wait_side)
+                      (clear-wait-prompt state wait-side)
                       (effect-completed state side eid card))
-                  (continue-ability state side (reorder-choice reorder_side wait_side original '() (count original) original)
+                  (continue-ability state side
+                                    (reorder-choice reorder-side wait-side original '() (count original) original)
                                     card nil)))})
 
 (defn swap-ice

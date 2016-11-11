@@ -6,10 +6,10 @@
 
 ;;; Runner abilites for breaking subs
 (defn runner-break
-  "Ability to break a subroutine by spending a resource (bioroids, Negotiator, Turing etc)"
+  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, Turing etc)"
   [cost subs]
   (let [cost-str (build-cost-str [cost])
-        subs-str (str subs " subroutine" (when (< 1 subs) "s"))]
+        subs-str (quantify subs "subroutine")]
     {:cost cost
      :label (str "break " subs-str)
      :effect (req (system-msg state :runner (str "spends " cost-str " to break " subs-str " on " (:title card))))}))
@@ -245,7 +245,7 @@
                    :effect (effect (corp-install (move state side target :play-area)
                                                  nil {:no-install-cost true}))}
                   {:label "Install a card from HQ or Archives"
-                   :prompt "Choose a card to install from Archives or HQ"
+                   :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
                    :priority true
                    :choices {:req #(and (not (is-type? % "Operation"))
@@ -381,7 +381,7 @@
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
                            :player :corp
-                           :prompt "Choose a target for Clairvoyant Monitor"
+                           :prompt "Select a target for Clairvoyant Monitor"
                            :msg (msg "place 1 advancement token on "
                                      (card-str state target) " and end the run")
                            :choices {:req installed?}
@@ -416,7 +416,7 @@
    "Chum"
    {:subroutines [{:label "Give +2 strength to next ICE Runner encounters"
                    :req (req this-server)
-                   :prompt "Choose the ICE the Runner is encountering"
+                   :prompt "Select the ICE the Runner is encountering"
                    :choices {:req #(and (rezzed? %) (ice? %))}
                    :msg (msg "give " (:title target) " +2 strength")
                    :effect (req (let [ice (:cid target)]
@@ -439,12 +439,13 @@
 
    "Crick"
    {:subroutines [{:label "install a card from Archives"
-                   :msg (msg (corp-install-msg target))
-                   :prompt "Choose a card to install from Archives"
-                   :show-discard true :priority true
+                   :prompt "Select a card to install from Archives"
+                   :show-discard true
+                   :priority true
                    :choices {:req #(and (not (is-type? % "Operation"))
                                         (= (:zone %) [:discard])
                                         (= (:side %) "Corp"))}
+                   :msg (msg (corp-install-msg target))
                    :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
@@ -544,9 +545,11 @@
    {:additional-cost [:forfeit]
     :subroutines [trash-program
                   (do-brain-damage 1)
-                  {:label "Trash a console" :effect (effect (trash target))
-                   :prompt "Choose a console to trash" :msg (msg "trash " (:title target))
-                   :choices {:req #(has-subtype? % "Console")}}
+                  {:label "Trash a console"
+                   :prompt "Select a console to trash"
+                   :choices {:req #(has-subtype? % "Console")}
+                   :msg (msg "trash " (:title target))
+                   :effect (effect (trash target))}
                   {:msg "trash all virtual resources"
                    :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-installed state :runner))]
                                   (trash state side c)))}]
@@ -624,10 +627,10 @@
                                     :msg "trash 1 hardware, do 2 meat damage, and end the run"
                                     :delayed-completion true
                                     :effect (effect (continue-ability
-                                                     {:prompt "Choose a piece of hardware to trash"
+                                                     {:prompt "Select a piece of hardware to trash"
                                                       :label "Trash a piece of hardware"
-                                                      :msg (msg "trash " (:title target))
                                                       :choices {:req #(is-type? % "Hardware")}
+                                                      :msg (msg "trash " (:title target))
                                                       :effect (req (when-completed
                                                                      (trash state side target {:cause :subroutine})
                                                                      (do (damage state side eid :meat 2 {:unpreventable true
@@ -678,9 +681,10 @@
                                   (when (> delta 0)
                                     (resolve-ability
                                       state :runner
-                                      {:prompt (msg "Choose " delta " cards to discard")
+                                      {:prompt (msg "Select " delta " cards to discard")
                                        :player :runner
-                                       :choices {:max delta :req #(in-hand? %)}
+                                       :choices {:max delta
+                                                 :req #(in-hand? %)}
                                        :effect (req (doseq [c targets]
                                                       (trash state :runner c))
                                                     (system-msg state :runner
@@ -817,7 +821,7 @@
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Kitsune"
-   {:subroutines [{:prompt "Choose a card in HQ to force access"
+   {:subroutines [{:prompt "Select a card in HQ to force access"
                    :choices {:req in-hand?}
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
@@ -1157,13 +1161,13 @@
 
    "Swordsman"
    {:subroutines [(do-net-damage 1)
-                  {:prompt "Choose an AI program to trash"
-                   :msg (msg "trash " (:title target))
-                   :label "Trash an AI program"
-                   :effect (effect (trash target))
+                  {:label "Trash an AI program"
+                   :prompt "Select an AI program to trash"
                    :choices {:req #(and (installed? %)
                                         (is-type? % "Program")
-                                        (has-subtype? % "AI"))}}]}
+                                        (has-subtype? % "AI"))}
+                   :msg (msg "trash " (:title target))
+                   :effect (effect (trash target))}]}
 
    "Taurus"
    (constellation-ice trash-hardware)
