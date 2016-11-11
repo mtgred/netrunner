@@ -709,14 +709,17 @@
 
    "The Gauntlet"
    {:in-play [:memory 2]
-    :events {:successful-run {:req (req (= :hq target))
-                              :silent (req true)
-                              :prompt "How many ice protecting HQ did you break all subroutines on?"
-                              ; HACK ALERT - :number needs an upper limit. we don't track "broke all subroutines"
-                              ; events, so we can't put an accurate upper limit here. The higher the upper limit,
-                              ; the more entries in the UI drop-down list. 10 seems OK.
-                              :choices {:number (req 10)}
-                              :effect (effect (access-bonus target))}}}
+    :events {:pre-access {:req (req (= :hq target))
+                          :silent (req true)
+                          :delayed-completion true
+                          :effect (effect (continue-ability
+                                            {:prompt "How many ICE protecting HQ did you break all subroutines on?"
+                                             ; HACK ALERT - :number needs an upper limit. we don't track "broke all subroutines"
+                                             ; events, so we can't put an accurate upper limit here. The higher the upper limit,
+                                             ; the more entries in the UI drop-down list. 10 seems OK.
+                                             :choices {:number (req 10)}
+                                             :effect (effect (access-bonus target))}
+                                            card nil))}}}
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")

@@ -492,16 +492,16 @@
 (defn do-access
   "Starts the access routines for the run's server."
   [state side eid server]
-  (trigger-event state side :pre-access (first server))
-  (let [cards (cards-to-access state side server)
-        n (count cards)]
-    ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-    (when-not (or (= (get-in @state [:run :max-access]) 0)
-                  (empty? cards))
-      (when-completed (resolve-ability state side (choose-access cards server) nil nil)
-                      (effect-completed state side eid nil))
-      (swap! state assoc-in [:run :cards-accessed] n)))
-  (handle-end-run state side))
+  (when-completed (trigger-event-sync state side :pre-access (first server))
+                  (do (let [cards (cards-to-access state side server)
+                            n (count cards)]
+                        ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
+                        (when-not (or (= (get-in @state [:run :max-access]) 0)
+                                      (empty? cards))
+                          (when-completed (resolve-ability state side (choose-access cards server) nil nil)
+                                          (effect-completed state side eid nil))
+                          (swap! state assoc-in [:run :cards-accessed] n)))
+                      (handle-end-run state side))))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
