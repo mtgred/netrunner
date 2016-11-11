@@ -264,6 +264,19 @@
     :effect (effect (disable-identity :corp))
     :leave-play (effect (enable-identity :corp))}
 
+   "En Passant"
+   {:req (req (:successful-run runner-reg))
+    :effect (req (let [runtgt (first (flatten (turn-events state side :run)))
+                       serv (zone->name runtgt)]
+                   (resolve-ability state side
+                     {:prompt (msg "Choose an unrezzed piece of ICE protecting " serv " that you passed on your last run")
+                      :choices {:req #(and (ice? %)
+                                           (not (rezzed? %))
+                                           (= runtgt (second (:zone %))))}
+                      :msg (msg "trash " (card-str state target))
+                      :effect (effect (trash target))}
+                    card nil)))}
+
    "Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
                    :choices {:req #(and (installed? %) (ice? %)) :max 2}
