@@ -974,8 +974,9 @@
                      (if-let [n (get-in prompt [:choices :number])]
                        [:div
                         [:div.credit-select
-                         [:select#credit (for [i (range (inc n))]
-                                           [:option {:value i} i])]]
+                         [:select#credit {:value (get-in prompt [:choices :default] 0)}
+                          (for [i (range (inc n))]
+                            [:option {:value i} i])]]
                         [:button {:on-click #(send-command "choice"
                                                            {:choice (-> "#credit" js/$ .val js/parseInt)})}
                          "OK"]]

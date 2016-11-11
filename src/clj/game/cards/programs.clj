@@ -419,7 +419,8 @@
                   :effect (effect (continue-ability
                                     {:req (req (< 1 (get-virus-counters state side card)))
                                      :prompt "Choose how many additional R&D accesses to make with Medium"
-                                     :choices {:number (req (dec (get-virus-counters state side card)))}
+                                     :choices {:number (req (dec (get-virus-counters state side card)))
+                                               :default (req (dec (get-virus-counters state side card)))}
                                      :msg (msg "access " target " additional cards from R&D")
                                      :effect (effect (access-bonus (max 0 target)))}
                                     card nil))}}}
@@ -443,7 +444,8 @@
                   :effect (effect (continue-ability
                                     {:req (req (< 1 (get-virus-counters state side card)))
                                      :prompt "Choose how many additional HQ accesses to make with Nerve Agent"
-                                     :choices {:number (req (dec (get-virus-counters state side card)))}
+                                     :choices {:number (req (dec (get-virus-counters state side card)))
+                                               :default (req (dec (get-virus-counters state side card)))}
                                      :msg (msg "access " target " additional cards from HQ")
                                      :effect (effect (access-bonus (max 0 target)))}
                                     card nil))}}}
