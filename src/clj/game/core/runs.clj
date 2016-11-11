@@ -230,7 +230,7 @@
   "Increase the number of cards to be accessed during this run by n. Legwork, Maker's Eye.
   Not for permanent increases like RDI."
   [state side n]
-  (swap! state update-in [:run :access-bonus] #(+ % n)))
+  (swap! state update-in [:run :access-bonus] (fnil #(+ % n) 0)))
 
 (defn access-count [state side kw]
   (let [run (:run @state)
