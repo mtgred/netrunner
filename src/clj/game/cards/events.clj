@@ -289,17 +289,21 @@
                                  :effect (effect (resolve-ability (es) card nil))}} card))})
 
    "Eureka!"
-   {:effect
-    (req (let [topcard (first (:deck runner))
-               caninst (some #(= % (:type topcard)) '("Hardware" "Resource" "Program"))
-               cost (min 10 (:cost topcard))]
-           (when caninst
-             (do (gain state side :credit cost)
-                 (runner-install state side topcard)))
-           (when (get-card state topcard) ; only true if card was not installed
-             (do (system-msg state side (str "reveals and trashes " (:title topcard)))
-                 (trash state side topcard)
-                 (when caninst (lose state side :credit cost))))))}
+   {:effect (req (let [topcard (first (:deck runner))
+                       caninst (or (is-type? topcard "Hardware")
+                                   (is-type? topcard "Program")
+                                   (is-type? topcard "Resource"))]
+                   (if caninst
+                     (resolve-ability
+                       state side
+                       {:optional {:prompt (msg "Install " (:title topcard) "?")
+                                   :yes-ability {:effect (effect (install-cost-bonus [:credit -10])
+                                                                 (runner-install topcard))}
+                                   :no-ability {:effect (effect (trash topcard {:unpreventable true})
+                                                                (system-msg (str "reveals and trashes "
+                                                                                 (:title topcard))))}}} card nil)
+                     (do (trash state side topcard {:unpreventable true})
+                         (system-msg state side (str "reveals and trashes " (:title topcard)))))))}
 
    "Exclusive Party"
    {:msg (msg "draw 1 card and gain "
@@ -392,6 +396,33 @@
     :choices (req (:scored runner))
     :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
+
+   "Frantic Coding"
+   {:effect (req (let [topten (take 10 (:deck runner))]
+                   (prompt! state :runner card (str "The top 10 cards of the Stack are "
+                                                    (join ", " (map :title topten))) ["OK"] {})
+                   (resolve-ability
+                     state side
+                     {:prompt "Install a program?"
+                      :choices (conj (vec (sort-by :title (filter #(and (is-type? % "Program")
+                                                                        (can-pay? state side nil
+                                                                                  (modified-install-cost
+                                                                                    state side % [:credit -5])))
+                                                                  topten))) "No install")
+                      :effect (req (if (not= target "No install")
+                                     (do (install-cost-bonus state side [:credit -5])
+                                         (runner-install state side target)
+                                         (doseq [c (remove (fn [installed] (= (:cid installed) (:cid target))) topten)]
+                                           (trash state side c {:unpreventable true}))
+                                         (system-msg
+                                           state side
+                                           (str "trashes " (join ", " (map :title (remove (fn [installed]
+                                                                                            (= (:cid installed)
+                                                                                               (:cid target))) topten))))))
+                                     (do (doseq [c topten] (trash state side c {:unpreventable true}))
+                                         (system-msg
+                                           state side
+                                           (str "trashes " (join ", " (map :title topten)))))))} card nil)))}
 
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
