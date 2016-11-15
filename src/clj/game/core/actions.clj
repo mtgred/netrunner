@@ -126,7 +126,7 @@
     (if (not= choice "Cancel")
       (if (:card-title choices) ; check the card has a :card-title function
         (let [title-fn (:card-title choices)
-              found (some #(when (= (lower-case choice) (lower-case (:title %))) %) (vals @all-cards))]
+              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
               (do ((:effect prompt) (or choice card))
