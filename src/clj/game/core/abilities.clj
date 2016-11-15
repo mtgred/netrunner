@@ -188,8 +188,11 @@
        (show-select state s card ability args)
        ;; a :number prompt
        (:number choices)
-       (let [n ((:number choices) state side eid card targets)]
-         (prompt! state s card prompt {:number n} ab args))
+       (let [n ((:number choices) state side eid card targets)
+             d (if-let [dfunc (:default choices)]
+                 (dfunc state side (make-eid state) card targets)
+                 0)]
+         (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
        (prompt!
          state s card prompt

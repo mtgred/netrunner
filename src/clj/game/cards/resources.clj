@@ -454,20 +454,24 @@
                  :effect (effect (draw))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:delayed-completion true
-                             :interactive (req true)
-                             :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
-                                       (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
-                             :effect (req (let [from-hq (access-count state side :hq-access)]
-                                            (continue-ability
-                                              state side
-                                              (access-helper-hq
-                                                state from-hq
-                                                ; access-helper-hq uses a set to keep track of which cards have already
-                                                ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                                ; unable to access those cards, as Gang Sign intends.
-                                                (set (get-in @state [:corp :servers :hq :content])))
-                                              card nil)))}}}
+   {:events {:agenda-scored
+             {:delayed-completion true
+              :interactive (req true)
+              :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
+                        (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
+              :effect (req (when-completed
+                             ; manually trigger the pre-access event to alert Nerve Agent.
+                             (trigger-event-sync state side :pre-access :hq)
+                             (let [from-hq (access-count state side :hq-access)]
+                               (continue-ability
+                                 state side
+                                 (access-helper-hq
+                                   state from-hq
+                                   ; access-helper-hq uses a set to keep track of which cards have already
+                                   ; been accessed. by adding HQ root's contents to this set, we make the runner
+                                   ; unable to access those cards, as Gang Sign intends.
+                                   (set (get-in @state [:corp :servers :hq :content])))
+                                 card nil))))}}}
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -939,12 +943,17 @@
    {:effect (req (add-watch state :raymond-flint
                             (fn [k ref old new]
                               (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
-                                (resolve-ability
-                                 ref side
-                                 {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
-                                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}
-                                 card nil)))))
+                                (when-completed
+                                  ; manually trigger the pre-access event to alert Nerve Agent.
+                                  (trigger-event-sync ref side :pre-access :hq)
+                                  (let [from-hq (access-count state side :hq-access)]
+                                    (resolve-ability
+                                      ref side
+                                      (access-helper-hq
+                                        state from-hq
+                                        ; see note in Gang Sign
+                                        (set (get-in @state [:corp :servers :hq :content])))
+                                      card nil)))))))
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:msg "expose 1 card"
                  :choices {:req installed?}
