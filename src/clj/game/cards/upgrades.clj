@@ -282,7 +282,7 @@
                               (toast state :runner
                                      (str "You must trash Mumbad Virtual Tour, if able, using any available means "
                                           "(Whizzard, Imp, Ghost Runner, Net Celebrity...)")))))}
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "NeoTokyo Grid"

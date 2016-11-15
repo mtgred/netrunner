@@ -920,17 +920,19 @@
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
 
    "Mother Goddess"
-   (let [ab {:req (req (ice? target))
-             :effect (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
-                                                         (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
-                                                         (mapcat #(split (:subtype %) #" - "))
-                                                         (cons "Mythic")
-                                                         distinct
-                                                         (join " - "))]
-                                        (assoc card :subtype-target (remove-subtypes subtype "Mythic")
-                                                    :subtype subtype))))}]
-     {:subroutines [end-the-run]
-      :events {:rez ab :trash ab :derez ab}})
+   (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
+                                                (filter #(and (rezzed? %) (not= (:cid card) (:cid %))))
+                                                (mapcat #(split (:subtype %) #" - "))
+                                                (cons "Mythic")
+                                                distinct
+                                                (join " - "))]
+                               (assoc card :subtype-target (remove-subtypes subtype "Mythic")
+                                           :subtype subtype))))
+         mg {:req (req (ice? target))
+             :effect ab}]
+     {:effect ab
+      :subroutines [end-the-run]
+      :events {:rez mg :trash mg :derez mg}})
 
    "Muckraker"
    {:effect take-bad-pub

@@ -230,18 +230,16 @@
               :delayed-completion true
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")))
-              :effect (req (if (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp))
-                             (do (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
-                                 (continue-ability state side
-                                                   {:prompt "Choose a bioroid to rez" :player :corp
-                                                    :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
-                                                    :msg (msg "rez " (:title target))
-                                                    :cancel-effect (final-effect (clear-wait-prompt :runner))
-                                                    :effect (effect (rez-cost-bonus -4)
-                                                                    (rez target)
-                                                                    (clear-wait-prompt :runner))}
-                                                   card nil))
-                             (effect-completed state side eid)))}}}
+              :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
+                              (continue-ability
+                                {:prompt "Choose a bioroid to rez" :player :corp
+                                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                 :msg (msg "rez " (:title target))
+                                 :cancel-effect (final-effect (clear-wait-prompt :runner))
+                                 :effect (effect (rez-cost-bonus -4)
+                                                 (rez target)
+                                                 (clear-wait-prompt :runner))}
+                               card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -439,7 +437,7 @@
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
-                :choices {:req #(and (not (:rezzed %)) (card-is? % :side :corp))}
+                :choices {:req #(and (not (rezzed? %)) (installed? %) (card-is? % :side :corp))}
                 :msg (msg "add " (card-str state target) " to HQ")
                 :effect (final-effect (move :corp target :hand))}]
      {:flags {:slow-hq-access (req true)}
