@@ -349,13 +349,14 @@
    {:effect take-bad-pub
     :subroutines [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
                                     :msg "do 3 meat damage when this run is successful"
-                                    :effect (req (swap! state assoc-in [:run :run-effect :end-run]
-                                                        {:req (req (:successful run))
-                                                         :msg "do 3 meat damage"
-                                                         :effect (effect (damage eid :meat 3
-                                                                                 {:card card}))})
-                                                 (swap! state assoc-in [:run :run-effect :card]
-                                                        card))})]}
+                                    :effect (effect (register-events
+                                                      {:successful-run
+                                                       {:delayed-completion true
+                                                        :msg "do 3 meat damage"
+                                                        :effect (effect (damage eid :meat 3 {:card card}))}
+                                                       :run-ends {:effect (effect (unregister-events card))}}
+                                                     card))})]
+    :events {:successful-run nil :run-ends nil}}
 
    "Chetana"
    {:subroutines [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
