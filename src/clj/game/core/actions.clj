@@ -358,7 +358,7 @@
   [state side args]
   (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost :tag 1)]
-      (system-msg state side (build-spend-msg cost-str "remove 1 Tag")))))
+      (system-msg state side (build-spend-msg cost-str "remove 1 tag")))))
 
 (defn auto-pump
   "Use the 'match strength with ice' function of icebreakers."

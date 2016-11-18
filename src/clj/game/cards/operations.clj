@@ -311,12 +311,11 @@
            (remove-effect [state side card]
              (click-run-cost-bonus state side [:click -1])
              (update! state side (dissoc card :elp-activated)))]
-     {:msg (msg (when (and (= :runner (:active-player @state))
-                           (not (:made-click-run runner-reg)))
-                  "add an additional cost of [Click] to make the first run not through a card ability this turn"))
-      :effect (req (when (and (= :runner (:active-player @state))
+     {:effect (req (when (and (= :runner (:active-player @state))
                               (not (:made-click-run runner-reg)))
-                     (add-effect state side card)))
+                     (add-effect state side card)
+                     (system-msg state side (str "uses Enhanced Login Protocol to add an additional cost of [Click]"
+                                                 " to make the first run not through a card ability this turn"))))
       :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
                                     :effect (effect (add-effect card))}
                :runner-turn-ends {:req (req (:elp-activated card))
