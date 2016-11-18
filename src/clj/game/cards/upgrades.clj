@@ -151,6 +151,13 @@
                                   :end-effect (effect (clear-wait-prompt :runner))}}
                                card nil)))}})
 
+   "Drone Screen"
+   {:events {:run {:req (req (and this-server tagged))
+                   :delayed-completion true
+                   :trace {:base 3
+                           :msg "do 1 meat damage"
+                           :effect (effect (damage eid :meat 1 {:card card :unpreventable true}))}}}}
+
    "Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
     :events {:pre-ice-strength {:req (req (= (card->server state card) (card->server state target)))
@@ -276,7 +283,7 @@
                               (toast state :runner
                                      (str "You must trash Mumbad Virtual Tour, if able, using any available means "
                                           "(Whizzard, Imp, Ghost Runner, Net Celebrity...)")))))}
-    :trash-effect {:when-unrezzed true
+    :trash-effect {:when-inactive true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "NeoTokyo Grid"

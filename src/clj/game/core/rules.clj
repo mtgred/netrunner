@@ -292,7 +292,10 @@
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
-      (when (and (not disabled) (or (= (:side card) "Runner") (:rezzed card) (:when-unrezzed trash-effect)))
+      (when (and (not disabled) (or (and (= (:side card) "Runner")
+                                         (:installed card))
+                                    (:rezzed card)
+                                    (:when-inactive trash-effect)))
         (resolve-ability state side trash-effect moved-card (cons cause targets))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))
@@ -464,7 +467,7 @@
   (system-msg state side (str "exposes " (card-str state target {:visible true})))
   (if-let [ability (:expose (card-def target))]
     (when-completed (resolve-ability state side ability target nil)
-                    (trigger-event-sync state side eid :expose target))
+                    (trigger-event-sync state side (make-result eid true) :expose target))
     (trigger-event-sync state side (make-result eid true) :expose target)))
 
 (defn expose

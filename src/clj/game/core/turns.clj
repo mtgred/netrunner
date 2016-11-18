@@ -19,12 +19,26 @@
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
 ;;; Functions for the creation of games and the progression of turns.
-(defn- identity-init
+(defn init-identity
   "Initialise the identity"
   [state side identity]
   (card-init state side identity)
   (when-let [baselink (:baselink identity)]
     (gain state side :link baselink)))
+
+(defn- init-hands [state]
+  (draw state :corp 5 {:suppress-event true})
+  (draw state :runner 5 {:suppress-event true})
+  (when (and (-> @state :corp :identity :title)
+             (-> @state :runner :identity :title))
+    (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
+  (doseq [side [:corp :runner]]
+    (when (-> @state side :identity :title)
+      (show-prompt state side nil "Keep hand?"
+                   ["Keep" "Mulligan"]
+                   #(if (= % "Keep")
+                      (keep-hand state side nil)
+                      (mulligan state side nil))))))
 
 (defn init-game
   "Initializes a new game with the given players vector."
@@ -43,8 +57,8 @@
                  :sfx [] :sfx-current-id 0
                  :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
-                        :deck (zone :deck (drop 5 corp-deck))
-                        :hand (zone :hand (take 5 corp-deck))
+                        :deck (zone :deck corp-deck)
+                        :hand []
                         :discard [] :scored [] :rfg [] :play-area []
                         :servers {:hq {} :rd{} :archives {}}
                         :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
@@ -53,8 +67,8 @@
                         :agenda-point 0
                         :click-per-turn 3 :agenda-point-req 7 :keep false}
                  :runner {:user (:user runner) :identity runner-identity
-                          :deck (zone :deck (drop 5 runner-deck))
-                          :hand (zone :hand (take 5 runner-deck))
+                          :deck (zone :deck runner-deck)
+                          :hand []
                           :discard [] :scored [] :rfg [] :play-area []
                           :rig {:program [] :resource [] :hardware []}
                           :toast []
@@ -63,17 +77,14 @@
                           :agenda-point 0
                           :hq-access 1 :rd-access 1 :tagged 0
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
-    (identity-init state :corp corp-identity)
-    (identity-init state :runner runner-identity)
+    (init-identity state :corp corp-identity)
+    (init-identity state :runner runner-identity)
     (swap! game-states assoc gameid state)
-    (trigger-event state :corp :pre-start-game)
-    (trigger-event state :runner :pre-start-game)
-    (when (and (-> @state :corp :identity :title) (-> @state :runner :identity :title))
-      (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
-    (doseq [s [:corp :runner]]
-      (when (-> @state s :identity :title)
-        (show-prompt state s nil "Keep hand?" ["Keep" "Mulligan"]
-                     #(if (= % "Keep") (keep-hand state s nil) (mulligan state s nil)))))
+    (let [side :corp]
+      (when-completed (trigger-event-sync state side :pre-start-game)
+                      (let [side :runner]
+                        (when-completed (trigger-event-sync state side :pre-start-game)
+                                        (init-hands state)))))
     @game-states))
 
 (defn server-card
@@ -112,13 +123,6 @@
 (defn make-result
   [eid result]
   (assoc eid :result result))
-
-;; Appears to be unused???
-(def reset-value
-  {:corp {:credit 5 :bad-publicity 0
-          :hand-size-base 5 :hand-size-modification 0}
-   :runner {:credit 5 :run-credit 0 :link 0 :memory 4
-            :hand-size-base 5 :hand-size-modification 0}})
 
 (defn mulligan
   "Mulligan starting hand."

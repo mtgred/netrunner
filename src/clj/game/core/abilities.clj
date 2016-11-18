@@ -1,5 +1,5 @@
 (in-ns 'game.core)
-(declare corp-trace-prompt optional-ability
+(declare any-flag-fn? corp-trace-prompt optional-ability
          check-optional check-psi check-trace complete-ability
          do-choices do-ability
          psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
@@ -188,8 +188,11 @@
        (show-select state s card ability args)
        ;; a :number prompt
        (:number choices)
-       (let [n ((:number choices) state side eid card targets)]
-         (prompt! state s card prompt {:number n} ab args))
+       (let [n ((:number choices) state side eid card targets)
+             d (if-let [dfunc (:default choices)]
+                 (dfunc state side (make-eid state) card targets)
+                 0)]
+         (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
        (prompt!
          state s card prompt
@@ -403,10 +406,14 @@
    (swap! state assoc :psi {})
    (register-once state psi card)
    (doseq [s [:corp :runner]]
-     (show-prompt state s card (str "Choose an amount to spend for " (:title card))
-                  (map #(str % " [Credits]") (range (min 3 (inc (get-in @state [s :credit])))))
-                  #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
-                  {:priority 2}))))
+     (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
+           valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
+                                      (any-flag-fn? state :runner :psi-prevent-spend %))
+                                 all-amounts)]
+       (show-prompt state s card (str "Choose an amount to spend for " (:title card))
+                    (map #(str % " [Credits]") valid-amounts)
+                    #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                    {:priority 2})))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -422,10 +429,10 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (trigger-event state side :psi-game nil)
-          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
-            (effect-completed state side eid card)))
+          (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
+                          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+                            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
+                            (effect-completed state side eid card))))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 

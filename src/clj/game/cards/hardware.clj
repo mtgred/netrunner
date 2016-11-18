@@ -710,6 +710,20 @@
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
                                  (trash card {:cause :ability-cost}))}]}
 
+   "The Gauntlet"
+   {:in-play [:memory 2]
+    :events {:pre-access {:req (req (= :hq target))
+                          :silent (req true)
+                          :delayed-completion true
+                          :effect (effect (continue-ability
+                                            {:prompt "How many ICE protecting HQ did you break all subroutines on?"
+                                             ; HACK ALERT - :number needs an upper limit. we don't track "broke all subroutines"
+                                             ; events, so we can't put an accurate upper limit here. The higher the upper limit,
+                                             ; the more entries in the UI drop-down list. 10 seems OK.
+                                             :choices {:number (req 10)}
+                                             :effect (effect (access-bonus target))}
+                                            card nil))}}}
+
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
@@ -754,6 +768,19 @@
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
                     (damage eid :meat 2 {:card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
+
+   "Top Hat"
+   (letfn [(ability [n]
+             {:delayed-completion true
+              :mandatory true
+              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+              :choices (take n ["1" "2" "3" "4" "5"])
+              :effect (effect (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
+     {:events {:successful-run
+               {:req (req (= target :rd))
+                :optional {:prompt "Use Top Hat to choose one of the top 5 cards in R&D to access?"
+                           :yes-ability {:effect (req (swap! state assoc-in [:run :run-effect :replace-access]
+                                                             (ability (count (:deck corp)))))}}}}})
 
    "Turntable"
    {:in-play [:memory 1]

@@ -461,6 +461,7 @@
       (core/command-counter state :runner ["virus" 2])
       (prompt-select :runner (refresh med))
       (run-empty-server state :rd)
+      (prompt-choice :runner 2)
       (prompt-choice :runner "Card from deck")
       (is (= "Hedge Fund" (-> (get-runner) :prompt first :card :title)))
       (prompt-choice :runner "OK")

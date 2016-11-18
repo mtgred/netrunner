@@ -135,6 +135,18 @@
    {:msg "gain 3 [Credits]"
     :effect (effect (gain :credit 3))}
 
+   "Best Defense"
+   {:delayed-completion true
+    :req (req (not-empty (all-installed state :runner)))
+    :effect (req (let [t (:tag runner)]
+                   (continue-ability state side
+                     {:prompt (msg "Choose a Runner card with an install cost of " t " or less to trash")
+                      :choices {:req #(and (installed? %)
+                                           (<= (:cost %) t))}
+                      :msg (msg "trash " (:title target))
+                      :effect (effect (trash target))}
+                    card nil)))}   
+
    "Big Brother"
    {:req (req tagged)
     :msg "give the Runner 2 tags"
@@ -301,12 +313,11 @@
            (remove-effect [state side card]
              (click-run-cost-bonus state side [:click -1])
              (update! state side (dissoc card :elp-activated)))]
-     {:msg (msg (when (and (= :runner (:active-player @state))
-                           (not (:made-click-run runner-reg)))
-                  "add an additional cost of [Click] to make the first run not through a card ability this turn"))
-      :effect (req (when (and (= :runner (:active-player @state))
+     {:effect (req (when (and (= :runner (:active-player @state))
                               (not (:made-click-run runner-reg)))
-                     (add-effect state side card)))
+                     (add-effect state side card)
+                     (system-msg state side (str "uses Enhanced Login Protocol to add an additional cost of [Click]"
+                                                 " to make the first run not through a card ability this turn"))))
       :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
                                     :effect (effect (add-effect card))}
                :runner-turn-ends {:req (req (:elp-activated card))
@@ -406,6 +417,34 @@
             :msg "give the Runner 4 tags"
             :label "Give the Runner 4 tags"
             :effect (effect (tag-runner :runner 4))}}
+
+   "Hasty Relocation"
+   (letfn [(hr-final [chosen original]
+             {:prompt (str "The top cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+              :choices ["Done" "Start over"]
+              :delayed-completion true
+              :effect (req (if (= target "Done")
+                             (do (doseq [c (reverse chosen)] (move state :corp c :deck {:front true}))
+                                 (clear-wait-prompt state :runner)
+                                 (effect-completed state side eid card))
+                             (continue-ability state side (hr-choice original '() 3 original)
+                                               card nil)))})
+           (hr-choice [remaining chosen n original]
+             {:prompt "Choose a card to move next onto R&D"
+              :choices remaining
+              :delayed-completion true
+              :effect (req (let [chosen (cons target chosen)]
+                             (if (< (count chosen) n)
+                               (continue-ability state side (hr-choice (remove-once #(not= target %) remaining)
+                                                                        chosen n original) card nil)
+                               (continue-ability state side (hr-final chosen original) card nil))))})]
+     {:delayed-completion true
+      :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
+      :effect (req (mill state :corp)
+                   (draw state side 3)
+                   (show-wait-prompt state :runner "Corp to add 3 cards in HQ to the top of R&D")
+                   (let [from (get-in @state [:corp :hand])]
+                     (continue-ability state :corp (hr-choice from '() 3 from) card nil)))})
 
    "Hatchet Job"
    {:trace {:base 5
