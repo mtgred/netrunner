@@ -26,7 +26,7 @@
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([corp runner] (new-game corp runner nil))
-  ([corp runner {:keys [mulligan start-as dont-start] :as args}]
+  ([corp runner {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
     (let [states (core/init-game
                    {:gameid 1
                     :players [{:side "Corp"
@@ -36,14 +36,15 @@
                                :deck {:identity (@all-cards (:identity runner))
                                       :cards (:deck runner)}}]})
           state (second (last states))]
-      (if (#{:both :corp} mulligan)
-        (core/resolve-prompt state :corp {:choice "Mulligan"})
-        (core/resolve-prompt state :corp {:choice "Keep"}))
-      (if (#{:both :runner} mulligan)
-        (core/resolve-prompt state :runner {:choice "Mulligan"})
-        (core/resolve-prompt state :runner {:choice "Keep"}))
-      (when (not dont-start) (core/start-turn state :corp nil))
-      (when (= start-as :runner) (take-credits state :corp))
+      (when-not dont-start-game
+        (if (#{:both :corp} mulligan)
+          (core/resolve-prompt state :corp {:choice "Mulligan"})
+          (core/resolve-prompt state :corp {:choice "Keep"}))
+        (if (#{:both :runner} mulligan)
+          (core/resolve-prompt state :runner {:choice "Mulligan"})
+          (core/resolve-prompt state :runner {:choice "Keep"}))
+        (when-not dont-start-turn (core/start-turn state :corp nil))
+        (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
 (defn load-all-cards []
