@@ -933,7 +933,7 @@
              :effect ab}]
      {:effect ab
       :subroutines [end-the-run]
-      :events {:rez mg :trash mg :derez mg}})
+      :events {:rez mg :card-moved mg :derez mg}})
 
    "Muckraker"
    {:effect take-bad-pub
