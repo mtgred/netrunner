@@ -193,8 +193,9 @@
                  :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                  :effect (effect (draw 3)
                                  (resolve-ability
-                                   {:prompt "Choose a card to shuffle back into your Stack"
-                                    :choices (req (:hand runner))
+                                   {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                    :choices {:req #(and (in-hand? %)
+                                                         (= (:side %) "Runner"))}
                                     :effect (effect (move target :deck)
                                                     (shuffle! :deck))}
                                   card nil))}]}
