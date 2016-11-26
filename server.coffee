@@ -205,19 +205,22 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "watch"
         game = games[msg.gameid]
-        if game
-          game.spectators.push({user: socket.request.user, id: socket.id})
-          socket.join(msg.gameid)
-          socket.gameid = msg.gameid
-          socket.emit("netrunner", {type: "game", gameid: msg.gameid, started: game.started})
-          refreshLobby("update", msg.gameid)
-          if game.started
-            requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
-          else
-            socket.broadcast.to(msg.gameid).emit 'netrunner',
-              type: "say"
-              user: "__system__"
-              text: "#{getUsername(socket)} joined the game as a spectator."
+        if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
+          if game
+            game.spectators.push({user: socket.request.user, id: socket.id})
+            socket.join(msg.gameid)
+            socket.gameid = msg.gameid
+            socket.emit("netrunner", {type: "game", gameid: msg.gameid, started: game.started})
+            refreshLobby("update", msg.gameid)
+            if game.started
+              requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: "#{getUsername(socket)} joined the game as a spectator."}))
+            else
+              socket.broadcast.to(msg.gameid).emit 'netrunner',
+                type: "say"
+                user: "__system__"
+                text: "#{getUsername(socket)} joined the game as a spectator."
+        else
+          fn("invalid password")
 
       when "reconnect"
         game = games[msg.gameid]
