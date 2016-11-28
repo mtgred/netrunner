@@ -498,5 +498,6 @@
                                             (when (> m 1) "s")))))
                               " into R&D")
                     :effect (req (doseq [c targets] (move state side c :deck))
-                                 (shuffle! state side :deck))}
+                                 (shuffle! state side :deck))
+                    :cancel-effect (req (shuffle! state side :deck))}
                    card nil))
