@@ -786,15 +786,17 @@
     0
     {:req (req (pos? (:advance-counter (get-card state card) 0)))
      :effect
-     (effect (resolve-ability
-              {:prompt "Choose an Agenda in HQ to score"
-               :choices {:req #(and (is-type? % "Agenda")
-                                    (<= (:advancementcost %) (:advance-counter (get-card state card) 0))
-                                    (in-hand? %))}
-               :msg (msg "score " (:title target))
-               :effect (effect (score (assoc target :advance-counter
-                                             (:advancementcost target))))}
-              card nil))}
+     (req (doseq [ag (filter #(is-type? % "Agenda") (get-in @state [:corp :hand]))]
+            (update-advancement-cost state side ag))
+          (resolve-ability state side
+            {:prompt "Choose an Agenda in HQ to score"
+             :choices {:req #(and (is-type? % "Agenda")
+                                  (<= (:current-cost %) (:advance-counter (get-card state card) 0))
+                                  (in-hand? %))}
+             :msg (msg "score " (:title target))
+             :effect (effect (score (assoc target :advance-counter
+                                           (:current-cost target))))}
+           card nil))}
     "Score an Agenda from HQ?")
 
    "Political Dealings"
