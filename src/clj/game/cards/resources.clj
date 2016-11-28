@@ -439,7 +439,8 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:optional
+             :successful-run {:interactive (req true)
+                              :optional
                               {:delayed-completion true
                                :req (req (first-event state side :successful-run))
                                :prompt "Use Find the Truth to look at the top card of R&D?"
