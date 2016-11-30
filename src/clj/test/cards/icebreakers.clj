@@ -186,6 +186,23 @@
       (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 
+(deftest faerie-auto-trash
+  ;; Faerie - trash after encounter is over, not before.
+  (do-game
+    (new-game
+      (default-corp [(qty "Caduceus" 1)])
+      (default-runner [(qty "Faerie" 1)]))
+    (play-from-hand state :corp "Caduceus" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Faerie")
+    (let [fae (get-program state 0)]
+      (run-on state :archives)
+      (core/rez state :corp (get-ice state :archives 0))
+      (card-ability state :runner fae 0)
+      (is (refresh fae) "Faerie not trashed until encounter over")
+      (run-continue state)
+      (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+
 (deftest faust-pump
   ;; Faust - Pump by discarding
   (do-game
