@@ -50,7 +50,7 @@
    "runner-ability" core/play-runner-ability
    "subroutine" core/play-subroutine
    "trash-resource" core/trash-resource
-   "auto-pump" core/auto-pump
+   "dynamic-ability" core/play-dynamic-ability
    "toast" core/toast
    "view-deck" core/view-deck
    "close-deck" core/close-deck})

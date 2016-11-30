@@ -565,7 +565,8 @@
                                                              "\" subroutine on " title)})
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
                 subroutines)])
-        (let [actions (action-list cursor)]
+        (let [actions (action-list cursor)
+              dynabi-count (count (filter #(= (first %) :dynamic) abilities))]
           (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                     (some #{"derez" "advance"} actions)
                     (= type "ICE"))
@@ -575,12 +576,12 @@
                   actions)
              (map-indexed
               (fn [i ab]
-                (if (:auto-pump ab)
-                  [:div {:on-click #(do (send-command "auto-pump" {:card @cursor}))
+                (if (:dynamic ab)
+                  [:div {:on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
+                                                                          :card @cursor)))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
                   [:div {:on-click #(do (send-command "ability" {:card @cursor
-                                                                 :ability (if (some (fn [a] (:auto-pump a)) abilities)
-                                                                            (dec i) i)})
+                                                                 :ability (- i dynabi-count)})
                                         (-> (om/get-node owner "abilities") js/$ .fadeOut))
                          :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
               abilities)

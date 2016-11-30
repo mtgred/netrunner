@@ -183,13 +183,49 @@
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
               :effect (req (add-prop state side card :rec-counter -1)
-                           (gain state side :credit 1)
+                             (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
                              (trigger-event state side :spent-stealth-credit card)))}
              (get-in cdef [:abilities ability]))]
     (when-not (:disabled card)
       (do-play-ability state side card ab targets))))
 
+(defn play-auto-pump
+  "Use the 'match strength with ice' function of icebreakers."
+  [state side args]
+  (let [run (:run @state) card (get-card state (:card args))
+        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((get-run-ices state) (dec (:position run)))))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                           (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
+      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
+      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
+                                  (:title card) " to " (:current-strength (get-card state card)))))))
+
+(defn play-copy-ability
+  "Play an ability from another card's definition."
+  [state side {:keys [card source index] :as args}]
+  (let [card (get-card state card)
+        source-abis (:abilities (cards (.replace source "'" "")))
+        abi (when (< -1 index (count source-abis))
+              (nth source-abis index))]
+    (prn card)
+    (prn source-abis)
+    (when abi
+      (do-play-ability state side card abi nil))))
+
+(def dynamic-abilities
+  {"auto-pump" play-auto-pump
+   "copy" play-copy-ability})
+
+(defn play-dynamic-ability
+  "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
+  :abilities vector."
+  [state side args]
+  ((dynamic-abilities (:dynamic args)) state (keyword side) args))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -359,21 +395,6 @@
   (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost :tag 1)]
       (system-msg state side (build-spend-msg cost-str "remove 1 tag")))))
-
-(defn auto-pump
-  "Use the 'match strength with ice' function of icebreakers."
-  [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((get-run-ices state) (dec (:position run)))))
-        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
-        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                                           (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
-    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
-      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
-                                  (:title card) " to " (:current-strength (get-card state card)))))))
 
 (defn continue
   "The runner decides to approach the next ice, or the server itself."
