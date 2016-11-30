@@ -19,7 +19,9 @@
   "Removes a card from its host."
   [state side {:keys [cid] :as card}]
   (let [host-card (get-card state (:host card))]
-    (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(not= (:cid %) cid) coll))))))
+    (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
+    (when-let [hosted-lost (:hosted-lost (card-def host-card))]
+      (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
@@ -62,6 +64,7 @@
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))]
        (update! state side (update-in card [:hosted] #(conj % c)))
+
        ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
        (when (or (and installed (card-is? target :side :runner))
                  (or (is-type? target "Operation")
@@ -75,4 +78,6 @@
          (when (and installed (:recurring (card-def c)))
            (unregister-events state side target)
            (register-events state side events c)))
+       (when-let [hosted-gained (:hosted-gained (card-def card))]
+         (hosted-gained state side (make-eid state) (get-card state card) [c]))
        c))))
