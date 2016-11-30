@@ -7,7 +7,7 @@
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
   we can break."
   {:effect
-   (req (let [abs (filter #(not (:auto-pump %)) (:abilities card))
+   (req (let [abs (filter #(not= (:dynamic %) :auto-pump) (:abilities card))
               pumpabi (some #(when (:pump %) %) abs)
               pumpcst (when pumpabi (second (drop-while #(and (not= % :credit)
                                                               (not= % "credit"))
@@ -26,7 +26,7 @@
                                    (or (some #(has-subtype? current-ice %) (:breaks card))
                                        (= (first (:breaks card)) "All"))
                                    (pos? strdif))
-                            (vec (cons {:auto-pump true
+                            (vec (cons {:dynamic :auto-pump
                                         :cost [:credit (* pumpcst pumpnum)]
                                         :label (str "Match strength of " (:title current-ice))}
                                        abs))
@@ -99,7 +99,8 @@
 (defn- break-and-enter
   "Breakers from the Break and Entry set"
   [type]
-  (cloud-icebreaker {:abilities [{:msg (str "break up to 3 " (lower-case type) " subroutines")
+  (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case type) "subroutines")
+                                  :msg (str "break up to 3 " (lower-case type) " subroutines")
                                   :effect (effect (trash card {:cause :ability-cost}))}]
                       :events (let [cloud {:silent (req true)
                                            :req (req (has-subtype? target "Icebreaker"))
@@ -137,6 +138,27 @@
                                                   (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
                                                   (card-init state side newdeva false)))
                                               (move state side card :hand))}]}))
+
+(defn- conspiracy
+  "Install-from-heap breakers"
+  [title type abilities]
+  (let [install-prompt {:req (req (and (= (:zone card) [:discard])
+                                       (rezzed? current-ice)
+                                       (has-subtype? current-ice type)))
+                        :optional {:player :runner
+                                   :prompt (str "Install " title "?")
+                                   :yes-ability {:effect (effect (unregister-events card)
+                                                                 (runner-install :runner card))}}}
+        heap-event (req (when (= (:zone card) [:discard])
+                          (unregister-events state side card)
+                          (register-events state side
+                                           (:events (card-def card))
+                                           (assoc card :zone [:discard]))))]
+    {:move-zone heap-event
+     :events {:rez install-prompt
+              :approach-ice install-prompt
+              :run install-prompt}
+     :abilities abilities}))
 
 ;;; Icebreaker definitions
 (def cards-icebreakers
@@ -184,6 +206,30 @@
                     {:abilities [(break-sub 2 1 "barrier")
                                  (strength-pump 2 3)]})
 
+   "Baba Yaga"
+   (let [host-click {:cost [:click 1]
+                     :label "Install a non-AI icebreaker on Baba Yaga"
+                     :prompt "Choose a non-AI icebreaker in your Grip to install on Baba Yaga"
+                     :choices {:req #(and (has-subtype? % "Icebreaker")
+                                          (not (has-subtype? % "AI"))
+                                          (in-hand? %))}
+                     :effect (effect (runner-install target {:host-card card}))}
+         host-free {:label "Host an installed non-AI icebreaker on Baba Yaga"
+                    :prompt "Choose an installed non-AI icebreaker to host on Baba Yaga"
+                    :choices {:req #(and (has-subtype? % "Icebreaker")
+                                         (not (has-subtype? % "AI"))
+                                         (installed? %))}
+                    :effect (effect (runner-install target {:host-card card}))}
+         gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2 :dynamic :copy, :source (:title c)
+                                                                               :index %1, :label (make-label %2))
+                                                                    (filter #(not= :manual-state (:ability-type %))
+                                                                            (:abilities (card-def c)))))
+                                               (:hosted card))]
+                          (update! state :runner (assoc card :abilities (concat [host-click host-free] new-abis)))))]
+   {:abilities [host-click host-free]
+    :hosted-gained gain-abis
+    :hosted-lost gain-abis})
+
    "Battering Ram"
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 2 2 "barrier")
@@ -199,25 +245,10 @@
                  :effect (effect (pump card 2)) :pump 2}]}
 
    "Black Orchestra"
-   (let [install {:req (req (and (= (:zone card) [:discard])
-                                 (rezzed? current-ice)
-                                 (has-subtype? current-ice "Code Gate")))
-                  :optional {:player :runner
-                             :prompt "Install Black Orchestra?"
-                             :yes-ability {:effect (effect (unregister-events card)
-                                                           (runner-install :runner card))}}}
-         heap-event (req (when (= (:zone card) [:discard])
-                           (unregister-events state side card)
-                           (register-events state side
-                                            (:events (card-def card))
-                                            (assoc card :zone [:discard]))))]
-   {:move-zone heap-event
-    :abilities [{:cost [:credit 3]
+   (conspiracy "Black Orchestra" "Code Gate"
+               [{:cost [:credit 3]
                  :effect (effect (pump card 2)) :pump 2
-                 :msg "add 2 strength and break up to 2 subroutines"}]
-    :events {:rez install
-             :approach-ice install
-             :run install}})
+                 :msg "add 2 strength and break up to 2 subroutines"}])
 
    "Blackstone"
    {:abilities [(break-sub 1 1 "barrier")
@@ -342,9 +373,10 @@
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [{:msg "break a sentry subroutine"
-                                  :effect (effect (trash card))}
-                                 (strength-pump 1 1)]})
+                    {:abilities [(break-sub 0 1 "sentry" (effect (update! (assoc card :faerie-used true))))
+                                 (strength-pump 1 1)]
+                     :events {:pass-ice {:req (req (:faerie-used card))
+                                         :effect (effect (trash (dissoc card :faerie-used)))}}})
 
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
@@ -460,9 +492,16 @@
                     {:abilities [(break-sub 1 2 "sentry")
                                  (strength-pump 2 2)]})
 
+   "MKUltra"
+   (conspiracy "MKUltra" "Sentry"
+               [{:cost [:credit 3]
+                 :effect (effect (pump card 2)) :pump 2
+                 :msg "add 2 strength and break up to 2 subroutines"}])
+
    "Nfr"
    {:abilities [{:label "Place 1 power counter on Nfr"
                  :msg "place 1 power counter on it"
+                 :ability-type :manual-state
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}
                 (break-sub 1 1 "barrier")]
@@ -474,29 +513,13 @@
                                  (strength-pump 3 5)]})
 
    "Paperclip"
-   (let [install {:req (req (and (= (:zone card) [:discard])
-                                 (rezzed? current-ice)
-                                 (has-subtype? current-ice "Barrier")))
-                  :optional {:player :runner
-                             :prompt "Install Paperclip?"
-                             :yes-ability {:effect (effect (unregister-events card)
-                                                           (runner-install :runner card))}}}
-         heap-event (req (when (= (:zone card) [:discard])
-                           (unregister-events state side card)
-                           (register-events state side
-                                            (:events (card-def card))
-                                            (assoc card :zone [:discard]))))]
-   {:move-zone heap-event
-    :abilities [{:label (str "X [Credits]: +X strength, break X subroutines")
+   (conspiracy "Paperclip" "Barrier"
+               [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices :credit
                  :prompt "How many credits?"
                  :effect (effect (pump card target))
                  :msg (msg "increase strength by " target " and break " target " barrier subroutine"
-                           (when (not= target 1) "s"))}]
-    :events {:rez install
-             :approach-ice install
-             :run install}})
-
+                           (when (not= target 1) "s"))}])
 
    "Passport"
    (auto-icebreaker ["Code Gate"]
@@ -577,7 +600,9 @@
 
    "Sharpshooter"
    (auto-icebreaker ["Destroyer"]
-                    {:abilities [{:msg "break any number of destroyer subroutines" :effect (effect (trash card {:cause :ability-cost}))}
+                    {:abilities [{:label "[Trash]: Break any number of destroyer subroutines"
+                                  :msg "break any number of destroyer subroutines"
+                                  :effect (effect (trash card {:cause :ability-cost}))}
                                  (strength-pump 1 2)]})
 
    "Shiv"
