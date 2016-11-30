@@ -352,7 +352,7 @@
 
 (defn- resolve-trash-no-cost
   [state side card]
-  (trash state side card)
+  (trash state side (assoc card :seen true))
   (close-access-prompt state side))
 
 (defn trash-no-cost
