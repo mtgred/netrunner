@@ -529,6 +529,7 @@
    {:abilities [{:msg "access all cards in Archives"
                  :effect (req (trash state side card {:cause :ability-cost})
                               (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0))
                               (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
