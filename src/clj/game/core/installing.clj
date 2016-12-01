@@ -307,7 +307,7 @@
                           :prompt (str "Choose a card to host " (:title card) " on")
                           :effect (effect (runner-install eid card (assoc params :host-card target)))}
                          card nil)
-       (do (trigger-event state side :pre-install card)
+       (do (trigger-event state side :pre-install card facedown)
            (let [cost (runner-get-cost state side card params)]
              (if (runner-can-install? state side card facedown)
                (if-let [cost-str (pay state side card cost)]
