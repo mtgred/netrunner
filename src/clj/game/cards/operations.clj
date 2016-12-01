@@ -466,6 +466,20 @@
             :unsuccessful {:msg "take 1 bad publicity"
                            :effect (effect (gain :corp :bad-publicity 1))}}}
 
+   "Hellion Beta Test"
+   {:req (req (:trashed-card runner-reg))
+    :trace {:base 2
+            :label "Trash 2 installed non-program cards"
+            :choices {:max 2
+                      :req #(and (installed? %)
+                                 (= (:side %) "Runner")
+                                 (not (is-type? % "Program")))}
+            :msg (msg "trash " (join ", " (map :title targets)))
+            :effect (req (doseq [c targets]
+                           (trash state side c)))
+            :unsuccessful {:msg "take 1 bad publicity"
+                           :effect (effect (gain :corp :bad-publicity 1))}}}
+
    "Heritage Committee"
    {:delayed-completion true
     :effect (effect (draw 3)
