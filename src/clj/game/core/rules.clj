@@ -353,6 +353,7 @@
 (defn- resolve-trash-no-cost
   [state side card]
   (trash state side (assoc card :seen true))
+  (swap! state assoc-in [:runner :register :trashed-card] true)
   (close-access-prompt state side))
 
 (defn trash-no-cost
