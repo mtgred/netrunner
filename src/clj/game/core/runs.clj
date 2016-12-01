@@ -116,8 +116,9 @@
           (continue-ability state :runner
                             {:cost [:credit trash-cost]
                              :delayed-completion true
-                             :effect (effect (trash eid card nil)
-                                             (system-msg (str "is forced to pay " trash-msg)))}
+                             :effect (req (trash state side eid card nil)
+                                          (swap! state assoc-in [:runner :register :trashed-card] true)
+                                          (system-msg state side (str "is forced to pay " trash-msg)))}
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
           (if-not (and (is-type? card "Operation")
