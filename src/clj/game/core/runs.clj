@@ -128,8 +128,9 @@
                                {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
-                                              :effect (effect (trash eid card nil)
-                                                              (system-msg (str "pays " trash-msg)))}}}
+                                              :effect (req (trash state side eid card nil)
+                                                           (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                           (system-msg state side (str "pays " trash-msg)))}}}
                               card nil))))
       ;; The card does not have a trash cost
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
