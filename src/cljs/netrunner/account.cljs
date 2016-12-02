@@ -102,7 +102,7 @@
                               :on-change #(om/set-state! owner :opponent-alt-art (.. % -target -checked))}]
               "Show opponent's alternate card arts"]]
 
-            (when (or (:special user) true) ; temporarily showing to all users on test server
+            (when (:special user)
               [:div {:style {:margin-top "10px"}}
                [:h4 "My alternate card arts"]
                [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
