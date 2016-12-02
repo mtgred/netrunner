@@ -499,8 +499,7 @@
                                 (trash state side card))}]}
 
    "Datapike"
-   {:implementation "Encounter effect is manual"
-    :subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
+   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
                    :effect (effect (pay :runner card :credit 2))}
                   end-the-run]}
 
