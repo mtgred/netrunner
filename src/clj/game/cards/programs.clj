@@ -414,36 +414,19 @@
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Medium"
-   {:effect (req (when (and run
-                            (= (first (get-in @state [:run :server])) :rd)
-                            (not current-ice))
-                   (update! state side (assoc card :medium-active true))))
-    :events {:no-action {:req (req (and run
-                                        (= (first (get-in @state [:run :server])) :rd)
-                                        (not current-ice)
-                                        (> (get-virus-counters state side card) 0)))
-                         :effect (req (toast state :runner "Click Medium to choose fewer than all additional R&D accesses." "info")
-                                      (update! state side (assoc card :medium-active true)))}
-             :successful-run {:silent (req true)
-                              :req (req (and (= target :rd)
-                                             (or (:medium-active card)
-                                                 (zero? (get-in card [:counter :virus] 0)))))
-                              :effect (effect (add-counter card :virus 1))}
-             :pre-access {:req (req (and (= target :rd) (:medium-active card)))
-                          :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (and run
-                                (= (first (get-in @state [:run :server])) :rd)
-                                (not current-ice)
-                                (:medium-active card)
-                                (empty? (get-in @state [:runner :prompt]))))
-                 :effect (effect (add-counter card :virus 1)
-                                 (resolve-ability
-                                   {:prompt "Choose how many additional R&D accesses to make"
-                                    :choices {:number (req (get-virus-counters state side card))}
-                                    :msg (msg "do " target " additional accesses from R&D")
-                                    :effect (effect (access-bonus (max 0 target))
-                                                    (update! (dissoc (get-card state card) :medium-active)))} card nil))}]}
-
+   {:events
+    {:successful-run {:req (req (= target :rd))
+                      :effect (effect (add-counter card :virus 1))}
+     :pre-access {:delayed-completion true
+                  :req (req (= target :rd))
+                  :effect (effect (continue-ability
+                                    {:req (req (< 1 (get-virus-counters state side card)))
+                                     :prompt "Choose how many additional R&D accesses to make with Medium"
+                                     :choices {:number (req (dec (get-virus-counters state side card)))
+                                               :default (req (dec (get-virus-counters state side card)))}
+                                     :msg (msg "access " target " additional cards from R&D")
+                                     :effect (effect (access-bonus (max 0 target)))}
+                                    card nil))}}}
    "Misdirection"
    {:abilities [{:cost [:click 2]
                  :prompt "How many [Credits] to spend to remove that number of tags?"
@@ -456,34 +439,19 @@
    {:recurring 2}
 
    "Nerve Agent"
-   {:effect (req (when (and run
-                            (= (first (get-in @state [:run :server])) :hq)
-                            (not current-ice))
-                   (update! state side (assoc card :nerve-active true))))
-    :events {:no-action {:req (req (and run
-                                        (= (first (get-in @state [:run :server])) :hq)
-                                        (not current-ice)
-                                        (> (get-virus-counters state side card) 0)))
-                         :effect (req (toast state :runner "Click Nerve Agent to choose fewer than all additional HQ accesses." "info")
-                                      (update! state side (assoc card :nerve-active true)))}
-             :successful-run {:req (req (and (= target :hq)
-                                             (or (:nerve-active card)
-                                                 (zero? (get-in card [:counter :virus] 0)))))
-                              :effect (effect (add-counter card :virus 1))}
-             :pre-access {:req (req (and (= target :hq) (:nerve-active card)))
-                          :effect (effect (access-bonus (max 0 (dec (get-virus-counters state side (get-card state card))))))}}
-    :abilities [{:req (req (and run
-                                (= (first (get-in @state [:run :server])) :hq)
-                                (not current-ice)
-                                (:nerve-active card)
-                                (empty? (get-in @state [:runner :prompt]))))
-                 :effect (effect (add-counter card :virus 1)
-                                 (resolve-ability
-                                   {:prompt "Choose how many additional HQ accesses to make"
-                                    :choices {:number (req (get-virus-counters state side card))}
-                                    :msg (msg "do " target " additional accesses from HQ")
-                                    :effect (effect (access-bonus (max 0 target))
-                                                    (update! (dissoc (get-card state card) :nerve-active)))} card nil))}]}
+   {:events
+    {:successful-run {:req (req (= target :hq))
+                      :effect (effect (add-counter card :virus 1))}
+     :pre-access {:delayed-completion true
+                  :req (req (= target :hq))
+                  :effect (effect (continue-ability
+                                    {:req (req (< 1 (get-virus-counters state side card)))
+                                     :prompt "Choose how many additional HQ accesses to make with Nerve Agent"
+                                     :choices {:number (req (dec (get-virus-counters state side card)))
+                                               :default (req (dec (get-virus-counters state side card)))}
+                                     :msg (msg "access " target " additional cards from HQ")
+                                     :effect (effect (access-bonus (max 0 target)))}
+                                    card nil))}}}
 
    "Net Shield"
    {:prevent {:damage [:net]}

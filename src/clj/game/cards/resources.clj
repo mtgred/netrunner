@@ -384,9 +384,9 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
-                   (register-successful-run state side (:server run))
-                   (swap! state update-in [:runner :prompt] rest)
-                   (handle-end-run state side)))}
+                   (when-completed (register-successful-run state side (:server run))
+                                   (do (swap! state update-in [:runner :prompt] rest)
+                                       (handle-end-run state side)))))}
 
    "Emptied Mind"
    (let [ability {:req (req (= 0 (count (:hand runner))))
@@ -404,9 +404,10 @@
 
    "Fall Guy"
    {:prevent {:trash [:resource]}
-    :abilities [{:label "Prevent a resource from being trashed"
+    :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
                  :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
-                {:effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+                {:label "[Trash]: Gain 2 [Credits]"
+                 :effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
@@ -456,12 +457,24 @@
                  :effect (effect (draw))}]}
 
    "Gang Sign"
-   {:events {:agenda-scored {:delayed-completion true
-                             :interactive (req true)
-                             :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
-                                       (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
-                             :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                            (continue-ability state :runner (choose-access c '(:hq)) card nil)))}}}
+   {:events {:agenda-scored
+             {:delayed-completion true
+              :interactive (req true)
+              :msg (msg "access " (get-in @state [:runner :hq-access]) " card"
+                        (when (< 1 (get-in @state [:runner :hq-access])) "s") " from HQ")
+              :effect (req (when-completed
+                             ; manually trigger the pre-access event to alert Nerve Agent.
+                             (trigger-event-sync state side :pre-access :hq)
+                             (let [from-hq (access-count state side :hq-access)]
+                               (continue-ability
+                                 state side
+                                 (access-helper-hq
+                                   state from-hq
+                                   ; access-helper-hq uses a set to keep track of which cards have already
+                                   ; been accessed. by adding HQ root's contents to this set, we make the runner
+                                   ; unable to access those cards, as Gang Sign intends.
+                                   (set (get-in @state [:corp :servers :hq :content])))
+                                 card nil))))}}}
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -522,9 +535,9 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
-                   (register-successful-run state side (:server run))
-                   (swap! state update-in [:runner :prompt] rest)
-                   (handle-end-run state side)))}
+                   (when-completed (register-successful-run state side (:server run))
+                                   (do (swap! state update-in [:runner :prompt] rest)
+                                       (handle-end-run state side)))))}
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -935,12 +948,17 @@
    {:effect (req (add-watch state :raymond-flint
                             (fn [k ref old new]
                               (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
-                                (resolve-ability
-                                 ref side
-                                 {:msg (msg "access " (get-in @state [:runner :hq-access]) " card from HQ")
-                                  :effect (req (let [c (take (get-in @state [:runner :hq-access]) (shuffle (:hand corp)))]
-                                                 (resolve-ability state :runner (choose-access c '(:hq)) card nil)))}
-                                 card nil)))))
+                                (when-completed
+                                  ; manually trigger the pre-access event to alert Nerve Agent.
+                                  (trigger-event-sync ref side :pre-access :hq)
+                                  (let [from-hq (access-count state side :hq-access)]
+                                    (resolve-ability
+                                      ref side
+                                      (access-helper-hq
+                                        state from-hq
+                                        ; see note in Gang Sign
+                                        (set (get-in @state [:corp :servers :hq :content])))
+                                      card nil)))))))
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:msg "expose 1 card"
                  :choices {:req installed?}
@@ -1304,9 +1322,9 @@
     :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
                                [:credit -7 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
-                   (register-successful-run state side (:server run))
-                   (swap! state update-in [:runner :prompt] rest)
-                   (handle-end-run state side)))}
+                   (when-completed (register-successful-run state side (:server run))
+                                   (do (swap! state update-in [:runner :prompt] rest)
+                                       (handle-end-run state side)))))}
 
    "Virus Breeding Ground"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}

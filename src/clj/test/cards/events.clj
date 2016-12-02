@@ -401,6 +401,19 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content])))
           "Project Atlas not trashed from Server 3"))))
 
+(deftest drive-by-psychic-field
+  ;; Drive By - Psychic Field trashed after psi game. Issue #2127.
+  (do-game
+    (new-game (default-corp [(qty "Psychic Field" 1)])
+              (default-runner [(qty "Drive By" 3)]))
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Drive By")
+    (prompt-select :runner (get-content state :remote1 0))
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
@@ -412,6 +425,63 @@
     (play-from-hand state :runner "Employee Strike")
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
+
+(deftest eureka!
+  ;; Eureka! - Install the program but trash the event
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Eureka!" 2) (qty "Torch" 1) (qty "Sure Gamble" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 1)
+    (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Eureka!")
+    (prompt-choice :runner "Yes")
+    (is (= 3 (:credit (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rig :program]))))
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (play-from-hand state :runner "Eureka!")
+    (is (= 0 (:credit (get-runner))))
+    (is (= 3 (count (:discard (get-runner)))))))
+
+(deftest frantic-coding-install
+  ;; Frantic Coding - Install 1 program, other 9 cards are trashed
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Frantic Coding" 1) (qty "Torch" 1) (qty "Corroder" 1)
+                               (qty "Magnum Opus" 1) (qty "Daily Casts" 2) (qty "Sure Gamble" 2)
+                               (qty "John Masanori" 1) (qty "Amped Up" 1) (qty "Wanton Destruction" 1)]))
+    (starting-hand state :runner ["Frantic Coding"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Frantic Coding")
+    (prompt-choice :runner "OK")
+    (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+      (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
+      (is (= 2 (:credit (get-runner))))
+      (is (= 1 (count (:discard (get-runner)))))
+      (prompt-choice :runner (find-card "Magnum Opus" (:deck (get-runner))))
+      (is (= 1 (count (get-in @state [:runner :rig :program]))))
+      (is (= 2 (:credit (get-runner))) "Magnum Opus installed for free")
+      (is (= 10 (count (:discard (get-runner))))))))
+
+(deftest frantic-coding-noinstall
+  ;; Frantic Coding - Don't install anything, all 10 cards are trashed
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Frantic Coding" 1) (qty "Torch" 1) (qty "Corroder" 1)
+                               (qty "Magnum Opus" 1) (qty "Daily Casts" 2) (qty "Sure Gamble" 2)
+                               (qty "John Masanori" 1) (qty "Amped Up" 1) (qty "Wanton Destruction" 1)]))
+    (starting-hand state :runner ["Frantic Coding"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Frantic Coding")
+    (prompt-choice :runner "OK")
+    (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
+          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+      (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
+      (is (= 1 (count (:discard (get-runner)))))
+      (prompt-choice :runner "No install")
+      (is (= 0 (count (get-in @state [:runner :rig :program]))))
+      (is (= 11 (count (:discard (get-runner))))))))
 
 (deftest freelance-coding-contract
   ;; Freelance Coding Contract - Gain 2 credits per program trashed from Grip

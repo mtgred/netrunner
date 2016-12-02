@@ -20,7 +20,10 @@
                     {:max-count count :max-faction faction}
                     ;; Lost plurality
                     (= count max-count)
-                    (dissoc acc :max-faction)))
+                    (dissoc acc :max-faction)
+                    ;; Count is not more, do not change the accumulator map
+                    :default
+                    acc))
         best-faction (:max-faction (reduce-kv reducer {:max-count 0 :max-faction nil} faction-freq))]
     (= fc best-faction)))
 
@@ -29,22 +32,25 @@
   {"Adam: Compulsive Hacker"
    {:events {:pre-start-game
              {:req (req (= side :runner))
-              :effect (req (let [is-directive? #(has-subtype? % "Directive")
+              :delayed-completion true
+              :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
+                           (let [is-directive? #(has-subtype? % "Directive")
                                  directives (filter is-directive? (vals @all-cards))
                                  directives (map make-card directives)
                                  directives (zone :play-area directives)]
-                             ;; Add directives to :play-area - should be empty
+                             ;; Add directives to :play-area - assumed to be empty
                              (swap! state assoc-in [:runner :play-area] directives)
-                             ;; If more directives are printed this is probably where the runner gets to choose
-                             (doseq [c directives]
-                               (runner-install state side c {:no-cost true
-                                                             :custom-message (str "starts with " (:title c) " in play")}))
-                             (when (< 3 (count directives))
-                               ;; Extra directives have been added, ask player to use /rfg on the directives not used.
-                               ;; This implementation is just to make this more future proof, if extra directives are
-                               ;; actually added then a selection would be better
-                               (toast state :runner
-                                      (str "Please use /rfg to remove any directives other than the 3 you intend to start with.")))))}}}
+                             (continue-ability state side
+                                               {:prompt (str "Choose 3 starting directives")
+                                                :choices {:max 3
+                                                          :req #(and (= (:side %) "Runner")
+                                                                     (= (:zone %) [:play-area]))}
+                                                :effect (req (doseq [c targets]
+                                                               (runner-install state side c {:no-cost true
+                                                                                             :custom-message (str "starts with " (:title c) " in play")}))
+                                                             (swap! state assoc-in [:runner :play-area] [])
+                                                             (clear-wait-prompt state :corp))}
+                                               card nil)))}}}
 
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
@@ -227,18 +233,16 @@
               :delayed-completion true
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")))
-              :effect (req (if (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp))
-                             (do (show-wait-prompt state :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
-                                 (continue-ability state side
-                                                   {:prompt "Choose a bioroid to rez" :player :corp
-                                                    :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
-                                                    :msg (msg "rez " (:title target))
-                                                    :cancel-effect (final-effect (clear-wait-prompt :runner))
-                                                    :effect (effect (rez-cost-bonus -4)
-                                                                    (rez target)
-                                                                    (clear-wait-prompt :runner))}
-                                                   card nil))
-                             (effect-completed state side eid)))}}}
+              :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
+                              (continue-ability
+                                {:prompt "Choose a bioroid to rez" :player :corp
+                                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                 :msg (msg "rez " (:title target))
+                                 :cancel-effect (final-effect (clear-wait-prompt :runner))
+                                 :effect (effect (rez-cost-bonus -4)
+                                                 (rez target)
+                                                 (clear-wait-prompt :runner))}
+                               card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
@@ -436,7 +440,7 @@
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
-                :choices {:req #(and (not (:rezzed %)) (card-is? % :side :corp))}
+                :choices {:req #(and (not (rezzed? %)) (installed? %) (card-is? % :side :corp))}
                 :msg (msg "add " (card-str state target) " to HQ")
                 :effect (final-effect (move :corp target :hand))}]
      {:flags {:slow-hq-access (req true)}

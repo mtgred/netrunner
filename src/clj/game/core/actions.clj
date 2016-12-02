@@ -128,7 +128,7 @@
     (if (not= choice "Cancel")
       (if (:card-title choices) ; check the card has a :card-title function
         (let [title-fn (:card-title choices)
-              found (some #(when (= (lower-case choice) (lower-case (:title %))) %) (vals @all-cards))]
+              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
               (do ((:effect prompt) (or choice card))
@@ -202,14 +202,15 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
-  [state side {:keys [card subroutine targets] :as args}]
-  (let [cdef (card-def card)
-        sub (get-in cdef [:subroutines subroutine])
-        cost (:cost sub)]
-    (when (or (nil? cost)
-              (apply can-pay? state side (:title card) cost))
-      (when-let [activatemsg (:activatemsg sub)] (system-msg state side activatemsg))
-      (resolve-ability state side sub card targets))))
+  ([state side args] (play-subroutine state side (make-eid state) args))
+  ([state side eid {:keys [card subroutine targets] :as args}]
+   (let [cdef (card-def card)
+         sub (get-in cdef [:subroutines subroutine])
+         cost (:cost sub)]
+     (when (or (nil? cost)
+               (apply can-pay? state side (:title card) cost))
+       (when-let [activatemsg (:activatemsg sub)] (system-msg state side activatemsg))
+       (resolve-ability state side eid sub card targets)))))
 
 ;;; Corp actions
 (defn trash-resource

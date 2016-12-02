@@ -22,6 +22,23 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
+(deftest archangel
+  ;; Archangel - accessing from R&D does not cause run to hang.
+  (do-game
+    (new-game (default-corp [(qty "Archangel" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Bank Job" 1)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bank Job")
+    (run-empty-server state :rd)
+    (prompt-choice :corp "Yes")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)) "Run ended")))
+
 (deftest architect-untrashable
   ;; Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ
   (do-game

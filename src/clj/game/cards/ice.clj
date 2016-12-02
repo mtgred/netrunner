@@ -195,29 +195,41 @@
 
    "Archangel"
    {:access
-    {:req (req (not= (first (:zone card)) :discard))
+    {:delayed-completion true
+     :req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
-                     (resolve-ability
+                     (continue-ability
                        {:optional
                         {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
                          :yes-ability {:cost [:credit 3]
-                                       :effect (req (system-msg state :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
-                                                    (clear-wait-prompt state :runner)
-                                                    (resolve-ability state :runner
-                                                                     {:optional
-                                                                      {:player :runner
-                                                                       :prompt "Allow Archangel trace to fire?" :priority 1
-                                                                       :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
-                                                                     card nil))}
-                         :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Archangel")
-                                                   (clear-wait-prompt state :runner))}}} card nil))}
-   :subroutines [(trace-ability 6 {:choices {:req #(and (installed? %)
-                                                        (card-is? % :side :runner))}
-                                   :label "Add 1 installed card to the Runner's Grip"
-                                   :msg "add 1 installed card to the Runner's Grip"
-                                   :effect (effect (move :runner target :hand true)
-                                                   (system-msg (str "adds " (:title target)
-                                                                    " to the Runner's Grip")))})]}
+                                       :delayed-completion true
+                                       :effect (effect (system-msg :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
+                                                       (clear-wait-prompt :runner)
+                                                       (continue-ability
+                                                         :runner {:optional
+                                                                  {:player :runner
+                                                                   :prompt "Allow Archangel trace to fire?"
+                                                                   :priority 1
+                                                                   :yes-ability {:delayed-completion true
+                                                                                 :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
+                                                                   :no-ability {:effect (effect (effect-completed eid))}}}
+                                                         card nil))}
+                         :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
+                                                      (clear-wait-prompt :runner))}}}
+                       card nil))}
+   :subroutines [(trace-ability 6 {:delayed-completion true
+                                   :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
+                                                   (continue-ability {:choices {:req #(and (installed? %)
+                                                                                           (card-is? % :side :runner))}
+                                                                      :label "Add 1 installed card to the Runner's Grip"
+                                                                      :msg "add 1 installed card to the Runner's Grip"
+                                                                      :effect (effect (clear-wait-prompt :runner)
+                                                                                      (move :runner target :hand true)
+                                                                                      (system-msg (str "adds " (:title target)
+                                                                                                       " to the Runner's Grip")))
+                                                                      :cancel-effect (effect (clear-wait-prompt :runner)
+                                                                                             (effect-completed eid))}
+                                                                     card nil))})]}
 
    "Archer"
    {:additional-cost [:forfeit]
@@ -306,6 +318,19 @@
                                         (move state side card
                                               (conj (server->zone state target) :ices)))})]}
 
+   "Bulwark"
+   {:effect take-bad-pub
+    :abilities [{:msg "gain 2[Credits] if there is an installed AI"
+                 :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
+                 :effect (effect (gain :credit 2))}]
+    :subroutines [(assoc trash-program :player :runner
+                                       :msg "force the Runner to trash 1 program"
+                                       :label "The runner trashes 1 program")
+                  {:msg "gain 2[Credits] and end the run"
+                   :effect (effect (gain :credit 2)
+                                   (end-run))}]}
+
+
    "Burke Bugs"
    {:subroutines [(trace-ability 0 (assoc trash-program :not-distinct true
                                                         :player :runner
@@ -330,13 +355,14 @@
    {:effect take-bad-pub
     :subroutines [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
                                     :msg "do 3 meat damage when this run is successful"
-                                    :effect (req (swap! state assoc-in [:run :run-effect :end-run]
-                                                        {:req (req (:successful run))
-                                                         :msg "do 3 meat damage"
-                                                         :effect (effect (damage eid :meat 3
-                                                                                 {:card card}))})
-                                                 (swap! state assoc-in [:run :run-effect :card]
-                                                        card))})]}
+                                    :effect (effect (register-events
+                                                      {:successful-run
+                                                       {:delayed-completion true
+                                                        :msg "do 3 meat damage"
+                                                        :effect (effect (damage eid :meat 3 {:card card}))}
+                                                       :run-ends {:effect (effect (unregister-events card))}}
+                                                     card))})]
+    :events {:successful-run nil :run-ends nil}}
 
    "Chetana"
    {:subroutines [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
@@ -371,22 +397,27 @@
 
    "Chrysalis"
    {:subroutines [(do-net-damage 2)]
-    :access {:req (req (not= (first (:zone card)) :discard))
+    :access {:delayed-completion true
+             :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Chrysalis")
-                             (resolve-ability
+                             (continue-ability
                                {:optional
                                 {:req (req (not= (first (:zone card)) :discard))
                                  :prompt "Force the Runner to encounter Chrysalis?"
-                                 :yes-ability {:effect (req (system-msg state :corp "forces the Runner to encounter Chrysalis")
-                                                            (clear-wait-prompt state :runner)
-                                                            (resolve-ability state :runner
-                                                              {:optional
-                                                               {:player :runner
-                                                                :prompt "Allow Chrysalis subroutine to fire?" :priority 1
-                                                                :yes-ability {:effect (req (play-subroutine state side {:card card :subroutine 0}))}}}
-                                                             card nil))}
-                                 :no-ability {:effect (req (system-msg state :corp "declines to force the Runner to encounter Chrysalis")
-                                                           (clear-wait-prompt state :runner))}}}
+                                 :yes-ability {:delayed-completion true
+                                               :effect (effect (system-msg :corp "forces the Runner to encounter Chrysalis")
+                                                               (clear-wait-prompt :runner)
+                                                               (continue-ability
+                                                                 :runner {:optional
+                                                                          {:player :runner
+                                                                           :prompt "Allow Chrysalis subroutine to fire?"
+                                                                           :priority 1
+                                                                           :yes-ability {:delayed-completion true
+                                                                                         :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
+                                                                           :no-ability {:effect (effect (effect-completed eid))}}}
+                                                                 card nil))}
+                                 :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Chrysalis")
+                                                              (clear-wait-prompt :runner))}}}
                               card nil))}}
 
    "Chum"
@@ -484,6 +515,18 @@
                         :effect (req (tag-runner state :runner 1)
                                      (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
+
+   "Data Ward"
+   {:runner-abilities [{:label "Pay 3 [Credits]"
+                        :effect (req (pay state :runner card :credit 3)
+                                     (system-msg state :runner "chooses to pay 3 [Credits] on encountering Data Ward"))}
+                       {:label "Take 1 tag"
+                        :effect (req (tag-runner state :runner 1)
+                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Ward"))}]
+    :subroutines [{:label "End the run if the Runner is tagged"
+                   :req (req tagged)
+                   :msg "end the run"
+                   :effect (effect (end-run))}]}
 
    "DNA Tracker"
    {:abilities [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
@@ -890,17 +933,19 @@
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
 
    "Mother Goddess"
-   (let [ab {:req (req (ice? target))
-             :effect (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
-                                                         (filter #(and (:rezzed %) (not= (:cid card) (:cid %))))
-                                                         (mapcat #(split (:subtype %) #" - "))
-                                                         (cons "Mythic")
-                                                         distinct
-                                                         (join " - "))]
-                                        (assoc card :subtype-target (remove-subtypes subtype "Mythic")
-                                                    :subtype subtype))))}]
-     {:subroutines [end-the-run]
-      :events {:rez ab :trash ab :derez ab}})
+   (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
+                                                (filter #(and (rezzed? %) (not= (:cid card) (:cid %))))
+                                                (mapcat #(split (:subtype %) #" - "))
+                                                (cons "Mythic")
+                                                distinct
+                                                (join " - "))]
+                               (assoc card :subtype-target (remove-subtypes subtype "Mythic")
+                                           :subtype subtype))))
+         mg {:req (req (ice? target))
+             :effect ab}]
+     {:effect ab
+      :subroutines [end-the-run]
+      :events {:rez mg :card-moved mg :derez mg}})
 
    "Muckraker"
    {:effect take-bad-pub

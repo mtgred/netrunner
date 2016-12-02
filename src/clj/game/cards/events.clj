@@ -264,6 +264,19 @@
     :effect (effect (disable-identity :corp))
     :leave-play (effect (enable-identity :corp))}
 
+   "En Passant"
+   {:req (req (:successful-run runner-reg))
+    :effect (req (let [runtgt (first (flatten (turn-events state side :run)))
+                       serv (zone->name runtgt)]
+                   (resolve-ability state side
+                     {:prompt (msg "Choose an unrezzed piece of ICE protecting " serv " that you passed on your last run")
+                      :choices {:req #(and (ice? %)
+                                           (not (rezzed? %))
+                                           (= runtgt (second (:zone %))))}
+                      :msg (msg "trash " (card-str state target))
+                      :effect (effect (trash target))}
+                    card nil)))}
+
    "Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
                    :choices {:req #(and (installed? %) (ice? %)) :max 2}
@@ -276,17 +289,21 @@
                                  :effect (effect (resolve-ability (es) card nil))}} card))})
 
    "Eureka!"
-   {:effect
-    (req (let [topcard (first (:deck runner))
-               caninst (some #(= % (:type topcard)) '("Hardware" "Resource" "Program"))
-               cost (min 10 (:cost topcard))]
-           (when caninst
-             (do (gain state side :credit cost)
-                 (runner-install state side topcard)))
-           (when (get-card state topcard) ; only true if card was not installed
-             (do (system-msg state side (str "reveals and trashes " (:title topcard)))
-                 (trash state side topcard)
-                 (when caninst (lose state side :credit cost))))))}
+   {:effect (req (let [topcard (first (:deck runner))
+                       caninst (or (is-type? topcard "Hardware")
+                                   (is-type? topcard "Program")
+                                   (is-type? topcard "Resource"))]
+                   (if caninst
+                     (resolve-ability
+                       state side
+                       {:optional {:prompt (msg "Install " (:title topcard) "?")
+                                   :yes-ability {:effect (effect (install-cost-bonus [:credit -10])
+                                                                 (runner-install topcard))}
+                                   :no-ability {:effect (effect (trash topcard {:unpreventable true})
+                                                                (system-msg (str "reveals and trashes "
+                                                                                 (:title topcard))))}}} card nil)
+                     (do (trash state side topcard {:unpreventable true})
+                         (system-msg state side (str "reveals and trashes " (:title topcard)))))))}
 
    "Exclusive Party"
    {:msg (msg "draw 1 card and gain "
@@ -384,6 +401,33 @@
     :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
+   "Frantic Coding"
+   {:effect (req (let [topten (take 10 (:deck runner))]
+                   (prompt! state :runner card (str "The top 10 cards of the Stack are "
+                                                    (join ", " (map :title topten))) ["OK"] {})
+                   (resolve-ability
+                     state side
+                     {:prompt "Install a program?"
+                      :choices (conj (vec (sort-by :title (filter #(and (is-type? % "Program")
+                                                                        (can-pay? state side nil
+                                                                                  (modified-install-cost
+                                                                                    state side % [:credit -5])))
+                                                                  topten))) "No install")
+                      :effect (req (if (not= target "No install")
+                                     (do (install-cost-bonus state side [:credit -5])
+                                         (runner-install state side target)
+                                         (doseq [c (remove (fn [installed] (= (:cid installed) (:cid target))) topten)]
+                                           (trash state side c {:unpreventable true}))
+                                         (system-msg
+                                           state side
+                                           (str "trashes " (join ", " (map :title (remove (fn [installed]
+                                                                                            (= (:cid installed)
+                                                                                               (:cid target))) topten))))))
+                                     (do (doseq [c topten] (trash state side c {:unpreventable true}))
+                                         (system-msg
+                                           state side
+                                           (str "trashes " (join ", " (map :title topten)))))))} card nil)))}
+
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
                              :effect (effect (as-agenda :runner card 1))}}}
@@ -401,6 +445,9 @@
    "Game Day"
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
+
+   "Government Investigations"
+   {:flags {:psi-prevent-spend (req 2)}}
 
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
@@ -437,7 +484,8 @@
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
-    :trash-effect {:req (req (#{:meat :net} target))
+    :trash-effect {:when-inactive true
+                   :req (req (#{:meat :net} target))
                    :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
 
    "Immolation Script"
@@ -844,8 +892,8 @@
                   (fn [x] (assoc (server-card (:title target) (get-in @state [:runner :user]))
                             :zone [:identity])))
 
-               ;; enable-identity does not do everything that identity-init does
-               (identity-init state side (get-in @state [:runner :identity]))
+               ;; enable-identity does not do everything that init-identity does
+               (init-identity state side (get-in @state [:runner :identity]))
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary"))}
