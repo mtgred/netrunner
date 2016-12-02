@@ -496,9 +496,9 @@ app.post '/update-profile', (req, res) ->
       'alt-arts': req.body['alt-arts'], 'opponent-alt-art': req.body['opponent-alt-art']}}}, \
       (err) ->
         console.log(err) if err
-        res.send {message: 'OK', background: req.body.background, altarts: req.body['alt-arts']}, 200
+        res.status(200).send({message: 'OK', background: req.body.background, altarts: req.body['alt-arts']})
   else
-    res.send {message: 'Unauthorized'}, 401
+    res.status(401).send({message: 'Unauthorized'})
 
 hashPassword = (password, cb) ->
   bcrypt.hash password, 10, cb
