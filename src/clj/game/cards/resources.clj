@@ -467,7 +467,7 @@
                              (trigger-event-sync state side :pre-access :hq)
                              (let [from-hq (access-count state side :hq-access)]
                                (continue-ability
-                                 state side
+                                 state :runner
                                  (access-helper-hq
                                    state from-hq
                                    ; access-helper-hq uses a set to keep track of which cards have already
