@@ -10,7 +10,8 @@
   "scripts": {
     "start": "coffee server.coffee",
     "postinstall": "bower install",
-    "fetch": "cd data/ && coffee fetch.coffee"
+    "fetch": "cd data/ && coffee fetch.coffee",
+    "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray"
   },
   "devDependencies": {
     "bower": "^1.7.9",
