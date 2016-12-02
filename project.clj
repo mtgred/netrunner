@@ -1,5 +1,5 @@
 (defproject netrunner "1.0"
-  ; the version string gets replaced by the git rev version plugin anyway
+  ;; the version string gets replaced by the git rev version plugin anyway
   :description "Browser implementation of Android: Netrunner card game."
   :url "https://github.com/mtgred/netrunner"
   :license {:name "The MIT License (MIT)"
@@ -22,7 +22,7 @@
                                   [figwheel-sidecar "0.5.8"]
                                   [com.cemerick/piggieback "0.2.1"]]}}
 
-  ; aot only the namespaces needed for the main game in uberjar
+  ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test namespaces
   :aot [game.utils
         game.main
         game.macros
