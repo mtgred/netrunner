@@ -847,8 +847,7 @@
    {:msg "draw 5 cards" :effect (effect (draw 5))}
 
    "Queens Gambit"
-   {:implementation "Prevent access is not implemented"
-    :choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
+   {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
     :effect (req (let [c (Integer/parseInt target)]
                    (resolve-ability
                      state side

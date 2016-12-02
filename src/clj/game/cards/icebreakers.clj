@@ -190,7 +190,7 @@
                                  (strength-pump 1 1 :all-run)]})
 
    "BlacKat"
-   {:implementation "Steal credit restriction not enforced"
+   {:implementation "Stealth credit restriction not enforced"
     :abilities [(break-sub 1 1 "barrier")
                 {:cost [:credit 1]
                  :msg "break up to 3 barrier subroutines (using a stealth [Credits])"}
@@ -298,13 +298,13 @@
 
    "Dagger"
    (auto-icebreaker ["Sentry"]
-                    {:implementation "Steal credit restriction not enforced"
+                    {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 5)]})
 
    "Dai V"
    (auto-icebreaker ["All"]
-                    {:implementation "Steal credit restriction not enforced"
+                    {:implementation "Stealth credit restriction not enforced"
                      :abilities [{:cost [:credit 2]
                                   :msg "break all ICE subroutines (using stealth [Credits])"}
                                  (strength-pump 1 1)]})
@@ -547,7 +547,7 @@
 
    "Refractor"
    (auto-icebreaker ["Code Gate"]
-                    {:implementation "Steal credit restriction not enforced"
+                    {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "code gate")
                                  (strength-pump 1 3)]})
    "Sadyojata"
@@ -602,7 +602,7 @@
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]
-                    {:implementation "Steal credit restriction not enforced"
+                    {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 0 "sentry")
                                  (strength-pump 1 7)]})
 
