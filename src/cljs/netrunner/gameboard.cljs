@@ -8,7 +8,8 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [image-url add-symbols] :as cb]
             [differ.core :as differ]
-            [om.dom :as dom]))
+            [om.dom :as dom]
+            [netrunner.toast :refer [toast] :as toast]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
@@ -50,7 +51,7 @@
   "Send a notification to the chat, and a toast to the current player of the specified severity"
   [text severity]
   (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity nil))
+  (toast text severity))
 
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -937,7 +938,8 @@
       (when (= "card-title" (get-in cursor [side :prompt 0 :prompt-type]))
         (-> "#card-title" js/$ .focus))
       (doseq [{:keys [msg type options]} (get-in cursor [side :toast])]
-        (toast msg type options)))
+        (toast msg type options))
+        (send-command "toast"))
 
     om/IRenderState
     (render-state [this state]

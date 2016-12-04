@@ -1,7 +1,10 @@
 (ns netrunner.main
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [goog.events :as events])
+            [goog.events :as events]
+            [netrunner.ajax :refer [GET]]
+            [netrunner.toast :refer [toast] :as toast])
   (:import goog.history.Html5History
            goog.history.EventType))
 
@@ -27,6 +30,15 @@
 (.setUseFragment history false)
 (.setPathPrefix history "")
 (.setEnabled history true)
+
+(go (while true
+      (let [msg (<! socket-channel)]
+        (reset! lock false)
+        (case (:type msg)
+          ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
+                                                                             #(assoc (:state msg) :side (:side @game-state))))
+                                           (swap! last-state #(identity @game-state)))
+          nil))))
 
 (defn navbar [cursor owner]
   (om/component
@@ -68,6 +80,28 @@
                                                          (map (fn [%] {:player % :game game})
                                                               (:spectators game)))]]))))])))
 
+(defn version [cursor owner]
+  (reify
+    om/IWillMount
+    (will-mount [this]
+      (let [edit-channel (om/get-state owner :edit-channel)]
+        (go (while true
+            (let [card (<! zoom-channel)]
+              (om/set-state! owner :zoom card))))
+
+    om/IDidUpdate
+      (did-update [this prev-props prev-state]
+        (let [version-val (.html (js/$ "#version-val"))]
+          (cond
+              (not= version-val (:version @app-state)) (toast (str (str "You have an older version: " (:version @app-state)) version-val) "warning"))))
+
+    om/IRenderState
+      (render-state [this state]
+        (sab/html
+          [:div
+            [:div.float-right "Version: "
+              [:span (:version cursor)]]]))))
+
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
-
+(om/root version app-state {:target (. js/document (getElementById "version"))})
