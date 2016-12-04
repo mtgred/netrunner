@@ -775,6 +775,7 @@
               :effect (effect (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
      {:events {:successful-run
                {:req (req (= target :rd))
+                :interactive (req true)
                 :optional {:prompt "Use Top Hat to choose one of the top 5 cards in R&D to access?"
                            :yes-ability {:effect (req (swap! state assoc-in [:run :run-effect :replace-access]
                                                              (ability (count (:deck corp)))))}}}}})

@@ -872,6 +872,11 @@
                                      (unregister-events state side hosted)
                                      (update! state side (dissoc hosted :abilities))))}
                      card nil)))
+    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+                              :effect (req (doseq [c (get-in card [:hosted])]
+                                             (unregister-events state side c)
+                                             (update! state side (dissoc c :abilities)))
+                                           (update-ice-strength state side card))}}
     :subroutines [end-the-run]}
 
    "Mamba"

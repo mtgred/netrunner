@@ -193,8 +193,9 @@
                  :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                  :effect (effect (draw 3)
                                  (resolve-ability
-                                   {:prompt "Choose a card to shuffle back into your Stack"
-                                    :choices (req (:hand runner))
+                                   {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                    :choices {:req #(and (in-hand? %)
+                                                         (= (:side %) "Runner"))}
                                     :effect (effect (move target :deck)
                                                     (shuffle! :deck))}
                                   card nil))}]}
@@ -438,7 +439,8 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:optional
+             :successful-run {:interactive (req true)
+                              :optional
                               {:delayed-completion true
                                :req (req (first-event state side :successful-run))
                                :prompt "Use Find the Truth to look at the top card of R&D?"
@@ -465,7 +467,7 @@
                              (trigger-event-sync state side :pre-access :hq)
                              (let [from-hq (access-count state side :hq-access)]
                                (continue-ability
-                                 state side
+                                 state :runner
                                  (access-helper-hq
                                    state from-hq
                                    ; access-helper-hq uses a set to keep track of which cards have already
