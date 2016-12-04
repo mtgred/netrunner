@@ -507,7 +507,7 @@
                                       (empty? cards))
                           (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                                           (effect-completed state side eid nil))
-                          (swap! state assoc-in [:run :cards-accessed] n)))
+                          (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))))
                       (handle-end-run state side))))
 
 (defn replace-access
