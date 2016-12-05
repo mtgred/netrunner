@@ -2,7 +2,7 @@
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points is-type? in-corp-scored?
          prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
-         update-all-ice win win-decked)
+         update-all-ice win win-decked play-sfx)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -38,6 +38,7 @@
                                   (when-not no-additional-cost additional-cost))] ; play cost can be paid
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (build-spend-msg cost-str "play") title))
+             (play-sfx state side "play-instant")
              (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
                      (when-let [current (first (get-in @state [s :current]))] ; trash old current
@@ -508,6 +509,7 @@
   "Records a win reason for statistics."
   [state side reason]
   (system-msg state side "wins the game")
+  (play-sfx state side "game-end")
   (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
 
 (defn win-decked

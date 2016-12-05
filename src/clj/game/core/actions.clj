@@ -5,7 +5,7 @@
 (declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
-         can-run-server? can-score?)
+         can-run-server? can-score? play-sfx)
 
 ;;; Neutral actions
 (defn play
@@ -34,7 +34,8 @@
   (when (and (not (get-in @state [side :register :cannot-draw])) (pay state side nil :click 1))
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
-    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))))
+    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))
+    (play-sfx state side "click-card")))
 
 (defn click-credit
   "Click to gain 1 credit."
@@ -42,7 +43,8 @@
   (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
-    (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))))
+    (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
+    (play-sfx state side "click-credit")))
 
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
@@ -230,7 +232,8 @@
     (purge state side)
     (let [spent (build-spend-msg cost "purge")
           message (str spent "all virus counters")]
-      (system-msg state side message))))
+      (system-msg state side message))
+    (play-sfx state side "virus-purge")))
 
 (defn rez
   "Rez a corp card."
@@ -265,8 +268,10 @@
                  (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                       Please rez prior to clicking Start Turn in the future." "warning"
                         {:time-out 0 :close-button true}))
-               (when (ice? card)
-                 (update-ice-strength state side card))
+               (if (ice? card)
+                 (do (update-ice-strength state side card)
+                     (play-sfx state side "rez-ice"))
+                 (play-sfx state side "rez-other"))
                (trigger-event state side :rez card))))
          (swap! state update-in [:bonus] dissoc :cost))))))
 
@@ -294,7 +299,8 @@
               message (str spent card)]
           (system-msg state side message))
         (update-advancement-cost state side card)
-        (add-prop state side (get-card state card) :advance-counter 1)))))
+        (add-prop state side (get-card state card) :advance-counter 1)
+        (play-sfx state side "click-advance")))))
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."
@@ -321,7 +327,8 @@
                                                 (system-msg state :corp (str "scores " (:title c) " and gains " points
                                                                              " agenda point" (when (> points 1) "s")))
                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                                (gain-agenda-point state :corp points)))}}
+                                                (gain-agenda-point state :corp points)
+                                                (play-sfx state side "agenda-score")))}}
           c)))))
 
 (defn no-action
@@ -351,14 +358,16 @@
       (run state side server)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
         (system-msg state :runner
-                    (str (build-spend-msg cost-str "make a run on") server))))))
+                    (str (build-spend-msg cost-str "make a run on") server))
+        (play-sfx state side "click-run")))))
 
 (defn remove-tag
   "Click to remove a tag."
   [state side args]
   (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost :tag 1)]
-      (system-msg state side (build-spend-msg cost-str "remove 1 tag")))))
+      (system-msg state side (build-spend-msg cost-str "remove 1 tag"))
+      (play-sfx state side "click-remove-tag"))))
 
 (defn auto-pump
   "Use the 'match strength with ice' function of icebreakers."

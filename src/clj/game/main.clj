@@ -2,7 +2,7 @@
   (:import [org.zeromq ZMQ ZMQQueue])
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [all-cards all-cards-alt card-is-public? game-states show-error-toast toast] :as core]
+            [game.core :refer [all-cards card-is-public? game-states show-error-toast toast] :as core]
             [game.utils :refer [private-card]]
             [environ.core :refer [env]]
             [differ.core :as differ])
@@ -128,13 +128,8 @@
   [cards]
   (let [;; split the cards into regular cards and alt-art cards
         [regular alt] ((juxt filter remove) #(not= "Alternates" (:setname %)) cards)
-        regular (into {} (map (juxt :title identity) regular))
-        alt (into {} (map (juxt :title identity)
-                          ;; take the regular version of this card and change its code to the alt code
-                          (map #(assoc (regular (:title %))
-                                 :code (:code %)) alt)))]
-    (reset! all-cards regular)
-    (reset! all-cards-alt alt)))
+        regular (into {} (map (juxt :title identity) regular))]
+    (reset! all-cards regular)))
 
 (defn- handle-command
   "Apply the given command to the given state. Return true if the state should be sent

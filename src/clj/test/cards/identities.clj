@@ -700,7 +700,7 @@
       (make-deck "Noise: Hacker Extraordinaire" [(qty "Datasucker" 1) (qty "Cache" 1) (qty "Sure Gamble" 1) (qty "Clone Chip" 2) (qty "Sharpshooter" 2)]))
     (starting-hand state :runner ["Datasucker" "Sure Gamble" "Clone Chip" "Clone Chip" "Cache"])
     (is (= 6 (count (:hand (get-corp)))) "Corp should start with 6 cards in hand")
-    (is (= 5 (count (:deck (get-corp)))) "Corp deck should contain 3 cards")
+    (is (= 5 (count (:deck (get-corp)))) "Corp deck should contain 5 cards")
     (take-credits state :corp)
     (is (= 0 (count (:discard (get-corp)))) "Archives started empty")
     (play-from-hand state :runner "Datasucker")

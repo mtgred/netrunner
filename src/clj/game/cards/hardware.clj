@@ -187,7 +187,8 @@
    {:recurring 1}
 
    "Deep Red"
-   {:in-play [:memory 3]
+   {:implementation "MU use restriction not enforced"
+    :in-play [:memory 3]
     :events {:runner-install
              {:optional
               {:req (req (has-subtype? target "Caïssa"))
@@ -277,7 +278,8 @@
    {:in-play [:memory 1 :link 1]}
 
    "e3 Feedback Implants"
-   {:abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
+   {:implementation "Usage restriction not enforced"
+    :abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
 
    "Ekomind"
    {:effect (req (swap! state assoc-in [:runner :memory] (count (get-in @state [:runner :hand])))
@@ -411,7 +413,8 @@
                                                      (handle-end-run state :runner))))} card nil))}]}
 
    "MemStrips"
-   {:in-play [:memory 3]}
+   {:implementation "MU usage restriction not enforced"
+    :in-play [:memory 3]}
 
    "Mirror"
    {:in-play [:memory 2]

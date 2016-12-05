@@ -47,7 +47,8 @@
               :effect (effect (ice-strength-bonus -2 target))}}}
 
    "Bug"
-   {:req (req (some #{:hq} (:successful-run runner-reg)))
+   {:implementation "Can only pay to see last card drawn after multiple draws"
+    :req (req (some #{:hq} (:successful-run runner-reg)))
     :events {:corp-draw {:optional
                          {:prompt (msg "Pay 2 [Credits] to reveal card just drawn?") :player :runner
                           :yes-ability {:msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))
@@ -107,12 +108,14 @@
                                  card nil)))}]}
 
    "Crescentus"
-   {:abilities [{:req (req (rezzed? current-ice))
+   {:implementation "Does not check that all subroutines were broken"
+    :abilities [{:req (req (rezzed? current-ice))
                  :msg (msg "derez " (:title current-ice))
                  :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
    "D4v1d"
-   {:data {:counter {:power 3}}
+   {:implementation "Does not check that ICE strength is 5 or greater"
+    :data {:counter {:power 3}}
     :abilities [{:counter-cost [:power 1]
                  :msg "break 1 subroutine"}]}
 
@@ -517,7 +520,8 @@
    {:recurring 2}
 
    "Pawn"
-   {:abilities [{:label "Host Pawn on the outermost ICE of a central server"
+   {:implementation "All abilities are manual"
+    :abilities [{:label "Host Pawn on the outermost ICE of a central server"
                  :prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
                  :choices {:req #(and (ice? %)
                                       (= (last (:zone %)) :ices)

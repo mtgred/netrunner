@@ -391,7 +391,8 @@
                                                 (effect-completed state side eid card))))}} card))}
 
    "Feint"
-   {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
+   {:implementation "Bypass is manual"
+    :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
     :events {:successful-run {:msg "access 0 cards"
                               :effect (effect (max-access 0))}
@@ -421,7 +422,10 @@
                      card nil)))}
 
    "Forked"
-   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
+   {:implementation "Ice trash is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
 
    "Frame Job"
    {:prompt "Choose an agenda to forfeit"
@@ -478,7 +482,8 @@
    {:flags {:psi-prevent-spend (req 2)}}
 
    "Hacktivist Meeting"
-   {:events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+   {:implementation "Does not prevent rez if HQ is empty"
+    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
@@ -632,7 +637,10 @@
                       card nil))}
 
    "Inside Job"
-   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
+   {:implementation "Bypass is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
@@ -649,7 +657,10 @@
                      (gain state :corp :hand-size-modification (:bad-publicity corp)))}
 
    "Knifed"
-   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
+   {:implementation "Ice trash is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
@@ -970,7 +981,8 @@
                             :effect (effect (disable-card :corp target))}}})
 
    "Run Amok"
-   {:prompt "Choose a server" :choices (req runnable-servers)
+   {:implementation "Ice trash is manual"
+    :prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
 
    "Running Interference"
@@ -1075,7 +1087,10 @@
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
-   {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
+   {:implementation "Ice trash is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req runnable-servers)

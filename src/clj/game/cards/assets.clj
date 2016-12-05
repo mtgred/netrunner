@@ -120,7 +120,8 @@
                                  (trash card))}]}
 
    "Allele Repression"
-   {:advanceable :always
+   {:implementation "Card swapping is manual"
+    :advanceable :always
     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
                  :effect (effect (trash card))
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
@@ -177,7 +178,8 @@
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
-   {:abilities [{:label "Trace 3 - Avoid taking a bad publicity"
+   {:implementation "Removes 1 bad publicity rather than prevent it"
+    :abilities [{:label "Trace 3 - Avoid taking a bad publicity"
                  :trace {:base 3 :msg "avoid taking a bad publicity"
                          :effect (effect (lose :bad-publicity 1))}}]}
 
@@ -562,7 +564,8 @@
                  :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
-   {:abilities [{:label "Gain [Click]"
+   {:implementation "Trigger is manual"
+    :abilities [{:label "Gain [Click]"
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
 
@@ -1132,7 +1135,8 @@
                  :msg "swap the positions of two ICE"}]}
 
    "Test Ground"
-   {:advanceable :always
+   {:implementation "Derez is manual"
+    :advanceable :always
     :abilities [{:label "Derez 1 card for each advancement token"
                  :msg (msg "derez " (:advance-counter card)) :effect (effect (trash card))}]}
 

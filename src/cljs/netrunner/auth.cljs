@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put!] :as async]
-            [netrunner.main :refer [app-state]]
+            [netrunner.appstate :refer [app-state]]
             [netrunner.ajax :refer [POST GET]]))
 
 (defn avatar [{:keys [emailhash]} owner opts]
@@ -11,7 +11,7 @@
    (sab/html
     (when emailhash
       [:img.avatar
-       {:src (str "http://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
+       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
@@ -21,13 +21,15 @@
 (defn logged-menu [user owner]
   (om/component
    (sab/html
-    [:li.dropdown.usermenu
-     [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-      (om/build avatar user {:key :username :opts {:size 22}})
-      (:username user)
-      [:b.caret]]
-     [:div.dropdown-menu.blue-shade.float-right
-      [:a.block-link {:href "/logout"} "Logout"]]])))
+     [:ul
+      [:li.dropdown.usermenu
+       [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
+        (om/build avatar user {:key :username :opts {:size 22}})
+        (:username user)
+        [:b.caret]]
+       [:div.dropdown-menu.blue-shade.float-right
+        [:a.block-link {:href "/account"} "My Account"]
+        [:a.block-link {:href "/logout"} "Logout"]]]])))
 
 (defn unlogged-menu [user owner]
   (om/component

@@ -4,7 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
-            [netrunner.main :refer [app-state]]
+            [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
@@ -93,14 +93,15 @@
                    :allowspectator (om/get-state owner :allowspectator)
                    :spectatorhands (om/get-state owner :spectatorhands)
                    :side (om/get-state owner :side)
-                   :room (om/get-state owner :current-room)})))))))
+                   :room (om/get-state owner :current-room)
+                   :options (:options @app-state)})))))))
 
 (defn join-game [gameid owner action password]
   (authenticated
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (send {:action action :gameid gameid :password password} #(if (= % "invalid password")
+     (send {:action action :gameid gameid :password password :options (:options @app-state)} #(if (= % "invalid password")
                                                                  (om/set-state! owner :error-msg "Invalid password")
                                                                  (om/set-state! owner :prompt false))))))
 

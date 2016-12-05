@@ -716,7 +716,8 @@
                                              (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
 
    "Unorthodox Predictions"
-   {:delayed-completion false
+   {:implementation "Prevention of subroutine breaking is not enforced"
+    :delayed-completion false
     :prompt "Choose an ICE type for Unorthodox Predictions" :choices ["Sentry", "Code Gate", "Barrier"]
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 

@@ -40,6 +40,7 @@ a
   color: orange
   transition(all 0.2s ease-in-out)
   cursor: pointer
+
   &:hover
     color: blue
     text-decoration: none
@@ -67,9 +68,8 @@ ul.list
   p
     margin: 2px 0
 
-ul.list.compact
-  li
-    margin-bottom: 2px
+ul.list.compact li
+  margin-bottom: 2px
 
 p
   margin: 8px 0
@@ -128,6 +128,7 @@ button.small
   width: 20px
   background-color: transparent
   border-color: white
+
   &:hover
     background-color: transparent-orange
     border-color: orange
@@ -172,46 +173,46 @@ button.small
   border-color: lawngreen
 
 .smallwarning
-    position: relative
-    background: transparent-orange
-    border: 1px solid orange
-    color: white
-    margin-left: 2px
-    margin-right: 2px
-    width: 12px
-    display: inline-block
-    text-align: center
+  position: relative
+  background: transparent-orange
+  border: 1px solid orange
+  color: white
+  margin-left: 2px
+  margin-right: 2px
+  width: 12px
+  display: inline-block
+  text-align: center
 
 .warning
-    position: relative
-    background: #34849F
-    border: 1px solid #9AC2CF
-    margin-left: 12px
-    width: 12px
-    display: inline-block
-    text-align: center
+  position: relative
+  background: #34849F
+  border: 1px solid #9AC2CF
+  margin-left: 12px
+  width: 12px
+  display: inline-block
+  text-align: center
 
 .warning:after, .warning:before
-    right: 100%
-    top: 50%
-    border: solid transparent
-    content: " "
-    height: 0
-    width: 0
-    position: absolute
-    pointer-events: none
+  right: 100%
+  top: 50%
+  border: solid transparent
+  content: " "
+  height: 0
+  width: 0
+  position: absolute
+  pointer-events: none
 
 .warning:after
-    border-color: rgba(52, 132, 159, 0)
-    border-right-color: #34849F
-    border-width: 8px
-    margin-top: -8px
+  border-color: rgba(52, 132, 159, 0)
+  border-right-color: #34849F
+  border-width: 8px
+  margin-top: -8px
 
 .warning:before
-    border-color: rgba(154, 194, 207, 0)
-    border-right-color: #9AC2CF
-    border-width: 10px
-    margin-top: -10px
+  border-color: rgba(154, 194, 207, 0)
+  border-right-color: #9AC2CF
+  border-width: 10px
+  margin-top: -10px
 
 .fake-link
   color: orange
@@ -385,7 +386,7 @@ span.small
   right: 0
   bottom: 0
   left: 0
-  z-index: 1050
+  z-index: 10001
   display: none
   overflow: auto
   overflow-y: scroll
@@ -412,7 +413,7 @@ span.small
   right: 0
   bottom: 0
   left: 0
-  z-index: 1040
+  z-index: 10000
   background-color: black
   transition(all 0.2s ease-in-out)
 
@@ -434,34 +435,43 @@ nav ul
   top: 0
   left: 0
   right: 0
-  padding: 0 20px
+  color: grey
   border-bottom: 1px solid rgba(39, 56, 76, 0.9)
 
-  #left-menu > ul li
-    margin-right: 20px
+  #left-menu, #right-menu
+    margin: 0 10px
 
-  #right-menu > ul li
-    margin-left: 20px
+    > ul li
+      margin: 0 10px
+
+      &.usermenu
+        margin: 0
+
+        .dropdown-menu
+          margin-right: -5px
 
   li, #status
     display: inline-block
     height: 30px
     line-height: 29px
+
     a
       color: white
+
       &:hover
         color: orange
-  li.active
-    a
-      color: orange
+
+  li.active a
+    color: orange
 
   .dropdown-menu a
     line-height: 20px
+
     &:hover
       color: white
 
 .panel
-  radius: 4px
+  border-radius: 4px
   padding: 5px 10px
   border: 1px solid rgba(39, 56, 76, 0.9)
   margin: 5px
@@ -471,7 +481,6 @@ nav ul
   margin: 0 auto
 
 .blue-shade
-  color: white
   background-color: transparent-blue
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)
 
@@ -542,9 +551,8 @@ nav ul
     position: relative
     cursor: pointer
 
-    &:hover
-      .spectators
-        display: block
+    &:hover .spectators
+      display: block
 
   .concede-button
     margin-right: 12px
@@ -557,6 +565,7 @@ nav ul
     margin-bottom: 10px
     font-size: 15px
     border-color: orange
+
   button
     margin-right: 5px
 
@@ -573,10 +582,6 @@ nav ul
   font-size: 14px
   margin-bottom: 10px
 
-.usermenu
-  padding: 0 10px
-  margin-right: -20px
-
 .block-link
   cursor: pointer
   border: 1px solid transparent
@@ -584,6 +589,7 @@ nav ul
   border-radius: 4px
   display: block
   margin: 0 -4px
+
   &:hover
     background-color: transparent-orange
     border: 1px solid orange
@@ -592,10 +598,12 @@ nav ul
 
 #main
   height: 100%
+
   .carousel-inner
     height: 100%
+
     .item
-      padding-top: 29px
+      padding-top: 31px
       height: 100%
       color: white
 
@@ -617,9 +625,15 @@ nav ul
 .about-bg
   cover-img: url('/img/bg/FastTrack.jpg')
 
+.account-bg
+  cover-img: url('/img/bg/FastTrack.jpg')
+  opacity: 1
+
 .reset-bg
   cover-img: url('/img/bg/Logos.jpg')
 
+.gameboard-bg
+  opacity: 1
 
 // Chat
 
@@ -724,16 +738,16 @@ nav ul
     &:hover
       color: dark-grey
 
-.set-list
-  > div
-    cursor: pointer
-    border: 1px solid transparent
-    padding: 0 4px
-    margin: 0 -4px
-    border-radius: 4px
-    &:hover
-      background-color: transparent-orange
-      border: 1px solid orange
+.set-list > div
+  cursor: pointer
+  border: 1px solid transparent
+  padding: 0 4px
+  margin: 0 -4px
+  border-radius: 4px
+
+  &:hover
+    background-color: transparent-orange
+    border: 1px solid orange
 
 .card-list
   position: absolute
@@ -989,6 +1003,7 @@ nav ul
 
   &:hover
     cursor: default
+
     .status-tooltip
       display: inline
 
@@ -1009,7 +1024,7 @@ nav ul
   .games, .game-panel
     flex(1)
     display-flex()
-    flex-direction: column
+    flex-direction(column)
 
   .game-panel
     border-left: 1px solid white
@@ -1098,12 +1113,11 @@ nav ul
       left: 15px
       right: 15px
       display-flex()
-      flex-direction: column
+      flex-direction(column)
 
-    .button-bar
-      button
-        min-width: 80px
-        margin-right: 5px
+    .button-bar button
+      min-width: 80px
+      margin-right: 5px
 
     .players
       height: 65px
@@ -1134,15 +1148,14 @@ nav ul
       .player
         margin-right: 12px
 
-    .chat-box
-      .message-list
-        height: 298px
-        width: 100%
-        border: 1px solid white
-        border-radius: 4px
-        margin-bottom: 5px
-        overflow: auto
-        padding: 5px 10px
+    .chat-box .message-list
+      height: 298px
+      width: 100%
+      border: 1px solid white
+      border-radius: 4px
+      margin-bottom: 5px
+      overflow: auto
+      padding: 5px 10px
 
   .game-title
     width: 250px
@@ -1155,15 +1168,14 @@ nav ul
 // Gameboard
 
 #gameboard
+  width: 100%
+  height: 100%
   display: none
 
 .gameboard
-  overflow-x: auto;
-  position: absolute
-  top: 31px
-  bottom: 0
-  left: 0
-  right: 0
+  width: 100%
+  height: 100%
+  overflow: auto
   display-flex()
   justify-content(space-between)
 
@@ -1176,7 +1188,7 @@ nav ul
     position: absolute
     top: 0
     left: 0
-    z-index: 2
+    z-index: 1
     padding: 1px 4px
     font-size: 10px
     line-height: 14px
@@ -1184,19 +1196,14 @@ nav ul
   .darkbg
     background: rgba(0, 0, 0, 0.6)
     text-shadow 1px 1px 2px black
-    radius: 4px
+    border-radius: 4px
 
   .card
-    display: inline-block
     position: relative
     height: 84px
     width: 60px
     border-radius: 4px
-
-    .servers-menu
-      top: auto
-      width: 120px
-      bottom: -5px
+    display-flex()
 
     .cardname
       float: left
@@ -1215,7 +1222,7 @@ nav ul
     bottom: 0
     left: 0
     right: 0
-    z-index: 5
+    z-index: 10
     display-flex()
     flex-direction(column)
     justify-content(center)
@@ -1307,13 +1314,16 @@ nav ul
     &.sentry
       background-color: criminal-blue
 
+  .abilities, .servers-menu, .menu, .runner-abilities, .popup
+    left: 0
+    bottom: 100%
+    margin: 6px -1px
+
   .abilities, .servers-menu, .menu, .runner-abilities
     display: none
     position: absolute
-    z-index: 10
+    z-index: 30
     width: 200px
-    left: 58px
-    top: -5px
     font-size: 12px
     line-height: 16px
 
@@ -1330,42 +1340,16 @@ nav ul
       &:hover
         border-color: orange
 
-  .playable
-    cursor: pointer
-    border-radius: 4px
-
-    .card
-      box-shadow(0 0 1px 2px orange)
-
-  .bg
-    position: absolute
-    left: 0
-    bottom: 0
-
-  .deck, .discard, .identity
-    height: 86px
-    width: 62px
-    padding: 0
-
-  .deck, .rfg, > .card, .identity, .discard
-    margin-left: 16px
-    margin-right: 16px
-    flex-shrink: 0
-
-  .shift
-    position: relative
-    left: -16px
-
-  .discard
-    position: relative
-
-  .discard .popup, .deck .popup
+  .popup
     display: none
     position: absolute
-    bottom: 85px
     width: 590px
     min-height: 92px
-    z-index: 15
+    z-index: 20
+
+    &.opponent
+      top: 100%
+      bottom: auto
 
     .card
       float: left
@@ -1375,15 +1359,41 @@ nav ul
       display: inline-block
       margin: 0 10px 8px 4px
 
-  .deck .popup
-    left: -271px
+  .playable
+    cursor: pointer
+    border-radius: 4px
 
-  .discard .popup
-    left: -6px
+    .card
+      box-shadow(0 0 1px 2px orange)
 
-  .discard .popup.opponent
-    top: 85px
-    bottom: auto
+  .bg
+    position: absolute
+    top: 0
+    left: 0
+
+  .deck, .discard, .identity
+    position: relative
+    height: 84px
+    width: 60px
+    border-radius: 4px
+
+  .server-card
+    position: relative
+    min-height: 84px
+    min-width: 60px
+
+    &.central
+      margin-top: 24px
+
+    &.shift
+      margin-left: -15px
+
+  .rfg
+    margin-left: 16px
+    margin-right: 16px
+
+  .discard
+    position: relative
 
   .hand, .scored, .rfg
     height: 86px
@@ -1395,7 +1405,7 @@ nav ul
 
   .card-wrapper
     display: inline-block
-    margin: 0 4px 0 0
+    margin-right: 4px
     transition(all 0.3s ease-in-out)
 
     &:last-child
@@ -1407,160 +1417,168 @@ nav ul
   .squeeze .card-wrapper
     position: absolute
 
-  .stats
-    > div
-      height: 20px
-      font-size: 12px
+  .stats > div
+    height: 20px
+    font-size: 12px
 
-      .controls
-        float: right
-        display: none
-        margin-top: -1px
+    .controls
+      float: right
+      display: none
+      margin-top: -1px
 
-      &:hover .controls
-        display: block
+    &:hover .controls
+      display: block
 
   .hosted
-    height: 84px
-    width: auto
     margin-left: 24px
     margin-top: -65px
+    display-flex()
 
-    > div
-      float: left
+    .card-frame:not(:first-child)
       margin-left: -15px
 
-  .centralpane
-    display-flex()
-    flex(1)
-
-  .secondary-pane
-    width: 186px
-    z-index: 1
-    justify-content(space-between)
-    display-flex()
-    flex-direction(column)
-
-    > div
-      width: 100%
-      display-flex()
-      flex-direction(column)
-
-    .panel
-      margin: 0
-
-    .button-pane
-      .panel
-        padding: 8px
-
-      .run-button
-        position: relative
-
-        .servers-menu
-          bottom: 0
-          top: auto
-          left: 100px
-          width: 120px
-
-      h4
-        text-align: center
-        margin-bottom: 10px
-
-      button
-        width: 100%
-        font-size: 11px
-        margin: 0 0 5px 0
-        padding: 0 8px 1px
-
-        &:last-child
-          margin-bottom: 0
-
-      .credit-select
-        text-align: center
-        margin-bottom: 10px
-
-        select
-          margin-right: 5px
-
   .leftpane
-    width: 201px
-    margin-top: -5px
-    margin-bottom: -5px
     display-flex()
     flex-direction(column)
     justify-content(space-between)
 
-    > div
-      width: 100%
+    .inner-leftpane
+      flex(1)
+      display-flex()
 
-  .mainpane
+      .left-inner-leftpane
+        width: 201px
+        margin-top: -5px
+        margin-bottom: -5px
+        display-flex()
+        flex-direction(column)
+        justify-content(space-between)
+
+        > div
+          width: 100%
+
+      .right-inner-leftpane
+        width: 186px
+        z-index: 1
+        justify-content(space-between)
+        display-flex()
+        flex-direction(column)
+
+        > div
+          width: 100%
+          display-flex()
+          flex-direction(column)
+
+        .panel
+          margin: 0
+
+        .button-pane
+          .panel
+            padding: 8px
+
+          .run-button
+            position: relative
+
+            .servers-menu
+              left: 100%
+              bottom: 0
+              width: 120px
+              margin: 3px
+              z-index: 40
+
+          h4
+            text-align: center
+            margin-bottom: 10px
+
+          button
+            width: 100%
+            font-size: 11px
+            margin: 0 0 5px 0
+            padding: 0 8px 1px
+
+            &:last-child
+              margin-bottom: 0
+
+          .credit-select
+            text-align: center
+            margin-bottom: 10px
+
+            select
+              margin-right: 5px
+
+  .centralpane
+    flex(1)
     display-flex()
     flex-direction(column)
-    flex(1)
 
-    .board
+    .card-wrapper
+      margin: 3px 6px
+
+    .runner-board
       flex(1)
       display-flex()
       flex-direction(column)
-      margin-left: 1px
 
       > div
-        flex(1)
-
-      .runner-board
-        padding: 10px
-        display: flex;
-        flex-direction: column;
-
-        > div:first-child
-          margin-top: auto
-
-      .content.shift > .card-frame
-        margin-left: 8px
-        margin-top: -16px
-
-      .runner-board.opponent
-        > div:first-child
-          margin-top: 0px
-
-        > div:last-child
-          margin-bottom: auto
-
-      .corp-board
         display-flex()
 
-        .server
-          margin: 0 4px
-          transform(rotate(180deg))
+        &:first-child
+          margin-top: auto
+
+      .runner-centrals
+        padding: 5px 0
+        display-flex()
+
+        .deck, .discard, .identity
+          margin-left: 16px
+          margin-right: 16px
+
+    .runner-board.opponent
+      > div:first-child
+        margin-top: 0
+
+      > div:last-child
+        margin-bottom: auto
+
+    .corp-board
+      flex(1)
+      display-flex()
+      flex-direction(row-reverse)
+      justify-content(flex-end)
+
+      .server
+        position: relative
+        min-width: 84px
+        margin: 0 4px
+        transform(rotate(180deg))
+        display-flex()
+        flex-direction(column-reverse)
+        justify-content(flex-end)
+        align-items(center)
+
+        .ices
           position: relative
-          z-index: 1
+          display-flex()
+          flex-direction(column-reverse)
+          justify-content(flex-end)
+          align-items(center)
 
-          .ices
+          .run-card
+            margin-top: 62px
+            transform(rotate(180deg))
+
+          .run-arrow
             position: relative
-            width: 86px
-            margin-top: 22px
+            top: 15%
+            animation: fadein 0.5s
 
-            .strength
-              transform(rotate(90deg))
-
-            .subtype-target
-              transform(rotate(90deg), translateX(100%))
-              transform-origin(100% 0)
-
-            .icon
-              transform(rotate(90deg))
-
-            .run-arrow
+            > div
               position: absolute
-              animation: fadein 0.5s
-              z-index: 10
               left: 50%
-              top: 5px
-              bottom: -62px
+              top: 0
+              bottom: -70px
               width: 16px
-              border: 1px solid orange
-              border-top: none
-              background-color: rgba(255, 165, 0, 0.5)
+              background-color: transparent-orange
               transform(translateX(-50%))
               border-radius: 0 0 4px 4px
 
@@ -1576,109 +1594,110 @@ nav ul
                 bottom: 100%
                 left: 50%
                 transform(translateX(-50%))
-                border-bottom: 22px solid rgba(255, 165, 0, 0.5)
+                border-bottom: 22px solid transparent-orange
 
-            .run-card
-              position: absolute
-              text-align: center
-              bottom: -154px
-              transform(rotate(180deg))
-              width: 100%
+          .ice
+            margin: -7px 0
+            transform(rotate(90deg))
+            cursor: pointer
 
-            .hosted
-              position: absolute
+            &.host
+              margin-bottom: 5px
 
-              .card-frame
-                transform(rotate(90deg))
-                margin: -44px 0 0 0
+            .run-arrow
+              top: auto
+              bottom: 50%
+              left: 95%
+              transform: rotate(-90deg)
 
-                .counters
-                  transform(rotate(-90deg))
+          .hosted
+            margin-top: -69px
+            flex-direction(column)
 
-                .abilities, .runner-abilities
-                  transform(rotate(0))
-
-            .counter
+            .card-frame
+              margin-left: 0
               transform(rotate(90deg))
 
-            > .card-frame
-              position: relative
-              left: -1px
-              margin-top: -22px
-              transform(rotate(90deg))
-              cursor: pointer
+              &:not(:first-child)
+                margin-top: -42px
 
-            .abilities
-              transform(rotate(90deg))
-              top: -73px
-              left: 12px
-
-            .runner-abilities
-              transform(rotate(-90deg))
-              top: -95px
-              left: 34px
-
-          .content.center
-            left: -13px
-
-          .content
-            transform(rotate(180deg))
-            position: absolute
-            top: -90px
-            display-flex()
-            width: 86px
-            height: 86px
-
-            .card
-              margin: 0 -40px 0 0
-              .abilities, .runner-abilities
-                left: -145px
-                bottom: 85px
-                top: auto
-
-      .corp-board.opponent
-        .server
-          transform(rotate(0))
-
-          &:nth-child(n+4)
-            z-index: auto
-
-          .content
-            transform(rotate(0))
-
-          .content.center
-            left: 13px
-
-          .strength
-            transform(rotate(-90deg))
-
-          .icon
-            transform(rotate(-90deg))
-
-          .ices
-            .subtype-target
-              transform(rotate(-90deg), translateY(-100%))
-
-            .hosted
-              .card-frame
+              .counters
                 transform(rotate(-90deg))
 
-                .counters
-                  transform(rotate(-90deg))
+              .abilities, .runner-abilities
+                top: auto
+                bottom: 100%
+                left: 0
+                margin: 6px -1px
+                transform(initial)
 
-            .counter
-              transform(rotate(-90deg))
+          .strength
+            transform(rotate(90deg))
 
-            .run-card
-              transform(rotate(0deg))
+          .subtype-target
+            transform(rotate(90deg), translateX(100%))
+            transform-origin(100% 0)
 
-      .card-wrapper
-        margin-right: 10px
-        margin-bottom: 5px
+          .icon
+            transform(rotate(90deg))
 
-    .dashboard
-      display-flex()
-      align-items(flex-end)
+          .counter
+            transform(rotate(90deg))
+
+          .abilities, .runner-abilities
+            left: 100%
+            margin: -1px 6px
+
+          .abilities
+            top: 0
+            bottom: auto
+            transform(rotate(90deg) translateY(-100%))
+            transform-origin(0 0)
+
+          .runner-abilities
+            bottom: 0
+            transform(rotate(-90deg) translateY(100%))
+            transform-origin(0 100%)
+
+        .content
+          position: relative
+          min-height: 84px
+          margin: 5px
+          transform(rotate(180deg))
+          display-flex()
+
+    .corp-board.opponent .server
+      transform(initial)
+
+      .content
+        transform(initial)
+
+      .strength
+        transform(rotate(-90deg))
+
+      .icon
+        transform(rotate(-90deg))
+
+      .ices
+        .subtype-target
+          transform(rotate(-90deg), translateY(-100%))
+
+        .hosted
+          .card-frame
+            transform(rotate(-90deg))
+
+          .counters
+            transform(rotate(90deg))
+
+          .abilities, .runner-abilities
+            top: 100%
+            bottom: auto
+
+        .counter
+          transform(rotate(-90deg))
+
+        .run-card
+          transform(initial)
 
   .rightpane
     position: relative
@@ -1700,6 +1719,24 @@ nav ul
 
         .text
           height: 195px
+
+    // Card implementation div
+    .implementation
+      width: 150px
+      position: absolute
+      top: 0
+      right: 224px
+      text-align: right
+      font-size: 12px
+      line-height: 12px
+      transition(all 0.2s ease-in-out)
+
+      .unimplemented
+        color: red
+        font-style: italic
+
+      .impl-msg
+        color: orange
 
     .log
       width: 225px
@@ -1786,6 +1823,11 @@ nav ul
     padding-left: 20px
     list-style-type: none
 
+#account
+  display: block
+  height: 100%
+  overflow: auto
+
 @keyframes highlight
   from
     background: darkolivegreen
@@ -1824,9 +1866,8 @@ nav ul
       background-color: white
       transition(all 0.2s ease-in-out)
 
-    &:hover
-      .qr
-        display: block
+    &:hover .qr
+      display: block
 
 // News
 
@@ -1846,7 +1887,7 @@ nav ul
     margin-bottom: 4px
 
     .title p
-        display: inline
+      display: inline
 
     .date
       margin-right: 10px
