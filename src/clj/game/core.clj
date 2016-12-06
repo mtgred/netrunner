@@ -11,8 +11,8 @@
 
 (def all-cards (atom {}))
 
-(load "core/cards")     ; retrieving and updating cards
 (load "core/events")    ; triggering of events
+(load "core/cards")     ; retrieving and updating cards
 (load "core/costs")     ; application of costs to play
 (load "core/rules")     ; core game rules
 (load "core/turns")     ; the turn sequence

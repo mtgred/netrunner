@@ -825,16 +825,17 @@
                       {:optional
                        {:prompt (str "Use Paige Piper to trash copies of " title "?")
                         :yes-ability {:prompt "How many would you like to trash?"
-                                      :choices {:number (req num)}
+                                      :choices (take (inc num) ["0" "1" "2" "3" "4" "5"])
                                       :msg "shuffle their Stack"
-                                      :effect (req (trigger-event state side :searched-stack nil)
-                                                   (shuffle! state :runner :deck)
-                                                   (doseq [c (take (int target) cards)]
-                                                     (trash state side c {:unpreventable true}))
-                                                   (when (> (int target) 0)
-                                                     (system-msg state side (str "trashes " (int target)
-                                                                                 " cop" (if (> (int target) 1) "ies" "y")
-                                                                                 " of " title))))}}}))]
+                                      :effect (req (let [target (Integer/parseInt target)]
+                                                     (trigger-event state side :searched-stack nil)
+                                                     (shuffle! state :runner :deck)
+                                                     (doseq [c (take target cards)]
+                                                       (trash state side c {:unpreventable true}))
+                                                     (when (> (int target) 0)
+                                                       (system-msg state side (str "trashes " target
+                                                                                   " cop" (if (not= target 1) "ies" "y")
+                                                                                   " of " title)))))}}}))]
      {:events {:runner-install {:req (req (first-event state side :runner-install))
                                 :delayed-completion true
                                 :effect (effect (continue-ability

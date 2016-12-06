@@ -814,6 +814,34 @@
       (is (= 1 (:agenda-point (get-runner))))
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
+(deftest paige-piper-frantic-coding
+  ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Paige Piper" 1) (qty "Frantic Coding" 2) (qty "Sure Gamble" 3)
+                               (qty "Gordian Blade" 2) (qty "Ninja" 1) (qty "Bank Job" 3) (qty "Indexing" 2)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Paige Piper" "Frantic Coding" "Frantic Coding"])
+    (play-from-hand state :runner "Paige Piper")
+    (prompt-choice :runner "No")
+    (take-credits state :runner) ; now 8 credits
+    (take-credits state :corp)
+    (play-from-hand state :runner "Frantic Coding")
+    (prompt-choice :runner "OK")
+    (prompt-card :runner (find-card "Gordian Blade" (:deck (get-runner))))
+    (is (= 1 (count (get-program state))) "Installed Gordian Blade")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "0")
+    (is (= 1 (count (:discard (get-runner)))) "Paige Piper intervention stopped Frantic Coding from trashing 9 cards")
+    (is (= 5 (:credit (get-runner))) "No charge to install Gordian")
+    ;; a second Frantic Coding will not trigger Paige (once per turn)
+    (play-from-hand state :runner "Frantic Coding")
+    (prompt-choice :runner "OK")
+    (prompt-card :runner (find-card "Ninja" (:deck (get-runner))))
+    (is (= 2 (count (get-program state))) "Installed Ninja")
+    (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
+    (is (= 2 (:credit (get-runner))) "No charge to install Ninja")))
+
 (deftest patron
   ;; Patron - Ability
   (do-game
