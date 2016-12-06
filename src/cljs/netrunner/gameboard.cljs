@@ -908,20 +908,20 @@
 (defmethod board-view "Runner" [{:keys [player run]}]
   (om/component
    (sab/html
-    (let [is-opponent (= (:side @game-state) :corp)
+    (let [is-me (= (:side @game-state) :runner)
           centrals (sab/html
                     [:div.runner-centrals
                      (om/build discard-view player)
                      (om/build deck-view player)
                      (om/build identity-view player)])]
-      [:div.runner-board {:class (if is-opponent "opponent" "me")}
-       (when is-opponent centrals)
+      [:div.runner-board {:class (if is-me "me" "opponent")}
+       (when-not is-me centrals)
        (for [zone [:program :hardware :resource :facedown]]
          [:div
           (for [c (zone (:rig player))]
             [:div.card-wrapper {:class (when (playable? c) "playable")}
              (om/build card-view c)])])
-       (when-not is-opponent centrals)]))))
+       (when is-me centrals)]))))
 
 (defn cond-button [text cond f]
   (sab/html
