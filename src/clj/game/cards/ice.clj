@@ -179,6 +179,11 @@
   [ability]
   {:subroutines [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
 
+;;; Helper function for adding implementation notes to ICE defined with functions
+(defn- implementation-note [note ice-def]
+  "Adds an implementation note to the ice-definition"
+  (assoc ice-def :implementation note))
+
 
 ;;;; Card definitions
 (def cards-ice
@@ -267,7 +272,8 @@
    (space-ice end-the-run)
 
    "Bailiff"
-   {:abilities [(gain-credits 1)]
+   {:implementation "Gain credit is manual"
+    :abilities [(gain-credits 1)]
     :subroutines [end-the-run]}
 
    "Bandwidth"
@@ -498,7 +504,8 @@
                   end-the-run]}
 
    "Data Raven"
-   {:abilities [give-tag
+   {:implementation "Encounter effect is manual"
+    :abilities [give-tag
                 (power-counter-ability give-tag)]
     :runner-abilities [{:label "End the run"
                         :effect (req (end-run state :runner)
@@ -649,14 +656,16 @@
     :subroutines [trash-program]}
 
    "Guard"
-   {:subroutines [end-the-run]}
+   {:implementation "Prevent bypass is manual"
+    :subroutines [end-the-run]}
 
    "Gutenberg"
    {:subroutines [(tag-trace 7)]
     :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}
 
    "Gyri Labyrinth"
-   {:subroutines [{:req (req (:run @state))
+   {:implementation "Hand size is not restored if trashed or derezzed after firing"
+    :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
                    :effect (effect (lose :runner :hand-size-modification 2)
@@ -771,7 +780,8 @@
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Information Overload"
-   {:abilities [{:label "Gain subroutines"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:tag runner 0) " subroutines")}
                 (tag-trace 1)]
     :subroutines [trash-installed]}
@@ -872,6 +882,11 @@
                                      (unregister-events state side hosted)
                                      (update! state side (dissoc hosted :abilities))))}
                      card nil)))
+    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+                              :effect (req (doseq [c (get-in card [:hosted])]
+                                             (unregister-events state side c)
+                                             (update! state side (dissoc c :abilities)))
+                                           (update-ice-strength state side card))}}
     :subroutines [end-the-run]}
 
    "Mamba"
@@ -884,7 +899,8 @@
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Matrix Analyzer"
-   {:abilities [{:label "Place 1 advancement token on a card that can be advanced"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Place 1 advancement token on a card that can be advanced"
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req can-be-advanced?}
                  :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}]
@@ -985,7 +1001,8 @@
 
    "Orion"
    ;; TODO: wormhole subroutine
-   (space-ice trash-program end-the-run)
+   (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
+                        (space-ice trash-program end-the-run))
 
    "Pachinko"
    {:subroutines [{:label "End the run if the Runner is tagged"
@@ -994,10 +1011,12 @@
                    :effect (effect (end-run))}]}
 
    "Paper Wall"
-   {:subroutines [end-the-run]}
+   {:implementation "Trash on break is manual"
+    :subroutines [end-the-run]}
 
    "Pop-up Window"
-   {:abilities [(gain-credits 1)]
+   {:implementation "Encounter effect is manual. Runner choice is not implemented"
+    :abilities [(gain-credits 1)]
     :subroutines [end-the-run]
     :runner-abilities [(runner-break [:credit 1] 1)]}
 
@@ -1009,7 +1028,8 @@
    {:subroutines [end-the-run]}
 
    "Quicksand"
-   {:abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
+   {:implementation "Encounter effect is manual"
+    :abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
                  :label "Add 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (update-all-ice))}]
@@ -1115,7 +1135,8 @@
                                   (handle-access state side [c])))}]}
 
    "Snoop"
-   {:abilities [{:req (req (= current-ice card))
+   {:implementation "Encounter effect is manual"
+    :abilities [{:req (req (= current-ice card))
                  :label "Reveal all cards in the Runner's Grip"
                  :msg (msg "reveal the Runner's Grip ( " (join ", " (map :title (:hand runner))) " )")}
                 {:req (req (> (get-in card [:counter :power] 0) 0))
@@ -1159,7 +1180,8 @@
     :runner-abilities [(runner-break [:credit 3] 1)]}
 
    "Swordsman"
-   {:subroutines [(do-net-damage 1)
+   {:implementation "AI restriction not implemented"
+    :subroutines [(do-net-damage 1)
                   {:prompt "Choose an AI program to trash"
                    :msg (msg "trash " (:title target))
                    :label "Trash an AI program"
@@ -1181,7 +1203,8 @@
     :subroutines [end-the-run]}
 
    "Tollbooth"
-   {:abilities [{:msg "make the Runner pay 3 [Credits], if able"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:msg "make the Runner pay 3 [Credits], if able"
                  :effect (effect (pay :runner card :credit 3))}]
     :subroutines [end-the-run]}
 
@@ -1192,7 +1215,8 @@
     :subroutines [end-the-run]}
 
    "Troll"
-   {:abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
+   {:implementation "Encounter effect is manual"
+    :abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
                                   :msg "force the Runner to lose [Click] or end the run"
                                   :player :runner
                                   :prompt "Choose one"
@@ -1209,12 +1233,14 @@
                   (do-net-damage 1)]}
 
    "Turing"
-   {:subroutines [end-the-run]
+   {:implementation "AI restriction not implemented"
+    :subroutines [end-the-run]
     :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))
     :runner-abilities [(runner-break [:click 3] 1)]}
 
    "Turnpike"
-   {:abilities [{:msg "force the Runner to lose 1 [Credits]"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:msg "force the Runner to lose 1 [Credits]"
                  :effect (effect (lose :runner :credit 1))}]
     :subroutines [(tag-trace 5)]}
 
@@ -1236,7 +1262,8 @@
                                   (lose state :runner :credit 1)))}]}
 
    "Upayoga"
-   {:subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
+   {:implementation "\"Resolve a subroutine...\" subroutine is not implemented"
+    :subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
                            :msg "make the Runner lose 2 [Credits]"
                            :effect (effect (lose :runner :credit 2))})
                   {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
@@ -1251,7 +1278,8 @@
    {:subroutines [end-the-run]}
 
    "Vikram 1.0"
-   {:subroutines [{:msg "prevent the Runner from using programs for the remainder of this run"}
+   {:implementation "Program prevention is not implemented"
+    :subroutines [{:msg "prevent the Runner from using programs for the remainder of this run"}
                   (trace-ability 4 (do-brain-damage 1))]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
@@ -1297,7 +1325,10 @@
                   (do-net-damage 2)]}
 
    "Wendigo"
-   (morph-ice "Code Gate" "Barrier" {:msg "prevent the Runner from using a chosen program for the remainder of this run"})
+   (implementation-note
+     "Program prevention is not implemented"
+     (morph-ice "Code Gate" "Barrier"
+                {:msg "prevent the Runner from using a chosen program for the remainder of this run"}))
 
    "Whirlpool"
    {:subroutines [{:msg "prevent the Runner from jacking out"
@@ -1318,7 +1349,8 @@
 
    "Wormhole"
    ;; TODO: create an ability for wormhole
-   (space-ice)
+   (implementation-note "Wormhole subroutine is not implemented"
+                        (space-ice))
 
    "Wotan"
    {:subroutines [end-the-run
@@ -1345,5 +1377,6 @@
                               :no-ability {:effect (req (system-msg state :corp (str "does not use Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
-   {:subroutines [(do-brain-damage 1)]
+   {:implementation "Restriction on having spent [click] is not implemented"
+    :subroutines [(do-brain-damage 1)]
     :runner-abilities [(runner-break [:click 1] 1)]}})

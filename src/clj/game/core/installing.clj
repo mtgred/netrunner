@@ -193,6 +193,7 @@
                    (when (not host-card)
                      (corp-install-asset-agenda state side c dest-zone)
                      (corp-install-message state side c server install-state cost-str))
+                   (play-sfx state side "install-corp")
 
                    (let [moved-card (if host-card
                                       (host state side host-card (assoc c :installed true))
@@ -307,7 +308,7 @@
                           :prompt (str "Choose a card to host " (:title card) " on")
                           :effect (effect (runner-install eid card (assoc params :host-card target)))}
                          card nil)
-       (do (trigger-event state side :pre-install card)
+       (do (trigger-event state side :pre-install card facedown)
            (let [cost (runner-get-cost state side card params)]
              (if (runner-can-install? state side card facedown)
                (if-let [cost-str (pay state side card cost)]
@@ -320,6 +321,7 @@
                                         (update! state side c)
                                         (card-init state side c true))]
                    (runner-install-message state side (:title card) cost-str params)
+                   (play-sfx state side "install-runner")
                    (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
                      (toast state :runner "You have run out of memory units!"))
                    (handle-virus-counter-flag state side installed-card)

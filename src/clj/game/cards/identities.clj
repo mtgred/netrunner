@@ -169,7 +169,8 @@
    {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")
                                      (turn-flag? state side card :can-trash-operation)))
-                      :effect (effect (trash target))
+                      :effect (req (trash state side target)
+                                   (swap! state assoc-in [:runner :register :trashed-card] true))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
                                                   (nil? (:replace-access (:run-effect target)))
@@ -591,7 +592,8 @@
              :run-ends {:effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}}}
 
    "Pālanā Foods: Sustainable Growth"
-   {:events {:runner-draw {:msg "gain 1 [Credits]"
+   {:events {:runner-draw {:req (req (pos? target))
+                           :msg "gain 1 [Credits]"
                            :once :per-turn
                            :effect (effect (gain :corp :credit 1))}}}
 
@@ -726,7 +728,8 @@
    {:recurring 1}
 
    "Weyland Consortium: Builder of Nations"
-   {:abilities [{:label "Do 1 meat damage"
+   {:implementation "Damage triggered manually"
+    :abilities [{:label "Do 1 meat damage"
                  :delayed-completion true
                  :msg "do 1 meat damage"
                  :effect (effect (damage eid :meat 1 {:card card}))}]}

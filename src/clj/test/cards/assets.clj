@@ -1295,7 +1295,6 @@
 
     (run-empty-server state :remote2)
     (prompt-choice :runner "Add News Team to score area")
-    (prompt-choice :runner "Yes")
     (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
     (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
 

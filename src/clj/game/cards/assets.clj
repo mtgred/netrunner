@@ -120,7 +120,8 @@
                                  (trash card))}]}
 
    "Allele Repression"
-   {:advanceable :always
+   {:implementation "Card swapping is manual"
+    :advanceable :always
     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
                  :effect (effect (trash card))
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
@@ -177,7 +178,8 @@
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
-   {:abilities [{:label "Trace 3 - Avoid taking a bad publicity"
+   {:implementation "Removes 1 bad publicity rather than prevent it"
+    :abilities [{:label "Trace 3 - Avoid taking a bad publicity"
                  :trace {:base 3 :msg "avoid taking a bad publicity"
                          :effect (effect (lose :bad-publicity 1))}}]}
 
@@ -562,7 +564,8 @@
                  :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
-   {:abilities [{:label "Gain [Click]"
+   {:implementation "Trigger is manual"
+    :abilities [{:label "Gain [Click]"
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
 
@@ -786,15 +789,17 @@
     0
     {:req (req (pos? (:advance-counter (get-card state card) 0)))
      :effect
-     (effect (resolve-ability
-              {:prompt "Choose an Agenda in HQ to score"
-               :choices {:req #(and (is-type? % "Agenda")
-                                    (<= (:advancementcost %) (:advance-counter (get-card state card) 0))
-                                    (in-hand? %))}
-               :msg (msg "score " (:title target))
-               :effect (effect (score (assoc target :advance-counter
-                                             (:advancementcost target))))}
-              card nil))}
+     (req (doseq [ag (filter #(is-type? % "Agenda") (get-in @state [:corp :hand]))]
+            (update-advancement-cost state side ag))
+          (resolve-ability state side
+            {:prompt "Choose an Agenda in HQ to score"
+             :choices {:req #(and (is-type? % "Agenda")
+                                  (<= (:current-cost %) (:advance-counter (get-card state card) 0))
+                                  (in-hand? %))}
+             :msg (msg "score " (:title target))
+             :effect (effect (score (assoc target :advance-counter
+                                           (:current-cost target))))}
+           card nil))}
     "Score an Agenda from HQ?")
 
    "Political Dealings"
@@ -858,6 +863,36 @@
                            (when (<= (get-in card [:counter :power]) 1)
                              (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
+
+   "Raman Rai"
+   {:abilities [{:once :per-turn
+                 :label "Lose [Click] and swap a card in HQ you just drew for a card in Archives"
+                 :req (req (and (pos? (:click corp))
+                                (not-empty (turn-events state side :corp-draw))))
+                 :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])]
+                                (lose state :corp :click 1)
+                                (resolve-ability state side
+                                  {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
+                                   :choices {:req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                   :effect (req (let [hqcard target
+                                                      t (:type hqcard)]
+                                                  (resolve-ability state side
+                                                    {:show-discard true
+                                                     :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hqcard))
+                                                     :choices {:req #(and (= (:side %) "Corp")
+                                                                          (= (:type %) t)
+                                                                          (= (:zone %) [:discard]))}
+                                                     :msg (msg "lose [Click], reveal " (:title hqcard) " from HQ, and swap it for " (:title target) " from Archives")
+                                                     :effect (req (let [swappedcard (assoc hqcard :zone [:discard])
+                                                                        archndx (ice-index state target)
+                                                                        arch (get-in @state [:corp :discard])
+                                                                        newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
+                                                                     (swap! state assoc-in [:corp :discard] newarch)
+                                                                     (swap! state update-in [:corp :hand]
+                                                                            (fn [coll] (remove-once #(not= (:cid %) (:cid hqcard)) coll)))
+                                                                     (move state side target :hand)))}
+                                                   card nil)))}
+                                 card nil)))}]}
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
@@ -1100,7 +1135,8 @@
                  :msg "swap the positions of two ICE"}]}
 
    "Test Ground"
-   {:advanceable :always
+   {:implementation "Derez is manual"
+    :advanceable :always
     :abilities [{:label "Derez 1 card for each advancement token"
                  :msg (msg "derez " (:advance-counter card)) :effect (effect (trash card))}]}
 

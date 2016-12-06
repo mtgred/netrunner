@@ -236,7 +236,8 @@
                                  (strength-pump 1 1 :all-run)]})
 
    "BlacKat"
-   {:abilities [(break-sub 1 1 "barrier")
+   {:implementation "Stealth credit restriction not enforced"
+    :abilities [(break-sub 1 1 "barrier")
                 {:cost [:credit 1]
                  :msg "break up to 3 barrier subroutines (using a stealth [Credits])"}
                 (strength-pump 2 1)
@@ -258,7 +259,8 @@
 
    "Brahman"
    (auto-icebreaker ["All"]
-                    {:abilities [(break-sub 1 2 "ICE")
+                    {:implementation "Adding non-virus program to top of Stack is manual"
+                     :abilities [(break-sub 1 2 "ICE")
                                  (strength-pump 2 1)]})
 
    "Breach"
@@ -327,12 +329,14 @@
 
    "Dagger"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 1 1 "sentry")
+                    {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 5)]})
 
    "Dai V"
    (auto-icebreaker ["All"]
-                    {:abilities [{:cost [:credit 2]
+                    {:implementation "Stealth credit restriction not enforced"
+                     :abilities [{:cost [:credit 2]
                                   :msg "break all ICE subroutines (using stealth [Credits])"}
                                  (strength-pump 1 1)]})
 
@@ -489,7 +493,8 @@
 
    "Mongoose"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 1 2 "sentry")
+                    {:implementation "Usage restriction is not implemented"
+                     :abilities [(break-sub 1 2 "sentry")
                                  (strength-pump 2 2)]})
 
    "MKUltra"
@@ -499,7 +504,8 @@
                  :msg "add 2 strength and break up to 2 subroutines"}])
 
    "Nfr"
-   {:abilities [{:label "Place 1 power counter on Nfr"
+   {:implementation "Adding power counter is manual"
+    :abilities [{:label "Place 1 power counter on Nfr"
                  :msg "place 1 power counter on it"
                  :ability-type :manual-state
                  :effect (effect (add-counter card :power 1)
@@ -564,7 +570,8 @@
 
    "Refractor"
    (auto-icebreaker ["Code Gate"]
-                    {:abilities [(break-sub 1 1 "code gate")
+                    {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 1 "code gate")
                                  (strength-pump 1 3)]})
    "Sadyojata"
    (deva "Sadyojata")
@@ -620,7 +627,8 @@
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 1 0 "sentry")
+                    {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 0 "sentry")
                                  (strength-pump 1 7)]})
 
    "Torch"

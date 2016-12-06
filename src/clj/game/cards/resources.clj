@@ -64,7 +64,8 @@
                                                   (system-msg (str "adds 2 [Credit] to Algo Trading")))}}}
 
    "Always Be Running"
-   {:abilities [{:once :per-turn
+   {:implementation "Run requirement not enforced"
+    :abilities [{:once :per-turn
                  :cost [:click 2]
                  :msg (msg "break 1 subroutine")}]}
 
@@ -193,8 +194,9 @@
                  :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                  :effect (effect (draw 3)
                                  (resolve-ability
-                                   {:prompt "Choose a card to shuffle back into your Stack"
-                                    :choices (req (:hand runner))
+                                   {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                    :choices {:req #(and (in-hand? %)
+                                                         (= (:side %) "Runner"))}
                                     :effect (effect (move target :deck)
                                                     (shuffle! :deck))}
                                   card nil))}]}
@@ -244,7 +246,8 @@
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Councilman"
-   {:events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
+   {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
+    :events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
                                   (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
                    :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                           " that was just rezzed") "info")
@@ -438,7 +441,8 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:optional
+             :successful-run {:interactive (req true)
+                              :optional
                               {:delayed-completion true
                                :req (req (first-event state side :successful-run))
                                :prompt "Use Find the Truth to look at the top card of R&D?"
@@ -465,7 +469,7 @@
                              (trigger-event-sync state side :pre-access :hq)
                              (let [from-hq (access-count state side :hq-access)]
                                (continue-ability
-                                 state side
+                                 state :runner
                                  (access-helper-hq
                                    state from-hq
                                    ; access-helper-hq uses a set to keep track of which cards have already
@@ -529,6 +533,7 @@
    {:abilities [{:msg "access all cards in Archives"
                  :effect (req (trash state side card {:cause :ability-cost})
                               (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                              (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0))
                               (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -7 :click -1] nil))
@@ -562,7 +567,8 @@
                                   (runner-install state side c {:facedown true})))}]}
 
    "Ice Analyzer"
-   {:events {:rez {:req (req (ice? target))
+   {:implementation "Credit use restriction is not enforced"
+    :events {:rez {:req (req (ice? target))
                    :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-counter :runner card :credit 1))}}
     :abilities [{:counter-cost [:credit 1]
@@ -590,7 +596,8 @@
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :makes-run true
                   :effect (effect (run target))}]
-   {:flags {:runner-phase-12 (req true)}
+   {:implementation "Doesn't prevent program use"
+    :flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (* -1 (:link runner))])
     :events {:runner-turn-begins
               {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))

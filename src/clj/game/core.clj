@@ -10,7 +10,6 @@
             [clojure.core.match :refer [match]]))
 
 (def all-cards (atom {}))
-(def all-cards-alt (atom {}))
 
 (load "core/cards")     ; retrieving and updating cards
 (load "core/events")    ; triggering of events

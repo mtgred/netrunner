@@ -333,6 +333,25 @@
       (prompt-choice :runner "OK")
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
 
+(deftest obelus-hades-shard
+  ;; Obelus - using Hades Shard during run to increase draw
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 3)])
+              (default-runner [(qty "Obelus" 1) (qty "Hades Shard" 1)
+                               (qty "Sure Gamble" 3) (qty "Cache" 3)]))
+    (starting-hand state :corp ["Hedge Fund" "Hedge Fund"])
+    (trash-from-hand state :corp "Hedge Fund")
+    (trash-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (starting-hand state :runner ["Obelus" "Hades Shard"])
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Obelus")
+    (play-from-hand state :runner "Hades Shard")
+    (run-empty-server state "R&D")
+    (card-ability state :runner (get-resource state 0) 0)
+    (prompt-choice :runner "OK")
+    (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
+
 (deftest plascrete
   ;; Plascrete Carapace - Prevent meat damage
   (do-game

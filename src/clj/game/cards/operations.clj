@@ -122,7 +122,8 @@
               (* 3 (get target :advance-counter 0)) " [Credits]")}
 
    "Bad Times"
-   {:req (req tagged)
+   {:implementation "Any required program trashing is manual"
+    :req (req tagged)
     :msg "force the Runner to lose 2[mu] until the end of the turn"
     :effect (req (lose state :runner :memory 2)
                  (when (< (:memory runner) 0)
@@ -152,7 +153,8 @@
     :effect (effect (tag-runner :runner 2))}
 
    "Bioroid Efficiency Research"
-   {:choices {:req #(and (ice? %)
+   {:implementation "Derez is manual"
+    :choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")
                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
@@ -466,6 +468,20 @@
             :unsuccessful {:msg "take 1 bad publicity"
                            :effect (effect (gain :corp :bad-publicity 1))}}}
 
+   "Hellion Beta Test"
+   {:req (req (:trashed-card runner-reg))
+    :trace {:base 2
+            :label "Trash 2 installed non-program cards"
+            :choices {:max 2
+                      :req #(and (installed? %)
+                                 (= (:side %) "Runner")
+                                 (not (is-type? % "Program")))}
+            :msg (msg "trash " (join ", " (map :title targets)))
+            :effect (req (doseq [c targets]
+                           (trash state side c)))
+            :unsuccessful {:msg "take 1 bad publicity"
+                           :effect (effect (gain :corp :bad-publicity 1))}}}
+
    "Heritage Committee"
    {:delayed-completion true
     :effect (effect (draw 3)
@@ -649,7 +665,8 @@
                      card nil))}
 
    "Oversight AI"
-   {:choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
+   {:implementation "Trashing ICE is manual"
+    :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
                           (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
@@ -851,7 +868,8 @@
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
-    :events {:pre-install {:req (req (is-type? target "Resource"))
+    :events {:pre-install {:req (req (and (is-type? target "Resource")
+                                          (not (second targets)))) ; not facedown
                            :effect (effect (install-cost-bonus [:credit 2]))}}}
 
    "Scorched Earth"

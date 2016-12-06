@@ -4,8 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.auth :refer [avatar authenticated] :as auth]
-            [netrunner.ajax :refer [GET]]
-            [netrunner.main :as main]))
+            [netrunner.ajax :refer [GET]]))
 
 (def app-state
   (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []

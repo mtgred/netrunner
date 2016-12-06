@@ -5,6 +5,19 @@
 
 (def game-states (atom {}))
 
+(defn- card-implemented [card]
+  "Checks if the card is implemented. Looks for a valid return from `card-def`.
+  If implemented also looks for `:implementation` key which may contain special notes.
+  Returns either:
+    nil - not implemented
+    :full - implemented fully
+    msg - string with implementation notes"
+  (when-let [cdef (card-def card)]
+    ;; Card is defined - hence implemented
+    (if-let [impl (:implementation cdef)]
+      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
+
 ;;; Functions for the creation of games and the progression of turns.
 (defn init-identity
   "Initialise the identity"
@@ -35,10 +48,13 @@
         corp-deck (create-deck (:deck corp) (:user corp))
         runner-deck (create-deck (:deck runner) (:user runner))
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
+        corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
                  :rid 0 :turn 0 :eid 0
+                 :sfx [] :sfx-current-id 0
                  :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
                         :deck (zone :deck corp-deck)
@@ -46,6 +62,7 @@
                         :discard [] :scored [] :rfg [] :play-area []
                         :servers {:hq {} :rd{} :archives {}}
                         :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
+                        :toast []
                         :hand-size-base 5 :hand-size-modification 0
                         :agenda-point 0
                         :click-per-turn 3 :agenda-point-req 7 :keep false}
@@ -54,6 +71,7 @@
                           :hand []
                           :discard [] :scored [] :rfg [] :play-area []
                           :rig {:program [] :resource [] :hardware []}
+                          :toast []
                           :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
                           :hand-size-base 5 :hand-size-modification 0
                           :agenda-point 0
@@ -72,14 +90,13 @@
 (defn server-card
   ([title] (@all-cards title))
   ([title user]
-   (let [c (@all-cards title)]
-     (or (when (:special user) (@all-cards-alt title)) c))))
+   (@all-cards title)))
 
 (defn make-card
   "Makes a proper card from an @all-cards card"
   [card]
   (-> card
-      (assoc :cid (make-cid))
+      (assoc :cid (make-cid) :implementation (card-implemented card))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
 
 (defn create-deck
