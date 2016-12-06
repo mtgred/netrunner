@@ -31,6 +31,25 @@
       (is (= 2 (get-counters atman :power)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
+(deftest baba-yaga
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Baba Yaga" 1) (qty "Faerie" 1) (qty "Yog.0" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Baba Yaga")
+    (let [baba (get-program state 0)
+          base-abicount (count (:abilities baba))]
+      (card-ability state :runner baba 0)
+      (prompt-select :runner (find-card "Faerie" (:hand (get-runner))))
+      (is (= (+ 2 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 2 subroutines from Faerie")
+      (card-ability state :runner (refresh baba) 0)
+      (prompt-select :runner (find-card "Yog.0" (:hand (get-runner))))
+      (is (= (+ 3 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 1 subroutine from Yog.0")
+      (core/trash state :runner (first (:hosted (refresh baba))))
+      (is (= (inc base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga lost 2 subroutines from trashed Faerie"))))
+
 (deftest chameleon-clonechip
   ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn
   (do-game
