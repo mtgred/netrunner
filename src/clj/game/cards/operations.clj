@@ -145,7 +145,7 @@
                                            (<= (:cost %) t))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash target))}
-                    card nil)))}   
+                    card nil)))}
 
    "Big Brother"
    {:req (req tagged)
@@ -293,6 +293,11 @@
     :effect (effect (trash-cards (get-in @state [:corp :hand]))
                     (draw 5))}
 
+   "Enforced Curfew"
+   {:msg "reduce the Runner's maximum hand size by 1"
+    :effect (effect (lose :runner :hand-size-modification 1))
+    :leave-play (effect (gain :runner :hand-size-modification 1))}
+
    "Enforcing Loyalty"
    {:trace {:base 3
             :label "Trash a card not matching the faction of the Runner's identity"
@@ -406,6 +411,22 @@
               :req #(and (installed? %)
                          (is-type? % "Resource"))}
     :effect (final-effect (trash-cards :runner targets))}
+
+   "Friends in High Places"
+   (let [fhelper (fn fhp [n] {:prompt "Select a card in Archives to install with Friends in High Places"
+                              :priority -1
+                              :delayed-completion true
+                              :show-discard true
+                              :choices {:req #(and (= (:side %) "Corp")
+                                                   (not (is-type? % "Operation"))
+                                                   (in-discard? %))}
+                              :effect (req (when-completed
+                                             (corp-install state side target nil nil)
+                                             (if (< n 2)
+                                               (continue-ability state side (fhp (inc n)) card nil)
+                                               (effect-completed state side eid card))))})]
+     {:delayed-completion true
+      :effect (effect (continue-ability (fhelper 1) card nil))})
 
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"

@@ -385,39 +385,20 @@
                :corp-turn-ends turn-end-ability}
       :subroutines [end-the-run]})
 
-   "Clairvoyant Monitor"
-   {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
-                           :player :corp
-                           :prompt "Choose a target for Clairvoyant Monitor"
-                           :msg (msg "place 1 advancement token on "
-                                     (card-str state target) " and end the run")
-                           :choices {:req installed?}
-                           :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                           (end-run))})]}
-
    "Chrysalis"
    {:subroutines [(do-net-damage 2)]
     :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard))
-             :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Chrysalis")
+             :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
                              (continue-ability
-                               {:optional
-                                {:req (req (not= (first (:zone card)) :discard))
-                                 :prompt "Force the Runner to encounter Chrysalis?"
-                                 :yes-ability {:delayed-completion true
-                                               :effect (effect (system-msg :corp "forces the Runner to encounter Chrysalis")
-                                                               (clear-wait-prompt :runner)
-                                                               (continue-ability
-                                                                 :runner {:optional
-                                                                          {:player :runner
-                                                                           :prompt "Allow Chrysalis subroutine to fire?"
-                                                                           :priority 1
-                                                                           :yes-ability {:delayed-completion true
-                                                                                         :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
-                                                                           :no-ability {:effect (effect (effect-completed eid))}}}
-                                                                 card nil))}
-                                 :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Chrysalis")
-                                                              (clear-wait-prompt :runner))}}}
+                               :runner {:optional
+                                        {:player :runner
+                                         :prompt "Allow Chrysalis subroutine to fire?"
+                                         :priority 1
+                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                       (play-subroutine eid {:card card :subroutine 0}))}
+                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                      (effect-completed eid))}}}
                               card nil))}}
 
    "Chum"
@@ -435,6 +416,16 @@
                                   (update-all-ice state side)))}
                   (do-net-damage 3)]
     :events {:pre-ice-strength nil :run-ends nil}}
+
+   "Clairvoyant Monitor"
+   {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
+                           :player :corp
+                           :prompt "Choose a target for Clairvoyant Monitor"
+                           :msg (msg "place 1 advancement token on "
+                                     (card-str state target) " and end the run")
+                           :choices {:req installed?}
+                           :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                                           (end-run))})]}
 
    "Cobra"
    {:subroutines [trash-program (do-net-damage 2)]}
@@ -572,6 +563,11 @@
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
                    :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
+
+   "Fairchild"
+   {:subroutines [end-the-run
+                  (do-brain-damage 1)]
+    :runner-abilities [(runner-break [:credit 4] 1)]}
 
    "Fairchild 1.0"
    {:subroutines [{:label "Force the Runner to pay 1 [Credits] or trash an installed card"
@@ -1072,6 +1068,22 @@
                  :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
     :subroutines [(tag-trace 2)]}
 
+   "Sapper"
+   {:subroutines [trash-program]
+    :access {:delayed-completion true
+             :req (req (not= (first (:zone card)) :discard))
+             :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
+                             (continue-ability
+                               :runner {:optional
+                                        {:player :runner
+                                         :prompt "Allow Sapper subroutine to fire?"
+                                         :priority 1
+                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                       (play-subroutine :corp eid {:card card :subroutine 0}))}
+                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                      (effect-completed eid))}}}
+                              card nil))}}
+
    "Searchlight"
    {:advanceable :always
     ;; Could replace this with (tag-trace advance-counters).
@@ -1192,6 +1204,21 @@
 
    "Taurus"
    (constellation-ice trash-hardware)
+
+   "Thoth"
+   {:implementation "Encounter effect is manual"
+    :abilities [give-tag]
+    :runner-abilities [{:label "Take 1 tag"
+                        :effect (req (tag-runner state :runner 1)
+                                     (system-msg state :runner "takes 1 tag on encountering Thoth"))}]
+    :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
+                                    :delayed-completion true
+                                    :msg (msg "do " (:tag runner) " net damage")
+                                    :effect (effect (damage eid :net (:tag runner) {:card card}))})
+                  (trace-ability 4 {:label "Runner loses 1 [Credits] for each tag"
+                                    :delayed-completion true
+                                    :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
+                                    :effect (effect (lose :runner :credit (:tag runner)))})]}
 
    "TL;DR"
    {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}
