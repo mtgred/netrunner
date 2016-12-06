@@ -86,8 +86,9 @@
 
 (defn get-program
   "Get non-hosted program by position."
-  [state pos]
-  (get-in @state [:runner :rig :program pos]))
+  ([state] (get-in @state [:runner :rig :program]))
+  ([state pos]
+   (get-in @state [:runner :rig :program pos])))
 
 (defn get-hardware
   "Get hardware by position."
