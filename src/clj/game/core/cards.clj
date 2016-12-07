@@ -172,7 +172,8 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (swap! state update-in [side kw] shuffle))
+  (when-completed (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
+                  (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
