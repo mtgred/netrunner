@@ -669,6 +669,11 @@
                                   :msg "to do 1 net damage"
                                   :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Show of Force"
+   {:delayed-completion true
+    :msg "do 2 meat damage"
+    :effect (effect (damage eid :meat 2 {:card card}))}
+
    "Superior Cyberwalls"
    {:interactive (req true)
     :msg (msg "gain " (reduce (fn [c server]
