@@ -332,7 +332,18 @@ app.use express.static(__dirname + '/resources/public')
 
 # load version info from database
 db.collection('config').findOne (err, config) ->
-  app.locals.version = config && config.version || process.env['APP_VERSION'] || "0.1.0"
+  if err || config == null
+      console.log('Creating config information in database')
+      db.createCollection('config')
+      db.collection('config').insert {version: process.env['APP_VERSION'] || "0.1.0"}, (err) ->
+        if err
+          console.log('Could not create config in database')
+        else
+          app.locals.version = config && config.version || process.env['APP_VERSION'] || "0.1.0"
+          console.log('App version ' + app.locals.version)
+  else
+    app.locals.version = config && config.version || process.env['APP_VERSION'] || "0.1.0"
+    console.log('App version ' + app.locals.version)
 
 # Auth
 passport.use new LocalStrategy (username, password, done) ->
