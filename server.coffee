@@ -330,7 +330,9 @@ app.use passport.session()
 app.use stylus.middleware({src: __dirname + '/src', dest: __dirname + '/resources/public'})
 app.use express.static(__dirname + '/resources/public')
 
-app.locals.version = process.env['APP_VERSION'] || "0.1.0"
+# load version info from database
+db.collection('config').findOne (err, config) ->
+  app.locals.version = config && config.version || process.env['APP_VERSION'] || "0.1.0"
 
 # Auth
 passport.use new LocalStrategy (username, password, done) ->
@@ -588,16 +590,38 @@ app.get '/data/:collection/:field/:value', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.get '/announce', (req, res) ->
+app.get '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
     res.render('announce.jade', {user : req.user})
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.post '/announce', (req, res) ->
+app.post '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
     requester.send(JSON.stringify({action: "alert", command: req.body.message}))
     res.status(200).send({text: req.body.message, result: "ok"})
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.get '/admin/init', (req, res) ->
+  if req.user and req.user.isadmin
+    db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
+      requester.send(JSON.stringify({action: "initialize", cards: data}))
+      res.status(200).send({result: "ok"})
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.get '/admin/version', (req, res) ->
+  if req.user and req.user.isadmin
+    res.render('version.jade', {user : req.user, version: app.locals.version})
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.post '/admin/version', (req, res) ->
+  if req.user and req.user.isadmin
+    app.locals.version = req.body.version
+    db.collection('config').update {}, {$set: {version: req.body.version}}, (err) ->
+      res.status(200).send({text: req.body.version, result: "ok"})
   else
     res.status(401).send({message: 'Unauthorized'})
 
