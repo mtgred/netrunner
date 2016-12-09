@@ -851,7 +851,7 @@
       [:div.server
        (let [ices (:ices server)
              run-pos (:position run)
-             current-ice (when (and run (pos? run-pos))
+             current-ice (when (and run (pos? run-pos) (<= run-pos (count ices)))
                            (nth ices (dec run-pos)))
              run-arrow (sab/html [:div.run-arrow [:div]])
              max-hosted (apply max (map #(count (:hosted %)) ices))]
