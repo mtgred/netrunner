@@ -947,7 +947,7 @@
 (defn update-audio [{:keys [gameid sfx sfx-current-id] :as cursor} owner]
   ;; When it's the first game played with this state or when the sound history comes from different game, we skip the cacophony
   (let [sfx-last-played (om/get-state owner :sfx-last-played)]
-    (when (and (get-in @app-state [:options :enablesounds])
+    (when (and (get-in @app-state [:options :sounds])
                (not (nil? sfx-last-played))
                (= gameid (:gameid sfx-last-played)))
       ;; Skip the SFX from queue with id smaller than the one last played, queue the rest
