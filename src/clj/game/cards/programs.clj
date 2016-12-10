@@ -648,14 +648,19 @@
                                 (gain state side :credit 1)))}]}
 
    "Self-modifying Code"
-   {:abilities [{:prompt "Choose a program to install" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install"
+                 :msg (req (if (not= target "No install")
+                             (str "install " (:title target))
+                             (str "shuffle their Stack")))
                  :priority true
-                 :choices (req (cancellable (filter #(is-type? % "Program") (:deck runner)) :sorted))
+                 :choices (req (cancellable
+                                 (conj (vec (sort-by :title (filter #(is-type? % "Program") (:deck runner))))
+                                       "No install")))
                  :cost [:credit 2]
-                 :effect (effect (trigger-event :searched-stack nil)
-                                 (trash card {:cause :ability-cost})
-                                 (shuffle! :deck)
-                                 (runner-install target))}]}
+                 :effect (req (trigger-event state side :searched-stack nil)
+                              (trash state side card {:cause :ability-cost})
+                              (shuffle! state side :deck)
+                              (when (not= target "No install") (runner-install state side target)))}]}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1]
