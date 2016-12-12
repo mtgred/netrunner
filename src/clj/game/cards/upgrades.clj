@@ -218,6 +218,24 @@
                               (trash state side card {:cause :ability-cost})
                               (lose state :runner :tag 1))}]}
 
+   "Manta Grid"
+   {:events
+    {:successful-run
+     {:req (req this-server)
+      :effect (req (register-events state side
+                     {:run-ends {:msg "gain an additional [Click] on their next turn"
+                                 :req (req (and (< (:credit runner) 6)
+                                                (= 0 (:click runner))))
+                                 :effect (req (gain state :corp :click-per-turn 1)
+                                              (update! state side (assoc card :manta-used true)))}
+                      :corp-turn-begins {:req (req (:manta-used card))
+                                         :effect (effect (lose :corp :click-per-turn 1)
+                                                         (update! (dissoc card :manta-used))
+                                                         (unregister-events card))}}
+                    card))}}
+    :leave-play (req (when (:manta-used card)
+                       (lose state :corp :click-per-turn 1)))}
+
    "Marcus Batty"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Start a Psi game"
