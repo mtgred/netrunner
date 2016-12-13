@@ -788,6 +788,26 @@
     :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
+   "On the Lam"
+   {:req (req (some #(is-type? % "Resource") (all-installed state :runner)))
+    :prompt "Choose a resource to host On the Lam"
+    :choices {:req #(and (is-type? % "Resource")
+                         (installed? %))}
+    :effect (req (let [c (card-init state side (assoc card :zone [:discard] :seen true))]
+                   (host state side target c)
+                   (system-msg state side (str "hosts On the Lam on " (:title target)))
+                   (swap! state update-in [:runner :prompt] rest)))
+    :prevent {:tag [:all] :damage [:meat :net :brain]}
+    :abilities [{:label "[Trash]: Avoid 3 tags"
+                 :msg "avoid up to 3 tags"
+                 :effect (effect (tag-prevent 3) (trash card {:cause :ability-cost}))}
+                {:label "[Trash]: Prevent up to 3 damage"
+                 :msg "prevent up to 3 damage"
+                 :effect (effect (damage-prevent :net 3)
+                                 (damage-prevent :meat 3)
+                                 (damage-prevent :brain 3)
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Out of the Ashes"
    (letfn [(ashes-flag []
              {:runner-phase-12 {:priority -1
