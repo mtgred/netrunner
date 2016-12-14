@@ -7,9 +7,9 @@
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
-                               :effect (effect (tag-runner 2)
-                                               (gain :runner :credit (* 2 (min 5 (:credit corp))))
-                                               (lose :corp :credit (min 5 (:credit corp))))}} card))}
+                               :effect (req (when-completed (tag-runner state :runner 2)
+                                                            (do (gain state :runner :credit (* 2 (min 5 (:credit corp))))
+                                                                (lose state :corp :credit (min 5 (:credit corp))))))}} card))}
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
@@ -113,14 +113,15 @@
    "Code Siphon"
    {:effect (effect (run :rd
                          {:replace-access
-                          {:prompt "Choose a program to install"
+                          {:delayed-completion true
+                           :prompt "Choose a program to install"
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (trigger-event :searched-stack nil)
                                            (shuffle! :deck)
                                            (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target)
-                                           (tag-runner 1) )}} card))}
+                                           (tag-runner eid 1) )}} card))}
 
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
@@ -1234,9 +1235,11 @@
    "Vamp"
    {:effect (effect (run :hq {:req (req (= target :hq))
                               :replace-access
-                              {:prompt "How many [Credits]?" :choices :credit
+                              {:delayed-completion true
+                               :prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :corp :credit target) (tag-runner 1))}} card))}
+                               :effect (effect (lose :corp :credit target)
+                                               (tag-runner eid 1))}} card))}
 
    "Wanton Destruction"
    {:effect (effect (run :hq {:req (req (= target :hq))

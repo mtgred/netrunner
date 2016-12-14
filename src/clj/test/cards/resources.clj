@@ -814,6 +814,24 @@
       (is (= 1 (:agenda-point (get-runner))))
       (is (empty? (get-in @state [:runner :rig :resource])) "NACH trashed by agenda steal"))))
 
+(deftest new-angeles-city-hall-siphon
+  ;; New Angeles City Hall - don't gain Siphon credits until opportunity to avoid tags has passed
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Account Siphon" 1) (qty "New Angeles City Hall" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "New Angeles City Hall")
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (prompt-choice :runner "Run ability")
+    (let [nach (get-in @state [:runner :rig :resource 0])]
+      (is (= 4 (:credit (get-runner))) "Have not gained Account Siphon credits until tag avoidance window closes")
+      (card-ability state :runner nach 0)
+      (card-ability state :runner nach 0)
+      (prompt-choice :runner "Done")
+      (is (= 0 (:tag (get-runner))) "Tags avoided")
+      (is (= 10 (:credit (get-runner))) "10 credits siphoned")
+      (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
+
 (deftest paige-piper-frantic-coding
   ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
   (do-game

@@ -53,7 +53,8 @@
    "Bernice Mai"
    {:events {:successful-run {:req (req this-server)
                               :trace {:base 5 :msg "give the Runner 1 tag"
-                                      :effect (effect (tag-runner :runner 1))
+                                      :delayed-completion true
+                                      :effect (effect (tag-runner :runner eid 1))
                                       :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                                      (trash card))}}}}}
 
@@ -77,7 +78,8 @@
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
-                                :effect (effect (tag-runner :runner 1))
+                                :delayed-completion true
+                                :effect (effect (tag-runner :runner eid 1))
                                 :msg "give the Runner 1 tag"}}}
 
    "Corporate Troubleshooter"
@@ -346,9 +348,7 @@
                                                :msg "do 1 meat damage and give the Runner 1 tag"
                                                :delayed-completion true
                                                :effect (req (when-completed (damage state side :meat 1 {:card card})
-                                                                            (do (tag-runner state :runner 1)
-                                                                                ;; TO-DO: extend effect-completed to tag prevention
-                                                                                (effect-completed state side eid))))}}}
+                                                                            (tag-runner state :runner eid 1)))}}}
                                card nil))}}
 
    "Product Placement"
