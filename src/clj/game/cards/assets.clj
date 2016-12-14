@@ -812,7 +812,7 @@
                                                    (corp-install state side (nth agendas n) nil
                                                                  {:install-state
                                                                   (:install-state (card-def (nth agendas n))
-                                                                    :rezzed-no-cost)})
+                                                                    :unrezzed)})
                                                    (if (< (inc n) (count agendas))
                                                      (continue-ability state side (pd agendas (inc n)) card nil)
                                                      (effect-completed state side eid))))}
