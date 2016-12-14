@@ -699,14 +699,15 @@
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now
-                          (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
+                          ;; Are there more copies in the deck or play area (ABT interaction)?
+                          (some #(= (:title %) (:title target)) (concat (:deck corp) (:play-area corp)))
                           (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
                                     (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-           {:prompt "Add another copy to HQ?" :priority 1
+           {:prompt "Add another copy to HQ?"
             :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
                           :effect (effect (shuffle! :deck)
-                                          (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand))}}}}}
+                                          (move (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp))) :hand))}}}}}
 
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}
