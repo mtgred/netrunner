@@ -110,7 +110,7 @@
     :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
     :effect (req (doseq [c (filter #(= (:title target) (:title %)) (:discard runner))]
-                   (move state side c :rfg))
+                   (move state :runner c :rfg))
                  (effect-completed state side eid card))}
 
    "Back Channels"
