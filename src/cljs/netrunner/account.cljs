@@ -5,7 +5,8 @@
             [cljs.core.async :refer [chan put!] :as async]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.appstate :refer [app-state]]
-            [netrunner.ajax :refer [POST GET]]))
+            [netrunner.ajax :refer [POST GET]]
+            [netrunner.cardbrowser :refer [cards-channel]]))
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
@@ -17,7 +18,9 @@
                      (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)
         (put! alt-arts-channel cards))))
-(load-alt-arts)
+
+(go (let [cards (<! cards-channel)]
+      (load-alt-arts)))
 
 (defn handle-post [event owner url ref]
   (.preventDefault event)
@@ -25,7 +28,9 @@
   (swap! app-state assoc-in [:options :sounds] (om/get-state owner :sounds))
   (swap! app-state assoc-in [:options :background] (om/get-state owner :background))
   (swap! app-state assoc-in [:options :opponent-alt-art] (om/get-state owner :opponent-alt-art))
+  (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
+  (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
 
   (let [params (:options @app-state)]
     (go (let [response (<! (POST url params :json))]
@@ -55,6 +60,7 @@
       (om/set-state! owner :background (get-in @app-state [:options :background]))
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :opponent-alt-art (get-in @app-state [:options :opponent-alt-art]))
+      (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
       (go (while true
             (let [cards (<! alt-arts-channel)]
               (om/set-state! owner :cards cards)))))
@@ -77,8 +83,15 @@
              [:label [:input {:type "checkbox"
                               :value true
                               :checked (om/get-state owner :sounds)
-                              :on-change #(om/set-state! owner :sounds (.. % -target -checked))}
-                      "Enable sounds"]]]
+                              :on-change #(om/set-state! owner :sounds (.. % -target -checked))}]
+              "Enable sounds"]]
+            [:div {:style {:margin-top "4px" :margin-left "24px"}}
+             "Volume:"
+             [:div [:input {:type "range"
+                            :min 1 :max 100 :step 1
+                            :on-change #(om/set-state! owner :volume (.. % -target -value))
+                            :value (om/get-state owner :volume)
+                            :disabled (not (om/get-state owner :sounds))}]]]
             [:h3 {:style {:margin-top "1em"}} "Game board background"]
             (for [option [{:name "Beanstalk"      :ref "home-bg"}
                           {:name "The Root"       :ref "lobby-bg"}

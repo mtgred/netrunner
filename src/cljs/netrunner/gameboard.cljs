@@ -153,6 +153,7 @@
   [sfx soundbank]
   (when-not (empty? sfx)
     (when-let [sfx-key (keyword (first sfx))]
+      (.volume (sfx-key soundbank) (/ (js/parseInt (get-in @app-state [:options :sounds-volume])) 100))
       (.play (sfx-key soundbank)))
     (play-sfx (rest sfx) soundbank)))
 
