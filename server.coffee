@@ -255,13 +255,15 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         refreshLobby("update", msg.gameid)
 
       when "deck"
-        for player in games[socket.gameid].players
-          if player.user.username is getUsername(socket)
-            player.deck = msg.deck
-            break
-        updateMsg = {"update" : {}}
-        updateMsg["update"][socket.gameid] = games[socket.gameid]
-        lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
+        game = games[socket.gameid]
+        if game and game.players
+          for player in game.players
+            if player.user.username is getUsername(socket)
+              player.deck = msg.deck
+              break
+          updateMsg = {"update" : {}}
+          updateMsg["update"][socket.gameid] = games[socket.gameid]
+          lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
 
       when "start"
         game = games[socket.gameid]
