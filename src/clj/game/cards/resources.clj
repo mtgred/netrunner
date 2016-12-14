@@ -696,7 +696,9 @@
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (prompt! card (str "The top card of your Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}]
-   {:events {:runner-turn-begins ability}
+   {:flags {:runner-turn-draw true
+            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner)))}
+    :events {:runner-turn-begins ability}
     :abilities [ability]})
 
    "Mr. Li"

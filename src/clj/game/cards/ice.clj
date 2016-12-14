@@ -1095,8 +1095,9 @@
                                         {:player :runner
                                          :prompt "Allow Sapper subroutine to fire?"
                                          :priority 1
-                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                       (play-subroutine :corp eid {:card card :subroutine 0}))}
+                                         :yes-ability {:effect (req (clear-wait-prompt state :corp)
+                                                                    (show-wait-prompt state :runner "Corp to trash a program with Sapper")
+                                                                    (play-subroutine state :corp eid {:card card :subroutine 0}))}
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                               card nil))}}

@@ -5,7 +5,8 @@
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
                                          (is-type? % "Program"))}
-                    :effect (effect (trash target {:cause :subroutine}))})
+                    :effect (effect (trash target {:cause :subroutine})
+                                    (clear-wait-prompt :runner))})
 
 (def trash-hardware {:prompt "Choose a piece of hardware to trash"
                      :label "Trash a piece of hardware"
