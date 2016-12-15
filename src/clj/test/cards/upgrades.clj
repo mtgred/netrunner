@@ -520,6 +520,24 @@
       (prompt-choice :runner "OK")
       (is (= 0 (count (:scored (get-runner)))) "No scored agendas"))))
 
+(deftest old-hollywood-grid-gang-sign
+  ;; Old Hollywood Grid - Gang Sign interaction. Prevent the steal outside of a run. #2169
+  (do-game
+    (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
+              (default-runner [(qty "Gang Sign" 1)]))
+    (play-from-hand state :corp "Old Hollywood Grid" "HQ")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (take-credits state :runner)
+    (core/rez state :corp (get-content state :hq 0))
+    (score-agenda state :corp (get-content state :remote1 0))
+    ;; Gang sign fires
+    (prompt-choice :runner "Card from hand")
+    ;; prompt shows "You cannot steal"
+    (prompt-choice :runner "OK")
+    (is (= 0 (count (:scored (get-runner)))) "No scored agendas")))
+
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
