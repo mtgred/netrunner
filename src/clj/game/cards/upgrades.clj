@@ -355,14 +355,22 @@
     :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
-   (let [ohg {:req (req this-server)
-              :effect (effect (register-run-flag!
+   (let [ohg {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+              :effect (effect (register-persistent-flag!
                                 card :can-steal
-                                (fn [state side card]
+                                (fn [state _ card]
                                   (if-not (some #(= (:title %) (:title card)) (:scored runner))
                                     ((constantly false) (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                                     true))))}]
-     (assoc-in ohg [:events :run] ohg))
+     {:trash-effect
+              {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone target) (:previous-zone card))
+                                                                                          (= (central->zone (:zone target))
+                                                                                             (butlast (:previous-zone card))))))
+                                                 :run-ends {:effect (effect (unregister-events card))}}
+                                                (assoc card :zone '(:discard))))}
+      :events {:pre-steal-cost ohg
+               :post-access-card {:effect (effect (clear-persistent-flag! card :can-steal))}}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

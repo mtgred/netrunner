@@ -322,7 +322,8 @@
 (defn can-steal?
   "Checks if the runner can steal agendas"
   [state side card]
-  (check-flag-types? state side card :can-steal [:current-turn :current-run]))
+  (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
+       (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
 (defn can-access?
   "Checks if the runner can access the specified card"

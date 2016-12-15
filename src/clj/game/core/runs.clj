@@ -215,7 +215,8 @@
                                                            (effect-completed state side eid))))
                                      (access-non-agenda state side eid c)))))
                              ;; The runner cannot afford the cost to access the card
-                             (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {}))))))))
+                             (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))
+                         (trigger-event state side :post-access-card c))))))
 
 (defn msg-handle-access
   ([state side cards]
