@@ -1123,6 +1123,26 @@
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
             [:div.gameboard-bg {:class (:background (:options @app-state))}]
+
+            [:div.rightpane
+             [:div.card-zoom
+              (when-let [card (om/get-state owner :zoom)]
+                (om/build cb/card-view card))]
+             ;; card implementation info
+             (when-let [card (om/get-state owner :zoom)]
+               (let [implemented (:implementation card)]
+                 (case implemented
+                   (:full "full") nil
+                   [:div.panel.blue-shade.implementation
+                    (case implemented
+                      nil [:span.unimplemented "Unimplemented"]
+                      [:span.impl-msg implemented])])))
+             (om/build log-pane (:log cursor))]
+
+            [:div.centralpane
+             (om/build board-view {:player opponent :run run})
+             (om/build board-view {:player me :run run})]
+
             [:div.leftpane
              [:div.opponent
               (om/build hand-view {:player opponent :remotes (get-remotes (:servers corp))})]
@@ -1148,25 +1168,6 @@
                  (om/build button-pane {:side side :active-player active-player :run run :end-turn end-turn :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12 :corp corp :runner runner :me me :opponent opponent}))]]
 
              [:div.me
-              (om/build hand-view {:player me :remotes (get-remotes (:servers corp))})]]
-
-            [:div.centralpane
-             (om/build board-view {:player opponent :run run})
-             (om/build board-view {:player me :run run})]
-
-            [:div.rightpane {}
-             [:div.card-zoom
-              (when-let [card (om/get-state owner :zoom)]
-                (om/build cb/card-view card))]
-             ;; card implementation info
-             (when-let [card (om/get-state owner :zoom)]
-               (let [implemented (:implementation card)]
-                 (case implemented
-                   (:full "full") nil
-                   [:div.panel.blue-shade.implementation
-                    (case implemented
-                      nil [:span.unimplemented "Unimplemented"]
-                      [:span.impl-msg implemented])])))
-             (om/build log-pane (:log cursor))]]))))))
+              (om/build hand-view {:player me :remotes (get-remotes (:servers corp))})]]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})
