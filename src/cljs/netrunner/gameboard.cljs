@@ -326,7 +326,9 @@
             height (.-scrollHeight div)]
         (when (or (zero? scrolltop)
                   (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
-          (aset div "scrollTop" height)))) om/IDidMount
+          (aset div "scrollTop" height))))
+
+    om/IDidMount
     (did-mount [this]
       (-> ".log" js/$ (.resizable #js {:handles "w"})))
 
