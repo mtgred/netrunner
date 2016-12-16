@@ -191,18 +191,22 @@
     :in-play [:memory 3]
     :events {:runner-install
              {:optional
-              {:req (req (has-subtype? target "Caïssa"))
-               :delayed-completion true
-               :prompt "Use Deep Red to trigger the [Click] ability of the installed Caïssa?"
-               :yes-ability {:effect (req (let [cid (:cid (first (map last (turn-events state :runner :pre-install))))
-                                                caissa (find-cid cid (all-installed state :runner))]
+              {:delayed-completion true
+               :req (req (has-subtype? target "Caïssa"))
+               :prompt "Use Deep Red?" :priority 1
+               :yes-ability {:delayed-completion true
+                             :effect (req (let [cid (:cid target)]
                                             (continue-ability state side
-                                              {:msg (msg "trigger the [Click] ability of " (:title caissa)
+                                              {:delayed-completion true
+                                               :prompt "Choose the just-installed Caïssa to have Deep Red trigger its [Click] ability"
+                                               :choices {:req #(= cid (:cid %))}
+                                               :msg (msg "trigger the [Click] ability of " (:title target)
                                                          " without spending [Click]")
-                                               :effect (effect (gain :click 1)
-                                                               (play-ability {:card (get-card state caissa) :ability 0}))}
+                                               :effect (req (gain state :runner :click 1)
+                                                            (play-ability state side {:card target :ability 0})
+                                                            (effect-completed state side eid))}
                                              card nil)))}
-               :no-ability {:effect (req (effect-completed state side eid card))}}}}}
+               :no-ability {:effect (req (effect-completed state side eid))}}}}}
 
    "Desperado"
    {:in-play [:memory 1]
