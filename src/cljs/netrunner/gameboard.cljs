@@ -842,6 +842,14 @@
        [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
         (when me? (controls :hand-size-modification))]]))))
 
+(defn run-arrow
+  ([] (run-arrow nil))
+  ([class]
+   (sab/html
+    [:div.run-arrow {:class class}
+     [:div.run-arrow-head]
+     [:div.run-arrow-shaft]])))
+
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
    (sab/html
@@ -851,19 +859,26 @@
              run-pos (:position run)
              current-ice (when (and run (pos? run-pos) (<= run-pos (count ices)))
                            (nth ices (dec run-pos)))
-             run-arrow (sab/html [:div.run-arrow [:div]])
+             passed-ices (->> ices
+                              (map #(vector %1 %2) (range))
+                              (filter #(and run (<= run-pos (first %))))
+                              (map second))
              max-hosted (apply max (map #(count (:hosted %)) ices))]
          [:div.ices {:style {:width (when (pos? max-hosted)
                                       (+ 84 3 (* 42 (dec max-hosted))))}}
           (when-let [run-card (:card (:run-effect run))]
             [:div.run-card (om/build card-img run-card)])
-          (for [ice (reverse ices)]
-            [:div.ice {:class (when (not-empty (:hosted ice)) "host")}
-             (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}})
-             (when (and current-ice (= (:cid current-ice) (:cid ice)))
-               run-arrow)])
+          (for [ice (reverse ices)
+                :let [is-current-ice (and current-ice (= (:cid current-ice) (:cid ice)))]]
+            [:div.ice-container
+             (when is-current-ice
+               (run-arrow (when (< run-pos (count ices)) "short")))
+             (when (some #(= (:cid %) (:cid ice)) passed-ices)
+               (run-arrow (str "no-head " (if (= (:cid (last passed-ices)) (:cid ice)) "med" "short"))))
+             [:div.ice {:class (when (not-empty (:hosted ice)) "host")}
+              (om/build card-view ice {:opts {:flipped (not (:rezzed ice))}})]])
           (when (and run (not current-ice))
-            run-arrow)])
+            (run-arrow (when (count ices) "short")))])
        [:div.content
         (when central-view
           central-view)

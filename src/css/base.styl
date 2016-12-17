@@ -230,7 +230,7 @@ button .fake-link
 
 .float-right
   float: right
-  margin-left: 10px;
+  margin-left: 10px
 
 .clear
   clear: both
@@ -1569,32 +1569,49 @@ nav ul
 
           .run-arrow
             position: relative
-            top: 20px
+            top: 16px
             animation: fadein 0.5s
 
             > div
-              position: absolute
-              left: 50%
-              top: 0
-              bottom: -70px
-              width: 16px
-              background-color: transparent-orange
-              transform(translateX(-50%))
-              border-radius: 0 0 4px 4px
+              position: relative
+              top: -16px
 
-              &:before
-                content: ""
-                display: block
-                position: absolute
-                right: 8px
-                width: 0
-                height: 0
-                border-left: 16px solid transparent
-                border-right: 16px solid transparent
-                bottom: 100%
-                left: 50%
-                transform(translateX(-50%))
-                border-bottom: 22px solid transparent-orange
+            .run-arrow-head
+              width: 0
+              height: 0
+              border-left: 16px solid transparent
+              border-right: 16px solid transparent
+              border-bottom: 18px solid transparent-orange
+
+            .run-arrow-shaft
+              width: 16px
+              height: 80px
+              border-radius: 0 0 4px 4px
+              background-color: transparent-orange
+              transform(translateX(50%))
+
+            &.short .run-arrow-shaft
+                height: 14px
+
+            &.med .run-arrow-shaft
+                height: 32px
+
+            &.no-head
+              top: 0
+
+              .run-arrow-head
+                display: none
+
+              .run-arrow-shaft
+                top: 0
+                border-radius: 4px
+
+          .ice-container
+            display-flex()
+            flex-direction(column-reverse)
+
+            .run-arrow
+              left: 14px
 
           .ice
             margin: -7px 0
@@ -1603,12 +1620,6 @@ nav ul
 
             &.host
               margin-bottom: 5px
-
-            .run-arrow
-              top: auto
-              bottom: 42px
-              left: 57px
-              transform: rotate(-90deg)
 
           .hosted
             margin-top: -69px
