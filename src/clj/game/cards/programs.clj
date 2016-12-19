@@ -592,6 +592,11 @@
                           :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
 
+   "Reaver"
+   {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (installed? target)))
+                            :effect (effect (draw :runner 1))
+                            :msg "draw 1 card"}}}
+   
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)
