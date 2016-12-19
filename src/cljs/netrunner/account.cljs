@@ -72,7 +72,7 @@
          [:div.account
           [:div {:class (:background (:options @app-state))}]
           [:div.panel.blue-shade#profile-form {:ref "profile-form"}
-           [:h2 "My Account"]
+           [:h2 "Settings"]
            [:p.flash-message (:flash-message state)]
            [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
             [:h3 "Avatar"]
