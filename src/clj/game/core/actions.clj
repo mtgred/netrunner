@@ -89,10 +89,10 @@
         (do (trash state s c {:unpreventable true})
             (system-msg state side (str "trashes " label from-str)))
         ("Grip" "HQ")
-        (do (move state s (dissoc c :seen :rezzed) :hand)
+        (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
             (system-msg state side (str "moves " label from-str " to " server)))
         ("Stack" "R&D")
-        (do (move state s (dissoc c :seen :rezzed) :deck {:front true})
+        (do (move state s (dissoc c :seen :rezzed) :deck {:front true :force true})
             (system-msg state side (str "moves " label from-str " to the top of " server)))
         nil))))
 
