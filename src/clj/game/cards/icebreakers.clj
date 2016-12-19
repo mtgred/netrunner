@@ -160,6 +160,15 @@
               :run install-prompt}
      :abilities abilities}))
 
+(defn- central-breaker
+  "'Cannot be used on a remote server' breakers"
+  [type pump break]
+  (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
+    (auto-icebreaker [type]
+                     {:abilities [(assoc break :req central-req)
+                                  (assoc pump :req central-req)]
+                      :effect (effect (update! (assoc card :central-breaker true)))})))
+
 ;;; Icebreaker definitions
 (def cards-icebreakers
   {"Aghora"
@@ -173,11 +182,9 @@
                                  (strength-pump 1 1)]})
 
    "Alias"
-   (auto-icebreaker ["Sentry"]
-                    {:abilities [{:cost [:credit 1]
-                                  :req (req (#{:hq :rd :archives} (first (:server run))))
-                                  :msg "break 1 sentry subroutine"}
-                                 (strength-pump 2 3)]})
+   (central-breaker "Sentry"
+                    (break-sub 1 1 "sentry")
+                    (strength-pump 2 3))
 
    "Ankusa"
    (auto-icebreaker ["Barrier"]
@@ -264,11 +271,10 @@
                                  (strength-pump 2 1)]})
 
    "Breach"
-   (auto-icebreaker ["Barrier"]
-                    {:abilities [{:cost [:credit 2]
-                                  :req (req (#{:hq :rd :archives} (first (:server run))))
-                                  :msg "break 3 barrier subroutines"}
-                                 (strength-pump 2 4)]})
+   (central-breaker "Barrier"
+                    (break-sub 2 3 "barrier")
+                    (strength-pump 2 4))
+
 
    "Cerberus \"Cuj.0\" H3"
    (cerberus "Sentry")
@@ -518,21 +524,6 @@
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 3 5)]})
 
-   "Paperclip"
-   (conspiracy "Paperclip" "Barrier"
-               [{:label (str "X [Credits]: +X strength, break X subroutines")
-                 :choices :credit
-                 :prompt "How many credits?"
-                 :effect (effect (pump card target))
-                 :msg (msg "increase strength by " target " and break " target " barrier subroutine"
-                           (when (not= target 1) "s"))}])
-
-   "Passport"
-   (auto-icebreaker ["Code Gate"]
-                    {:abilities [{:cost [:credit 1]
-                                  :req (req (#{:hq :rd :archives} (first (:server run))))
-                                  :msg "break 1 code gate subroutine"}
-                                 (strength-pump 2 2)]})
 
    "Omega"
    (auto-icebreaker ["All"]
@@ -546,6 +537,20 @@
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
+
+   "Paperclip"
+   (conspiracy "Paperclip" "Barrier"
+               [{:label (str "X [Credits]: +X strength, break X subroutines")
+                 :choices :credit
+                 :prompt "How many credits?"
+                 :effect (effect (pump card target))
+                 :msg (msg "increase strength by " target " and break " target " barrier subroutine"
+                           (when (not= target 1) "s"))}])
+
+   "Passport"
+   (central-breaker "Code Gate"
+                    (break-sub 1 1 "code gate")
+                    (strength-pump 2 2))
 
    "Peacock"
    (auto-icebreaker ["Code Gate"]
