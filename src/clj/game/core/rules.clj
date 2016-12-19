@@ -245,16 +245,18 @@
   [state side n]
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
-(defn resolve-tag [state side n args]
-  (when (pos? n)
-    (gain state :runner :tag n)
-    (toast state :runner (str "Took " n " tag" (when (> n 1) "s") "!") "info")
-    (trigger-event state side :runner-gain-tag n)))
+(defn resolve-tag [state side eid n args]
+  (if (pos? n)
+    (do (gain state :runner :tag n)
+        (toast state :runner (str "Took " n " tag" (when (> n 1) "s") "!") "info")
+        (trigger-event-sync state side eid :runner-gain-tag n))
+    (effect-completed state side eid)))
 
 (defn tag-runner
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
-  ([state side n] (tag-runner state side n nil))
-  ([state side n {:keys [unpreventable unboostable card] :as args}]
+  ([state side n] (tag-runner state side (make-eid state) n nil))
+  ([state side eid n] (tag-runner state side eid n nil))
+  ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (trigger-event state side :pre-tag card)
    (let [n (tag-count state side n args)]
@@ -272,9 +274,9 @@
                                       (if (< 1 prevent) " tags" " tag"))
                                  "will not avoid tags"))
                    (clear-wait-prompt state :corp)
-                   (resolve-tag state side (max 0 (- n (or prevent 0))) args)))
+                   (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
-         (resolve-tag state side n args))))))
+         (resolve-tag state side eid n args))))))
 
 
 ;;; Trashing

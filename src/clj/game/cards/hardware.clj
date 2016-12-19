@@ -391,6 +391,7 @@
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
+                 :delayed-completion true
                  :label "Move this accessed card to bottom of R&D"
                  :req (req (when-let [c (:card (first (get-in @state [:runner :prompt])))]
                              (in-deck? c)))
@@ -399,18 +400,18 @@
                                 (when (is-type? c "Agenda") ; trashing before the :access events actually fire; fire them manually
                                   (resolve-steal-events state side c))
                                 (move state :corp c :deck)
-                                (tag-runner state :runner 1)
                                 (close-access-prompt state side)
-                                (effect-completed state side eid card)))}
+                                (tag-runner state :runner eid 1)))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
                                    {; only allow targeting cards that were accessed this turn -- not perfect, but good enough?
+                                    :delayed-completion true
                                     :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
                                                           (map first (turn-events state side :access)))}
                                     :msg (msg "move " (:title target) " to the bottom of R&D")
                                     :effect (req (move state :corp target :deck)
-                                                 (tag-runner state :runner 1)
+                                                 (tag-runner state :runner eid 1)
                                                  (swap! state update-in [side :prompt] rest)
                                                  (when-let [run (:run @state)]
                                                    (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
@@ -671,10 +672,11 @@
    "Security Nexus"
    {:in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))
+                 :delayed-completion true
                  :msg "force the Corp to initiate a trace"
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
                  :trace {:once :per-turn :base 5 :msg "give the Runner 1 tag and end the run"
-                         :effect (effect (tag-runner :runner 1) (end-run))
+                         :effect (effect (tag-runner :runner eid 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
    "Silencer"

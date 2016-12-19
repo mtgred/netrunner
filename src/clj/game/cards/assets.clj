@@ -231,8 +231,9 @@
    {:events {:runner-turn-begins
              {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
               :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
+              :delayed-completion true
               :effect (req (if-not (and (= target "Pay 1 [Credits]") (pay state side card :credit 1))
-                             (do (tag-runner state side 1) (system-msg state side "takes 1 tag"))
+                             (do (tag-runner state side eid 1) (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
 
    "Clone Suffrage Movement"
@@ -474,10 +475,11 @@
     :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
    "Ghost Branch"
-   (advance-ambush 0 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+   (advance-ambush 0 {:delayed-completion true
+                      :req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "give the Runner " (:advance-counter (get-card state card) 0) " tag"
                                 (when (> (:advance-counter (get-card state card) 0) 1) "s"))
-                      :effect (effect (tag-runner :runner (:advance-counter (get-card state card) 0)))})
+                      :effect (effect (tag-runner :runner eid (:advance-counter (get-card state card) 0)))})
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -740,13 +742,15 @@
              :delayed-completion true
              :effect (effect (continue-ability
                                {:player :runner
+                                :delayed-completion true
                                 :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                               (do (as-trashed-agenda state :runner card -1)
-                                                   (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point")))
-                                               (do (tag-runner state :runner 2)
-                                                   (system-msg state :runner (str "takes 2 tags from News Team")))))}
+                                               (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
+                                                   (as-trashed-agenda state :runner card -1)
+                                                   (effect-completed state side eid))
+                                               (do (system-msg state :runner (str "takes 2 tags from News Team"))
+                                                   (tag-runner state :runner eid 2))))}
                                card targets))}}
 
    "PAD Campaign"
@@ -1078,11 +1082,11 @@
                                {:optional
                                 {:prompt "Pay 4 [Credits] to use Snare! ability?"
                                  :end-effect (effect (clear-wait-prompt :runner))
-                                 :yes-ability {:cost [:credit 4]
+                                 :yes-ability {:delayed-completion true
+                                               :cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :delayed-completion true
                                                :effect (effect (damage eid :net 3 {:card card})
-                                                               (tag-runner :runner 1))}}}
+                                                               (tag-runner :runner eid 1))}}}
                                card nil))}}
 
    "Space Camp"
@@ -1249,7 +1253,8 @@
 
    "Zealous Judge"
    {:rez-req (req tagged)
-    :abilities [{:label "Give the Runner 1 tag"
-                :cost [:click 1 :credit 1]
-                :msg (msg "give the Runner 1 tag")
-                :effect (effect (tag-runner 1))}]}})
+    :abilities [{:delayed-completion true
+                 :label "Give the Runner 1 tag"
+                 :cost [:click 1 :credit 1]
+                 :msg (msg "give the Runner 1 tag")
+                 :effect (effect (tag-runner eid 1))}]}})

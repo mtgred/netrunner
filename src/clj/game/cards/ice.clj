@@ -26,7 +26,8 @@
    Mostly used with tag-trace"
   {:label "Give the Runner 1 tag"
    :msg "give the Runner 1 tag"
-   :effect (effect (tag-runner :runner 1))})
+   :delayed-completion true
+   :effect (effect (tag-runner :runner eid 1))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -278,7 +279,8 @@
 
    "Bandwidth"
    {:subroutines [{:msg "give the Runner 1 tag"
-                   :effect (effect (tag-runner :runner 1)
+                   :delayed-completion true
+                   :effect (effect (tag-runner :runner eid 1)
                                    (register-events
                                      {:successful-run {:effect (effect (lose :runner :tag 1))
                                                        :msg "make the Runner lose 1 tag"}
@@ -502,8 +504,9 @@
                         :effect (req (end-run state :runner)
                                      (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
                        {:label "Take 1 tag"
-                        :effect (req (tag-runner state :runner 1)
-                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Raven"))}]
+                        :delayed-completion true
+                        :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
+                                     (tag-runner state :runner eid 1))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Data Ward"
@@ -511,8 +514,9 @@
                         :effect (req (pay state :runner card :credit 3)
                                      (system-msg state :runner "chooses to pay 3 [Credits] on encountering Data Ward"))}
                        {:label "Take 1 tag"
-                        :effect (req (tag-runner state :runner 1)
-                                     (system-msg state :runner "chooses to take 1 tag on encountering Data Ward"))}]
+                        :delayed-completion true
+                        :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
+                                     (tag-runner state :runner eid 1))}]
     :subroutines [{:label "End the run if the Runner is tagged"
                    :req (req tagged)
                    :msg "end the run"
@@ -532,7 +536,8 @@
     :strength-bonus (req (get-in card [:counter :power] 0))
     :subroutines [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                     :msg "give the Runner 1 tag and end the run"
-                                    :effect (effect (tag-runner :runner 1)
+                                    :delayed-completion true
+                                    :effect (effect (tag-runner :runner eid 1)
                                                     (end-run))})]}
 
    "Eli 1.0"
@@ -763,16 +768,18 @@
    {:subroutines [trash-program
                   (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
-                                    :effect (effect (damage eid :brain 1 {:card card})
-                                                    (tag-runner :runner 1))})]
+                                    :delayed-completion true
+                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
+                                                                 (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Ichi 2.0"
    {:subroutines [trash-program
                   (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
-                                    :effect (effect (damage eid :brain 1 {:card card})
-                                                    (tag-runner :runner 1))})]
+                                    :delayed-completion true
+                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
+                                                                 (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Information Overload"
@@ -912,10 +919,11 @@
                    :msg (msg "do " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) " net damage")
                    :effect (effect (damage eid :net (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) {:card card}))}
                   {:label "Give the Runner 1 tag (and end the run)"
+                   :delayed-completion true
                    :msg (msg "give the Runner 1 tag"
-                          (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) " and end the run"))
-                   :effect (req (tag-runner state :runner 1)
-                             (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
+                             (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) " and end the run"))
+                   :effect (req (tag-runner state :runner eid 1)
+                                (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
                                   (end-run state side)))}]}
 
    "Merlin"
@@ -1106,7 +1114,9 @@
    {:advanceable :always
     ;; Could replace this with (tag-trace advance-counters).
     :subroutines [{:label "Trace X - Give the Runner 1 tag"
-                   :trace {:base advance-counters :effect (effect (tag-runner :runner 1))
+                   :trace {:base advance-counters
+                           :delayed-completion true
+                           :effect (effect (tag-runner :runner eid 1))
                            :msg "give the Runner 1 tag"}}]}
 
    "Sensei"
@@ -1137,7 +1147,8 @@
                            :effect  (effect (move :runner target :deck))}}
                   {:label  "Give the Runner 1 tag"
                    :msg    "give the Runner 1 tag"
-                   :effect (effect (tag-runner :runner 1))}]
+                   :delayed-completion true
+                   :effect (effect (tag-runner :runner eid 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Shinobi"
@@ -1227,8 +1238,9 @@
    {:implementation "Encounter effect is manual"
     :abilities [give-tag]
     :runner-abilities [{:label "Take 1 tag"
-                        :effect (req (tag-runner state :runner 1)
-                                     (system-msg state :runner "takes 1 tag on encountering Thoth"))}]
+                        :delayed-completion true
+                        :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")
+                                     (tag-runner state :runner eid 1))}]
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
                                     :delayed-completion true
                                     :msg (msg "do " (:tag runner) " net damage")

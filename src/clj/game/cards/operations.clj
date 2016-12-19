@@ -150,7 +150,8 @@
    "Big Brother"
    {:req (req tagged)
     :msg "give the Runner 2 tags"
-    :effect (effect (tag-runner :runner 2))}
+    :delayed-completion true
+    :effect (effect (tag-runner :runner eid 2))}
 
    "Bioroid Efficiency Research"
    {:implementation "Derez is manual"
@@ -194,7 +195,8 @@
                                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
-                      :effect (effect (tag-runner :runner 2)) :msg "give the Runner 2 tags"}}}
+                      :delayed-completion true
+                      :effect (effect (tag-runner :runner eid 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
    {:choices {:max 5
@@ -207,8 +209,9 @@
    {:req (req (:successful-run runner-reg))
     :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
+                      :delayed-completion true
                       :effect (req (if (= target "1 tag")
-                                     (tag-runner state side 1)
+                                     (tag-runner state side eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}
 
    "Cerebral Static"
@@ -281,8 +284,7 @@
                       :delayed-completion true
                       :effect (req (if tagged
                                      (damage state side eid :meat 1 {:card card})
-                                     (do (tag-runner state :runner 1)
-                                         (effect-completed state side eid card))))}}}}
+                                     (tag-runner state :runner eid 1)))}}}}
 
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
@@ -437,9 +439,10 @@
    "Hard-Hitting News"
    {:req (req (:made-run runner-reg))
     :trace {:base 4
+            :delayed-completion true
             :msg "give the Runner 4 tags"
             :label "Give the Runner 4 tags"
-            :effect (effect (tag-runner :runner 4))}}
+            :effect (effect (tag-runner :runner eid 4))}}
 
    "Hasty Relocation"
    (letfn [(hr-final [chosen original]
@@ -609,7 +612,8 @@
    {:events {:successful-run {:interactive (req true)
                               :req (req (first-event state side :successful-run))
                               :trace {:base 2 :msg "give the Runner 1 tag"
-                                      :effect (effect (tag-runner :runner 1))}}}}
+                                      :delayed-completion true
+                                      :effect (effect (tag-runner :runner eid 1))}}}}
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
@@ -620,8 +624,9 @@
     :trace {:base 6
             :msg "give the Runner X tags"
             :label "Give the Runner X tags"
-            :effect (effect (tag-runner :runner (- target (second targets)))
-                            (system-msg (str "gives the Runner " (- target (second targets)) " tags")))}}
+            :delayed-completion true
+            :effect (effect (system-msg (str "gives the Runner " (- target (second targets)) " tags"))
+                            (tag-runner :runner eid (- target (second targets))))}}
 
    "Mushin No Shin"
    {:prompt "Choose a card to install from HQ"
@@ -906,7 +911,8 @@
     :trace {:base 3
             :msg "give the Runner 1 tag"
             :label "Give the Runner 1 tag"
-            :effect (effect (tag-runner :runner 1))}}
+            :delayed-completion true
+            :effect (effect (tag-runner :runner eid 1))}}
 
    "Service Outage"
    (let [add-effect (fn [state side card]
@@ -988,8 +994,11 @@
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
-                                                   :effect (final-effect (tag-runner 1 {:unpreventable true}))}
-                                                  {:effect (final-effect (trash c)) :msg (msg "trash " (:title c))})
+                                                   :delayed-completion true
+                                                   :effect (effect (tag-runner eid 1 {:unpreventable true}))}
+                                                  {:delayed-completion true
+                                                   :effect (effect (trash eid c nil))
+                                                   :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
 
