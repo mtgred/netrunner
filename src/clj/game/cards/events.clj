@@ -1028,7 +1028,10 @@
                                   (or (card-is? card :type "Asset")
                                       (card-is? card :type "Upgrade"))
                                   (not (has-subtype? card "Region"))))
-           (rumor [state] (filter eligible? (all-installed state :corp)))]
+           (rumor [state] (filter eligible? (concat (all-installed state :corp)
+                                  (get-in @state [:corp :hand])
+                                  (get-in @state [:corp :deck])
+                                  (get-in @state [:corp :discard]))))]
    {:leave-play (req (doseq [c (rumor state)]
                        (enable-card state :corp c)))
     :effect (req (doseq [c (rumor state)]
