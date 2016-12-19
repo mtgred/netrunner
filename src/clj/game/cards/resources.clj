@@ -687,7 +687,8 @@
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
-                                               (trash state side c)))}}}
+                                               (when (is-type? c "Program")
+                                                 (trash state side c))))}}}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
