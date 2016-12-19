@@ -201,24 +201,36 @@
                      (trigger-event state side :corp-install moved-card)
                      (when (is-type? c "Agenda")
                        (update-advancement-cost state side moved-card))
-                     (when (= install-state :rezzed-no-cost)
-                       (rez state side moved-card {:ignore-cost :all-costs}))
-                     (when (= install-state :rezzed)
-                       (rez state side moved-card))
-                     (when (= install-state :face-up)
-                       (if (:install-state cdef)
-                         (card-init state side
-                                    (assoc (get-card state moved-card) :rezzed true :seen true) false)
-                         (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))))
+
+                     (cond
+                       ;; Ignore all costs. Pass eid to rez.
+                       (= install-state :rezzed-no-cost)
+                       (rez state side eid moved-card {:ignore-cost :all-costs})
+
+                       ;; Pay costs. Pass eid to rez.
+                       (= install-state :rezzed)
+                       (rez state side eid moved-card nil)
+
+                       ;; "Face-up" cards. Trigger effect-completed manually.
+                       (= install-state :face-up)
+                       (do (if (:install-state cdef)
+                             (card-init state side
+                                        (assoc (get-card state moved-card) :rezzed true :seen true) false)
+                             (update! state side (assoc (get-card state moved-card) :rezzed true :seen true)))
+                           (when-not (:delayed-completion cdef)
+                             (effect-completed state side eid)))
+
+                       ;; All other cards. Trigger effect-completed as long as the card itself is not delayed.
+                       (not (:delayed-completion cdef))
+                       (effect-completed state side eid))
+
                      (when-let [dre (:derezzed-events cdef)]
                        (when-not (:rezzed (get-card state moved-card))
                          (register-events state side dre moved-card)))))))
            ;; Cannot install due to region restriction - toast
            (toast state side (str "Cannot install " (:title card) " in " server
                                   ", limited to one Region per server")))
-         (clear-install-cost-bonus state side)
-         (when-not (:delayed-completion cdef)
-           (effect-completed state side eid card)))))))
+         (clear-install-cost-bonus state side))))))
 
 
 ;;; Installing a runner card

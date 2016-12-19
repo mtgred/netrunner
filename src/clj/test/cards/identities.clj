@@ -1009,6 +1009,21 @@
       (is (= 0 (count (:prompt (get-corp))))
           "Corp not prompted to trigger Strategic Innovations"))))
 
+(deftest the-foundry-abt
+  ;; The Foundry - interaction with Accelerated Beta Test
+  (do-game
+    (new-game
+      (make-deck "The Foundry: Refining the Process" [(qty "Accelerated Beta Test" 2) (qty "Eli 1.0" 3)])
+      (default-runner))
+    (starting-hand state :corp ["Accelerated Beta Test"])
+    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Eli 1.0" (:play-area (get-corp))))
+    (prompt-choice :corp "Archives")
+    (prompt-choice :corp "Yes")
+    (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")))
+
 (deftest titan-agenda-counter
   ;; Titan Transnational - Add a counter to a scored agenda
   (do-game
