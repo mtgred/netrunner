@@ -687,7 +687,8 @@
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
-                                               (trash state side c)))}}}
+                                               (when (is-type? c "Program")
+                                                 (trash state side c))))}}}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
@@ -696,7 +697,9 @@
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (prompt! card (str "The top card of your Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}]
-   {:events {:runner-turn-begins ability}
+   {:flags {:runner-turn-draw true
+            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner)))}
+    :events {:runner-turn-begins ability}
     :abilities [ability]})
 
    "Mr. Li"
