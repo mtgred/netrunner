@@ -220,8 +220,8 @@
                            (when-not (:delayed-completion cdef)
                              (effect-completed state side eid)))
 
-                       ;; All other cards. Trigger effect-completed as long as the card itself is not delayed.
-                       (not (:delayed-completion cdef))
+                       ;; All other cards. Trigger effect-completed.
+                       :else
                        (effect-completed state side eid))
 
                      (when-let [dre (:derezzed-events cdef)]
