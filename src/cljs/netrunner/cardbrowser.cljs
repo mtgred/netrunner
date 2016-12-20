@@ -38,39 +38,47 @@
       (make-span "\\[Trash\\]" "trash")))
 
 (defn card-view [card owner]
-  (om/component
-   (sab/html
-    [:div.card-preview.blue-shade
-     [:h4 (:title card)]
-     (when-let [memory (:memoryunits card)]
-       (if (< memory 3)
-         [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
-     (when-let [cost (:cost card)]
-       [:div.heading (str "Cost: " cost)])
-     (when-let [trash-cost (:trash card)]
-       [:div.heading (str "Trash cost: " trash-cost)])
-     (when-let [strength (:strength card)]
-       [:div.heading (str "Strength: " strength)])
-     (when-let [requirement (:advancementcost card)]
-       [:div.heading (str "Advancement requirement: " requirement)])
-     (when-let [agenda-point (:agendatpoints card)]
-       [:div.heading (str "Agenda points: " agenda-point)])
-     (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading (str "Minimum deck size: " min-deck-size)])
-     (when-let [influence-limit (:influencelimit card)]
-       [:div.heading (str "Influence limit: " influence-limit)])
-     (when-let [influence (:factioncost card)]
-       [:div.heading "Influence "
-        [:span.influence
-         {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
-          :class (-> card :faction .toLowerCase (.replace " " "-"))}]])
-     [:div.text
-      [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
-                                            "" (str ": " (:subtype card)))]
-      [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
-     (when-let [url (image-url card)]
-       [:img {:src url :onError #(-> % .-target js/$ .hide) :onLoad #(-> % .-target js/$ .show)}])])))
+      (reify
+        om/IInitState
+        (init-state [_] {:showText false})
+        om/IRenderState
+        (render-state [_ state]
+                      (let [ifShowText #(when (:showText state) %)]
+                           (sab/html
+                             [:div.card-preview.blue-shade
+                              (ifShowText [:h4 (:title card)])
+                              (ifShowText (when-let [memory (:memoryunits card)]
+                                                    (if (< memory 3)
+                                                      [:div.anr-icon {:class (str "mu" memory)} ""]
+                                                      [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]])))
+                              (ifShowText (when-let [cost (:cost card)]
+                                                    [:div.heading (str "Cost: " cost)]))
+                              (ifShowText (when-let [trash-cost (:trash card)]
+                                                    [:div.heading (str "Trash cost: " trash-cost)]))
+                              (ifShowText (when-let [strength (:strength card)]
+                                                    [:div.heading (str "Strength: " strength)]))
+                              (ifShowText (when-let [requirement (:advancementcost card)]
+                                                    [:div.heading (str "Advancement requirement: " requirement)]))
+                              (ifShowText (when-let [agenda-point (:agendatpoints card)]
+                                                    [:div.heading (str "Agenda points: " agenda-point)]))
+                              (ifShowText (when-let [min-deck-size (:minimumdecksize card)]
+                                                    [:div.heading (str "Minimum deck size: " min-deck-size)]))
+                              (ifShowText (when-let [influence-limit (:influencelimit card)]
+                                                    [:div.heading (str "Influence limit: " influence-limit)]))
+                              (ifShowText (when-let [influence (:factioncost card)]
+                                                    [:div.heading "Influence "
+                                                     [:span.influence
+                                                      {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+                                                       :class                   (-> card :faction .toLowerCase (.replace " " "-"))}]]))
+                              (ifShowText [:div.text
+                                           [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                                                                 "" (str ": " (:subtype card)))]
+                                           [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]])
+                              (when-not (:showText state) (when-let [url (image-url card)]
+                                                                    [:img {:src url
+                                                                           :onError #(-> (om/set-state! owner {:showText true}))
+                                                                           :onLoad #(-> % .-target js/$ .show)}]))
+                              ])))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
