@@ -28,7 +28,7 @@
         (:username user)
         [:b.caret]]
        [:div.dropdown-menu.blue-shade.float-right
-        [:a.block-link {:href "/account"} "My Account"]
+        [:a.block-link {:href "/account"} "Settings"]
         [:a.block-link {:href "/logout"} "Logout"]]]])))
 
 (defn unlogged-menu [user owner]

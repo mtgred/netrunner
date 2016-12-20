@@ -405,6 +405,7 @@
   ([state side eid card psi]
    (swap! state assoc :psi {})
    (register-once state psi card)
+   (system-msg state :corp (str "uses " (:title card) " to start a psi game"))
    (doseq [s [:corp :runner]]
      (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
            valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)

@@ -328,7 +328,9 @@
                  :msg (msg "to trigger an ability on " (:title target))}]}
 
    "Hyperdriver"
-   {:abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
+   {:flags {:runner-phase-12 (req true)}
+    :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
+                 :req (req (:runner-phase-12 @state))
                  :effect (effect (move card :rfg) (gain :memory 3 :click 3))
                  :msg "gain [Click] [Click] [Click]"}]}
 
@@ -592,6 +594,11 @@
                           :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
 
+   "Reaver"
+   {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (installed? target)))
+                            :effect (effect (draw :runner 1))
+                            :msg "draw 1 card"}}}
+   
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)

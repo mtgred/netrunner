@@ -263,8 +263,10 @@
     (is (= 1 (:memory (get-runner))) "3 MU used")
     (take-credits state :runner)
     (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
     (let [hyp (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner hyp 0)
+      (core/end-phase-12 state :runner nil)
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
       (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 

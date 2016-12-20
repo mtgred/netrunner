@@ -18,7 +18,8 @@
    {:events
     {:corp-turn-begins {:req (req (= 0 (:tag runner)))
                         :msg "take 1 tag"
-                        :effect (effect (tag-runner :runner 1))}
+                        :delayed-completion true
+                        :effect (effect (tag-runner :runner eid 1))}
      :runner-turn-begins {:req (req (not has-bad-pub))
                           :msg "give the Corp 1 bad publicity"
                           :effect (effect (gain :corp :bad-publicity 1))}}}
@@ -610,15 +611,17 @@
                               :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (first-event state side :unsuccessful-run))
+                                :delayed-completion true
                                 :msg "take 1 tag" :once-key :john-masanori-tag
-                                :effect (effect (tag-runner :runner 1))}}}
+                                :effect (effect (tag-runner :runner eid 1))}}}
 
    "Joshua B."
    (let [ability {:msg "gain [Click]"
                   :once :per-turn
                   :label "Gain [Click] (start of turn)"
                   :effect (effect (gain :click 1))
-                  :end-turn {:effect (effect (tag-runner 1))
+                  :end-turn {:delayed-completion true
+                             :effect (effect (tag-runner eid 1))
                              :msg "gain 1 tag"}}]
    {:events {:runner-turn-begins
              {:optional {:prompt "Use Joshua B. to gain [Click]?"
@@ -687,7 +690,8 @@
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
-                                               (trash state side c)))}}}
+                                               (when (is-type? c "Program")
+                                                 (trash state side c))))}}}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
@@ -696,7 +700,9 @@
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (prompt! card (str "The top card of your Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}]
-   {:events {:runner-turn-begins ability}
+   {:flags {:runner-turn-draw true
+            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner)))}
+    :events {:runner-turn-begins ability}
     :abilities [ability]})
 
    "Mr. Li"
@@ -1153,8 +1159,9 @@
                               {:prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
                                :player :runner
                                :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
+                                             :delayed-completion true
                                              :effect (effect (gain :corp :bad-publicity 1)
-                                                             (tag-runner :runner 1)
+                                                             (tag-runner :runner eid 1)
                                                              (clear-wait-prompt :corp))}
                                :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                             card nil))}}}

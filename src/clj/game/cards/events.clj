@@ -7,9 +7,9 @@
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
-                               :effect (effect (tag-runner 2)
-                                               (gain :runner :credit (* 2 (min 5 (:credit corp))))
-                                               (lose :corp :credit (min 5 (:credit corp))))}} card))}
+                               :effect (req (when-completed (tag-runner state :runner 2)
+                                                            (do (gain state :runner :credit (* 2 (min 5 (:credit corp))))
+                                                                (lose state :corp :credit (min 5 (:credit corp))))))}} card))}
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
@@ -113,14 +113,32 @@
    "Code Siphon"
    {:effect (effect (run :rd
                          {:replace-access
-                          {:prompt "Choose a program to install"
+                          {:delayed-completion true
+                           :prompt "Choose a program to install"
                            :msg (msg "install " (:title target) " and take 1 tag")
                            :choices (req (filter #(is-type? % "Program") (:deck runner)))
                            :effect (effect (trigger-event :searched-stack nil)
                                            (shuffle! :deck)
                                            (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target)
-                                           (tag-runner 1) )}} card))}
+                                           (tag-runner eid 1) )}} card))}
+
+   "Cold Read"
+   (let [end-effect {:prompt "Choose a program that was used during the run to trash "
+                     :choices {:req #(card-is? % :type "Program")}
+                     :msg (msg "trash" (:title target))
+                     :effect (effect (trash target {:unpreventable true}))}]
+     {:delayed-completion true
+      :prompt "Choose a server"
+      :recurring 4
+      :choices (req runnable-servers)
+      :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area)]
+                     (card-init state side c false)
+                     (game.core/run state side (make-eid state) target
+                                    {:end-run {:delayed-completion true
+                                               :effect (effect (trash c)
+                                                               (continue-ability end-effect card nil))}}
+                                    c)))})
 
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
@@ -788,6 +806,26 @@
     :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
+   "On the Lam"
+   {:req (req (some #(is-type? % "Resource") (all-installed state :runner)))
+    :prompt "Choose a resource to host On the Lam"
+    :choices {:req #(and (is-type? % "Resource")
+                         (installed? %))}
+    :effect (req (let [c (card-init state side (assoc card :zone [:discard] :seen true))]
+                   (host state side target c)
+                   (system-msg state side (str "hosts On the Lam on " (:title target)))
+                   (swap! state update-in [:runner :prompt] rest)))
+    :prevent {:tag [:all] :damage [:meat :net :brain]}
+    :abilities [{:label "[Trash]: Avoid 3 tags"
+                 :msg "avoid up to 3 tags"
+                 :effect (effect (tag-prevent 3) (trash card {:cause :ability-cost}))}
+                {:label "[Trash]: Prevent up to 3 damage"
+                 :msg "prevent up to 3 damage"
+                 :effect (effect (damage-prevent :net 3)
+                                 (damage-prevent :meat 3)
+                                 (damage-prevent :brain 3)
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Out of the Ashes"
    (letfn [(ashes-flag []
              {:runner-phase-12 {:priority -1
@@ -991,7 +1029,10 @@
                                   (or (card-is? card :type "Asset")
                                       (card-is? card :type "Upgrade"))
                                   (not (has-subtype? card "Region"))))
-           (rumor [state] (filter eligible? (all-installed state :corp)))]
+           (rumor [state] (filter eligible? (concat (all-installed state :corp)
+                                  (get-in @state [:corp :hand])
+                                  (get-in @state [:corp :deck])
+                                  (get-in @state [:corp :discard]))))]
    {:leave-play (req (doseq [c (rumor state)]
                        (enable-card state :corp c)))
     :effect (req (doseq [c (rumor state)]
@@ -1247,9 +1288,11 @@
    "Vamp"
    {:effect (effect (run :hq {:req (req (= target :hq))
                               :replace-access
-                              {:prompt "How many [Credits]?" :choices :credit
+                              {:delayed-completion true
+                               :prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :corp :credit target) (tag-runner 1))}} card))}
+                               :effect (effect (lose :corp :credit target)
+                                               (tag-runner eid 1))}} card))}
 
    "Wanton Destruction"
    {:effect (effect (run :hq {:req (req (= target :hq))

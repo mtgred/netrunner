@@ -72,12 +72,12 @@
    "Argus Security: Protection Guaranteed"
    {:events {:agenda-stolen
              {:prompt "Take 1 tag or suffer 2 meat damage?"
+              :delayed-completion true
               :choices ["1 tag" "2 meat damage"] :player :runner
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (system-msg state side "chooses to take 1 tag")
-                                 (tag-runner state :runner 1)
-                                 (effect-completed state side eid nil))
+                                 (tag-runner state :runner eid 1))
                              (do (system-msg state side "chooses to suffer 2 meat damage")
                                  (damage state :runner eid :meat 2 {:unboostable true :card card}))))}}}
 
@@ -311,7 +311,8 @@
    {:events (let [inf {:req (req (and (not (:disabled card))
                                       (has-most-faction? state :corp "NBN")))
                        :msg "give the Runner 1 tag"
-                       :effect (effect (tag-runner :runner 1))}]
+                       :delayed-completion true
+                       :effect (effect (tag-runner :runner eid 1))}]
               {:pre-start-game {:effect draft-points-target}
                :agenda-scored inf :agenda-stolen inf})}
 
@@ -486,11 +487,11 @@
                            (continue-ability
                              state :corp
                              {:optional
-                              {:delayed-completion true
-                               :prompt "Trace the Runner with NBN: Controlling the Message?"
+                              {:prompt "Trace the Runner with NBN: Controlling the Message?"
                                :yes-ability {:trace {:base 4
                                                      :msg "give the Runner 1 tag"
-                                                     :effect (effect (tag-runner :runner 1 {:unpreventable true})
+                                                     :delayed-completion true
+                                                     :effect (effect (tag-runner :runner eid 1 {:unpreventable true})
                                                                      (clear-wait-prompt :runner))
                                                      :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
@@ -699,14 +700,21 @@
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now
-                          (some #(= (:title %) (:title target)) (:deck corp)) ;; Are there more copies in the dec
+                          ;; Are there more copies in the deck or play area (ABT interaction)?
+                          ;; (some #(= (:title %) (:title target)) (concat (:deck corp) (:play-area corp)))
+                          ;; Based on ruling re: searching and failing to find, we no longer enforce the requirement
+                          ;; of there being a target ice to bring into HQ.
                           (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
                                     (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
-           {:prompt "Add another copy to HQ?" :priority 1
-            :yes-ability {:msg (msg "add a copy of " (:title target) " from R&D to HQ")
-                          :effect (effect (shuffle! :deck)
-                                          (move (some #(when (= (:title %) (:title target)) %) (:deck corp)) :hand))}}}}}
+           {:prompt "Add another copy to HQ?"
+            :yes-ability {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]
+                                         (do (move state side found-card :hand)
+                                             (system-msg state side (str "uses The Foundry to add a copy of "
+                                                                         (:title found-card) " to HQ, and shuffles their deck"))
+                                             (shuffle! state side :deck))
+                                         (do (system-msg state side (str "fails to find a target for The Foundry, and shuffles their deck"))
+                                             (shuffle! state side :deck))))}}}}}
 
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}
