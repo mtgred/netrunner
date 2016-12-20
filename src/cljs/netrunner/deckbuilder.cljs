@@ -7,6 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
+            [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET]]))
 
 (def select-channel (chan))
@@ -743,6 +744,7 @@
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]
       (load-decks decks)
+      (load-alt-arts)
       (>! cards-channel cards)))
 
 (om/root deck-builder app-state {:target (. js/document (getElementById "deckbuilder"))})

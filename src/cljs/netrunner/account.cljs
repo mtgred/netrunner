@@ -19,9 +19,6 @@
         (swap! app-state assoc :alt-arts cards)
         (put! alt-arts-channel cards))))
 
-(go (let [cards (<! cards-channel)]
-      (load-alt-arts)))
-
 (defn handle-post [event owner url ref]
   (.preventDefault event)
   (om/set-state! owner :flash-message "Updating profile...")
