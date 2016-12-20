@@ -37,40 +37,43 @@
       (make-span "\\[Link\\]" "link")
       (make-span "\\[Trash\\]" "trash")))
 
-(defn card-view [card owner]
-  (om/component
-   (sab/html
-    [:div.card-preview.blue-shade
-     [:h4 (:title card)]
-     (when-let [memory (:memoryunits card)]
-       (if (< memory 3)
-         [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
-     (when-let [cost (:cost card)]
-       [:div.heading (str "Cost: " cost)])
-     (when-let [trash-cost (:trash card)]
-       [:div.heading (str "Trash cost: " trash-cost)])
-     (when-let [strength (:strength card)]
-       [:div.heading (str "Strength: " strength)])
-     (when-let [requirement (:advancementcost card)]
-       [:div.heading (str "Advancement requirement: " requirement)])
-     (when-let [agenda-point (:agendatpoints card)]
-       [:div.heading (str "Agenda points: " agenda-point)])
-     (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading (str "Minimum deck size: " min-deck-size)])
-     (when-let [influence-limit (:influencelimit card)]
-       [:div.heading (str "Influence limit: " influence-limit)])
-     (when-let [influence (:factioncost card)]
-       [:div.heading "Influence "
-        [:span.influence
-         {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
-          :class (-> card :faction .toLowerCase (.replace " " "-"))}]])
-     [:div.text
-      [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
-                                            "" (str ": " (:subtype card)))]
-      [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
-     (when-let [url (image-url card)]
-       [:img {:src url :onError #(-> % .-target js/$ .hide) :onLoad #(-> % .-target js/$ .show)}])])))
+(defn card-view [appearance card owner]
+  (reify
+    om/IRenderState
+    (render-state [this state]
+       (sab/html
+        [:div.card-preview.blue-shade
+         [:h4 (:title card)]
+         (when-let [memory (:memoryunits card)]
+           (if (< memory 3)
+             [:div.anr-icon {:class (str "mu" memory)} ""]
+             [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+         (when-let [cost (:cost card)]
+           [:div.heading (str "Cost: " cost)])
+         (when-let [trash-cost (:trash card)]
+           [:div.heading (str "Trash cost: " trash-cost)])
+         (when-let [strength (:strength card)]
+           [:div.heading (str "Strength: " strength)])
+         (when-let [requirement (:advancementcost card)]
+           [:div.heading (str "Advancement requirement: " requirement)])
+         (when-let [agenda-point (:agendatpoints card)]
+           [:div.heading (str "Agenda points:" agenda-point)])
+         (when-let [min-deck-size (:minimumdecksize card)]
+           [:div.heading (str "Minimum deck size: " min-deck-size)])
+         (when-let [influence-limit (:influencelimit card)]
+           [:div.heading (str "Influence limit: " influence-limit)])
+         (when-let [influence (:factioncost card)]
+           [:div.heading "Influence "
+            [:span.influence
+             {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+              :class (-> card :faction .toLowerCase (.replace " " "-"))}]])
+         [:div.text
+          [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                                "" (str ": " (:subtype card)))]
+          [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
+         (when-let [url (image-url card)]
+           (when (= appearance :image)
+             [:img {:src url :onError #(-> % .-target js/$ .hide) :onLoad #(-> % .-target js/$ .show)}]))]))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -133,6 +136,7 @@
        :type-filter "All"
        :side-filter "All"
        :faction-filter "All"
+       :appearance :image
        :page 1
        :filter-ch (chan)})
 
@@ -178,10 +182,16 @@
               [:h4 (first filter)]
               [:select {:value ((second filter) state)
                         :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
-               (options (last filter))]]))]
+               (options (last filter))]]))
+
+         [:div
+          [:label [:input {:type "checkbox" :checked (= (:appearance state) :image)
+                           :on-change #(om/set-state! owner
+                                                      :appearance (if (.. % -target -checked) :image :text))}]
+           "Show images"]]]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
-         (om/build-all card-view
+         (om/build-all (partial card-view (:appearance state))
                        (let [s (-> (:set-filter state)
                                      (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
                                      (.replace " cycle" ""))
