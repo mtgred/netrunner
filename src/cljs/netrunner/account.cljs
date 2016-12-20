@@ -5,8 +5,7 @@
             [cljs.core.async :refer [chan put!] :as async]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.appstate :refer [app-state]]
-            [netrunner.ajax :refer [POST GET]]
-            [netrunner.cardbrowser :refer [cards-channel]]))
+            [netrunner.ajax :refer [POST GET]]))
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
@@ -18,9 +17,6 @@
                      (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)
         (put! alt-arts-channel cards))))
-
-(go (let [cards (<! cards-channel)]
-      (load-alt-arts)))
 
 (defn handle-post [event owner url ref]
   (.preventDefault event)
