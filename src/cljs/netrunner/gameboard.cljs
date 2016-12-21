@@ -1032,21 +1032,22 @@
             [:button {:on-click #(send-command "end-phase-12")}
              (if (= side :corp) "Mandatory Draw" "Take Clicks")])
           (when (= side :runner)
-            (cond-button "Remove Tag"
-                         (and (pos? (:click me))
-                              (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0)))
-                              (pos? (:tag me)))
-                         #(send-command "remove-tag"))
-            [:div.run-button
-             (cond-button "Run" (and (pos? (:click me))
-                                     (not (get-in me [:register :cannot-run])))
-                          #(-> (om/get-node owner "servers") js/$ .toggle))
-             [:div.panel.blue-shade.servers-menu {:ref "servers"}
-              (map (fn [label]
-                     [:div {:on-click #(do (send-command "run" {:server label})
-                                           (-> (om/get-node owner "servers") js/$ .fadeOut))}
-                      label])
-                   (zones->sorted-names (runnable-servers corp runner)))]])
+            [:div
+             (cond-button "Remove Tag"
+                          (and (pos? (:click me))
+                               (>= (:credit me) (- 2 (or (:tag-remove-bonus me) 0)))
+                               (pos? (:tag me)))
+                          #(send-command "remove-tag"))
+             [:div.run-button
+              (cond-button "Run" (and (pos? (:click me))
+                                      (not (get-in me [:register :cannot-run])))
+                           #(-> (om/get-node owner "servers") js/$ .toggle))
+              [:div.panel.blue-shade.servers-menu {:ref "servers"}
+               (map (fn [label]
+                      [:div {:on-click #(do (send-command "run" {:server label})
+                                            (-> (om/get-node owner "servers") js/$ .fadeOut))}
+                       label])
+                    (zones->sorted-names (runnable-servers corp runner)))]]])
           (when (= side :corp)
             (cond-button "Purge" (>= (:click me) 3) #(send-command "purge")))
           (when (= side :corp)
