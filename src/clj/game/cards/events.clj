@@ -811,10 +811,8 @@
     :prompt "Choose a resource to host On the Lam"
     :choices {:req #(and (is-type? % "Resource")
                          (installed? %))}
-    :effect (req (let [c (card-init state side (assoc card :zone [:discard] :seen true))]
-                   (host state side target c)
-                   (system-msg state side (str "hosts On the Lam on " (:title target)))
-                   (swap! state update-in [:runner :prompt] rest)))
+    :effect (effect (host target (assoc card :zone [:discard]))
+                    (system-msg (str "hosts On the Lam on " (:title target))))
     :prevent {:tag [:all] :damage [:meat :net :brain]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"
