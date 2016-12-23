@@ -144,7 +144,8 @@
   [title type abilities]
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
-                                       (has-subtype? current-ice type)))
+                                       (has-subtype? current-ice type)
+                                       (not (some #(= title (:title %)) (all-installed state :runner)))))
                         :optional {:player :runner
                                    :prompt (str "Install " title "?")
                                    :yes-ability {:effect (effect (unregister-events card)
@@ -152,12 +153,14 @@
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side
-                                           (:events (card-def card))
+                                           {:rez install-prompt
+                                            :approach-ice install-prompt
+                                            :run install-prompt}
                                            (assoc card :zone [:discard]))))]
     {:move-zone heap-event
-     :events {:rez install-prompt
-              :approach-ice install-prompt
-              :run install-prompt}
+     :events {:rez nil
+              :approach-ice nil
+              :run nil}
      :abilities abilities}))
 
 (defn- central-breaker
