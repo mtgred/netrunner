@@ -581,7 +581,7 @@
                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
               subroutines)])
       (let [actions (action-list cursor)
-            dynabi-count (count (filter #(= (first %) :dynamic) abilities))]
+            dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
                   (some #{"derez" "advance"} actions)
                   (= type "ICE"))
