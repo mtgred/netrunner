@@ -1096,7 +1096,8 @@
    "Sapper"
    {:subroutines [trash-program]
     :access {:delayed-completion true
-             :req (req (not= (first (:zone card)) :discard))
+             :req (req (and (not= (first (:zone card)) :discard)
+                            (some #(is-type? % "Program") (all-installed state :runner))))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
                              (continue-ability
                                :runner {:optional

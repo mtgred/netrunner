@@ -68,23 +68,16 @@
    {:delayed-completion false
     :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]
     :effect (req (let [serv target]
+                   (show-wait-prompt state :corp (str "Runner to decide on running " target))
                    (continue-ability
                      state side
                      {:optional
                       {:prompt (msg "Make a run on " serv "?") :player :runner
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
-                                     :effect (req (let [s (cond
-                                                            (= serv "HQ") [:hq]
-                                                            (= serv "R&D") [:rd]
-                                                            (= serv "Archives") [:archives])
-                                                        ices (get-in @state (concat [:corp :servers] s [:ices]))]
-                                                    (swap! state assoc :per-run nil
-                                                           :run {:server s :position (count ices)
-                                                                 :access-bonus 0 :run-effect nil :cannot-jack-out true})
-                                                    (gain-run-credits state :runner (:bad-publicity corp))
-                                                    (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-                                                    (trigger-event state :runner :run s)))}
-                       :no-ability {:effect (effect (as-agenda :corp (last (:discard corp)) 1))
+                                     :effect (effect (clear-wait-prompt :corp)
+                                                     (game.core/run eid serv nil card))}
+                       :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                    (as-agenda :corp (last (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 
