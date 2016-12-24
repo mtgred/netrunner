@@ -199,7 +199,8 @@
     (play-from-hand state :runner "Temüjin Contract")
     (prompt-choice :runner "HQ")
     (run-empty-server state "HQ")
-    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")))
+    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")
+    (is (not (:successful-run (:register (get-runner)))) "No successful run in register")))
 
 (deftest cyberdex-virus-suite-purge
   ;; Cyberdex Virus Suite - Purge ability

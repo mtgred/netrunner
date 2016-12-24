@@ -116,7 +116,7 @@
                                     :req (req this-server)
                                     :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                                  (swap! state update-in [:run] dissoc :successful)
-                                                 (swap! state update-in [:runner :register :successful-run] #(rest %)))}}})
+                                                 (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
 
    "Cyberdex Virus Suite"
    {:access {:delayed-completion true
