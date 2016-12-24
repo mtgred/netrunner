@@ -162,7 +162,7 @@
 
 (defn- central-breaker
   "'Cannot be used on a remote server' breakers"
-  [type pump break]
+  [type break pump]
   (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
     (auto-icebreaker [type]
                      {:abilities [(assoc break :req central-req)
@@ -232,7 +232,7 @@
                                                                     (filter #(not= :manual-state (:ability-type %))
                                                                             (:abilities (card-def c)))))
                                                (:hosted card))]
-                          (update! state :runner (assoc card :abilities (concat [host-click host-free] new-abis)))))]
+                          (update! state :runner (assoc card :abilities (concat new-abis [host-click host-free])))))]
    {:abilities [host-click host-free]
     :hosted-gained gain-abis
     :hosted-lost gain-abis})
