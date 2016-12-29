@@ -832,6 +832,29 @@
       (is (= 10 (:credit (get-runner))) "10 credits siphoned")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest off-campus-peddler
+  ;; Off-Campus Apartment - second ability does not break cards that are hosting others, e.g., Street Peddler
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 2) (qty "Off-Campus Apartment" 1) (qty "Spy Camera" 6)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Street Peddler" "Off-Campus Apartment"])
+    (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (let [oca (get-resource state 0)]
+      (card-ability state :runner oca 0)
+      (prompt-select :runner (find-card "Street Peddler" (:hand (get-runner))))
+      (let [ped1 (first (:hosted (refresh oca)))]
+        (card-ability state :runner ped1 0)
+        (prompt-card :runner (-> (get-runner) :prompt first :choices second)) ; choose Street Peddler
+        (card-ability state :runner (refresh oca) 1)
+        (prompt-select :runner (get-resource state 1))
+        (let [ped2 (first (:hosted (refresh oca)))]
+          (card-ability state :runner ped2 0)
+          (prompt-card :runner (-> (get-runner) :prompt first :choices first)) ; choose Spy Camera
+          ;; the fact that we got this far means the bug is fixed
+          (is (= 1 (count (get-hardware state))) "Spy Camera installed"))))))
+
 (deftest paige-piper-frantic-coding
   ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
   (do-game

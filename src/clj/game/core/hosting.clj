@@ -63,9 +63,12 @@
                            :facedown facedown
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
                            :previous-zone (:zone target))
+           ;; Update any cards hosted by the target, so their :host has the updated zone.
+           c (update-in c [:hosted] #(map (fn [h] (assoc h :host c)) %))
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update-in card [:hosted] #(conj % c)))
+
        ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
        (when (or (is-type? target "Operation")
                  (is-type? target "Event")
