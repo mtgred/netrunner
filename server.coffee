@@ -9,7 +9,7 @@ async = require('async')
 bcrypt = require('bcrypt')
 bodyParser = require('body-parser')
 session = require('express-session')
-MongoStore = require('connect-mongo')(session)
+MongoStore = require('connect-mongo/es5')(session)
 cookieParser = require('cookie-parser')
 cors = require('cors')
 favicon = require('serve-favicon')
@@ -26,6 +26,10 @@ LocalStrategy = require('passport-local').Strategy
 io = require('socket.io')(server)
 stylus = require('stylus')
 zmq = require('zmq')
+mongoose = require('mongoose')
+
+# Models
+Post = require('./models/post')
 
 config = require('./config')
 
@@ -33,6 +37,8 @@ config = require('./config')
 appName = 'netrunner'
 mongoUrl = process.env['MONGO_URL'] || "mongodb://127.0.0.1:27017/netrunner"
 db = mongoskin.db(mongoUrl)
+
+mongoose.connect(mongoUrl);
 
 # Game lobby
 games = {}
@@ -568,20 +574,17 @@ app.get '/data/donators', (req, res) ->
     res.status(200).json(d.username or d.name for d in data)
 
 app.get '/data/news', (req, res) ->
-  if process.env['TRELLO_API_KEY']
-    cached = cache.get('news')
-    if not cached
-      t = new Trello(process.env['TRELLO_API_KEY'])
-      t.get '/1/lists/5668b498ced988b1204cae9a/cards', {filter : 'open', fields : 'dateLastActivity,name,labels'}, (err, data) ->
-        throw err if err
-        data = ({title: d.name, date: d.date = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
-          for d in data when d.labels.length == 0)
-        cache.put('news', data, 60000) # 60 seconds timeout
-        res.status(200).json(data)
-    else
-      res.status(200).json(cached)
+  cached = cache.get('news')
+  if not cached
+    Post.find {}, (err, posts) ->
+      throw err if err
+      
+      posts = ({title: d.title, date: d.updatedAt = moment(d.dateLastActivity).format("MM/DD/YYYY HH:mm")} \
+        for d in posts)
+      cache.put('news', posts, 60000) # 60 seconds timeout
+      res.status(200).json(posts)
   else
-    res.status(200).json([{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
+    res.status(200).json(cached)
 
 app.get '/data/:collection', (req, res) ->
   if req.params.collection != 'users' && req.params.collection != 'games'
@@ -635,6 +638,18 @@ app.post '/admin/version', (req, res) ->
     app.locals.version = req.body.version
     db.collection('config').update {}, {$set: {version: req.body.version}}, (err) ->
       res.status(200).send({text: req.body.version, result: "ok"})
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.post '/admin/news', (req, res) ->
+  if req.user and req.user.isadmin
+    if !req.body.title
+      res.status(401).send({message:'Post requires a title'})
+    else
+      post = Post { title: req.body.title }
+      post.save (err, post) ->
+        throw err if (err) 
+        res.status(200).send({text: post.title, result: "ok"})
   else
     res.status(401).send({message: 'Unauthorized'})
 
