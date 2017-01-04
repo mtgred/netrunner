@@ -62,22 +62,27 @@
            c (assoc target :host (dissoc card :hosted)
                            :facedown facedown
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc
-                           :previous-zone (:zone target))]
+                           :previous-zone (:zone target))
+           ;; Update any cards hosted by the target, so their :host has the updated zone.
+           c (update-in c [:hosted] #(map (fn [h] (assoc h :host c)) %))
+           cdef (card-def card)
+           tdef (card-def c)]
        (update! state side (update-in card [:hosted] #(conj % c)))
 
        ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
-       (when (or (and installed (card-is? target :side :runner))
-                 (or (is-type? target "Operation")
-                     (and installed (card-is? target :side :corp) (:rezzed target))))
-         (when-let [events (:events (card-def target))]
+       (when (or (is-type? target "Operation")
+                 (is-type? target "Event")
+                 (and installed (card-is? target :side :runner))
+                 (and installed (card-is? target :side :corp) (:rezzed target)))
+         (when-let [events (:events tdef)]
            (register-events state side events c))
-         (when (:recurring (card-def c))
+         (when (or (:recurring tdef) (:prevent tdef))
            (card-init state side c false)))
 
-       (when-let [events (:events (card-def target))]
-         (when (and installed (:recurring (card-def c)))
+       (when-let [events (:events tdef)]
+         (when (and installed (:recurring tdef))
            (unregister-events state side target)
            (register-events state side events c)))
-       (when-let [hosted-gained (:hosted-gained (card-def card))]
+       (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [c]))
        c))))

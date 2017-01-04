@@ -199,7 +199,8 @@
     (play-from-hand state :runner "Temüjin Contract")
     (prompt-choice :runner "HQ")
     (run-empty-server state "HQ")
-    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")))
+    (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")
+    (is (not (:successful-run (:register (get-runner)))) "No successful run in register")))
 
 (deftest cyberdex-virus-suite-purge
   ;; Cyberdex Virus Suite - Purge ability
@@ -494,14 +495,14 @@
       (prompt-select :runner hok)
       ;; prompt shows "You cannot steal"
       (prompt-choice :runner "OK")
-      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
       (prompt-select :runner ohg)
       (prompt-choice :runner "No")
       (core/steal state :runner (find-card "House of Knives" (:hand (get-corp))))
       (run-empty-server state "Server 1")
       (prompt-select :runner hok)
       (prompt-choice :runner "Yes")
-      (is (= 2 (count (:scored (get-runner)))) "2 scored agendas"))))
+      (is (= 2 (count (:scored (get-runner)))) "2 stolen agendas"))))
 
 (deftest old-hollywood-grid-central
   ;; Old Hollywood Grid - Central server
@@ -518,7 +519,13 @@
       (prompt-choice :runner "Card from hand")
       ;; prompt shows "You cannot steal"
       (prompt-choice :runner "OK")
-      (is (= 0 (count (:scored (get-runner)))) "No scored agendas"))))
+      (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
+      (prompt-choice :runner "Old Hollywood Grid")
+      ;; trash OHG
+      (prompt-choice :runner "Yes")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
 
 (deftest old-hollywood-grid-gang-sign
   ;; Old Hollywood Grid - Gang Sign interaction. Prevent the steal outside of a run. #2169
@@ -536,7 +543,7 @@
     (prompt-choice :runner "Card from hand")
     ;; prompt shows "You cannot steal"
     (prompt-choice :runner "OK")
-    (is (= 0 (count (:scored (get-runner)))) "No scored agendas")))
+    (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program

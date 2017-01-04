@@ -9,7 +9,7 @@
     {:successful-run
      {:silent (req true)
       :delayed-completion true
-      :req (req (= target :archives))
+      :req (req (and (= target :archives) (not-empty (:discard corp))))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"

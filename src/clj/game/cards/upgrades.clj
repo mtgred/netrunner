@@ -116,7 +116,7 @@
                                     :req (req this-server)
                                     :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                                                  (swap! state update-in [:run] dissoc :successful)
-                                                 (swap! state update-in [:runner :register :successful-run] #(rest %)))}}})
+                                                 (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
 
    "Cyberdex Virus Suite"
    {:access {:delayed-completion true
@@ -372,7 +372,7 @@
                                                  :run-ends {:effect (effect (unregister-events card))}}
                                                 (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ohg
-               :post-access-card {:effect (effect (clear-persistent-flag! card :can-steal))}}})
+               :post-access-card {:effect (effect (clear-persistent-flag! target :can-steal))}}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

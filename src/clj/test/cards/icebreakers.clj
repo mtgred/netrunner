@@ -297,6 +297,24 @@
     (let [ov (get-in @state [:runner :rig :program 0])]
       (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
+(deftest paperclip
+  ;; Paperclip - prompt to install on encounter, but not if another is installed
+  (do-game
+    (new-game (default-corp [(qty "Vanilla" 1)])
+              (default-runner [(qty "Paperclip" 2)]))
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Paperclip")
+    (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 0))
+    (prompt-choice :runner "Yes") ; install paperclip
+    (run-continue state)
+    (run-successful state)
+    (is (not (:run @state)) "Run ended")
+    (trash-from-hand state :runner "Paperclip")
+    (run-on state "Archives")
+    (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
+
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
   (do-game
