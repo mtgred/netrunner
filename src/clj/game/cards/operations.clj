@@ -77,7 +77,7 @@
                                      :effect (effect (clear-wait-prompt :corp)
                                                      (game.core/run eid serv nil card))}
                        :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                    (as-agenda :corp (last (:discard corp)) 1))
+                                                    (as-agenda :corp (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 

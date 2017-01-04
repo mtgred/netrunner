@@ -107,6 +107,22 @@
       (prompt-select :corp (refresh co))
       (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
 
+(deftest an-offer-you-cant-refuse
+  ;; An Offer You Can't Refuse - exact card added to score area, not the last discarded one
+  (do-game
+    (new-game (default-corp [(qty "Celebrity Gift" 1) (qty "An Offer You Can't Refuse" 1)])
+              (default-runner))
+    (play-from-hand state :corp "An Offer You Can't Refuse")
+    (prompt-choice :corp "R&D")
+    (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :discard)
+    (is (= 2 (count (:discard (get-corp)))))
+    (prompt-choice :runner "No")
+    (is (= 1 (:agenda-point (get-corp))) "An Offer the Runner refused")
+    (is (= 1 (count (:scored (get-corp)))))
+    (is (find-card "An Offer You Can't Refuse" (:scored (get-corp))))
+    (is (= 1 (count (:discard (get-corp)))))
+    (is (find-card "Celebrity Gift" (:discard (get-corp))))))
+
 (deftest big-brother
   ;; Big Brother - Give the Runner 2 tags if already tagged
   (do-game
