@@ -32,6 +32,32 @@
     (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
     (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
 
+(deftest account-siphon-nach-interaction
+  ;; Account Siphon - Access
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Account Siphon" 1)
+                                              (qty "New Angeles City Hall" 1)]))
+    (core/gain state :corp :bad-publicity 1)
+    (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+    (core/lose state :runner :credit 1)
+    (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+    (take-credits state :corp) ; pass to runner's turn by taking credits
+    (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
+    (play-from-hand state :runner "New Angeles City Hall")
+    (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+    (let [nach (get-in @state [:runner :rig :resource 0])]
+      (play-run-event state (first (get-in @state [:runner :hand])) :hq)
+      (prompt-choice :runner "Run ability")
+      (is (= 4 (:credit (get-runner))) "Runner still has 4 credits due to BP")
+      (card-ability state :runner nach 0)
+      (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
+      (card-ability state :runner nach 0)
+      (is (= 0 (:credit (get-runner))) "Runner has no credits left")
+      (prompt-choice :runner "Done"))
+    (is (= 0 (:tag (get-runner))) "Runner did not take any tags")
+    (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
+    (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
+
 (deftest amped-up
   ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
   (do-game
