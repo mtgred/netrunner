@@ -935,6 +935,41 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate"))))
 
+(deftest silhouette-expose-trigger-before-access
+  ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.
+  (do-game
+    (new-game
+      (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 3)])
+      (make-deck "Silhouette: Stealth Operative" [(qty "Feedback Filter" 1) (qty "Inside Job" 1)]))
+    (starting-hand state :corp ["Psychic Field" "Fetal AI"])
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+    (let [psychic (get-content state :remote1 0)
+          ff (get-hardware state 0)]
+      (run-empty-server state :hq)
+      (is (:run @state) "On successful run trigger effects")
+      (prompt-select :runner psychic)
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (card-ability state :runner ff 0)
+      (prompt-choice :runner "Done")
+      (is (= 0 (:credit (get-runner))) "Runner has no more credits left")
+      (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
+      (is (empty? (:discard (get-runner))) "No cards discarded")
+      (is (:run @state) "On run access phase")
+      (prompt-choice :runner "Access")
+      (prompt-choice :runner "Done")
+      (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
+      (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")
+      (is (:run @state) "Resolving access triggers")
+      (prompt-choice :runner "Yes")
+      (is (= 0 (count (:scored (get-runner)))) "Runner has no credits to be able to steal Fetal AI")
+      (is (not (:run @state)) "Run has now ended")
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
 (deftest silhouette-temujin-weirdness
   ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.
   (do-game
