@@ -384,8 +384,8 @@ app.post '/register', (req, res) ->
   db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
     if user
       res.status(422).send({message: 'Username taken'})
-    else if req.body.username.length < 4 or req.body.username.length > 16
-      res.status(423).send({message: 'Username too short/too long'})
+    else if req.body.username.length > 20
+      res.status(423).send({message: 'Usernames are limited to 20 characters'})
     else
       email = req.body.email.trim().toLowerCase()
       req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
