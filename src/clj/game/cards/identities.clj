@@ -627,7 +627,8 @@
               :delayed-completion true
               :req (req (= target :hq)) :once :per-turn
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
-                                                 :effect (effect (expose target)) :msg "expose 1 card"}
+                                                 :effect (effect (expose eid target)) :msg "expose 1 card"
+                                                 :delayed-completion true }
                                                 card nil))}}}
 
    "Spark Agency: Worldswide Reach"
