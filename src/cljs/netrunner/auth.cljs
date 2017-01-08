@@ -59,7 +59,8 @@
                 401 (om/set-state! owner :flash-message "Invalid login or password")
                 421 (om/set-state! owner :flash-message "No account with that email address exists")
                 422 (om/set-state! owner :flash-message "Username taken")
-                423 (om/set-state! owner :flash-message "Username too short/too long")
+                423 (om/set-state! owner :flash-message "Username too long")
+                424 (om/set-state! owner :flash-message "Email already used")
                 (-> js/document .-location (.reload true))))))))
 
 (defn check-username [event owner]
@@ -83,8 +84,7 @@
     (cond
       (empty? email) (om/set-state! owner :flash-message "Email can't be empty")
       (empty? username) (om/set-state! owner :flash-message "Username can't be empty")
-      (> 4 (count username)) (om/set-state! owner :flash-message "Username must be 4 characters or longer")
-      (< 16 (count username)) (om/set-state! owner :flash-message "Username must be 16 characters or shorter")
+      (< 20 (count username)) (om/set-state! owner :flash-message "Username must be 20 characters or shorter")
       (empty? password) (om/set-state! owner :flash-message "Password can't be empty")
       :else (handle-post event owner "/register" "register-form"))))
 
