@@ -78,7 +78,7 @@
 
 (defn valid-email? [email]
   (let [pattern #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"]
-    (and (string? email) (re-matches pattern email))))
+    (and (string? email) (re-matches pattern (.toLowerCase email)))))
 
 (defn register [event owner]
   (.preventDefault event)
