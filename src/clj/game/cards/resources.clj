@@ -1654,9 +1654,15 @@
    {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
+    :install-cost-bonus (req (if (and run
+                                      (= (:server run) [:hq])
+                                      (zero? (:position run))
+                                      (not (:access @state)))
                                [:credit -15 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
+    :effect (req (when (and run
+                            (= (:server run) [:hq]) 
+                            (zero? (:position run))
+                            (not (:access @state)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
                                        (handle-end-run state side)))))}
