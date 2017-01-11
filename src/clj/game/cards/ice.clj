@@ -1061,9 +1061,9 @@
    {:subroutines [end-the-run]}
 
    "Ravana 1.0"
-   {:subroutines [{:label "Resolve a subroutine on another piece of rezzed bioroid ice."
+   {:subroutines [{:label "Resolve a subroutine on another piece of rezzed bioroid ICE"
                    :choices {:req #(and (rezzed? %) (ice? %) (has-subtype? % "Bioroid"))}
-                   :msg (msg "Resolve subroutine on " (:title target))}]
+                   :msg (msg "resolve a subroutine on " (:title target))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Red Tape"
