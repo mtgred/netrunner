@@ -691,6 +691,23 @@
               :effect (effect (lose :runner :hand-size-modification 1))}
     :leave-play (effect (gain :runner :hand-size-modification 1))}
 
+   "Sensor Net Activation"
+   {:effect (effect (add-counter card :agenda 1))
+    :silent (req true)
+    :abilities [{:counter-cost [:agenda 1]
+                 :req (req (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp)))
+                 :prompt "Choose a bioroid to rez, ignoring all costs"
+                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                 :msg (msg "rez " (card-str state target) ", ignoring all costs")
+                 :effect (req (let [c target]
+                                (rez state side c {:ignore-cost :all-costs})
+                                (register-events state side
+                                  {:corp-turn-ends {:effect (effect (derez c)
+                                                                    (unregister-events card))}
+                                   :runner-turn-ends {:effect (effect (derez c)
+                                                                      (unregister-events card))}} card)))}]
+      :events {:corp-turn-ends nil :runner-turn-ends nil}}
+
    "Sentinel Defense Program"
    {:events {:pre-resolve-damage {:req (req (and (= target :brain) (> (last targets) 0)))
                                   :msg "to do 1 net damage"

@@ -209,7 +209,7 @@
                                                        (continue-ability
                                                          :runner {:optional
                                                                   {:player :runner
-                                                                   :prompt "Allow Archangel trace to fire?"
+                                                                   :prompt "You are encountering Archangel. Allow its subroutine to fire?"
                                                                    :priority 1
                                                                    :yes-ability {:delayed-completion true
                                                                                  :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
@@ -322,13 +322,13 @@
 
    "Bulwark"
    {:effect take-bad-pub
-    :abilities [{:msg "gain 2[Credits] if there is an installed AI"
+    :abilities [{:msg "gain 2 [Credits] if there is an installed AI"
                  :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
                  :effect (effect (gain :credit 2))}]
     :subroutines [(assoc trash-program :player :runner
                                        :msg "force the Runner to trash 1 program"
-                                       :label "The runner trashes 1 program")
-                  {:msg "gain 2[Credits] and end the run"
+                                       :label "The Runner trashes 1 program")
+                  {:msg "gain 2 [Credits] and end the run"
                    :effect (effect (gain :credit 2)
                                    (end-run))}]}
 
@@ -387,6 +387,13 @@
                :corp-turn-ends turn-end-ability}
       :subroutines [end-the-run]})
 
+   "Chiyashi"
+   {:abilities [{:label "Trash the top 2 cards of the Runner's Stack"
+                 :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
+                 :effect (effect (mill :runner 2))}]
+    :subroutines [(do-net-damage 2)
+                  end-the-run]}
+
    "Chrysalis"
    {:subroutines [(do-net-damage 2)]
     :access {:delayed-completion true
@@ -395,7 +402,7 @@
                              (continue-ability
                                :runner {:optional
                                         {:player :runner
-                                         :prompt "Allow Chrysalis subroutine to fire?"
+                                         :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
                                          :priority 1
                                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
                                                                        (play-subroutine eid {:card card :subroutine 0}))}
@@ -1272,6 +1279,10 @@
                                                   (all-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
 
+   "Tribunal"
+   {:subroutines [{:msg "force the Runner to trash 1 installed card"
+                   :effect (effect (resolve-ability :runner trash-installed card nil))}]}
+
    "Troll"
    {:implementation "Encounter effect is manual"
     :abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
@@ -1334,6 +1345,15 @@
 
    "Vanilla"
    {:subroutines [end-the-run]}
+
+   "Veritas"
+   {:subroutines [{:label "Corp gains 2 [Credits]"
+                   :msg "gain 2 [Credits]"
+                   :effect (effect (gain :corp :credit 2))}
+                  {:label "Runner loses 2 [Credits]"
+                   :msg "force the Runner to lose 2 [Credits]"
+                   :effect (effect (lose :runner :credit 2))}
+                  (trace-ability 2 give-tag)]}
 
    "Vikram 1.0"
    {:implementation "Program prevention is not implemented"
