@@ -157,13 +157,14 @@
     (is (= 6 (:memory (get-runner))) "Gain 2 memory")))
 
 (deftest desperado
-  ;; Desperado - Gain 1 credit on successful run
+  ;; Desperado - Gain 1 MU and gain 1 credit on successful run
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Desperado" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Desperado")
     (run-empty-server state :archives)
+    (is (= 5 (:memory (get-runner))) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
 (deftest dinosaurus-strength-boost-mu-savings
@@ -203,6 +204,41 @@
     (is (:run @state) "New run started")
     (is (= [:rd] (:server (:run @state))) "Running on R&D")
     (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+
+(deftest dorm-computer
+  ;; make a run and avoid all tags for the remainder of the run
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Dorm Computer" 1)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner dorm 0)
+      (prompt-choice :runner "Server 1")
+      (run-empty-server state "Server 1")
+      (is (:run @state) "New run started")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (is (= 3 (get-counters (refresh dorm) :power))))))
+
+(deftest snare
+  ;; pay 4 on access, and do 3 net damage and give 1 tag
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Feedback Filter" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+        "Runner has prompt to wait for Snare!")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 3 left")
+    (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 3 net damage")
+    ))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
