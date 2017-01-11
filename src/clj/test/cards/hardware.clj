@@ -222,7 +222,8 @@
           "Runner has prompt to wait for Snare!")
       (prompt-choice :corp "Yes")
       (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
-      (is (= 3 (get-counters (refresh dorm) :power))))))
+      (is (= 3 (get-counters (refresh dorm) :power))))
+      ))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage

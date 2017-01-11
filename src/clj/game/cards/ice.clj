@@ -1060,6 +1060,12 @@
    "Rainbow"
    {:subroutines [end-the-run]}
 
+   "Ravana 1.0"
+   {:subroutines [{:label "Resolve a subroutine on another piece of rezzed bioroid ice."
+                   :choices {:req #(and (rezzed? %) (ice? %) (has-subtype? % "Bioroid"))}
+                   :msg (msg "Resolve subroutine on " (:title target))}]
+    :runner-abilities [(runner-break [:click 1] 1)]}
+
    "Red Tape"
    {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
                    :msg "give +3 strength to all ICE for the remainder of the run"
