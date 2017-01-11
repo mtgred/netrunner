@@ -224,22 +224,6 @@
       (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
       (is (= 3 (get-counters (refresh dorm) :power))))))
 
-(deftest snare
-  ;; pay 4 on access, and do 3 net damage and give 1 tag
-  (do-game
-    (new-game (default-corp [(qty "Snare!" 1)])
-              (default-runner [(qty "Feedback Filter" 2) (qty "Sure Gamble" 3)]))
-    (play-from-hand state :corp "Snare!" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-        "Runner has prompt to wait for Snare!")
-    (prompt-choice :corp "Yes")
-    (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 3 left")
-    (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
-    (is (= 2 (count (:hand (get-runner)))) "Runner took 3 net damage")
-    ))
-
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
   (do-game
