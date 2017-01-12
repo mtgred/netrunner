@@ -598,7 +598,7 @@
    {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (installed? target)))
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
-   
+
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)
@@ -721,6 +721,18 @@
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                    :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
+
+   "Tapwrm"
+   (let [ability {:label "Gain [Credits] (start of turn)"
+                  :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (gain :credit (quot (:credit corp) 5)))}]
+     {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+      :flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability
+               :purge {:effect (effect (trash card))}}})
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}
