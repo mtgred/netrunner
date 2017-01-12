@@ -680,6 +680,26 @@
                          :effect (effect (tag-runner :runner eid 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
+   "Şifr"
+   {:in-play [:memory 2]
+    :abilities [{:once :per-turn
+                 :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                 :effect (effect (lose :runner :hand-size-modification 1)
+                                 (update! (assoc card :sifr-target current-ice))
+                                 (register-events
+                                   {:pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
+                                                      :effect (req (let [ice-str (:current-strength target)]
+                                                                     (ice-strength-bonus state side (- ice-str) target)))}
+                                    :runner-turn-begins {:effect (effect (gain :runner :hand-size-modification 1)
+                                                                         (unregister-events card))}
+                                    :runner-turn-ends {:effect (effect (update! (dissoc card :sifr-target)))}
+                                    :pass-ice {:effect (effect (update! (dissoc card :sifr-target)))}} card)
+                                 (update-ice-strength current-ice))}]
+    :events {:runner-turn-begins nil
+             :pre-ice-strength nil
+             :runner-turn-ends nil
+             :pass-ice nil}}
+
    "Silencer"
    {:recurring 1}
 
