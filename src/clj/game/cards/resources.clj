@@ -19,7 +19,7 @@
                    :effect (effect (lose :tag 1) (draw))}]
       :events {:agenda-scored am :agenda-stolen am}})
 
-  {"Access to Globalsec"
+   "Access to Globalsec"
    {:in-play [:link 1]}
 
    "Activist Support"
