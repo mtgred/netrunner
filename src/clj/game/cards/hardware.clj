@@ -685,20 +685,15 @@
     :abilities [{:once :per-turn
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
                  :effect (effect (lose :runner :hand-size-modification 1)
-                                 (update! (assoc card :sifr-target current-ice))
-                                 (register-events
-                                   {:pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
-                                                      :effect (req (let [ice-str (:current-strength target)]
-                                                                     (ice-strength-bonus state side (- ice-str) target)))}
-                                    :runner-turn-begins {:effect (effect (gain :runner :hand-size-modification 1)
-                                                                         (unregister-events card))}
-                                    :runner-turn-ends {:effect (effect (update! (dissoc card :sifr-target)))}
-                                    :pass-ice {:effect (effect (update! (dissoc card :sifr-target)))}} card)
+                                 (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
-    :events {:runner-turn-begins nil
-             :pre-ice-strength nil
-             :runner-turn-ends nil
-             :pass-ice nil}}
+    :events {:runner-turn-begins {:req (req (:sifr-used card))
+                                  :effect (effect (gain :runner :hand-size-modification 1)
+                                                  (update! (dissoc card :sifr-used)))}
+             :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
+                                :effect (req (let [ice-str (:current-strength target)]
+                                               (ice-strength-bonus state side (- ice-str) target)))}
+             :run-ends {:effect (effect (update! (dissoc card :sifr-target)))}}}
 
    "Silencer"
    {:recurring 1}
