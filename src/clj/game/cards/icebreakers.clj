@@ -403,6 +403,15 @@
                  :msg (msg "trash " (:title target) " and add 2 strength")
                  :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
 
+   "Fawkes"
+   {:implementation "Stealth credit restriction not enforced"
+    :abilities [(break-sub 1 1 "sentry")
+                {:label (str "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])")
+                 :choices :credit
+                 :prompt "How many credits?"
+                 :effect (effect (pump card target :all-run))
+                 :msg (msg "increase strength by " target " for the remainder of the run")}]}
+
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
                     {:prompt "Choose a piece of ICE to target for bypassing"
@@ -631,6 +640,16 @@
                 {:cost [:credit 2] :msg "place 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}]
+    :strength-bonus (req (get-in card [:counter :power] 0))}
+
+   "Sūnya"
+   {:implementation "Adding power counter is manual"
+    :abilities [{:label "Place 1 power counter on Sūnya"
+                 :ability-type :manual-state
+                 :effect (effect (add-counter card :power 1)
+                                 (system-msg (str "places 1 power counter on Sūnya"))
+                                 (update-breaker-strength card))}
+                (break-sub 2 1 "sentry")]
     :strength-bonus (req (get-in card [:counter :power] 0))}
 
    "Switchblade"

@@ -598,7 +598,7 @@
    {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (installed? target)))
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
-   
+
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)
@@ -721,6 +721,30 @@
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                    :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
+
+   "Tapwrm"
+   (let [ability {:label "Gain [Credits] (start of turn)"
+                  :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (gain :credit (quot (:credit corp) 5)))}]
+     {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+      :flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability
+               :purge {:effect (effect (trash card))}}})
+
+   "Tracker"
+   (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)
+                  :msg (msg "target " target)
+                  :req (req (not (:server-target card)))
+                  :effect (effect (update! (assoc card :server-target target)))}]
+     {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
+                   :req (req (:server-target card))
+                   :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
+                   :effect (effect (run (:server-target card) nil card))}]
+      :events {:runner-turn-begins ability
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}})
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}
