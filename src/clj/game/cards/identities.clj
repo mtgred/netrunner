@@ -739,9 +739,13 @@
    "Weyland Consortium: Builder of Nations"
    {:implementation "Damage triggered manually"
     :abilities [{:label "Do 1 meat damage"
+                 :once :per-turn
+                 :prompt "Do a meat damage from identity ability?"
+                 :choices (cancellable ["Yes"])
                  :delayed-completion true
-                 :msg "do 1 meat damage"
-                 :effect (effect (damage eid :meat 1 {:card card}))}]}
+                 :effect (req (when (= target "Yes")
+                                (do (damage state :runner eid :meat 1 {:card card})
+                                    (system-msg state side "uses Weyland Consortium: Builder of Nations to do 1 meat damage"))))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"
