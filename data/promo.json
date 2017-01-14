@@ -186,7 +186,7 @@
     "versions": ["wc2015"]
 }, {
     "code": "01110",
-    "versions": ["wc2015"]
+    "versions": ["alt", "wc2015"]
 }, {
     "code": "01058",
     "versions": ["wc2015"]
