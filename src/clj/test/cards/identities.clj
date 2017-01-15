@@ -1104,6 +1104,23 @@
         (is (= 0 (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
         (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
 
+(deftest weyland-builder
+  ;; Builder of Nations - 1 meat damage per turn at most
+  (do-game
+    (new-game
+      (make-deck "Weyland Consortium: Builder of Nations" [(qty "Hedge Fund" 3)])
+      (default-runner))
+      (let [bon (get-in @state [:corp :identity])]
+        (card-ability state :corp bon 0)
+        (prompt-choice :corp "Cancel")
+        (is (= 0 (count (:discard (get-runner)))) "Runner took no meat damage from BoN")
+        (card-ability state :corp bon 0)
+        (prompt-choice :corp "Yes")
+        (is (= 1 (count (:discard (get-runner)))) "Runner took 1 meat damage from BoN")
+        (card-ability state :corp bon 0)
+        (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
+        (is (= 0 (count (:prompt (get-corp))))))))
+
 (deftest whizzard
   ;; Whizzard - Recurring credits
   (do-game
