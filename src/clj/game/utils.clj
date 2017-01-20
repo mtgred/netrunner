@@ -94,6 +94,18 @@
   [ability]
   (or (:label ability) (and (string? (:msg ability)) (capitalize (:msg ability))) ""))
 
+(defn click-spent?
+  "Returns true if player has spent at least one click"
+  [side state]
+  (case side
+    :runner (contains? (into {} (get @state :turn-events)) :runner-spent-click)
+    :corp   (contains? (into {} (get @state :turn-events)) :corp-spent-click)))
+
+(defn used-this-turn?
+  "Returns true if a card has been used this turn"
+  [cid state]
+  (contains? (get-in @state [:per-turn]) cid))
+
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
   with Cancel always last."
