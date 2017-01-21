@@ -236,8 +236,7 @@
                                         (pay state side card :credit 1)
                                         (effect-completed state side eid))
                              (do (tag-runner state side eid 1)
-                                 (system-msg state side "takes 1 tag")
-                                 (effect-completed state side eid))
+                                 (system-msg state side "takes 1 tag"))
                              (system-msg state side "pays 1 [Credits]")))}}}
 
    "Clone Suffrage Movement"
