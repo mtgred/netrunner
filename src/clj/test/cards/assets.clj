@@ -169,11 +169,13 @@
       (prompt-choice :runner "Pay 1 [Credits]")
       (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
       (is (= 0 (:tag (get-runner))) "Runner didn't take a tag")
+      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")
       (take-credits state :runner)
       (take-credits state :corp)
       (prompt-choice :runner "Take 1 tag")
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
+      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
 
 (deftest daily-business-show
   ;; Daily Business Show - Full test
