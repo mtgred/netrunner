@@ -262,6 +262,26 @@
       (core/rez state :corp eli)
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
+(deftest haas-bioroid-engineering-the-future-employee-strike
+  ;; EtF - interaction with Employee Strike
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Engineering the Future" [(qty "Eli 1.0" 3) (qty "Paywall Implementation" 1)])
+      (default-runner [(qty "Employee Strike" 1)]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))) "Corp has 8 credits at turn end")
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (play-from-hand state :corp "Paywall Implementation")
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 9 (:credit (get-corp))) "Corp gained 1cr from EtF")))
+
 (deftest iain-stirling-credits
   ;; Iain Stirling - Gain 2 credits when behind
   (do-game
