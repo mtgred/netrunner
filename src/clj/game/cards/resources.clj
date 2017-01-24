@@ -5,9 +5,9 @@
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
   [state side event]
-  (or (first-event state side event)
+  (or (first-event? state side event)
       (and (has-flag? state side :persistent :genetics-trigger-twice)
-           (second-event state side event))))
+           (second-event? state side event))))
 
 ;;; Card definitions
 (def cards-resources
@@ -453,7 +453,7 @@
              :successful-run {:interactive (req true)
                               :optional
                               {:delayed-completion true
-                               :req (req (first-event state side :successful-run))
+                               :req (req (first-event? state side :successful-run))
                                :prompt "Use Find the Truth to look at the top card of R&D?"
                                :yes-ability {:msg "look at the top card of R&D"
                                              :effect (req (prompt! state :runner card (str "The top card of R&D is "
@@ -615,10 +615,10 @@
     :abilities [ability]})
 
    "John Masanori"
-   {:events {:successful-run {:req (req (first-event state side :successful-run))
+   {:events {:successful-run {:req (req (first-event? state side :successful-run))
                               :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
-             :unsuccessful-run {:req (req (first-event state side :unsuccessful-run))
+             :unsuccessful-run {:req (req (first-event? state side :unsuccessful-run))
                                 :delayed-completion true
                                 :msg "take 1 tag" :once-key :john-masanori-tag
                                 :effect (effect (tag-runner :runner eid 1))}}}
@@ -850,7 +850,7 @@
                                                        (system-msg state side (str "trashes " target
                                                                                    " cop" (if (not= target 1) "ies" "y")
                                                                                    " of " title)))))}}}))]
-     {:events {:runner-install {:req (req (first-event state side :runner-install))
+     {:events {:runner-install {:req (req (first-event? state side :runner-install))
                                 :delayed-completion true
                                 :effect (effect (continue-ability
                                                  (pphelper (:title target)
@@ -1357,7 +1357,7 @@
                                 (add-counter state side target :virus 1)))}]}
 
    "Wasteland"
-   {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (:installed target)))
+   {:events {:runner-trash {:req (req (and (first-event? state :runner :runner-trash) (:installed target)))
                      :effect (effect (gain :credit 1))
                      :msg "to gain 1[Credit]"}}}
 

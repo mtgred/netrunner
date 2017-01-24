@@ -226,7 +226,7 @@
                    true))]
      {:events {:agenda-stolen
                {:effect (effect (register-turn-flag! card :can-steal haarp))}}
-      :effect (req (when-not (first-event state side :agenda-stolen)
+      :effect (req (when-not (first-event? state side :agenda-stolen)
                      (register-turn-flag! state side card :can-steal haarp)))
       :leave-play (effect (clear-turn-flag! card :can-steal))})
 
@@ -235,7 +235,7 @@
              {:delayed-completion true
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")
-                             (first-event state :corp :pass-ice)))
+                             (first-event? state :corp :pass-ice)))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
                                 {:prompt "Choose a bioroid to rez" :player :corp
@@ -248,7 +248,7 @@
                                card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
-   {:events {:corp-install {:req (req (first-event state corp :corp-install))
+   {:events {:corp-install {:req (req (first-event? state corp :corp-install))
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
@@ -277,9 +277,9 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:silent (req (not (and (first-event state side :runner-install)
+             {:silent (req (not (and (first-event? state side :runner-install)
                                      (some #(is-type? % (:type target)) (:hand runner)))))
-              :req (req (and (first-event state side :runner-install)
+              :req (req (and (first-event? state side :runner-install)
                              (some #(is-type? % (:type target)) (:hand runner))))
               :once :per-turn
               :delayed-completion true
@@ -323,7 +323,7 @@
    {:events {:pre-start-game {:effect draft-points-target}
              :pre-install {:req (req (and (has-most-faction? state :runner "Shaper")
                                           (pos? (count (:deck runner)))
-                                          (first-event state side :pre-install)))
+                                          (first-event? state side :pre-install)))
                            :msg "draw 1 card"
                            :once :per-turn
                            :effect (effect (draw 1))}}}
@@ -418,7 +418,7 @@
 
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
-             {:req (req (first-event state :corp :pass-ice))
+             {:req (req (first-event? state :corp :pass-ice))
               :delayed-completion true
               :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
                              (continue-ability state side
@@ -513,7 +513,7 @@
     :leave-play (effect (lose :hand-size-modification 1))}
 
    "Near-Earth Hub: Broadcast Center"
-   {:events {:server-created {:req (req (first-event state :corp :server-created))
+   {:events {:server-created {:req (req (first-event? state :corp :server-created))
                               :msg "draw 1 card"
                               :effect (effect (draw 1))}}}
 
@@ -603,7 +603,7 @@
              :run-ends {:effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}}}
 
    "Pālanā Foods: Sustainable Growth"
-   {:events {:runner-draw {:req (req (and (first-event state :corp :runner-draw)
+   {:events {:runner-draw {:req (req (and (first-event? state :corp :runner-draw)
                                           (pos? target)))
                            :msg "gain 1 [Credits]"
                            :effect (effect (gain :corp :credit 1))}}}

@@ -1180,7 +1180,7 @@
     :effect (req (add-counter state :runner target :virus 2))}
 
    "System Outage"
-   {:events {:corp-draw {:req (req (not (first-event state side :corp-draw)))
+   {:events {:corp-draw {:req (req (not (first-event? state side :corp-draw)))
                          :msg "force the Corp to lose 1 [Credits]"
                          :effect (effect (lose :corp :credit 1))}}}
 

@@ -217,12 +217,12 @@
   [state side ev]
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
-(defn first-event
+(defn first-event?
   "Returns true if the given event has not occurred yet this turn."
   [state side ev]
   (empty? (turn-events state side ev)))
 
-(defn second-event
+(defn second-event?
   "Returns true if the given event has occurred exactly once this turn."
   [state side ev]
   (= (count (turn-events state side ev)) 1))

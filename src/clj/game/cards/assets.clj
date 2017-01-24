@@ -313,7 +313,7 @@
              {:msg "draw additional cards"
               :once :per-turn
               :once-key :daily-business-show-draw-bonus
-              :req (req (first-event state side :pre-corp-draw))
+              :req (req (first-event? state side :pre-corp-draw))
               :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
              :post-corp-draw
