@@ -405,7 +405,7 @@
     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest jinteki-replicating-perfection-employee-strike
-  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313.
+  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313 and #1956.
   (do-game
     (new-game
       (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
@@ -414,7 +414,9 @@
     (take-credits state :corp)
     (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
     (play-from-hand state :runner "Employee Strike")
-    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")
+    (play-from-hand state :runner "Scrubbed")
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
 (deftest kate-mac-mccaffrey-discount
   ;; Kate 'Mac' McCaffrey - Install discount
