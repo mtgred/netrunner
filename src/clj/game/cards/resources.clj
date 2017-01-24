@@ -719,19 +719,17 @@
                                    :effect (req (move state side target :deck))} card nil)))}]}
 
    "Muertos Gang Member"
-   {:effect (req (resolve-ability
-                   state :corp
-                   {:prompt "Choose a card to derez"
-                    :choices {:req #(and (= (:side %) "Corp") (:rezzed %))}
-                    :effect (req (derez state side target))}
-                  card nil))
-    :trash-effect {:effect (req (resolve-ability
-                                 state :corp
-                                 {:prompt "Choose a card to rez, ignoring the rez cost"
-                                  :choices {:req #(not (:rezzed %))}
-                                  :effect (req (rez state side target {:ignore-cost :rez-cost})
-                                  (system-msg state side (str "rezzes " (:title target) " at no cost")))}
-                                 card nil))}
+   {:effect (req (resolve-ability state :corp
+                                  {:prompt "Choose a card to derez"
+                                   :choices {:req #(and (= (:side %) "Corp") (:rezzed %))}
+                                   :effect (req (derez state side target))}
+                                  card nil))
+    :trash-effect {:effect (req
+                             (resolve-ability state :corp
+                                              {:prompt "Choose a card to rez, ignoring the rez cost"
+                                               :choices {:req #(not (:rezzed %))}
+                                               :effect (req (rez state side target {:ignore-cost :rez-cost})
+                                                               (system-msg state side (str "rezzes " (:title target) " at no cost")))} card nil))}
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
 
