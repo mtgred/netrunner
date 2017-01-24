@@ -212,7 +212,6 @@
   (reduce #(or %1 ((:req (:ability %2)) state side (make-eid state) (:card %2) targets))
           false (get-in @state [:suppress event])))
 
-
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
   [state side ev]
@@ -227,6 +226,11 @@
   "Returns true if the given event has occurred exactly once this turn."
   [state side ev]
   (= (count (turn-events state side ev)) 1))
+
+(defn first-successful-run-on-server?
+  "Returns true if the active run is the first succesful run on the given server"
+  [state server]
+  (empty? (filter #(= [server] %) (turn-events state :runner :successful-run))))
 
 ;;; Effect completion triggers
 (defn register-effect-completed

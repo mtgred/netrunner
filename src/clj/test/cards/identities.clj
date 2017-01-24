@@ -251,16 +251,21 @@
     (prompt-choice :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
 
-(deftest haas-bioroid-stronger-together
-  ;; Stronger Together - +1 strength for Bioroid ice
+(deftest haas-bioroid-architects-of-tomorrow
+  ;; Architects of Tomorrow - prompt to rez after passing bioroid
   (do-game
     (new-game
-      (make-deck "Haas-Bioroid: Stronger Together" [(qty "Eli 1.0" 1)])
+      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 3)])
       (default-runner))
     (play-from-hand state :corp "Eli 1.0" "Archives")
-    (let [eli (get-ice state :archives 0)]
-      (core/rez state :corp eli)
-      (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 0))
+    (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rezzing Eli 1.0")
+    (run-continue state)
+    (prompt-select :corp (get-ice state :hq 0))
+    (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
 (deftest haas-bioroid-engineering-the-future-employee-strike
   ;; EtF - interaction with Employee Strike
@@ -281,6 +286,17 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Eli 1.0" "New remote")
     (is (= 9 (:credit (get-corp))) "Corp gained 1cr from EtF")))
+
+(deftest haas-bioroid-stronger-together
+  ;; Stronger Together - +1 strength for Bioroid ice
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Stronger Together" [(qty "Eli 1.0" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Eli 1.0" "Archives")
+    (let [eli (get-ice state :archives 0)]
+      (core/rez state :corp eli)
+      (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
 (deftest iain-stirling-credits
   ;; Iain Stirling - Gain 2 credits when behind
@@ -1022,15 +1038,20 @@
   ;; Spark Agency - Rezzing advertisements
   (do-game
     (new-game
-      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 2)])
+      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 3)])
       (default-runner))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
     (let [lc1 (get-content state :remote1 0)
-          lc2 (get-content state :remote2 0)]
+          lc2 (get-content state :remote2 0)
+          lc3 (get-content state :remote3 0)]
       (core/rez state :corp lc1)
       (is (= 4 (:credit (get-runner)))
           "Runner lost 1 credit from rez of advertisement (Corp turn)")
+      (core/rez state :corp lc3)
+      (is (= 4 (:credit (get-runner)))
+          "Runner did not lose credit from second Spark rez")
       (take-credits state :corp)
       (run-on state "Server 1")
       (core/rez state :corp lc2)
