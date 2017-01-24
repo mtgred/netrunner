@@ -515,11 +515,12 @@
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
-             :msg "force the Runner to trash 1 card from their Grip at random"
-             :effect (effect (trash (first (shuffle (:hand runner)))))}]
+             :effect (effect (trash (first (shuffle (:hand runner)))))
+             :msg (msg "force the Runner to trash 1 card from their Grip at random. Trashes: "
+                       (:title (first (:discard runner))))}]
      {:events {:searched-stack pp
                :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
-                                                        (pos? (count (:hand runner))))))}})
+                                                     (pos? (count (:hand runner))))))}})
 
    "Philotic Entanglement"
    {:interactive (req true)
@@ -760,11 +761,23 @@
 
    "Underway Renovation"
    {:install-state :face-up
-    :events {:advance {:req (req (= (:cid card) (:cid target)))
-                       :msg (msg "trash the top " (if (>= (:advance-counter (get-card state card)) 4) "2 cards" "card")
-                                 " of the Runner's Stack")
+    :events {:advance {:req (req (= (:cid card) (:cid target))) 
+                       :msg (msg (let [deck (:deck runner)] 
+                         (if (> (count deck) 0) 
+                           (if (>= (:advance-counter (get-card state card)) 4) 
+                             (str "trash the top 2 cards of the Runner's stack:  " (join ", " (map :title (take 2 deck)))) 
+                             (str "trash the top card of the Runner's stack:  " (:title (first deck)))) 
+                         "trash from the Runner's stack but it is empty")))
                        :effect (effect (mill :runner
                                              (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
+
+;   "Underway Renovation"
+;   {:install-state :face-up
+;    :events {:advance {:req (req (= (:cid card) (:cid target)))
+;                       :msg (msg "trash the top " (if (>= (:advance-counter (get-card state card)) 4) "2 cards" "card")
+;                                 " of the Runner's Stack")
+;                       :effect (effect (mill :runner
+;                                             (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"
