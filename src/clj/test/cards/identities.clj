@@ -147,6 +147,30 @@
         (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner)))))))))
 
+(deftest chronos-protocol-employee-strike
+  ;; Chronos Protocol - Issue #1958 also affects Chronos Protocol
+  (do-game
+    (new-game
+      (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 3) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (run-on state :hq)
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-subroutine state :corp pup 0)
+      (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
+      (card-subroutine state :corp pup 0)
+      (is (= 2 (count (:discard (get-runner)))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Scrubbed")
+      (run-on state :hq)
+      (card-subroutine state :corp pup 0)
+      (is (not (empty? (:prompt (get-corp)))) "Employee Strike out of play - Ability turned on correctly"))))
+
 (deftest edward-kim
   ;; Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives
   (do-game
