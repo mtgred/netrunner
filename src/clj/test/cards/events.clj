@@ -509,6 +509,23 @@
       (is (= 0 (count (get-in @state [:runner :rig :program]))))
       (is (= 11 (count (:discard (get-runner))))))))
 
+(deftest freedom-through-equality
+  ;; Move Freedom Through Equality to runner score on another steal
+  ;; Check only one current used
+  (do-game
+    (new-game (default-corp [(qty "Project Beale" 1)])
+              (default-runner [(qty "\"Freedom Through Equality\"" 2) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "\"Freedom Through Equality\"")
+    (play-from-hand state :runner "\"Freedom Through Equality\"")
+    (prompt-choice :runner "Steal")
+    (is (= 2 (count (:scored (get-runner)))) "Freedom Through Equality moved to score area")
+    (is (= 3 (:agenda-point (get-runner))) "Freedom Through Equality for 1 agenda point")))
+
+
 (deftest freelance-coding-contract
   ;; Freelance Coding Contract - Gain 2 credits per program trashed from Grip
   (do-game

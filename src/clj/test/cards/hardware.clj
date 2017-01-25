@@ -5,6 +5,14 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest akamatsu-mem
+  ;; Akamatsu Mem Chip - Gain 1 memory
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Akamatsu Mem Chip" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Akamatsu Mem Chip")
+    (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -139,6 +147,26 @@
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
+(deftest cybersolutions-mem-chip
+  ;; CyberSolutions Mem Chip- Gain 2 memory
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "CyberSolutions Mem Chip" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "CyberSolutions Mem Chip")
+    (is (= 6 (:memory (get-runner))) "Gain 2 memory")))
+
+(deftest desperado
+  ;; Desperado - Gain 1 MU and gain 1 credit on successful run
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Desperado" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Desperado")
+    (run-empty-server state :archives)
+    (is (= 5 (:memory (get-runner))) "Gain 1 memory")
+    (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
+
 (deftest dinosaurus-strength-boost-mu-savings
   ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
   (do-game
@@ -176,6 +204,26 @@
     (is (:run @state) "New run started")
     (is (= [:rd] (:server (:run @state))) "Running on R&D")
     (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+
+(deftest dorm-computer
+  ;; make a run and avoid all tags for the remainder of the run
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Dorm Computer" 1)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner dorm 0)
+      (prompt-choice :runner "Server 1")
+      (run-empty-server state "Server 1")
+      (is (:run @state) "New run started")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (is (= 3 (get-counters (refresh dorm) :power))))
+      ))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
