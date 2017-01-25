@@ -941,9 +941,11 @@
       (is (:runner-phase-12 @state) "Runner in Step 1.2")
       (card-ability state :runner p 0)
       (prompt-choice :runner "Archives")
+      (card-ability state :runner j 0)
+      (prompt-choice :runner "Archives")
+      (run-successful state)
       (core/end-phase-12 state :runner nil)
-      (prompt-choice :runner "No")
-      (is (empty? (:prompt (get-runner))) "No second prompt for Patron"))))
+      (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already"))))
 
 (deftest professional-contacts
   ;; Professional Contacts - Click to gain 1 credit and draw 1 card
