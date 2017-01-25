@@ -182,6 +182,22 @@
     (take-credits state :corp)
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
 
+(deftest bhagat
+  ;; Bhagat - only trigger on first run
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)])
+              (default-runner [(qty "Bhagat" 1)]))
+    (starting-hand state :corp [])
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (play-from-hand state :runner "Bhagat")
+    (run-empty-server state :hq)
+    (is (empty? (:discard (get-corp))) "Bhagat did not trigger on second successful run")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game

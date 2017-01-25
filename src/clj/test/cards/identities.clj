@@ -147,6 +147,30 @@
         (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner)))))))))
 
+(deftest chronos-protocol-employee-strike
+  ;; Chronos Protocol - Issue #1958 also affects Chronos Protocol
+  (do-game
+    (new-game
+      (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 3) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (run-on state :hq)
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-subroutine state :corp pup 0)
+      (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
+      (card-subroutine state :corp pup 0)
+      (is (= 2 (count (:discard (get-runner)))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Scrubbed")
+      (run-on state :hq)
+      (card-subroutine state :corp pup 0)
+      (is (not (empty? (:prompt (get-corp)))) "Employee Strike out of play - Ability turned on correctly"))))
+
 (deftest edward-kim
   ;; Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives
   (do-game
@@ -250,6 +274,42 @@
     (run-empty-server state "HQ")
     (prompt-choice :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
+
+(deftest haas-bioroid-architects-of-tomorrow
+  ;; Architects of Tomorrow - prompt to rez after passing bioroid
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Eli 1.0" "Archives")
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 0))
+    (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rezzing Eli 1.0")
+    (run-continue state)
+    (prompt-select :corp (get-ice state :hq 0))
+    (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
+
+(deftest haas-bioroid-engineering-the-future-employee-strike
+  ;; EtF - interaction with Employee Strike
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Engineering the Future" [(qty "Eli 1.0" 3) (qty "Paywall Implementation" 1)])
+      (default-runner [(qty "Employee Strike" 1)]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))) "Corp has 8 credits at turn end")
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (play-from-hand state :corp "Paywall Implementation")
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 9 (:credit (get-corp))) "Corp gained 1cr from EtF")))
 
 (deftest haas-bioroid-stronger-together
   ;; Stronger Together - +1 strength for Bioroid ice
@@ -369,7 +429,7 @@
     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest jinteki-replicating-perfection-employee-strike
-  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313.
+  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313 and #1956.
   (do-game
     (new-game
       (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
@@ -378,7 +438,9 @@
     (take-credits state :corp)
     (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
     (play-from-hand state :runner "Employee Strike")
-    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")
+    (play-from-hand state :runner "Scrubbed")
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
 (deftest kate-mac-mccaffrey-discount
   ;; Kate 'Mac' McCaffrey - Install discount
@@ -1002,15 +1064,20 @@
   ;; Spark Agency - Rezzing advertisements
   (do-game
     (new-game
-      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 2)])
+      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 3)])
       (default-runner))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
     (let [lc1 (get-content state :remote1 0)
-          lc2 (get-content state :remote2 0)]
+          lc2 (get-content state :remote2 0)
+          lc3 (get-content state :remote3 0)]
       (core/rez state :corp lc1)
       (is (= 4 (:credit (get-runner)))
           "Runner lost 1 credit from rez of advertisement (Corp turn)")
+      (core/rez state :corp lc3)
+      (is (= 4 (:credit (get-runner)))
+          "Runner did not lose credit from second Spark rez")
       (take-credits state :corp)
       (run-on state "Server 1")
       (core/rez state :corp lc2)

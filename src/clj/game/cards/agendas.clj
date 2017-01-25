@@ -62,7 +62,7 @@
    "Advanced Concept Hopper"
    {:events
     {:run
-     {:req (req (first-event state side :run))
+     {:req (req (first-event? state side :run))
       :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
                       (continue-ability
                         {:player :corp

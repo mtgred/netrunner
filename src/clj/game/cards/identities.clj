@@ -124,11 +124,11 @@
     {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
-     {:once :per-turn
-      :delayed-completion true
+     {:delayed-completion true
       :req (req (and (= target :net)
                      (corp-can-choose-damage? state)
-                     (> (last targets) 0)))
+                     (> (last targets) 0)
+                     (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
       :effect (req (damage-defer state side :net (last targets))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
@@ -157,6 +157,8 @@
                              :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
                            card nil))))}}
+    :req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
+    :effect (effect (enable-corp-damage-choice))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
@@ -201,8 +203,10 @@
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:silent (req true)
-                              :msg "gain 2 [Credits]" :once :per-turn
-                              :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
+                              :req (req (and (= target :hq)
+                                             (first-successful-run-on-server? state :hq)))
+                              :msg "gain 2 [Credits]"
+                              :effect (effect (gain :credit 2)) }}}
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:flags {:slow-remote-access (req (not (:disabled card)))}
@@ -224,16 +228,16 @@
                    true))]
      {:events {:agenda-stolen
                {:effect (effect (register-turn-flag! card :can-steal haarp))}}
-      :effect (req (when-not (first-event state side :agenda-stolen)
+      :effect (req (when-not (first-event? state side :agenda-stolen)
                      (register-turn-flag! state side card :can-steal haarp)))
       :leave-play (effect (clear-turn-flag! card :can-steal))})
 
    "Haas-Bioroid: Architects of Tomorrow"
    {:events {:pass-ice
-             {:once :per-turn
-              :delayed-completion true
+             {:delayed-completion true
               :req (req (and (rezzed? target)
-                             (has-subtype? target "Bioroid")))
+                             (has-subtype? target "Bioroid")
+                             (first-event? state :corp :pass-ice)))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
                                 {:prompt "Choose a bioroid to rez" :player :corp
@@ -246,7 +250,8 @@
                                card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
-   {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
+   {:events {:corp-install {:req (req (first-event? state corp :corp-install))
+                            :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
    "Haas-Bioroid: Stronger Together"
@@ -274,9 +279,9 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:silent (req (not (and (first-event state side :runner-install)
+             {:silent (req (not (and (first-event? state side :runner-install)
                                      (some #(is-type? % (:type target)) (:hand runner)))))
-              :req (req (and (first-event state side :runner-install)
+              :req (req (and (first-event? state side :runner-install)
                              (some #(is-type? % (:type target)) (:hand runner))))
               :once :per-turn
               :delayed-completion true
@@ -320,7 +325,7 @@
    {:events {:pre-start-game {:effect draft-points-target}
              :pre-install {:req (req (and (has-most-faction? state :runner "Shaper")
                                           (pos? (count (:deck runner)))
-                                          (first-event state side :pre-install)))
+                                          (first-event? state side :pre-install)))
                            :msg "draw 1 card"
                            :once :per-turn
                            :effect (effect (draw 1))}}}
@@ -354,6 +359,9 @@
            :req (req (is-central? (:server run)))
            :effect (req (apply enable-run-on-server
                                state card (map first (get-remotes @state))))}}
+    :req (req (empty? (let [successes (turn-events state side :successful-run)]
+                        (filter #(is-central? %) successes))))
+    :effect (req (apply prevent-run-on-server state card (map first (get-remotes @state))))
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes @state))))}
 
    "Jinteki Biotech: Life Imagined"
@@ -405,12 +413,17 @@
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Ken \"Express\" Tenma: Disappeared Clone"
-   {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
-                          :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   {:events {:play-event {:req (req (and (has-subtype? target "Run")
+                                         (empty? (filter #(has-subtype? % "Run")
+                                                         ;; have to flatten because each element is a list containing
+                                                         ;; the Event card that was played
+                                                         (flatten (turn-events state :runner :play-event))))))
+                          :msg "gain 1 [Credits]"
+                          :effect (effect (gain :credit 1))}}}
 
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
-             {:once :per-turn
+             {:req (req (first-event? state :corp :pass-ice))
               :delayed-completion true
               :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
                              (continue-ability state side
@@ -505,7 +518,9 @@
     :leave-play (effect (lose :hand-size-modification 1))}
 
    "Near-Earth Hub: Broadcast Center"
-   {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
+   {:events {:server-created {:req (req (first-event? state :corp :server-created))
+                              :msg "draw 1 card"
+                              :effect (effect (draw 1))}}}
 
    "Nero Severn: Information Broker"
    {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
@@ -593,9 +608,9 @@
              :run-ends {:effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}}}
 
    "Pālanā Foods: Sustainable Growth"
-   {:events {:runner-draw {:req (req (pos? target))
+   {:events {:runner-draw {:req (req (and (first-event? state :corp :runner-draw)
+                                          (pos? target)))
                            :msg "gain 1 [Credits]"
-                           :once :per-turn
                            :effect (effect (gain :corp :credit 1))}}}
 
    "Quetzal: Free Spirit"
@@ -625,7 +640,8 @@
    {:events {:successful-run
              {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
               :delayed-completion true
-              :req (req (= target :hq)) :once :per-turn
+              :req (req (and (= target :hq)
+                             (first-successful-run-on-server? state :hq)))
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
                                                  :effect (effect (expose eid target)) :msg "expose 1 card"
                                                  :delayed-completion true }
@@ -633,8 +649,9 @@
 
    "Spark Agency: Worldswide Reach"
    {:events
-    {:rez {:req (req (has-subtype? target "Advertisement"))
-           :once :per-turn
+    {:rez {:req (req (and (has-subtype? target "Advertisement")
+                          (empty? (filter #(has-subtype? % "Advertisement")
+                                          (flatten (turn-events state :corp :rez))))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
