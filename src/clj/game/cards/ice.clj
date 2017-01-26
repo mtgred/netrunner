@@ -727,6 +727,26 @@
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
+   "Herald"
+   {:subroutines [(gain-credits 2)
+                  {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
+                   :msg (msg "place 1 advancement token on " (card-str state target))
+                   :choices {:req can-be-advanced?}
+                   :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}]
+    :access {:delayed-completion true
+             :req (req (not= (first (:zone card)) :discard))
+             :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
+                             (continue-ability
+                               :runner {:optional
+                                        {:player :runner
+                                         :prompt "You are encountering Heralds. Allow its subroutines to fire?"
+                                         :priority 1
+                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                       (play-subroutine eid {:card card :subroutine 0}))}
+                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                      (effect-completed eid))}}}
+                              card nil))}}
+
    "Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect (effect (lose :runner :click 1))}]}
