@@ -13,7 +13,7 @@
   ([state side eid? card?] (if (:eid eid?)
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
-  ([state side eid {:keys [title] :as card} {:keys [targets extra-cost no-additional-cost]}]
+  ([state side eid {:keys [title] :as card} {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
            additional-cost (if (and (has-subtype? card "Double")
@@ -34,10 +34,15 @@
                           (get-in @state [side :register :cannot-run])))
                 (not (and (has-subtype? card "Priority")
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         (if-let [cost-str (pay state side card :credit (:cost card) extra-cost
-                                  (when-not no-additional-cost additional-cost))] ; play cost can be paid
+         (if-let [cost-str (pay state side card :credit (if ignore-cost 0 (:cost card)) extra-cost
+                                (when-not (or ignore-cost no-additional-cost)
+                                  additional-cost))]
            (let [c (move state side (assoc card :seen true) :play-area)]
-             (system-msg state side (str (build-spend-msg cost-str "play") title))
+             (system-msg state side (str (if ignore-cost
+                                           "play "
+                                           (build-spend-msg cost-str "play"))
+                                         title
+                                         (when ignore-cost " at no cost")))
              (play-sfx state side "play-instant")
              (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]

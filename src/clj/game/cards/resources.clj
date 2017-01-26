@@ -1070,8 +1070,7 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
-                                (< 0 (count (filter #(is-type? % "Event")
-                                                    (get-in @state [:runner :discard]))))))
+                                (< 0 (count (filter #(is-type? % "Event") (:discard runner))))))
                  :prompt "Choose an event to play"
                  :msg (msg "play " (:title target))
                  :show-discard true
