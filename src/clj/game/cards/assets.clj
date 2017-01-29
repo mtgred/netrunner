@@ -591,8 +591,9 @@
 
    "Jeeves Model Bioroids"
     (let [ability {:label "Gain [Click]"
-                 :msg "gain [Click]" :once :per-turn
-                 :effect (effect (gain :click 1))}
+                   :msg "gain [Click]" :once :per-turn
+                   :effect (effect (gain :click 1))
+                   }
 
           jeeves  (fn [eventkey]
                     {:effect (req (do (swap! state update-in [:jeeves] conj (first eventkey)))
@@ -604,7 +605,9 @@
 
     {:abilities  [ability]
 
-    :events {:corp-click-credit (jeeves [:corp-click-credit])
+     :leave-play (req(swap! state dissoc :jeeves))
+
+     :events {:corp-click-credit (jeeves [:corp-click-credit])
              :corp-click-draw (jeeves [:corp-click-draw])
              :corp-click-install (jeeves [:corp-click-install])
              :advance (jeeves [:advance])
@@ -615,7 +618,6 @@
                                 :once :per-turn
                                 :msg (msg "gain a [Click]")}
              :corp-turn-begins {:effect (req(swap! state dissoc :jeeves))}
-
              ;add one more for using a card power -eg. PAD factory
              }})
 
