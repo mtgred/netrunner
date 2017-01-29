@@ -1115,12 +1115,12 @@
       (default-runner [(qty "Rumor Mill" 1)]))
     (core/gain state :corp :credit 100 :click 100 :bad-publicity 1)
     (core/draw state :corp 100)
-    (play-from-hand state :corp "Caprice Nisei" "New remote")
-    (play-from-hand state :corp "Chairman Hiro" "New remote")
-    (play-from-hand state :corp "Cybernetics Court" "New remote")
-    (play-from-hand state :corp "Elizabeth Mills" "New remote")
-    (play-from-hand state :corp "Project Atlas" "New remote")
-    (play-from-hand state :corp "Ibrahim Salem" "New remote")
+    (play-from-hand state :corp "Caprice Nisei" "New remote")     ;; Remote 1
+    (play-from-hand state :corp "Chairman Hiro" "New remote")     ;; Remote 2
+    (play-from-hand state :corp "Cybernetics Court" "New remote") ;; Remote 3
+    (play-from-hand state :corp "Elizabeth Mills" "New remote")   ;; Remote 4
+    (play-from-hand state :corp "Project Atlas" "New remote")     ;; Remote 5
+    (play-from-hand state :corp "Ibrahim Salem" "New remote")     ;; Remote 6
     (core/move state :corp (find-card "Director Haas" (:hand (get-corp))) :deck)
     (core/rez state :corp (get-content state :remote2 0))
     (core/rez state :corp (get-content state :remote3 0))
@@ -1152,21 +1152,34 @@
     (is (empty? (:prompt (get-corp))) "Caprice prompt is not showing")
     (run-jack-out state)
 
-    ;; Trashable execs
+    ;; Trashable assets
     (run-empty-server state :remote2)
     (prompt-choice :runner "Yes")
     (is (empty? (:scored (get-runner))) "Chairman Hiro not added to runner's score area")
+    (is (= 0 (:hand-size-modification (get-runner))) "Runner has original hand size")
     (run-jack-out state)
     (run-on state "R&D")
     (run-successful state)
     (prompt-choice :runner "Yes")
     (is (empty? (:scored (get-runner))) "Director Haas not added to runner's score area")
+    (run-empty-server state :remote3)
+    (prompt-choice :runner "Yes")
+    (is (= 0 (:hand-size-modification (get-corp))) "Corp has original hand size")
     (take-credits state :runner)
+    (core/move state :corp (find-card "Cybernetics Court" (:discard (get-corp))) :hand)
+    (play-from-hand state :corp "Cybernetics Court" "Server 3")
+    (core/rez state :corp (get-content state :remote3 0))
+    (core/move state :corp (find-card "Chairman Hiro" (:discard (get-corp))) :hand)
+    (play-from-hand state :corp "Chairman Hiro" "Server 2")
+    (core/rez state :corp (get-content state :remote2 0))
+    (is (= 0 (:hand-size-modification (get-corp))) "Corp has original hand size before trashing RM")
+    (is (= 0 (:hand-size-modification (get-runner))) "Corp has original hand size before trashing RM")
 
     ;; Trash RM, make sure everything works again
     (play-from-hand state :corp "Housekeeping")
-    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
-    (is (= 0 (:hand-size-modification (get-runner))) "Runner has +0 hand size")
+    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size after trashing RM")
+    (is (= -2 (:hand-size-modification (get-runner))) "Runner has -2 hand size after trashing RM")
+    (is (= 1 (:bad-publicity (get-corp))) "Corp still has 1 bad publicity")
 
     (core/derez state :corp (get-content state :remote4 0))
     (core/rez state :corp (get-content state :remote4 0))

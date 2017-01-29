@@ -205,6 +205,7 @@
    "Chairman Hiro"
    {:effect (effect (lose :runner :hand-size-modification 2))
     :leave-play (effect (gain :runner :hand-size-modification 2))
+    :flags {:constant-effect true}
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -319,7 +320,9 @@
                  :effect (effect (trash target {:unpreventable true}))}]}
 
    "Cybernetics Court"
-   {:in-play [:hand-size-modification 4]}
+   {:effect (effect (gain :corp :hand-size-modification 4))
+    :leave-play (effect (lose :corp :hand-size-modification 4))
+     :flags {:constant-effect true}}
 
    "Daily Business Show"
    {:events {:pre-corp-draw

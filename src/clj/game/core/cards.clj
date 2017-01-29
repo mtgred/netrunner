@@ -233,4 +233,6 @@
     (let [c (dissoc card :disabled)]
       (update! state side c)
       (when (active? card)
-        (card-init state side c false)))))
+        (if (card-flag? card :constant-effect true)
+          (card-init state side c true)
+          (card-init state side c false))))))
