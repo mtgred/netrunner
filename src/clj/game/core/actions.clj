@@ -15,7 +15,8 @@
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
+      ("ICE" "Upgrade" "Asset" "Agenda") (do (corp-install state side card server {:extra-cost [:click 1]})
+                                             (trigger-event state side :corp-click-install card)))
     (trigger-event state side :play card)))
 
 (defn shuffle-deck
@@ -256,6 +257,7 @@
                        {:prompt "Choose a resource to trash"
                         :choices {:req #(is-type? % "Resource")}
                         :effect (effect (trash target)
+                                        (trigger-event state side :corp-click-trash nil)
                                         (system-msg (str (build-spend-msg cost-str "trash")
                                                          (:title target))))} nil nil))))
 
@@ -264,6 +266,7 @@
   [state side args]
   (when-let [cost (pay state side nil :click 3)]
     (purge state side)
+    (trigger-event state side :corp-click-purge nil)
     (let [spent (build-spend-msg cost "purge")
           message (str spent "all virus counters")]
       (system-msg state side message))

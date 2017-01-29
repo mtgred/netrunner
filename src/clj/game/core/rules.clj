@@ -57,6 +57,13 @@
                    (when (has-subtype? card "Terminal")
                      (lose state side :click (-> @state side :click))
                      (swap! state assoc-in [:corp :register :terminal] true))))
+             ;; This is for Jeeves to see two events for a double
+             (when (and (has-subtype? card "Double")
+                      (not (get-in @state [side :register :double-ignore-additional])))
+               (trigger-event state side (if (= side :corp) :pay-double-operation :pay-double-event) c))
+             ;; This is for Jeeves to not trigger from Accelerated Diagnostics
+             (when-not (or ignore-cost no-additional-cost)
+               (trigger-event state side (if (= side :corp) :pay-click-operation :pay-click-event) c))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c))
            ;; could not pay the card's price; mark the effect as being over.
            (effect-completed state side eid card))

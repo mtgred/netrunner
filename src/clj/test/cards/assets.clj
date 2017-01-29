@@ -659,6 +659,36 @@
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
 
+(deftest jeeves-model-bioroids
+  (do-game
+    (new-game (default-corp [(qty "Jeeves Model Bioroids" 1) (qty "TGTBT" 1)])
+              (default-runner [(qty "Personal Workshop" 3)]))
+    (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Personal Workshop")
+    (play-from-hand state :runner "Personal Workshop")
+    (play-from-hand state :runner "Personal Workshop")
+    (take-credits state :runner)
+    ;click for credits
+    (take-credits state :corp 3)
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;click to purge
+    (core/do-purge state :corp 3)
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;click to advance
+    (core/advance state :corp (get-content state :remote2 0))
+    (core/advance state :corp (get-content state :remote2 0))
+    (core/advance state :corp (get-content state :remote2 0))
+    (is (= 1 (:click (get-corp))))
+    ; trash resources - tbc
+    (core/gain state :runner :tag 1)))
+
 (deftest launch-campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
