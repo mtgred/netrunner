@@ -509,7 +509,9 @@
 
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+    :events {:rez {:req (req (and (not (ice? target))
+                                  (< 0 (count (:hand corp)))
+                                  (= (:cid card) (:cid(first(:current(:runner @state)))))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
@@ -1050,7 +1052,8 @@
                        (enable-card state :corp c)))
     :effect (req (doseq [c (rumor state)]
                    (disable-card state :corp c)))
-    :events {:corp-install {:req (req (eligible? target))
+    :events {:corp-install {:req (req (and (eligible? target)
+                                           (= (:cid card) (:cid(first(:current(:runner @state)))))))
                             :effect (effect (disable-card :corp target))}}})
 
    "Run Amok"

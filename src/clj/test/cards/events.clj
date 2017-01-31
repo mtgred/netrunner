@@ -561,6 +561,29 @@
    (play-from-hand state :runner "Game Day")
    (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
+(deftest hacktivist-meeting
+  ;; Trash a random card from corp hand while active
+  ;; Make sure it is not active when hosted on Peddler
+  (do-game
+    (new-game (default-corp [(qty "Jeeves Model Bioroids" 2)
+                             (qty "Jackson Howard" 2)])
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Hacktivist Meeting" 3)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Hacktivist Meeting"])
+    (play-from-hand state :runner "Street Peddler")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (let [jeeves (get-content state :remote1 0)
+          jackson (get-content state :remote2 0)]
+      (core/rez state :corp jeeves)
+      (is (= 0 (count (:discard (get-corp)))) "Nothing discarded to rez Jeeves - Hacktivist not active")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hacktivist Meeting")
+      (core/rez state :corp jackson)
+      (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active"))))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
@@ -1173,6 +1196,22 @@
     (is (= 0 (:bad-publicity (get-corp))) "Corp has 0 bad publicity")
     (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
     (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
+
+(deftest rumor-mill-street-peddler
+  ;; Make sure Rumor Mill is not active when hosted on Peddler
+  (do-game
+    (new-game (default-corp [(qty "Jeeves Model Bioroids" 1)])
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Rumor Mill" 3)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler"])
+    (play-from-hand state :runner "Street Peddler")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
+    (let [jeeves (get-content state :remote1 0)]
+      (core/rez state :corp jeeves)
+      (card-ability state :corp jeeves 0)
+      (is (= 3 (:click (get-corp))) "Corp has 3 clicks - Jeeves working ok"))))
 
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
