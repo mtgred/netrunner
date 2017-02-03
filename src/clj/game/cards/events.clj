@@ -19,7 +19,8 @@
 
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
-             {:trace {:base 0
+             {:trace {:req (req (is-active-current? state card))
+                      :base 0
                       :msg (msg (str "Runner gains " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))
                       :unsuccessful {:effect (effect (gain :runner :credit
                                                            (+ (:agenda-point runner) (:agenda-point corp))))
@@ -487,7 +488,8 @@
                                  (system-msg state side (str "trashes " (join ", " (map :title topten)))))))} card nil)))}
 
    "\"Freedom Through Equality\""
-   {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
+   {:events {:agenda-stolen {:req (req (is-active-current? state card))
+                             :msg "add it to their score area as an agenda worth 1 agenda point"
                              :effect (effect (as-agenda :runner card 1))}}}
 
    "Freelance Coding Contract"
@@ -509,7 +511,9 @@
 
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+    :events {:rez {:req (req (and (not (ice? target))
+                                  (< 0 (count (:hand corp)))
+                                  (is-active-current? state card)))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
@@ -1050,7 +1054,8 @@
                        (enable-card state :corp c)))
     :effect (req (doseq [c (rumor state)]
                    (disable-card state :corp c)))
-    :events {:corp-install {:req (req (eligible? target))
+    :events {:corp-install {:req (req (and (eligible? target)
+                                           (is-active-current? state card)))
                             :effect (effect (disable-card :corp target))}}})
 
    "Run Amok"
@@ -1101,7 +1106,9 @@
                  {:encounter-ice {:once :per-turn
                                   :effect (effect (update! (assoc card :scrubbed-target target))
                                                   (update-ice-strength current-ice))}
-                  :pre-ice-strength {:req (req (= (:cid target) (get-in card [:scrubbed-target :cid])))
+                  :pre-ice-strength {:req (req (and
+                                                 (= (:cid target) (get-in card [:scrubbed-target :cid]))
+                                                 (is-active-current? state card)))
                                      :effect (effect (ice-strength-bonus -2 target))}
                   :run-ends sc})}
 
@@ -1182,7 +1189,7 @@
     :effect (req (add-counter state :runner target :virus 2))}
 
    "System Outage"
-   {:events {:corp-draw {:req (req (not (first-event? state side :corp-draw)))
+   {:events {:corp-draw {:req (req (and (is-active-current? state card) (not (first-event? state side :corp-draw))))
                          :msg "force the Corp to lose 1 [Credits]"
                          :effect (effect (lose :corp :credit 1))}}}
 

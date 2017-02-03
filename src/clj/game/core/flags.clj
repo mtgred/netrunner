@@ -214,6 +214,12 @@
   [card]
   (= (:zone card) [:discard]))
 
+(defn is-active-current?
+  "Checks if the specifified card is the active current"
+  [state card]
+  (or (= (:cid card) (:cid (first (:current (:runner @state)))))
+      (= (:cid card) (:cid (first (:current (:corp @state)))))))
+
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
   [state side card]
