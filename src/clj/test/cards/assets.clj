@@ -1075,6 +1075,19 @@
     (play-from-hand state :corp "Pup" "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
 
+(deftest shock
+  ;; do 1 net damage on access
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (run-empty-server state "Archives")
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 1 net damage")))
+
 (deftest snare
   ;; pay 4 on access, and do 3 net damage and give 1 tag
   (do-game
