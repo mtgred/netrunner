@@ -763,11 +763,13 @@
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target))) 
                        :msg (msg (let [deck (:deck runner)] 
-                         (if (> (count deck) 0) 
-                           (if (>= (:advance-counter (get-card state card)) 4) 
-                             (str "trash the top 2 cards of the Runner's stack:  " (join ", " (map :title (take 2 deck)))) 
-                             (str "trash the top card of the Runner's stack:  " (:title (first deck)))) 
-                         "trash from the Runner's stack but it is empty")))
+                         (cond
+                           (and (> (count deck) 0)  (>= (:advance-counter (get-card state card)) 4) )
+                             (str "trash the top 2 cards of the Runner's stack:  " (join ", " (map :title (take 2 deck))))
+                           (and (> (count deck) 0)  (< (:advance-counter (get-card state card)) 4) )
+                             (str "trash the top card of the Runner's stack:  " (:title (first deck)))
+                           (= (count deck) 0)  
+                             "trash from the Runner's stack but it is empty")))
                        :effect (effect (mill :runner
                                              (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
 
