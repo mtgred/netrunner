@@ -79,18 +79,25 @@
   ;; Another Day, Another Paycheck
   (do-game
     (new-game
-      (default-corp [(qty "Project Atlas" 2)])
-      (default-runner [(qty "Another Day, Another Paycheck" 1)]))
+      (default-corp [(qty "Project Atlas" 3)])
+      (default-runner [(qty "Street Peddler" 1) (qty "Another Day, Another Paycheck" 2)]))
+    (starting-hand state :runner ["Street Peddler" "Another Day, Another Paycheck"])
     (play-from-hand state :corp "Project Atlas" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
     (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Steal")
+    (is (= 5 (:credit (get-runner))) "No trace, no gain")
     (play-from-hand state :runner "Another Day, Another Paycheck")
     (run-empty-server state :hq)
     (prompt-choice :runner "Steal")
     (prompt-choice :corp 0)
     (prompt-choice :runner 1)
-    ;; 4 credits after trace, should gain 4
-    (is (= 8 (:credit (get-runner))) "Runner gained 8 credits")))
+    ;; 4 credits after trace, gain 6
+    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")
+
+    ))
 
 (deftest apocalypse-hosting
   ;; Apocalypse - Ensure MU is correct and no duplicate cards in heap
@@ -513,18 +520,28 @@
   ;; Move Freedom Through Equality to runner score on another steal
   ;; Check only one current used
   (do-game
-    (new-game (default-corp [(qty "Project Beale" 1)])
-              (default-runner [(qty "\"Freedom Through Equality\"" 2) (qty "Sure Gamble" 1)]))
+    (new-game (default-corp [(qty "Project Beale" 2)])
+              (default-runner [(qty "Street Peddler" 1) (qty "\"Freedom Through Equality\"" 3) (qty "Sure Gamble" 1)]))
+    (starting-hand state :runner ["Street Peddler"
+                                  "\"Freedom Through Equality\""
+                                  "\"Freedom Through Equality\""
+                                  "Sure Gamble"])
+    (play-from-hand state :corp "Project Beale" "New remote")
     (play-from-hand state :corp "Project Beale" "New remote")
     (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
     (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (is (= 1 (count (:scored (get-runner)))) "Freedom Through Equality not moved from Peddler to score area")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state "Server 2")
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "\"Freedom Through Equality\"")
     (play-from-hand state :runner "\"Freedom Through Equality\"")
     (prompt-choice :runner "Steal")
-    (is (= 2 (count (:scored (get-runner)))) "Freedom Through Equality moved to score area")
-    (is (= 3 (:agenda-point (get-runner))) "Freedom Through Equality for 1 agenda point")))
-
+    (is (= 3 (count (:scored (get-runner)))) "Freedom Through Equality moved to score area")
+    (is (= 5 (:agenda-point (get-runner))) "Freedom Through Equality for 1 agenda point")))
 
 (deftest freelance-coding-contract
   ;; Freelance Coding Contract - Gain 2 credits per program trashed from Grip
@@ -737,6 +754,25 @@
     (run-continue state)
     (run-successful state)
     (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+
+(deftest interdiction
+  ;; Corp cannot rez non-ice cards during runner's turn
+  (do-game
+    (new-game (default-corp [(qty "Jeeves Model Bioroids" 1) (qty "Jackson Howard" 1)])
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Interdiction" 3)]))
+    (starting-hand state :runner ["Street Peddler" "Interdiction"])
+    (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (let [jeeves (get-content state :remote1 0)
+          jackson (get-content state :remote2 0)]
+      (core/rez state :corp jeeves)
+      (is (get-in (refresh jeeves) [:rezzed]) "Jeeves is rezzed.  Interdiction not active when on Peddler")
+      (play-from-hand state :runner "Interdiction")
+      (core/rez state :corp jackson)
+      (is (not (get-in (refresh jackson) [:rezzed])) "Jackson is not rezzed"))))
 
 (deftest ive-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
@@ -1213,6 +1249,28 @@
       (card-ability state :corp jeeves 0)
       (is (= 3 (:click (get-corp))) "Corp has 3 clicks - Jeeves working ok"))))
 
+(deftest scrubbed
+  ;; First piece of ice encountered each turn has -2 Strength for remainder of the run
+  (do-game
+    (new-game (default-corp [(qty "Turing" 1)])
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Scrubbed" 3)]))
+    (starting-hand state :runner ["Street Peddler" "Scrubbed"])
+    (play-from-hand state :corp "Turing" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (let [turing (get-ice state :hq 0)]
+      (core/rez state :corp turing)
+      (is (= 2 (:current-strength (refresh turing))))
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= 2 (:current-strength (refresh turing))) "Scrubbed not active when on Peddler")
+      (play-from-hand state :runner "Scrubbed")
+      (run-on state "HQ")
+      (run-continue state)
+      (is (= 0 (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
+      (run-successful state))))
+
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
   (do-game
@@ -1321,6 +1379,30 @@
       (play-from-hand state :runner "Surge")
       (prompt-select :runner gd)
       (is (= 3 (get-counters (refresh gd) :virus)) "Surge does not trigger on Gorman Drip"))))
+
+(deftest system-outage
+  ;; When Corp draws 1+ cards, it loses 1 if it is not the first time he or she has drawn cards this turn
+  (do-game
+    (new-game (default-corp [(qty "Turing" 10)])
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "System Outage" 3)]))
+    (starting-hand state :corp [])
+    (starting-hand state :runner ["Street Peddler" "System Outage"])
+    (take-credits state :corp) ; corp at 8cr
+    (play-from-hand state :runner "Street Peddler")
+    (take-credits state :runner)
+    (core/click-draw state :corp 1)
+    (is (= 8 (:credit (get-corp))) "1st card drawn for free - System Outage on Peddler")
+    (core/click-draw state :corp 1)
+    (is (= 8 (:credit (get-corp))) "2nd card drawn for free - System Outage on Peddler")
+    (take-credits state :corp) ; corp at 9cr
+    (is (= 9 (:credit (get-corp))) "Corp at 9")
+    (play-from-hand state :runner "System Outage")
+    (take-credits state :runner)
+    (core/click-draw state :corp 1)
+    (is (= 8 (:credit (get-corp))) "1st card drawn cost 1cr - System Outage active")
+    (core/click-draw state :corp 1)
+    (is (= 7 (:credit (get-corp))) "2nd card drawn cost 1cr - System Outage active")))
 
 (deftest test-run
   ;; Test Run - Programs hosted after install get returned to Stack. Issue #1081
