@@ -761,16 +761,21 @@
    "Underway Renovation"
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target))) 
-                       :msg (msg (let [deck (:deck runner)] 
+                       :msg (msg (let [deck (:deck runner)
+                                       anydeck? (pos? (count deck)) 
+                                       adv4? (>= (:advance-counter (get-card state card)))] 
                          (cond
-                           (and (pos? (count deck))  (>= (:advance-counter (get-card state card)) 4) )
-                             (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
-                           (and (pos? (count deck))  (< (:advance-counter (get-card state card)) 4) )
-                             (str "trash " (:title (first deck)) " from the Runner's stack")
-                           (zero? (count deck))  
-                             "trash from the Runner's stack but it is empty")))
+                           (and anydeck? adv4?)
+                           (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
+
+                           (and anydeck? (not adv4?) )
+                           (str "trash " (:title (first deck)) " from the Runner's stack")
+
+                           (false? anydeck?)  
+                           "trash from the Runner's stack but it is empty")))
+
                        :effect (effect (mill :runner
-                                             (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
+                                             (if (>= (:advance-counter (get-card state card)) 4)  2 1)))}}}
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"
