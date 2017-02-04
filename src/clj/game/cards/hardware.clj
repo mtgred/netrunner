@@ -146,7 +146,10 @@
                  :req (req (not (seq (get-in @state [:runner :locked :discard]))))
                  :choices {:req #(and (is-type? % "Program")
                                       (= (:zone %) [:discard]))}
-                 :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
+                 :effect (req (when (>= (:credit runner) (:cost target))
+                                    (do
+                                      (trash state side card {:cause :ability-cost})
+                                      (runner-install state side target))))}]}
 
    "Comet"
    {:in-play [:memory 1]
