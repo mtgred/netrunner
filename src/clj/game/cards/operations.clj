@@ -788,6 +788,26 @@
                                       :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                      card nil)))}
 
+    "Psychokinesis"
+    (letfn [(ad [i n adcard]
+             {:prompt "Select an agenda, asset, or upgrade to play"
+              :choices {:req #(and (= (:side %) "Corp")
+                                   (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                   (= (:zone %) [:play-area]))}
+              :msg (msg (corp-install-msg target))
+              :delayed-completion true
+              :effect (effect (corp-install state side nil nil))})]
+     {:delayed-completion true
+      :effect (req (let [n (count (filter #(#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                          (take 5 (:deck corp))))]
+                     (continue-ability state side
+                                       {:msg "look at the top 5 cards of R&D"
+                                        :delayed-completion true
+                                        :effect (req (doseq [c (take 5 (:deck corp))]
+                                                       (move state side c :play-area))
+                                                     (continue-ability state side (ad 1 n card) card nil))}
+                                       card nil)))})
+
    "Punitive Counterstrike"
    {:trace {:base 5 :msg "do meat damage equal to the number of agenda points stolen last turn"
             :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
