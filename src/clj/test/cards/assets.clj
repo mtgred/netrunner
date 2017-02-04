@@ -735,8 +735,7 @@
     (core/rez state :corp (get-content state :remote1 0))
     (run-empty-server state :archives)
     (prompt-choice :runner "Add News Team to score area")
-    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")
-    ))
+    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
 
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
