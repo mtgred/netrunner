@@ -1088,6 +1088,21 @@
     (run-empty-server state "Archives")
     (is (= 1 (count (:hand (get-runner)))) "Runner took 1 net damage")))
 
+(deftest shock-chairman-hiro
+  ;; issue #2319 - ensure :access flag is cleared on run end
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3) (qty "Chairman Hiro" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (is (not (:run @state)) "Run is complete")
+    (trash-from-hand state :corp "Chairman Hiro")
+    (is (= 2 (count (:discard (get-corp)))) "Hiro and Shock still in archives")
+    (is (= 0 (count (:scored (get-runner)))) "Hiro not scored by Runner")))
+
 (deftest snare
   ;; pay 4 on access, and do 3 net damage and give 1 tag
   (do-game
