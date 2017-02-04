@@ -579,7 +579,6 @@
           "Personality Profiles trashed card name is in log")
       (is (= 3 (count (:discard (get-runner))))))))
 
-
 (deftest personality-profiles-empty-hand
   ;; Personality Profiles - Ensure effects still fire with an empty hand, #1840
   (do-game

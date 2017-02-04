@@ -611,8 +611,8 @@
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
-                                   :msg (msg "trash " target " cards from their Stack and prevent " target " damage.  Trashes: "
-                                             (join ", " (map :title (take target (:deck runner)))))
+                                   :msg (msg "trash " (join ", " (map :title (take target (:deck runner))))
+                                             " from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)
                                                    (damage-prevent :brain target)
                                                    (mill :runner target)

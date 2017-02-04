@@ -516,11 +516,10 @@
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
              :effect (effect (trash (first (shuffle (:hand runner)))))
-             :msg (msg "force the Runner to trash 1 card from their Grip at random. Trashes: "
-                       (:title (first (:discard runner))))}]
+             :msg (msg "force the Runner to trash " (:title (first (:discard runner))) " from their Grip at random")}]
      {:events {:searched-stack pp
                :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
-                                                     (pos? (count (:hand runner))))))}})
+                                                        (pos? (count (:hand runner))))))}})
 
    "Philotic Entanglement"
    {:interactive (req true)
@@ -764,11 +763,11 @@
     :events {:advance {:req (req (= (:cid card) (:cid target))) 
                        :msg (msg (let [deck (:deck runner)] 
                          (cond
-                           (and (> (count deck) 0)  (>= (:advance-counter (get-card state card)) 4) )
-                             (str "trash the top 2 cards of the Runner's stack:  " (join ", " (map :title (take 2 deck))))
-                           (and (> (count deck) 0)  (< (:advance-counter (get-card state card)) 4) )
-                             (str "trash the top card of the Runner's stack:  " (:title (first deck)))
-                           (= (count deck) 0)  
+                           (and (pos? (count deck))  (>= (:advance-counter (get-card state card)) 4) )
+                             (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
+                           (and (pos? (count deck))  (< (:advance-counter (get-card state card)) 4) )
+                             (str "trash " (:title (first deck)) " from the Runner's stack")
+                           (zero? (count deck))  
                              "trash from the Runner's stack but it is empty")))
                        :effect (effect (mill :runner
                                              (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}

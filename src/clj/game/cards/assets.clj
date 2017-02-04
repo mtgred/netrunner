@@ -577,8 +577,7 @@
                   :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}
                 {:label "[Trash]: Trash the top card of the Runner's Stack"
-                 :msg (msg "trash the top card of the Runner's Stack: "
-                           (:title (first (:deck runner))))
+                 :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
 
