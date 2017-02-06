@@ -624,17 +624,18 @@
                         (and
                              (true? (:access @state))
                              (= (:cid (second (:pre-damage eventmap)))
-                                (:cid (first (:access eventmap)))))))
-                :effect (req (resolve-ability state side
-                                          {:prompt "Choose how much damage to prevent"
-                                           :priority 50
-                                           :choices {:number (req (min
-                                                                    (last (:pre-damage (into {} (reverse (get @state :turn-events)))))
-                                                                    (:credit runner)))}
-                                           :msg (msg "prevent " target " damage")
-                                           :effect (effect (damage-prevent :net target)
-                                                           (lose :credit target)
-                                                           (trash card {:cause :ability-cost}))} card nil))}]}
+                                (:cid (first (:post-access-card eventmap)))))))
+                :effect (req (let [eventmap (into {} (reverse (get @state :turn-events)))]
+                               (resolve-ability state side
+                                                {:prompt "Choose how much damage to prevent"
+                                                 :priority 50
+                                                 :choices {:number (req (min
+                                                                          (last (:pre-damage eventmap))
+                                                                          (:credit runner)))}
+                                                 :msg (msg "prevent " target " damage")
+                                                 :effect (effect (damage-prevent (first (:pre-damage eventmap))  target)
+                                                                 (lose :credit target)
+                                                                 (trash card {:cause :ability-cost}))} card nil)))}]}
 
    "Record Reconstructor"
    {:events
