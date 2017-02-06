@@ -438,6 +438,56 @@
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
 
+(deftest recon-drone
+  ;; trash and pay X to prevent that much damage from a card you are accessing
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1) (qty "House of Knives" 1)])
+              (default-runner [(qty "Recon Drone" 3) (qty "Sure Gamble" 3)]))
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 100)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (play-from-hand state :corp "Snare!" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (core/draw state :runner)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Recon Drone")
+    (play-from-hand state :runner "Recon Drone")
+    (let [rd1 (get-in @state [:runner :rig :hardware 0])
+          rd2 (get-in @state [:runner :rig :hardware 1])
+          hok (get-in @state [:corp :scored 0])]
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+        "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd1 0)
+      (prompt-choice :runner 3)
+      (prompt-choice :runner "Done")
+      (is (= 4 (count (:hand (get-runner)))) "Runner took no net damage")
+      ; fire HOK while accessing Snare!
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (card-ability state :corp hok 0)
+      ; Recon Drone ability won't fire as we are not accessing HOK
+      (card-ability state :runner rd2 0)
+      (prompt-choice :runner "Done")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
+      (core/lose state :runner :credit 100)
+      ; can only stop 1 damage due to credits
+      (core/gain state :runner :credit 1)
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd2 0)
+      (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to runner credits")
+      (prompt-choice :runner 1)
+      (prompt-choice :runner "Done")
+      (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
+      )))
+
 (deftest replicator-bazaar
   ;; Replicator - interaction with Bazaar. Issue #1511.
   (do-game

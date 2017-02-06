@@ -617,6 +617,25 @@
                                                    (mill :runner target)
                                                    (trash card {:cause :ability-cost}))} card nil)))}]}
 
+   "Recon Drone"
+   {:prevent {:damage [:net :brain :meat]}
+    ; eventmap uses reverse so we get the most recent event of each kind into map
+    :abilities [{:req (req (let [eventmap (into {} (reverse (get @state :turn-events)))]
+                        (and
+                             (true? (:access @state))
+                             (= (:cid (second (:pre-damage eventmap)))
+                                (:cid (first (:access eventmap)))))))
+                :effect (req (resolve-ability state side
+                                          {:prompt "Choose how much damage to prevent"
+                                           :priority 50
+                                           :choices {:number (req (min
+                                                                    (last (:pre-damage (into {} (reverse (get @state :turn-events)))))
+                                                                    (:credit runner)))}
+                                           :msg (msg "prevent " target " damage")
+                                           :effect (effect (damage-prevent :net target)
+                                                           (lose :credit target)
+                                                           (trash card {:cause :ability-cost}))} card nil))}]}
+
    "Record Reconstructor"
    {:events
     {:successful-run
