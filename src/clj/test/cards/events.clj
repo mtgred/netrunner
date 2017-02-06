@@ -95,9 +95,7 @@
     (prompt-choice :corp 0)
     (prompt-choice :runner 1)
     ;; 4 credits after trace, gain 6
-    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")
-
-    ))
+    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")))
 
 (deftest apocalypse-hosting
   ;; Apocalypse - Ensure MU is correct and no duplicate cards in heap

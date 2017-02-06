@@ -71,7 +71,7 @@
 
        ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
        (when (or (is-type? target "Operation")
-                 (and (is-type? target "Event") (false? facedown))
+                 (and (is-type? target "Event") (not facedown))
                  (and installed (card-is? target :side :runner))
                  (and installed (card-is? target :side :corp) (:rezzed target)))
          (when-let [events (:events tdef)]
