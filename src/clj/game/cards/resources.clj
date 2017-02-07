@@ -993,7 +993,10 @@
                                                                   (count from) from) card nil)
                      (do (clear-wait-prompt state :corp)
                          (effect-completed state side eid card)))))
-    :trash-effect {:effect (effect (mill :runner 3))}}
+    :trash-effect {:effect (effect (system-msg :runner (str "trashes "
+                                               (join ", " (map :title (take 3 (:deck runner))))
+                                               " from their Stack due to Rolodex being trashed"))
+                                       (mill :runner 3))}}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}

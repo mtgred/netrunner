@@ -659,6 +659,27 @@
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
 
+(deftest kala-ghoda
+  ; Kala Ghoda Real TV
+  (do-game
+    (new-game (default-corp [(qty "Kala Ghoda Real TV" 1)])
+              (default-runner) [(qty "Sure Gamble" 3)])
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (let [tv (get-content state :remote1 0)]
+      (core/rez state :corp tv)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp tv 0)
+      (prompt-choice :corp "Done")
+      (card-ability state :corp tv 1)
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (last-log-contains? state "Sure Gamble")
+          "Kala Ghoda did log trashed card names")
+      )))
+
 (deftest launch-campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
