@@ -995,6 +995,8 @@
     (is (= "Corroder" (:title (second (rest (rest (:deck (get-runner))))))))
     (is (= "Patron" (:title (second (rest (rest (rest (:deck (get-runner)))))))))
     (core/trash state :runner (get-resource state 0))
+    (is (last-log-contains? state "Sure Gamble, Desperado, Diesel")
+        "Rolodex did log trashed card names")
     (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
     (is (= "Corroder" (:title (first (:deck (get-runner))))))))
 

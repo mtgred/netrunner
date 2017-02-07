@@ -240,7 +240,7 @@
 
    "Architect"
    {:flags {:untrashable-while-rezzed true}
-    :subroutines [{:msg "look at the top 5 cards of R&D"
+    :subroutines [{:label "Look at the top 5 cards of R&D"
                    :prompt "Choose a card to install"
                    :priority true
                    :activatemsg "uses Architect to look at the top 5 cards of R&D"
@@ -390,6 +390,7 @@
    "Chiyashi"
    {:abilities [{:label "Trash the top 2 cards of the Runner's Stack"
                  :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
+                 :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
                  :effect (effect (mill :runner 2))}]
     :subroutines [(do-net-damage 2)
                   end-the-run]}

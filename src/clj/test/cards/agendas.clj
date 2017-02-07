@@ -575,6 +575,8 @@
     (let [chip (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+      (is (last-log-contains? state "Patron")
+          "Personality Profiles trashed card name is in log")
       (is (= 3 (count (:discard (get-runner))))))))
 
 (deftest personality-profiles-empty-hand
@@ -831,6 +833,8 @@
     (play-from-hand state :corp "Underway Renovation" "New remote")
     (let [ur (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh ur)})
+      (is (last-log-contains? state "Sure Gamble")
+          "Underway Renovation trashed card name is in log")
       (is (= 1 (count (:discard (get-runner)))) "1 card milled from Runner Stack")
       (play-from-hand state :corp "Shipment from SanSan")
       (prompt-choice :corp "2")
@@ -839,6 +843,8 @@
       (is (= 1 (count (:discard (get-runner)))) "No Runner mills; advancements were placed")
       (core/advance state :corp {:card (refresh ur)})
       (is (= 4 (:advance-counter (refresh ur))))
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble")
+          "Underway Renovation trashed card name is in log")
       (is (= 3 (count (:discard (get-runner)))) "2 cards milled from Runner Stack; 4+ advancements"))))
 
 (deftest vulcan-coverup
