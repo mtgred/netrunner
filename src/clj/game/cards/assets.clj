@@ -48,10 +48,11 @@
 
 (defn as-trashed-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
-  [state side card n]
-  (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored) ; if the runner did not trash the card on access, then this will work
-      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored)) ; if the runner did trash it, then this will work
-  (gain-agenda-point state side n))
+  ([state side card n] (as-trashed-agenda state side card n nil))
+  ([state side card n options]
+  (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options) ; if the runner did not trash the card on access, then this will work
+      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options)) ; allow force option in case of Blacklist/News Team
+  (gain-agenda-point state side n)))
 
 
 (defn jeeves-event-map
@@ -627,7 +628,7 @@
                   :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}
                 {:label "[Trash]: Trash the top card of the Runner's Stack"
-                 :msg "trash the top card of the Runner's Stack"
+                 :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
 
@@ -816,7 +817,7 @@
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
                                                (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
-                                                   (as-trashed-agenda state :runner card -1)
+                                                   (as-trashed-agenda state :runner card -1 {:force true})
                                                    (effect-completed state side eid))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
                                                    (tag-runner state :runner eid 2))))}

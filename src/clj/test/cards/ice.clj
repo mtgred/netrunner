@@ -235,6 +235,19 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
 
+(deftest data-mine
+  ;; Data Mine - do one net and trash
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (take-credits state :corp)
+    (let [dm (get-ice state :remote1 0)]
+      (run-on state "Server 1")
+      (core/rez state :corp dm)
+      (card-subroutine state :corp dm 0)
+      (is (= 1 (count (:discard (get-runner)))) "Runner suffered 1 net damage"))))
+
 (deftest draco
   ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game

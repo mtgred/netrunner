@@ -229,7 +229,8 @@
                     :choices {:req #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
-                    :effect (effect (runner-install target {:host-card card}))}
+                    :effect (req (when (host state side card target)
+                                   (gain :memory (:memoryunits target))))}
          gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2 :dynamic :copy, :source (:title c)
                                                                                :index %1, :label (make-label %2))
                                                                     (filter #(not= :manual-state (:ability-type %))

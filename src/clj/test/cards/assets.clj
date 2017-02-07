@@ -689,6 +689,28 @@
     ; trash resources - tbc
     (core/gain state :runner :tag 1)))
 
+(deftest kala-ghoda
+  ; Kala Ghoda Real TV
+  (do-game
+    (new-game (default-corp [(qty "Kala Ghoda Real TV" 1)])
+              (default-runner) [(qty "Sure Gamble" 3)])
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (let [tv (get-content state :remote1 0)]
+      (core/rez state :corp tv)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp tv 0)
+      (prompt-choice :corp "Done")
+      (card-ability state :corp tv 1)
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (last-log-contains? state "Sure Gamble")
+          "Kala Ghoda did log trashed card names")
+      )))
+>>>>>>> upstream/master
+
 (deftest launch-campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
@@ -748,6 +770,26 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
+
+(deftest news-team
+  ;; News Team - on access take 2 tags or take as agenda worth -1
+  (do-game
+    (new-game (default-corp [(qty "News Team" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
+    (trash-from-hand state :corp "News Team")
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
 
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
@@ -1104,6 +1146,34 @@
     (is (= 5 (:credit (get-corp))) "Gained 2c at start of turn")
     (play-from-hand state :corp "Pup" "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
+
+(deftest shock
+  ;; do 1 net damage on access
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (run-empty-server state "Archives")
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 1 net damage")))
+
+(deftest shock-chairman-hiro
+  ;; issue #2319 - ensure :access flag is cleared on run end
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3) (qty "Chairman Hiro" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (is (not (:run @state)) "Run is complete")
+    (trash-from-hand state :corp "Chairman Hiro")
+    (is (= 2 (count (:discard (get-corp)))) "Hiro and Shock still in archives")
+    (is (= 0 (count (:scored (get-runner)))) "Hiro not scored by Runner")))
 
 (deftest snare
   ;; pay 4 on access, and do 3 net damage and give 1 tag
