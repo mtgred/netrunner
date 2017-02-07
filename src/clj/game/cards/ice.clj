@@ -240,7 +240,7 @@
 
    "Architect"
    {:flags {:untrashable-while-rezzed true}
-    :subroutines [{:msg "look at the top 5 cards of R&D"
+    :subroutines [{:label "Look at the top 5 cards of R&D"
                    :prompt "Choose a card to install"
                    :priority true
                    :activatemsg "uses Architect to look at the top 5 cards of R&D"
