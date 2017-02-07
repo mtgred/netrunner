@@ -740,6 +740,26 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
+(deftest news-team
+  ;; News Team - on access take 2 tags or take as agenda worth -1
+  (do-game
+    (new-game (default-corp [(qty "News Team" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
+    (trash-from-hand state :corp "News Team")
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
+
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
   (do-game
