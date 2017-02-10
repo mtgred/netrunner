@@ -1264,6 +1264,26 @@
           "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
+(deftest street-peddler-muertos-brain-chip
+  ;; Muertos/Brain Chip uninstall effect not fired when removed off peddler/hosting Issue #2294+#2358
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Street Peddler" 2)(qty "Muertos Gang Member" 1) (qty "Brain Chip" 1)]))
+    (core/move state :runner (find-card "Muertos Gang Member" (:hand (get-runner))) :deck {:front true})
+    (core/move state :runner (find-card "Brain Chip" (:hand (get-runner))) :deck {:front true})
+    (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (core/gain state :runner :agenda-point 1)
+    (let [jh (get-content state :remote1 0)
+          sp (get-in @state [:runner :rig :resource 0])]
+      (core/rez state :corp jh)
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (find-card "Street Peddler" (:hosted sp))) ; choose to another Peddler
+      (is (empty? (:prompt (get-corp))) "Corp not prompted to rez Jackson")
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
+
 (deftest street-peddler-in-play-effects
   ;; Street Peddler - Trashing hardware should not reduce :in-play values
   (do-game
