@@ -24,7 +24,7 @@
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
-       (trigger-event state :runner :run s)))))
+       (trigger-event-sync state :runner (make-eid state) :run s)))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."

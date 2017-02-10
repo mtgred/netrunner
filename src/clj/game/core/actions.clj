@@ -426,7 +426,7 @@
                           (when cur-ice
                             (update-ice-strength state side cur-ice))
                           (when next-ice
-                            (trigger-event state side :approach-ice next-ice))
+                            (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
                             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                             (update-breaker-strength state side p)))))))
