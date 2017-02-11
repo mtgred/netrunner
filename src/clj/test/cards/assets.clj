@@ -709,7 +709,6 @@
       (is (last-log-contains? state "Sure Gamble")
           "Kala Ghoda did log trashed card names")
       )))
->>>>>>> upstream/master
 
 (deftest launch-campaign
   (do-game

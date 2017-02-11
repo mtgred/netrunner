@@ -16,7 +16,7 @@
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
       ("ICE" "Upgrade" "Asset" "Agenda") (do (corp-install state side card server {:extra-cost [:click 1]})
-                                             (trigger-event state side :corp-click-install card)))
+                                             (trigger-event state side :corp-spend-click :click-install 1)))
     (trigger-event state side :play card)))
 
 (defn shuffle-deck
@@ -35,6 +35,7 @@
   (when (and (not (get-in @state [side :register :cannot-draw])) (pay state side nil :click 1))
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
+    (when (= side :corp) (trigger-event state side :corp-spend-click :click-draw 1))
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))
     (play-sfx state side "click-card")))
 
@@ -44,6 +45,7 @@
   (when (pay state side nil :click 1)
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
+    (when (= side :corp) (trigger-event state side :corp-spend-click :click-credit 1))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
 
@@ -257,7 +259,7 @@
                        {:prompt "Choose a resource to trash"
                         :choices {:req #(is-type? % "Resource")}
                         :effect (effect (trash target)
-                                        (trigger-event state side :corp-click-trash nil)
+                                        (trigger-event state side :corp-spend-click :click-trash 1)
                                         (system-msg (str (build-spend-msg cost-str "trash")
                                                          (:title target))))} nil nil))))
 
@@ -266,7 +268,7 @@
   [state side args]
   (when-let [cost (pay state side nil :click 3)]
     (purge state side)
-    (trigger-event state side :corp-click-purge nil)
+    (trigger-event state side :corp-spend-click :click-purge 3)
     (let [spent (build-spend-msg cost "purge")
           message (str spent "all virus counters")]
       (system-msg state side message))
@@ -341,6 +343,7 @@
           (system-msg state side message))
         (update-advancement-cost state side card)
         (add-prop state side (get-card state card) :advance-counter 1)
+        (trigger-event state side :corp-spend-click :click-advance 1)
         (play-sfx state side "click-advance")))))
 
 (defn score

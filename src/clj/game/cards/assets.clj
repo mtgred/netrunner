@@ -54,17 +54,6 @@
       (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options)) ; allow force option in case of Blacklist/News Team
   (gain-agenda-point state side n)))
 
-
-(defn jeeves-event-map
-  "Returns a map of the events seen by Jeeves & their count this turn"
-  [state]
-  (frequencies (get @state :jeeves)))
-
-(defn jeeves-event-count
-  "Returns summed occurences of an event vector this turn or zero if nil"
-  [state eventkeys]
-  (reduce + (map #(or (% (jeeves-event-map state)) 0) eventkeys)))
-
 ;;; Card definitions
 (declare in-server?)
 
@@ -591,36 +580,26 @@
                  :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
-    (let [ability {:label "Gain [Click]"
-                   :msg "gain [Click]" :once :per-turn
-                   :effect (effect (gain :click 1))
-                   }
-
-          jeeves  (fn [eventkey]
-                    {:effect (req (do (swap! state update-in [:jeeves] conj (first eventkey)))
-                     (resolve-ability state side
-                                      {:req (req (= 3 (jeeves-event-count state eventkey)))
-                                       :once :per-turn
-                                       :effect (effect (gain :click 1))
-                                       :msg (msg "gain a [Click]")} card nil ))})]
+    (let [jeeves (effect (gain :click 1))
+          ability {:label "Gain [Click]"
+                   :msg "gain [Click]"
+                   :once :per-turn
+                   :effect jeeves}
+          matrix  (atom {})]
 
     {:abilities  [ability]
-
-     :leave-play (req(swap! state dissoc :jeeves))
-
-     :events {:corp-click-credit (jeeves [:corp-click-credit])
-             :corp-click-draw (jeeves [:corp-click-draw])
-             :corp-click-install (jeeves [:corp-click-install])
-             :advance (jeeves [:advance])
-             :pay-click-operation (jeeves [:pay-click-operation :pay-double-operation])
-             :pay-double-operation (jeeves [:pay-double-operation :pay-click-operation])
-             :corp-click-trash (jeeves [:corp-click-trash])
-             :corp-click-purge {:effect (effect (gain :click 1))
-                                :once :per-turn
-                                :msg (msg "gain a [Click]")}
-             :corp-turn-begins {:effect (req(swap! state dissoc :jeeves))}
-             ;add one more for using a card power -eg. PAD factory
-             }})
+     :leave-play (req (reset! matrix {}))
+     :trash-effect (req (reset! matrix {}))
+     :events {
+             :corp-spend-click
+              {:effect (req (swap! matrix update-in [target] (fnil + 0) (second targets))
+                            (let [qty (get-in @matrix [target])]
+                              (resolve-ability state side
+                                             {:req (req (>= qty 3))
+                                              :once :per-turn
+                                              :effect jeeves
+                                              :msg (msg "gain a [Click]")} card nil)))}
+             :corp-turn-begins {:effect (req (reset! matrix {}))}}})
 
    "Kala Ghoda Real TV"
    {:flags {:corp-phase-12 (req true)}
@@ -718,7 +697,9 @@
     :events {:corp-turn-begins ability}})
 
    "Melange Mining Corp."
-   {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
+   {:abilities [{:cost [:click 3] :effect (effect (do (gain :credit 7)
+                                                      (trigger-event state side :corp-spend-click (:cid card) 3)))
+                 :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"
    (let [ability {:msg "gain 1 [Credits]"
