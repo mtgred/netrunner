@@ -790,14 +790,17 @@
 
     "Psychokinesis"
     (letfn [(install-card [cards]
-             {:prompt "Select an agenda, asset, or upgrade to play"
+             {:prompt "Select an agenda, asset, or upgrade to install"
               :choices (cons "None" cards)
               :delayed-completion true
-              :msg (msg (corp-install-msg target))
-              :effect (effect (corp-install state side nil nil))})]
-     {:msg "look at and install any agenda, asset, or upgrade"
+              :msg (req (when (not= target "None") (corp-install-msg target)))
+              :effect (req (if (or (= target "None") (ice? target) (is-type? target "Operation"))
+                            (do (effect-completed state side eid card)
+                                (system-msg state side "does not install an asset, agenda, or upgrade"))
+                            (corp-install state side target "New Remote")))})]
+     {:msg "look at the top 5 cards of R&D"
       :delayed-completion true
-      :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of HQ2")
+      :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
                     (let [from (take 5 (:deck corp))]
                       (if (pos? (count from))
                         (continue-ability state side (install-card from) card nil)
