@@ -797,7 +797,7 @@
               :effect (req (if (or (= target "None") (ice? target) (is-type? target "Operation"))
                             (do (effect-completed state side eid card)
                                 (system-msg state side "does not install an asset, agenda, or upgrade"))
-                            (corp-install state side target "New Remote")))})]
+                            (corp-install state side target (get-remote-names @state))))})]
      {:msg "look at the top 5 cards of R&D"
       :delayed-completion true
       :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
