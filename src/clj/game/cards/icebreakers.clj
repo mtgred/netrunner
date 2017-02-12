@@ -145,11 +145,15 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
-                                       (not (some #(= title (:title %)) (all-installed state :runner)))))
+                                       (not (some #(= title (:title %)) (all-installed state :runner)))
+                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                         :optional {:player :runner
                                    :prompt (str "Install " title "?")
                                    :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}}}
+                                                                 (runner-install :runner card))}
+                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
+                                                              ;; to prevent multiple copies from prompting multiple times.
+                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side
@@ -229,7 +233,8 @@
                     :choices {:req #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
-                    :effect (effect (runner-install target {:host-card card}))}
+                    :effect (req (when (host state side card target)
+                                   (gain :memory (:memoryunits target))))}
          gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2 :dynamic :copy, :source (:title c)
                                                                                :index %1, :label (make-label %2))
                                                                     (filter #(not= :manual-state (:ability-type %))

@@ -163,54 +163,59 @@
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 2)
-      (case command
-        "/draw"       #(draw %1 %2 (max 0 value))
-        "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
-        "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
-        "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
-        "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
-        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
-        "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
-        "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (:hand-size-base %2)))
-        "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
-        "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
-        "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
-        "/psi"        #(when (= %2 :corp) (psi-game %1 %2
-                                                    {:title "/psi command" :side %2}
-                                                    {:equal  {:msg "resolve equal bets effect"}
-                                                     :not-equal {:msg "resolve unequal bets effect"}}))
-        "/trace"      #(when (= %2 :corp)
-                        (corp-trace-prompt %1
-                                           {:title "/trace command" :side %2}
-                                           {:base (max 0 value)
-                                            :msg "resolve successful trace effect"}))
-        "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
-                                                                                (card-str state target) ": " (get-card state target))))
-                                               :choices {:req (fn [t] (card-is? t :side %2))}}
-                                        {:title "/card-info command"} nil)
-        "/counter"    #(command-counter %1 %2 args)
-        "/adv-counter" #(command-adv-counter %1 %2 value)
-        "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
-        "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
-        "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
-        "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
-        "/close-prompt" #(command-close-prompt %1 %2)
-        "/rez"        #(when (= %2 :corp)
-                        (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
-                                                :choices {:req (fn [t] (card-is? t :side %2))}}
-                                         {:title "/rez command"} nil))
-        "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
-        "/rfg"        #(resolve-ability %1 %2 {:prompt "Select a card to remove from the game"
-                                               :effect (req (let [c (deactivate %1 %2 target)]
-                                                              (move %1 %2 c :rfg)))
-                                               :choices {:req (fn [t] (card-is? t :side %2))}}
-                                        {:title "/rfg command"} nil)
-        "/move-bottom"  #(resolve-ability %1 %2 {:prompt "Select a card in hand to put on the bottom of your deck"
-                                                 :effect (effect (move target :deck))
-                                                 :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
-                                          {:title "/move-bottom command"} nil)
-        "/error"      #(show-error-toast %1 %2)
-        nil))))
+      (if (= (first (first args)) \#)
+        (case command
+          "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
+          "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
+          nil)
+        (case command
+          "/draw"       #(draw %1 %2 (max 0 value))
+          "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
+          "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
+          "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
+          "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
+          "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
+          "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
+          "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (:hand-size-base %2)))
+          "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
+          "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
+          "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
+          "/psi"        #(when (= %2 :corp) (psi-game %1 %2
+                                                      {:title "/psi command" :side %2}
+                                                      {:equal  {:msg "resolve equal bets effect"}
+                                                       :not-equal {:msg "resolve unequal bets effect"}}))
+          "/trace"      #(when (= %2 :corp)
+                          (corp-trace-prompt %1
+                                             {:title "/trace command" :side %2}
+                                             {:base (max 0 value)
+                                              :msg "resolve successful trace effect"}))
+          "/card-info"  #(resolve-ability %1 %2 {:effect (effect (system-msg (str "shows card-info of "
+                                                                                  (card-str state target) ": " (get-card state target))))
+                                                 :choices {:req (fn [t] (card-is? t :side %2))}}
+                                          {:title "/card-info command"} nil)
+          "/counter"    #(command-counter %1 %2 args)
+          "/adv-counter" #(command-adv-counter %1 %2 value)
+          "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
+          "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
+          "/close-prompt" #(command-close-prompt %1 %2)
+          "/rez"        #(when (= %2 :corp)
+                          (resolve-ability %1 %2 {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
+                                                  :choices {:req (fn [t] (card-is? t :side %2))}}
+                                           {:title "/rez command"} nil))
+          "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
+          "/rfg"        #(resolve-ability %1 %2 {:prompt "Select a card to remove from the game"
+                                                 :effect (req (let [c (deactivate %1 %2 target)]
+                                                                (move %1 %2 c :rfg)))
+                                                 :choices {:req (fn [t] (card-is? t :side %2))}}
+                                          {:title "/rfg command"} nil)
+          "/move-bottom"  #(resolve-ability %1 %2 {:prompt "Select a card in hand to put on the bottom of your deck"
+                                                   :effect (effect (move target :deck))
+                                                   :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
+                                            {:title "/move-bottom command"} nil)
+          "/error"      #(show-error-toast %1 %2)
+          "/discard"    #(toast %1 %2 "/discard number takes the format #n")
+          "/deck"       #(toast %1 %2 "/deck number takes the format #n")
+          nil)))))
 
 (defn corp-install-msg
   "Gets a message describing where a card has been installed from. Example: Interns. "
