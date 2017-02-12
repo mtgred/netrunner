@@ -321,6 +321,32 @@
     (run-on state "Archives")
     (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
 
+(deftest paperclip-multiple
+  ;; Paperclip - do not show a second install prompt if user said No to first, when multiple are in heap
+  (do-game
+    (new-game (default-corp [(qty "Vanilla" 2)])
+              (default-runner [(qty "Paperclip" 3)]))
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Paperclip")
+    (trash-from-hand state :runner "Paperclip")
+    (trash-from-hand state :runner "Paperclip")
+    (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 1))
+    (prompt-choice :runner "No")
+    (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
+    (run-continue state)
+    ;; we should get the prompt on a second ice even after denying the first.
+    (core/rez state :corp (get-ice state :archives 0))
+    (prompt-choice :runner "No")
+    (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
+    (core/jack-out state :runner)
+    ;; Run again, make sure we get the prompt to install again.
+    (run-on state "Archives")
+    (prompt-choice :runner "No")
+    (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")))
+
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
   (do-game
