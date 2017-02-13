@@ -14,13 +14,12 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-(defn image-url
-  [{:keys [side code] :as card} player]
-  (let [version (if (and (not= (:side @game-state) (keyword (lower-case side)))
-                         (not (get-in @app-state [:options :opponent-alt-art])))
-                  "default"
-                  (get-in @game-state [player :user :options :alt-arts (keyword (:code card))] "default"))]
-    (str "/img/cards/" (:code card) (when-not (= version "default") (str "-" version)) ".png")))
+(defn image-url [{:keys [side code] :as card}]
+  (let [alt-art (get-in @app-state [:alt-arts code])
+        version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
+                           alt-art)
+                  (first (:versions alt-art)))]
+    (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -488,7 +487,7 @@
       [:div.card-frame
        [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
-        (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
+        (when-let [url (image-url cursor)]
           [:div
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
@@ -522,7 +521,7 @@
                                                (put! zoom-channel cursor))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(handle-card-click @cursor owner)}
-      (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
+      (when-let [url (image-url cursor)]
         (if (or (not code) flipped facedown)
           [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
           [:div
