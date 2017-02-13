@@ -33,9 +33,10 @@
                  ["Deck Builder" "/deckbuilder" 2]
                  ["Play" "/play" 3]
                  ["Help" "/help" 4]
-                 ["Settings" "/account" 5]
+                 (when (:user @app-state)
+                  ["Settings" "/account" 5])
                  ["About" "/about" 6]]]
-       (let [route (second page)]
+       (when-let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
                :data-target "#main" :data-slide-to (last page)}

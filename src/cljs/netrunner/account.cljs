@@ -101,22 +101,10 @@
             [:div.button-bar {:style {:clear "both"}}
              [:button {:style {:margin "2em 0"}} "Update Profile"]]]]]]))))
 
-(defn unlogged-view [user owner]
-  (om/component
-   (sab/html
-    [:div.account.panel.blue-shade
-      [:h4 "Sign up to play Netrunner"]
-      [:ul
-       [:li
-        [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-             :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
-       [:li
-        [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]]])))
 
 (defn account [{:keys [user]} owner]
   (om/component
-   (if user
-     (om/build account-view user)
-     (om/build unlogged-view user))))
+   (when user
+     (om/build account-view user))))
 
 (om/root account app-state {:target (. js/document (getElementById "account"))})
