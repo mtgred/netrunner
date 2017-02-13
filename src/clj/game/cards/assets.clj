@@ -826,7 +826,8 @@
     0
     {:req (req (pos? (:advance-counter (get-card state card) 0)))
      :effect
-     (req (doseq [ag (filter #(is-type? % "Agenda") (get-in @state [:corp :hand]))]
+     (req (show-wait-prompt state :runner "Corp to choose an agenda to score with Plan B")
+          (doseq [ag (filter #(is-type? % "Agenda") (get-in @state [:corp :hand]))]
             (update-advancement-cost state side ag))
           (resolve-ability state side
             {:prompt "Choose an Agenda in HQ to score"
@@ -835,7 +836,8 @@
                                   (in-hand? %))}
              :msg (msg "score " (:title target))
              :effect (effect (score (assoc target :advance-counter
-                                           (:current-cost target))))}
+                                           (:current-cost target)))
+                             (clear-wait-prompt :runner))}
            card nil))}
     "Score an Agenda from HQ?")
 
