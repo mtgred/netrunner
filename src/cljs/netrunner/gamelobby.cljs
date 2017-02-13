@@ -268,115 +268,118 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.lobby.panel.blue-shade
-        [:div.games
-         [:div.button-bar
-          (if gameid
-            [:button.float-left {:class "disabled"} "New game"]
-            [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
-          (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
-                room-tab (fn [room roomname]
-                           [:span.roomtab
-                            (if (= room (om/get-state owner :current-room))
-                              {:class "current"}
-                              {:on-click #(om/set-state! owner :current-room room)})
-                            roomname " (" (count-games room) ")"])]
-            [:div.rooms
-             (room-tab "competitive" "Competitive")
-             (room-tab "casual" "Casual")])]
-        (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
-         (game-list (assoc cursor :password-game password-game) owner))]
+       [:div
+        [:div.lobby-bg]
+        [:div.container
+         [:div.lobby.panel.blue-shade 
+          [:div.games
+           [:div.button-bar
+            (if gameid
+              [:button.float-left {:class "disabled"} "New game"]
+              [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
+            (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
+                  room-tab (fn [room roomname]
+                             [:span.roomtab
+                              (if (= room (om/get-state owner :current-room))
+                                {:class "current"}
+                                {:on-click #(om/set-state! owner :current-room room)})
+                              roomname " (" (count-games room) ")"])]
+              [:div.rooms
+               (room-tab "competitive" "Competitive")
+               (room-tab "casual" "Casual")])]
+           (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
+             (game-list (assoc cursor :password-game password-game) owner))]
 
-        [:div.game-panel
-         (if (:editing state)
-           [:div
-            [:div.button-bar
-             [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
-             [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
+          [:div.game-panel
+           (if (:editing state)
+             [:div
+              [:div.button-bar
+               [:button {:type "button" :on-click #(create-game cursor owner)} "Create"]
+               [:button {:type "button" :on-click #(om/set-state! owner :editing false)} "Cancel"]]
 
-            (when-let [flash-message (:flash-message state)]
-               [:p.flash-message flash-message])
+              (when-let [flash-message (:flash-message state)]
+                [:p.flash-message flash-message])
 
-            [:section
-             [:h3 "Title"]
-             [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
-                                 :value (:title state) :placeholder "Title" :maxLength "100"}]]
+              [:section
+               [:h3 "Title"]
+               [:input.game-title {:on-change #(om/set-state! owner :title (.. % -target -value))
+                                   :value (:title state) :placeholder "Title" :maxLength "100"}]]
 
-            [:section
-             [:h3 "Side"]
-             (for [option ["Corp" "Runner"]]
+              [:section
+               [:h3 "Side"]
+               (for [option ["Corp" "Runner"]]
+                 [:p
+                  [:label [:input {:type "radio"
+                                   :name "side"
+                                   :value option
+                                   :on-change #(om/set-state! owner :side (.. % -target -value))
+                                   :checked (= (om/get-state owner :side) option)}] option]])]
+
+              [:section
+               [:h3 "Options"]
                [:p
-                [:label [:input {:type "radio"
-                                 :name "side"
-                                 :value option
-                                 :on-change #(om/set-state! owner :side (.. % -target -value))
-                                 :checked (= (om/get-state owner :side) option)}] option]])]
-
-            [:section
-             [:h3 "Options"]
-             [:p
-              [:label
-               [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
-                        :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
-               "Allow spectators"]]
-             [:p
-              [:label
-               [:input {:type "checkbox" :checked (om/get-state owner :spectatorhands)
-                        :on-change #(om/set-state! owner :spectatorhands (.. % -target -checked))
-                        :disabled (not (om/get-state owner :allowspectator))}]
-               "Make players' hands visible to spectators"]]
-             [:p {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
-              "This will reveal both players' hands to ALL spectators of your game. We recommend "
-              "using a password to prevent strangers from spoiling the game."]
-             [:p
-              [:label
-               [:input {:type "checkbox" :checked (om/get-state owner :private)
-                        :on-change #(om/set-state! owner :protected (.. % -target -checked))}]
-               "Password protected"]]
-             (when (:protected state)
+                [:label
+                 [:input {:type "checkbox" :checked (om/get-state owner :allowspectator)
+                          :on-change #(om/set-state! owner :allowspectator (.. % -target -checked))}]
+                 "Allow spectators"]]
                [:p
-                [:input.game-title {:on-change #(om/set-state! owner :password (.. % -target -value))
-                                    :type "password"
-                                    :value (:password state) :placeholder "Password" :maxLength "30"}]])]]
+                [:label
+                 [:input {:type "checkbox" :checked (om/get-state owner :spectatorhands)
+                          :on-change #(om/set-state! owner :spectatorhands (.. % -target -checked))
+                          :disabled (not (om/get-state owner :allowspectator))}]
+                 "Make players' hands visible to spectators"]]
+               [:p {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
+                "This will reveal both players' hands to ALL spectators of your game. We recommend "
+                "using a password to prevent strangers from spoiling the game."]
+               [:p
+                [:label
+                 [:input {:type "checkbox" :checked (om/get-state owner :private)
+                          :on-change #(om/set-state! owner :protected (.. % -target -checked))}]
+                 "Password protected"]]
+               (when (:protected state)
+                 [:p
+                  [:input.game-title {:on-change #(om/set-state! owner :password (.. % -target -value))
+                                      :type "password"
+                                      :value (:password state) :placeholder "Password" :maxLength "30"}]])]]
 
-           (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
-             (let [players (:players game)]
-               [:div
-                [:div.button-bar
-                 (when (= (-> players first :user) user)
-                   (if (every? :deck players)
-                     [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"]
-                     [:button {:class "disabled"} "Start"]))
-                 [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
-                 (when (= (-> players first :user) user)
-                   [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
-                [:div.content
-                 [:h2 (:title game)]
-                 (when-not (every? :deck players)
-                   [:div.flash-message "Waiting players deck selection"])
-                 [:h3 "Players"]
-                 [:div.players
-                  (for [player (:players game)]
-                    [:div
-                     (om/build player-view {:player player})
-                     (when-let [deck (:deck player)]
-                       [:span {:class (deck-status-label sets deck)}
-                        [:span.label
-                         (if (= (:user player) user)
-                           (:name deck)
-                           "Deck selected")]])
-                     (when-let [deck (:deck player)]
-                       [:div.float-right (deck-status-span sets deck true)])
-                     (when (= (:user player) user)
-                       [:span.fake-link.deck-load
-                        {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
-                 (when (:allowspectator game)
-                   [:div.spectators
-                    (let [c (count (:spectators game))]
-                      [:h3 (str c " Spectator" (when (> c 1) "s"))])
-                    (for [spectator (:spectators game)]
-                      (om/build player-view {:player spectator}))])]
-                (om/build chat-view messages {:state state})])))]
-        (om/build deckselect-modal cursor)]))))
+             (when-let [game (some #(when (= gameid (:gameid %)) %) games)]
+               (let [players (:players game)]
+                 [:div
+                  [:div.button-bar
+                   (when (= (-> players first :user) user)
+                     (if (every? :deck players)
+                       [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"]
+                       [:button {:class "disabled"} "Start"]))
+                   [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
+                   (when (= (-> players first :user) user)
+                     [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
+                  [:div.content
+                   [:h2 (:title game)]
+                   (when-not (every? :deck players)
+                     [:div.flash-message "Waiting players deck selection"])
+                   [:h3 "Players"]
+                   [:div.players
+                    (for [player (:players game)]
+                      [:div
+                       (om/build player-view {:player player})
+                       (when-let [deck (:deck player)]
+                         [:span {:class (deck-status-label sets deck)}
+                          [:span.label
+                           (if (= (:user player) user)
+                             (:name deck)
+                             "Deck selected")]])
+                       (when-let [deck (:deck player)]
+                         [:div.float-right (deck-status-span sets deck true)])
+                       (when (= (:user player) user)
+                         [:span.fake-link.deck-load
+                          {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                   (when (:allowspectator game)
+                     [:div.spectators
+                      (let [c (count (:spectators game))]
+                        [:h3 (str c " Spectator" (when (> c 1) "s"))])
+                      (for [spectator (:spectators game)]
+                        (om/build player-view {:player spectator}))])]
+                  (om/build chat-view messages {:state state})])))]
+          (om/build deckselect-modal cursor)]]]))))
 
 (om/root game-lobby app-state {:target (. js/document (getElementById "gamelobby"))})

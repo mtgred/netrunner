@@ -1177,8 +1177,7 @@
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
-            [:div.gameboard-bg {:class (:background (:options @app-state))}]
-
+            [:div {:class (:background (:options @app-state))}]
             [:div.rightpane
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

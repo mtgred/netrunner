@@ -53,7 +53,6 @@
       (sab/html
         [:div.container
          [:div.account
-          [:div {:class (:background (:options @app-state))}]
           [:div.panel.blue-shade.content-page#profile-form {:ref "profile-form"}
            [:h2 "Settings"]
            [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
@@ -79,12 +78,14 @@
 
             [:section
              [:h3  "Game board background"]
-             (for [option [{:name "Beanstalk"      :ref "home-bg"}
-                           {:name "The Root"       :ref "lobby-bg"}
-                           {:name "Project Atlas"  :ref "deckbuilder-bg"}
-                           {:name "Dyson Mem Chip" :ref "cardbrowser-bg"}
-                           {:name "Fast Track"     :ref "about-bg"}
-                           {:name "Logos"          :ref "reset-bg"}]]
+             (for [option [{:name "The Root"        :ref "lobby-bg"}
+                           {:name "Freelancer"      :ref "freelancer-bg"}
+                           {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
+                           {:name "Traffic Jam"     :ref "traffic-jam-bg"}
+                           {:name "Rumor Mill"      :ref "rumor-mill-bg"}
+                           {:name "Find The Truth"  :ref "find-the-truth-bg"}
+                           {:name "Push Your Luck"  :ref "push-your-luck-bg"}
+                           {:name "Apex"            :ref "apex-bg"}]]
                [:div.radio
                 [:label [:input {:type "radio"
                                  :name "background"
