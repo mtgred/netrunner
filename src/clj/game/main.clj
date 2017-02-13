@@ -124,13 +124,6 @@
                      :runner (assoc-in runner-private [:hand] (get-in @state [:runner :hand])))
        (assoc @state :corp corp-private :runner runner-private))]))
 
-(defn- reset-all-cards
-  [cards]
-  (let [;; split the cards into regular cards and alt-art cards
-        [regular alt] ((juxt filter remove) #(not= "Alternates" (:setname %)) cards)
-        regular (into {} (map (juxt :title identity) regular))]
-    (reset! all-cards regular)))
-
 (defn- handle-command
   "Apply the given command to the given state. Return true if the state should be sent
   back across the socket (if the command was successful or a resolvable exception was
@@ -138,7 +131,7 @@
   [{:keys [gameid action command side user args text cards] :as msg} state]
 
   (try (do (case action
-             "initialize" (reset-all-cards cards);; creates a map from card title to card data
+             "initialize" (reset! all-cards cards)
              "start" (core/init-game msg)
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
