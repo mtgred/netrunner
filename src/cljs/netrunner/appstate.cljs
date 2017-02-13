@@ -4,7 +4,7 @@
   (atom {:active-page "/"
          :user (js->clj js/user :keywordize-keys true)
          :options (merge {:background "lobby-bg"
-                          :opponent-alt-art true
+                          :show-alt-art true
                           :sounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
                                     (if (nil? sounds) true (= sounds "true")))
                           :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]

@@ -17,6 +17,7 @@
 (defn image-url [{:keys [side code] :as card}]
   (let [alt-art (get-in @app-state [:alt-arts code])
         version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
+                           (get-in @app-state [:options :show-alt-art])
                            alt-art)
                   (first (:versions alt-art)))]
     (str "/img/cards/" code (when version (str "-" version)) ".png")))

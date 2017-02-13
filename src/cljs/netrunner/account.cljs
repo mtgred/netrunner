@@ -22,7 +22,7 @@
   (om/set-state! owner :flash-message "Updating profile...")
   (swap! app-state assoc-in [:options :sounds] (om/get-state owner :sounds))
   (swap! app-state assoc-in [:options :background] (om/get-state owner :background))
-  (swap! app-state assoc-in [:options :opponent-alt-art] (om/get-state owner :opponent-alt-art))
+  (swap! app-state assoc-in [:options :show-alt-art] (om/get-state owner :show-alt-art))
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
@@ -45,7 +45,7 @@
     (will-mount [this]
       (om/set-state! owner :background (get-in @app-state [:options :background]))
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
-      (om/set-state! owner :opponent-alt-art (get-in @app-state [:options :opponent-alt-art]))
+      (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume])))
 
     om/IRenderState
@@ -93,10 +93,11 @@
             [:h3 {:style {:margin-top "1em"}} "Alt arts"]
             [:div
              [:label [:input {:type "checkbox"
-                              :name "opponent-alt-art"
-                              :checked (om/get-state owner :opponent-alt-art)
-                              :on-change #(om/set-state! owner :opponent-alt-art (.. % -target -checked))}]
-              "Show opponent's alternate card arts"]]
+                              :name "show-alt-art"
+                              :checked (om/get-state owner :show-alt-art)
+                              :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
+              "Show alternate card arts"]]
+
             [:div.button-bar {:style {:clear "both"}}
              [:button {:style {:margin "2em 0"}} "Update Profile"]]]]]]))))
 
