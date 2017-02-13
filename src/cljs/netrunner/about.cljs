@@ -11,7 +11,7 @@
 (defn about [cursor owner]
   (om/component
    (sab/html
-    [:div.about.panel.blue-shade
+    [:div.about.panel.content-page.blue-shade
      [:h3 "About"]
      [:p "This website is created and run by an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
 

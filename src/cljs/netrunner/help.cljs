@@ -259,7 +259,7 @@
 (defn help [cursor owner]
   (om/component
     (sab/html
-      [:div.help.panel.blue-shade
+      [:div.help.panel.content-page.blue-shade
        [:h2 "Help Topics"]
        help-toc
        help-contents])))

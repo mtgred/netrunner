@@ -74,6 +74,9 @@ ul.list.compact li
 p
   margin: 8px 0
 
+section
+  margin-bottom: 16px
+
 input, select, textarea
   font-family: "Titillium Web", "Helvetica Neue", sans-serif
   font-size: 13px
@@ -1034,9 +1037,6 @@ nav ul
       margin-right: 10px
       margin-bottom: 5px
 
-    section
-      margin-bottom: 16px
-
     p
       margin: 4px 0
 
@@ -1799,10 +1799,6 @@ nav ul
   font-weight: normal
 
 .help
-  padding: 10px 20px
-  width: 650px
-  margin: 40px auto 10px
-
   > h3
     margin-top: -35px
     padding-top: 35px
@@ -1829,6 +1825,16 @@ nav ul
   display: block
   height: 100%
   overflow: auto
+  margin-top: -31px
+
+  .flash-message
+    color: lawngreen
+    margin-left: 16px
+
+  input[type="range"]
+    position: relative
+    top: 9px
+    left: 16px
 
 @keyframes highlight
   from
@@ -1850,11 +1856,12 @@ nav ul
   bottom: 0
   overflow: auto
 
-.about
-  padding: 10px 20px
+.content-page
+  padding: 12px 20px
   width: 650px
   margin: 40px auto 10px
 
+.about
   .bitcoin
     color: orange
     position: relative

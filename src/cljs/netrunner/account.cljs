@@ -54,52 +54,57 @@
         [:div.container
          [:div.account
           [:div {:class (:background (:options @app-state))}]
-          [:div.panel.blue-shade#profile-form {:ref "profile-form"}
+          [:div.panel.blue-shade.content-page#profile-form {:ref "profile-form"}
            [:h2 "Settings"]
-           [:p.flash-message (:flash-message state)]
            [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
-            [:h3 "Avatar"]
-            (om/build avatar user {:opts {:size 38}})
-            [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]
-            [:h3 {:style {:margin-top "1em"}} "Sounds"]
-            [:div
-             [:label [:input {:type "checkbox"
-                              :value true
-                              :checked (om/get-state owner :sounds)
-                              :on-change #(om/set-state! owner :sounds (.. % -target -checked))}]
-              "Enable sounds"]]
-            [:div {:style {:margin-top "4px" :margin-left "24px"}}
-             "Volume:"
-             [:div [:input {:type "range"
-                            :min 1 :max 100 :step 1
-                            :on-change #(om/set-state! owner :volume (.. % -target -value))
-                            :value (om/get-state owner :volume)
-                            :disabled (not (om/get-state owner :sounds))}]]]
-            [:h3 {:style {:margin-top "1em"}} "Game board background"]
-            (for [option [{:name "Beanstalk"      :ref "home-bg"}
-                          {:name "The Root"       :ref "lobby-bg"}
-                          {:name "Project Atlas"  :ref "deckbuilder-bg"}
-                          {:name "Dyson Mem Chip" :ref "cardbrowser-bg"}
-                          {:name "Fast Track"     :ref "about-bg"}
-                          {:name "Logos"          :ref "reset-bg"}]]
-              [:div.radio
-               [:label [:input {:type "radio"
-                                :name "background"
-                                :value (:ref option)
-                                :on-change #(om/set-state! owner :background (.. % -target -value))
-                                :checked (= (om/get-state owner :background) (:ref option))}]
-                (:name option)]])
+            [:section
+             [:h3 "Avatar"]
+             (om/build avatar user {:opts {:size 38}})
+             [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
 
-            [:h3 {:style {:margin-top "1em"}} "Alt arts"]
-            [:div
-             [:label [:input {:type "checkbox"
-                              :name "show-alt-art"
-                              :checked (om/get-state owner :show-alt-art)
-                              :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
-              "Show alternate card arts"]]
+            [:section
+             [:h3 "Sounds"]
+             [:div
+              [:label [:input {:type "checkbox"
+                               :value true
+                               :checked (om/get-state owner :sounds)
+                               :on-change #(om/set-state! owner :sounds (.. % -target -checked))}]
+               "Enable sounds"]]
+             [:div "Volume"
+              [:input {:type "range"
+                       :min 1 :max 100 :step 1
+                       :on-change #(om/set-state! owner :volume (.. % -target -value))
+                       :value (om/get-state owner :volume)
+                       :disabled (not (om/get-state owner :sounds))}]]]
 
-            [:div.button-bar {:style {:clear "both"}}
-             [:button {:style {:margin "2em 0"}} "Update Profile"]]]]]]))))
+            [:section
+             [:h3  "Game board background"]
+             (for [option [{:name "Beanstalk"      :ref "home-bg"}
+                           {:name "The Root"       :ref "lobby-bg"}
+                           {:name "Project Atlas"  :ref "deckbuilder-bg"}
+                           {:name "Dyson Mem Chip" :ref "cardbrowser-bg"}
+                           {:name "Fast Track"     :ref "about-bg"}
+                           {:name "Logos"          :ref "reset-bg"}]]
+               [:div.radio
+                [:label [:input {:type "radio"
+                                 :name "background"
+                                 :value (:ref option)
+                                 :on-change #(om/set-state! owner :background (.. % -target -value))
+                                 :checked (= (om/get-state owner :background) (:ref option))}]
+                 (:name option)]])]
+
+            [:section
+             [:h3 "Alt arts"]
+             [:div
+              [:label [:input {:type "checkbox"
+                               :name "show-alt-art"
+                               :checked (om/get-state owner :show-alt-art)
+                               :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
+               "Show alternate card arts"]]]
+
+            [:p
+             [:button "Update Profile"]
+             [:span.flash-message (:flash-message state)]]]]]]))))
 
 
 (defn account [{:keys [user]} owner]
