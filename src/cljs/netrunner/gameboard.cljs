@@ -21,6 +21,49 @@
                   (first (:versions alt-art)))]
     (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
+(defn card-zoom [card owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:showText false})
+    om/IRenderState
+    (render-state [_ state]
+      (let [ifShowText #(when (:showText state) %)]
+        (sab/html
+         [:div.card-preview.blue-shade
+          (ifShowText [:h4 (:title card)])
+          (ifShowText (when-let [memory (:memoryunits card)]
+                        (if (< memory 3)
+                          [:div.anr-icon {:class (str "mu" memory)} ""]
+                          [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]])))
+          (ifShowText (when-let [cost (:cost card)]
+                        [:div.heading (str "Cost: " cost)]))
+          (ifShowText (when-let [trash-cost (:trash card)]
+                        [:div.heading (str "Trash cost: " trash-cost)]))
+          (ifShowText (when-let [strength (:strength card)]
+                        [:div.heading (str "Strength: " strength)]))
+          (ifShowText (when-let [requirement (:advancementcost card)]
+                        [:div.heading (str "Advancement requirement: " requirement)]))
+          (ifShowText (when-let [agenda-point (:agendatpoints card)]
+                        [:div.heading (str "Agenda points: " agenda-point)]))
+          (ifShowText (when-let [min-deck-size (:minimumdecksize card)]
+                        [:div.heading (str "Minimum deck size: " min-deck-size)]))
+          (ifShowText (when-let [influence-limit (:influencelimit card)]
+                        [:div.heading (str "Influence limit: " influence-limit)]))
+          (ifShowText (when-let [influence (:factioncost card)]
+                        [:div.heading "Influence "
+                         [:span.influence
+                          {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+                           :class                   (-> card :faction .toLowerCase (.replace " " "-"))}]]))
+          (ifShowText [:div.text
+                       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                                             "" (str ": " (:subtype card)))]
+                       [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]])
+          (when-not (:showText state)
+            (when-let [url (image-url card)]
+              [:img {:src url
+                     :onError #(-> (om/set-state! owner {:showText true}))
+                     :onLoad #(-> % .-target js/$ .show)}]))])))))
+
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
   [options]
@@ -1138,7 +1181,7 @@
             [:div.rightpane
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
-                (om/build cb/card-view card))]
+                (om/build card-zoom card))]
              ;; card implementation info
              (when-let [card (om/get-state owner :zoom)]
                (let [implemented (:implementation card)]
