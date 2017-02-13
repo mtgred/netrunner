@@ -684,6 +684,7 @@
    "Şifr"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
+                 :req (req (rezzed? current-ice))
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
                  :effect (effect (lose :runner :hand-size-modification 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
