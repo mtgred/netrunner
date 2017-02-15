@@ -36,7 +36,7 @@
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
          (if-let [cost-str (pay state side card :credit (if ignore-cost 0 (:cost card)) extra-cost
                                 (when-not (or ignore-cost no-additional-cost)
-                                  additional-cost))]
+                                  additional-cost) {:action :play-instant})]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (if ignore-cost
                                            "play "
@@ -57,13 +57,6 @@
                    (when (has-subtype? card "Terminal")
                      (lose state side :click (-> @state side :click))
                      (swap! state assoc-in [:corp :register :terminal] true))))
-             ;; This is for Jeeves to see two events for a double
-             (when (and (has-subtype? card "Double")
-                      (not (get-in @state [side :register :double-ignore-additional])))
-               (trigger-event state side (when (= side :corp) :corp-spent-click :play-op 1)))
-             ;; This is for Jeeves to not trigger from Accelerated Diagnostics
-             (when-not (or ignore-cost no-additional-cost)
-               (trigger-event state side (when (= side :corp) :corp-spent-click :play-op 1)))
              (trigger-event state side (if (= side :corp) :play-operation :play-event) c))
            ;; could not pay the card's price; mark the effect as being over.
            (effect-completed state side eid card))

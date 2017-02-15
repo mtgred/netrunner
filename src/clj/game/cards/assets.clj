@@ -584,22 +584,20 @@
           ability {:label "Gain [Click]"
                    :msg "gain [Click]"
                    :once :per-turn
-                   :effect jeeves}
-          matrix  (atom {})]
+                   :effect jeeves}]
 
     {:abilities  [ability]
-     :leave-play (req (reset! matrix {}))
-     :trash-effect (req (reset! matrix {}))
+     :leave-play {:effect (effect (update! (dissoc card :seen-this-turn)))}
+     :trash-effect {:effect (effect (update! (dissoc card :seen-this-turn)))}
      :events {
-             :corp-spend-click
-              {:effect (req (swap! matrix update-in [target] (fnil + 0) (second targets))
-                            (let [qty (get-in @matrix [target])]
-                              (resolve-ability state side
-                                             {:req (req (>= qty 3))
-                                              :once :per-turn
-                                              :effect jeeves
-                                              :msg (msg "gain a [Click]")} card nil)))}
-             :corp-turn-begins {:effect (req (reset! matrix {}))}}})
+             :corp-spent-click
+              {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
+                            (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
+                                 (resolve-ability state side
+                                                  {:once :per-turn
+                                                   :effect jeeves
+                                                   :msg (msg "gain a [Click]")} card nil)))}
+              :corp-turn-ends {:effect (effect (update! (dissoc card :seen-this-turn)))}}})
 
    "Kala Ghoda Real TV"
    {:flags {:corp-phase-12 (req true)}
@@ -697,8 +695,7 @@
     :events {:corp-turn-begins ability}})
 
    "Melange Mining Corp."
-   {:abilities [{:cost [:click 3] :effect (effect (do (gain :credit 7)
-                                                      (trigger-event state side :corp-spend-click (:cid card) 3)))
+   {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7))
                  :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"

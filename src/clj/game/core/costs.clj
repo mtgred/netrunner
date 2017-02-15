@@ -30,7 +30,8 @@
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
   [state side title & args]
-  (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit])) args))
+  ; ignore the optional map input - not a cost
+  (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit]) (map? %)) args))
         forfeit-cost (some #{[:forfeit] :forfeit} args)
         scored (get-in @state [side :scored])
         cost-msg (or (some #(toast-msg-helper state side %) costs)
@@ -43,6 +44,8 @@
 
 (defn pay
   "Deducts each cost from the player."
+  ; args format  ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
+  ; for Jeeves added a map we can pull action out of
   [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side (:title card) args)]
     (when forfeit-cost
@@ -52,7 +55,7 @@
                  {:effect (effect (forfeit target))})))
     (->> costs (map #(do
                       (when (= (first %) :click)
-                        (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) nil)
+                        (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action args)) (:click (into {} costs)))
                         (swap! state assoc-in [side :register :spent-click] true))
                       (deduce state side %)))
          (filter some?)
