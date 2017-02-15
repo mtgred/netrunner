@@ -763,7 +763,7 @@
     :events {:advance {:req (req (= (:cid card) (:cid target))) 
                        :msg (msg (let [deck (:deck runner)
                                        anydeck? (pos? (count deck)) 
-                                       adv4? (>= (:advance-counter (get-card state card)))] 
+                                       adv4? (>= (:advance-counter (get-card state card)) 4)] 
                          (cond
                            (and anydeck? adv4?)
                            (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
