@@ -695,8 +695,7 @@
     :events {:corp-turn-begins ability}})
 
    "Melange Mining Corp."
-   {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7))
-                 :msg "gain 7 [Credits]"}]}
+   {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
    "Mental Health Clinic"
    (let [ability {:msg "gain 1 [Credits]"
