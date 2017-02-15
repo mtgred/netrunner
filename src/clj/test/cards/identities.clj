@@ -606,6 +606,17 @@
     (is (not (get-content state :archives 0)) "Upgrade returned to hand")
     (is (not (:run @state)) "Run ended, no more accesses")))
 
+(deftest maxx
+  (do-game
+    (new-game (default-corp)
+              (make-deck "MaxX: Maximum Punk Rock" [(qty "Wyldside" 3)
+                                                    (qty "Eater" 1)]))
+    (starting-hand state :runner ["Eater"])
+    (take-credits state :corp)
+    (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+    (is (last-log-contains? state "Wyldside, Wyldside")
+        "Maxx did log trashed card names")))
+
 (deftest maxx-wyldside-start-of-turn
   ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game

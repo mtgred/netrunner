@@ -515,8 +515,8 @@
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
-             :msg "force the Runner to trash 1 card from their Grip at random"
-             :effect (effect (trash (first (shuffle (:hand runner)))))}]
+             :effect (effect (trash (first (shuffle (:hand runner)))))
+             :msg (msg "force the Runner to trash " (:title (first (:discard runner))) " from their Grip at random")}]
      {:events {:searched-stack pp
                :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
                                                         (pos? (count (:hand runner))))))}})
@@ -760,11 +760,22 @@
 
    "Underway Renovation"
    {:install-state :face-up
-    :events {:advance {:req (req (= (:cid card) (:cid target)))
-                       :msg (msg "trash the top " (if (>= (:advance-counter (get-card state card)) 4) "2 cards" "card")
-                                 " of the Runner's Stack")
+    :events {:advance {:req (req (= (:cid card) (:cid target))) 
+                       :msg (msg (let [deck (:deck runner)
+                                       anydeck? (pos? (count deck)) 
+                                       adv4? (>= (:advance-counter (get-card state card)))] 
+                         (cond
+                           (and anydeck? adv4?)
+                           (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
+
+                           (and anydeck? (not adv4?) )
+                           (str "trash " (:title (first deck)) " from the Runner's stack")
+
+                           (false? anydeck?)  
+                           "trash from the Runner's stack but it is empty")))
+
                        :effect (effect (mill :runner
-                                             (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
+                                             (if (>= (:advance-counter (get-card state card)) 4)  2 1)))}}}
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"

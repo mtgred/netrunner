@@ -35,10 +35,11 @@
   (do-game
     (new-game
       (default-corp)
-      (default-runner [(qty "Baba Yaga" 1) (qty "Faerie" 1) (qty "Yog.0" 1)]))
+      (default-runner [(qty "Baba Yaga" 1) (qty "Faerie" 1) (qty "Yog.0" 1)(qty "Sharpshooter" 1)]))
     (take-credits state :corp)
-    (core/gain state :runner :credit 100)
+    (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Baba Yaga")
+    (play-from-hand state :runner "Sharpshooter")
     (let [baba (get-program state 0)
           base-abicount (count (:abilities baba))]
       (card-ability state :runner baba 0)
@@ -48,7 +49,12 @@
       (prompt-select :runner (find-card "Yog.0" (:hand (get-runner))))
       (is (= (+ 3 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 1 subroutine from Yog.0")
       (core/trash state :runner (first (:hosted (refresh baba))))
-      (is (= (inc base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga lost 2 subroutines from trashed Faerie"))))
+      (is (= (inc base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga lost 2 subroutines from trashed Faerie")
+      (card-ability state :runner baba 1)
+      (prompt-select :runner (find-card "Sharpshooter" (:program (:rig (get-runner)))))
+      (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
+      (is (= 1 (:memory (get-runner))) "1 MU left with 2 breakers on Baba Yaga")
+      (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
 
 (deftest chameleon-clonechip
   ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn

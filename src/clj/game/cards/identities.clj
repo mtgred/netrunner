@@ -463,7 +463,10 @@
                :agenda-stolen leela}})
 
    "MaxX: Maximum Punk Rock"
-   (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
+   (let [ability {:msg (msg (let [deck (:deck runner)]
+                              (if (pos? (count deck))
+                                (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
                   :effect (effect (mill 2) (draw))}]
      {:flags {:runner-turn-draw true
