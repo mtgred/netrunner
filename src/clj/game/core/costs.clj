@@ -43,9 +43,9 @@
       (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay
-  "Deducts each cost from the player."
-  ; args format  ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
-  ; for Jeeves added a map we can pull action out of
+  "Deducts each cost from the player.
+  args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
+  The map with :action was added for Jeeves so we can log what each click was used on"
   [state side card & args]
   (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side (:title card) args)]
     (when forfeit-cost

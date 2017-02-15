@@ -584,20 +584,18 @@
           ability {:label "Gain [Click]"
                    :msg "gain [Click]"
                    :once :per-turn
-                   :effect jeeves}]
+                   :effect jeeves}
+          cleanup (effect (update! (dissoc card :seen-this-turn)))]
 
     {:abilities  [ability]
-     :leave-play {:effect (effect (update! (dissoc card :seen-this-turn)))}
-     :trash-effect {:effect (effect (update! (dissoc card :seen-this-turn)))}
+     :leave-play {:effect cleanup}
+     :trash-effect {:effect cleanup}
      :events {
              :corp-spent-click
               {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
                             (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
-                                 (resolve-ability state side
-                                                  {:once :per-turn
-                                                   :effect jeeves
-                                                   :msg (msg "gain a [Click]")} card nil)))}
-              :corp-turn-ends {:effect (effect (update! (dissoc card :seen-this-turn)))}}})
+                                 (resolve-ability state side ability card nil)))}
+              :corp-turn-ends {:effect cleanup}}})
 
    "Kala Ghoda Real TV"
    {:flags {:corp-phase-12 (req true)}
