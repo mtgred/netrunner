@@ -1537,6 +1537,26 @@
       (is (= 0 (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
+(deftest the-supplier-trashed
+  ;; Issue #2358 Brain chip mem is deducted when it is hosted and Supplier is trashed
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "The Supplier" 1)
+                               (qty "Brain Chip" 1)]))
+    (take-credits state :corp)
+    (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+    (play-from-hand state :runner "The Supplier")
+    (let [ts (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner ts 0)
+      (prompt-select :runner (find-card "Brain Chip" (:hand (get-runner))))
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+      (take-credits state :runner)
+      (core/gain state :runner :tag 1)
+      (core/trash-resource state :corp nil)
+      (prompt-select :corp (get-resource state 0))
+      (is (= 2 (count (:discard (get-runner)))))
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
+
 (deftest tech-trader
   ;; Basic test
   (do-game
