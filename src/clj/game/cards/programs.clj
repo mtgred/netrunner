@@ -406,11 +406,15 @@
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
-
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
-    :abilities [{:cost [:credit 3] :msg "prevent a hardware from being trashed"}
-                {:effect (effect (trash card {:cause :ability-cost})) :msg "prevent a hardware from being trashed"}]}
+    :abilities [{:cost [:credit 3]
+                 :msg "prevent a hardware from being trashed"
+                 :effect (effect (trash-prevent :hardware 1))}
+                {:label "[Trash]: Prevent a hardware from being trashed"
+                 :msg "prevent a hardware from being trashed"
+                 :effect (effect (trash-prevent :hardware 1)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Magnum Opus"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
