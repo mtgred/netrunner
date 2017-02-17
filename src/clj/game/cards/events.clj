@@ -316,6 +316,14 @@
     :effect (effect (disable-identity :corp))
     :leave-play (effect (enable-identity :corp))}
 
+   "Encore"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+    :effect (req (swap! state assoc-in [:runner :extra-turn] true)
+                 (move state side (first (:play-area runner)) :rfg))
+    :msg "take an additional turn after this one"}
+
    "En Passant"
    {:req (req (:successful-run runner-reg))
     :effect (req (let [runtgt (first (flatten (turn-events state side :run)))

@@ -457,6 +457,24 @@
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
 
+(deftest encore
+  ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)])
+              (default-runner [(qty "Encore" 1)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Encore")
+    (is (= 1 (count (:rfg (get-runner)))) "Encore removed from game")
+    (take-credits state :runner)
+    (take-credits state :runner)
+    ; only get one extra turn
+    (take-credits state :runner)
+    (is (= 9 (:credit (get-runner))))))
+
 (deftest eureka!
   ;; Eureka! - Install the program but trash the event
   (do-game
