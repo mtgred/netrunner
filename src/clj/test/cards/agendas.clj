@@ -516,6 +516,31 @@
         (core/score state :corp {:card (refresh napd)})
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
+(deftest net-quarantine
+  ;; The Runner's base link strength is reduced to 0 during the first trace each turn.
+  ;; Whenever the Runner increases his or her link strength by spending credits, gain 1 for every 2 spent.
+  (do-game
+    (new-game (default-corp [(qty "Net Quarantine" 1)])
+              (default-runner))
+    (core/gain state :runner :link 1)
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Net Quarantine" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")
+    (is (= 1 (:link (get-runner))) "Runner has 1 link")
+    (core/corp-trace-prompt state {:title "/trace command" :side :corp} {:base 1})
+    (prompt-choice :corp 0)
+    (is (= 0 (:link (get-runner))) "Runner has 0 link")
+    (prompt-choice :runner 3)
+    (is (= 1 (:link (get-runner))) "Runner has 1 link again")
+    (is (= 6 (:credit (get-corp))) "Corp gained a credit from NQ")
+    ; second trace of turn - no link reduction
+    (core/corp-trace-prompt state {:title "/trace command" :side :corp} {:base 1})
+    (prompt-choice :corp 0)
+    (is (= 1 (:link (get-runner))) "Runner has 1 link")
+    (prompt-choice :runner 2)
+    (is (= 7 (:credit (get-corp))) "Corp gained a credit from NQ")))
+
 (deftest nisei-mk-ii-step-43
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
   (do-game

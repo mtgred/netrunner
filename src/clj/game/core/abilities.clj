@@ -470,7 +470,7 @@
           which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
       (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
                                        card [strength (+ (:link runner) boost)])
-                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
+                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace) {:runner-spent boost})
                           (when-let [kicker (:kicker ability)]
                             (when (>= strength (:min kicker))
                               (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
