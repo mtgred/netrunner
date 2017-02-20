@@ -1171,6 +1171,10 @@
                            :delayed-completion true
                            :effect (effect (tag-runner :runner eid 1))
                            :msg "give the Runner 1 tag"}}]}
+                           
+    "Self-Adapting Code Wall"
+    {:subroutines [end-the-run]
+        :flags {:cannot-lower-strength true}}
 
    "Sensei"
    {:subroutines [{:label "Give each other ICE encountered \"End the run\" for the remainder of the run"
