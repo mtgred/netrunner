@@ -1174,7 +1174,7 @@
                            
     "Self-Adapting Code Wall"
     {:subroutines [end-the-run]
-        :flags {:cannot-lower-strength true}}
+     :flags {:cannot-lower-strength true}}
 
    "Sensei"
    {:subroutines [{:label "Give each other ICE encountered \"End the run\" for the remainder of the run"
