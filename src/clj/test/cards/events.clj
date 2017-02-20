@@ -248,6 +248,30 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest cold-read
+  ;; Make a run, and place 4 on this card, which you may use only during this run.
+  ;; When this run ends, trash 1 program (cannot be prevented) used during this run.
+  (do-game
+    (new-game (default-corp [(qty "Blacklist" 3)])
+              (default-runner [(qty "Imp" 1) (qty "Cold Read" 2)]))
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (let [bl (get-content state :remote1 0)]
+      (play-from-hand state :runner "Cold Read")
+      (prompt-choice :runner "HQ")
+      (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
+      (run-successful state)
+      (card-ability state :runner (get-program state 0) 0)
+      (prompt-select :runner (get-program state 0))
+      (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
+      ; Cold Read works when Blacklist rezzed - #2378
+      (core/rez state :corp bl)
+      (play-from-hand state :runner "Cold Read")
+      (prompt-choice :runner "HQ")
+      (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
+      (run-successful state))))
+
 (deftest corporate-scandal
   ;; Corporate Scandal - Corp has 1 additional bad pub even with 0
   (do-game

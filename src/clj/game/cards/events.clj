@@ -134,7 +134,7 @@
       :prompt "Choose a server"
       :recurring 4
       :choices (req runnable-servers)
-      :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area)]
+      :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
                      (card-init state side c false)
                      (game.core/run state side (make-eid state) target
                                     {:end-run {:delayed-completion true
