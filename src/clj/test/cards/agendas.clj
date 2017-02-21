@@ -860,6 +860,9 @@
       (core/advance state :corp {:card (refresh ur)})
       (is (last-log-contains? state "Sure Gamble")
           "Underway Renovation trashed card name is in log")
+      ; check for #2370
+      (is (not (last-log-contains? state "Sure Gamble, Sure Gamble"))
+          "Underway Renovation trashed card name is in log")
       (is (= 1 (count (:discard (get-runner)))) "1 card milled from Runner Stack")
       (play-from-hand state :corp "Shipment from SanSan")
       (prompt-choice :corp "2")
