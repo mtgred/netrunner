@@ -215,4 +215,7 @@
       (swap! state update-in [side :register] dissoc :cannot-draw)
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
       (clear-turn-register! state)
-      (swap! state dissoc :turn-events))))
+      (swap! state dissoc :turn-events)
+      (when (some? (get-in @state [side :extra-turn]))
+        (start-turn state side nil)
+        (swap! state dissoc-in [side :extra-turn])))))
