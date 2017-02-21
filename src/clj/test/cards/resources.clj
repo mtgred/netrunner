@@ -1264,6 +1264,26 @@
           "Corroder was installed")
       (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
 
+(deftest street-peddler-muertos-brain-chip
+  ;; Muertos/Brain Chip uninstall effect not fired when removed off peddler/hosting Issue #2294+#2358
+  (do-game
+    (new-game (default-corp [(qty "Jackson Howard" 1)])
+              (default-runner [(qty "Street Peddler" 2)(qty "Muertos Gang Member" 1) (qty "Brain Chip" 1)]))
+    (core/move state :runner (find-card "Muertos Gang Member" (:hand (get-runner))) :deck {:front true})
+    (core/move state :runner (find-card "Brain Chip" (:hand (get-runner))) :deck {:front true})
+    (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
+    (play-from-hand state :corp "Jackson Howard" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (core/gain state :runner :agenda-point 1)
+    (let [jh (get-content state :remote1 0)
+          sp (get-in @state [:runner :rig :resource 0])]
+      (core/rez state :corp jh)
+      (card-ability state :runner sp 0)
+      (prompt-card :runner (find-card "Street Peddler" (:hosted sp))) ; choose to another Peddler
+      (is (empty? (:prompt (get-corp))) "Corp not prompted to rez Jackson")
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
+
 (deftest street-peddler-in-play-effects
   ;; Street Peddler - Trashing hardware should not reduce :in-play values
   (do-game
@@ -1516,6 +1536,26 @@
       (prompt-select :runner (find-card "Plascrete Carapace" (:hosted (refresh ts))))
       (is (= 0 (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
+
+(deftest the-supplier-trashed
+  ;; Issue #2358 Brain chip mem is deducted when it is hosted and Supplier is trashed
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "The Supplier" 1)
+                               (qty "Brain Chip" 1)]))
+    (take-credits state :corp)
+    (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+    (play-from-hand state :runner "The Supplier")
+    (let [ts (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner ts 0)
+      (prompt-select :runner (find-card "Brain Chip" (:hand (get-runner))))
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+      (take-credits state :runner)
+      (core/gain state :runner :tag 1)
+      (core/trash-resource state :corp nil)
+      (prompt-select :corp (get-resource state 0))
+      (is (= 2 (count (:discard (get-runner)))))
+      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
 
 (deftest tech-trader
   ;; Basic test

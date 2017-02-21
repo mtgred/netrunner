@@ -71,8 +71,8 @@
        (let [dest (if (sequential? to) (vec to) [to])
              trash-hosted (fn [h]
                              (trash state side
-                               (dissoc (update-in h [:zone] #(map to-keyword %)) :facedown)
-                               {:unpreventable true})
+                                    (update-in h [:zone] #(map to-keyword %))
+                                    {:unpreventable true})
                                ())
              update-hosted (fn [h]
                              (let [newz (flatten (list (if (vector? to) to [to])))
