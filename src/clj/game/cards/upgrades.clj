@@ -220,6 +220,14 @@
                               (trash state side card {:cause :ability-cost})
                               (lose state :runner :tag 1))}]}
 
+   "Manta Grid"
+   {:events {
+     :successful-run
+     {:msg (msg " gain a [Click] next turn")
+      :req    (req (and this-server
+                        (or (< (:credit runner) 6) (zero? (:click runner)))))
+      :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}}}
+
    "Marcus Batty"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Start a Psi game"

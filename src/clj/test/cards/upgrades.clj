@@ -354,6 +354,32 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest manta-grid
+  ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
+  (do-game
+    (new-game (default-corp [(qty "Manta Grid" 1)])
+              (default-runner))
+    (starting-hand state :runner [])
+    (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
+    (play-from-hand state :corp "Manta Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (core/click-draw state :runner nil)
+    (core/click-draw state :runner nil)
+    (run-empty-server state "HQ")
+    (is (= 1 (:click (get-runner))) "Running last click")
+    (run-empty-server state "HQ")
+    (take-credits state :runner)
+    (is (= 5 (:click (get-corp))) "Corp gained 2 clicks due to < 6 runner credits and run last click")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Corp back to 3 clicks")
+    (take-credits state :corp)
+    (take-credits state :runner 3)
+    (run-empty-server state "HQ")
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
+
 (deftest marcus-batty-security-nexus
   ;; Marcus Batty - Simultaneous Interaction with Security Nexus
   (do-game
