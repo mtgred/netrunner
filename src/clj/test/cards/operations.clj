@@ -1340,12 +1340,14 @@
                              (qty "Vanilla" 1)
                              (qty "Wetwork Refit" 3)])
               (default-runner))
+    (core/gain state :corp :credit 20)
+    (core/gain state :corp :click 10)
     (play-from-hand state :corp "Eli 1.0" "R&D")
     (play-from-hand state :corp "Vanilla" "HQ")
     (let [eli (get-ice state :rd 0)
           vanilla (get-ice state :hq 0)]
       (play-from-hand state :corp "Wetwork Refit")
-      (is (not-any? #{"Eli 1.0"} (get-in @state [:runner :prompt :choices]))
+      (is (not-any? #{"Eli 1.0"} (get-in @state [:corp :prompt :choices]))
           "Unrezzed Eli 1.0 is not a choice to host Wetwork Refit")
       (prompt-choice :corp "Done")
 

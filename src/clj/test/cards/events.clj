@@ -1044,6 +1044,38 @@
     (prompt-choice :runner 3)
     (is (= 6 (:credit (get-runner))) "Corp guessed incorrectly")))
 
+(deftest pushing-the-envelope
+  ;; Run. Add 2 strength to each installer breaker.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Pushing the Envelope" 3) (qty "Corroder" 2) (qty "Atman" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 20)
+    (core/gain state :runner :click 10)
+    (core/draw state :runner)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Atman")
+    (prompt-choice :runner 0)
+    (let [atman (get-in @state [:runner :rig :program 1])
+          corr (get-in @state [:runner :rig :program 0])]
+      (is (= 0 (:current-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (play-from-hand state :runner "Pushing the Envelope")
+      (prompt-choice :runner "Archives")
+      ; 3 cards in hand - no boost
+      (is (= 0 (:current-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (run-successful state)
+      (play-from-hand state :runner "Pushing the Envelope")
+      (prompt-choice :runner "Archives")
+      (run-continue state)
+      ; 2 cards in hand - boost
+      (is (= 2 (:current-strength (refresh atman))) "Atman 2 current strength")
+      (is (= 4 (:current-strength (refresh corr))) "Corroder 2 current strength")
+      (run-successful state)
+      (is (= 0 (:current-strength (refresh atman))) "Atman 0 current strength")
+      (is (= 2 (:current-strength (refresh corr))) "Corroder 2 current strength"))))
+
 (deftest queens-gambit
   ;; Check that Queen's Gambit prevents access of card #1542
   (do-game
