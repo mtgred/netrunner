@@ -31,15 +31,17 @@
       [:a {:href "https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml"
            :target "_blank"} "status"] "."]
 
-     [:p "Donations can be submitted to PayPal account mtgred@gmail.com or to Bitcoin address "
-      [:span.bitcoin "1ByjuLNZRvG17YaRKgKUjNi3c4qQ3daX3g" [:img.qr {:src "/img/bitcoin.png"}]]
-      "."]
-
-     [:p "Contributions are appreciated and help finance fast servers."]
-
      [:h3 "Contributors"]
      [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Dominic Kexel (queueseven), Lukasz Dobrogowski (zaroth), Filip Gokstorp (Saintis) and Felix Laurie von Massenbach (erbridge) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
-     [:p "Many thanks to all the donators. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
+
+     [:h3 "Donations"]
+     [:p "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]
+     [:ul.list.compact
+      [:li "PayPal: mtgred@gmail.com or " [:a {:href "https://www.paypal.me/mtgred" :title "PayPal" :target "_blank"} "paypal.me/mtgred"]]
+      [:li "Bitcoin: " [:span.bitcoin "371AEPFnNVhBDohVhRngVncb8mmgRYzmrh" [:img.qr {:src "/img/bitcoin.png"}]]]
+      ]
+
+     [:p "Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
      [:ul.list.compact
       (for [d (:donators cursor)]
         [:li d])]
