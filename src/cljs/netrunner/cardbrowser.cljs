@@ -66,10 +66,11 @@
           (ifShowText (when-let [influence-limit (:influencelimit card)]
                         [:div.heading (str "Influence limit: " influence-limit)]))
           (ifShowText (when-let [influence (:factioncost card)]
-                        [:div.heading "Influence "
-                         [:span.influence
-                          {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
-                           :class                   (-> card :faction .toLowerCase (.replace " " "-"))}]]))
+                        (when-let [faction (:faction card)]
+                         [:div.heading "Influence "
+                          [:span.influence
+                           {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+                            :class                   (-> faction .toLowerCase (.replace " " "-"))}]])))
           (ifShowText [:div.text
                        [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                                              "" (str ": " (:subtype card)))]
