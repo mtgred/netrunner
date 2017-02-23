@@ -220,6 +220,10 @@
                               (trash state side card {:cause :ability-cost})
                               (lose state :runner :tag 1))}]}
 
+   "Khondi Plaza"
+   {:recurring (effect (set-prop card :rec-counter (count (get-remotes @state))))
+    :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
+
    "Manta Grid"
    {:events {
      :successful-run
