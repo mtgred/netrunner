@@ -357,6 +357,13 @@
                                                (= (:zone card) (:zone (get-card state (:host target)))))))
                          :effect (effect (trash-cost-bonus 3))}}}
 
+   "Oberth Protocol"
+   {:additional-cost [:forfeit]
+    :events {:advance {:req (req (empty? (filter #(= (second (:zone %)) (second (:zone card)))
+                                                 (map first (turn-events state side :advance)))))
+                       :msg (msg "place an additional advancement token on " (card-str state target))
+                       :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}}}
+
    "Off the Grid"
    {:implementation "Installation restriction not enforced"
     :effect (req (prevent-run-on-server state card (second (:zone card))))
