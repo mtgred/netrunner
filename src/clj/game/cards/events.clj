@@ -374,6 +374,16 @@
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
 
+   "Exploit"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+    :prompt "Choose up to 3 pieces of ICE to derez"
+    :choices {:max 3 :req #(and (rezzed? %) (ice? %))}
+    :msg (msg "derez " (join ", " (map :title targets)))
+    :effect (req (doseq [c targets]
+                   (derez state side c)))}
+
    "Exploratory Romp"
    {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target
