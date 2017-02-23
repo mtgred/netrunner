@@ -1173,6 +1173,20 @@
     :choices (req runnable-servers)
     :effect (effect (run target nil card))}
 
+   "Spot the Prey"
+   {:prompt "Select 1 non-ICE card to expose"
+    :msg "expose 1 card and make a run"
+    :choices {:req #(and (installed? %) (not (ice? %)) (= (:side %) "Corp"))}
+    :delayed-completion true
+    :effect (req (when-completed (expose state side target)
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a server"
+                                    :choices (req runnable-servers)
+                                    :delayed-completion true
+                                    :effect (effect (game.core/run eid target))}
+                                   card nil)))}
+
    "Stimhack"
    {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (gain-run-credits 9)
