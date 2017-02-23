@@ -1226,6 +1226,17 @@
                              (when (= 0 (get-in (get-card state card) [:counter :credit]))
                                (trash state side card {:unpreventable true}))))}}}
 
+   "The Archivist"
+   {:in-play [:link 1]
+    :events {:agenda-scored {:req (req (or (has-subtype? target "Initiative")
+                                           (has-subtype? target "Security")))
+                             :delayed-completion true
+                             :msg "force the Corp to initiate a trace"
+                             :label "Trace 1 - If unsuccessful, take 1 bad publicity"
+                             :trace {:base 1
+                                     :unsuccessful {:effect (effect (gain :corp :bad-publicity 1)
+                                                                    (system-msg :corp (str "takes 1 bad publicity")))}}}}}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
