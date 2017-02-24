@@ -9,6 +9,7 @@
     {:successful-run
      {:delayed-completion true
       :req (req (and (= target :archives)
+                     (not= (:max-access run) 0)
                      (not-empty (:discard corp))))
       :effect (effect (continue-ability
                         {:optional
