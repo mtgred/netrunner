@@ -1110,6 +1110,7 @@
                       (let [kate-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
                         (core/resolve-prompt state :runner {:card kate-choice})))
 
+      ayla "Ayla \"Bios\" Rahim: Simulant Specialist"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
       professor "The Professor: Keeper of Knowledge"
@@ -1124,7 +1125,7 @@
       (new-game (default-corp) (default-runner ["Magnum Opus" "Rebirth"]) {:start-as :runner})
 
       (play-from-hand state :runner "Rebirth")
-      (is (= (first (prompt-titles :runner)) chaos) "List is sorted")
+      (is (= (first (prompt-titles :runner)) ayla) "List is sorted")
       (is (every?   #(some #{%} (prompt-titles :runner))
                     [kate kit]))
       (is (not-any? #(some #{%} (prompt-titles :runner))
