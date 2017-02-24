@@ -134,6 +134,23 @@
    "Dedicated Technician Team"
    {:recurring 2}
 
+   "Defense Construct"
+   {:advanceable :always
+    :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"
+                 :req (req (and run (= (:server run) [:archives])
+                                (pos? (get-in card [:advance-counter] 0))))
+                 :effect (effect (resolve-ability
+                                   {:show-discard true
+                                    :choices {:max (get-in card [:advance-counter] 0)
+                                              :req #(and (= (:side %) "Corp")
+                                                         (not (:seen %))
+                                                         (= (:zone %) [:discard]))}
+                                              :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
+                                    :effect (req (doseq [c targets]
+                                                   (move state side c :hand)))}
+                                  card nil)
+                                 (trash card))}]}
+
    "Disposable HQ"
    (letfn [(dhq [n i]
              {:req (req (pos? i))
@@ -219,6 +236,10 @@
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
                               (lose state :runner :tag 1))}]}
+
+   "Khondi Plaza"
+   {:recurring (effect (set-prop card :rec-counter (count (get-remotes @state))))
+    :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
 
    "Manta Grid"
    {:events {
@@ -352,6 +373,13 @@
                                            (or (= (:zone card) (:zone target))
                                                (= (:zone card) (:zone (get-card state (:host target)))))))
                          :effect (effect (trash-cost-bonus 3))}}}
+
+   "Oberth Protocol"
+   {:additional-cost [:forfeit]
+    :events {:advance {:req (req (empty? (filter #(= (second (:zone %)) (second (:zone card)))
+                                                 (map first (turn-events state side :advance)))))
+                       :msg (msg "place an additional advancement token on " (card-str state target))
+                       :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}}}
 
    "Off the Grid"
    {:implementation "Installation restriction not enforced"

@@ -733,14 +733,14 @@
                   {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
                    :msg (msg "place 1 advancement token on " (card-str state target))
                    :choices {:req can-be-advanced?}
-                   :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1))}]
+                   :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
                              (continue-ability
                                :runner {:optional
                                         {:player :runner
-                                         :prompt "You are encountering Heralds. Allow its subroutines to fire?"
+                                         :prompt "You are encountering Herald. Allow its subroutines to fire?"
                                          :priority 1
                                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
                                                                        (play-subroutine eid {:card card :subroutine 0}))}
@@ -857,6 +857,13 @@
    "Janus 1.0"
    {:subroutines [(do-brain-damage 1)]
     :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Kakugo"
+   {:events {:pass-ice {:delayed-completion true
+                        :req (req (= target card))
+                        :msg "do 1 net damage"
+                        :effect (effect (damage eid :net 1 {:card card}))}}
+    :subroutines [end-the-run]}
 
    "Kitsune"
    {:subroutines [{:prompt "Choose a card in HQ to force access"
@@ -1502,4 +1509,10 @@
    "Zed 1.0"
    {:implementation "Restriction on having spent [click] is not implemented"
     :subroutines [(do-brain-damage 1)]
-    :runner-abilities [(runner-break [:click 1] 1)]}})
+    :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Zed 2.0"
+   {:implementation "Restriction on having spent [click] is not implemented"
+    :subroutines [trash-hardware
+                  (do-brain-damage 2)]
+    :runner-abilities [(runner-break [:click 2] 2)]}})

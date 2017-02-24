@@ -198,6 +198,14 @@
       :abilities [ability]
       :events {:runner-turn-begins ability}})
 
+   "Bio-Modeled Network"
+   {:prevent {:damage [:net]}
+    :events {:pre-damage {:req (req (= target :net))
+                          :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}}
+    :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
+                 :effect (effect (damage-prevent :net (dec (:dmg-amount card)))
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Blockade Runner"
    {:abilities [{:cost [:click 2]
                  :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
@@ -1217,6 +1225,17 @@
                              (set-prop state side card :counter {:credit (- creds 4)})
                              (when (= 0 (get-in (get-card state card) [:counter :credit]))
                                (trash state side card {:unpreventable true}))))}}}
+
+   "The Archivist"
+   {:in-play [:link 1]
+    :events {:agenda-scored {:req (req (or (has-subtype? target "Initiative")
+                                           (has-subtype? target "Security")))
+                             :delayed-completion true
+                             :msg "force the Corp to initiate a trace"
+                             :label "Trace 1 - If unsuccessful, take 1 bad publicity"
+                             :trace {:base 1
+                                     :unsuccessful {:effect (effect (gain :corp :bad-publicity 1)
+                                                                    (system-msg :corp (str "takes 1 bad publicity")))}}}}}
 
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
