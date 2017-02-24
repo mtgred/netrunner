@@ -1149,6 +1149,7 @@
                              :interactive (req true)
                              :delayed-completion true
                              :choices {:req #(and (not (is-type? % "Operation"))
+                                                  (= (:side %) "Corp")
                                                   (#{[:hand] [:discard]} (:zone %)))}
                              :msg (msg (corp-install-msg target))
                              :effect (effect (corp-install eid target nil {:no-install-cost true}))}}}
