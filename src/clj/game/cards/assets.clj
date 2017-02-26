@@ -1142,6 +1142,13 @@
                                   :effect (req (when (not this-server)
                                                  (gain state :corp :credit 2)))}}}
 
+   "Synth DNA Modification"
+   {:implementation "Manual fire once subroutine is broken"
+    :abilities [{:msg "do 1 net damage"
+                 :label "Do 1 net damage after AP subroutine broken"
+                 :once :per-turn
+                 :effect (effect (damage eid :net 1 {:card card}))}]}
+
    "Team Sponsorship"
    {:events {:agenda-scored {:label "Install a card from Archives or HQ"
                              :prompt "Choose a card from Archives or HQ to install"
