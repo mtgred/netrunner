@@ -524,6 +524,18 @@
       :effect (effect (gain :credit (get-in card [:counter :credit] 0))
                       (set-prop card :counter {:credit 0}))}]}
 
+   "Signal Jamming"
+   {:abilities [{:label "[Trash]: Cards cannot be installed until the end of the run"
+                 :msg (msg "prevent cards being installed until the end of the run")
+                 :req (req this-server)
+                 :effect (effect (trash (get-card state card) {:cause :ability-cost}))}]
+    :trash-effect {:effect (effect (lock-install (:cid card) :runner)
+                                   (toast :runner "Cannot install until the end of the run")
+                                   (register-events {:run-ends {:effect (effect (unlock-install (:cid card) :runner))}}
+                                                    (assoc card :zone '(:discard))))}
+    :events {:run-ends nil
+             :turn-ends {:effect (effect (unregister-events card))}}}
+
    "Simone Diego"
    {:recurring 2}
 

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare host in-play? make-rid rez run-flag? server-list server->zone set-prop system-msg
+(declare host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
          turn-flag? update-breaker-strength update-ice-strength update-run-ice)
 
 ;;;; Functions for the installation and deactivation of cards.
@@ -252,6 +252,8 @@
       (and (has-subtype? card "Console")
            (some #(has-subtype? % "Console") (all-installed state :runner)))
       :console
+      ;; Installing not locked
+      (install-locked? state side) :lock-install
       ;; Uniqueness check
       (and uniqueness (in-play? state card)) :unique
       ;; Req check
@@ -272,6 +274,9 @@
       :unique
       (reason-toast (str "Cannot install a second copy of " title " since it is unique. Please trash currently"
                          " installed copy first"))
+      ;; failed install lock check
+      :lock-install
+      (reason-toast (str "Unable to install " title " since installing is currently locked"))
       ;; failed console check
       :console
       (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
@@ -313,7 +318,8 @@
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown] :as params}]
-   (if (empty? (get-in @state [side :locked (-> card :zone first)]))
+   (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
+            (not (seq (get-in @state [:runner :lock-install]))))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
        (continue-ability state side
                          {:choices hosting
