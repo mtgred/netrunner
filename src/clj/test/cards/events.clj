@@ -850,6 +850,23 @@
     (is (= 2 (:click (get-runner))) "Spent 2 clicks")
     (is (= 1 (:tag (get-runner))) "Lost 2 tags")))
 
+(deftest mad-dash
+  ;; Mad Dash - Make a run. Move to score pile as 1 point if steal agenda.  Take 1 meat if not
+  (do-game
+    (new-game (default-corp [(qty "Project Atlas" 1)])
+              (default-runner [(qty "Mad Dash" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mad Dash")
+    (prompt-choice :runner "Archives")
+    (run-successful state)
+    (is (= 2 (count (:discard (get-runner)))) "Took a meat damage")
+    (play-from-hand state :runner "Mad Dash")
+    (prompt-choice :runner "HQ")
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+    (is (= 2 (count (:scored (get-runner)))) "Mad Dash moved to score area")
+    (is (= 3 (:agenda-point (get-runner))) "Mad Dash scored for 1 agenda point")))
+
 (deftest making-an-entrance
   ;; Making an Entrance - Full test
   (do-game

@@ -374,16 +374,6 @@
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
 
-   "Exploit"
-   {:req (req (and (some #{:hq} (:successful-run runner-reg))
-                   (some #{:rd} (:successful-run runner-reg))
-                   (some #{:archives} (:successful-run runner-reg))))
-    :prompt "Choose up to 3 pieces of ICE to derez"
-    :choices {:max 3 :req #(and (rezzed? %) (ice? %))}
-    :msg (msg "derez " (join ", " (map :title targets)))
-    :effect (req (doseq [c targets]
-                   (derez state side c)))}
-
    "Exploratory Romp"
    {:prompt "Choose a server" :choices (req runnable-servers)
     :effect (effect (run target
@@ -771,6 +761,24 @@
    "Lucky Find"
    {:msg "gain 9 [Credits]"
     :effect (effect (gain :credit 9))}
+
+   "Mad Dash"
+   {:choices (req runnable-servers)
+    :prompt "Choose a server"
+    :delayed-completion true
+    :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
+                   (register-events state side
+                                    {:agenda-stolen {:effect (effect (as-agenda c 1)
+                                                                     (system-msg  "uses Mad Dash to score an extra point")
+                                                                     (unregister-events  c))}
+                                     :run-ends  {:delayed-completion true
+                                                 :effect (effect (trash c)
+                                                                 (damage eid :meat 1 {:card c})
+                                                                 (system-msg "takes 1 meat damage from Mad Dash")
+                                                                 (unregister-events c))}} c)
+                   (game.core/run state side (make-eid state) target nil c)))
+    :events {:agenda-stolen nil
+             :run-ends nil}}
 
    "Making an Entrance"
    (letfn [(entrance-trash [cards]
@@ -1195,20 +1203,6 @@
     :prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run target nil card))}
-
-   "Spot the Prey"
-   {:prompt "Select 1 non-ICE card to expose"
-    :msg "expose 1 card and make a run"
-    :choices {:req #(and (installed? %) (not (ice? %)) (= (:side %) "Corp"))}
-    :delayed-completion true
-    :effect (req (when-completed (expose state side target)
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Choose a server"
-                                    :choices (req runnable-servers)
-                                    :delayed-completion true
-                                    :effect (effect (game.core/run eid target))}
-                                   card nil)))}
 
    "Stimhack"
    {:prompt "Choose a server" :choices (req runnable-servers)

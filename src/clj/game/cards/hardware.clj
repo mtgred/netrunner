@@ -143,7 +143,8 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install from your Heap" :msg (msg "install " (:title target))
                  :priority true :show-discard true
-                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
+                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                               (not (install-locked? state side))))
                  :choices {:req #(and (is-type? % "Program")
                                       (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
