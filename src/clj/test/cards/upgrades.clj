@@ -828,6 +828,29 @@
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
+(deftest signal-jamming
+  ;; Trash to stop installs for the rest of the run
+  (do-game
+    (new-game (default-corp [(qty "Signal Jamming" 3)])
+              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+    (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
+    (play-from-hand state :corp "Signal Jamming" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Self-modifying Code")
+    (let [smc1 (get-in @state [:runner :rig :program 0])
+          smc2 (get-in @state [:runner :rig :program 1])
+          sj (get-content state :hq 0)]
+      (core/rez state :corp sj)
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :corp sj 0)
+      (card-ability state :runner smc1 0)
+      (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
+      (run-jack-out state)
+      (card-ability state :runner smc2 0)
+      (prompt-card :runner (find-card "Reaver" (:deck (get-runner)))))))
+
 (deftest strongbox
   ;; Strongbox - Ability
   (do-game

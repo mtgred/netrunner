@@ -145,6 +145,7 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
+                                       (not (install-locked? state side))
                                        (not (some #(= title (:title %)) (all-installed state :runner)))
                                        (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                         :optional {:player :runner

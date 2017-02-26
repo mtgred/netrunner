@@ -659,7 +659,8 @@
                                 (gain state side :credit 1)))}]}
 
    "Self-modifying Code"
-   {:abilities  [{:effect (req (when-completed (trash state side card {:cause :ability-cost})
+   {:abilities  [{:req (req (not (install-locked? state side)))
+                  :effect (req (when-completed (trash state side card {:cause :ability-cost})
                                                (continue-ability state side
                                                                   {:prompt "Choose a program to install"
                                                                    :msg (req (if (not= target "No install")
