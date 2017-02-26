@@ -183,7 +183,7 @@
              end-cost (install-cost state side card all-cost)
              install-state (or install-state (:install-state cdef))]
 
-         (if (corp-can-install? card dest-zone)
+         (if (and (corp-can-install? card dest-zone) (not (install-locked? state :corp)))
            (if-let [cost-str (pay state side card end-cost)]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
@@ -227,9 +227,11 @@
                      (when-let [dre (:derezzed-events cdef)]
                        (when-not (:rezzed (get-card state moved-card))
                          (register-events state side dre moved-card)))))))
-           ;; Cannot install due to region restriction - toast
-           (toast state side (str "Cannot install " (:title card) " in " server
-                                  ", limited to one Region per server")))
+           (if (install-locked? state :corp)
+             (toast state side (str "Unable to install " (:title card) " since installing is currently locked"))
+             ;; Cannot install due to region restriction - toast
+             (toast state side (str "Cannot install " (:title card) " in " server
+                                  ", limited to one Region per server"))))
          (clear-install-cost-bonus state side))))))
 
 
