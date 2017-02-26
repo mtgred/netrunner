@@ -256,6 +256,16 @@
               :trace {:base 1 :unsuccessful {:effect (effect (lose :runner :tag 1))
                                              :msg "remove 1 tag"}}}}}
 
+   "Clan Vengeance"
+   {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
+                                  :effect (effect (add-counter card :power 1)
+                                                  (system-msg :runner (str "places 1 power counter on Clan Vengeance")))}}
+    :abilities [{:label "[Trash]: Trash 1 random card from HQ for each power counter"
+                 :req (req (pos? (get-in card [:counter :power] 0)))
+                 :msg (msg "trash " (min (get-in card [:counter :power] 0) (count (:hand corp))) " cards from HQ")
+                 :effect (effect (mill :corp (min (get-in card [:counter :power] 0) (count (:hand corp))))
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Compromised Employee"
    {:recurring 1
     :events {:rez {:req (req (ice? target))
