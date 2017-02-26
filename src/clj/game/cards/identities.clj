@@ -462,6 +462,12 @@
       :events {:agenda-scored leela
                :agenda-stolen leela}})
 
+   "Los: Data Hijacker"
+   {:events {:rez {:once :per-turn
+                   :req (req (ice? target))
+                   :msg "gain 2 [Credits]"
+                   :effect (effect (gain :runner :credit 2))}}}
+
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg (msg (let [deck (:deck runner)]
                               (if (pos? (count deck))
