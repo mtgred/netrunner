@@ -263,7 +263,8 @@
     :abilities [{:label "[Trash]: Trash 1 random card from HQ for each power counter"
                  :req (req (pos? (get-in card [:counter :power] 0)))
                  :msg (msg "trash " (min (get-in card [:counter :power] 0) (count (:hand corp))) " cards from HQ")
-                 :effect (effect (mill :corp (min (get-in card [:counter :power] 0) (count (:hand corp))))
+                 :effect (effect (trash-cards (take (min (get-in card [:counter :power] 0) (count (:hand corp)))
+                                              (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))}]}
 
    "Compromised Employee"
