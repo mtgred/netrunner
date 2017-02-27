@@ -330,6 +330,19 @@
                            :once :per-turn
                            :effect (effect (draw 1))}}}
 
+   "Jemison Astronautics: Sacrifice. Audacity. Success."
+   {:events {:corp-forfeit-agenda
+             {:delayed-completion true
+              :effect (req (show-wait-prompt state :runner "Corp to place advancement tokens")
+                           (let [p (inc (get-agenda-points state :corp target))]
+                             (continue-ability state side
+                               {:prompt "Choose a card to place advancement tokens on with Jemison Astronautics: Sacrifice. Audacity. Success."
+                                :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
+                                :msg (msg "place " p " advancement tokens on " (card-str state target))
+                                :effect (effect (add-prop :corp target :advance-counter p {:placed true})
+                                                (clear-wait-prompt :runner))}
+                              card nil)))}}}
+
    "Jesminder Sareen: Girl Behind the Curtain"
    {:events {:pre-tag {:once :per-run
                        :req (req (:run @state))
@@ -461,6 +474,12 @@
      {:flags {:slow-hq-access (req true)}
       :events {:agenda-scored leela
                :agenda-stolen leela}})
+
+   "Los: Data Hijacker"
+   {:events {:rez {:once :per-turn
+                   :req (req (ice? target))
+                   :msg "gain 2 [Credits]"
+                   :effect (effect (gain :runner :credit 2))}}}
 
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg (msg (let [deck (:deck runner)]

@@ -356,6 +356,32 @@
       (run-empty-server state "Server 1")
       (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
 
+(deftest jemison-astronautics
+  ;; Jemison Astronautics - Place advancements when forfeiting agendas
+  (do-game
+    (new-game
+      (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success." [(qty "Enforcer 1.0" 1) (qty "Hostile Takeover" 1)
+                                                                        (qty "Ice Wall" 1) (qty "Global Food Initiative" 1)])
+      (default-runner [(qty "Data Dealer" 1)]))
+    (play-from-hand state :corp "Enforcer 1.0" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [enf (get-ice state :hq 0)
+          iwall (get-ice state :rd 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Data Dealer")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Steal")
+      (let [dd (get-resource state 0)]
+        (card-ability state :runner dd 0)
+        (is (empty? (:prompt (get-corp))) "No Jemison prompt for Runner forfeit")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Global Food Initiative" "New remote")
+        (score-agenda state :corp (get-content state :remote2 0))
+        (core/rez state :corp enf)
+        (prompt-select :corp iwall)
+        (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
+
 (deftest jesminder-sareen-ability
   ;; Jesminder Sareen - avoid tags only during a run
   (do-game
