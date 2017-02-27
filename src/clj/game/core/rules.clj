@@ -427,12 +427,15 @@
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."
-  [state side card]
-  (let [c (if (in-corp-scored? state side card)
-            (deactivate state side card) card)]
-    (system-msg state side (str "forfeits " (:title c)))
-    (gain-agenda-point state side (- (get-agenda-points state side c)))
-    (move state :corp c :rfg)))
+  ([state side card] (forfeit state side (make-eid state) card))
+  ([state side eid card]
+   (let [c (if (in-corp-scored? state side card)
+             (deactivate state side card) card)]
+     (system-msg state side (str "forfeits " (:title c)))
+     (gain-agenda-point state side (- (get-agenda-points state side c)))
+     (move state :corp c :rfg)
+     (when-completed (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) c)
+                     (effect-completed state side eid)))))
 
 (defn gain-agenda-point
   "Gain n agenda points and check for winner."
