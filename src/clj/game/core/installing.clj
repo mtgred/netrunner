@@ -184,7 +184,7 @@
              install-state (or install-state (:install-state cdef))]
 
          (if (corp-can-install? card dest-zone)
-           (if-let [cost-str (pay state side card end-cost)]
+           (if-let [cost-str (pay state side card end-cost {:action :corp-click-install})]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
                              (dissoc :seen :disabled))]

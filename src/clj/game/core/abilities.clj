@@ -222,7 +222,7 @@
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid.
-    (when-let [cost-str (apply pay (concat [state side card] cost))]
+    (when-let [cost-str (apply pay (concat [state side card] cost [{:action (:cid card)}]))]
       (let [c (if counter-cost
                 (update-in card [:counter (first counter-cost)]
                            #(- (or % 0) (or (second counter-cost) 0)))

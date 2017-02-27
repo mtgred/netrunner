@@ -36,7 +36,7 @@
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
          (if-let [cost-str (pay state side card :credit (if ignore-cost 0 (:cost card)) extra-cost
                                 (when-not (or ignore-cost no-additional-cost)
-                                  additional-cost))]
+                                  additional-cost) {:action :play-instant})]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (if ignore-cost
                                            "play "
