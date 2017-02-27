@@ -776,6 +776,12 @@
                                                     (system-msg state :runner (str "places 1 [Credits] on Net Mercur")))))}
                                card nil))}}}
 
+   "Network Exchange"
+   {:msg "increase the install cost of non-innermost ICE by 1"
+    :events {:pre-corp-install {:req (req (is-type? target "ICE"))
+                                :effect (req (when (pos? (count (:dest-zone (second targets))))
+                                               (install-cost-bonus state :corp [:credit 1])))}}}
+
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
     :events {:pre-access {:req (req (and (= target :archives)

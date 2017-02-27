@@ -805,6 +805,21 @@
       (card-ability state :runner nm 0)
       (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
 
+(deftest network-exchange
+  ;; ICE install costs 1 more except for inner most
+  (do-game
+    (new-game (default-corp [(qty "Paper Wall" 3)])
+              (default-runner [(qty "Network Exchange" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Network Exchange")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (is (= 8 (:credit (get-corp))) "Paid 0 to install Paper Wall")
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (is (= 6 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (is (= 3 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")))
+
 (deftest new-angeles-city-hall
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
   (do-game
