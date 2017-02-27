@@ -184,16 +184,6 @@
                  :trace {:base 3 :msg "avoid taking a bad publicity"
                          :effect (effect (lose :bad-publicity 1))}}]}
 
-   "Bryan Stinson"
-   {:abilities [{:cost [:click 1]
-                 :req (req (and (< (:credit runner) 6)
-                                (< 0 (count (filter #(is-type? % "Operation") (:discard corp))))))
-                 :label "Play an operation from Archives ignoring all costs and remove it from the game"
-                 :prompt "Choose an operation to play"
-                 :msg (msg "play " (:title target) " from Archives ignoring all costs and remove it from the game")
-                 :choices (req (cancellable (filter #(is-type? % "Operation") (:discard corp)) :sorted))
-                 :effect (effect (play-instant nil target {:ignore-cost true}) (move target :rfg))}]}
-
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
 
