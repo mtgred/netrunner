@@ -31,7 +31,8 @@
 (defn click-draw
   "Click to draw."
   [state side args]
-  (when (and (not (get-in @state [side :register :cannot-draw])) (pay state side nil :click 1))
+  (when (and (not (get-in @state [side :register :cannot-draw]))
+             (pay state side nil :click 1 {:action :corp-click-draw}))
     (system-msg state side "spends [Click] to draw a card")
     (draw state side)
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))
@@ -40,7 +41,7 @@
 (defn click-credit
   "Click to gain 1 credit."
   [state side args]
-  (when (pay state side nil :click 1)
+  (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
@@ -251,7 +252,7 @@
   "Click to trash a resource."
   [state side args]
   (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
-    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost)]
+    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
                        {:prompt "Choose a resource to trash"
                         :choices {:req #(is-type? % "Resource")}
@@ -262,7 +263,7 @@
 (defn do-purge
   "Purge viruses."
   [state side args]
-  (when-let [cost (pay state side nil :click 3)]
+  (when-let [cost (pay state side nil :click 3 {:action :corp-click-purge})]
     (purge state side)
     (let [spent (build-spend-msg cost "purge")
           message (str spent "all virus counters")]
@@ -331,7 +332,7 @@
   [state side {:keys [card]}]
   (let [card (get-card state card)]
     (when (can-advance? state side card)
-      (when-let [cost (pay state side card :click 1 :credit 1)]
+      (when-let [cost (pay state side card :click 1 :credit 1 {:action :corp-advance})]
         (let [spent   (build-spend-msg cost "advance")
               card    (card-str state card)
               message (str spent card)]
