@@ -129,6 +129,7 @@
                                           :choices {:req #(and (<= (:cost %) (get-in c [:counter :power] 0))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
                                                                (in-hand? %))}
+                                          :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
                                                           (runner-install target {:no-cost true}))}
@@ -633,6 +634,7 @@
    "Savoir-faire"
    {:abilities [{:cost [:credit 2]
                  :once :per-turn
+                 :req (req (not (install-locked? state side)))
                  :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (is-type? % "Program")
