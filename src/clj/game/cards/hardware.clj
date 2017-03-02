@@ -390,6 +390,16 @@
                               (shuffle! :deck)
                               (move target :hand))}}}
 
+   "Maw"
+   (let [manual {:label "Trash a card from HQ"
+                 :msg (msg "trash a card from HQ")
+                 :once :per-turn
+                 :effect (effect (trash-cards (take 1 (shuffle (:hand corp))))
+                                 (update! (dissoc card :access-seen)))}]
+     {:in-play [:memory 2]
+      :implementation "Click card to fire the trash"
+      :abilities [manual]})
+
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
