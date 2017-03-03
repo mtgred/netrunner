@@ -1259,7 +1259,9 @@
                                  (gain-agenda-point state :corp 0))
                              (add-counter state side card :power 1)))}}
     :trash-effect {:effect (req (swap! state update-in [:corp] dissoc :cannot-win-on-points)
-                                (gain-agenda-point state :corp 0))}}
+                                (gain-agenda-point state :corp 0))}
+    :leave-play (req (swap! state update-in [:corp] dissoc :cannot-win-on-points)
+                     (gain-agenda-point state :corp 0))}
 
    "The Helpful AI"
    {:in-play [:link 1]
