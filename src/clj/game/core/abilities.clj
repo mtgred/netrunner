@@ -424,9 +424,9 @@
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (do (clear-wait-prompt state opponent)
-          (gain state opponent :credit (- opponent-bet))
+          (deduce state opponent [:credit opponent-bet])
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-          (gain state side :credit (- bet))
+          (deduce state side [:credit bet])
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
