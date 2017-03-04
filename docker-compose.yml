@@ -1,17 +1,23 @@
 version: '2'
 services:
 
-  npm:
-    build: .
+  npm-install:
+    image: netrunner-node
     volumes:
-      - .:/workdir
+      - .:/netrunner
+    command: |
+      sh -c "npm install
+             ./node_modules/.bin/bower --allow-root install"
+
+  fetch:
+    image: netrunner-node
+    volumes:
+      - .:/netrunner
     links:
       - mongo
-    command: |
-      sh -c "cd /workdir
-             npm install
-             ./node_modules/.bin/bower --allow-root install
-             OPENSHIFT_MONGODB_DB_HOST=mongo npm run fetch"
+    environment: 
+      OPENSHIFT_MONGODB_DB_HOST: mongo 
+    command: npm run fetch
 
   mongo:
     image: mongo:latest
@@ -41,23 +47,21 @@ services:
              lein run"
 
   stylus:
-    build: .
+    image: netrunner-node
     volumes:
-      - .:/workdir
-    command: |
-      sh -c "cd /workdir
-             ./node_modules/.bin/stylus -w src/css -o resources/public/css/"
+      - .:/netrunner
+    command: ./node_modules/.bin/stylus -w src/css -o resources/public/css/
 
   coffee:
-    build: .
+    image: netrunner-node
     volumes:
-      - .:/workdir
+      - .:/netrunner
     ports:
       - 1042:1042
     links:
       - mongo
       - netrunner
-    command: |
-      sh -c "apt-get update && apt-get install -y libzmq3-dev
-             cd /workdir
-             MONGO_URL=mongodb://mongo:27017/netrunner CLOJURE_HOST=netrunner ./node_modules/.bin/coffee server.coffee"
+    environment:
+      MONGO_URL: mongodb://mongo:27017/netrunner
+      CLOJURE_HOST: netrunner
+    command: ./node_modules/.bin/coffee server.coffee
