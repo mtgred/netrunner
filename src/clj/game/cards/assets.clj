@@ -768,6 +768,13 @@
                    :effect (effect (gain :credit (* 2 (get-in card [:counter :power])))
                                    (trash card))}]})
 
+   "Net Analytics"
+   (let [ability {:req (req (not (empty? (filter #(some #{:tag} %) targets))))
+                  :msg (msg "to draw a card")
+                  :effect (effect (draw :corp))}]
+   {:events {:runner-loss ability
+             :runner-prevent ability}})
+
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}

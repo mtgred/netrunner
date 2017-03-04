@@ -243,7 +243,8 @@
       (max 0)))
 
 (defn tag-prevent [state side n]
-  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0)))
+  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
+  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n)))
 
 (defn tag-remove-bonus
   "Applies a cost increase of n to removing tags with the click action. (SYNC.)"

@@ -814,6 +814,38 @@
     (prompt-choice :runner "Add News Team to score area")
     (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
 
+(deftest net-analytics
+  ;; Draw a card when runner avoids or removes 1 or more tags
+  (do-game
+    (new-game (default-corp [(qty "Ghost Branch" 3) (qty "Net Analytics" 3)])
+              (default-runner [(qty "New Angeles City Hall" 3)]))
+    (starting-hand state :corp ["Net Analytics" "Ghost Branch"])
+    (play-from-hand state :corp "Ghost Branch" "New remote")
+    (play-from-hand state :corp "Net Analytics" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "New Angeles City Hall")
+    (take-credits state :runner)
+    (let [gb (get-content state :remote1 0)
+          net (get-content state :remote2 0)
+          nach (get-in @state [:runner :rig :resource 0])]
+      (core/rez state :corp (refresh net))
+      (core/advance state :corp {:card (refresh gb)})
+      (is (= 1 (get-in (refresh gb) [:advance-counter])))
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
+      (run-empty-server state "Server 1")
+      (prompt-choice :corp "Yes") ; choose to do the optional ability
+      (card-ability state :runner nach 0)
+      (prompt-choice :runner "Done")
+      (prompt-choice :runner "No")
+      (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
+      (is (= 0 (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
+      ; tag removal
+      (core/tag-runner state :runner 1)
+      (core/remove-tag state :runner 1)
+      (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
+
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
   (do-game
