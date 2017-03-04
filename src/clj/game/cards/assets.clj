@@ -96,7 +96,7 @@
                                   (resolve-ability
                                     state side
                                     {:prompt "Prevent Alexa Belsky from shuffling back in 1 card for every 2 [Credits] spent. How many credits?"
-                                     :choices :credit :player :runner
+                                     :choices :credit :player :runner :priority 2
                                      :msg (msg "shuffle " (- (count (:hand corp)) (quot target 2)) " card"
                                                (when-not (= 1 (- (count (:hand corp)) (quot target 2))) "s")
                                                " in HQ into R&D")
