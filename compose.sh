@@ -26,7 +26,8 @@ if [[ -n ${BUILD} ]]; then
 fi
 
 docker-compose up npm-install
+docker-compose up -d mongo
 
-docker-compose up npm
+docker-compose up fetch-cards
 
-docker-compose up netrunner coffee stylus lein
+docker-compose up lein-netrunner coffee-server stylus-css lein-cljs

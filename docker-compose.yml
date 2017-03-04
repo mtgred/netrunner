@@ -9,7 +9,7 @@ services:
       sh -c "npm install
              ./node_modules/.bin/bower --allow-root install"
 
-  fetch:
+  fetch-cards:
     image: netrunner-node
     volumes:
       - .:/netrunner
@@ -26,7 +26,7 @@ services:
     volumes:
       - /tmp/netrunner/mongo-data:/data/db
 
-  lein:
+  lein-cljs:
     image: clojure:latest
     volumes:
       - .:/netrunner
@@ -34,7 +34,7 @@ services:
       sh -c "cd /netrunner
              lein cljsbuild auto dev"
 
-  netrunner:
+  lein-netrunner:
     image: clojure:latest
     volumes:
       - .:/netrunner
@@ -46,13 +46,13 @@ services:
       sh -c "cd /netrunner
              lein run"
 
-  stylus:
+  stylus-css:
     image: netrunner-node
     volumes:
       - .:/netrunner
     command: ./node_modules/.bin/stylus -w src/css -o resources/public/css/
 
-  coffee:
+  coffee-server:
     image: netrunner-node
     volumes:
       - .:/netrunner
@@ -60,8 +60,8 @@ services:
       - 1042:1042
     links:
       - mongo
-      - netrunner
+      - lein-netrunner
     environment:
       MONGO_URL: mongodb://mongo:27017/netrunner
-      CLOJURE_HOST: netrunner
+      CLOJURE_HOST: lein-netrunner
     command: ./node_modules/.bin/coffee server.coffee
