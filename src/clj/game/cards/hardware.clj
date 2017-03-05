@@ -391,6 +391,18 @@
                               (shuffle! :deck)
                               (move target :hand))}}}
 
+   "Maw"
+   (let [manual {:optional
+                 {:label "Trash a card from HQ"
+                  :req (req (not (used-this-turn? (:cid card) state)))
+                  :prompt "Trash a card from HQ?"
+                  :yes-ability {:msg "trash a card from HQ"
+                                :once :per-turn
+                                :effect (effect (trash-cards (take 1 (shuffle (:hand corp)))))}}}]
+     {:in-play [:memory 2]
+      :implementation "Manual - click card to fire the trash"
+      :abilities [manual]})
+
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn

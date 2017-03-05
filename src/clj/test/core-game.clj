@@ -419,6 +419,24 @@
     (prompt-choice :runner "Yes")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
+(deftest run-psi-bad-publicity-credits
+  ;; Should pay from Bad Pub for Psi games during run #2374
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
+    (play-from-hand state :corp "Caprice Nisei" "New remote")
+    (take-credits state :corp)
+    (let [caprice (get-content state :remote1 0)]
+      (core/rez state :corp caprice)
+      (run-on state "Server 1")
+      (is (prompt-is-card? :corp caprice) "Caprice prompt even with no ice, once runner makes run")
+      (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")
+      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game"))))
+
 (deftest purge-nested
   ;; Purge nested-hosted virus counters
   (do-game
