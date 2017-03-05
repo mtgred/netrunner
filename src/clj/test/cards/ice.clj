@@ -590,6 +590,33 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest self-adapting-code-wall-unlowerable
+  ;; self-adapting code wall strength cannot be lowered
+  (do-game
+    (new-game (default-corp [(qty "Self-Adapting Code Wall" 1) (qty "Lag Time" 1)])
+              (default-runner [(qty "Ice Carver" 1) (qty "Parasite" 1)]))
+    (play-from-hand state :corp "Self-Adapting Code Wall" "Archives")
+    (take-credits state :corp 2)
+    (let [sacw (get-ice state :archives 0)]
+      (core/rez state :corp sacw)
+      (play-from-hand state :runner "Ice Carver")
+      (run-on state "Archives")
+      (is (= 1 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
+      (run-jack-out state)
+      (play-from-hand state :runner "Parasite")
+      (prompt-select :runner sacw)
+      (is (= 1 (count (:hosted (refresh sacw)))) "Parasite hosted on Self-Adapting Code Wall")
+      (take-credits state :runner 1)
+      (take-credits state :corp)
+      (is (= 1 (core/get-virus-counters state :runner (first (:hosted (refresh sacw)))))
+          "Parasite has 1 virus counter")
+      (is (= 1 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Lag Time")
+      (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
+      (take-credits state :corp 2)
+      (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
+
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
   (do-game
