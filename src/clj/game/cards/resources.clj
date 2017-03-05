@@ -107,6 +107,7 @@
    "Artist Colony"
    {:abilities [{:prompt "Choose a card to install"
                  :msg (msg "install " (:title target))
+                 :req (req (not (install-locked? state side)))
                  :cost [:forfeit]
                  :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
                  :effect (effect (trigger-event :searched-stack nil)
@@ -1156,7 +1157,8 @@
    "Street Peddler"
    {:effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
-    :abilities [{:prompt "Choose a card on Street Peddler to install"
+    :abilities [{:req (req (not (install-locked? state side)))
+                 :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
                                                           (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))

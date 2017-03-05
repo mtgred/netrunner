@@ -197,6 +197,11 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
+(defn lock-install [state side cid tside]
+  (swap! state update-in [tside :lock-install] #(conj % cid)))
+
+(defn unlock-install [state side cid tside]
+  (swap! state update-in [tside :lock-install] #(remove #{cid} %)))
 
 ;;; Small utilities for card properties.
 (defn in-server?
@@ -273,6 +278,11 @@
 ;; This appears unused, can it be removed?
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
+
+(defn install-locked?
+  "Checks if installing is locked"
+  [state side]
+  (seq (get-in @state [side :lock-install])))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.
