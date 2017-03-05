@@ -27,7 +27,10 @@ fi
 
 docker-compose up npm-install
 docker-compose up -d mongo
+sleep 30
 
 docker-compose up fetch-cards
 
-docker-compose up lein-netrunner coffee-server stylus-css lein-cljs
+docker-compose up -d coffee-server stylus-css
+
+docker-compose up lein-netrunner lein-cljs
