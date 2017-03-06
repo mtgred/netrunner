@@ -916,16 +916,18 @@
    "Quarantine System"
    (letfn [(rez-ice [cnt ap] {:prompt "Choose an ICE to rez"
                               :delayed-completion true
-                              :choices {:req #(and (is-type? % "ICE") (complement rezzed?))}
+                              :choices {:req #(and (ice? %) (complement rezzed?))}
                               :msg (msg "rez " (:title target))
                               :effect (req (rez-cost-bonus state side (* ap -2))
                                            (rez state side target {:no-warning true})
                                            (if (< cnt 3) (continue-ability state side (rez-ice (inc cnt) ap) card nil)
                                                          (effect-completed state side eid)))})]
-     {:abilities [{:label "Forfeit agenda to rez upto 3 ICE with a 2 [Credit] discount per agenda point"
+     {:abilities [{:label "Forfeit agenda to rez up to 3 ICE with a 2 [Credit] discount per agenda point"
                    :req (req (pos? (count (:scored corp))))
                    :cost [:forfeit]
-                   :effect (req (continue-ability state side (rez-ice 1 (:agendapoints (last (:rfg corp)))) card nil))}]})
+                   :effect (req (let [agenda (last (:rfg corp))
+                                      ap (if (is-type? agenda "Agenda") (:agendapoints agenda) 0)]
+                             (continue-ability state side (rez-ice 1 ap) card nil)))}]})
 
    "Raman Rai"
    {:abilities [{:once :per-turn
