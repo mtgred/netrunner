@@ -927,7 +927,7 @@
                    :cost [:forfeit]
                    :effect (req (let [agenda (last (:rfg corp))
                                       ap (if (is-type? agenda "Agenda") (:agendapoints agenda) 0)]
-                             (continue-ability state side (rez-ice 1 ap) card nil)))}]})
+                                  (continue-ability state side (rez-ice 1 ap) card nil)))}]})
 
    "Raman Rai"
    {:abilities [{:once :per-turn
