@@ -913,6 +913,20 @@
                              (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
+   "Quarantine System"
+   (letfn [(rez-ice [cnt ap] {:prompt "Choose an ICE to rez"
+                              :delayed-completion true
+                              :choices {:req #(and (is-type? % "ICE") (complement rezzed?))}
+                              :msg (msg "rez " (:title target))
+                              :effect (req (rez-cost-bonus state side (* ap -2))
+                                           (rez state side target {:no-warning true})
+                                           (if (< cnt 3) (continue-ability state side (rez-ice (inc cnt) ap) card nil)
+                                                         (effect-completed state side eid)))})]
+     {:abilities [{:label "Forfeit agenda to rez upto 3 ICE with a 2 [Credit] discount per agenda point"
+                   :req (req (pos? (count (:scored corp))))
+                   :cost [:forfeit]
+                   :effect (req (continue-ability state side (rez-ice 1 (:agendapoints (last (:rfg corp)))) card nil))}]})
+
    "Raman Rai"
    {:abilities [{:once :per-turn
                  :label "Lose [Click] and swap a card in HQ you just drew for a card in Archives"
