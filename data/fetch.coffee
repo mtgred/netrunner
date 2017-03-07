@@ -13,7 +13,7 @@ mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
 appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 
-db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}")
+db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 
 same = (key, t) ->
   return [key, t]
