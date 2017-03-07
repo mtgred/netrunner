@@ -789,23 +789,26 @@
                                      card nil)))}
 
     "Psychokinesis"
-    (letfn [(install-card [cards]
+    (letfn [(choose-card [cards]
              {:prompt "Select an agenda, asset, or upgrade to install"
               :choices (cons "None" cards)
               :delayed-completion true
-              :msg (req (when (not= target "None") (corp-install-msg target)))
-              :effect (req (if (or (= target "None") (ice? target) (is-type? target "Operation"))
-                            (do (effect-completed state side eid card)
-                                (system-msg state side "does not install an asset, agenda, or upgrade"))
-                            (corp-install state side target (get-remote-names @state))))})]
+              :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
+                             (continue-ability state side (install-card target) card nil)
+                             (system-msg state side "does not install an asset, agenda, or upgrade"))
+                           (effect-completed state side eid card)
+                           (clear-wait-prompt state :runner))})
+            (install-card [chosen]
+             {:prompt "Select a remote server"
+              :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+              :delayed-completion true
+              :effect (effect (clear-wait-prompt :runner)
+                              (corp-install (move state side chosen :play-area) target))})]
      {:msg "look at the top 5 cards of R&D"
       :delayed-completion true
       :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
-                    (let [from (take 5 (:deck corp))]
-                      (if (pos? (count from))
-                        (continue-ability state side (install-card from) card nil)
-                        (do (clear-wait-prompt state :corp)
-                            (effect-completed state side eid card)))))})
+                   (let [from (take 5 (:deck corp))]
+                     (continue-ability state side (choose-card from) card nil)))})
 
    "Punitive Counterstrike"
    {:trace {:base 5 :msg "do meat damage equal to the number of agenda points stolen last turn"
