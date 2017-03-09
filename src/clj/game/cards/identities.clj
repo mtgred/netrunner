@@ -52,6 +52,18 @@
                                                              (clear-wait-prompt state :corp))}
                                                card nil)))}}}
 
+   "AgInfusion: New Miracles for a New World"
+   {:abilities [{:once :per-turn
+                 :req (req (and (:run @state) (not (rezzed? current-ice))))
+                 :prompt "Choose another server and redirect the run to its outermost position"
+                 :choices (req (cancellable servers))
+                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
+                 :effect (req (let [dest (server->zone state target)]
+                                (trash state side current-ice)
+                                (swap! state update-in [:run]
+                                       #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                 :server (rest dest)))))}]}
+
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
                               :effect (effect (draw 4 {:suppress-event true}))}}
