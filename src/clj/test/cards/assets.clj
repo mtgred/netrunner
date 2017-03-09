@@ -1051,6 +1051,39 @@
         (is (= "Public Support" (:title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
 
+(deftest quarantine-system
+  ;; Forfeit agenda to rez up to 3 ICE with 2 credit discount per agenda point
+  (do-game
+    (new-game
+      (default-corp [(qty "Chiyashi" 3) (qty "Quarantine System" 1) (qty "Project Beale" 1)])
+      (default-runner))
+    (core/gain state :corp :credit 100)
+    (core/gain state :corp :click 100)
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Quarantine System" "New remote")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (is (= 102 (:credit (get-corp))) "Corp has 102 creds")
+    (let [ch1 (get-ice state :hq 0)
+          ch2 (get-ice state :hq 1)
+          ch3 (get-ice state :hq 2)
+          qs (get-content state :remote1 0)
+          beale (get-content state :remote2 0)]
+      (core/rez state :corp qs)
+      (card-ability state :corp qs 0)
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE")
+      (score-agenda state :corp beale)
+      ; 1 on rez
+      (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
+      (card-ability state :corp qs 0)
+      (prompt-select :corp ch1)
+      (prompt-select :corp ch2)
+      (prompt-select :corp ch3)
+      ; pay 8 per Chiyashi - 24 total
+      (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
+
 (deftest reality-threedee
   ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)
   (do-game
