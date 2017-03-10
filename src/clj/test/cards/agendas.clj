@@ -172,9 +172,11 @@
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
   (do-game
-    (new-game (default-corp [(qty "Dedicated Neural Net" 1) (qty "Scorched Earth" 3) (qty "Hedge Fund" 1)])
+    (new-game (default-corp [(qty "Dedicated Neural Net" 1) (qty "Scorched Earth" 2)
+                             (qty "Hedge Fund" 1) "Caprice Nisei"])
               (default-runner [(qty "HQ Interface" 1)]))
     (play-from-hand state :corp "Dedicated Neural Net" "New remote")
+    (play-from-hand state :corp "Caprice Nisei" "HQ")
     (score-agenda state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (run-empty-server state :hq)
@@ -182,9 +184,13 @@
     (prompt-choice :corp "1")
     (is (-> @state :run :run-effect :replace-access) "Replace-access tiggered")
     (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
-    (prompt-choice :runner "Card from HQ")
+    (prompt-choice :runner "Card from hand")
     (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")
     (prompt-choice :runner "OK")
+    ;; test for #2376
+    (prompt-choice :runner "Unrezzed upgrade in HQ")
+    (is (accessing state "Caprice Nisei") "Runner accessing Caprice")
+    (prompt-choice :runner "No")
     (is (not (:run @state)) "Run completed")
     (run-empty-server state :hq)
     (prompt-choice :runner "OK")
