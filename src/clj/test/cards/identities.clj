@@ -735,12 +735,15 @@
   ;; NBN: Controlling the Message - Trace to tag Runner when first installed Corp card is trashed
   (do-game
     (new-game
-      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 2)])
+      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 3)])
       (default-runner [(qty "Forger" 1)]))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Forger")
+    ; trash from HQ first - #2321
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Yes")
     (run-empty-server state "Server 1")
     (prompt-choice :runner "Yes")
     (prompt-choice :corp "Yes")
