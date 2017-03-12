@@ -915,7 +915,7 @@
     (core/gain state :corp :click 1)
     (core/move state :corp (find-card "Psychokinesis" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp "New remote")
+    (prompt-choice :corp "None")
     (is (= nil (:title (get-content state :remote4 0)))
       "Nothing is installed by Psychokinesis")))
 
