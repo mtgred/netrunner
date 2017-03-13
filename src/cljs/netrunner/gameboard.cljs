@@ -783,8 +783,8 @@
                                                           (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
-        [:div
-         [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
+        [:div {:on-click #(close-popup % owner "popup" nil false false)}
+         [:a "Close"]
          [:label (let [total (count discard)
                        face-up (count (filter faceup? discard))]
                    (str total " cards, " (- total face-up) " face-down."))]]
