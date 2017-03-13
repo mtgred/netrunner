@@ -524,13 +524,16 @@
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
 
    "NBN: Controlling the Message"
-   {:events {:runner-trash
+   (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
+   {:events {:corp-turn-ends {:effect cleanup}
+             :runner-turn-ends {:effect cleanup}
+             :runner-trash
              {:delayed-completion true
-              :req (req (and (let [trashes (flatten (turn-events state side :runner-trash))]
-                               (empty? (filter #(card-is? % :side :corp) trashes)))
+              :req (req (and (not (:saw-trash card))
                              (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
+                           (update! state :corp (assoc card :saw-trash true))
                            (continue-ability
                              state :corp
                              {:optional
@@ -542,7 +545,7 @@
                                                                      (clear-wait-prompt :runner))
                                                      :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                             card nil))}}}
+                             card nil))}}})
 
    "NBN: Making News"
    {:recurring 2}

@@ -182,17 +182,7 @@
       :abilities [ability]})
 
    "Dedicated Neural Net"
-   (letfn [(access-hq [cards]
-             {:prompt "Select a card to access."
-              :player :runner
-              :choices [(str "Card from HQ")]
-              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                           (when-completed
-                             (handle-access state side [(first cards)])
-                             (do (if (< 1 (count cards))
-                                   (continue-ability state side (access-hq (next cards)) card nil)
-                                   (effect-completed state side eid card)))))})]
-     (let [psi-effect
+    (let [psi-effect
            {:delayed-completion true
             :mandatory true
             :effect (req (if (not-empty (:hand corp))
@@ -203,7 +193,14 @@
                                   :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
                                             :max (req (access-count state side :hq-access))}
                                   :effect (effect (clear-wait-prompt :runner)
-                                                  (continue-ability :runner (access-hq (shuffle targets)) card nil))}
+                                                  (continue-ability :runner
+                                                                    (access-helper-hq
+                                                                      state (access-count state side :hq-access)
+                                                                      ; access-helper-hq uses a set to keep track of which cards have already
+                                                                      ; been accessed. Using the set difference we make the runner unable to
+                                                                      ; access non-selected cards from the corp prompt
+                                                                      (clojure.set/difference (set (:hand corp)) (set targets)))
+                                                                    card nil))}
                                  card nil))
                            (effect-completed state side eid card)))}]
        {:events {:successful-run {:interactive (req true)
@@ -212,7 +209,7 @@
                                         :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
                                                                    (swap! state update-in [:run :run-effect]
                                                                           #(assoc % :replace-access psi-effect)))
-                                                                 (effect-completed state side eid))}}}}}))
+                                                                 (effect-completed state side eid))}}}}})
 
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
