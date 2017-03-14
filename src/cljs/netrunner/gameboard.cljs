@@ -766,7 +766,7 @@
    (sab/html
     (let [faceup? #(or (:seen %) (:rezzed %))]
       [:div.blue-shade.discard
-       (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+       (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeToggle)})
 
        (when-not (empty? discard)
          (let [c (last discard)]
@@ -783,11 +783,12 @@
                                                           (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
-        [:div {:on-click #(close-popup % owner "popup" nil false false)}
-         [:a "Close"]
-         [:label (let [total (count discard)
+        [:div
+         [:a
+          {:on-click #(close-popup % owner "popup" nil false false)}
+          (let [total (count discard)
                        face-up (count (filter faceup? discard))]
-                   (str total " cards, " (- total face-up) " face-down."))]]
+                   (str "Close - " total " cards, " (- total face-up) " face-down."))]]
         (for [c discard]
           (if (faceup? c)
             (om/build card-view c)
