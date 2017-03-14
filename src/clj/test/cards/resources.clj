@@ -478,6 +478,28 @@
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest film-critic-hostile-infrastructure
+  ;; Do not take a net damage when a hosted agenda is trashed due to film critic trash #2382
+  (do-game
+    (new-game (default-corp [(qty "Hostile Infrastructure" 3) (qty "Project Vitruvius" 1)])
+              (default-runner [(qty "Film Critic" 1) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (run-empty-server state :remote2)
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (core/gain state :corp :credit 10)
+      (core/trash-resource state :corp nil)
+      (prompt-select :corp fc)
+      (is (= 1 (count (:discard (get-runner)))) "FC trashed")
+      (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
+      (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
+
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
   (do-game
