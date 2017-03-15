@@ -216,30 +216,6 @@
     (run-empty-server state :hq)
     (is (= 7 (:credit (get-runner))) "No credits gained")))
 
-(deftest gagarin
-  ;; Gagarin - pay 1c to access each card in remote
-  (do-game
-    (new-game
-      (make-deck "Gagarin Deep Space: Expanding the Horizon" [(qty "PAD Campaign" 1) (qty "Caprice Nisei" 1)])
-      (default-runner))
-    (core/lose state :runner :credit 4)
-    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state :remote1)
-    (prompt-select :runner (get-content state :remote1 0))
-    (is (= 0 (:credit (get-runner))) "Paid 1 credit to access")
-    (prompt-choice :runner "No") ; Dismiss trash prompt
-    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
-    (run-empty-server state :remote1)
-    (prompt-select :runner (get-content state :remote1 0))
-    (prompt-choice :runner "OK") ; Could not afford message dismissed
-    (is (empty? (:prompt (get-runner))) "Runner cannot access so no trash prompt")
-    (is (not (last-log-contains? state "PAD Campaign")) "No card name was logged")
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No") ; Dismiss trash prompt
-    (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
-
 (deftest grndl-power-unleashed
   ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
   (do-game
