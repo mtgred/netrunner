@@ -784,11 +784,10 @@
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
         [:div
-         [:a
-          {:on-click #(close-popup % owner "popup" nil false false)}
-          (let [total (count discard)
+         [:a {:on-click #(close-popup % owner "popup" nil false false)} "Close"]
+         [:label (let [total (count discard)
                        face-up (count (filter faceup? discard))]
-                   (str "Close - " total " cards, " (- total face-up) " face-down."))]]
+                   (str total " cards, " (- total face-up) " face-down."))]]
         (for [c discard]
           (if (faceup? c)
             (om/build card-view c)
