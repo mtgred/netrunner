@@ -213,6 +213,7 @@
                                                    :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
                                             {:title "/move-bottom command"} nil)
           "/error"      #(show-error-toast %1 %2)
+          "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
           "/discard"    #(toast %1 %2 "/discard number takes the format #n")
           "/deck"       #(toast %1 %2 "/deck number takes the format #n")
           nil)))))
