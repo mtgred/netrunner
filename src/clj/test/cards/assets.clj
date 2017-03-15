@@ -584,6 +584,22 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
 
+(deftest hostile-infrastructure
+  ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
+  (do-game
+    (new-game (default-corp [(qty "Hostile Infrastructure" 3)])
+              (default-runner))
+    (core/gain state :runner :credit 50)
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
+
 (deftest hyoubu-research-facility
   (do-game
     (new-game (default-corp [(qty "Hyoubu Research Facility" 1) (qty "Snowflake" 1)])

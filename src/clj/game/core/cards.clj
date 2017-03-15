@@ -72,7 +72,7 @@
              trash-hosted (fn [h]
                              (trash state side
                                     (update-in h [:zone] #(map to-keyword %))
-                                    {:unpreventable true})
+                                    {:unpreventable true :suppress-event true})
                                ())
              update-hosted (fn [h]
                              (let [newz (flatten (list (if (vector? to) to [to])))

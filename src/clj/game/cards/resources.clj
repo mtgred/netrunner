@@ -1292,14 +1292,17 @@
    "The Supplier"
    (let [ability  {:label "Install a hosted card (start of turn)"
                    :prompt "Choose a card hosted on The Supplier to install"
-                   :once :per-turn
                    :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
-                                   (:hosted card)))
+                                        (:hosted card)))
                    :choices {:req #(= "The Supplier" (:title (:host %)))}
-                   :msg (msg "install " (:title target) " lowering its install cost by 2")
-                   :effect (req (when (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
+                   :effect (req
+                             (runner-can-install? state side target nil)
+                             (when (and (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
+                                           (not (and (:uniqueness target) (in-play? state target))))
                                   (install-cost-bonus state side [:credit -2])
                                   (runner-install state side target)
+                                  :once :per-turn
+                                  (system-msg state side (str "uses The Supplier to install " (:title target) " lowering its install cost by 2"))
                                   (update! state side (-> card
                                                           (assoc :supplier-installed (:cid target))
                                                           (update-in [:hosted]
