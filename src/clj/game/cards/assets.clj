@@ -571,22 +571,20 @@
                  :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
-    (let [jeeves (effect (gain :click 1))
-          ability {:label "Gain [Click]"
-                   :msg "gain [Click]"
-                   :once :per-turn
-                   :effect jeeves}
-          cleanup (effect (update! (dissoc card :seen-this-turn)))]
-
-    {:abilities  [ability]
-     :leave-play {:effect cleanup}
-     :trash-effect {:effect cleanup}
-     :events {
-             :corp-spent-click
-              {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
-                            (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
-                                 (resolve-ability state side ability card nil)))}
-              :corp-turn-ends {:effect cleanup}}})
+   (let [jeeves (effect (gain :click 1))
+         ability {:label "Gain [Click]"
+                  :msg "gain [Click]"
+                  :once :per-turn
+                  :effect jeeves}
+         cleanup (effect (update! (dissoc card :seen-this-turn)))]
+     {:abilities [ability]
+      :leave-play cleanup
+      :trash-effect {:effect cleanup}
+      :events {:corp-spent-click
+               {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
+                             (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
+                               (resolve-ability state side ability card nil)))}
+               :corp-turn-ends {:effect cleanup}}})
 
    "Kala Ghoda Real TV"
    {:flags {:corp-phase-12 (req true)}

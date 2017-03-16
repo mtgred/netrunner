@@ -810,6 +810,14 @@
                                                                  (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
+   "Inazuma"
+   {:abilities [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"}
+                {:msg "prevent the Runner from jacking out until after the next piece of ICE"
+                 :effect (effect (register-events
+                                   {:pass-ice {:effect (req (swap! state update-in [:run] dissoc :prevent-jack-out)
+                                                            (unregister-events state side card))}} card)
+                                 (prevent-jack-out))}]}
+
    "Information Overload"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Gain subroutines"
@@ -819,12 +827,12 @@
 
    "IP Block"
    {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-installed state :runner))))
-                                :label "Give the Runner 1 tag if there is an installed AI")
-                (tag-trace 3)
-                {:label "End the run if the Runner is tagged"
-                 :req (req tagged)
-                 :msg "end the run"
-                 :effect (effect (end-run))}]}
+                                :label "Give the Runner 1 tag if there is an installed AI")]
+    :subroutines [(tag-trace 3)
+                  {:label "End the run if the Runner is tagged"
+                   :req (req tagged)
+                   :msg "end the run"
+                   :effect (effect (end-run))}]}
 
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
@@ -1178,7 +1186,7 @@
                            :delayed-completion true
                            :effect (effect (tag-runner :runner eid 1))
                            :msg "give the Runner 1 tag"}}]}
-                           
+
     "Self-Adapting Code Wall"
     {:subroutines [end-the-run]
      :flags {:cannot-lower-strength true}}

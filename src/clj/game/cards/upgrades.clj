@@ -254,12 +254,11 @@
     :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
 
    "Manta Grid"
-   {:events {
-     :successful-run
-     {:msg (msg " gain a [Click] next turn")
-      :req    (req (and this-server
-                        (or (< (:credit runner) 6) (zero? (:click runner)))))
-      :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}}}
+   {:events {:successful-run-ends
+             {:msg "gain a [Click] next turn"
+              :req (req (and (= (first (:server target)) (second (:zone card)))
+                             (or (< (:credit runner) 6) (zero? (:click runner)))))
+              :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}}}
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
