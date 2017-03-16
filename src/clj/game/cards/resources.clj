@@ -636,10 +636,10 @@
     :abilities [ability]})
 
    "John Masanori"
-   {:events {:successful-run {:req (req (first-event? state side :successful-run))
+   {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
                               :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
-             :unsuccessful-run {:req (req (first-event? state side :unsuccessful-run))
+             :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
                                 :delayed-completion true
                                 :msg "take 1 tag" :once-key :john-masanori-tag
                                 :effect (effect (tag-runner :runner eid 1))}}}
