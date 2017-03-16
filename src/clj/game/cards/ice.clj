@@ -531,9 +531,9 @@
                    :effect (effect (end-run))}]}
 
    "DNA Tracker"
-   {:abilities [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
-                 :effect (req (when-completed (damage state side :net 1 {:card card})
-                                              (lose state :runner :credit 2)))}]}
+   {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
+                   :effect (req (when-completed (damage state side :net 1 {:card card})
+                                                (lose state :runner :credit 2)))}]}
 
    "Dracō"
    {:prompt "How many power counters?"
