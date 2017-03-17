@@ -37,7 +37,7 @@
   "Moves a card to the runner's :scored area, triggering events from the completion of the steal."
   ([state side card] (steal state side (make-eid state) card))
   ([state side eid card]
-   (let [c (move state :runner (dissoc card :advance-counter :new) :scored)
+   (let [c (move state :runner (dissoc card :advance-counter :new) :scored {:force true})
          points (get-agenda-points state :runner c)]
      (when-completed
        (trigger-event-simult
