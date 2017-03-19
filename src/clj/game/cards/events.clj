@@ -69,6 +69,10 @@
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req runnable-servers)
                                       :effect (effect (run target nil card))} card nil))}
 
+   "Build Script"
+   {:msg (msg "gain 1 [Credits] and draw 2 cards")
+    :effect (effect (gain :credit 1) (draw 2))}
+   
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(has-subtype? % "Connection") (all-installed state :runner)))
               " [Credits]")
@@ -226,6 +230,13 @@
                                                      (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
 
+   "Deep Data Mining"
+   {:effect (effect (run :rd nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:successful-run {:silent (req true)
+                              :effect (effect (access-bonus (min 4 (:memory runner))))}
+             :run-ends {:effect (effect (unregister-events card))}}}
+   
    "Demolition Run"
    {:prompt "Choose a server" :choices ["HQ" "R&D"]
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
@@ -809,6 +820,10 @@
       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
                    (let [from (take 6 (:deck runner))]
                      (continue-ability state side (entrance-trash from) card nil)))})
+   
+   "Mars for Martians"
+   {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource")) (all-installed state :runner))) " card(s) and gain " (:tag runner) " [Credits]")
+    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource")) (all-installed state :runner)))) (gain :credit (:tag runner)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -1199,6 +1214,12 @@
     :events {:pre-rez-cost nil}
     :end-turn {:effect (effect (unregister-events card))}}
 
+   "Spear Phishing"
+   {:implementation "Bypass is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
+   
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (trigger-event :searched-stack nil)
