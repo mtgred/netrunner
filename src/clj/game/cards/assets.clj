@@ -126,12 +126,9 @@
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
    "Anson Rose"
-   (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
-                  :once :per-turn
-                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
-      :events {:corp-turn-begins ability
+      :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}
                :rez {:req (req (and (ice? target) (pos? (:advance-counter card 0))))
                      :delayed-completion true
                      :effect (req (let [ice (get-card state target)
