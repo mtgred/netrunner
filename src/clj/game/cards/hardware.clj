@@ -395,10 +395,10 @@
    (let [manual {:optional
                  {:label "Trash a card from HQ"
                   :req (req (not (used-this-turn? (:cid card) state)))
-                  :prompt "Trash a card from HQ?"
-                  :yes-ability {:msg "trash a card from HQ"
+                  :prompt "Use Maw to trash a card from HQ?"
+                  :yes-ability {:msg "force the Corp to trash a random card from HQ"
                                 :once :per-turn
-                                :effect (effect (trash-cards (take 1 (shuffle (:hand corp)))))}}}]
+                                :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
      {:in-play [:memory 2]
       :implementation "Manual - click card to fire the trash"
       :abilities [manual]})
@@ -582,9 +582,10 @@
    {:recurring 1}
 
    "Q-Coherence Chip"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events (let [e {:msg "trash itself" :req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card))}]
+   {:in-play [:memory 1]
+    :events (let [e {:req (req (= (last (:zone target)) :program))
+                     :effect (effect (trash card)
+                                     (system-msg (str "trashes Q-Coherence Chip")))}]
               {:runner-trash e :corp-trash e})}
 
    "Qianju PT"

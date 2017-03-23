@@ -254,12 +254,11 @@
     :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
 
    "Manta Grid"
-   {:events {
-     :successful-run
-     {:msg (msg " gain a [Click] next turn")
-      :req    (req (and this-server
-                        (or (< (:credit runner) 6) (zero? (:click runner)))))
-      :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}}}
+   {:events {:successful-run-ends
+             {:msg "gain a [Click] next turn"
+              :req (req (and (= (first (:server target)) (second (:zone card)))
+                             (or (< (:credit runner) 6) (zero? (:click runner)))))
+              :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}}}
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
@@ -388,8 +387,9 @@
 
    "Oberth Protocol"
    {:additional-cost [:forfeit]
-    :events {:advance {:req (req (empty? (filter #(= (second (:zone %)) (second (:zone card)))
-                                                 (map first (turn-events state side :advance)))))
+    :events {:advance {:req (req (and (= (second (:zone target)) (second (:zone card)))
+                                      (empty? (filter #(= (second (:zone %)) (second (:zone card)))
+                                                      (map first (turn-events state side :advance))))))
                        :msg (msg "place an additional advancement token on " (card-str state target))
                        :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}}}
 

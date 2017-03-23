@@ -105,7 +105,8 @@
                                                  state side
                                                  {:choices {:req can-be-advanced?}
                                                   :msg (msg "place " c " advancement tokens on " (card-str state target))
-                                                  :cancel-effect (effect (clear-wait-prompt :runner))
+                                                  :cancel-effect (req (clear-wait-prompt state :runner)
+                                                                      (effect-completed state side eid))
                                                   :effect (effect (add-prop :corp target :advance-counter c {:placed true})
                                                                   (clear-wait-prompt :runner))} card nil)))}
                               card nil))}}
