@@ -1733,22 +1733,30 @@
   ;; Wasteland - Gain 1c the first time you trash an installed card each turn
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Wasteland" 1) (qty "Fall Guy" 3)]))
+              (default-runner [(qty "Wasteland" 1) (qty "Faust" 1) (qty "Fall Guy" 4)]))
     (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (core/draw state :runner)
+    (play-from-hand state :runner "Faust")
     (play-from-hand state :runner "Wasteland")
+    ; trash from hand first which should not trigger #2291
+    (let [faust (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner faust 1)
+      (prompt-card :runner (first (:hand (get-runner)))))
+    (is (= 0 (:credit (get-runner))) "Gained nothing from Wasteland")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (card-ability state :runner (get-resource state 1) 1)
     (is (= 1 (count (:discard (get-runner)))) "Fall Guy trashed")
-    (is (= 6 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
+    (is (= 3 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
     (take-credits state :runner)
     (card-ability state :runner (get-resource state 1) 1)
     (is (= 2 (count (:discard (get-runner)))) "Fall Guy trashed")
-    (is (= 9 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
+    (is (= 6 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
     (card-ability state :runner (get-resource state 1) 1)
     (is (= 3 (count (:discard (get-runner)))) "Fall Guy trashed")
-    (is (= 11 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
+    (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit
