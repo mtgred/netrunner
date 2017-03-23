@@ -252,6 +252,37 @@
                  :effect (effect (move target :hand)) :once :per-turn
                  :msg (msg "add " (if (:seen target) (:title target) "a facedown card") " to HQ")}]}
 
+   "Clyde Van Rite"
+   (let [ability {:prompt "Pay 1 [Credits] or trash the top card of the Stack"
+                  :once :per-turn
+                  :choices ["Pay 1 [Credits]" "Trash top card"]
+                  :player :runner :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
+                  :effect (req (cond
+                                 ;; Pay 1 credit scenarios
+                                 (or (and (= target "Pay 1 [Credits]")
+                                          (pos? (:credit runner)))
+                                     (and (= target "Trash top card")
+                                          (pos? (:credit runner))
+                                          (zero? (count (:deck runner)))))
+                                 (do (pay state side card :credit 1)
+                                     (system-msg state side "pays 1 [Credits]"))
+
+                                 ;; Trash top card scenarios
+                                 (or (and (= target "Trash top card")
+                                          (pos? (count (:deck runner))))
+                                     (and (= target "Pay 1 [Credits]")
+                                          (pos? (count (:deck runner)))
+                                          (zero? (:credit runner))))
+                                 (do (mill state :runner)
+                                     (system-msg state side "trashes the top card of the Stack"))
+
+                                 :else (system-msg state side "cannot pay 1 [Credits] or
+                                 trash the top card of the Stack")))}]
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req true)}
+    :events {:corp-turn-begins ability}
+    :abilities [ability]})
+
    "Commercial Bankers Group"
    (let [ability {:req (req unprotected)
                   :label "Gain 3 [Credits] (start of turn)"
@@ -306,6 +337,7 @@
                                      (:rezzed card)))}
     :abilities [{:label "Trash a resource"
                  :prompt "Choose a resource to trash with Corporate Town"
+                 :once :per-turn
                  :choices {:req #(is-type? % "Resource")}
                  :msg (msg "trash " (:title target))
                  :effect (effect (trash target {:unpreventable true}))}]}
@@ -587,7 +619,8 @@
                :corp-turn-ends {:effect cleanup}}})
 
    "Kala Ghoda Real TV"
-   {:flags {:corp-phase-12 (req true)}
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req true)}
     :abilities [{:msg "look at the top card of the Runner's Stack"
                   :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}
@@ -726,7 +759,8 @@
                                  (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Museum of History"
-   {:flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
     :abilities [{:label "Shuffle cards in Archives into R&D"
                  :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %)) (rezzed? %)) (all-installed state :corp)))]
                                 (str "Choose " (if (< 1 mus) (str mus " cards") "a card")
