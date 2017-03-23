@@ -77,6 +77,21 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest blacklist-steal
+  ;; Blacklist - #2426.  Need to allow steal.
+  (do-game
+    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Fetal AI")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (= 1 (count (get-in @state [:corp :discard])))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
+    (= 1 (count (get-in @state [:runner :scored])))))
+
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game

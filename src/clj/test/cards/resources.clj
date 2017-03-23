@@ -645,14 +645,18 @@
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
   (do-game
-    (new-game (default-corp)
+    (new-game (default-corp [(qty "Crisium Grid" 1)])
               (default-runner [(qty "John Masanori" 3)
                                (qty "Sure Gamble" 3)
                                (qty "Fall Guy" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
-    (core/gain state :runner :click 1)
+    (core/gain state :runner :click 2)
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Yes") ; trash crisium #2433
     (run-empty-server state "Archives")
     (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
     (run-empty-server state "Archives")

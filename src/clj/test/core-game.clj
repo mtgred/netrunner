@@ -306,6 +306,24 @@
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
+(deftest log-accessed-names
+  ;; Check that accessed card names are logged - except those on R&D, and no logs on archives
+  (do-game
+    (new-game
+      (default-corp [(qty "PAD Campaign" 7)])
+      (default-runner))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (trash-from-hand state :corp "PAD Campaign")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
+    (run-empty-server state :rd)
+    (is (last-log-contains? state "an unseen card") "Accessed card name was not logged")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")))
+
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
