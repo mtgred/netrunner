@@ -342,6 +342,11 @@
                  :msg (msg "trash " (:title target))
                  :effect (effect (trash target {:unpreventable true}))}]}
 
+   "CPC Generator"
+   {:events {:runner-click-credit {:req (req (first-event? state side :runner-click-credit))
+                                   :msg "gain 1 [Credits]"
+                                   :effect (effect (gain :corp :credit 1))}}}
+
    "Cybernetics Court"
    {:in-play [:hand-size-modification 4]}
 
