@@ -1588,7 +1588,7 @@
     (take-credits state :corp)
     (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
     (play-from-hand state :runner "The Supplier")
-    (let [ts (get-resource state 0])]
+    (let [ts (get-resource state 0)]
       (card-ability state :runner ts 0)
       (prompt-select :runner (find-card "Brain Chip" (:hand (get-runner))))
       (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
