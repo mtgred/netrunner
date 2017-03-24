@@ -585,6 +585,13 @@
                                    (gain state side :credit (* (count targets) 3)))}
                     card nil)))}
 
+   "Load Testing"
+   {:msg "make the Runner lose [Click] when their next turn begins"
+    :effect (effect (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:runner-turn-begins {:msg "make the Runner lose [Click]"
+                                  :effect (effect (lose :runner :click 1))}}}
+
    "Localized Product Line"
    {:prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
