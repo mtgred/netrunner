@@ -590,7 +590,8 @@
     :effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
     :events {:runner-turn-begins {:msg "make the Runner lose [Click]"
-                                  :effect (effect (lose :runner :click 1))}}}
+                                  :effect (effect (lose :runner :click 1)
+                                                  (unregister-events card))}}}
 
    "Localized Product Line"
    {:prompt "Choose a card"
