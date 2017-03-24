@@ -1581,16 +1581,19 @@
 (deftest the-supplier-trashed
   ;; Issue #2358 Brain chip mem is deducted when it is hosted and Supplier is trashed
   (do-game
-    (new-game (default-corp)
+    (new-game (default-corp [(qty "Hostile Takeover" 2)])
               (default-runner [(qty "The Supplier" 1)
                                (qty "Brain Chip" 1)]))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
     (take-credits state :corp)
     (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
     (play-from-hand state :runner "The Supplier")
-    (let [ts (get-in @state [:runner :rig :resource 0])]
+    (let [ts (get-resource state 0])]
       (card-ability state :runner ts 0)
       (prompt-select :runner (find-card "Brain Chip" (:hand (get-runner))))
       (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Steal")
       (take-credits state :runner)
       (core/gain state :runner :tag 1)
       (core/trash-resource state :corp nil)
