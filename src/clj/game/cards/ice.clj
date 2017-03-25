@@ -1207,9 +1207,21 @@
                            :effect (effect (tag-runner :runner eid 1))
                            :msg "give the Runner 1 tag"}}]}
 
-    "Self-Adapting Code Wall"
-    {:subroutines [end-the-run]
-     :flags {:cannot-lower-strength true}}
+   "Seidr Adaptive Barrier"
+   {:effect (req (let [srv (second (:zone card))]
+                   (add-watch state (keyword (str "sab" (:cid card)))
+                              (fn [k ref old new]
+                                (let [ices (count (get-in new [:corp :servers srv :ices]))]
+                                  (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
+                                    (update! ref side (assoc (get-card ref card) :strength-bonus ices))
+                                    (update-ice-strength ref side (get-card ref card))))))))
+    :strength-bonus (req (count (:ices (card->server state card))))
+    :leave-play (req (remove-watch state (keyword (str "sab" (:cid card)))))
+    :subroutines [end-the-run]}
+
+   "Self-Adapting Code Wall"
+   {:subroutines [end-the-run]
+    :flags {:cannot-lower-strength true}}
 
    "Sensei"
    {:subroutines [{:label "Give each other ICE encountered \"End the run\" for the remainder of the run"
