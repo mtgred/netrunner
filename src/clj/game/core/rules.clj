@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points is-type? in-corp-scored?
-         prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
+(declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
+         in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
          update-all-ice win win-decked play-sfx)
 
 ;;;; Functions for applying core Netrunner game rules.
@@ -311,6 +311,7 @@
 (defn- resolve-trash
   [state side eid {:keys [zone type] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+  (when (installed? card) (swap! state update-in [side :register :trashed-installed] (fnil inc 0)))
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
                     (apply resolve-trash-end state side eid card args targets))

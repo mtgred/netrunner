@@ -1403,7 +1403,7 @@
                                 (add-counter state side target :virus 1)))}]}
 
    "Wasteland"
-   {:events {:runner-trash {:req (req (and (first-event? state :runner :runner-trash) (:installed target)))
+   {:events {:runner-trash {:req (req (and (= 1 (get-in @state [:runner :register :trashed-installed])) (:installed target)))
                      :effect (effect (gain :credit 1))
                      :msg "to gain 1[Credit]"}}}
 
