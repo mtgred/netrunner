@@ -818,6 +818,26 @@
                                               (resolve-ability state side (mi (inc n)) card nil)))})]
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
+   "Möbius"
+   {:delayed-completion true
+    :effect (req (register-events state side (:events (card-def card))
+                                  (assoc card :zone '(:discard)))
+                 (when-completed (game.core/run state side :rd nil card)
+                                 (let [card (get-card state (assoc card :zone '(:discard)))]
+                                   (unregister-events state side card)
+                                   (if (:run-again card)
+                                     (do (game.core/run state side eid :rd nil card)
+                                         (register-events state side {:successful-run
+                                                                      {:req (req (= target :rd))
+                                                                       :msg "gain 4 [Credits]"
+                                                                       :effect (effect (gain :credit 4))}}
+                                                                     (assoc card :zone '(:discard))))
+                                     (effect-completed state side eid))
+                                   (update! state side (dissoc card :run-again)))))
+    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+                                              :prompt "Make another run on R&D?"
+                                              :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
+
    "Modded"
    {:prompt "Choose a program or piece of hardware to install from your Grip"
     :choices {:req #(and (or (is-type? % "Hardware")

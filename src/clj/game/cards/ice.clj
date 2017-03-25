@@ -654,6 +654,12 @@
                                                                              (end-run))}
                                                      card nil))})]}
 
+   "Free Lunch"
+   {:abilities [(power-counter-ability {:label "Runner loses 1 [Credits]"
+                                        :msg "make the Runner lose 1 [Credits]"
+                                        :effect (effect (lose :runner :credit 1))})]
+    :subroutines [add-power-counter]}
+
    "Galahad"
    (grail-ice end-the-run)
 
@@ -1048,6 +1054,20 @@
    {:subroutines [(gain-credits 2)
                   trash-program]
     :runner-abilities [(runner-break [:credit 2] 1)]}
+
+   "Nerine 2.0"
+   {:subroutines [{:label "Do 1 brain damage and Corp may draw 1 card"
+                   :delayed-completion true
+                   :msg "do 1 brain damage"
+                   :effect (req (when-completed (damage state :runner :brain 1 {:card card})
+                                                (resolve-ability state side
+                                                  {:optional
+                                                   {:prompt "Draw 1 card?"
+                                                    :yes-ability {:msg "draw 1 card"
+                                                                  :effect (effect (draw))}
+                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                 card nil)))}]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Neural Katana"
    {:subroutines [(do-net-damage 3)]}
@@ -1473,6 +1493,15 @@
    "Wall of Thorns"
    {:subroutines [end-the-run
                   (do-net-damage 2)]}
+
+   "Watchtower"
+   {:subroutines [{:label "Search R&D and add 1 card to HQ"
+                   :prompt "Choose a card to add to HQ"
+                   :msg "add a card from R&D to HQ"
+                   :choices (req (cancellable (:deck corp) :sorted))
+                   :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
+                   :effect (effect (shuffle! :deck)
+                                   (move target :hand))}]}
 
    "Wendigo"
    (implementation-note
